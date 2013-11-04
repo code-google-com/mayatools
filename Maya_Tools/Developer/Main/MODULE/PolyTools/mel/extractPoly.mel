@@ -1,0 +1,30 @@
+global proc NinjaMesh_Extract()
+{
+	$ObjectName =  `ls -hl`;
+	$DupObject =  `duplicate -rr $ObjectName`;
+	string $SelectedFaceIndex[] = {};
+	string $FaceSelection[] = `filterExpand -ex 1 -sm 34`;
+	string $DupFaceSelection[] = {};
+	for ($f = 0; $f < `size $FaceSelection`; $f++)
+		{
+			string $buf[] = {};
+			int $numTokens = `tokenize $FaceSelection[$f] "." $buf`;
+			$SelectedFaceIndex[$f] = $buf[1];
+        }
+
+ 	select -cl;
+	for ($s = 0; $s < `size $SelectedFaceIndex`; $s++)
+		{
+
+			$DupFaceSelection[$s] = ($DupObject[0] + "." + $SelectedFaceIndex[$s]);
+
+        }
+
+		select $DupFaceSelection;
+		InvertSelection;
+		delete;
+		select $DupObject;
+
+}
+
+NinjaMesh_Extract;

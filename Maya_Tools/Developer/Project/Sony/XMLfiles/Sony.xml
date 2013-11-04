@@ -1,0 +1,81 @@
+<?xml version="1.0" ?>
+<Project name="Sony">
+	<Managers>
+		<Tech>
+			<user>khata</user>
+			<user>trungtran</user>
+			<user>quynguyen</user>
+			<user>khoavinh</user>
+		</Tech>
+		<ArtDirector>
+			<user>namnguyen</user>
+			<user>huongnguyen</user>
+			<user>daren</user>
+		</ArtDirector>
+		<Producer>
+			<user>nguyenthuy</user>
+			<user>tulong</user>
+			<user>kimchi</user>
+		</Producer>
+	</Managers>
+	<Directories>
+		<ServerPath>//glassegg.com/projects/Scenes/Sony_Vehicles_2012/art/</ServerPath>
+		<ServerPathtmp>D:/art/vehicles/</ServerPathtmp>
+		<LocalPath>M:/art/vehicles/</LocalPath>
+		<ProjectLocalPath>source/maya_wip/</ProjectLocalPath>
+		<DocumentsPath>//glassegg.com/projects/Documents_Feedbacks\</DocumentsPath>
+		<FeedbacksPath>//glassegg.com/projects/Documents_Feedbacks\</FeedbacksPath>
+		<ReferencesImagePath>//glassegg.com/projects\Documents_Feedbacks\</ReferencesImagePath>
+		<LibraryPath>M:\art\vehicles\GENERIC_TEXTURES\</LibraryPath>
+		<PluginsPath>testing</PluginsPath>
+	</Directories>
+	<Structures_Asset group = "False">
+		<folder name = "maya" filename = "_latest_wip" filetype = "mb"/>
+		<folder name = "source" >
+			<folder name = "maya_wip" filename = "_all_vlast" filetype = "mb">
+				<folder name = "Exterior_LOD0" type = "LOD">
+					<folder name = "model" type = "stage" filename = "_Exterior_LOD0_model_v00" filetype = "mb"/>
+					<folder name = "textures" type = "stage" filename = "_Exterior_LOD0_textures_v00" filetype = "mb"/>
+				</folder>
+				<folder name = "Interior_LOD0" type = "LOD">
+					<folder name = "model" type = "stage" filename = "_Interior_LOD0_model_v00" filetype = "mb"/>
+					<folder name = "textures" type = "stage" filename = "_Interior_LOD0_textures_v00" filetype = "mb"/>
+				</folder>
+				<folder name = "Tech_LOD0" type = "LOD">
+					<folder name = "model" type = "stage" filename = "_Tech_LOD0_model_v00" filetype = "mb"/>
+					<folder name = "textures" type = "stage" filename = "_Tech_LOD0_textures_v00" filetype = "mb"/>
+				</folder>
+				<folder name = "Wheel_LODs" type = "LOD" filename = "_Wheel_LODs_v00" filetype = "mb"/>
+				<folder name = "LOD1" type = "LOD" filename = "_LOD1_v00" filetype = "mb"/>
+				<folder name = "LODs" type = "LOD" filename = "_LODs_v00" filetype = "mb"/>
+			</folder>
+			<folder name = "textures_wip" filetype = "psd"/>
+		</folder>
+		<folder name = "textures" filetype = "tif"/>
+		<folder name = "export" type = "max, fbx"/>
+	</Structures_Asset>
+	<ProjectData>
+		<Template file = "Sony_template_file.mb"/>
+		<TechInfo file = "Sony_TechInfo.ini"/>
+		<Module>
+			<module name = "NamingConvention"/>
+			<module name = "CleanerTools"/>
+			<module name = "Pivots"/>
+			<module name = "LODTools"/>
+			<module name = "CrydevTools"/>
+			<module name = "UVTools"/>
+			<module name = "PolyTools"/>
+			<module name = "ShaderTools"/>
+		</Module>
+		<CheckList>
+			<check name = "PolyCount"/>
+			<check name = "FreezeTransforms"/>
+			<check name = "DeleteHistory"/>
+			<check name = "NGon"/>
+			<check name = "Lamina"/>
+			<check name = "UVFlipped"/>
+			<check name = "UVSetCount"/>
+			<uncheck name = "ShortestEdges"/>
+		</CheckList>
+	</ProjectData>
+</Project>

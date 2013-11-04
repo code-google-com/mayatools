@@ -1,0 +1,1198 @@
+
+// requires boltShatter boltDenter boltHierarchy boltCarData boltGlobalProcs
+
+source boltHierarchy; 
+source boltCarData;
+source boltGlobalProcs;
+
+
+global proc boltVehicleDisplayManager()
+//vehicle layer manager 
+{
+	int $oldFlags[] = {}; 
+	string $oldSwaps[] = {}; //stores any existing window settings
+	
+	if (`window -exists boltVehicleDisplayManagerWindow`)
+	{ 
+		$oldFlags = `boltGetCurrentFlags`;
+		$oldSwaps = `boltGetSwapSettings`;
+
+		deleteUI boltVehicleDisplayManagerWindow;
+	}
+	//delete the window if it already exists
+	
+	window -height 307 -width 208 -title "Display Manager" -toolbox 1 boltVehicleDisplayManagerWindow;
+	//create window
+		//scrollLayout;
+			frameLayout -mw 0 -mh 0 -bv 0 -lv 0;
+				columnLayout;
+					
+					frameLayout  -collapsable 1 -label "Layer Visibility:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+							
+							rowLayout -numberOfColumns 2;
+								checkBox -width 100 -value 0 -label "Locators" 		 	-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDLocs;
+								checkBox -width 100 -value 0 -label "Shadow Vols"			-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDShad;
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								checkBox -width 100 -value 0 -label "Cameras" 				-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDCams;
+								checkBox -width 100 -value 0 -label "Lights" 				-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDLigh;
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								checkBox -width 100 -value 0 -label "Collision" 		-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDColl;
+								checkBox -width 100 -value 0 -label "Crumple Boxes"	-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDCrum;
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								checkBox -width 100 -value 0 -label "Animation Locs" 	-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDAnim;
+								checkBox -width 100 -value 0 -label "Havok Nodes" 			-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDHvok;
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								checkBox -width 100 -value 0 -label "Evo Atributes" 		-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDEvoA;
+								text -label "";
+							setParent ..;
+							//checkBox -value 0 -label "Ragdoll Col" 	-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDRagd;
+							//checkBox -value 0 -label "Occluders"			-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDOccl;
+														
+							separator -style "in" -horizontal 1 -height 10 -width 200;
+							
+							rowLayout -numberOfColumns 2;
+								checkBox -width 100 -value 0 -label "LOD 0" 	-changeCommand "boltUpdateVehicleDisplay"    boltCheckBoxVDLod0;
+								checkBox -width 100 -value 0 -label "LOD 4"	-changeCommand "boltUpdateVehicleDisplay"    boltCheckBoxVDLod4;
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								checkBox -width 100 -value 0 -label "LOD 1"	-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDLod1;
+								checkBox -width 100 -value 0 -label "LOD 5"	-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDLod5;
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								checkBox -width 100 -value 0 -label "LOD 2" 	-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDLod2;
+								checkBox -width 100 -value 0 -label "LOD 6"	-changeCommand "boltUpdateVehicleDisplay"	 boltCheckBoxVDLod6;
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								checkBox -width 100 -value 0 -label "LOD 3"	-changeCommand "boltUpdateVehicleDisplay"	 boltCheckBoxVDLod3;
+								checkBox -width 100 -value 0 -label "Shadow Proxies" -changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDShPx;
+							setParent ..;
+							
+							separator -style "in" -horizontal 1 -height 10 -width 200;
+							
+							rowLayout -numberOfColumns 2;
+								checkBox -width 100 -value 0 -label "Body" 				-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDBody;	
+								checkBox -width 100 -value 0 -label "Technical"			-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDTech;
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								checkBox -width 100 -value 0 -label "Interior" 			-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDInte;
+								checkBox -width 100 -value 0 -label "Wheels" 				-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDWhee;
+							setParent ..;
+							
+							separator -style "in" -horizontal 1 -height 10 -width 200;
+							rowLayout -numberOfColumns 2;
+								checkBox -width 100 -value 0 -label "Undamaged" 			-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDUnda;
+								checkBox -width 100 -value 0 -label "Damaged" 				-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDDama;
+							setParent ..;
+							
+							//checkBox -value 0 -label "Dead"	 				-changeCommand "boltUpdateVehicleDisplay"	 boltCheckBoxVDDead;
+							//checkBox -value 0 -label "Undead"	 			-changeCommand "boltUpdateVehicleDisplay"	 boltCheckBoxVDUnde;
+							//checkBox -value 0 -label "Glows / Effects"		-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDGlow;
+							//checkBox -value 0 -label "All Swappable"		-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDSwap;	
+					
+							
+						setParent ..;
+					setParent ..;
+										
+					frameLayout  -collapsable 1 -label "Presets:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+							
+							rowLayout -numberOfColumns 3;
+								button -height 20 -width 49 -recomputeSize 0 -label "All On" 		-command "boltVehicleDisplayButton 1"				-ann "Turn all layers on";
+								button -height 20 -width 49 -recomputeSize 0 -label "All Off" 	-command "boltVehicleDisplayButton 0"				-ann "Turn all layers off";
+								button -height 20 -width 100 -recomputeSize 0 -label "All Geometry" 		-command "boltVehicleDisplayButton 8"				-ann "Turn all vehicle geometry layers on";
+							setParent ..;
+												
+							rowLayout -numberOfColumns 7;    
+								button -height 20 -width 49 -recomputeSize 0 -label "Lod 0" -command "boltVehicleDisplayButton 2"				-ann "Turn main car layers on - lod 0";
+								button -height 20 -width 23 -recomputeSize 0 -label "1" 	-command "boltVehicleDisplayButton 3"				-ann "Turn main car layers on - lod 1";
+								button -height 20 -width 23 -recomputeSize 0 -label "2" 	-command "boltVehicleDisplayButton 4"				-ann "Turn main car layers on - lod 2";
+								button -height 20 -width 23 -recomputeSize 0 -label "3" 	-command "boltVehicleDisplayButton 5"				-ann "Turn main car layers on - lod 3";
+								button -height 20 -width 23 -recomputeSize 0 -label "4" 	-command "boltVehicleDisplayButton 6"				-ann "Turn main car layers on - lod 4";
+								button -height 20 -width 23 -recomputeSize 0 -label "5" 	-command "boltVehicleDisplayButton 7"				-ann "Turn main car layers on - lod 5";
+								button -height 20 -width 23 -recomputeSize 0 -label "6" 	-command "boltVehicleDisplayButton 9"				-ann "Turn main car layers on - lod 6";
+							setParent ..;  
+													
+							separator -style "in" -horizontal 1 -height 10 -width 200;
+							
+							rowLayout -numberOfColumns 2 -cw2 100 100;
+								button -height 20 -width 100 -label "Spread Car" 		-command "boltVehicleDisplayButton 8; boltSpreadCar"	-ann "Spread out vehicle lods and swap parts";
+								button -height 20 -width 100 -label "Unspread Car" 	-command "boltUnspreadCar"								-ann "Restores positioning of vehicle lods and swap parts";
+							setParent ..;
+							
+						setParent ..;
+					setParent ..;
+					
+					frameLayout  -collapsable 1 -label "Polygons:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+							rowLayout -numberOfColumns 2;
+								button -height 20 -width 100 -recomputeSize 0 -label "Hide Polys" 			-command "hideSelectedFaces 1"		-ann "Hides all selected polygons";
+								button -height 20 -width 100 -recomputeSize 0 -label "Unhide Polys" 		-command "hideSelectedFaces 0"		-ann "Unhides all hidden polygons";
+							setParent ..;
+						setParent ..;
+					setParent ..;
+					frameLayout  -collapsable 1 -label "Maya Shortcuts:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+					
+							rowLayout -numberOfColumns 2 -cw2 100 100;
+								button -height 20 -width 100 -recomputeSize 0 -label "Hide Selected" 	-ann "Hide selected items" 		-command "hideKeepSelection `ls -sl`;";
+								button -height 20 -width 100 -recomputeSize 0 -label "Hide Unselected" 	-ann "Hide unselected items" 	-command "hideKeepSelection `listUnselected`";
+							setParent ..; 
+							rowLayout -numberOfColumns 1;
+								button -height 20 -width 202 -recomputeSize 0 -label "Unhide All" 		-ann "Show everything, respecting Display manager settings" -command "boltUnhideAll";
+			                setParent ..;
+							rowLayout -numberOfColumns 3;
+								text -width 100 -label "Backface Culling:";
+ 								button -height 20 -width 49 -recomputeSize 0 -label "All On" 	-ann "Turn on back face culling for all objects in scene" 		-command "boltSetAllBackFaceCulling 3";
+								button -height 20 -width 49 -recomputeSize 0 -label "All Off" 	-ann "Turn off back face culling for all objects in scene" 		-command "boltSetAllBackFaceCulling 0";
+							setParent ..;
+							
+							button -height 20 -width 100 -recomputeSize 0 -label "Double Sided Off" 	-ann "Turn off double side flag for all objects. Needed to display glass correctly in Maya" 		-command "boltTurnOffDoubleSided;";
+								
+							
+							
+						setParent ..;
+					setParent ..;
+					
+					/*
+					frameLayout -collapsable 1 -label "Swappable Parts:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+							
+							button -height 20 -width 100 -recomputeSize 0 -label "Refresh Swaps:" 	-command "boltVehicleDisplayManager"	-ann "Updates the display manager and swap shape lists";
+								
+							
+							string $swps[] = `boltGetSwappableBaseParts`;
+							for ($swp in $swps)
+							{
+								string $options[] = `boltGetSwappableOptionsForPart $swp`;
+								
+								rowLayout -numberOfColumns 3 -cw 1 15 -cw 2 15 -cw 3 200;
+									button -height 23 -width 15 -recomputeSize 0 -label "<"	-command ("boltSwpButtonUpdateMulti -1 " + $swp);
+									button -height 23 -width 15 -recomputeSize 0 -label ">"	-command ("boltSwpButtonUpdateMulti 1 " + $swp);
+									optionMenu -changeCommand ("boltUpdateVehicleDisplay") ("boltOptionMenuSWP" + $swp);
+ 										for ($option in $options)
+ 										{	
+ 											menuItem -label $option;
+ 										}
+									
+								setParent ..;
+							}
+							
+							checkBox -value 1 -label "Link Corresponding Swaps"	-ann "Causes all left/right/front/back version of the object to be swapped at once (when using the arrow buttons)" boltCheckBoxLinkSwaps;	
+							checkBox -value 0 -label "Link All Swaps" -ann "Causes all swap shapes in the scene to be swapped at once (when using the arrow buttons)"	boltCheckBoxLinkAllSwaps;	
+							
+							separator -style "in" -horizontal 1 -height 10 -width 150;
+							
+								button -height 20 -width 150 -recomputeSize 0 -label "Show Default Swaps" 	-command "boltSelectSWP00"	-ann "Switches back to display all default SWP00 parts";
+								button -height 20 -width 150 -recomputeSize 0 -label "Show Worst Case" 		-command "boltSelectHighestPolySwaps"	-ann "Shows the worst case polygon count, by selecting the highest polygon swaps. Now works for each selected lod seperately.";
+								button -height 20 -width 150 -recomputeSize 0 -label "Randomise Swaps" 		-command "boltSelectRandomSwaps"	-ann "Randomises the currently displayed swap parts";
+								
+							
+						setParent ..;
+					setParent ..;
+					*/
+				
+				setParent ..;
+			setParent ..;
+		//setParent ..;
+	setParent ..;
+
+	showWindow boltVehicleDisplayManagerWindow;
+	//display the window
+	      
+	window -e -height 525 -width 220 boltVehicleDisplayManagerWindow;    
+	      
+	if (size($oldFlags)>0)
+	{
+		boltSetCurrentFlags $oldFlags;
+		//boltSetSwapSettings $oldSwaps;
+	}
+	//preserves any exisiting settings if reloading/refreshing
+	else
+	{
+		boltVehicleDisplayButton 2;
+	}
+	//shows main car, lod0
+		
+}
+
+
+
+global proc boltTurnOffDoubleSided()
+{
+	string $meshes[] = `ls -long -type mesh`;
+	for ($mesh in $meshes)
+	{
+		 setAttr ($mesh + ".doubleSided") 0;
+	}
+}
+
+
+global proc boltSetAllBackFaceCulling(int $setting)
+//sets bfc for all meshes in scene
+// 0 for off, 3 for full
+{
+	string $meshes[] = `ls -long -type mesh`;
+	for ($mesh in $meshes)
+	{
+		 setAttr ($mesh + ".backfaceCulling") $setting;
+	}
+}
+
+global proc boltVehicleDisplayButton(int $flag)
+//code for preset buttons
+{
+	int $values[];
+	string $checkboxes[] = {"Locs","Shad","Cams","Ligh","Coll","Crum","ShPx","Lod0","Lod1","Lod2","Lod3","Lod4","Lod5","Lod6","Body","Tech","Inte","Whee","Anim","Hvok","Unda","Dama"};
+	if ($flag == 0) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0};  //all off
+	if ($flag == 1) $values = { 1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1};  //all on
+	if ($flag == 2) $values = { 0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     0,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 0
+	if ($flag == 3) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 1
+	if ($flag == 4) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 2
+	if ($flag == 5) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 3
+	if ($flag == 6) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 4
+	if ($flag == 7) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 5
+	if ($flag == 9) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 6
+	if ($flag == 8) $values = { 0,     0,     0,     0,     0,     0,     0,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     0,     0,     1,     0};  //all geometry
+	
+		
+  	for ($i=0; $i<size($checkboxes); $i++)
+  	{
+  		checkBox -e -value ($values[$i]) ("boltCheckBoxVD" + $checkboxes[$i]);
+	}	
+	
+	boltUpdateVehicleDisplay;	
+}
+
+global proc int[] boltGetCurrentFlags()
+//gets current display manager checkbox settings
+{
+	int $values[] = {};
+	string $checkboxes[] = {"Locs","Shad","Cams","Ligh","Coll","Crum","ShPx","Lod0","Lod1","Lod2","Lod3","Lod4","Lod5","Body","Tech","Inte","Whee","Anim","Hvok","Unda","Dama"};
+			
+  	for ($i=0; $i<size($checkboxes); $i++)
+  	{
+  		$values[$i] = `checkBox -q -value ("boltCheckBoxVD" + $checkboxes[$i])`;
+	}	
+	
+	return $values;
+}
+
+global proc boltSetCurrentFlags(int $values[])
+//sets current display manager checkbox settings
+{
+	string $checkboxes[] = {"Locs","Shad","Cams","Ligh","Coll","Crum","ShPx","Lod0","Lod1","Lod2","Lod3","Lod4","Lod5","Body","Tech","Inte","Whee","Anim","Hvok","Unda","Dama"};
+			
+  	for ($i=0; $i<size($checkboxes); $i++)
+  	{
+  		checkBox -e -value ($values[$i]) ("boltCheckBoxVD" + $checkboxes[$i]);
+	}
+	boltUpdateVehicleDisplay;
+}
+
+
+
+global proc boltUnhideAll()
+//unhides all, except viewport cams, and hidden car layers if vehicle display manager is open.
+{
+	showHidden -all;
+	hide top front side persp;
+	if (`window -exists boltVehicleDisplayManagerWindow`) boltUpdateVehicleDisplay;
+}
+	
+global proc string[] boltTransformsToShapes(string $transforms[])
+{
+	string $shapes[] = {};
+	for ($transform in $transforms)
+	{
+		if (objExists($transform))
+		{
+			string $newShapes[] = `listRelatives -fullPath -type "mesh" $transform`;
+			if ($newShapes[0]!="")
+			{
+				$shapes = `stringArrayCatenate $shapes {$newShapes[0]}`;
+			}
+		}	
+	}
+	return $shapes;
+}
+
+global proc string[] boltTransformsToShortShapes(string $transforms[])
+//converts a list of transforms into a list of shapes
+//this version returns the the shape name without it's |path|crap|
+{
+	string $shapes[] = {};
+	for ($transform in $transforms)
+	{
+		if (objExists($transform))
+		{
+			string $newShapes[] = `listRelatives -type "mesh" $transform`;
+			if ($newShapes[0]!="")
+			{
+				$shapes = `stringArrayCatenate $shapes {$newShapes[0]}`;
+			}
+		}	
+	}
+	return $shapes;
+}
+
+global proc string[] boltTransformsToShapesEtc(string $transforms[])
+//as well as shapes, also returns cameras, locators, lattices, lights, evo
+{
+	string $shapes[] = {};
+	for ($transform in $transforms)
+	{
+		if (objExists($transform))
+		{
+			string $newShapes[];
+			if (catchQuiet(`listRelatives -fullPath -type "evoamboccvollocator" $transform`) == 0)
+			{
+				$newShapes = `listRelatives -fullPath -type "evoamboccvollocator" -type "evoAttributeNode" -type "lattice" -type "locator" -type "camera" -type "mesh" -type "light" $transform`;
+			}
+			//this version is run is MS3 plugins found
+			else
+			{
+				$newShapes = `listRelatives -fullPath -type "lattice" -type "locator" -type "camera" -type "mesh" -type "light" $transform`;
+			}
+			//this verison prevents errors if ms3 plugins not present
+			
+			if ($newShapes[0]!="")
+			{
+				$shapes = `stringArrayCatenate $shapes $newShapes`;
+			}
+		}	
+	}
+	return $shapes;
+}
+
+
+
+global proc string[] boltShapesToTransforms(string $shapes[])
+{
+	string $transforms[] = {};
+	for ($shape in $shapes)
+	{
+		if (objExists($shape))
+		{
+			string $newTransforms[] = `listRelatives -fullPath -parent $shape`;
+			$transforms = `stringArrayCatenate $transforms {$newTransforms[0]}`;
+		}	
+	}
+	
+	$transforms = stringArrayRemoveDuplicates($transforms);
+	
+	return $transforms;
+}
+
+global proc string[] boltShapesToTransformsNoPath(string $shapes[])
+{
+	string $transforms[] = {};
+	for ($shape in $shapes)
+	{
+		if (objExists($shape))
+		{
+			string $newTransforms[] = `listRelatives -parent $shape`;
+			$transforms = `stringArrayCatenate $transforms {$newTransforms[0]}`;
+		}	
+	}
+	
+	$transforms = stringArrayRemoveDuplicates($transforms);
+	
+	return $transforms;
+}
+
+global proc string[] boltStripPath(string $nodes[])
+//strips any paths from a list of nodes - returns list without paths
+{
+	string $noPaths[] = {};
+	for ($node in $nodes)
+	{
+		string $noPath = `match "[^|]*$" $node`;
+		$noPaths[size($noPaths)] = $noPath;
+	}
+	return $noPaths;
+}
+
+
+
+
+
+global proc boltShowHide (string $checkBox, string $transforms[]) 
+//given a checkBox and list of transforms, shows/hides shape nodes of those transforms, depending on state of the checkbox
+{   
+	//print "\nShow/Hiding";
+	                                                            
+	$state = `checkBox -q -value $checkBox`; 
+	if ($state == 1) boltShowList(`boltTransformsToShapesEtc $transforms`);
+	if ($state == 0) boltHideList(`boltTransformsToShapesEtc $transforms`);
+	
+}   
+
+
+
+
+
+global proc boltShowHidePart(string $part, int $visibility)
+//hides or shows the given part
+//includes frig for directional light
+{
+	$shapes = `boltTransformsToShapesEtc {$part}`;
+	for ($shape in $shapes)
+	{
+		string $nodeType = `nodeType $shape`;
+		
+		//if ($nodeType == "evoAttributeNode")
+		//{
+		//	setAttr ($part + ".visibility") $visibility;
+		//}
+		//avoid setting visibility on evoAttribute node directly - became VERY slow for
+		//some reason after migration to new branch structure
+		//else
+		{		
+			if (`getAttr ($shape + ".visibility")` != $visibility)
+			{
+				setAttr ($shape + ".visibility") $visibility;
+			}
+			
+			if ($nodeType == "directionalLight")
+			{
+				setAttr ($part + ".visibility") $visibility;
+			}
+			//bodge to hide/show directional light transforms
+			
+			
+			
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+global proc boltHideList(string $hideList[])
+//hides the given list of shape nodes
+{
+	for ($shape in $hideList)
+	{
+		setAttr ($shape + ".visibility") 0;
+		
+		
+		if (`nodeType $shape` == "directionalLight")
+		{
+			string $newTransforms[] = `listRelatives -fullPath -parent $shape`;
+			hide $newTransforms[0];
+		}
+		//bodge to hide light axis
+		
+	}
+}
+
+global proc boltShowList(string $showList[])
+//shows the given list of shape nodes
+{
+	for ($shape in $showList)
+	{
+		setAttr ($shape + ".visibility") 1;
+	
+	
+	if (`nodeType $shape` == "directionalLight")
+		{
+			string $newTransforms[] = `listRelatives -fullPath -parent $shape`;
+			showHidden $newTransforms[0];
+		}
+	//bodge to show light axis
+	
+	}	
+}
+
+
+global proc string[] boltGetSwappableBaseParts()
+//returns a list of swapable base part names - eg "BUMPER_F"
+{
+	string $objs[] = `ls -type "mesh"`;
+	$objs = `boltShapesToTransformsNoPath $objs`;
+	string $swps[] = {};
+	
+	for ($obj in $objs)
+	{
+		if (`gmatch $obj "*_SWP01"`) 
+		{
+			$swps[size($swps)] = `substitute "_SWP01" $obj  ""`;
+		}
+	}
+	return $swps;
+}
+
+
+
+
+global proc boltSwpButtonUpdateMulti(int $direction, string $swp)
+{
+	if ((`checkBox -q -value boltCheckBoxLinkSwaps`)&&(`checkBox -q -value boltCheckBoxLinkAllSwaps`==0))
+	{
+		string $buffer[];
+		tokenize $swp "_" $buffer;
+		string $basePart = $buffer[0];
+		$basePart = `match "[^:]*$" $basePart`; //strip namespaces
+		
+		string $swaps[] = `boltGetSwappableBaseParts`;
+		
+		for ($swap in $swaps)
+		{
+			if (`gmatch $swap ("*" + $basePart + "*")`)
+			{
+				if (`optionMenu -exists ("boltOptionMenuSWP" + $swap)`)
+				{
+					boltSwpButtonUpdate $direction $swap;
+				}
+			}
+		} 
+	}
+	if (`checkBox -q -value boltCheckBoxLinkAllSwaps`)
+	{
+		string $swaps[] = `boltGetSwappableBaseParts`;
+		for ($swap in $swaps)
+		{
+			if (`optionMenu -exists ("boltOptionMenuSWP" + $swap)`)
+			{
+				boltSwpButtonUpdate $direction $swap;
+			}
+		} 
+	}
+		
+	if ((`checkBox -q -value boltCheckBoxLinkSwaps`==0)&&(`checkBox -q -value boltCheckBoxLinkAllSwaps`==0))
+	{
+		boltSwpButtonUpdate $direction $swp;
+	}
+	
+	boltUpdateVehicleDisplay;
+}
+
+
+
+global proc boltSwpButtonUpdate(int $direction, string $swp)
+//makes the < > buttons work for the swappable parts in the display manager.
+{
+	$size = `optionMenu -q -numberOfItems ("boltOptionMenuSWP" + $swp)`;
+	$selected = `optionMenu -q -sl ("boltOptionMenuSWP" + $swp)`;
+	
+	$selected = $selected + $direction;
+	if ($selected > $size) $selected = 1;
+	if ($selected < 1) $selected = $size;
+	
+	optionMenu -e -sl $selected ("boltOptionMenuSWP" + $swp);
+}
+
+
+global proc string[] boltWhatIsPart (string $part)
+//returns a list of flags to define the type of part this is
+//FLAGS: _DEF _LOC _SHAD _CAM _LIGHT _COL _RAGDOLL _DAMZONE _LOD# _SWP## _DEAD _UNDEAD 
+//       _BODY _TECH _INTERIOR _SUSP _UNKNOWN _WHEELS _GLOW _OCC _SHADOW _HAVOK _ANIM _DAM
+{
+	if (objExists($part)==0)
+	{
+		warning ("boltWhatIsPart could not find " + $part + " in scene!");
+		return {};
+	}
+	//catch error if not a valid part
+	
+	string $flags[] = {};
+	string $basePart = `boltGetBasePartName $part`;
+	
+	
+	//print ("\nprocessing part " + $part);
+	
+	if (`nodeType $part` == "aimConstraint") 
+	{
+		$flags[size($flags)] = "_AIM";
+		return $flags;
+	}
+	
+	if (`nodeType $part` == "evoAttributeNode") 
+	{
+		$flags[size($flags)] = "_EVOATT";
+		return $flags;
+	}
+	
+	//check for havok nodes
+	string $havokNodeTypes[] = boltGetHavokNodeTypes();  
+	for ($havokNodeType in $havokNodeTypes)
+	{
+		if (`nodeType $part` == $havokNodeType)
+		{
+			$flags[size($flags)] = "_HAVOK";
+			return $flags;
+		}
+	}
+	
+	//print ("\nPart = " + $part);
+		
+	string $shapes[] = `boltTransformsToShapesEtc {$part}`;
+	
+	string $nodeType = "";	
+	if ($shapes[0] != "") $nodeType = `nodeType $shapes[0]`;
+	//gets the type of node
+	
+	if ($nodeType == "lattice") 
+	{
+		$flags[size($flags)] = "_DEF";
+		return $flags;
+	}	
+	if ($nodeType == "locator") 
+	{
+		$flags[size($flags)] = "_LOC";
+		return $flags;
+	}
+	if ($nodeType == "evoamboccvollocator") 
+	{
+		$flags[size($flags)] = "_SHAD";
+		return $flags;
+	}
+	if ($nodeType == "camera") 
+	{
+		$flags[size($flags)] = "_CAM";
+		return $flags;
+	}
+	if (`gmatch $nodeType "*Light"`) 
+	{
+		$flags[size($flags)] = "_LIGHT";
+		return $flags;
+	}
+	if ((`gmatch $part "SAFETYZONE_*"`)||(`gmatch $part "CRUMPLEZONE_*"`)) 
+	{
+		$flags[size($flags)] = "_DAMZONE";
+		return $flags;
+	}
+	if (`gmatch $part "RAGDOLL_*_COL"`) 
+	{
+		$flags[size($flags)] = "_RAGDOLL";
+		return $flags;
+	}
+	else if (`gmatch $part "*_COL"`)
+	{
+		$flags[size($flags)] = "_COL";
+		return $flags;
+	}
+	else if (`gmatch $part "*_OCC"`)
+	{
+		$flags[size($flags)] = "_OCC";
+		return $flags;
+	}
+	//all these object types only return a single flag. Avoids them picking up any false lod flags etc.
+	
+	string $partType = `boltGetPartType $basePart`;
+	
+	//check for anim locators	
+	if ($partType == "anim_locator") 
+	{
+		$flags[size($flags)] = "_ANIM";
+		return $flags;
+	}
+	
+		
+	if (`gmatch $part "*_LOD1"`) $flags[size($flags)] = "_LOD1";
+	if (`gmatch $part "*_LOD2"`) $flags[size($flags)] = "_LOD2";
+	if (`gmatch $part "*_LOD3"`) $flags[size($flags)] = "_LOD3";
+	if (`gmatch $part "*_LOD4"`) $flags[size($flags)] = "_LOD4";
+	if (`gmatch $part "*_LOD5"`) $flags[size($flags)] = "_LOD5";
+	if (`gmatch $part "*_LOD6"`) $flags[size($flags)] = "_LOD6";
+	if (`gmatch $part "*_SHADOW"`) $flags[size($flags)] = "_SHADOW";
+	
+	if ((`sGmatchItem $flags "_LOD*"` == -1) && (`sGmatchItem $flags "_SHADOW"` == -1)) $flags[size($flags)] = "_LOD0";
+	//if no lod or shadow number recorded, assume lod0
+		
+	if (`gmatch $part "*_DEAD*"`)
+	{ 		
+		$flags[size($flags)] = "_DEAD";
+	}
+	else if (objExists($basePart+"_DEAD")) 	
+	{
+		$flags[size($flags)] = "_UNDEAD";
+	}
+	//work out deads and undeads
+	
+	if ((`gmatch $part "*_DAM"`) || (`gmatch $part "*_DAM_*"`)) //prevent _DAMPER being recognised as damage
+	{ 		
+		$flags[size($flags)] = "_DAM";
+	}
+	
+			
+	if (objExists($basePart+"_SWP01"))
+	{
+		string $swp = `match "_SWP.." $part`;
+		if (size($swp)==0) $swp = "_SWP00";
+		$flags[size($flags)] = $swp;
+	}
+	//work out swapable parts, including  swap 00.
+	 
+	
+		
+	if ($partType == "bodywork") 		$flags[size($flags)] = "_BODY";
+	if ($partType == "chassis_susp_b") 	$flags[size($flags)] = "_SUSP";
+	if ($partType == "chassis_susp_f") 	$flags[size($flags)] = "_SUSP";
+	if ($partType == "mechanical") 		$flags[size($flags)] = "_TECH";
+	if ($partType == "chassis_tech") 	$flags[size($flags)] = "_TECH";
+	if ($partType == "wheels") 			$flags[size($flags)] = "_WHEELS";
+	if ($partType == "interior") 		$flags[size($flags)] = "_INTERIOR"; 
+	if ($partType == "glow") 			$flags[size($flags)] = "_GLOW";   
+	if ($partType == "unknown") 		$flags[size($flags)] = "_UNKNOWN";
+	
+		
+	return $flags;
+}
+
+
+
+global proc string boltGetBasePartName (string $part)
+//returns part name with all dead, lod and swp extentions removed
+{
+	$part = `substitute "_LOD."  $part ""`;
+	$part = `substitute "_DEAD"  $part ""`; 
+	$part = `substitute "_SWP.." $part ""`; 
+	$part = `substitute "_SHADOW" $part ""`;
+	
+	return $part;
+}
+
+global proc string boltGetBasePartNameDead (string $part)
+//returns part name with all lod and swp extentions removed
+//keeps dead extentions
+{
+	$part = `substitute "_LOD."  $part ""`;
+	$part = `substitute "_SWP.." $part ""`; 
+	
+	return $part;
+}
+
+
+global proc boltUpdateVehicleDisplay()
+//sets visibility of each object in turn, based on display manager settings,
+//and object type reported by boltWhatIsPart
+{
+	string $objs[] = `ls -transforms`;
+	for ($obj in $objs) 
+	{
+		boltShowHidePart $obj `boltGetPartVisibility $obj`;
+	}
+	
+	//deal with havok nodes
+	string $havokNodeTypes[] = {"hkNodeRigidBody", "hkNodeShape", "hkNodeHingeConstraint", "hkNodeRagDollConstraint"}; //, "hkdBody", "hkdFlexibleJointController", "hkdRandomSplitFracture", "hkdShape" };  
+	for ($havokNodeType in $havokNodeTypes)
+	{
+		$objs = {};
+		catchQuiet($objs = `ls -type $havokNodeType`);
+		for ($obj in $objs) 
+		{
+			setAttr ($obj + ".visibility") `boltGetPartVisibility $obj`;
+		}
+	}
+	
+	//deal with evoAttributeNode
+	$objs = {};
+	catchQuiet($objs = `ls -type "evoAttributeNode"`);
+	for ($obj in $objs) 
+	{
+		setAttr ($obj + ".visibility") `boltGetPartVisibility $obj`;
+	}
+	
+	
+	
+	//print "\nDONE DISPLAY UPDATE!";
+}
+		
+		
+global proc int boltGetPartVisibility(string $obj)
+//returns 0 or 1 depending whether the part should be visible.
+//based on part type and display manager checkboxes.
+{
+	string $partType[] = `boltWhatIsPart $obj`;
+	//FLAGS: _DEF _LOC _SHAD _CAM _LIGHT _COL _RAGDOLL _DAMZONE _LOD# _SWP## _DEAD _UNDEAD       
+	//       _BODY _TECH _INTERIOR _SUSP _UNKNOWN _WHEELS _GLOW _HAVOK _ANIM _EVOATT                          
+	
+	if (`sFindItem $partType "_LOC"` 	 != -1) return `checkBox -q -v  boltCheckBoxVDLocs`;   
+	if (`sFindItem $partType "_SHAD"` 	 != -1) return `checkBox -q -v  boltCheckBoxVDShad`; 
+	if (`sFindItem $partType "_CAM"` 	 != -1) return `checkBox -q -v  boltCheckBoxVDCams`;
+	if (`sFindItem $partType "_LIGHT"` 	 != -1) return `checkBox -q -v  boltCheckBoxVDLigh`;
+	if (`sFindItem $partType "_COL"` 	 != -1) return `checkBox -q -v  boltCheckBoxVDColl`;
+	if (`sFindItem $partType "_DAMZONE"` != -1) return `checkBox -q -v  boltCheckBoxVDCrum`;          
+	//if (`sFindItem $partType "_RAGDOLL"` != -1) return `checkBox -q -v  boltCheckBoxVDRagd`;          
+	//if (`sFindItem $partType "_OCC"` 	!= -1) return `checkBox -q -v  boltCheckBoxVDOccl`;          
+	if (`sFindItem $partType "_HAVOK"` 	!= -1) return `checkBox -q -v  boltCheckBoxVDHvok`;
+	if (`sFindItem $partType "_ANIM"` 	!= -1) return `checkBox -q -v  boltCheckBoxVDAnim`;
+	if (`sFindItem $partType "_EVOATT"` != -1) return `checkBox -q -v  boltCheckBoxVDEvoA`;
+	
+	//display/hide all above misc stuff
+		
+	if ((`checkBox -q -v  boltCheckBoxVDLod0` == 0) && (`sFindItem $partType "_LOD0"` 		!= -1)) return 0;
+	if ((`checkBox -q -v  boltCheckBoxVDLod1` == 0) && (`sFindItem $partType "_LOD1"` 		!= -1)) return 0;
+	if ((`checkBox -q -v  boltCheckBoxVDLod2` == 0) && (`sFindItem $partType "_LOD2"` 		!= -1)) return 0;
+	if ((`checkBox -q -v  boltCheckBoxVDLod3` == 0) && (`sFindItem $partType "_LOD3"` 		!= -1)) return 0;
+	if ((`checkBox -q -v  boltCheckBoxVDLod4` == 0) && (`sFindItem $partType "_LOD4"` 		!= -1)) return 0;	
+	if ((`checkBox -q -v  boltCheckBoxVDLod5` == 0) && (`sFindItem $partType "_LOD5"` 		!= -1)) return 0;
+	if ((`checkBox -q -v  boltCheckBoxVDLod6` == 0) && (`sFindItem $partType "_LOD6"` 		!= -1)) return 0;
+	if ((`checkBox -q -v  boltCheckBoxVDShPx` == 0) && (`sFindItem $partType "_SHADOW"`     != -1)) return 0;  
+	
+	if ((`checkBox -q -v  boltCheckBoxVDDama` == 0) && (`sFindItem $partType "_DAM"`    	!= -1)) return 0;
+	if ((`checkBox -q -v  boltCheckBoxVDUnda` == 0) && (`sFindItem $partType "_DAM"`    	== -1)) return 0;
+	
+	if ((`checkBox -q -v  boltCheckBoxVDBody` == 0) && (`sFindItem $partType "_BODY"` 		!= -1)) return 0;
+    if ((`checkBox -q -v  boltCheckBoxVDTech` == 0) && (`sFindItem $partType "_TECH"` 		!= -1)) return 0;
+    if ((`checkBox -q -v  boltCheckBoxVDTech` == 0) && (`sFindItem $partType "_SUSP"` 		!= -1)) return 0;
+    if ((`checkBox -q -v  boltCheckBoxVDInte` == 0) && (`sFindItem $partType "_INTERIOR"`	!= -1)) return 0;
+    if ((`checkBox -q -v  boltCheckBoxVDWhee` == 0) && (`sFindItem $partType "_WHEELS"` 	!= -1)) return 0;
+    //if ((`checkBox -q -v  boltCheckBoxVDGlow` == 0) && (`sFindItem $partType "_GLOW"` 		!= -1)) return 0;
+    //if ((`checkBox -q -v  boltCheckBoxVDUnde` == 0) && (`sFindItem $partType "_UNDEAD"` 	!= -1)) return 0;
+    //if ((`checkBox -q -v  boltCheckBoxVDDead` == 0) && (`sFindItem $partType "_DEAD"` 		!= -1)) return 0;
+    //hide if this is an invisible body parts
+    
+    if (`sGmatchItem $partType "_SWP*"` == -1) return 1;
+    //quit with a visible part if this is not a swap part
+    
+    if (`checkBox -q -v  boltCheckBoxVDSwap` == 1) return 1;
+    //quit with a visible part if all swaps are visible this is not a swap part
+    
+    string $basePart = `boltGetBasePartName $obj`;
+    string $swap = `boltGetSelectedSwap $basePart`;
+    if (`sFindItem $partType $swap`	== -1) return 0;
+    else return 1;
+    //works out whether the swap part is the currently visible option
+    
+} 
+     
+global proc string boltGetSelectedSwap(string $basePart)     
+//given a base part, returns the selected swap from the display manager gui
+{
+	if (`optionMenu -exists ("boltOptionMenuSWP" + $basePart)`)
+	{
+		string $selectedSwap = `optionMenu -q -value ("boltOptionMenuSWP" + $basePart)`;
+		
+		string $swp = `match "_SWP.." $selectedSwap`;
+		if (size($swp)==0) $swp = "_SWP00";
+		
+		return $swp;
+	}	
+	return "";     
+}
+
+global proc boltSelectSWP00()
+//selects all the zero swaps in the display manager gui
+{
+	string $baseParts[] = `boltGetSwappableBaseParts`;
+	
+	for ($basePart in $baseParts)
+	{
+		if (`optionMenu -exists ("boltOptionMenuSWP" + $basePart)`)
+		{
+			optionMenu -e -sl 1 ("boltOptionMenuSWP" + $basePart);
+		}
+	}
+	boltUpdateVehicleDisplay;
+}
+
+global proc boltSelectHighestPolySwaps()
+//selects the highest poly swaps in the display manager gui
+{
+	string $baseParts[] = `boltGetSwappableBaseParts`;
+	
+	string $lod = `boltGetHighestDisplayedLod`;
+	
+	for ($basePart in $baseParts)
+	{
+		string $partToCheck = $basePart;	
+		if (`objExists ($basePart + $lod)`) $partToCheck = ($basePart + $lod);
+		
+		if (`optionMenu -exists ("boltOptionMenuSWP" + $basePart)`)
+		{
+			string $highestPoly = `boltGetHighestPolySwap $partToCheck`;
+			
+			$highestPoly = `substitute "_LOD." $highestPoly ""`; //strip any lod suffix
+			
+			optionMenu -e -v $highestPoly ("boltOptionMenuSWP" + $basePart);
+		}
+	}
+	boltUpdateVehicleDisplay;
+}
+
+global proc boltSelectRandomSwaps()
+//selects random swaps in the display manager gui
+{
+	string $baseParts[] = `boltGetSwappableBaseParts`;
+	
+	for ($basePart in $baseParts)
+	{                        
+		string $swapsForPart[] = `boltGetSwappableOptionsForPart $basePart`;	
+		int $partNo = `rand (size($swapsForPart))`;
+		//decide on the random part to use
+		
+		if (`checkBox -q -value boltCheckBoxLinkSwaps`)
+		{
+			string $buffer[];
+			tokenize $basePart "_" $buffer;
+			string $basePartName = $buffer[0];
+			//get the base part name before any underscores
+    		
+			string $swaps[] = `boltGetSwappableBaseParts`;
+			//get list of all swapable parts in scene to check through
+			
+			for ($swap in $swaps)
+			{
+				if (`gmatch $swap ($basePartName + "*")`)
+				{
+					if (`optionMenu -exists ("boltOptionMenuSWP" + $swap)`)
+					{
+						$swapsForPart = `boltGetSwappableOptionsForPart $swap`;
+						optionMenu -e -v $swapsForPart[$partNo] ("boltOptionMenuSWP" + $swap);
+					}
+				}
+			} 
+		}
+		else
+		{
+			if (`optionMenu -exists ("boltOptionMenuSWP" + $basePart)`)
+			{
+				optionMenu -e -v $swapsForPart[$partNo] ("boltOptionMenuSWP" + $basePart);
+			}
+		}
+	}
+	boltUpdateVehicleDisplay;
+}
+
+
+global proc string boltGetHighestDisplayedLod()
+//returns the highest lod ticked in the display manager, or empty string for lod0
+{
+	if (`checkBox -q -v  boltCheckBoxVDLod0` == 1) return "";
+	if (`checkBox -q -v  boltCheckBoxVDLod1` == 1) return "_LOD1";
+	if (`checkBox -q -v  boltCheckBoxVDLod2` == 1) return "_LOD2";
+	if (`checkBox -q -v  boltCheckBoxVDLod3` == 1) return "_LOD3";
+	if (`checkBox -q -v  boltCheckBoxVDLod4` == 1) return "_LOD4";
+	if (`checkBox -q -v  boltCheckBoxVDLod5` == 1) return "_LOD5";
+	return "";
+}
+
+
+
+
+
+global proc string[] boltGetSwapSettings()
+//returns the selected swap for each swap option menu
+{
+	string $baseParts[] = `boltGetSwappableBaseParts`;
+	string $swapSettings[] = {};
+	
+	for ($basePart in $baseParts)
+	{
+		if (`optionMenu -exists ("boltOptionMenuSWP" + $basePart)`)
+		{
+			$swapSettings[size($swapSettings)] = `optionMenu -q -v ("boltOptionMenuSWP" + $basePart)`;
+		}
+	}
+	return $swapSettings;
+}
+
+global proc boltSetSwapSettings(string $swapSettings[])
+//sets the swap option menus
+{
+	string $baseParts[] = `boltGetSwappableBaseParts`;
+			
+	for ($basePart in $baseParts)
+	{
+		string $optionMenu = ("boltOptionMenuSWP" + $basePart);
+		
+		if (`optionMenu -exists $optionMenu`)
+		{
+			int $swapIndex = `sGmatchItem $swapSettings ($basePart + "*")`;
+			
+			if ($swapIndex != -1)
+			{
+				string $partToSwapTo = $swapSettings[$swapIndex];
+			
+				string $availableSwaps[] = `boltListOptionMenuItems $optionMenu`;
+				if (`sFindItem $availableSwaps $partToSwapTo` != -1)
+				{
+			 		optionMenu -e -v $partToSwapTo $optionMenu;
+				}
+			}
+		}
+	}
+	boltUpdateVehicleDisplay;
+}
+
+
+
+global proc string[] boltListOptionMenuItems(string $optionMenu)
+//given an option menu, returns a list of menu item labels in it
+{
+	string $menuItems[] = {};
+	string $menuItemLabels[] = {};
+	
+	if (`optionMenu -exists $optionMenu`)
+	{
+		$menuItems = `optionMenu -q -itemListLong $optionMenu`;
+	
+		for ($menuItem in $menuItems)
+		{
+			$menuItemLabels[size($menuItemLabels)] = `menuItem -q -label $menuItem`;
+		}		
+	}
+	return $menuItemLabels;
+}
+
+
+global proc boltSpreadCar()
+//Spreads out car in the viewport so that all lods, deads and swaps can be viewed at once
+//stores info to unspread in a script node, so info is not lost if you save/quit maya
+{
+	boltUnspreadCar;
+	//prevents loss of original positions if you try to spread the car twice
+		
+	string $objectList[] = boltShapesToTransformsNoPath(`ls -type "mesh"`);
+		
+	string $spreadCarScript = "";
+		 
+	float $xOffset = 2; 
+	float $yOffset = 1.5; 
+	float $zOffset = 5;
+	
+	if (`objExists "BODY_COL"`)
+	{
+		float $bb[] = `polyEvaluate -boundingBox "BODY_COL"`;
+		
+		$xOffset = $bb[1]-$bb[0];
+		$yOffset = $bb[3]-$bb[2];
+		$zOffset = $bb[5]-$bb[4];
+	}
+	//get rough length and width of car
+	
+	boltRemoveHierarchy;
+	
+	for ($obj in $objectList)
+	{
+		float $origPos[] = `xform -q -t -ws $obj`;
+		
+		int $swp = `boltGetSwpNumber $obj`;
+		int $lod = `boltGetLodNumber $obj`;
+		int $dead = 0;		
+		if (`gmatch $obj "*_DEAD*"`) $dead = 1;
+		if (`gmatch $obj "BULB_*"`)  $dead = 2;
+		if (`gmatch $obj "*_SHADOW"`) $lod = -1;
+		
+		string $newLine = "";
+		
+		if ((`referenceQuery -isNodeReferenced $obj` == 1)&&($lod!=0))
+		//referenced wheel lods
+		{
+			move -r ($xOffset*$lod*-2) ($yOffset*$dead*1) 0 $obj;
+			$newLine = ( "if (objExists(\""+$obj+"\")) move -a -ws " + $origPos[0] + " " + $origPos[1] + " " + ($origPos[2]+($zOffset*$swp*2)) + " " + $obj + ";\n" );
+			//hack to make the positioning work for referenced wheels
+		}
+		else
+		{	
+			move -r ($xOffset*$lod*-2) ($yOffset*$dead*1) ($zOffset*$swp*-2) $obj;
+			$newLine = ( "if (objExists(\""+$obj+"\")) move -a -ws " + $origPos[0] + " " + $origPos[1] + " " + $origPos[2] + " " + $obj + ";\n" );
+		}
+		
+				
+		$spreadCarScript = $spreadCarScript + $newLine;
+		//write out script line to restore positions
+	}
+	
+	boltRestoreHierarchy;
+			
+	if (objExists("spreadCarScriptNode")) delete "spreadCarScriptNode";
+	scriptNode -scriptType 0 -as $spreadCarScript -name "spreadCarScriptNode";
+	//create script node
+}
+
+global proc boltUnspreadCar()
+{
+	if (objExists("spreadCarScriptNode"))
+	{	
+		boltRemoveHierarchy;
+		scriptNode -ea "spreadCarScriptNode";
+		delete "spreadCarScriptNode";
+		boltRestoreHierarchy;
+	}
+	//run repositioning script node if present
+}
+
+global proc int boltGetLodNumber(string $part)
+//returns the lod number of a given part name
+{
+	string $lod = `match "_LOD." $part`;
+	string $no  = `match "[0-9]+" $lod`;
+	
+	if (size($no))
+	{
+		int $lodNo = $no;
+		return $lodNo;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+global proc int boltGetSwpNumber(string $part)
+//returns the swap number of a given part name
+{
+	string $swp = `match "_SWP.." $part`;
+	string $no  = `match "[0-9]+" $swp`;
+	
+	if (size($no))
+	{
+		int $swpNo = $no;
+		return $swpNo;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+
+
+
+global proc int boltGetNodeCount(string $lod)
+//returns the node count for the specifed lod - (in format "_LOD1" etc)
+{
+	string $allObjs[] = boltShapesToTransformsNoPath(`ls -type "mesh"`);
+	string $objs[] = {};
+		
+	//filter all swap parts out of the list - ensures these are only counted once when the worst case is figured out	
+	for ($obj in $allObjs)
+	{
+		if (`gmatch $obj "*_SWP*"` == 0)
+		{
+			$objs[size($objs)] = $obj;
+		}
+	}
+	
+	int $nodeCount = 0;
+	
+	for ($obj in $objs)
+	{
+		string $partType[] = `boltWhatIsPart $obj`;
+		
+		//check if part is in the lod we are counting, ignore deads and glows
+		if ((`sFindItem $partType $lod` != -1) &&
+			(`sFindItem $partType "_DEAD"` == -1) &&
+			(`sFindItem $partType "_GLOW"` == -1))
+		{	
+			$nodeCount ++;
+    		//print ("\nCounted: " + $obj);
+    	}
+    }
+    
+    return $nodeCount;
+}
+

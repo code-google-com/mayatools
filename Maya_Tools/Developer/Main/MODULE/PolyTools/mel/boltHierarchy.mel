@@ -1,0 +1,1210 @@
+//contains all vehicle naming and hierarchy tools
+source boltCarData;
+source boltGlobalProcs;
+source boltSuperCarValidator;
+
+global proc boltHierarchy.GUI()
+//vehicle naming and hierarchy tools
+{
+
+	global int $boltCarArrayLength;	
+	string $windowName = "boltHierarchyWindow";
+	
+	if (`window -exists $windowName`)
+	{ 
+		deleteUI $windowName;
+	}
+	//delete the window if it already exists
+	
+	window -height 307 -width 208 -title "Part Names & Hierarchy" -toolbox 1 $windowName;
+	//create window
+		//scrollLayout;
+			frameLayout -mw 0 -mh 0 -bv 0 -lv 0;
+				columnLayout;
+					
+					frameLayout  -collapsable 1 -label "Edit Names:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+							
+							separator -style "none" -h 5;
+							rowLayout -numberOfColumns 2 -cw2 50 150;
+								text -l "Rename:";
+								textField -height 25 -width 150 -text "" -changeCommand "boltUpdateObjectName \"boltFieldRename\"" -ann "Rename selected object"	boltFieldRename;
+							setParent ..;
+							separator -style "none" -h 5;
+							
+							rowLayout -numberOfColumns 2 -cw2 30 170;
+								text -l "Ext:";
+								optionMenu -width 170 -changeCommand "boltOptionMenuCarRename boltOptionMenuRenameCarParts1" -ann "Select a new part name from the list. Ghosts parts already used in the scene. Also renames all related lod and damage parts" boltOptionMenuRenameCarParts1;
+									menuItem -label " ";
+									int $i;
+									for ($i = 0; $i < $boltCarArrayLength; $i++)
+									{
+										string $type = `boltGetArray "boltCarArray" $i 1`;
+										if ( ($type == "bodywork") || ($type == "wheels") )
+										{
+											string $partName = `boltGetArray "boltCarArray" $i 0`;
+											menuItem -label $partName ("boltMenuItem" + $partName);
+										}
+									}
+							setParent ..;
+							
+							rowLayout -numberOfColumns 2 -cw2 30 170;
+								text -l "Tech:";
+								optionMenu -width 170 -changeCommand "boltOptionMenuCarRename boltOptionMenuRenameCarParts2" -ann "Select a new part name from the list. Ghosts parts already used in the scene. Also renames all related lod and damage parts" boltOptionMenuRenameCarParts2;
+									menuItem -label " ";
+									int $i;
+									for ($i = 0; $i < $boltCarArrayLength; $i++)
+									{
+										string $type = `boltGetArray "boltCarArray" $i 1`;
+										if ( ($type == "mechanical") || ($type == "chassis_susp_b") || ($type == "chassis_susp_f") )
+										{
+											string $partName = `boltGetArray "boltCarArray" $i 0`;
+											menuItem -label $partName ("boltMenuItem" + $partName);
+										}
+									}
+							setParent ..;
+							
+							rowLayout -numberOfColumns 2 -cw2 30 170;
+								text -l "Int:";
+								optionMenu -width 170 -changeCommand "boltOptionMenuCarRename boltOptionMenuRenameCarParts3" -ann "Select a new part name from the list. Ghosts parts already used in the scene. Also renames all related lod and damage parts" boltOptionMenuRenameCarParts3;
+									menuItem -label " ";
+									int $i;
+									for ($i = 0; $i < $boltCarArrayLength; $i++)
+									{
+										if (`boltGetArray "boltCarArray" $i 1` == "interior")
+										{
+											string $partName = `boltGetArray "boltCarArray" $i 0`;
+											menuItem -label $partName ("boltMenuItem" + $partName);
+										}
+									}
+							setParent ..;
+							
+							rowLayout -numberOfColumns 2 -cw2 30 170;
+								text -l "Misc:";	
+								optionMenu -width 170 -changeCommand "boltOptionMenuCarRename boltOptionMenuRenameCarParts4" -ann "Select a new part name from the list. Ghosts parts already used in the scene. Also renames all related lod and damage parts" boltOptionMenuRenameCarParts4;
+									menuItem -label " ";
+									int $i;
+									for ($i = 0; $i < $boltCarArrayLength; $i++)
+									{
+										string $type = `boltGetArray "boltCarArray" $i 1`;
+										if ( ($type == "collision") || ($type == "anim_locator") )
+										{
+											string $partName = `boltGetArray "boltCarArray" $i 0`;
+											menuItem -label $partName ("boltMenuItem" + $partName);
+										}
+									}
+							setParent ..;
+
+							separator -style "none" -h 5;
+							
+							rowLayout -numberOfColumns 2;
+								button -height 20 -width 100 -recomputeSize 0 -label "Comet Rename" -ann "Offers find/replace, suffix, prefix, and numbering of object names" 	-command "cometRename";
+								button -height 20 -width 100  -recomputeSize 0 -label "Colour Code" -ann "Colour codes the object wireframes based on part names" 	-command "boltSetupWireColours";
+							setParent ..;
+							
+	
+						setParent ..;
+					setParent ..;
+					
+					frameLayout  -collapsable 1 -label "Edit Hierarchy:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+							rowLayout -numberOfColumns 2;
+								button -height 20 -width 100 -recomputeSize 0 -label "Remove" -ann "Removes hierarchy and stores it in a script node" 	-command "boltRemoveHierarchy";
+								button -height 20 -width 100 -recomputeSize 0 -label "Restore" -ann "Restores hierarchy from the script node" 					-command "boltRestoreHierarchy";
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								button -height 20 -width 100  -recomputeSize 0 -label "Parent" -command "Parent" 	-ann "Parents all selected objects to last selected object.";
+								button -height 20 -width 100  -recomputeSize 0 -label "Unparent" -command "boltUnparent" 	-ann "Unparents all selected objects - bodged, but should work better than the standard Maya version.";
+							setParent ..;
+							
+							rowLayout -numberOfColumns 2;
+								button -height 20 -width 100 -recomputeSize 0 -label "Build Hierarchy" -ann "Adds selected objects to a basic vehicle hierarchy - may need altertions depending on vehicle type" 	-command "boltSetupHierarchy";
+								button -height 20 -width 100 -recomputeSize 0 -label "Tidy nPower CAD" -ann "Tidies up the naming and hierarchy of nPower CAD data, removes all nPower nodes." 	-command "boltTidyNpower";
+							setParent ..;
+						setParent ..;
+					setParent ..;
+					
+					frameLayout  -collapsable 1 -label "Edit Pivots:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+							rowLayout -numberOfColumns 2;
+								button -height 20 -width 100  -recomputeSize 0 -label "Rotate Pivot" 	-command "scee.rotatePivot; window -e -wh 150 130 rotatePivotSetPivotWindow" -ann "Allows you to rotate pivot positions - Now works with locked nomals!";
+								button -height 20 -width 100 -recomputeSize 0 -label "Center Selected" 	-command "scee.centerPivotToSelection" 		-ann "Centers the pivot on the currently selected component or object center";
+							setParent ..;
+							rowLayout -numberOfColumns 4;
+								button -height 20 -width 88 -recomputeSize 0 -label "Reset Transform" 			-command "ResetTransformations" 		-ann "Resets current transforms to zero";
+								button -height 20 -width 10  -recomputeSize 0 -label ""				 		-command "ResetTransformationsOptions" 	-ann "Select which transforms to reset";
+								button -height 20 -width 88 -recomputeSize 0 -label "Freeze Transform"			-command "FreezeTransformations" 		-ann "Sets current transforms to be the zero position";
+								button -height 20 -width 10  -recomputeSize 0 -label ""					-command "FreezeTransformationsOptions" -ann "Select which transforms to freeze";
+							setParent ..;  
+							rowLayout -numberOfColumns 1;
+								button -height 20 -width 202 -recomputeSize 0 -label "Zero Pivot Offsets"	-command "boltZeroPivotOffset" 		-ann "Resets the pivot offsets to zero, without affecting pivot or geometry position";
+						    setParent ..; 
+						setParent ..;
+					setParent ..;
+					
+
+				setParent ..;
+			setParent ..;
+		//setParent ..;
+	setParent ..;
+
+	showWindow $windowName;
+	//display the window
+	      
+	window -e -height 300 -width 20 $windowName;    
+	
+	boltUpdateObjectNameField;
+	boltUpdateObjectNameOptionMenu;
+	$boltHierarchyJob1 = `scriptJob -parent $windowName -event "SelectionChanged" boltUpdateObjectNameField`;
+	$boltHierarchyJob2 = `scriptJob -parent $windowName -event "SelectionChanged" boltUpdateObjectNameOptionMenu`; 
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//NAMING
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+global proc boltOptionMenuCarRename(string $menuName)
+//renames an object when you use the cartools rename option menu.
+{
+	if (`optionMenu -q -value $menuName` != " ")
+	//don't rename to " " - the blank slot at the top of the menu
+	{
+		string $selected[] = `ls -sl -transforms`;
+		//get selected objects
+		
+		string $newName = `optionMenu -q -value $menuName`;
+		
+		if (size($selected) > 0)
+		{
+			rename $selected[0] $newName;
+			//rename the first one
+			
+			string $lods[]  = {"", "_LOD1", "_LOD2", "_LOD3", "_LOD4", "_LOD5","_LOD6","_SHADOW"};
+			string $deads[] = {"", "_DEAD"};
+			string $swaps[] = {"", "_SWP01" , "_SWP02", "_SWP03", "_SWP04", "_SWP05", "_SWP06", "_SWP07", "_SWP08", "_SWP09", "_SWP10",
+							       "_SWP11" , "_SWP12", "_SWP13", "_SWP14", "_SWP15", "_SWP16", "_SWP17", "_SWP18", "_SWP19", "_SWP20"};
+			
+			for ($lod in $lods)
+			{
+				for ($dead in $deads)
+				{
+					for ($swap in $swaps)
+					{
+						if (objExists($selected[0]+$dead+$swap+$lod))
+						{
+							if (!objExists($newName+$dead+$swap+$lod))
+							{	
+								rename ($selected[0]+$dead+$swap+$lod) ($newName+$dead+$swap+$lod);
+							}
+						}
+					}
+				}
+			}
+			//rename any existing variations of this part too			
+			
+			boltUpdateObjectNameField;
+			//update the object rename boxes
+			boltUpdateObjectNameOptionMenu;
+			//updates the ghosted items in the optionMenu	
+		}
+		else 
+		{
+			error "Nothing selected to rename!";
+		}
+		//error message
+	}
+}
+
+
+global proc boltUpdateObjectNameOptionMenu()
+//updates the rename optionMenu if a recognised object is selected
+{
+	string $menus[] = {"boltOptionMenuRenameCarParts1","boltOptionMenuRenameCarParts2","boltOptionMenuRenameCarParts3","boltOptionMenuRenameCarParts4"};
+	
+	if (!`optionMenu -exists $menus[1]`)
+	{
+		return;
+	}
+	
+	string $selected[] = `ls -sl -transforms`;
+	//get list of selected objects
+	
+	for ($menu in $menus)
+	{
+		optionMenu -e -value " " $menu;
+	}
+	
+	//search for and select the object in the correct menu
+	if (size($selected) > 0)
+	{
+		if (`menuItem -exists ("boltMenuItem" + $selected[0])`)
+		{
+			for ($menu in $menus)
+			{
+				if ( sFindItem(`optionMenu -q -itemListShort $menu`, ("boltMenuItem" + $selected[0])) != -1 )
+				{
+					optionMenu -e -value $selected[0] $menu;
+				}
+			}
+		}
+	}
+	
+	//resets all menu items to be enabled	
+	for ($menu in $menus)
+	{	
+		string $menuItems[] = `optionMenu -q -itemListShort $menu`;
+		string $menuItem;
+		for	($menuItem in $menuItems)
+		{
+			menuItem -e -enable 1 $menuItem; 
+		}
+	}
+	
+	//disable the current object name if it exists in the menu.
+	string $objects[] = `ls -transforms`;
+	string $object;
+	for ($object in $objects)
+	{
+		if (`menuItem -exists ("boltMenuItem" + $object)`) menuItem -e -enable 0 ("boltMenuItem" + $object);
+	}
+	
+	//print "selection changed";
+	//stops us ending on an error message
+}
+
+
+global proc boltUpdateObjectNameField()
+//scriptjob proc to update the rename object field when a different object is selected.
+{
+	string $selected[] = `ls -sl -transforms`;
+	//get the selected objects
+	if (size($selected) != 0) 
+	{
+		textField -e -text $selected[0] boltFieldRename;
+	}
+	//if something is selected put the name of the first selected into the rename boxes
+	else 
+	{
+		textField -e -text "" boltFieldRename;
+	}
+	//if nothing is selected then empty the boxes
+}
+
+global proc boltUpdateObjectName(string $fieldName)
+//renames an object when you hit enter in the renaming field. 
+//fieldName tells it which textbox to get the name from
+{
+	if (`textField -q -text $fieldName` != "")
+	{
+		string $selected[] = `ls -sl -transforms -long`;
+		//get full path of selected objects
+		
+		if (size($selected) > 0)
+		{
+			rename $selected[0] `textField -q -text $fieldName`;
+			//rename the first one
+		}
+		else print "Nothing selected to rename!";
+		//error message
+		
+		boltUpdateObjectNameOptionMenu;
+		//updates the ghosted items in the optionMenu	
+	}
+	
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//HIERARCHY
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+global proc boltRemoveHierarchy()
+//temporarily removes hierarchy so that objects can be selected individually, and layers will work.
+//now stores info to restore hierarchy in a script node, so info is not lost if you save/quit maya
+{
+	if (`window -exists polyTexturePlacementPanel1Window`) {deleteUI polyTexturePlacementPanel1Window;} 
+	//close uv window if found, as it causes massive slowdown
+	
+	string $sl[] = `ls -sl`;
+		
+	boltRestoreHierarchy;
+	//prevents loss of original hierarchy if you try to remove the hierarchy twice
+	
+	//throw an error if duplicate parts found	
+	string $dupes = boltCheckForDupes();
+	if ($dupes != "") error ("Could not remove hierarchy due to duplicate part name(s) in scene -" + $dupes); 
+
+	string $objectList[] = `ls -transforms`;
+		
+	string $hierarchyScript = "";
+	
+	for ($obj in $objectList)
+	{
+		string $parent[] = `listRelatives -parent $obj`;
+		
+		string $newLine = "";
+		
+		if ($parent[0] == "")
+		{
+			$newLine = ( "if ( (objExists(\""+$obj+"\")) ) if (`boltGetParent \""+$obj+"\"` != \"\") catchQuiet(`parent -world \""+$obj+"\"`);\n" );
+		}
+		else
+		{		
+			$newLine = ( "if ( (objExists(\""+$obj+"\")) && (objExists(\""+$parent[0]+"\")) ) if (`boltGetParent \""+$obj+"\"` != \""+$parent[0]+"\") catchQuiet(`parent \""+$obj+"\" \""+$parent[0]+"\"`);\n" );
+		}
+		$hierarchyScript = $hierarchyScript + $newLine;
+		//write out script line to restore hierarchy
+	}
+
+	for ($obj in $objectList)
+	{
+		string $currentParent = boltGetParent($obj);
+		if ($currentParent != "")
+		{
+			if (`referenceQuery -isNodeReferenced $currentParent` == 0)
+			{
+				 catchQuiet(`parent -world $obj`);
+			}
+		}
+		//unparent (if not already parented to the world or a ref object
+	}
+		
+	if (objExists("hierarchyScriptNode")) delete "hierarchyScriptNode";
+	scriptNode -scriptType 0 -as $hierarchyScript -name "hierarchyScriptNode";
+	//create script node
+	
+	select $sl;
+}
+
+
+global proc boltRestoreHierarchy()
+{
+	if (`window -exists polyTexturePlacementPanel1Window`) {deleteUI polyTexturePlacementPanel1Window;} 
+	//close uv window if found, as it causes massive slowdown
+	
+	string $sl[] = `ls -sl`;
+
+	if (objExists("hierarchyScriptNode"))
+	{	
+		scriptNode -ea "hierarchyScriptNode";
+		delete "hierarchyScriptNode";
+	}
+	//run re-rigging script node if present
+		
+
+	
+	select $sl;
+	
+}
+
+
+global proc string boltCheckForDupes()
+//returns string of any duplicate part names in the scene
+{
+	string $objs[] = `ls -fl -type "mesh" -type "transform" -type "spotLight" -type "evoAttributeNode"`;
+	for ($i=0; $i < size($objs); $i++)
+	{
+		$objs[$i] = `match "[^|]*$" $objs[$i]`;
+	}
+	string $objs2[] = stringArrayRemoveDuplicates($objs);
+	
+	if ( size($objs) != size($objs2) )
+	{
+		string $diff[] = stringArrayRemoveExact($objs2, $objs);
+		$returnString = "";
+		for ($obj in $diff)
+		{
+			$returnString = ($returnString + " " + $obj);
+		}
+		return $returnString;
+	}
+	return "";
+}
+
+global proc boltUnparent()
+//Unparents objects
+{
+	
+	int $i;
+	
+	SelectHierarchy;
+	//make sure everything is properly selected
+	
+	string $object;                                
+	string $objectList[] = `ls -sl -transforms`; 
+		
+	for ($object in $objectList)
+	{
+		catchQuiet(`parent -world $object`);
+	}
+	//parent everything to the world layer (ie - unparent everything)
+	
+	
+	
+	print "Selected objects unparented";
+	
+}
+
+
+
+
+
+
+
+global proc string boltGetParent(string $obj)
+//returns parent transform of a given node - empty string returned for world or if obj not found
+{
+	string $parent = "";
+	if (objExists($obj))
+	{	
+		string $parents[] = `listRelatives -type "transform" -parent $obj`;
+		$parent = $parents[0];
+	}
+	return $parent;
+}
+
+global proc boltSetupHierarchy()
+//builds car hierarchy for selected objects, or all objs if no selection
+{   
+	
+	
+	string $selected[] = `ls -sl`;
+	if (size($selected) == 0) $selected = `ls`;
+	//get selection. Select all if nothing selected
+		
+	boltSetupHierarchyObjs $selected;
+	
+	print "\nHierarchy rebuilt";
+} 
+
+global proc boltSetupHierarchyObjs(string $objs[])
+//builds hierarchy for all objs in objs string
+{
+	global string $boltCarArray[];
+	global int $boltCarArrayLength;
+	
+	for ($i = 0; $i < $boltCarArrayLength; $i++)
+	{
+		string $partName   = `boltGetArray "boltCarArray" $i 0`;
+		string $parentName = `boltGetArray "boltCarArray" $i 3`;
+		
+		if ($parentName != "")
+		{
+			if (`sFindItem $objs $partName` != -1)
+			{
+				catchQuiet(`parent $partName $parentName`);   
+				//attempts to create hierarchy, catch error if it doesn't exist		
+			}
+		}
+	}
+	
+	
+	for ($obj in $objs)  //do lods and swaps
+	{
+		if (`gmatch $obj "*_LOD?"`)
+		{
+			string $parent =  `substitute "_LOD.$" $obj ""`;
+			if (!(objExists($parent)))
+			{
+				print ("\nCannot find correct parent (" + $parent + ") for " + $obj);
+			}
+			//check parent exists, warn if not
+			else
+			{
+				if (`nodeType $parent` != "transform")
+				{
+					print ("\nExpected parent (" + $parent + ") of node "+ $obj + " is not a transform node - please check names of LOD and parent are correct");
+					//stops it crashing with lods called "PARTShape_LOD1" - tries to parent to a shape
+				}
+				else
+				{
+					parent $obj $parent;
+				}
+			}
+		}
+		
+		if (`gmatch $obj "*_SHADOW"`)
+		{
+			string $parent =  `substitute "_SHADOW" $obj ""`;
+			if (!(objExists($parent)))
+			{
+				print ("\nCannot find correct parent (" + $parent + ") for " + $obj);
+			}
+			//check parent exists, warn if not
+			else
+			{
+				if (`nodeType $parent` != "transform")
+				{
+					print ("\nExpected parent (" + $parent + ") of node "+ $obj + " is not a transform node - please check names of LOD and parent are correct");
+					//stops it crashing with lods called "PARTShape_LOD1" - tries to parent to a shape
+				}
+				else
+				{
+					parent $obj $parent;
+				}
+			}
+		}
+		
+		else if (`gmatch $obj "*_SWP??"`)
+		{
+			string $baseSwap =  `substitute "_SWP..$" $obj ""`;
+			if (!(objExists($baseSwap)))
+			{
+				print ("\nCannot find correct base swap part (" + $baseSwap + ") for " + $obj);
+			}
+			//check base swap exists, warn if not
+			else
+			{
+				string $parent[] = `listRelatives -type "transform" -parent $baseSwap`;
+				
+				if ( (size($parent)>0) && (objExists($parent[0])) )
+				{
+					if (`nodeType $parent[0]` != "transform")
+					{
+						print ("\nExpected parent (" + $parent[0] + ") of node "+ $obj + " is not a transform node - please check names of LOD and parent are correct");
+						//stops it crashing with lods called "PARTShape_LOD1" - tries to parent to a shape
+					}
+					else
+					{
+						parent $obj $parent[0];
+					}
+				}
+				else
+				{
+					print ("\nCould not find correct parent for node "+ $obj);
+					
+				}				
+			}
+		}
+	
+	}
+	
+	
+}
+
+
+
+
+
+global proc boltZeroPivotOffset()
+{
+	string $sels[] = `ls -sl`;
+	select -cl;
+	string $sel;
+	for ($sel in $sels)
+	{
+		//freeze transform
+		makeIdentity -apply 1 -t 1 -r 0 -s 0 $sel;
+		//move to the origin
+		move -rpr 0 0 0 $sel;
+
+		float $selX = `getAttr ($sel + ".translateX")`*(-1);
+		float $selY = `getAttr ($sel + ".translateY")`*(-1);
+		float $selZ = `getAttr ($sel + ".translateZ")`*(-1);
+
+		//freeze transform again
+		makeIdentity -apply 1 -t 1 -r 0 -s 0 $sel;
+
+	 	setAttr ($sel + ".translateX") $selX;
+	 	setAttr ($sel + ".translateY") $selY;
+	 	setAttr ($sel + ".translateZ") $selZ;
+	}
+	select $sels;
+}
+
+global proc boltZeroPivotOffsetVertCheck(string $obj)
+//added check to ensure verts don't move - needed for parts with constraints
+//also works on a given object rather than a selection
+{
+
+		string $vtxList[] = `boltGetVerts $obj`;
+		float $vtxArray[];
+		for ($n=0; $n<(size($vtxList)); $n++)
+		{
+			float $vtxPos[3]=`pointPosition -w $vtxList[$n]`;
+			$vtxArray[$n*3+0]=$vtxPos[0];
+			$vtxArray[$n*3+1]=$vtxPos[1];
+			$vtxArray[$n*3+2]=$vtxPos[2];
+		}
+		//store vertex positions
+
+		//freeze transform
+		makeIdentity -apply 1 -t 1 -r 0 -s 0 $obj;
+		//move to the origin
+		move -rpr 0 0 0 $obj;
+
+		float $objX = `getAttr ($obj + ".translateX")`*(-1);
+		float $objY = `getAttr ($obj + ".translateY")`*(-1);
+		float $objZ = `getAttr ($obj + ".translateZ")`*(-1);
+
+		//freeze transform again
+		makeIdentity -apply 1 -t 1 -r 0 -s 0 $obj;
+
+	 	setAttr ($obj + ".translateX") $objX;
+	 	setAttr ($obj + ".translateY") $objY;
+	 	setAttr ($obj + ".translateZ") $objZ;
+
+		for ($n=0; $n<(size($vtxList)); $n++)
+			move -a $vtxArray[$n*3+0] $vtxArray[$n*3+1] $vtxArray[$n*3+2] $vtxList[$n];
+		//move verts back into place
+		
+		clear $vtxArray; clear $vtxList;
+		//clear arrays
+}
+
+global proc zeroObjectScale(string $obj)
+//sets the given object's scale to 1 1 1
+{
+	print ("\nRemoving scale from object " + $obj);
+	
+	string $vtxList[] = `ls -flatten ($obj + ".vtx[*]")`;
+	float $vtxArray[];
+	for ($n=0; $n<(size($vtxList)); $n++)
+	{
+		float $vtxPos[3]=`pointPosition -w $vtxList[$n]`;
+		$vtxArray[$n*3+0]=$vtxPos[0];
+		$vtxArray[$n*3+1]=$vtxPos[1];
+		$vtxArray[$n*3+2]=$vtxPos[2];
+	}
+	//store vertex positions
+	 	
+ 	if (`connectionInfo -isDestination ($obj + ".scaleX")` == 0) setAttr ($obj + ".scaleX") 1;
+ 	if (`connectionInfo -isDestination ($obj + ".scaleY")` == 0) setAttr ($obj + ".scaleY") 1;
+ 	if (`connectionInfo -isDestination ($obj + ".scaleZ")` == 0) setAttr ($obj + ".scaleZ") 1;
+	//reset scale to zero... if not already controlled by a constraint
+	
+	for ($n=0; $n<(size($vtxList)); $n++)
+		move -a $vtxArray[$n*3+0] $vtxArray[$n*3+1] $vtxArray[$n*3+2] $vtxList[$n];
+	//move verts back into place
+	
+	clear $vtxArray; clear $vtxList;
+	//clear arrays
+
+
+}
+
+
+global proc boltSetupWireColours()
+//Colour codes all object wireframes based on settings in the car array.
+{
+	string $object;                                
+	string $objectList[] = `ls -transforms -long`; 
+	global string $boltCarArray[];                 
+	global int $boltCarArrayLength;                
+
+	displayRGBColor userDefined1 0.5 0.5 0;
+	displayRGBColor userDefined2 0.5 0   0;
+	displayRGBColor userDefined3 0   0.5 0;
+	displayRGBColor userDefined4 0   0   0.5;
+	displayRGBColor userDefined5 0.2 0.2 0.2;
+	displayRGBColor userDefined6 0   0.5 0.5;
+	displayRGBColor userDefined7 0.5 0   0.5;
+	displayRGBColor userDefined8 1   0.7   1;
+	//setup the wireframe display colours
+	
+	for ($object in $objectList)
+	{
+		color -ud 8 $object;
+	}
+	//reset everything to colour 8
+	
+	
+	for ($i = 0; $i < $boltCarArrayLength; $i++)
+	{
+		string $partName = `boltGetArray "boltCarArray" $i 0`;
+		int $color = `boltGetArray "boltCarArray" $i 2`;
+		
+		if (objExists($partName))
+		{
+			string $shapes[] = `listRelatives -type "mesh" $partName`;
+			for ($shape in $shapes)				
+			{
+				catchQuiet(`color -ud $color $shape`);
+			}		
+		}
+		
+		//attempts to change colour of the wireframe
+				
+	}
+	
+	print "Object colours updated";
+	
+}
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*  This file downloaded from Highend3d.com
+''  
+''  Highend3d.com File Information:
+''  
+''    Script Name: cometRename v1.2
+''    Author: Michael B. Comet
+''    Last Updated: February 28, 2003
+''    Update/Change this file at:
+''    http://www.highend3d.com/maya/mel/?section=utilities#2153
+''  
+''  History:
+''    cometRename v1.1 on February 24, 2003 by Michael B
+''  
+''  Please do not alter any information above this line
+''  it is generated dynamically by Highend3d.com and will
+''  be changed automatically on any updates.
+*/
+
+
+
+// --------------------------------------------------------------------------
+// cometRename.mel - MEL Script
+// --------------------------------------------------------------------------
+//
+// DESCRIPTION:
+//	A nice renaming utility that allows basic Prefix, Suffix, Search &
+//	Replace, and Rename+Number methods.  Works properly on any hierarchy,
+//	even if renaming nodes in the hierarchy out of order.
+//
+// REQUIRES:
+//	Nothing.
+//
+//
+// USAGE:
+//	source "cometRename.mel"; cometRename();
+//
+// AUTHORS:
+//	Michael B. Comet - comet@comet-cartoons.com
+//	Copyright ©2003 Michael B. Comet - All Rights Reserved.
+//
+// VERSIONS:
+//	1.00 - Feb 20, 2003 - Initial Release.
+//	1.10 - Feb 20, 2003 - Fixed so also handles non-unique node names.
+//	1.20 - Feb 28, 2003 - Fixed up code so string Replace won't die 
+//		if you search for nothing...And also sanity check for other 
+//		fields not to be blank
+//		Also made UI nicer so won't hit wrong buttons.
+//
+// --------------------------------------------------------------------------
+
+
+/*
+ * stringReplace() - Given a main string str, looks for ALL occurances
+ *	of $search, and replaces them with $replace.
+ *
+ *	This properly handles the replace string being similar or a part
+ *	of the search string, and handling multiple matches.
+ */
+proc string cR_stringReplace(string $str, string $search, string $replace)
+{
+    string $retstr = "";
+
+    	// Sanity check please!
+    if ($search == "")
+        return $str;
+    
+    if ($str == "")
+        return $str;
+        
+        
+    int $len = size($str);
+    int $lenS = size($search);
+    
+    int $i, $j;
+    int $match;
+    
+    for ($i=1; $i <= $len; ++$i)
+        {
+	$match = 0;
+
+	// Now get substring from where we are currently
+	// to the number of letters past of the length
+	// of the search string.  Basically the same
+	// length as the search string.  So if it is identical
+	// we know we have a match.
+	//
+	// If not, we don't.  We also make sure we aren't
+	// trying to look past the end of the string...
+	//
+	$j = $i + ($lenS - 1);
+
+	if ($j <= $len)
+	    {
+	    string $part = `substring $str $i $j`;
+	    if ($part == $search)
+	        $match = 1;
+	    }
+	
+	if ($match == 1)
+	    {
+	    $retstr += $replace; // we did it, so insert replace str
+	    $i = $j;	// skip forward
+	    }
+	else
+	    {
+	    string $char = `substring $str $i $i`;
+	    $retstr += $char;
+	    }
+	}
+
+    return $retstr;
+	
+}
+
+// --------------------------------------------------------------------------
+
+/*
+ * getShortName() - Given a string, get last part after last | pipe.
+ */
+proc string cR_getShortName(string $obj)
+{
+    string $ret = "";
+    
+    if ($obj == "")
+        return $ret;
+        
+    string $parts[];
+    int $cnt = tokenize($obj, "|", $parts);
+    
+    if ($cnt <= 0)
+        $ret = $obj;
+    else
+        $ret = $parts[($cnt-1)];
+    
+    return $ret;
+}
+
+// --------------------------------------------------------------------------
+
+/*
+ * chop() - Removes last char
+ */
+proc string cR_chop(string $str)
+{
+    string $ret = "";
+
+    int $cnt = size($str);
+    
+    if ($cnt <= 1)
+        return $ret;
+    
+    $ret = `substring $str 1 ($cnt-1)`;
+
+    return $ret;
+}
+
+// --------------------------------------------------------------------------
+
+/*
+ * cR_doRename() - Does real work of renaming selected objects
+ *
+ *    $mode:  0=S&R 1=Pre 2=Suf 3=R&N
+ */
+global proc cR_doRename(int $mode)
+{
+    string $objs[] = `ls -sl -long`;
+    int $objCnt = size($objs);
+    int $i;
+
+	// Get all UI data...
+	//
+    string $search = `textField -q -tx tfSearch`;
+    string $replace = `textField -q -tx tfReplace`;
+    string $prefix = `textField -q -tx tfPrefix`;
+    string $suffix = `textField -q -tx tfSuffix`;
+    string $rename = `textField -q -tx tfRename`;
+    int $start = `intField -q -v ifNumber`;
+    int $padding = `intField -q -v ifPadding`;
+    
+    string $shortName;
+    string $newShortName;
+    string $newName;
+
+	// Now do it
+	//
+    for ($i=0; $i < $objCnt; ++$i)
+        {
+	$obj = $objs[$i];
+	
+	$shortName = cR_getShortName($obj);
+		
+	switch ($mode)
+	    {
+	    case 0:
+	        if ($search == "")
+	            {
+	            warning -sl 0 ("Can't search and replace, search entry field is blank!");
+	            return;
+	            }
+	        $newShortName = cR_stringReplace($shortName, $search, $replace);
+	        break;
+
+	    case 1:
+	        if ($prefix == "")
+	            {
+	            warning -sl 0 ("Can't add prefix, prefix entry field is blank!");
+	            return;
+	    	    }
+	        $newShortName = ($prefix + $shortName);
+	        break;
+
+	    case 2:
+	        if ($suffix == "")
+	            {
+	            warning -sl 0 ("Can't add suffix, suffix entry field is blank!");
+	            return;
+	    	    }
+	        $newShortName = ($shortName + $suffix);
+	        break;
+
+	    case 3:
+	        if ($rename == "")
+	            {
+	            warning -sl 0 ("Can't rename and number, rename entry field is blank!");
+	            return;
+	            }
+	    		// get index of string as user wants
+	    	int $n = $i + $start;
+	    		// pad of 0's
+	    	string $padStr = "";
+	    	
+	    		// Add padding as needed
+	    	for ($p=1; $p < $padding; ++$p)
+	    	    {
+		    if ($n < pow(10, $p) )
+		        $padStr += "0";
+		    }
+	    	
+	    	$newShortName = ($rename+$padStr+$n);
+	        break;
+
+	    } // end of switch
+		
+	
+	$newName = `rename $obj $newShortName`;
+	select -r $newName;
+	string $newLongNames[] = `ls -sl -long`;
+	string $newLongName = $newLongNames[0];
+	
+	    // Now update rest of stuff in list in case |long|names
+	    // required it
+	for ($j=0; $j < $objCnt; ++$j)
+	    {
+	    string $tmp = $objs[$j];
+
+	    $tmp += "|";	// add to end for easy replacing
+	    $tmp = `substitute ($obj+"|") $tmp ("|"+$newLongName+"|")`;
+	    $tmp = cR_chop($tmp);
+	    
+	    $objs[$j] = $tmp;
+	    }
+	
+
+	}  // end of for all objs
+
+    select $objs;
+    
+}
+
+// --------------------------------------------------------------------------
+
+/*
+ * cometRename() - Main UI entry.
+ */
+global proc cometRename()
+{
+    if (`window -ex cometRenameWin` != true)
+        {
+	window -w 310 -h 360 -t ("cometRename - 1.20") -in "cometRename" -s true -tb true cometRenameWin;
+
+	columnLayout cr_mainCol;
+
+	separator -style "in" -w 300 -h 8;
+
+	rowColumnLayout -nc 2 -cw 1 50 -cw 2 250;
+	    text -l "Search: " -al "right";
+	    textField -tx "" tfSearch;
+	    setParent "..";
+	rowColumnLayout -nc 2 -cw 1 50 -cw 2 250;
+	    text -l "Replace: " -al "right";
+	    textField -tx "" tfReplace;
+	    setParent "..";
+	separator -style "none" -w 300 -h 4;
+	button -l "Search And Replace" -al "center" -w 300 -c ("cR_doRename(0);") -ann "Searches for Search text and replaecs with Replace text.  Replace CAN be blank to remove text, or CAN be a part of or contain search string in it." butSearchReplace;
+
+	separator -style "none" -w 300 -h 10;
+	separator -style "in" -w 300 -h 8;
+
+	rowColumnLayout -nc 2 -cw 1 50 -cw 2 250;
+	    text -l "Prefix: " -al "right";
+	    textField -tx "" tfPrefix;
+	    setParent "..";
+	separator -style "none" -w 300 -h 4;
+	button -l "Add Prefix" -al "center" -w 300 -c ("cR_doRename(1);") -ann "Adds prefix text in before current name of each object" butPrefix;
+
+
+	separator -style "none" -w 300 -h 10;
+	separator -style "in" -w 300 -h 8;
+
+	rowColumnLayout -nc 2 -cw 1 50 -cw 2 250;
+	    text -l "Suffix: " -al "right";
+	    textField -tx "" tfSuffix;
+	    setParent "..";
+	separator -style "none" -w 300 -h 4;
+	button -l "Add Suffix" -al "center" -w 300 -c ("cR_doRename(2);") -ann "Adds suffix text in after current name of each object" butSuffix;
+
+	separator -style "none" -w 300 -h 10;
+	separator -style "in" -w 300 -h 8;
+
+	rowColumnLayout -nc 2 -cw 1 50 -cw 2 250;
+	    text -l "Rename: " -al "right";
+	    textField -tx "" tfRename;
+	    setParent "..";
+	rowColumnLayout -nc 2 -cw 1 50 -cw 2 60;
+	    text -l "Start #: " -al "right";
+	    intField -v 0 -w 60 -min 0 ifNumber;
+	    setParent "..";
+	rowColumnLayout -nc 2 -cw 1 50 -cw 2 60;
+	    text -l "Padding: " -al "right";
+	    intField -v 4 -w 60 -min 0 ifPadding;
+	    setParent "..";
+	separator -style "none" -w 300 -h 4;
+	button -l "Rename And Number" -al "center" -w 300 -c ("cR_doRename(3);") -ann "Renames each object with the base rename text, then adds a number after each, with the specfied number of zero padding in front of the number" butRenameNumber;
+
+	separator -style "in" -w 300 -h 8;
+
+
+	showWindow cometRenameWin;
+	}
+    else	// else just pop it up from being minimized again
+    	{
+	showWindow cometRenameWin;
+	}
+
+}
+
+
+
+global proc string[] boltGetInstances()
+//returns a list of every instanced mesh/xform found in the scene
+{
+	string $nodes[] = `ls -long -type "mesh" -type "transform"`;
+	string $instanced[] = {};
+	for ($node in $nodes)
+	{
+		if (size(`listRelatives -fullPath -allParents $node`) > 1)
+		{
+			$instanced[size($instanced)] = $node;
+		}
+	}
+	return $instanced;
+}
+
+global proc string[] boltOrderListByHierarcyLevel(string $nodes[])
+{
+	string $orderedList[] = {};
+	
+	int $level = 1;
+	int $eb = 0;
+		
+	while (size($orderedList)<size($nodes))
+	{
+		for ($node in $nodes)
+		{
+			if (boltGetHierarchyLevel($node) == $level)
+			{
+				$orderedList[size($orderedList)] = $node;
+			}
+		}
+		$level++;
+		$eb++; if ($eb>50) {print "ordering EB!!!!!!!"; break;}
+	}
+	return $orderedList;
+}
+
+	
+global proc int boltGetHierarchyLevel(string $node)
+{
+	string $buffer[];
+	return `tokenize $node "|" $buffer`;
+}
+
+global proc boltRemoveInstanced()
+//makes all instanced meshes/xforms found in the scene into unique copies
+{
+	int $eb = 0;
+	int $level = 1;
+	
+	string $instances[] = boltOrderListByHierarcyLevel(boltGetInstances());
+	
+	while (size($instances) > 0)
+	{
+		//string $parent[] = `listRelatives -parent -fullPath $instances[0]`;
+		//duplicate -renameChildren $parent[0];
+		//delete $parent[0];
+		
+		duplicate -renameChildren $instances[0];
+		delete $instances[0];
+		
+		$instances = boltOrderListByHierarcyLevel(boltGetInstances());
+	
+		$eb++; if ($eb>500) {print "EB!!!!!!!"; break;}
+	}
+}
+
+global proc boltTidyNpower()
+//tidies an npower CAD scene
+{
+	string $shapeType = "nPowerShape";
+	string $xformType = "nPowerAssembly";
+	
+	if (`pluginInfo -query -loaded "nPowerTrans"` == 0)
+	{
+		$continue = `confirmDialog -title "Confirm" -message "NPower plugin not found - continue?"
+    		-button "Yes" -button "No" -defaultButton "Yes"
+   			 -cancelButton "No" -dismissString "No"`;
+   		if ($continue == "No") return;
+   		
+   		$shapeType = "unknownDag";
+		$xformType = "unknownTransform";
+   	}
+   	
+	$hkframes = `ls -type "hkNodeLocalFrame"`;
+	if (size($hkframes) > 0) delete $hkframes;
+	$npShapes = `ls -type $shapeType`;
+	if (size($npShapes) > 0) delete $npShapes;
+	
+	//try to give names to things
+	string $objs[] = `ls -exactType "transform"`;
+	for ($obj in $objs)
+	{
+		if (`gmatch $obj "nPower_*"` == 1)
+		{
+			print ("\nattempting to rename " + $obj);
+			
+			string $parent[] = `listRelatives -parent $obj`;
+			for ($i=0; $i<200; $i++)
+			{
+				if ($parent[0] == "") break;
+				if (`gmatch $parent[0] "nPowerAssembly*"` == 0)
+				{
+					string $suffix = `substitute "nPower" "" $obj`;
+					$newObj = `rename $obj ($parent[0] + $suffix)`;
+					print ("\n" + $obj + "renamed to " + $newObj);
+					$obj = $newObj;
+					break;
+				}
+				$parent = `listRelatives -parent $parent[0]`;
+			}
+		}
+		string $parent[] = `listRelatives -parent $obj`;
+		if ($parent[0] != "") parent -world $obj;
+	}
+
+	$npTransforms = `ls -type $xformType`;
+    delete $npTransforms;
+	boltRenameShapesOrig;
+}

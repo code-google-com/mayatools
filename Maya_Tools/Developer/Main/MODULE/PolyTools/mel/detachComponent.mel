@@ -1,0 +1,113 @@
+//Thia Mel use for project EA  Burenout Car game
+
+// Usage
+//   Select any number of face components. 
+//	If you select all faces for an object then
+//   no action is taken for that object.
+
+proc int[] componentRange( string $select )
+// componentRange() parses the selection stats for a component item
+// and returns the start and end for the selection range.
+// Example:  If vertices 3 through 5 of a model are selected, Maya
+// lists this as 'polyModel.vtx[3:5]'; in this case, componentRange()
+// will return the array { 3, 5 }.  If only a single vertex is selected,
+// Maya lists this as, e.g., 'polyMode.vtx[12]'; in this case,
+// componentRange() will return the array { 12, 12 }.
+{
+    string $buffer[];
+    int $i, $tokens;
+    int $elements[2] = { 0, 0 };
+
+    $tokens = `tokenize $select "[:]" $buffer`;
+                
+    $elements[0] = $elements[1] = int($buffer[1]);
+
+    if ( $tokens > 2 )
+        $elements[1] = int($buffer[2]);
+    
+    return $elements;
+}
+
+proc string rootNode( string $object )
+{
+    string $buffer[];
+    tokenize $object "." $buffer;
+    return $buffer[0];
+}
+
+proc string lastNode( string $object )
+{
+    string $buffer[];
+    int $numNodes = tokenize($object, "|", $buffer);
+    return $buffer[($numNodes - 1)];
+}
+global proc LikeMaxDetach()
+{
+    string $select[] = `filterExpand -sm 34 -ex false`;
+
+    if ( 0 == size( $select ) )
+        error ( "Please select one or more face components." );
+        
+    string $currentObject = rootNode( $select[0] );
+    string $faces[];
+    int $numFaces = 0;
+
+    string $origMesh, $newMesh, $dupeMesh, $newMeshNumbered;
+
+    for ( $i = 0; $i < size( $select ); $i++ )
+    {
+        $faces[$numFaces++] = $select[$i];
+        
+        if ( rootNode( $select[$i+1] ) != $currentObject )
+        // Last face for this object.. perform separate
+        {
+            string $node = rootNode( $faces[0] );
+
+            int $intArray[] = `polyEvaluate -f $node`;
+            int $evalFaces = $intArray[0];
+            
+            int $componentRange[] = componentRange( $select[$i] );
+            if ( $componentRange[0] != 0 || $componentRange[1] != ( $evalFaces - 1 ) )
+            {
+                string $dupe[] = `duplicate $node`;
+                $dupeMesh = $dupe[0];
+
+                //Delete selected faces from original object, and
+                //delete unselected faces from duplicate
+
+                //comment out these two lines to create a mel script called dupeFaces                
+                select -r $faces;
+                delete;
+                
+                $origMesh = `rename $node (lastNode($dupeMesh) + "#")`;
+                $newMesh = `rename $dupeMesh (lastNode($node))`;
+                select -r $faces;
+                select -tgl ($node + ".f[0:" + $evalFaces + "]");
+                delete;
+
+                // Restore names
+                $newMesh = `rename $newMesh (lastNode($dupeMesh))`;
+
+                $origMesh = `rename $origMesh (lastNode($node))`;
+
+                $stringNumSeg = `match "[0-9]+$" $origMesh`; //the trailing numbers
+                $origMesh = `substring $origMesh 1 (size($origMesh) - size($stringNumSeg))`; //chop em off
+                $newMeshNumbered = `rename $newMesh (lastNode($origMesh) + "#")`;
+                select $newMeshNumbered;
+            }
+            else
+            // User has selected all faces of object.. nothing to separate
+            {
+                warning( "Skipping " + $node );
+            }
+
+            clear $faces;
+            $numFaces = 0;
+        }
+    }
+
+}
+
+
+LikeMaxDetach();
+

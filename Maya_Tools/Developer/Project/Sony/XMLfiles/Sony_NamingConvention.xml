@@ -1,0 +1,56 @@
+<?xml version="1.0" ?>
+<NamingHierrachy>
+	<kit name = 'standard_type_a' shortname = "a"/>
+	<kit name = 'standard_type_b' shortname = "b"/>
+	<kit name = 'type_c' shortname = "c"/>
+	<kit name = 'type_d' shortname = "d"/>
+	<lod name = "lod_00" shortname = "same"/>
+	<lod name = "lod_01" shortname = "same"/>
+	<lod name = "lod_02" shortname = "same"/>
+	<lod name = "lod_03" shortname = "same"/>
+	<lod name = "lod_04" shortname = "same"/>
+	<lod name = "lod_05" shortname = "same"/>
+	<lod name = "lod_06" shortname = "same"/>
+	<part name = "body" shortname = "same"/>
+	<part name = "bumper_front" shortname = "same"/>
+	<part name = "bumper_rear" shortname = "same"/>
+	<part name = "chassis" shortname = "same"/>
+	<part name = "exhaust" shortname = "same"/>
+	<part name = "headlights" shortname = "same"/>
+	<part name = "hood" shortname = "same"/>
+	<part name = "interior" shortname = "same"/>
+	<part name = "mirrors" shortname = "same"/>
+	<part name = "rear_wiper" shortname = "same"/>
+	<part name = "side_skirts" shortname = "same"/>
+	<part name = "spoiler" shortname = "same"/>
+	<part name = "taillights" shortname = "same"/>
+	<part name = "wheel_arch" shortname = "same"/>
+	<part name = "windows" shortname = "same"/>
+	<material name = "badging_alpha" shortname = "badging_alpha"/>
+	<material name = "brake_caliper_opaque" shortname = "caliper"/>
+	<material name = "brake_rotor_opaque" shortname = "rotor"/>
+	<material name = "car_seam_multi" shortname = "seam"/>
+	<material name = "chassis_opaque" shortname = "chassis"/>
+	<material name = "chrome_opaque" shortname = "chrome"/>
+	<material name = "exhaust_opaque" shortname = "exhaust"/>
+	<material name = "glass_headlight_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_head"/>
+	<material name = "glass_taillight_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_tail"/>
+	<material name = "glass_window_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_window"/>
+	<material name = "headlight_type_a_opaque" shortname = "headlights_cluster"/>
+	<material name = "grill_alpha_layer92_nozwrite" shortname = "grill"/>
+	<material name = "interior_opaque" shortname = "interior"/>
+	<material name = "misc_opaque" shortname = "misc"/>
+	<material name = "numberplate_alpha" shortname = "numberplate"/>
+	<material name = "paint_shader_opaque" shortname = "paint"/>
+	<material name = "paint_shader_nodecal_opaque" shortname = "paintnod"/>
+	<material name = "plastic_dull_opaque" shortname = "plastic"/>
+	<hierrachy>
+		<material>
+			<part>
+				<kit>
+					<lod/>
+				</kit>
+			</part>
+		</material>
+	</hierrachy>
+</NamingHierrachy>

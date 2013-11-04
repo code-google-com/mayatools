@@ -1,0 +1,1735 @@
+global string $bptVersion = "v2.011 13/03/13";
+//version number added to keep track of different versions in different branches
+
+source boltHierarchy; //used by flatten combine proc
+source sceeProcs;
+source boltNormalToolbox;
+source boltShaderTools;
+
+global proc boltPolyTools.GUI()
+{
+
+	global int $gSelectJobToggleWeld;
+	global string $bptVersion;
+	global int $gBoltShellJobNo;
+	global int $gBoltShellJobNo2;
+	global int $gBoltShellJobNo3; 
+	
+	global float $gColToggleOff[] ;  
+	global float $gColToggleOn[] ;   
+	$gColToggleOff = {0.906,0.875,0.612};    //-backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2]
+	$gColToggleOn = {1.0,1.0,0.0};    		//-backgroundColor $gColToggleOn[0] $gColToggleOn[1] $gColToggleOn[2]
+		
+	
+	if (`window -exists boltPolyToolsWindow`) {deleteUI boltPolyToolsWindow;} 
+	//delete the window if it already exists
+	
+	window -height 630 -width 240 -title ("Poly Tools " + $bptVersion) -menuBar true -toolbox 1 boltPolyToolsWindow;
+	//create window
+	
+	
+		menu -label "Toolboxes" -tearOff true -allowOptionBoxes true;
+				menuItem -l "Debug Shader Toolbox" 		-c "source boltDebugShaderGUI; boltDebugShaderGUI";
+				menuItem -l "Display Manager" 			-c "source boltVehicleDisplayManager; boltVehicleDisplayManager;";
+				menuItem -l "Export"		 			-c "source evoexport.mel; source evosexportvehicle.mel; evoExportUI(); tabLayout -e -selectTab \"evoExportVehicleFrame\" evoExportUITabCtrl;";
+				menuItem -l "LOD Tools" 				-c "source boltLodTools; boltLodTools.GUI;";
+				menuItem -l "LOD Stats" 				-c "source boltLodStats; boltLodStats;";
+				menuItem -l "Material Library Browser" 	-c "source boltMaterialLibraryBrowser; boltMaterialLibraryBrowser();";
+				menuItem -l "Naming and Hierarchy" 		-c "source boltHierarchy; boltHierarchy.GUI;";
+				menuItem -l "Normal Toolbox" 			-c "source boltNormalToolbox; boltNorms.GUI;";
+				menuItem -l "Rigging and Physics" 		-c "source boltRigging; boltRigging.GUI";
+				menuItem -l "Super Car Validator" 		-c "source boltSuperCarValidator; boltSuperCarValidator.GUI;";
+				menuItem -l "UV Tools" 					-c "source boltUVTools; boltUVTools.GUI";
+				menuItem -l "Vertex Colour Tools" 		-c "source boltVertexColours; boltVertexColours.GUI;";
+				
+	
+		menu -label "Help" -tearOff true;
+			menuItem -label "Technical Updates" -command "boltListTechDocsGUI({})";
+		   	menuItem -label "Vehicle Tools Help - Evo Wiki" -command "showHelp -a \"http://43.193.223.115:8080/mediawiki/index.php/Maya_Vehicle_Modelling_Tools\"";
+		
+		frameLayout -mw 0 -mh 0 -bv 0 -lv 0;
+			columnLayout;
+				
+	
+				frameLayout  -collapsable 1 -label "Selection:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut" selectFrameLayout;
+					columnLayout;
+				
+						rowLayout -numberOfColumns 7;
+							button -height 20 -width 20 -recomputeSize 0 -label "uv"   	 -command "boltChangeSelectMode(\"uv\")"  -ann "Switch to UV selection mode" 			boltButtonUV;
+							button -height 20 -width 20 -recomputeSize 0 -label "vf"   	 -command "boltChangeSelectMode(\"vf\")"  -ann "Switch to vertex-face selection mode"		boltButtonVF;
+							button -height 20 -width 30 -recomputeSize 0 -label "vert"   -command "boltChangeSelectMode(\"vert\")"  -ann "Switch to vertex selection mode"			boltButtonVert;
+							button -height 20 -width 30 -recomputeSize 0 -label "edge"   -command "boltChangeSelectMode(\"edge\")"  -ann "Switch to edge selection mode"			boltButtonEdge;
+							button -height 20 -width 30 -recomputeSize 0 -label "bord"   -command "boltChangeSelectMode(\"border\")"  -ann "Switch to border selection mode"		boltButtonBorder;
+							button -height 20 -width 30 -recomputeSize 0 -label "poly"   -command "boltChangeSelectMode(\"poly\")"  -ann "Switch to polygon selection mode"			boltButtonPoly;
+							button -height 20 -width 30 -recomputeSize 0 -label "obj" 	 -command "boltChangeSelectMode(\"object\")"  -ann "Switch to object selection mode"	boltButtonObject;
+						setParent ..;
+						
+						rowLayout -numberOfColumns 6 -cw 1 60;
+							text -label "Convert to:";
+							button -height 20 -width 20 -recomputeSize 0 -label "uv"   	 -command "ConvertSelectionToUVs; 			boltChangeSelectMode(\"uv\")" -ann "Convert current selection to UVs" 					boltButtonCUV;
+							button -height 20 -width 20 -recomputeSize 0 -label "vf"   	 -command "ConvertSelectionToVertexFaces; 	boltChangeSelectMode(\"vf\")" -ann "Convert current selection to Vertex Faces" 		boltButtonCVF;
+							button -height 20 -width 30 -recomputeSize 0 -label "vert"   -command "ConvertSelectionToVertices; 		boltChangeSelectMode(\"vert\")" -ann "Convert current selection to Vertices" 			boltButtonCVert;
+							button -height 20 -width 32 -recomputeSize 0 -label "edge"    -command "ConvertSelectionToEdges; 		" -ann "Convert current selection to Edges" 				boltButtonCEdge;
+							button -height 20 -width 30 -recomputeSize 0 -label "poly"   -command "ConvertSelectionToFaces; 		boltChangeSelectMode(\"poly\")" -ann "Convert current selection to Polygons" 			boltButtonCPoly;
+						setParent ..;
+						
+						rowLayout -numberOfColumns 4 -cw 1 60;
+							text -label "Shell Mode:";
+							button -height 20 -width 50 -recomputeSize 0 -label "UV Shell"   	 -command "boltShellProc(1); boltUpdateShellButtons(1)" -ann "Switches on UV Shell selection mode" 		boltButtonShellUV;
+							button -height 20 -width 61 -recomputeSize 0 -label "Mesh Shell"   	 -command "boltShellProc(2); boltUpdateShellButtons(2)" -ann "Switches on geometry shell selection mode"	boltButtonShellMesh;
+							button -height 20 -width 25 -recomputeSize 0 -label "Off"   		 -command "boltShellProc(3); boltUpdateShellButtons(3)" -ann "Turn off shell selection mode" 	boltButtonShellOff;
+						setParent ..;
+						
+						rowLayout -numberOfColumns 4;
+							button -height 20 -width 78 -recomputeSize 0 -label "Edge Loop"			-ann "Converts current edge selection to loops" 	-command "SelectEdgeLoop;"		;
+							button -height 20 -width 20 -recomputeSize 0 -label " T"	  			-ann "Activate edge loop selection tool" 			-command "SelectEdgeLoopTool;"	;
+							button -height 20 -width 78 -recomputeSize 0 -label "Edge Ring"  		-ann "Converts current edge selection to rings" 	-command "SelectEdgeRing;"		;
+							button -height 20 -width 20 -recomputeSize 0 -label " T"  				-ann "Activate edge ring selection tool" 			-command "SelectEdgeRingTool;"	;
+						setParent ..;
+						
+						rowLayout -numberOfColumns 2;
+							button -height 20 -width 100 -recomputeSize 0 -label "Poly Loop"		-ann "Selects a poly loop" 		-command "boltNorms.PolyLoop(0, 1);";
+							button -height 20 -width 100 -recomputeSize 0 -label "Poly Ring"		  	-ann "Selects a poly ring" 		-command "boltNorms.PolyLoop(1, 1)";
+							setParent ..;
+						rowLayout -numberOfColumns 2;
+							button -height 20 -width 100 -recomputeSize 0 -label "Select Outline"  	-ann "Selects the edge outline of current polygon selections" -command "switchComponent -2; boltChangeSelectMode(\"edge\")" boltButtonSelOut;
+							button -height 20 -width 100 -recomputeSize 0 -label "Invert"  			-ann "Inverts the current selection" -command "InvertSelection"				boltButtonInvert;
+						setParent ..;
+						//rowLayout -numberOfColumns 2;
+						//	button -height 20 -width 100 -recomputeSize 0 -label "Outliner"  		-ann "Allows you to select objects from a list" -command "OutlinerWindow"			boltButtonOutliner;
+						//	button -height 20 -width 100 -recomputeSize 0 -label "Shape Select" 		-ann "Toggles shape selection mode - used to select/hide shapes at the top of the hierarchy, without selecting their children." -command "boltSelectShapeModeToggle" boltButtonSelectShape;
+						//setParent ..;
+	
+					setParent ..;
+				setParent ..;
+	
+		
+				frameLayout  -collapsable 1 -label "Edit Objects:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+					columnLayout;
+						rowLayout -numberOfColumns 1;
+							textField -height 20 -width 202 -text "" -changeCommand "boltUpdateObjectName \"boltFieldRename2\"" -ann "Rename selected object"	boltFieldRename2;
+						setParent ..;
+						rowLayout -numberOfColumns 2;
+							button -height 20 -width 100 -recomputeSize 0 -label "Replace"  -ann "Replaces all selected objects with the first selected object, preserving transforms and object names." -command "boltReplace";
+							button -height 20 -width 100 -recomputeSize 0 -label "Replace 180"  -ann "Replaces all selected objects with the first selected object, rotating them through 180 degrees, preserving object names." -command "boltReplaceRotate";
+						setParent ..;
+						rowLayout -numberOfColumns 2;
+							button -height 20 -width 100 -recomputeSize 0 -label "Delete History" -command "DeleteHistory;" -ann "Deletes construction history for currently selected objects";
+							button -height 20 -width 100 -recomputeSize 0 -label "Force Delete" -ann "Deletes selected objects, even if locked" -command "boltForceDeleteSelected";
+						setParent ..;
+						rowLayout -numberOfColumns 3;
+							button -height 20 -width 158 -recomputeSize 0 -label "Mirror, Rename, Delete - X-Axis" -ann "Mirrors in the X-axis, renaming parts from left to right. Deletes any existing target objects." 	-command "boltMirror X";
+							button -height 20 -width 20  -recomputeSize 0 -label "Y" -ann "Mirrors in the Y-axis, renaming parts from left to right. Deletes any existing target objects." 	-command "boltMirror Y";
+							button -height 20 -width 20  -recomputeSize 0 -label "Z" -ann "Mirrors in the Z-axis, renaming parts from left to right. Deletes any existing target objects." 	-command "boltMirror Z";
+						setParent ..;
+						rowLayout -numberOfColumns 2;
+							button -height 20 -width 100 -recomputeSize 0 -label "Add Noise" -ann "Brings up a gui to add vertex noise to the selected object" -command "boltVertNoiseGUI";
+						setParent ..;
+												
+					setParent ..;
+				setParent ..;
+		
+				frameLayout  -collapsable 1 -label "Edit Mesh:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut" editMeshFrameLayout;
+					columnLayout;
+						
+						rowLayout -numberOfColumns 2;
+							button -height 20 -width 100 -recomputeSize 0 -label "Attach Objects" 		-command "boltCombine 1"				-ann "Attaches selected objects using SCEETools flattenCombine, preserving the pivot of the last selected object"; 
+							button -height 20 -width 100 -recomputeSize 0 -label "Detach Polys" 		-command "scee.detachSeparate"		-ann "Detaches selected polys to a seperate object, using SCEETools detatchSeperate";
+						setParent ..;
+						rowLayout -numberOfColumns 2;
+							button -height 20 -width 100 -recomputeSize 0 -label "Attach (no weld)" 		-command "boltCombine 0"			-ann "Attaches selected objects using SCEETools flattenCombine, preserving the pivot of the last selected object. Doesn't weld any resulting verts"; 
+							button -height 20 -width 100 -recomputeSize 0 -label "Collapse" 			-command "boltCollapse"				-ann "Collapses selected geometry of any type down to a single average point";
+						setParent ..;
+						rowLayout -numberOfColumns 3;	
+							button -height 20 -width 88 -recomputeSize 0 -label "Interactive Bevel" 	-command "boltBevel 0"				-ann "Does an interactive edge chamfer - Drag mouse to adjust size, press q when done";
+							button -height 20 -width 10 -recomputeSize 0 -label "" 			 			-command "BevelPolygonOptions"		-ann "Chamfer Options";
+							button -height 20 -width 100 -recomputeSize 0 -label "Max Extrude/Bevel" 	-command "boltMaxBevel"				-ann "Does a quick interactive 3dsmax style bevel, drag to extrude, then drag again to bevel. Q quits tool.";
+						setParent ..;
+						rowLayout -numberOfColumns 2;
+							button -height 20 -width 100 -recomputeSize 0 -label "Loop LOD" 	-command "boltLoopLod"	-ann "Collapses every other edge on the selected loops";
+							button -height 20 -width 100 -recomputeSize 0 -label "Zero Vertex X" -ann "Moves selected vertices to zero on the X-axis, ready for mirroring" 	-command "boltZeroX";
+						setParent ..;
+						rowLayout -numberOfColumns 3;
+							button -height 20 -width 100 -recomputeSize 0 -label "Split By Vertex" 	-command "scee.polySplitByVertex"	-ann "Shortcut to the scee tools split polygons by vertex command";
+							button -height 20 -width 88 -recomputeSize 0 -label "Target Weld"			-command "boltToggleAutoWeld" 		-ann "Toggle target weld on/off" -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonAutoWeld;
+							button -height 20 -width 10 -recomputeSize 0 -label ""               		-command "boltWeldOptions"				-ann "Target weld options";  
+						setParent ..;	
+						
+						
+					setParent ..;
+				setParent ..;
+	
+				frameLayout  -collapsable 1 -label "Edit Shaders:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+					columnLayout;
+						rowLayout -numberOfColumns 1;
+							optionMenu -width 202 -ann "Select the shader to get, set, select or edit" boltOptionMenuShaders;
+						setParent ..;
+						rowLayout -numberOfColumns 2;
+							button -height 20 -width 100 -recomputeSize 0 -label "Get Shader" 	-ann "Gets the shader for the currently selected face" 				-command "boltGetShader";
+							button -height 20 -width 100 -recomputeSize 0 -label "Apply Shader" 	-ann "Sets the shader for currently selected faces or objects" 		-command "boltSetShader";
+						setParent ..;
+						rowLayout -numberOfColumns 2;
+							button -height 20 -width 100 -recomputeSize 0 -label "Select Shaded" -ann "Selects faces on selected objects using current shader" 		-command "boltSelShader";
+							button -height 20 -width 100 -recomputeSize 0 -label "Edit Shader" 	-ann "Edit attributes of the current shader"		 				-command "boltEdiShader";
+						setParent ..;
+						rowLayout -numberOfColumns 2;       
+							button -height 20 -width 100 -recomputeSize 0 -label "Material Library" 		-ann "Displays the material library browser" 		-command "source boltMaterialLibraryBrowser; boltMaterialLibraryBrowser();";
+							button -height 20 -width 100 -recomputeSize 0 -label "Select Unshaded" -ann "Selects faces on selected objects with no shader" 		-command "scee_selectUnshadedFaces()";
+						setParent ..;
+						//button -height 20 -width 100 -recomputeSize 0 -label "Reload Textures" -ann "Reloads and refreshes all texture files in the scene"		-command "boltReloadTextures";
+
+					setParent ..;
+				setParent ..;
+
+			setParent ..;
+		setParent ..;
+
+	boltButtonHighlight ""; // set all component buttons to off
+	
+	global int $gSelectJobToggleWeld;
+	global int $gBoltShapeSelectFlag = 0;
+	global string $gBoltShaderTechniqueStore[];
+	global float $gColToggleOn[];
+	
+	showWindow boltPolyToolsWindow;
+	//displays the interface
+	
+	window -e -height 585 -width 220 boltPolyToolsWindow;   
+
+	
+	boltShellProc(3); boltUpdateShellButtons(3); //switch of shell mode
+	//set up script jobs to update the selection mode and interface if changed outside of BPT interface
+				
+	boltUpdateObjectNameField2;
+	$boltEditTabJob3 = `scriptJob -parent "boltPolyToolsWindow" -event "SelectionChanged" boltUpdateObjectNameField2`;
+	//sets up the script job to update the rename object field
+	
+	boltUpdateShaderOptionMenu;
+	$boltEditTabJob4 = `scriptJob -parent "boltPolyToolsWindow" -event "SelectionChanged" boltUpdateShaderOptionMenu`;
+	
+	if ($gSelectJobToggleWeld == 1) 
+	{
+		button -edit -backgroundColor $gColToggleOn[0] $gColToggleOn[1] $gColToggleOn[2] boltButtonAutoWeld;
+		frameLayout -edit -collapse 1 editMeshFrameLayout;      
+		frameLayout -edit -collapse 0 editMeshFrameLayout;      
+		//forces redraw   
+	}
+	//sorts out the auto weld button initial status
+	
+	//initialise camera tumble pivot
+	//if (!`optionVar -exists "boltPolyToolsCameraTumble"`)
+	//{
+	//	optionVar -intValue "boltPolyToolsCameraTumble" 0;
+	//}
+	//int $value = `optionVar -q "boltPolyToolsCameraTumble"`;
+	//menuItem -e -checkBox $value boltMenuAutoTumbleOption;
+	//if ($value == 0) ctp 2; else ctp 1;
+	
+ 
+	boltCheckForNewTechDocs();
+	
+	
+}
+
+
+global proc boltChangeSelectMode(string $mode)
+{
+
+	switch ($mode) 
+	{
+        case "vert":
+			changeSelectMode -component;
+			setComponentPickMask "Point" true;
+			polySelectConstraint -bo false -sh false;
+			boltButtonHighlight("boltButtonVert");
+			break;
+		case "vf":  
+			changeSelectMode -component; 
+			selectType -polymeshVtxFace 1;
+			polySelectConstraint -bo false -sh false;
+			boltButtonHighlight("boltButtonVF"); 	
+			break;
+		case "uv":
+			changeSelectMode -component; 
+			selectType -polymeshUV true;
+			polySelectConstraint -bo false -sh false;
+			boltButtonHighlight("boltButtonUV");
+			break;
+		case "edge":
+			changeSelectMode -component;
+			setComponentPickMask "Line"  true;
+			polySelectConstraint -bo false -sh false;
+			boltButtonHighlight("boltButtonEdge");
+			break;
+		case "border":
+			changeSelectMode -component;
+			setComponentPickMask "Line"  true;
+			polySelectConstraint -bo true -sh false;
+			boltButtonHighlight("boltButtonBorder");
+			break;
+		case "poly":
+			changeSelectMode -component;
+			setComponentPickMask "Facet" true;
+			polySelectConstraint -bo false -sh false;
+			boltButtonHighlight("boltButtonPoly");
+			break;
+		case "object":
+			$sel = `ls -sl -long`;
+			changeSelectMode -object; 
+			selectType -objectComponent -allComponents false;
+			selectType -allObjects true;
+			polySelectConstraint -bo false -sh false;
+			select -cl;
+			hilite -replace;
+			select $sel;
+			boltButtonHighlight("boltButtonObject");
+			break;
+	}
+
+}
+
+global proc boltUpdateShaderOptionMenu()
+//updates the shaders displayed in the shaders optionmenu
+{
+	string $sMaterial;
+	if (`optionMenu -q -numberOfItems boltOptionMenuShaders` == 0)
+	{
+		$sMaterial = "";
+	}
+	else
+	{
+		$sMaterial = `optionMenu -q -value boltOptionMenuShaders`;
+	}
+	//remember selected material
+	
+	string $optionContents[] = `optionMenu -q -ils boltOptionMenuShaders`;
+	//get list of items in the option menu
+	
+	for ($item in $optionContents)
+	{
+		deleteUI $item;
+	}
+	//clear the option menu items
+	
+	string $shaderList[] = sort(`ls -materials`);
+				
+	string $shader;
+	for ($shader in $shaderList)
+	{
+		if ($shader != "particleCloud1")
+		//dont bother with this shader
+		{
+			string $label = `substring $shader 1 30`;
+			menuItem -parent "boltOptionMenuShaders" -label $label ("boltShaderList" + $shader);
+		}
+		//add menu items
+	}
+	//adds all the shader names to the option menu
+	
+	if ($sMaterial != "") //if (`menuItem -exists ("boltShaderList" + $sMaterial)`)
+	{
+		catchQuiet(`optionMenu -e -value $sMaterial boltOptionMenuShaders`);
+		print ("\n");
+	}
+	//restore previously selected material
+}
+
+
+global proc boltCombine(int $weld)
+//prevents flattenCombine from flattening all child objects if run on a hierarchy
+{
+	string $sel[] = `ls -sl`;
+	if (objExists("hierarchyScriptNode"))
+	{
+		scee.doFlattenCombine(1,0,$weld,0);
+	}
+	//added to stop hierarchy always being restored
+	else
+	{
+		boltRemoveHierarchy;
+		select $sel;
+		scee.doFlattenCombine(1,0,$weld,0);
+		boltRestoreHierarchy;
+	}
+}
+
+global proc boltUpdateObjectNameField2()
+//scriptjob proc to update the rename object field when a different object is selected.
+{
+	string $selected[] = `ls -sl -transforms`;
+	//get the selected objects
+	if (size($selected) != 0) 
+	{
+		textField -e -text $selected[0] boltFieldRename2;
+	}
+	//if something is selected put the name of the first selected into the rename boxes
+	else 
+	{
+		textField -e -text "" boltFieldRename2;
+	}
+	//if nothing is selected then empty the boxes
+}
+
+
+
+
+
+    
+
+
+global proc boltCollapse()
+//combines vert/edge/face collapsing into one function
+{
+	ConvertSelectionToVertices;
+	polyMergeVertex  -d 10000000;
+}
+
+global proc boltToggleAutoWeld()
+//Toggles autoweld on off and updates button text
+{
+	global float $gColToggleOff[]; global float $gColToggleOn[];
+	
+	global int $gSelectJobToggleWeld;
+	
+	global string $gWeldSelection = "";
+	select -cl; 
+	
+	boltAutoWeldUV; 
+
+	if ($gSelectJobToggleWeld==1) 
+		{button -edit -backgroundColor $gColToggleOn[0] $gColToggleOn[1] $gColToggleOn[2] boltButtonAutoWeld;}
+	if ($gSelectJobToggleWeld==0) 
+		{button -edit -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonAutoWeld;}
+	
+	frameLayout -edit -collapse 1 editMeshFrameLayout;      
+	frameLayout -edit -collapse 0 editMeshFrameLayout;      
+	//forces redraw of interface                                      
+}   
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Author: David Keegan (eyelink@sbcglobal.net)
+//Copyright (C) 2004 David Keegan
+//w/ww.keegan3d.com
+/////////////////////////////////////////////////////////////////////////
+
+//modified by to better preserve UVs
+//-uv preservation option added to autoWeld options
+//-won't yet work properly for multiple UV sets or multiple UVs per vertex
+
+
+global proc boltAutoWeldUV()
+{
+	global string $gWeldSelection = "";
+	global int $gSelectJobToggleWeld;
+	global int $gSelectJobWeld;
+	
+	if (!`optionVar -exists "weldVersion"`)
+		{
+			boltWeldOptions;
+			optionVar -intValue "weldVersion" 1;
+		}
+	
+	if (!`optionVar -exists "weldMergeType"`)
+		optionVar -intValue "weldMergeType" 1;
+	
+	if (!`optionVar -exists "UVMergeType"`)
+		optionVar -intValue "UVMergeType" 1;
+	
+	int $toggle;
+	
+	if($gSelectJobToggleWeld == 0)
+		{
+			$gSelectJobWeld = `scriptJob -e "SelectionChanged" "boltWeldSelected"`;
+			$toggle = 1;
+			print "\nAuto Weld : ON";
+		}
+	
+	if($gSelectJobToggleWeld == 1)
+		{
+			scriptJob -kill $gSelectJobWeld;
+			$toggle = 0;
+			print "\nAuto Weld : OFF";
+		}
+	
+	$gSelectJobToggleWeld = $toggle;
+}
+
+
+
+global proc boltWeldSelected()
+{
+	global string $gWeldSelection;
+	
+	int $check;
+	int $weldType = `optionVar -q "weldMergeType"`;
+	// 0 = snap to weld, 1 = average weld
+	int $uvWeldType = `optionVar -q "UVMergeType"`;
+	// 0 = normal, 1 = preserve UVs
+	
+	string $selBD[];
+	string $sel[] = `ls -sl -fl`;
+	// list selection flattened 
+	
+	
+	tokenize $sel[0] ".[" $selBD;
+	if($selBD[1]=="vtx")
+		$check = 1;
+	//looks at 1st selected item and sets $check=1 if it's a vertex 
+
+	if($check)
+	//if a vert was selected
+	{
+		if(`size($gWeldSelection)` == 0)
+			$gWeldSelection = $sel[0];
+		//if $gWeldSelection is empty, store the current vertex as the "weld from" vert
+		
+		else
+		//we already have a "weld from" vert
+			{
+				if($weldType==0)
+				//if doing a snap to weld
+					{
+						float $pos[] = `pointPosition $sel[0]`;
+						////Gets the position of the "weld to" vert
+						move -ws $pos[0] $pos[1] $pos[2] $gWeldSelection;
+						////Moves the "weld from" vert to the "weld to" vert
+						
+						if ($uvWeldType)
+						{
+							string $weldFromUV[] = `polyListComponentConversion -fv -tuv $gWeldSelection`;					
+							//gets the weld from UV
+							string $weldToUV[] = `polyListComponentConversion -fv -tuv $sel[0]`;	
+							//gets the weld to UV
+							float $UVsToUse[] = `polyEditUV -q $weldToUV[0]`;
+							//get the uv-coords to use
+							polyEditUV -relative false -u $UVsToUse[0] -v $UVsToUse[1] $weldFromUV[0];
+							//assign them to the "weld from" vert
+						}
+					
+						
+					}
+					
+				polyMergeVertex -d 1000 $sel[0] $gWeldSelection;
+				//merges the two vertexes (up to a distance of 1000)
+				
+				print "FUDGED";
+				print ($sel[0] + " and " + $gWeldSelection + " succesfully welded.");
+				$gWeldSelection = "";
+				//resets the "weld from" selection
+			}
+	}
+}
+
+global proc boltWeldOptions()
+{
+	int $weldType = `optionVar -q "weldMergeType"`;
+	
+	int $UVType   = `optionVar -q "UVMergeType"`;
+	//new option for uv merge type - 0=standard, 1 = attempt to preserve UVs
+	
+	if(`window -q -ex weldOptions`)	
+		deleteUI weldOptions;
+	
+	
+	
+	window -mb 1 -t "Weld" weldOptions;
+	menu -l "Options" -to 0;
+		menuItem -l "Shelf Button" -ann "Create Auto Weld shelf button" -c "weldShelf";
+		menuItem -l "Close" -ann "Close Auto Weld option box" -c "deleteUI weldOptions";
+	
+	string $autoWeldForm = `formLayout`;
+		
+	string $optionControl = `columnLayout -adj 1`;
+		radioCollection weldRadioSet;
+			radioButton -l "Snap" -ann "Weld at last selected vertex position" -al left weldRadio_0;
+			radioButton -l "Average" -ann "Weld at center of both vertices" -al left weldRadio_1;
+		radioButton -edit -sl ("weldRadio_" + $weldType);
+		checkBox -al left -label "Preserve UVs" -ann "Attempts to preserve UVs when welding" -value 0 weldCheck_0;
+		if ($UVType == 1) 
+			checkBox -edit -value 1 weldCheck_0;
+		
+		//extra checkbox for new preserve uvs option.
+	setParent $autoWeldForm;
+	
+	string $buttControl = `button -l "Apply" -ann "Apply settings" -c "setWeldType"`;
+	
+	formLayout
+		-edit
+		
+		-af $optionControl "left" 0
+		-af $optionControl "top" 0
+		-af $optionControl "bottom" 22
+		-af $optionControl "right" 0
+	
+		-af $buttControl "left" 0
+		-af $buttControl "bottom" 0
+		-ac $buttControl top 0 $optionControl
+		-af $buttControl "right" 0
+		
+		$autoWeldForm;
+		
+	window -edit -wh 135 125 weldOptions;
+	showWindow weldOptions;
+	}
+	
+	global proc setWeldType()
+	{
+	global int $gSelectJobToggleWeld;
+		
+	int $n;
+	string $radioBD[];
+	string $radio = `radioCollection -q -sl weldRadioSet`;
+	
+	tokenize $radio "_" $radioBD;
+	$n = $radioBD[1];
+	
+	optionVar -intValue "weldMergeType" $n;
+	//gets the radio button state and sets the optionVar
+	
+	$n = `checkBox -q -value weldCheck_0`;
+	optionVar -intValue "UVMergeType" $n;
+	//gets the UV tick box state and put it in an optionVar.
+	
+	if(`window -q -ex weldOptions`)	
+		deleteUI weldOptions;
+	//deletes the option window
+	
+	
+	if(!$gSelectJobToggleWeld)
+		{
+			boltAutoWeldUV;
+			select -cl;
+		}
+}
+
+
+
+
+
+
+
+
+
+global proc boltUpdateShellButtons(int $button)
+{
+	global float $gColToggleOff[]; global float $gColToggleOn[];
+	
+	button -edit -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonShellUV; 
+	button -edit -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonShellMesh;   
+	button -edit -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonShellOff;  
+
+	if ($button == 1) button -edit -backgroundColor $gColToggleOn[0] $gColToggleOn[1] $gColToggleOn[2] boltButtonShellUV; 
+	if ($button == 2) button -edit -backgroundColor $gColToggleOn[0] $gColToggleOn[1] $gColToggleOn[2] boltButtonShellMesh;   
+	if ($button == 3) button -edit -backgroundColor $gColToggleOn[0] $gColToggleOn[1] $gColToggleOn[2] boltButtonShellOff;  
+	
+	frameLayout -edit -collapse 1 selectFrameLayout;
+	frameLayout -edit -collapse 0 selectFrameLayout;
+	//forces redraw
+}
+
+global proc boltButtonHighlight(string $buttonToHighlight)
+//does the select mode button highlighting
+{
+	global float $gColToggleOff[]; global float $gColToggleOn[];
+	
+	button -edit -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonUV; 
+	button -edit -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonVF;   
+	button -edit -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonVert;  
+	button -edit -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonEdge;  
+	button -edit -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonBorder;
+	button -edit -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonPoly;  
+	//button -edit -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonShell; 
+	button -edit -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonObject;
+	//set all to off
+	
+	if ($buttonToHighlight != "")
+	{
+		button -edit -backgroundColor $gColToggleOn[0] $gColToggleOn[1] $gColToggleOn[2] $buttonToHighlight;       
+	}
+	//highlight selected button
+		
+	frameLayout -edit -collapse 1 selectFrameLayout;
+	frameLayout -edit -collapse 0 selectFrameLayout;
+	//forces redraw
+}
+
+
+
+global proc boltZeroX()
+//zeros selected points in the x axis
+{
+	move -ws -wd -x 0;
+}
+
+global proc boltTidyGeom()
+//Tidies up newly extruded geometry, welds, smooths, and sets vertex colours to white
+{
+	polyMergeVertex  -d 0.0001 -ch 1; 
+	polyColorPerVertex -r 1 -g 1 -b 1 -a 1 -cdo; 
+	polySoftEdge -a 180 -ch 1;
+}
+
+
+
+
+
+global proc boltMirror(string $axis)
+//mirrors and renames shapes from left to right/ front back. Deletes any existing geometry.
+{
+	string $objectList[] = `ls -sl -et transform`;
+	string $newObject;
+
+	string $L[] = {"_FL", "_FL1", "_FL2", "_BL", "_BL1", "_BL2", "_L", "_L1", "_L2", "_L3", "_L4", "_BFL", "_BBL", "_TFL", "_TBL", "_TFL1", "_TFL2", "_TBL1", "_TBL2", "_BFL1", "_BFL2", "_BBL1", "_BBL2", "_LEFT"};
+	string $R[] = {"_FR", "_FR1", "_FR2", "_BR", "_BR1", "_BR2", "_R", "_R1", "_R2", "_R3", "_R4", "_BFR", "_BBR", "_TFR", "_TBR", "_TFR1", "_TFR2", "_TBR1", "_TBR2", "_BFR1", "_BFR2", "_BBR1", "_BBR2", "_RIGHT"};
+	//list of left and right strings to match
+	string $F[] = {"_FL", "_FR", "_FL1", "_FR1", "_FL2", "_FR2", "_F", "_BFL", "_BFR", "_TFL", "_TFR", "_TFL1", "_TFL2", "_TFR1", "_TFR2", "_BFL1", "_BFL2", "_BFR1", "_BFR2"};
+	string $B[] = {"_BL", "_BR", "_BL1", "_BR1", "_BL2", "_BR2", "_B", "_BBL", "_BBR", "_TBL", "_TBR", "_TBL1", "_TBL2", "_TBR1", "_TBR2", "_BBL1", "_BBL2", "_BBR1", "_BBR2"};
+	//list of front and back strings to match
+
+	for ($object in $objectList)
+	{
+		$newObject = "";
+		
+		if ($axis == "X")
+		{
+			for ($i = 0; $i < size($L); $i++)
+			{
+				if (`match ($L[$i]+"$") $object`  == $L[$i]) 	$newObject = `substitute $L[$i]  $object $R[$i]`;
+				if (`match ($R[$i]+"$") $object`  == $R[$i]) 	$newObject = `substitute $R[$i]  $object $L[$i]`;
+				if (`match ($L[$i]+"_") $object`  == ($L[$i]+"_")) 	$newObject = `substitute ($L[$i]+"_")  $object ($R[$i]+"_")`;
+				if (`match ($R[$i]+"_") $object`  == ($R[$i]+"_")) 	$newObject = `substitute ($R[$i]+"_")  $object ($L[$i]+"_")`;
+			}
+			//swap any lefts/rights
+		}
+		
+		if ($axis == "Z")
+		{
+			for ($i = 0; $i < size($F); $i++)
+			{
+				if (`match ($F[$i]+"$") $object`  == $F[$i]) 	$newObject = `substitute $F[$i]  $object $B[$i]`;
+				if (`match ($B[$i]+"$") $object`  == $B[$i]) 	$newObject = `substitute $B[$i]  $object $F[$i]`;
+				if (`match ($L[$i]+"_") $object`  == ($L[$i]+"_")) 	$newObject = `substitute ($L[$i]+"_")  $object ($R[$i]+"_")`;
+				if (`match ($R[$i]+"_") $object`  == ($R[$i]+"_")) 	$newObject = `substitute ($R[$i]+"_")  $object ($L[$i]+"_")`;
+			}
+			//swap any fronts/backs
+		}
+		
+		if ($newObject == "")
+		{
+			if (`match "_MIRRORED" $object`  == "_MIRRORED") $newObject = `substitute "_MIRRORED" $object ""`;
+			else $newObject = ($object + "_MIRRORED");
+		}
+		//deals with objects without a L/R/F/B name, plus y axis mirroring
+		
+		
+		int $hierarchyRemovedFlag = 0;
+		if (!objExists("hierarchyScriptNode"))
+		{
+			boltRemoveHierarchy;
+			$hierarchyRemovedFlag = 1; 
+		}
+		//remove hierarchy if not already removed.
+				
+		if (`objExists $newObject`) delete $newObject;      
+		// get rid of the target mirror object if it already exists
+					  
+		duplicate -name	$newObject $object;
+		string $loc[] = `spaceLocator`;
+		parent $newObject $loc[0];
+		//clone the object and parent it to a new locator
+			
+		if ($axis == "X") setAttr ($loc[0]+".scale") -1 1 1;
+		if ($axis == "Y") setAttr ($loc[0]+".scale") 1 -1 1;
+		if ($axis == "Z") setAttr ($loc[0]+".scale") 1 1 -1;
+		//mirror the locator on the correct axis
+			
+		parent -world $newObject;
+		delete $loc[0];
+		//get rid of the locator
+					
+		//FreezeTransformations $newObject;
+		makeIdentity -apply true -t 0 -r 1 -s 1 -n 0 $newObject;
+		boltZeroPivotOffset;
+		//polyNormal -normalMode 4 -ch 1 $newObject; //flip normals
+		polyNormal -normalMode 0 -userNormalMode 0 $newObject;
+		
+		string $newShape[] = `listRelatives -type "mesh" -fullPath $newObject`; 
+	    setAttr ($newShape[0] + ".opposite") 0;
+		//switch off opposite flag
+		
+		//if (boltCheckForLockedNormals($newObject)==1)
+		//{		
+			//boltFlipLockedNormals $newObject; //fix locked normals
+		//}
+		//flip locked normals if neccessary - works in 2010!
+		//     not needed anymore
+		
+		if ($hierarchyRemovedFlag == 1) boltRestoreHierarchy;
+		//don't restore hierarchy unless it was stripped by this proc.
+					    
+		if (`match "_LOD.$" $newObject` != "")
+		{
+			int $sizeObj = size($newObject);
+			string $baseObj =  `substring $newObject 1 ($sizeObj - 5)`;
+			if (`objExists $baseObj`) parent $newObject $baseObj;
+			//attempt to parent correctly if this is a lod
+		}
+		if (`match "_SHADOW$" $newObject` != "")
+		{
+			int $sizeObj = size($newObject);
+			string $baseObj =  `substring $newObject 1 ($sizeObj - 7)`;
+			if (`objExists $baseObj`) parent $newObject $baseObj;
+			//atempt to parent correctly if this is a shadow
+		}
+	}
+}
+
+
+global proc int boltCheckForLockedNormals(string $obj)
+//returns 1 if obj or shape has locked normals
+{
+	int $normals[] = `polyNormalPerVertex -q -freezeNormal ($obj + ".vtx[*]")`;
+	for ($normal in $normals)
+	{
+		if ($normal==1)
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
+
+global proc boltFlipLockedNormals(string $obj)
+//flips any normals that are locked on an object
+{
+	int $vertCounts[] = `polyEvaluate -vertex $obj`;
+	int $vertCount = $vertCounts[0];
+	//get num of verts
+	
+	for ( $v = 0; $v < $vertCount; $v++ )
+	{
+		string $faces[] = `polyListComponentConversion -toFace ($obj + ".vtx[" + $v +"]")`;
+		$faces = `ls -flatten $faces`;
+		// Faces associated with vertex
+		
+		string $vertFaces[] = {};
+		for ( $f = 0; $f < size($faces); $f++ )
+		{
+			$faceNum = `match "[^\.]*$" $faces[$f]`;
+			$faceNum = `match "[0-9]+" $faceNum`;
+			//strip face names back to face numbers			
+			$vertFaces[$f] = ($obj + ".vtxFace[" + $v + "][" + $faceNum + "]");				
+		}
+		// get list of vertex faces.
+		
+		for ($vf in $vertFaces)
+		{
+			int $locked[] = `polyNormalPerVertex -q -freezeNormal $vf`;
+			if ( $locked[0] == 1)
+			{
+				float $normal[] = `polyNormalPerVertex -q -xyz  $vf`;
+				polyNormalPerVertex -xyz (-1*$normal[0]) (-1*$normal[1]) (-1*$normal[2]) $vf;
+			}
+		}
+		//flip vf normals
+	}
+}		
+
+
+
+
+global proc boltFlipLockedNormalsY(string $obj)
+//flips any normals that are locked on an object
+{
+	global string $gMainProgressBar; // This is defined on maya startup
+	
+	int $vertCounts[] = `polyEvaluate -vertex $obj`;
+	int $vertCount = $vertCounts[0];
+	//get num of verts
+	
+	progressBar -e -beginProgress -isInterruptable true -status "Rotating locked normals:" -maxValue $vertCount $gMainProgressBar;
+	
+	string $hardEdges[] = boltNorms.getHardEdges($obj);
+	
+	
+	for ( $v = 0; $v < $vertCount; $v++ )
+	{
+		string $faces[] = `polyListComponentConversion -toFace ($obj + ".vtx[" + $v +"]")`;
+		$faces = `ls -flatten $faces`;
+		// Faces associated with vertex
+		
+		string $vertFaces[] = {};
+		for ( $f = 0; $f < size($faces); $f++ )
+		{
+			$faceNum = `match "[^\.]*$" $faces[$f]`;
+			$faceNum = `match "[0-9]+" $faceNum`;
+			//strip face names back to face numbers			
+			$vertFaces[$f] = ($obj + ".vtxFace[" + $v + "][" + $faceNum + "]");				
+		}
+		// get list of vertex faces.
+		
+		for ($vf in $vertFaces)
+		{
+			int $locked[] = `polyNormalPerVertex -q -freezeNormal $vf`;
+			if ( $locked[0] == 1)
+			{
+				float $normal[] = `polyNormalPerVertex -q -xyz  $vf`;
+				polyNormalPerVertex -xyz (-1*$normal[0]) ($normal[1]) (-1*$normal[2]) $vf;
+			}
+		}
+		//flip vf normals
+		
+		progressBar -edit -step 1 $gMainProgressBar;
+	}
+	
+	boltNorms.setHardEdges($obj, $hardEdges);
+	
+	progressBar -e -endProgress $gMainProgressBar;
+}		
+
+
+global proc boltSelectShapeMode()
+//ensures that only shapes are selected
+//allows you to select objects individually without removing the hierarchy.
+{
+	global int $gBoltShapeSelectFlag;
+	
+	if ($gBoltShapeSelectFlag != 1)
+	{
+		$gBoltShapeSelectFlag = 1;
+		//set flag to prevent constant nested running of script by scriptjob
+		
+		string $selection[] = `ls -sl`;
+		for ($obj in $selection)
+		{
+			if (`nodeType $obj` == "transform")
+			{
+				string $shapes[] = `listRelatives -s $obj`;
+		 		if ($shapes[0] != "")
+				{			
+					select -d $obj;
+					for ($shape in $shapes)
+					{
+						select -add $shape;
+					}
+				}
+			}
+		}
+		//for every selected transform, select it's shape(s) instead
+		
+		string $selection[] = `ls -hl`;
+		for ($obj in $selection)
+		{
+			if (`nodeType $obj` == "transform")
+			{
+				string $shapes[] = `listRelatives -s $obj`;
+		 		if ($shapes[0] != "")
+				{			
+					hilite -u $obj;
+					for ($shape in $shapes)
+					{
+						hilite $shape;
+					}
+				}
+			}
+		}
+		//for every hilited transform, select it's shape(s) instead
+		
+	}
+	
+	$gBoltShapeSelectFlag = 0;
+}
+
+
+global proc boltSelectShapeModeToggle()
+//toggles select shape mode on or off
+{
+	global int $gBoltShapeSelectFlag;
+	global int $gBoltShapeSelectJob;
+	
+	global float $gColToggleOff[]; global float $gColToggleOn[];
+	
+	if ($gBoltShapeSelectJob == 0)
+	{
+		$gBoltShapeSelectFlag = 0;
+		$gBoltShapeSelectJob = `scriptJob -parent "boltPolyToolsWindow" -event "SelectionChanged" boltSelectShapeMode`;	
+		button -edit -backgroundColor $gColToggleOn[0] $gColToggleOn[1] $gColToggleOn[2] boltButtonSelectShape;
+		boltSelectShapeMode;
+		print "Shape select mode ON";
+	}
+	else
+	{
+		if (`scriptJob -ex $gBoltShapeSelectJob`) 
+		{
+			scriptJob -kill $gBoltShapeSelectJob; 
+			button -edit -backgroundColor $gColToggleOff[0] $gColToggleOff[1] $gColToggleOff[2] boltButtonSelectShape;
+			print "Shape select mode OFF";
+		}
+		else
+		{
+			$gBoltShapeSelectFlag = 0;
+			$gBoltShapeSelectJob = `scriptJob -parent "boltPolyToolsWindow" -event "SelectionChanged" boltSelectShapeMode`;	
+			button -edit -backgroundColor $gColToggleOn[0] $gColToggleOn[1] $gColToggleOn[2] boltButtonSelectShape;
+			boltSelectShapeMode;
+			print "Shape select mode ON";
+		}
+	}
+		//toggle the script job	
+
+	frameLayout -edit -collapse 1 selectFrameLayout;      
+	frameLayout -edit -collapse 0 selectFrameLayout;      
+	//forces redraw of interface                                      
+}
+
+
+
+global proc boltForceDeleteSelected()
+//deletes selected locked nodes
+{
+	string $sel[] = `ls -sl`;
+	boltForceDelete $sel;
+	
+}
+
+global proc boltForceDelete(string $objs[])
+{
+	for ($obj in $objs)
+	{
+		lockNode -lock off $obj;
+		delete $obj;
+	}
+}
+
+
+global proc boltLoopLod()
+//takes a selection of edges on loops, works out the loop for each edge, 
+//then collapses every other edge.
+{
+	string $edges[] = `ls -sl -fl`;
+	//get list of selected edges
+	
+	string $collapseList[] = {};
+	
+	for ($edge in $edges)
+	{
+		
+		string $obj = `match "^[^\.]*" $edge`; // returns just obj name
+		string $edgeComponent = `match "\\..*" $edge`; // returns eg .e[23] 
+		int $edgeID = `match "[0-9]+" $edgeComponent`; //returns eg 23 
+		
+		int $loopEdges[] = `polySelect -edgeLoop $edgeID -noSelection`; //returns list of edges in loop
+	
+		for ($i = 0; $i < size($loopEdges); $i=$i+2) 
+		{
+			$collapseList[size($collapseList)] = ($obj + ".e[" + $loopEdges[$i] + "]");
+		}
+		//build up list of all edges to collapse.
+	}
+	polyCollapseEdge -ch 0 $collapseList;
+	//collapse all edges at once for best results
+}
+
+global proc boltVertNoiseGUI()
+{
+	
+	if (`window -exists boltVertNoiseGUIWindow`) {deleteUI boltVertNoiseGUIWindow;} 
+	//delete the window if it already exists
+	window -height 307 -width 208 -title "Vertex Noise tool" -toolbox 1 boltVertNoiseGUIWindow;
+	//create window
+		scrollLayout;
+			frameLayout -mw 5 -mh 5 -bv 0 -lv 0;
+				columnLayout;
+					text -label "Amplitude:";
+					floatField -value 0.1 ffAmplitude;
+					text -label "Frequency:";
+					floatField -value 5 ffFrequency;
+					separator -style "in" -horizontal 1 -height 10 -width 150;
+					button -height 20 -width 150 -recomputeSize 0 -label "Apply Noise" -command "boltVertNoiseGUIproc";
+	showWindow boltVertNoiseGUIWindow;
+	//display the window
+}
+
+global proc boltVertNoiseGUIproc()
+{
+	string $objs[] = `ls -sl`;
+	float $amp  = `floatField -q -value ffAmplitude`;
+	float $freq = `floatField -q -value ffFrequency`;
+	boltVertNoise $objs[0] $freq $amp;
+}
+	
+global proc boltVertNoise(string $obj, float $noiseFreq, float $noiseAmp)
+//adds vertex noise of a given frequency and amplitude to an object
+{
+	int $noVerts[] = `polyEvaluate -v $obj`;
+		
+	for($k=0 ; $k < $noVerts[0]; $k++)
+	{	
+		string $v = ($obj+".vtx["+$k+"]");	
+		vector $vert = `pointPosition -w $v`;
+		vector $noise = dnoise($vert*$noiseFreq)*$noiseAmp;
+		move -r -xyz ($noise.x) ($noise.y) ($noise.z) $v;
+	}
+}	
+
+
+global proc boltShellProc(int $mode)
+//sets the shell selection mode - 1 = uv, 2 = mesh, 3 = off
+{
+
+	global int $gBoltShellJobNo;
+	global int $gBoltShellJobNo2;
+	global int $gBoltShellJobNo3;
+	
+	if ($mode == 1)
+	{
+		boltKillShellJob;
+		//kill script job
+		polySelectConstraint -bo false -sh true;
+		$gBoltShellJobNo = `scriptJob -parent "boltPolyToolsWindow" -e "SelectionChanged" boltUVShellScriptJob`;
+		$gBoltShellJobNo2 = `scriptJob -parent "boltPolyToolsWindow" -e "SelectModeChanged" boltUVShellScriptJob`;
+		$gBoltShellJobNo3 = `scriptJob -parent "boltPolyToolsWindow" -e "SelectTypeChanged" boltUVShellScriptJob`;
+	}
+	
+	if ($mode == 2)
+	{
+		polySelectConstraint -bo false -sh false;
+		boltKillShellJob;
+		$gBoltShellJobNo = `scriptJob -parent "boltPolyToolsWindow" -e "SelectionChanged" polyConvertToShell`;
+		//setup new scriptjob
+	}
+	
+	if ($mode == 3)
+	{
+		polySelectConstraint -bo false -sh false;
+		boltKillShellJob;
+	}
+	
+	
+}
+
+global proc boltUVShellScriptJob()
+{
+	polySelectConstraint -bo false -sh true;
+}
+
+
+global proc boltKillShellJob()
+//kills shell select script job
+{
+	global int $gBoltShellJobNo;
+	global int $gBoltShellJobNo2;
+	global int $gBoltShellJobNo3;
+	
+	if (($gBoltShellJobNo != 0) && `scriptJob -ex $gBoltShellJobNo`) 
+	{
+		scriptJob -kill $gBoltShellJobNo; 
+		$gBoltShellJobNo =0;
+	}
+	if (($gBoltShellJobNo2 != 0) && `scriptJob -ex $gBoltShellJobNo2`) 
+	{
+		scriptJob -kill $gBoltShellJobNo2; 
+		$gBoltShellJobNo2 =0;
+	}
+	if (($gBoltShellJobNo3 != 0) && `scriptJob -ex $gBoltShellJobNo3`) 
+	{
+		scriptJob -kill $gBoltShellJobNo3; 
+		$gBoltShellJobNo3 =0;
+	}
+}
+
+
+global proc boltReplace()
+//replaces all selected objects with the first object you selected
+//usefull for replacing wheels etc.
+
+{
+	string $objectList[] = `ls -sl -et transform`;
+	
+	if (`size $objectList` < 2) error "Please select at least 2 objects"; 
+	// quit if we don't have at least 2 objects selected.
+	
+	boltRestoreHierarchy;
+	boltRemoveHierarchy;
+	//strip hierarchy
+	
+	for ($i = 1; $i < `size $objectList`; $i++)
+	{
+	
+		string $newObject[] = `duplicate -rr $objectList[0]`;
+		//create a duplicate of the first selected object
+		
+		$locMatrix = `xform -q -ws -m $objectList[$i]`;
+		xform -ws -m $locMatrix[0] $locMatrix[1] $locMatrix[2] $locMatrix[3] $locMatrix[4] $locMatrix[5] $locMatrix[6] $locMatrix[7] $locMatrix[8] $locMatrix[9] $locMatrix[10] $locMatrix[11] $locMatrix[12] $locMatrix[13] $locMatrix[14] $locMatrix[15] $newObject[0];
+		//move it to the position of the target object
+		
+		string $targetName = $objectList[$i];
+		//store the target's name
+		
+		delete $objectList[$i];
+		//delete the target object
+		
+		rename $newObject[0] $targetName;
+		//rename the duplicate to match the deleted objcet.
+	}
+	
+	boltRestoreHierarchy;
+}
+
+
+global proc boltReplaceRotate()
+//replaces all selected objects with the first object you selected
+//+ rotates the verts 180 degrees without affecting the pivot - usefull for copying wheels without using mirror.
+//
+
+{
+	string $objectList[] = `ls -sl -et transform`;
+	
+	if (`size $objectList` < 2) error "Please select at least 2 objects"; 
+	// quit if we don't have at least 2 objects selected.
+	
+	boltRestoreHierarchy;
+	boltRemoveHierarchy;
+	//strip hierarchy
+	
+	for ($i = 1; $i < `size $objectList`; $i++)
+	{
+	
+		string $newObject[] = `duplicate -rr $objectList[0]`;
+		//create a duplicate of the first selected object
+		
+		$locMatrix = `xform -q -ws -m $objectList[$i]`;
+		xform -ws -m $locMatrix[0] $locMatrix[1] $locMatrix[2] $locMatrix[3] $locMatrix[4] $locMatrix[5] $locMatrix[6] $locMatrix[7] $locMatrix[8] $locMatrix[9] $locMatrix[10] $locMatrix[11] $locMatrix[12] $locMatrix[13] $locMatrix[14] $locMatrix[15] $newObject[0];
+		//move it to the position of the target object
+		
+		float $pivot[] = `xform -q -ws -rp $newObject[0]`;       
+		select $newObject[0];
+		ConvertSelectionToVertices;
+		rotate -r -p $pivot[0] $pivot[1] $pivot[2] -ws 0 180 0; 
+		//rotate the verts 180 degees on the y axis
+		
+		string $targetName = $objectList[$i];
+		//store the target's name
+		
+		delete $objectList[$i];
+		//delete the target object
+		
+		rename $newObject[0] $targetName;
+		//rename the duplicate to match the deleted objcet.
+		
+		if (boltCheckForLockedNormals($targetName) == 1)
+		{	
+			boltFlipLockedNormalsY($targetName);
+		}
+	}
+
+	boltRestoreHierarchy;
+	
+}
+
+
+
+global proc boltBevel(int $bevelMode)
+//does an interactive bevel with dragSlider control over bevel amount
+//bevel modes: 0 uses bevel option prefs, 1 does a soft crease, 2 does hard crease
+{
+	global string $boltRecentBevel2[];
+	global float $boltInitialOffset;
+	
+	print "bolt bevel";
+
+	string $cmd1 = `performPolyBevel 2`;
+	//deals with all the bevel options and outputs a "polyPerformAction" command
+	$cmd1 = `substitute "polyPerformAction" $cmd1 "boltPolyPerformAction"`; 
+	//force to use my own frigged routine that outputs the command without running it.
+	string $cmd2 = `eval $cmd1`;
+	//adds the selection to the command
+	string $boltRecentBevel2[] = `eval $cmd2`;
+	//run the final command and store the resulting bevel node name
+	
+	if (!`draggerContext -exists dragBevelContext`)
+		draggerContext dragBevelContext;
+	//create the bevel dragger if it doesn't already exist
+	
+	draggerContext -e 
+ 		-pressCommand "boltPressBevel $boltRecentBevel2[0]"
+ 		-dragCommand  "boltDragBevel $boltRecentBevel2[0]"
+ 		-cursor       "track"
+ 		dragBevelContext;
+	//edit the dragger settings
+		
+			
+	setToolTo dragBevelContext;
+	//switch on the dragger
+}
+	
+global proc boltPressBevel(string $inBevel)
+{
+	global float $boltInitialOffset;
+	$boltInitialOffset = `getAttr($inBevel+".offset")`;
+	//remember the initial offset - stops a new drag resetting the offset to zero
+}
+	
+global proc boltDragBevel(string $inBevel)
+{
+	global float $boltInitialOffset;
+	
+	//print $inBevel;
+	//print ("\n" + $boltInitialOffset + "\n");
+	
+	
+	float $dragStart[] = `draggerContext -query -anchorPoint dragBevelContext`;
+	float $dragPosition[] = `draggerContext -query -dragPoint dragBevelContext`;
+ 	float $dragOffset = ($dragPosition[1] - $dragStart[1]);
+ 	//work out how far we've dragged in the y
+ 	 	
+	//print ($dragOffset + "\n");
+	
+	float $newOffset = ($boltInitialOffset+($dragOffset / 100));
+	if ($newOffset < 0) $newOffset = 0;
+	//work out the new offset and stop it going below 0
+	
+	
+	undoInfo -stateWithoutFlush off;
+	//don't store the following bit in the undo buffer or the bevel is unundoable
+	
+	setAttr ($inBevel+".offset") $newOffset;
+	refresh -currentView;
+	//update the bevel offset and the viewport.
+	
+	undoInfo -stateWithoutFlush on;
+	//switch undo back on
+	
+	
+}
+
+proc setOptionVars(int $forceFactorySettings)
+{
+	if( $forceFactorySettings || !`optionVar -exists booleanOpPreserveColor`)
+		optionVar -intValue booleanOpPreserveColor 0;
+	if( $forceFactorySettings || !`optionVar -exists uniteMergeUVSets`)
+		optionVar -intValue uniteMergeUVSets 1;
+}
+proc string quoteStarSelection(string $searchString)
+// Some of the poly actions require a star to be quoted when the
+// command is called.
+// eg. will generate an error if passed in something like:
+//     poly1.e[*], this will be replace by poly1.e["*"]
+{
+    string $regExpr = "\\[\\*]";
+    string $swapString = "[\"*\"]";
+    string $returnString = $searchString;
+    
+    string $temp = `match $regExpr $returnString`;
+        
+    while ($temp != "")
+    {
+        $returnString = `substitute $regExpr $returnString $swapString`;
+        $temp = `match $regExpr $returnString`;
+    }
+    
+    return $returnString;
+}
+
+global proc string boltPolyPerformAction (string $action, string $funtype, int $ret)
+//hacked version to prevent command execution, otherwise can't get the created node name...
+{
+	string $cmd="";
+	string $sel[];
+	
+	string $tmp[], $actionbase;
+	tokenize $action $tmp;
+	$actionbase = $tmp[0];
+	int $doHistory = `constructionHistory -q -toggle`;
+	
+	setOptionVars(0);
+
+	switch ($ret) {
+	case 0:
+		waitCursor -state on;
+
+		// check if any objects selected (shapes or transforms)
+		string $objsSelected[] = `ls -sl -s -tr`; 
+		int $objectMode = (size($objsSelected) > 0);
+
+		if ($actionbase == "polySeparate") {
+			$sel = `polyCheckSelection $actionbase $funtype 0`;
+		} else {
+			$sel=`ls -sl`;
+		}
+		
+		if (size($sel) != 0) {
+			if ($actionbase == "polyUnite" || $actionbase == "polyBoolOp") {
+				// unite is the only action that can work on multiple objects at once
+				// and needs to, in fact.
+				// booleans are in the same case, but need to separate
+				// lead from others (for difference)
+				$cmd =($action + " -ch " + $doHistory);
+
+				// booleans have a threshold setting which is enabled by default
+				if ($actionbase == "polyBoolOp") {
+					$cmd += " -useThresholds 1";
+					
+					int $preserveColor = `optionVar -query booleanOpPreserveColor`;
+					$cmd += " -preserveColor " + $preserveColor;
+				}
+
+				if ($actionbase == "polyUnite") {
+					int $mergeUVSets = `optionVar -query uniteMergeUVSets`;
+					$cmd += " -mergeUVSets " + $mergeUVSets;
+				}
+
+				int $nsel = 0;
+				for ($i in $sel)
+				{
+					if(`nodeType $i` == "transform") {
+						$nsel++;
+						$cmd=($cmd + " " + $i);
+					}
+				}
+				if ($actionbase == "polyBoolOp" && $nsel != 2) {
+					string $msg = (uiRes("m_polyPerformAction.kSelectMeshBoolError"));
+ 					error ($msg);
+ 					return $cmd;
+				}
+
+				//evalEcho $cmd;
+			} else {
+				int $index=0;
+				while (size($sel) > $index) {
+					string $cursel[];
+					$index=`polyNextSelectionBatch $sel $cursel $index`;
+
+					$cmd =($action + " -ch " + $doHistory);
+					int $doAdd = 1;
+					if (size($cursel) != 0) 
+					{
+						for ($i in $cursel) 
+						{
+							string $theNodeType = `nodeType $i`;
+							if( $theNodeType != "transform" && $theNodeType != "mesh" )
+								$doAdd = 0;
+
+							if($doAdd)
+								$cmd=($cmd + " " + $i);
+						}
+					}
+
+                    // The called command will generate an error if a non-quoted * is used
+                    // Do a substitution before eval'ing the command.
+
+					if($doAdd)
+					{
+						$cmd = quoteStarSelection($cmd);
+						//evalEcho $cmd;
+					}
+
+				}
+			}
+
+			if ($actionbase == "polyUnite" || 
+				$actionbase == "polyBoolOp" ||
+				$actionbase == "polySeparate") {
+				
+				// Initialize the just created mesh node with global settings
+				setupNewMesh();
+			}
+			
+			// go back to object mode if the original selection was an object
+			if($objectMode) {
+				setSelectMode("objects", "Objects");
+			}
+			polyFinalizeAction;
+
+			clear $sel; 
+		}
+		waitCursor -state off;
+		break;
+	case 1:
+		if ($actionbase == "polyBoolOp") {
+			polyBooleanOptions($action, $funtype);
+		} else if ($actionbase == "polyUnite") {
+			polyUniteOptions($action, $funtype);
+		}
+		break;
+	case 2: $cmd =("polyPerformAction \"" + $action + "\" " + $funtype + " 0");
+	}
+	return $cmd;
+}
+
+
+// Bolt Max Bevel - 10/05/05
+// Does a quick 3dsmax style bevel - actually a combination extrude and inset. Handy for box modelling.
+// 1st drag extrudes, second drag insets, next drag starts a new extrude, etc.
+// press q to quit tool
+
+//could do with adding some size relative control of the rate of extrusion.
+
+global proc boltMaxBevel()
+{
+	string $item;
+	string $itemsToRemove[];
+	string $selectedList[] = `ls -sl`;
+	string $selectedFaces[];
+	global int $maxBevelMode;  
+	$maxBevelMode = 0;
+	
+	for ($item in $selectedList)
+	{
+		if (`match "\\.f\\[" $item` != ".f[") 
+		//if the item is not a face
+		{
+			string $from[] = {$item};
+			appendStringArray ($itemsToRemove, $from, 1);
+			//add it to a list of items to remove from the selection list
+		}
+	}
+	
+	$selectedFaces = stringArrayRemove($itemsToRemove, $selectedList);
+	//remove non-faces from the list of selected items 
+	
+	if (size($selectedFaces) != 0)
+	{		
+		string $extrusion[] = `polyExtrudeFacet $selectedFaces`;
+		//apply an extrude to the selected polys
+				
+		if (!`draggerContext -exists dragMaxBevelContext`)
+			draggerContext dragMaxBevelContext;
+		//create the bevel dragger if it doesn't already exist
+		
+		draggerContext -e 
+ 			-releaseCommand "boltReleaseMaxBevel"
+ 			-dragCommand  ("boltDragMaxBevel " + $extrusion[0])
+ 			-cursor       "track"
+ 			dragMaxBevelContext;
+		//edit the dragger settings
+			
+				
+		setToolTo dragMaxBevelContext;
+		//switch on the dragger
+	}
+	else
+	{
+		print "You must have faces selected to use this tool!";
+	}
+	
+
+}	
+
+
+
+global proc boltReleaseMaxBevel()
+{
+	global int $maxBevelMode;
+	$maxBevelMode++;
+}
+
+global proc boltDragMaxBevel (string $extrusion)
+{
+	
+	global int $maxBevelMode;
+	
+	if ($maxBevelMode == 0)
+	//first drag extrudes
+	{
+		
+		float $dragStart[] = `draggerContext -query -anchorPoint dragMaxBevelContext`;
+		float $dragPosition[] = `draggerContext -query -dragPoint dragMaxBevelContext`;
+ 		float $dragOffset = ($dragPosition[1] - $dragStart[1]);
+ 		//work out how far we've dragged in the y
+ 	
+		float $extrudeAmount = ($dragOffset / 1000);
+		//work out the new offset
+		
+		undoInfo -stateWithoutFlush off;
+		//don't store the following bit in the undo buffer or the bevel is un-undoable
+	
+		setAttr ($extrusion+".localTranslate") -type double3 0 0 $extrudeAmount;
+		refresh -currentView;
+		//update the bevel offset and the viewport.
+	
+		undoInfo -stateWithoutFlush on;
+		//switch undo back on
+	}
+	
+	if ($maxBevelMode == 1)
+	//second drag bevels
+	{
+		
+		float $dragStart[] = `draggerContext -query -anchorPoint dragMaxBevelContext`;
+		float $dragPosition[] = `draggerContext -query -dragPoint dragMaxBevelContext`;
+ 		float $dragOffset = ($dragPosition[1] - $dragStart[1]);
+ 		//work out how far we've dragged in the y
+ 	
+		float $bevelAmount = ($dragOffset / 2000);
+		//work out the new scale 
+		
+		undoInfo -stateWithoutFlush off;
+		//don't store the following bit in the undo buffer or the bevel is un-undoable
+	
+		setAttr ($extrusion+".offset") $bevelAmount;
+		refresh -currentView;
+		//update the bevel offset and the viewport.
+	
+		undoInfo -stateWithoutFlush on;
+		//switch undo back on
+	}
+	
+	if ($maxBevelMode == 2)
+	//start another bevel
+	//this is a bodge, should have put code in a seperate proc rather than cut'n'pasting!
+	{	
+		$maxBevelMode = 0;
+		
+		string $item;
+		string $itemsToRemove[];
+		string $selectedList[] = `ls -sl`;
+		string $selectedFaces[];
+		
+		for ($item in $selectedList)
+		{
+			if (`match "\\.f\\[" $item` != ".f[") 
+			//if the item is not a face
+			{
+				string $from[] = {$item};
+				appendStringArray ($itemsToRemove, $from, 1);
+				//add it to a list of items to remove from the selection list
+			}
+		}
+		
+		$selectedFaces = stringArrayRemove($itemsToRemove, $selectedList);
+		//remove non-faces from the list of selected items 
+			
+		string $extrusion[] = `polyExtrudeFacet $selectedFaces`;
+		//apply an extrude to the selected polys
+				
+		draggerContext -e 
+	 		-dragCommand  ("boltDragMaxBevel " + $extrusion[0])
+	 		dragMaxBevelContext;
+		//edit the dragger settings
+	}
+	
+}
+
+//check for new help files
+global proc boltCheckForNewTechDocs()
+{
+	string $docsOnDisk[] = boltGetListOfTechDocs();
+	string $docsInText[] = boltGetListOfViewedTechDocs();
+		
+	string $new[] = {};
+	for ($doc in $docsOnDisk)
+	{
+		if (`sFindItem $docsInText $doc` == -1) $new[size($new)] = $doc;
+	}	
+	
+	if (size($new) > 0)
+	{
+		boltListTechDocsGUI($new);
+	}
+	
+	boltSetListOfViewedTechDocs();
+	
+}
+
+
+//returns the path used to store tech docs
+global proc string boltGetTechDocPath()
+{
+	return "M:/art/vehicles/_DOCUMENTS/TechArt_Updates/";
+}
+
+//returns a list of tech docs
+global proc string[] boltGetListOfTechDocs()
+{
+	string $path = boltGetTechDocPath();
+	string $fileList[] = `getFileList -filespec "*.doc*" -folder $path`;
+	return $fileList;
+}
+
+//returns a list of files recorded in the txt file
+global proc string[] boltGetListOfViewedTechDocs()
+{
+	string $filePath = (boltGetTechDocPath() + "techdocs.txt");
+	
+	if (`filetest -r $filePath` == 0) return {};
+	
+	$fileId=`fopen $filePath "r"`;
+	if ($fileId == 0) return {};
+	
+	string $fileList[] = {};
+	string $nextLine = `fgetline $fileId`;
+	while ( size( $nextLine ) > 0 ) 
+	{
+		$nextLine = strip($nextLine);
+		$fileList[size($fileList)] = $nextLine;
+		$nextLine = `fgetline $fileId`;
+	}
+	fclose $fileId;
+	return $fileList;
+}
+
+//writes updated list of files to the txt file
+global proc boltSetListOfViewedTechDocs()
+{
+	string $filePath = (boltGetTechDocPath() + "techdocs.txt");
+	$fileId=`fopen $filePath "w"`;
+	if ($fileId == 0) return;
+	
+	string $fileList[] = boltGetListOfTechDocs();
+	string $fileText = "";
+	for ($file in $fileList)
+	{
+		$fileText += $file;
+		if ($file != $fileList[size($fileList)-1]) $fileText += "\n";
+	}
+	
+	//write file
+	fprint $fileId $fileText;
+	fclose $fileId;	
+}
+
+
+global proc boltListTechDocsGUI(string $newDocs[])
+{
+	if (`window -exists boltListTechDocsWindow`) {deleteUI boltListTechDocsWindow;} 
+	//delete the window if it already exists
+	
+	float $colEmpty1[] = {0.9,0.9,0.9};
+	float $colYellow1[] = {0.906,0.831,0.475};
+	
+	$title = "Technical Docs and Updates";
+	if (size($newDocs)>0) $title = "New Technical Docs and Updates!";
+	
+	window -title $title -toolbox 1 -retain boltListTechDocsWindow;
+	
+	string $docs[] = boltGetListOfTechDocs();
+	
+	scrollLayout -horizontalScrollBarThickness 0;		
+	columnLayout;
+		
+		for ($i = size($docs)-1; $i>-1; $i--)
+		{	
+			rowLayout;
+			
+			float $col[] = $colEmpty1;
+			if (sFindItem($newDocs,$docs[$i]) != -1) $col = $colYellow1;
+			
+			$cmd = ("system \"load \\\"" + boltGetTechDocPath() + $docs[$i] + "\\\"\"");
+			$cmd = `substituteAllString $cmd "/" "\\\\"`;
+			button -label $docs[$i] -command $cmd -width 360 -bgc $col[0] $col[1] $col[2] -ann "Opens the Word document";
+		    
+		    setParent ..;
+		}
+		   		    
+    setParent ..;
+    setParent ..;
+		
+	showWindow boltListTechDocsWindow;
+	//display the window
+	window -e -height 300 -width 400 boltListTechDocsWindow;  
+}
