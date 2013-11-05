@@ -8,6 +8,7 @@ import functools
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/Pivots.ui'
 form_class, base_class = uic.loadUiType(dirUI)
+
 class Pivots(form_class,base_class):
     def __init__(self, inputFile):
         super(base_class,self).__init__()
@@ -29,6 +30,10 @@ class Pivots(form_class,base_class):
         self.rdbZ.clicked.connect(functools.partial(self.pivotOnAxis,'z'))
         self.chkStatus.clicked.connect(self.checkStatus)
         self.edtX.textChanged.connect(self.updateLineEdit)
+        self.btnPivottoCenterElement.clicked.connect(self.setPivotLocation)
+        self.btnCenterPivot.clicked.connect(self.qtCenterPivotForSelectedMeshes)
+        self.btnPivottoOrigin.clicked.connect(self.qtPivotToOriginForSelectedMeshes)
+        self.btnPivottoanotherObj.clicked.connect(self.qtPivotToAnotherObject)
         
     def clearAll(self):
         try:
@@ -151,29 +156,18 @@ class Pivots(form_class,base_class):
             
         cmds.xfom(mesh, roo = 'yzx', rp = [x0, y0,z0], ws = True)
    
-    def on_btnCenterPivot_clicked(self):
-        if self.chkCenterPivot.isChecked():
-             TransformNode = cmds.ls(transforms = True)
-             for node in TransformNode:
-                 cmds.select(node)
-                 cmds.xform(cp=True)
-        else:
+    def qtCenterPivotForSelectedMeshes(self):
             selObj = cmds.ls(sl=True)
             for obj in selObj:
                 cmds.select(obj)
                 cmds.xform(cp=True)
             
-    def on_btnPivottoOrigin_clicked(self):
-        if self.chkPivottoOrigin.isChecked():
-             TransformNode = cmds.ls(transforms = True)
-             for node in TransformNode:
-                 cmds.move(0,0,0,node+'.scalePivot',node+'.rotatePivot',a=True)
-        else:
+    def qtPivotToOriginForSelectedMeshes(self):
             selObj = cmds.ls(sl=True)
             for obj in selObj:
                 cmds.move(0,0,0,obj+'.scalePivot',obj+'.rotatePivot',a=True)
                 
-    def on_btnPivottoanotherObj_clicked(self):
+    def qtPivotToAnotherObject(self):
         selObj = cmds.ls(sl=True)
         target = cmds.xform(selObj[1],q=True,sp=True,ws=True)
         cmds.xform(selObj[0],piv=target, ws=True)
@@ -210,7 +204,6 @@ class Pivots(form_class,base_class):
     def scaleMeshes(self):
         mesh = py.ls(sl = True)[0]
         currentScale = mesh.scaleX.get()
-        
         
 def main(xmlFile):
     form = Pivots(xmlFile)

@@ -116,6 +116,9 @@
              <bold>false</bold>
             </font>
            </property>
+           <property name="toolTip">
+            <string>Pivot to object</string>
+           </property>
            <property name="text">
             <string>Pivot to  Obj</string>
            </property>
