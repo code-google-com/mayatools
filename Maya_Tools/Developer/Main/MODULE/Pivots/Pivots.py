@@ -7,9 +7,7 @@ import pymel.core.datatypes as dt
 import functools
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/Pivots.ui'
-
-form_class, base_class = uic.loadUiType(dirUI)        
-
+form_class, base_class = uic.loadUiType(dirUI)
 class Pivots(form_class,base_class):
     def __init__(self, inputFile):
         super(base_class,self).__init__()
