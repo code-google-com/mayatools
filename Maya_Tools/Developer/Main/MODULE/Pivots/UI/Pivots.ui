@@ -613,6 +613,9 @@ border-radius: 10px;
 font:  bold 11px
 }</string>
            </property>
+           <property name="maxLength">
+            <number>32766</number>
+           </property>
            <property name="readOnly">
             <bool>true</bool>
            </property>
@@ -704,9 +707,6 @@ font:  bold 11px
            <property name="placeholderText">
             <string>1</string>
            </property>
-           <property name="cursorMoveStyle">
-            <enum>Qt::VisualMoveStyle</enum>
-           </property>
           </widget>
          </item>
          <item>
@@ -748,9 +748,6 @@ font:  bold 11px
            <property name="placeholderText">
             <string>1</string>
            </property>
-           <property name="cursorMoveStyle">
-            <enum>Qt::VisualMoveStyle</enum>
-           </property>
           </widget>
          </item>
          <item>
@@ -791,9 +788,6 @@ font:  bold 11px
            </property>
            <property name="placeholderText">
             <string>1</string>
-           </property>
-           <property name="cursorMoveStyle">
-            <enum>Qt::VisualMoveStyle</enum>
            </property>
           </widget>
          </item>

@@ -79,7 +79,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../../Source/IconResource.qrc">
+             <iconset>
               <normaloff>:/Project/Y_up.png</normaloff>:/Project/Y_up.png</iconset>
             </property>
             <property name="iconSize">
@@ -102,7 +102,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../../Source/IconResource.qrc">
+             <iconset>
               <normaloff>:/Project/background.png</normaloff>:/Project/background.png</iconset>
             </property>
             <property name="iconSize">
@@ -125,7 +125,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../../../Source/IconResource.qrc">
+             <iconset>
               <normaloff>:/Project/normal_off.png</normaloff>:/Project/normal_off.png</iconset>
             </property>
             <property name="iconSize">
@@ -182,7 +182,7 @@
                <string>Export to 3dsMax</string>
               </property>
               <property name="icon">
-               <iconset resource="../../../Source/IconResource.qrc">
+               <iconset>
                 <normaloff>:/Project/Export.png</normaloff>:/Project/Export.png</iconset>
               </property>
               <property name="iconSize">
@@ -199,7 +199,7 @@
                <string>Import from 3dsMax</string>
               </property>
               <property name="icon">
-               <iconset resource="../../../Source/IconResource.qrc">
+               <iconset>
                 <normaloff>:/Project/Import.png</normaloff>:/Project/Import.png</iconset>
               </property>
               <property name="iconSize">
@@ -303,6 +303,9 @@
          <layout class="QHBoxLayout" name="horizontalLayout_3">
           <item>
            <widget class="QSpinBox" name="spnRing">
+            <property name="maximum">
+             <number>98</number>
+            </property>
             <property name="value">
              <number>1</number>
             </property>
@@ -469,7 +472,7 @@
              <bool>false</bool>
             </property>
             <attribute name="buttonGroup">
-             <string notr="true">buttonGroup</string>
+             <string>buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -488,7 +491,7 @@
              <bool>true</bool>
             </property>
             <attribute name="buttonGroup">
-             <string notr="true">buttonGroup</string>
+             <string>buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -504,7 +507,7 @@
              <string>Instance</string>
             </property>
             <attribute name="buttonGroup">
-             <string notr="true">buttonGroup</string>
+             <string>buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -543,7 +546,7 @@
              <string>Parent Only</string>
             </property>
             <attribute name="buttonGroup">
-             <string notr="true">buttonGroup</string>
+             <string>buttonGroup</string>
             </attribute>
            </widget>
           </item>
