@@ -108,8 +108,6 @@ class ProjectUI(form_class,base_class):
         
     def AssetTracking(self):
         pass
-        #self.AssetTracking = AssetTracking.AssetTracking(self.Proj.managers)
-        #self.AssetTracking.show()
 
         
 
