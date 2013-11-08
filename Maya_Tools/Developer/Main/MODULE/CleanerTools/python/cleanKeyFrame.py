@@ -1,4 +1,4 @@
-description = 'Clean up keyframe.'
+description = 'Clean keyframe not needed.'
 name = 'cleanKeyFrame'
 
 import maya.cmds as cmds
