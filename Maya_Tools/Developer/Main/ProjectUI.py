@@ -17,10 +17,10 @@ try:
 except: 
     import GE_QA
 
-try:
-    reload(AssetTracking)
-except:
-    import AssetTracking
+# try:
+#     reload(AssetTracking)
+# except:
+#     import AssetTracking
     
 try:
     reload(UploadForm)
@@ -107,8 +107,9 @@ class ProjectUI(form_class,base_class):
         self.QAform.show()
         
     def AssetTracking(self):
-        self.AssetFrom = AssetTracking.AssetTracking(self.Proj.managers)
-        self.AssetFrom.show()
+        pass
+        #self.AssetFrom = AssetTracking.AssetTracking(self.Proj.managers)
+        #self.AssetFrom.show()
 
         
 

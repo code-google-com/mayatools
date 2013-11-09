@@ -440,7 +440,8 @@ class PolyTools(form_class,base_class):
                     cmds.setAttr(dupMesh[0] + '.scaleZ', -1)
             mel.eval('FreezeTransformations')
             mel.eval('DeleteHistory')
-            cmds.polyNormal(dupMesh, nm = 0)
+            if not cmds.about(version = True).split(' ')[0] == '2014':
+                cmds.polyNormal(dupMesh, nm = 0)
             dupMeshShape = cmds.listRelatives(dupMesh, type = 'mesh', fullPath = True)
             cmds.setAttr(dupMeshShape[0] + '.opposite', False)
             cmds.select(cl = True)
