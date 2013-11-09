@@ -60,4 +60,5 @@ CALL "E:\Program Files\Golaem\GolaemCrowd-2.5.0.1-Maya2014-64bit\bin\glmCrowdFor
 
 set MAYA_LAUNCHER=%DRIVE%:\PROGRAM FILES\AUTODESK\maya%MAYAVERSION%
 "%MAYA_LAUNCHER%\bin\maya.exe"
+exit
 
