@@ -36,6 +36,7 @@ def execute():
     for dead in deadShapes:
         try:
             cmds.delete(dead)
+            print '-- delete dead shape: ' + dead
         except:
             pass
 
