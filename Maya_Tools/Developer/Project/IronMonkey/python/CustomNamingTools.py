@@ -10,7 +10,8 @@ from xml.dom.minidom import *
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/CustomNamingTool.ui'
 locators = ['pivot_bumper_front_left','pivot_bumper_front_right','pivot_bumper_rear_left','pivot_bumper_rear_right','locator_headlights_00','locator_brakelights_00','locator_wheel_smoke_00 ','locator_nitro_00','wheel_arch_loc']
-
+lods = ['lod_00','lod_01','lod_02','lod_03','lod_04','lod_05','lod_06']
+parts = ['type_a','type_b','type_c','type_d','type_y','type_z','pull_wheelarch','large_overfender','small_overfender']
 form_class, base_class = uic.loadUiType(dirUI)    
 
 class CustomNamingTool(form_class,base_class):
@@ -26,6 +27,7 @@ class CustomNamingTool(form_class,base_class):
         self.cbbKit.currentIndexChanged.connect(self.updateActivedList)
         self.btnHierrachy.clicked.connect(self.buildHierrachy)
         self.btnPlace.clicked.connect(self.placeLocators)
+        self.btnSetupLOD.clicked.connect(self.setupLOD)
         self.material = list()
         self.loadXML(inputFile)
         self.cbbLocatorList.addItems(locators)
@@ -46,6 +48,32 @@ class CustomNamingTool(form_class,base_class):
         self.cbbPart.addItems(self.part)
         self.cbbLOD.addItems(self.lod)
         self.cbbKit.addItems(self.kit[0])
+        
+    def setupLOD(self):
+        #----- remove current layers. An setup correct structures
+        layers = cmds.ls(type = 'displayLayer')
+        cmds.delete(layers)
+        
+        #----- create structure layers. --------------------------------------------------
+        cmds.createDisplayLayer(n = 'decal_placement_layer')
+        cmds.createDisplayLayer(n = 'locator_layer')
+        cmds.createDisplayLayer(n = 'collision_layer')
+        cmds.createDisplayLayer(n = 'placeholder_wheel_layer')
+        cmds.createDisplayLayer(n = 'base_car_layer')
+        for part in parts:
+            try:
+                py.select('*' + part + '*')
+                cmds.createDisplayLayer(e = False, n = part + '_layer')
+            except:
+                pass
+        for lod in lods:
+            try: 
+                py.select('*' + lod + '*')
+                cmds.createDisplayLayer(e = False, n = lod + '_layer')
+            except:
+                pass
+        
+        py.select(type = '')
         
     def updateActivedList(self):
         selObjs = cmds.ls(sl = True, l = True)

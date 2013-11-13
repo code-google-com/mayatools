@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>440</width>
-    <height>169</height>
+    <height>199</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -160,6 +160,13 @@ font:  bold 11px
       </widget>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QPushButton" name="btnSetupLOD">
+     <property name="text">
+      <string>Setup LOD</string>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="Line" name="line">
