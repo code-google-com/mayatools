@@ -58,7 +58,7 @@ class CustomNamingTool(form_class,base_class):
         cmds.createDisplayLayer(n = 'decal_placement_layer')
         cmds.createDisplayLayer(n = 'locator_layer')
         cmds.createDisplayLayer(n = 'collision_layer')
-        cmds.createDisplayLayer(n = 'placeholder_wheel_layer')
+        cmds.createDisplayLayer(n = 'wheel_placeholder_layer')
         cmds.createDisplayLayer(n = 'base_car_layer')
         for part in parts:
             try:
@@ -72,8 +72,15 @@ class CustomNamingTool(form_class,base_class):
                 cmds.createDisplayLayer(e = False, n = lod + '_layer')
             except:
                 pass
+        # select all locator and put them in 
+        cmds.editDisplayLayerMembers('locator_layer', cmds.ls(type = 'locators'), noRecurse = True)
+        # select wheel place holder and put them in
+        cmds.editDisplayLayerMembers('wheel_placeholder_layer', cmds.ls('*wheel*placeholder'), noRecurse = True)
+        # select decal placeholder and put them in
+        cmds.editDisplayLayerMembers('decal_placement_layer', cmds.ls('*decal*'), noRecurse = True)
+        # select decal placeholder and put them in
+        cmds.editDisplayLayerMembers('collision_layer', cmds.ls('*collision*'), noRecurse = True)
         
-        py.select(type = '')
         
     def updateActivedList(self):
         selObjs = cmds.ls(sl = True, l = True)
