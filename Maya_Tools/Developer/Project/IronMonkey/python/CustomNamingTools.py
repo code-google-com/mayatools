@@ -73,14 +73,29 @@ class CustomNamingTool(form_class,base_class):
             except:
                 pass
         # select all locator and put them in 
-        cmds.editDisplayLayerMembers('locator_layer', cmds.ls(type = 'locators'), noRecurse = True)
+        cmds.editDisplayLayerMembers('locator_layer', cmds.ls(type = 'locator'), noRecurse = True)
         # select wheel place holder and put them in
-        cmds.editDisplayLayerMembers('wheel_placeholder_layer', cmds.ls('*wheel*placeholder'), noRecurse = True)
+        cmds.editDisplayLayerMembers('wheel_placeholder_layer', cmds.ls('*placeholder*'), noRecurse = True)
         # select decal placeholder and put them in
-        cmds.editDisplayLayerMembers('decal_placement_layer', cmds.ls('*decal*'), noRecurse = True)
+        # cmds.editDisplayLayerMembers('decal_placement_layer', [x for x in cmds.ls('*decal_*') if x not in cmds.ls(materials = True)], noRecurse = True)
         # select decal placeholder and put them in
-        cmds.editDisplayLayerMembers('collision_layer', cmds.ls('*collision*'), noRecurse = True)
-        
+        cmds.editDisplayLayerMembers('collision_layer', cmds.ls('*collider*'), noRecurse = True)
+        # select lod00 and add them to layer
+        cmds.editDisplayLayerMembers('lod_00_layer', cmds.ls('lod_00'), noRecurse = True)
+        # select lod01 and add them to layer
+        cmds.editDisplayLayerMembers('lod_01_layer', cmds.ls('lod_01'), noRecurse = True)
+        # select lod02 and add them to layer
+        cmds.editDisplayLayerMembers('lod_02_layer', cmds.ls('lod_02'), noRecurse = True)
+        # select lod03 and add them to layer
+        cmds.editDisplayLayerMembers('lod_03_layer', cmds.ls('lod_03'), noRecurse = True)
+        # select lod04 and add them to layer
+        cmds.editDisplayLayerMembers('lod_04_layer', cmds.ls('lod_04'), noRecurse = True)
+        # select lod05 and add them to layer
+        cmds.editDisplayLayerMembers('lod_05_layer', cmds.ls('lod_05'), noRecurse = True)
+        # select lod06 and add them to layer
+        cmds.editDisplayLayerMembers('lod_06_layer', cmds.ls('lod_06'), noRecurse = True)
+        # select base car and add them to layer
+        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('*rotor*','*caliper*','*chassis_*','*interior*'), noRecurse = True)
         
     def updateActivedList(self):
         selObjs = cmds.ls(sl = True, l = True)
