@@ -11,7 +11,7 @@ fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/CustomNamingTool.ui'
 locators = ['pivot_bumper_front_left','pivot_bumper_front_right','pivot_bumper_rear_left','pivot_bumper_rear_right','locator_headlights_00','locator_brakelights_00','locator_wheel_smoke_00 ','locator_nitro_00','wheel_arch_loc']
 lods = ['lod_00','lod_01','lod_02','lod_03','lod_04','lod_05','lod_06']
-parts = ['type_a','type_b','type_c','type_d','type_y','type_z','pull_wheelarch','large_overfender','small_overfender']
+parts = ['type_a','type_b','type_c','type_d','type_y','type_z']#,'pull_wheelarch','large_overfender','small_overfender']
 form_class, base_class = uic.loadUiType(dirUI)    
 
 class CustomNamingTool(form_class,base_class):
@@ -60,6 +60,10 @@ class CustomNamingTool(form_class,base_class):
         cmds.createDisplayLayer(n = 'collision_layer')
         cmds.createDisplayLayer(n = 'wheel_placeholder_layer')
         cmds.createDisplayLayer(n = 'base_car_layer')
+        cmds.createDisplayLayer(n = 'pulled_wheel_arch_layer')
+        cmds.createDisplayLayer(n = 'small_overfenders_layer')
+        cmds.createDisplayLayer(n = 'large_overfenders_layer')
+        
         for part in parts:
             try:
                 py.select('*' + part + '*')
@@ -95,7 +99,13 @@ class CustomNamingTool(form_class,base_class):
         # select lod06 and add them to layer
         cmds.editDisplayLayerMembers('lod_06_layer', cmds.ls('lod_06'), noRecurse = True)
         # select base car and add them to layer
-        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('*rotor*','*caliper*','*chassis_*','*interior*'), noRecurse = True)
+        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor','caliper','chassis_','body'), noRecurse = True)
+        # select pull wheel arch
+        cmds.editDisplayLayerMembers('pulled_wheel_arch_layer', cmds.ls('pulled'), noRecurse = True)
+        # select small over fender
+        cmds.editDisplayLayerMembers('small_overfenders_layer', cmds.ls('small'), noRecurse = True)
+        # select large over fender
+        cmds.editDisplayLayerMembers('large_overfenders_layer', cmds.ls('large'), noRecurse = True)
         
     def updateActivedList(self):
         selObjs = cmds.ls(sl = True, l = True)
@@ -156,7 +166,6 @@ class CustomNamingTool(form_class,base_class):
                         nullGroup = cmds.group( em = True)
                         cmds.parent(nullGroup, 'J_wheel_' + parts[0].replace('rotor_','') + '|rotor|type_a|')
                         cmds.rename(nullGroup,lod.replace('lod','lod_'))
-                        
                         
                 elif parts[0] in ['caliper_rear_left','caliper_rear_right','caliper_front_left','caliper_front_right']:
                     parent = 'J_suspension_bottom_' + parts[0].replace('caliper_','') +'|caliper|type_'+kit+'|'+ lod.replace('lod','lod_')

@@ -12,6 +12,7 @@ Sony_nohide = []
 # IronMonkey Lods:
 IronMonkey_mapping_LODs = ['lod_00_layer', 'lod_01_layer', 'lod_02_layer', 'lod_03_layer', 'lod_04_layer', 'lod_05_layer', 'lod_06_layer']
 IronMonkey_nohide = ['base_car_layer']
+
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/LODTools.ui'
 
@@ -29,6 +30,8 @@ class LODTools(form_class,base_class):
         self.setupUi(self)
         self.__name__ = 'LOD Tools'
         self._projectName = 'IronMonkey'
+        self._nohide = list()#['base_car_layer']
+        self._currentPart = ''
         self.btnSetupLOD.clicked.connect(self.check)
         self.btnSwitchLOD.clicked.connect(self.SwapLOD)
         self.btnCleanUp.clicked.connect(self.CleanUp)
@@ -170,7 +173,8 @@ class LODTools(form_class,base_class):
         cmds.showHidden(all = True)
         
     def SwapLOD(self):
-        LODa, LODb = '_LOD0_','_LOD1_'
+        self._nohide = ['base_car_layer']#globals()[self._projectName+'_nohide']
+        #LODa, LODb = '_LOD0_','_LOD1_'
         if self.rdbSourceLOD0.isChecked():
             LODa = mappingLODs(self._projectName,'_LOD0_')
         elif self.rdbSourceLOD1.isChecked():
@@ -204,10 +208,12 @@ class LODTools(form_class,base_class):
             LODb = mappingLODs(self._projectName,'_LOD6_')
         elif self.rdbTargetSHADOW.isChecked():
             LODb = mappingLODs(self._projectName,'_SHADOW_')
-        
         # --
-        nohideLayer = [LODa, LODb,'defaultLayer']
-        displayLayerNotWork = [layer for layer in cmds.ls(type = 'displayLayer') if layer not in [LODa, LODb, 'defaultLayer']]
+        self._nohide.append(LODa)
+        self._nohide.append(LODb)
+        self._nohide.append('defaultLayer')
+        self._nohide.append(self._currentPart)
+        displayLayerNotWork = [layer for layer in cmds.ls(type = 'displayLayer') if layer not in self._nohide]
         for l in displayLayerNotWork:
             cmds.setAttr(l + '.visibility', 0)
             
@@ -254,29 +260,56 @@ class LODTools(form_class,base_class):
         cmds.setAttr(LODsChain[indexofNeighborLOD] + '.visibility', True)
         cmds.setAttr(LODsChain[indexofCurrentLOD] + '.visibility', False)
         
-        
     def selectLOD(self, lod):
         if lod == '0':
             patternLOD = re.compile(r'(.*)LOD(\.*)',re.I)
             patternSHADOW = re.compile(r'(.*)SHADOW(\.*)',re.I)
             LOD0s = [x for x in cmds.ls(transforms = True) if not re.search(patternLOD,x) and not re.search(patternSHADOW,x) ]
             cmds.select(LOD0s)
+            self._currentPart = 'type_a_layer'
+            cmds.setAttr(self._currentPart + '.visibility', 1)
         if lod == '1':
-            cmds.select('*LOD1')
+            try:
+                cmds.select('*LOD1')
+            except:
+                pass
+            self._currentPart = 'type_b_layer'
+            cmds.setAttr(self._currentPart + '.visibility', 1)
         if lod == '2':
-            cmds.select('*LOD2')
+            try:
+                cmds.select('*LOD2')
+            except:
+                pass
+            self._currentPart = 'type_c_layer'
+            cmds.setAttr(self._currentPart + '.visibility', 1)
         if lod == '3':
-            cmds.select('*LOD3')
+            try:
+                cmds.select('*LOD3')
+            except:
+                pass
+            self._currentPart = 'type_d_layer'
+            cmds.setAttr(self._currentPart + '.visibility', 1)
         if lod == '4':
-            cmds.select('*LOD4')
+            try:
+                cmds.select('*LOD4')
+            except:
+                pass
+            self._currentPart = 'type_y_layer'
+            cmds.setAttr(self._currentPart + '.visibility', 1)
         if lod == '5':
-            cmds.select('*LOD5')
+            try:
+                cmds.select('*LOD5')
+            except:
+                pass
+            self._currentPart = 'type_z_layer'
+            cmds.setAttr(self._currentPart + '.visibility', 1)
         if lod == '6':
             cmds.select('*LOD6')
+            self._currentPart = ''
         if lod == 'shadow':
             cmds.select('*SHADOW') 
-        
-                    
+        print self._currentPart
+   
 def main(xmlFile):
     form = LODTools(xmlFile)
     return form 
