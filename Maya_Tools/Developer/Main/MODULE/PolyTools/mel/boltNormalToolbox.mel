@@ -1,29 +1,10 @@
 
 //////////////////////////////////////////////////////////////////////// 
-source boltVehicleDisplayManager;
-source sceeProcs;
+//source boltVehicleDisplayManager;
+//source sceeProcs;
 
 //////////////////////////////////////////////////////////////////////// 
 //from boltShaderTools.mel
-
-
-global proc string[] boltTransformsToShapes(string $transforms[])
-{
-	string $shapes[] = {};
-	for ($transform in $transforms)
-	{
-		if (objExists($transform))
-		{
-			string $newShapes[] = `listRelatives -fullPath -type "mesh" $transform`;
-			if ($newShapes[0]!="")
-			{
-				$shapes = `stringArrayCatenate $shapes {$newShapes[0]}`;
-			}
-		}	
-	}
-	return $shapes;
-}
-
 
 proc float boltGetTri3DArea(vector $v1, vector $v2, vector $v3)
 //uses heron's formula to return area of 3d triangle, given 3 points as vectors
@@ -1970,7 +1951,7 @@ global proc boltNorms.MatchSeamNormals()
 //given two edge loops on same or seperate objects, finds nearest verts, and averages normals.
 {
 	//max seperation allowed for matching verts, in m
-	float $maxVertSeperation = 0.1;
+	float $maxVertSeperation = 0.06;
 	
 	string $edges[] = `ls -sl -fl "*.e[*]"`;
 	
@@ -2008,6 +1989,65 @@ global proc boltNorms.MatchSeamNormals()
 
 
 }
+
+global proc boltNorms.MatchSeamAlphas()
+//given two edge loops on same or seperate objects, finds nearest verts, and averages vertex alpha.
+{
+	//max seperation allowed for matching verts, in m
+	float $maxVertSeperation = 0.06;
+	
+	string $edges[] = `ls -sl -fl "*.e[*]"`;
+	
+	//get and verify 2 edge loops
+	string $loop1[] = boltNorms.GetLoop($edges[0], $edges);
+	string $remainingEdges[] = stringArrayRemove($loop1,$edges); 
+	if (size($remainingEdges) == 0)
+	{
+		error "Please select 2 seperate, adjacent edge loops for seam matching";
+	}
+	string $loop2[] = boltNorms.GetLoop($remainingEdges[0], $remainingEdges);
+	if ( size($remainingEdges) > size($loop2) )
+	{
+		error "Please select 2 seperate, adjacent edge loops for seam matching";
+	}
+	
+	string $loop1verts[] = boltNorms.ToVerts($loop1);
+	string $loop2verts[] = boltNorms.ToVerts($loop2);
+	
+	for ($v1 in $loop1verts)
+	{
+		$v2 = boltNorms.GetNearestVertPos($v1, $loop2verts);
+		
+		if ( boltNorms.GetVertDistance($v1, $v2) > $maxVertSeperation )
+		{
+			warning ("Not alpha matching between " + $v1 + " and " + $v2 + ". Max vertex seperation of " + $maxVertSeperation + "m exceeded!");
+		}
+		else
+		{
+			boltNorms.AverageAlphas($v1, $v2);
+		}
+	}
+	
+	print "\nSeam Alpha Matching completed.";
+
+
+}
+
+global proc boltNorms.AverageAlphas(string $v1, string $v2)
+//averages the alphas of the two verts
+{
+	//get the average colour
+	float $c1 = boltGetAverageVertexAlphaOfVert($v1);
+	float $c2 = boltGetAverageVertexAlphaOfVert($v2);
+	float $c3 = ($c1 + $c2) /2.0;
+	
+	//write the colour
+	polyColorPerVertex -e -a $c3 $v1;
+	polyColorPerVertex -e -a $c3 $v2;
+}
+
+
+
 
 global proc vector boltNorms.GetAverageNormalOnVert(string $vert)
 //returns the average normal on a vert.

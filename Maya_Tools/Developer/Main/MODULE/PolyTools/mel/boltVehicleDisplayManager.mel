@@ -89,6 +89,12 @@ global proc boltVehicleDisplayManager()
 								checkBox -width 100 -value 0 -label "Damaged" 				-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDDama;
 							setParent ..;
 							
+							separator -style "in" -horizontal 1 -height 10 -width 200;
+							rowLayout -numberOfColumns 2;
+								checkBox -width 100 -value 0 -label "Exterior Only" 			-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDExtO;      
+								checkBox -width 100 -value 0 -label "Interior Only" 			-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDIntO;
+							setParent ..;
+							
 							//checkBox -value 0 -label "Dead"	 				-changeCommand "boltUpdateVehicleDisplay"	 boltCheckBoxVDDead;
 							//checkBox -value 0 -label "Undead"	 			-changeCommand "boltUpdateVehicleDisplay"	 boltCheckBoxVDUnde;
 							//checkBox -value 0 -label "Glows / Effects"		-changeCommand "boltUpdateVehicleDisplay" 	 boltCheckBoxVDGlow;
@@ -247,17 +253,17 @@ global proc boltVehicleDisplayButton(int $flag)
 //code for preset buttons
 {
 	int $values[];
-	string $checkboxes[] = {"Locs","Shad","Cams","Ligh","Coll","Crum","ShPx","Lod0","Lod1","Lod2","Lod3","Lod4","Lod5","Lod6","Body","Tech","Inte","Whee","Anim","Hvok","Unda","Dama"};
-	if ($flag == 0) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0};  //all off
-	if ($flag == 1) $values = { 1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1};  //all on
-	if ($flag == 2) $values = { 0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     0,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 0
-	if ($flag == 3) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 1
-	if ($flag == 4) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 2
-	if ($flag == 5) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 3
-	if ($flag == 6) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 4
-	if ($flag == 7) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 5
-	if ($flag == 9) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     1,     1,     1,     1,     0,     0,     1,     0};  //main car lod 6
-	if ($flag == 8) $values = { 0,     0,     0,     0,     0,     0,     0,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     0,     0,     1,     0};  //all geometry
+	string $checkboxes[] = {"Locs","Shad","Cams","Ligh","Coll","Crum","ShPx","Lod0","Lod1","Lod2","Lod3","Lod4","Lod5","Lod6","Body","Tech","Inte","Whee","Anim","Hvok","Unda","Dama","ExtO","IntO"};
+	if ($flag == 0) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0};  //all off
+	if ($flag == 1) $values = { 1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1};  //all on
+	if ($flag == 2) $values = { 0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     0,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0,     1,     0};  //main car lod 0
+	if ($flag == 3) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0,     1,     0};  //main car lod 1
+	if ($flag == 4) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0,     1,     0};  //main car lod 2
+	if ($flag == 5) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0,     1,     0};  //main car lod 3
+	if ($flag == 6) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     0,     1,     1,     1,     1,     0,     0,     1,     0,     1,     0};  //main car lod 4
+	if ($flag == 7) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     0,     1,     1,     1,     1,     0,     0,     1,     0,     1,     0};  //main car lod 5
+	if ($flag == 9) $values = { 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     1,     1,     1,     1,     1,     0,     0,     1,     0,     1,     0};  //main car lod 6
+	if ($flag == 8) $values = { 0,     0,     0,     0,     0,     0,     0,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     1,     0,     0,     1,     0,     1,     1};  //all geometry
 	
 		
   	for ($i=0; $i<size($checkboxes); $i++)
@@ -597,6 +603,7 @@ global proc string[] boltWhatIsPart (string $part)
 //returns a list of flags to define the type of part this is
 //FLAGS: _DEF _LOC _SHAD _CAM _LIGHT _COL _RAGDOLL _DAMZONE _LOD# _SWP## _DEAD _UNDEAD 
 //       _BODY _TECH _INTERIOR _SUSP _UNKNOWN _WHEELS _GLOW _OCC _SHADOW _HAVOK _ANIM _DAM
+//       _EXTONLY _INTONLY
 {
 	if (objExists($part)==0)
 	{
@@ -706,6 +713,13 @@ global proc string[] boltWhatIsPart (string $part)
 	if (`gmatch $part "*_LOD5"`) $flags[size($flags)] = "_LOD5";
 	if (`gmatch $part "*_LOD6"`) $flags[size($flags)] = "_LOD6";
 	if (`gmatch $part "*_SHADOW"`) $flags[size($flags)] = "_SHADOW";
+	if (`gmatch $part "*_LOD1_*"`) $flags[size($flags)] = "_LOD1";
+	if (`gmatch $part "*_LOD2_*"`) $flags[size($flags)] = "_LOD2";
+	if (`gmatch $part "*_LOD3_*"`) $flags[size($flags)] = "_LOD3";
+	if (`gmatch $part "*_LOD4_*"`) $flags[size($flags)] = "_LOD4";
+	if (`gmatch $part "*_LOD5_*"`) $flags[size($flags)] = "_LOD5";
+	if (`gmatch $part "*_LOD6_*"`) $flags[size($flags)] = "_LOD6";
+	if (`gmatch $part "*_SHADOW_*"`) $flags[size($flags)] = "_SHADOW";
 	
 	if ((`sGmatchItem $flags "_LOD*"` == -1) && (`sGmatchItem $flags "_SHADOW"` == -1)) $flags[size($flags)] = "_LOD0";
 	//if no lod or shadow number recorded, assume lod0
@@ -734,6 +748,22 @@ global proc string[] boltWhatIsPart (string $part)
 	}
 	//work out swapable parts, including  swap 00.
 	 
+	//test for interior / exterior only nodes
+	string $eaNodes[] = `listRelatives -type "evoAttributeNode" -children $part`;
+	for ($eaNode in $eaNodes)
+	{
+		$set = `getAttr ($eaNode + ".EvoAttributeSet")`;
+		if ($set == "ExteriorOnly")
+		{
+			$flags[size($flags)] = "_EXTONLY";
+			break;
+		}
+		if ($set == "InteriorOnly")
+		{
+			$flags[size($flags)] = "_INTONLY";
+			break;
+		}
+	}
 	
 		
 	if ($partType == "bodywork") 		$flags[size($flags)] = "_BODY";
@@ -746,7 +776,6 @@ global proc string[] boltWhatIsPart (string $part)
 	if ($partType == "glow") 			$flags[size($flags)] = "_GLOW";   
 	if ($partType == "unknown") 		$flags[size($flags)] = "_UNKNOWN";
 	
-		
 	return $flags;
 }
 
@@ -843,6 +872,9 @@ global proc int boltGetPartVisibility(string $obj)
 	
 	if ((`checkBox -q -v  boltCheckBoxVDDama` == 0) && (`sFindItem $partType "_DAM"`    	!= -1)) return 0;
 	if ((`checkBox -q -v  boltCheckBoxVDUnda` == 0) && (`sFindItem $partType "_DAM"`    	== -1)) return 0;
+	
+	if ((`checkBox -q -v  boltCheckBoxVDIntO` == 0) && (`sFindItem $partType "_INTONLY"`    != -1)) return 0;
+	if ((`checkBox -q -v  boltCheckBoxVDExtO` == 0) && (`sFindItem $partType "_EXTONLY"`    != -1)) return 0;
 	
 	if ((`checkBox -q -v  boltCheckBoxVDBody` == 0) && (`sFindItem $partType "_BODY"` 		!= -1)) return 0;
     if ((`checkBox -q -v  boltCheckBoxVDTech` == 0) && (`sFindItem $partType "_TECH"` 		!= -1)) return 0;

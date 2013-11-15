@@ -1,0 +1,333 @@
+global proc boltDenter()
+{
+	if (`window -exists boltDenterWindow`) {deleteUI boltDenterWindow;} 
+	//delete the window if it already exists
+	
+	window -title "Dent-o-matic" -toolbox 1 boltDenterWindow;
+		scrollLayout;
+	    	columnLayout;
+	    		
+	    		rowLayout -numberOfColumns 2 -cw 1 150 -cw 2 100;
+	    			text -label "Dent Diameter:";
+	    			floatField -precision 2 -ann "diameter of the dent in meters" boltDentDiameter;
+	    		setParent ..;	
+	    		rowLayout -numberOfColumns 2 -cw 1 150 -cw 2 100;
+	    			text -label "Dent Depth:";
+	    			floatField -precision 2 -ann "depth of the dent in meters" boltDentDepth;
+	    		setParent ..;
+	    		
+	    		separator -style "in" -horizontal 1 -height 10 -width 250;
+	    		
+	    		rowLayout -numberOfColumns 2 -cw 1 150 -cw 2 100;
+	    			text -label "Number of Ripples:";
+	    			intField -ann "number of ripples to create around the dent" boltRippleNum;
+	    		setParent ..;
+	    		rowLayout -numberOfColumns 2 -cw 1 150 -cw 2 100;
+	    			text -label "Ripple Width:";
+	    			floatField -precision 2 -ann "width of each ripple in meters" boltRippleWidth;
+	    		setParent ..;
+	    		rowLayout -numberOfColumns 2 -cw 1 150 -cw 2 100;
+	    			text -label "1st Ripple Distance:";
+	    			floatField -precision 2 -ann "distance to first ripple in meters" boltFirstRipple;
+	    		setParent ..;
+	    		rowLayout -numberOfColumns 2 -cw 1 150 -cw 2 100;
+	    			text -label "Ripple Spacing:";
+	    			floatField -precision 2 -ann "spacing between ripples in meters" boltRippleSpacing;
+	    		setParent ..;
+	    		rowLayout -numberOfColumns 2 -cw 1 150 -cw 2 100;
+	    			text -label "Max Ripple height:";
+	    			floatField -precision 2 -ann "maximum height of the first ripple in meters" boltRippleForceMax;
+	    		setParent ..;
+				
+				separator -style "in" -horizontal 1 -height 10 -width 250;
+				
+				rowLayout -numberOfColumns 2 -cw 1 150 -cw 2 100;
+	    			text -label "Noise Frequency:";
+	    			floatField -precision 2 -ann "Higher numbers = higher frequency noise" boltNoiseFreq;
+	    		setParent ..;
+				rowLayout -numberOfColumns 2 -cw 1 150 -cw 2 100;
+	    			text -label "Dent Noise Amplitude:";
+	    			floatField -precision 2 -ann "amount of noise applied to dents" boltNoiseAmp;
+	    		setParent ..;
+	    		rowLayout -numberOfColumns 2 -cw 1 150 -cw 2 100;
+	    			text -label "Ripple Noise Amplitude:";
+	    			floatField -precision 2 -ann "amount of noise applied to ripples" boltRippleNoiseAmp;
+	    		setParent ..;
+			
+				separator -style "in" -horizontal 1 -height 10 -width 250;
+				
+				text -label "Presets:";  
+				button -height 20 -width 100 -label "Minor Dint" 	 -command "boltDentPreset 0.15 0.03 0 0 0   0   0    5 0.05 0.1" boltButtonDentPreset1;
+	    		button -height 20 -width 100 -label "Small Dent"	 -command "boltDentPreset 0.2  0.1  1 1 0.5 1.5 0.05 5 0.1  0.1" boltButtonDentPreset2;
+	    		button -height 20 -width 100 -label "Good Smack" 	 -command "boltDentPreset 0.5  0.4  3 1 1   1.5 0.2  5 0.2  0.1" boltButtonDentPreset3;
+	    		button -height 20 -width 100 -label "Massive Damage" -command "boltDentPreset 2    0.8  5 1 1   1.5 0.3  5 0.2  0.1" boltButtonDentPreset4;
+	    		
+	    		separator -style "in" -horizontal 1 -height 10 -width 250;
+	    		
+	    		button -height 20 -width 200 -label "Apply dent (using vertex normal)" -command "boltDent 0 1 0" -ann "Applies dent to the selected vertex in the direction of the vertex normal" boltButtonDent;
+	    		button -height 20 -width 200 -label "Apply dent (using camera normal)" -command "boltDent 1 1 0" -ann "Applies dent to the selected vertex in the direction of the camera view" boltButtonDent1;
+	    		button -height 20 -width 100 -label "Auto Dent On"  -command "boltAutoDent 1" -ann "Automatically dents verts as they are selected" boltButtonAutoDentOn;
+	    		button -height 20 -width 100 -label "Auto Dent Off"  -command "boltAutoDent 0" -ann "Automatically dents verts as they are selected" boltButtonAutoDentOff;
+	    		
+	    		separator -style "in" -horizontal 1 -height 10 -width 250;
+	    		
+	    		button -height 20 -width 200 -label "Apply scratches (using vertex normal)" -command "boltDent 0 0 1" -ann "Applies scratch to the selected vertex in the direction of the vertex normal" boltButtonScratch;
+	    		button -height 20 -width 200 -label "Apply scratches (using camera normal)" -command "boltDent 1 0 1" -ann "Applies scratch to the selected vertex in the direction of the camera view" boltButtonScratch1;
+	    		
+	    		
+	    		
+			setParent ..;					
+		setParent ..;
+	setParent ..;   
+                 		                             
+	showWindow boltDenterWindow;
+	//display the window
+
+}
+
+global proc boltDentPreset(float $dentDiameter, float $dentDepth, int $rippleNum, float $rippleWidth, float $firstRipple, float $rippleSpacing, float $rippleForceMax, float $noiseFreq, float $noiseAmp, float $rippleNoiseAmp)
+//used to set preset damage values
+{
+	floatField -e -value $dentDiameter  	boltDentDiameter;		//size of main dent in meters
+	floatField -e -value $dentDepth  		boltDentDepth; 		//depth of the dent in meters
+	                                         
+	intField   -e -value $rippleNum  		boltRippleNum;       	//number of ripples to do
+	floatField -e -value $rippleWidth  		boltRippleWidth;		//width of each ripple
+	floatField -e -value $firstRipple  		boltFirstRipple;		//distance to first ripple
+	floatField -e -value $rippleSpacing  	boltRippleSpacing;		//spacing between ripples
+	floatField -e -value $rippleForceMax  	boltRippleForceMax;	//max force of a ripple
+	                                         
+	floatField -e -value $noiseAmp  		boltNoiseAmp; 			//Amplitude of noise
+	floatField -e -value $noiseFreq  		boltNoiseFreq;			//Frequency of noise
+	floatField -e -value $rippleNoiseAmp 	boltRippleNoiseAmp; 	//amplitude for ripple noise
+}
+
+global proc boltAutoDent(int $flag)
+//sets up autodent script job
+{
+	global int $gBoltAutoDentJob; 
+	
+	if ($flag==1)
+	{
+		if ($gBoltAutoDentJob > 0) if (`scriptJob -ex $gBoltAutoDentJob`) scriptJob -kill $gBoltAutoDentJob;
+		$gBoltAutoDentJob = `scriptJob -parent "boltDenterWindow" -event "SelectionChanged" boltDent`;
+		print "\nAuto Dent ON";
+	}
+	if ($flag==0)
+	{
+		if ($gBoltAutoDentJob > 0) if (`scriptJob -ex $gBoltAutoDentJob`) scriptJob -kill $gBoltAutoDentJob;
+		$gBoltAutoDentJob = 0;
+		print "\nAuto Dent OFF";  
+	}
+}
+
+
+global proc boltDent(int $normFlag, int $dentFlag, int $scratchFlag)
+{
+	print "\nStarting Dent...";
+	
+	float $dentDiameter = 	`floatField -q -value boltDentDiameter`;	//size of main dent in meters
+	float $dentDepth = 		`floatField -q -value boltDentDepth`; 		//depth of the dent in meters
+		
+	int   $rippleNum = 		`intField   -q -value boltRippleNum`;       	//number of ripples to do
+	float $rippleWidth = 	`floatField -q -value boltRippleWidth`;		//width of each ripple
+	float $firstRipple = 	`floatField -q -value boltFirstRipple`;		//distance to first ripple
+	float $rippleSpacing = 	`floatField -q -value boltRippleSpacing`;	//spacing between ripples
+	float $rippleForceMax = `floatField -q -value boltRippleForceMax`;	//max force of a ripple
+	
+	float $noiseAmp = 		`floatField -q -value boltNoiseAmp`; 		//Amplitude of noise
+	float $noiseFreq = 		`floatField -q -value boltNoiseFreq`;		//Frequency of noise
+	float $rippleNoiseAmp = `floatField -q -value boltRippleNoiseAmp`; 	//amplitude for ripple noise
+	//get dent properties from interface
+	
+	string $verts[] = `ls -sl -flatten`;
+	string $vert = $verts[0];
+	string $obj = `match "^[^\.]*" $vert`;
+	//get vert/cv and obj/lattice
+	
+	string $meshType = "";
+	if (`match "\\.pt\\[" $vert` == ".pt[") $meshType = "lattice";
+	if (`match "\\.vtx\\[" $vert` == ".vtx[") $meshType = "mesh";
+	if ($meshType == "") 
+	{
+		print "\nError - You need to select a vert or lattice point to operate on";
+		return;
+	}
+	//work out what type of point we have
+	
+	vector $dentNormal;
+	
+	if ($normFlag == 0)
+	{
+		if ($meshType == "lattice") 
+		{
+			print "\nError - Only camera nomal dents work for lattice points";
+			return;
+		}
+		float $dentNormals[] = `polyNormalPerVertex -q -xyz $vert`;
+		$dentNormal = <<$dentNormals[0],$dentNormals[1],$dentNormals[2]>>;
+		//get a normal from the vert
+	}
+	if ($normFlag == 1)
+	{
+		string $panel = `getPanel -withFocus`;
+		string $currentCamera = `modelEditor -q -camera $panel`;
+		float $floatMatrix[] = `xform -q -m $currentCamera`;
+		// get the current camera in the supplied modelling panel and get its transformation matrix	
+
+		float $campoint[] = {0.0, 0.0, 1.0};
+		//camera look vector
+
+		float $camVec[] = pointMatrixMult($campoint, $floatMatrix);
+		// multiply the direction vector of the camera Z, by the cameras transformation matrix, this gives us a vector for the orientation of the camera
+	
+		$dentNormal = <<$camVec[0],$camVec[1],$camVec[2]>>;
+		//get a normal from the camera
+	}
+	
+		
+	
+	vector $impactPosition = `pointPosition -w $vert`;
+	//store position of impact vert
+	
+	float $distList[];
+	string $vertList[];
+	
+	print "\nGetting DistList...";
+	
+	if ($meshType == "mesh")	
+	{
+		int $noVerts[] = `polyEvaluate -v $obj`;
+		for($k=0 ; $k < $noVerts[0]; $k++)
+		{
+			string $v = ($obj+".vtx["+$k+"]");
+			$vertList[size($vertList)] = $v;
+			
+			vector $vert = `pointPosition -w $v`;
+			vector $diff = $vert - $impactPosition;
+			float $distSquared = ($diff.x*$diff.x)+($diff.y*$diff.y)+($diff.z*$diff.z);
+			$distList[size($distList)] = $distSquared;
+		}
+		//get a vector array of distance(squared) of all verts from impact 
+ 	}
+ 	
+ 	if ($meshType == "lattice")	
+	{
+		string $lattices[] = `listRelatives -type "lattice" $obj`;
+		string $lattice = $lattices[0];
+		int $latX = `getAttr ($lattice + ".sDivisions")`;
+		int $latY = `getAttr ($lattice + ".tDivisions")`;
+		int $latZ = `getAttr ($lattice + ".uDivisions")`;
+		//get name and size of lattice
+		
+		for($x=0 ; $x < $latX; $x++)
+		{
+			for($y=0 ; $y < $latY; $y++)
+			{
+ 				for($z=0 ; $z < $latZ; $z++)
+				{
+					string $v = ($obj+".pt["+$x+"]["+$y+"]["+$z+"]");
+					$vertList[size($vertList)] = $v;
+					
+					vector $vert = `pointPosition -w $v`;
+					vector $diff = $vert - $impactPosition;
+					float $distSquared = ($diff.x*$diff.x)+($diff.y*$diff.y)+($diff.z*$diff.z);
+					$distList[size($distList)] = $distSquared;
+				}
+			}
+		}
+	}
+	//get a vector array of distance(squared) of all lattice pts from impact 
+	
+	
+	
+	if ($dentFlag==1)
+	{
+	
+		print "\nDoing Main Dent...";
+		
+		int $noVerts = size($vertList);
+		
+		for($k=0 ; $k < $noVerts; $k++)
+		{	
+			if ($distList[$k] < $dentDiameter)
+			{
+				vector $vert = `pointPosition -w ($vertList[$k])`;
+				vector $noise = dnoise($vert*$noiseFreq)*$noiseAmp;
+				//calculate a perlin noise vector offset for this point
+				vector $dentAmount = (($dentNormal*-1*$dentDepth)+$noise) * (($dentDiameter - $distList[$k])/$dentDiameter);
+				//amount to dent adjusted by distance from impact and strength of impact, + noise also adjusted for distance 
+				move -r -xyz ($dentAmount.x) ($dentAmount.y) ($dentAmount.z) ($vertList[$k]);
+			}
+		}
+		//dent verts inwards around impact point
+	
+		for($i=0 ; $i < $rippleNum; $i++)
+		//do the required number of ripples
+		{
+			print ("\nDoing Ripple " + $i + "...");
+			
+			float $rippleDistance = $firstRipple + ($i *$rippleSpacing);
+			float $rippleDistanceMin = $rippleDistance - (0.5 * $rippleWidth);
+			float $rippleDistanceMax = $rippleDistance + (0.5 * $rippleWidth);
+			//calculates the range of distances for the ripple
+			
+			vector $rippleNormal = `unit <<rand(-0.5,0.5),rand(-2,2),rand(-0.25,0.25)>>`;
+			//get a random direction for the ripple - biased towards y axis.
+			
+			//float $rippleForce = rand(($rippleForceMax/3),$rippleForceMax);
+			//ripple force is randomised, down to 1/3 the max value
+			//float $rippleForce = (($maxRipple-$rippleDistance)/($maxRipple-$minRipple)) * $rippleForceMax;
+			//ripple force weakens with distance from impact
+			
+			float $t = $i; //uses ints otherwise
+			float $rippleForce = $rippleForceMax * (($rippleNum-$t)/$rippleNum);
+			//ripple force relative to ripple number 
+			
+			
+			for($k=0 ; $k < $noVerts; $k++)
+			{	
+				if (($distList[$k] > $rippleDistanceMin)&&($distList[$k] < $rippleDistanceMax))
+				{
+					float $distFactor = (($rippleWidth * 0.5) - abs($rippleDistance - $distList[$k])) / ($rippleWidth * 0.5);
+					//gives distance of point from center of ripple as a fraction of 1 
+					
+					vector $vert = `pointPosition -w $vertList[$k]`;
+					vector $noise = dnoise($vert*$noiseFreq)*$rippleNoiseAmp;
+					//calculate a perlin noise vector offset for this point
+								
+					vector $moveAmount = (($rippleNormal*$rippleForce)+$noise) * $distFactor;
+					//amount to ripple adjusted by distance from center and strength of impact 
+					move -r -xyz ($moveAmount.x) ($moveAmount.y) ($moveAmount.z) $vertList[$k];
+				}
+			}
+		}
+		print "\nDent done!";
+	}  
+	
+	if ($scratchFlag==1)
+	{
+		print "\nDoing Scratch...";
+		
+		int $noVerts = size($vertList);
+		
+		for($k=0 ; $k < $noVerts; $k++)
+		{	
+			if ($distList[$k] < $dentDiameter)
+			{
+				vector $vert = `pointPosition -w ($vertList[$k])`;
+				vector $noise = dnoise($vert*$noiseFreq)*$noiseAmp;
+				
+				vector $scratch = (($dentNormal*-1*$dentDepth)+$noise) * (($dentDiameter - $distList[$k])/$dentDiameter);
+				//amount to scratch adjusted by distance from impact and strength of impact, + noise also adjusted for distance 
+				
+				polyColorSet -currentColorSet -colorSet "damageColourSet";
+				polyColorPerVertex -rgb ($scratch.x) ($scratch.y) ($scratch.z) ($vertList[$k]);
+			}
+		}
+		//scratch verts inwards around impact point
+		
+		print "\nScratch done!";
+	}	
+}
+

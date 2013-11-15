@@ -137,6 +137,7 @@ proc initialiseBoltCarArray()
 		"DOOR_PANEL_FR",		"interior", 			"4",    "DOOR_FR",          "5",
 		"DOOR_PISTON_BR",		"mechanical", 			"6",    "BODY",				"1",
 		"DOOR_PISTON_TR",		"mechanical", 			"6",    "BODY",				"1",
+		"DRIVER_SEATBELT",		"interior", 			"4",    "INTERIOR_SHELL",   "4",
 		"DRIVESHAFT_BL",		"chassis_susp_b", 		"3",	"BODY",             "3",
 		"DRIVESHAFT_BR",		"chassis_susp_b", 		"3",    "BODY",             "3",
 		"DRIVESHAFT_FL",		"chassis_susp_f", 		"2",    "BODY",             "3",

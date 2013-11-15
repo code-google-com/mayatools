@@ -1,0 +1,807 @@
+//contains all vehicle lod creation tools
+source boltLodStats; //used to get top lods for uv ratio
+source boltShaderTools; //used to get bodypaint shader for uv ratio
+source boltGlobalProcs; //float to string
+source boltNormalToolbox; //poly loop
+//source boltCarData;
+//source boltGlobalProcs;
+
+python "import uvratio";
+python "reload(uvratio)";
+
+global proc boltUVTools.GUI()
+//vehicle naming and hierarchy tools
+{
+	string $windowName = "boltUVToolsWindow";
+	
+	if (`window -exists $windowName`)
+	{ 
+		deleteUI $windowName;
+	}
+	//delete the window if it already exists
+	
+	window -height 307 -width 208 -title "UV Tools" -toolbox 1 $windowName;
+	//create window
+		//scrollLayout;
+			frameLayout -mw 0 -mh 0 -bv 0 -lv 0;
+				columnLayout;
+					
+					frameLayout  -collapsable 1 -label "Tweak UVs:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+							rowLayout -numberOfColumns 3;
+								text -l "" -w 66;
+								button -height 20 -width 66 -recomputeSize 0 -label "+V"			-command "boltTweakUV 0";
+								text -l "" -w 66;
+							setParent ..;
+							rowLayout -numberOfColumns 3;
+								button -height 20 -width 66 -recomputeSize 0 -label "-U"			-command "boltTweakUV 1";
+								floatField -height 20 -width 66 -minValue 0 -maxValue 1 -value 0.0005 -ann "amount to tweak by"	boltFieldUVTweakAmount;
+								button -height 20 -width 66 -recomputeSize 0 -label "+U"			-command "boltTweakUV 2";
+							setParent ..;
+							rowLayout -numberOfColumns 3;
+								text -l "" -w 66;
+								button -height 20 -width 66 -recomputeSize 0 -label "-V"			-command "boltTweakUV 3";
+								text -l "" -w 66;
+							setParent ..;
+							
+						setParent ..;
+					setParent ..;
+					
+					frameLayout  -collapsable 1 -label "Edit UVs:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+							rowLayout -numberOfColumns 2;
+								button -height 20 -width 100 -recomputeSize 0 -label "Mirror UVs" -ann "Mirrors selected UVs vertically about the center of the texture page" -command "polyEditUV -pu 0.5 -pv 0.5 -su 1 -sv -1";
+								button -height 20 -width 100 -recomputeSize 0 -label "Center UVs" -ann "Vertically centers selected UVs on the texture page" -command "polyEditUV -relative 0 -vValue 0.5";
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								button -height 20 -width 100 -recomputeSize 0 -label "Planar Map"		-ann "Planar maps selected faces from camera direction"				-command "ConvertSelectionToFaces; polyProjection -ch 1 -type planar -ibd on -kir -md c";
+								button -height 20 -width 100 -recomputeSize 0 -label "Cylinder Map"		-ann "Cylinder maps selected faces from camera direction"			-command "ConvertSelectionToFaces; polyProjection -ch 1 -type cylindrical -ibd on -kir -md c";
+							setParent ..;
+							rowLayout -numberOfColumns 3;
+								button -height 20 -width 88 -recomputeSize 0 -label "Auto Map"			-ann "Automatic Unwrap"					-command "performPolyAutoProj 0";
+								button -height 20 -width 10 -recomputeSize 0 -label ""					-ann "Automatic Unwrap Options"			-command "performPolyAutoProj 1";
+								button -height 20 -width 100 -recomputeSize 0 -label "UV Editor"			-ann "Shortcut to the UV Editor"	-command "TextureViewWindow";
+							
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								button -height 20 -width 100 -recomputeSize 0 -label "Flipped UVs" -ann "Selects faces on currently selected objects that have flipped UVs"	-command "boltSelectPolysWithFlippedMapping" 			 boltButtonSelFlippedUVs;
+								button -height 20 -width 100 -recomputeSize 0 -label "Unmapped Verts" -ann "Selects verts on currently selected objects that have no UV mapping"	-command "boltSelectUnmappedVerts" 			 boltButtonSelUnmappedVerts;
+							setParent ..;							
+						setParent ..;
+					setParent ..;
+					
+					frameLayout  -collapsable 1 -label "UV Ratios:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+							rowLayout -numberOfColumns 2;
+								text -w 100 -al "right" -l "UV Ratio";
+								floatField -w 100 -v 25 boltUVRatioField;
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								button -height 20 -width 100 -recomputeSize 0 -label "Get UV Ratio" -ann "Gets the UV ratio from the currently selected object or polys" -command "python(\"uvratio.get_sel_faces_UV_ratio(1)\")";
+								button -height 20 -width 100 -recomputeSize 0 -label "Set UV Ratio" -ann "Sets the UV ratio of selected shells to the value shown above (default for Driveclub vehicles is 25)" -command "python(\"uvratio.collect_shells_and_set_shells_UV_ratio(1)\")";
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								button -height 20 -width 100 -recomputeSize 0 -label "Texel Info" 		-ann "Reports texel aspect ratio, suggested texture authoring resolution, and texel density for the bodypaint shader - used by livery layout tool"		-command "boltReportTextureAspect";
+								button -height 20 -width 100 -recomputeSize 0 -label "Default Ratio" 	-ann "Shortcut to sets the UV ratio input field back to the default value of 25"		-command "floatField -e -v 25 boltUVRatioField";
+							
+							setParent ..;
+						setParent ..;
+					setParent ..;		
+							
+							
+					
+					
+					frameLayout  -collapsable 1 -label "Stitch Mapping:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+							button -height 20 -width 204 -label "Select Poly Loop" 
+								-ann "Converts poly selection into a loop. Select 2 polys to constrain the loop"
+								-command "boltNorms.PolyLoop(0,1)";
+							
+							separator -h 4 -style "none";
+							
+							rowLayout -numberOfColumns 2;
+								text -al "right" -label "Stitches on Map" -w 100;
+								intField -w 100 -ann "Number of stitch textures on the map" -step 1 -minValue 1 -maxValue 10 -value 8 boltStitchIntSliderMaxStitches;
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								text -al "right" -w 100 -label "Stitch to use";  
+								intField -w 100 -ann "Which stitch texture on the map to use" -step 1 -minValue 1 -maxValue 10 -value 1 boltStitchIntSliderStitchToUse;
+							setParent ..;
+							rowLayout -numberOfColumns 2;
+								text -al "right" -w 100 -label "U Scale";
+								floatField -w 100 -ann "U Scale of stitching" -step 1 -minValue 0 -maxValue 200 -value 3 boltStitchFloatSliderUScale;
+							setParent ..;
+							
+							checkBox -value 0 -label "Flip Vertical" -ann "Flip stitch mapping vertically" boltStitchCheckBoxFlip;
+							checkBox -value 1 -label "Edge Padding" -ann "adds spacing between maps to prevent bleeding" boltStitchCheckBoxPadding;
+							checkBox -value 1 -label "Unskew Quads" -ann "Straigtens out Quad UVs, only works if no triangles are selected" boltStitchQuadSkew;
+							separator -h 4 -style "none";
+							button -height 20 -width 204 -label "Map Stitches" -command "boltStitch.CreateUVfromGUI()" -ann "Creates stitch UVs for the selected polys";
+							
+						setParent ..;
+					setParent ..;
+	
+				setParent ..;  
+			setParent ..;
+		setParent ..;
+	setParent ..;
+
+	showWindow $windowName;
+	//display the window
+	      
+	window -e -height 400 -width 200 $windowName;    
+
+}
+
+
+global proc boltTweakUV(int $tDir)
+//tweaks poly UVs in given direction
+{
+	
+	float $tAmount = `floatField -q -value boltFieldUVTweakAmount`;
+	//amount to tweak by taken form this float field
+	
+	if ($tDir == 0)
+	//up
+	{
+		polyEditUV -v $tAmount;
+	}
+	else if ($tDir == 1)
+	//left
+	{
+		polyEditUV -u (-1 * $tAmount);
+	}
+	else if ($tDir == 2)
+	//right
+	{
+		polyEditUV -u $tAmount;
+	}
+	else if ($tDir == 3)
+	//down
+	{
+		polyEditUV -v (-1 * $tAmount);
+	}
+}
+
+
+
+global proc boltReportTextureAspect()
+{
+	int $xres = 4096;
+	int $yres = 2048;
+	
+	float $aspects[] = `boltGetBodypaintAspect $xres $yres`;
+	
+	string $aspect  = `boltFloatToString $aspects[0] 3`;
+	string $density = `boltFloatToString $aspects[1] 1`;
+	
+	int $tResY = 0;
+	int $tResX = 0;
+	
+	if ($aspects[0] != 0) 
+	{
+		$tResY = ($xres / $aspects[0]);	
+		$tResX = $xres;
+		
+		if ($tResY < $yres)
+		{
+			$tResX = ($yres * $aspects[0]);	
+			$tResY = $yres;
+		}
+	}
+	//works out the res. Always provides a larger res than the final texture.
+			
+			 
+	string $title = "Bodypaint UV Mapping Info - 2048x1024 texture";
+		
+	confirmDialog -title $title -message (
+		"UV aspect ratio (for livery editor): " + $aspect + "\n\n" +
+		"Create livery texture in Photoshop at " + $tResX + "*" + $tResY + " to ensure correct aspect ratio \n\n" +
+		"UV texel density: " + $density + " pixels/metre \n"
+		);
+}
+
+
+global proc float[] boltGetBodypaintAspect(int $xres, int $yres)
+//returns the median aspect ratio and texel density of all bodypaint polys on lod0.
+{
+	string $liveryShaders[] = {"body_livery_metal_damage", "body_livery_carbon_damage", "body_livery_metal", "body_livery_carbon"};
+	string $foundShaders[] = {};
+	
+	for ($s in $liveryShaders)
+	{
+		if (objExists($s)) $foundShaders[size($foundShaders)] = $s;
+	}
+		
+	if (size($foundShaders) == 0)
+	{
+		error ("No livery shaders found in scene! Make sure names of main livery shaders are unmodified from those in the library");
+	}
+	
+	string $objs[] = boltGetTopLods();
+	//get list of LOD0 objects
+	//$objs = {"SPOILER"};
+	
+	float $aspectRatios[] ={};
+	float $texelDensity[] ={};
+	
+	for ($liveryShader in $foundShaders)
+	{
+		print ("\nMeasuring texel aspect ratio on shader: " + $liveryShader);
+			
+		string $sel[] = `ls -sl`;
+		hyperShade -objects $liveryShader;
+		string $bodypaintPolys[] = `ls -sl -fl`;
+		select $sel;
+		//get quick and dirty list body paint polygons - only from lod/parts curently visible on screen
+		
+		int $count = 0;
+		int $total = 0;
+	
+		for ($poly in $bodypaintPolys)
+		{
+			float $ratio[] = `boltGetUVAspectRatio $poly $xres $yres`;
+			if (size($ratio) != 0) 
+			{
+				$aspectRatios[size($aspectRatios)] = $ratio[0];
+				$texelDensity[size($texelDensity)] = $ratio[1];
+			}
+		
+			$count ++;
+			if ($count == 500)
+			{
+				$total += 500;
+				$count = 0;
+				print ("\n  Polys processed: " + $total);
+			}
+		}
+	}
+	
+	$aspectRatios = `sort $aspectRatios`;
+	$texelDensity = `sort $texelDensity`;
+
+	return { ($aspectRatios[size($aspectRatios)/2]) , ($texelDensity[size($texelDensity)/2]) };
+	
+}
+
+//used by texel info
+global proc string[] boltGetTopLods()
+//returns short name tranforms for all top lod geometry in the scene
+//ditches lods, cols, zones
+{
+	string $meshes[] = `ls -type "mesh"`;
+	string $objs[] = `boltShapesToTransformsNoPath $meshes`;
+	string $lod0[];
+	
+	for ($obj in $objs)
+	{
+		if ((`match "_LOD.$" $obj` == "")
+			&& (`match "_SHADOW$"  $obj` == "")   
+			&& (`match "_COL$"  $obj` == "")
+			&& (`match "ZONE_..$"  $obj` == ""))		
+			$lod0[size($lod0)] = $obj;
+	} 
+	//get list of top lods
+
+	return $lod0;
+}
+
+
+
+global proc boltStitch.CreateUVfromGUI()
+{
+	string $sel[] = `ls -sl -fl "*.f[*]"`; //get selected faces
+	
+	float $uScale = `floatField -q -value boltStitchFloatSliderUScale`;
+	int $flipV = `checkBox -q -value boltStitchCheckBoxFlip`;
+	int $pad = `checkBox -q -value boltStitchCheckBoxPadding`;
+						
+	
+	int $divs   = `intField -q -value boltStitchIntSliderMaxStitches`;
+	int $stitch = `intField -q -value boltStitchIntSliderStitchToUse`;
+	int $quads = `checkBox -q -value boltStitchQuadSkew`;
+	
+	float $vMin = ( (1.0/$divs) * ($divs-$stitch) );
+	float $vMax = $vMin + (1.0/$divs);
+	
+	if ($pad == 1)
+	{
+		$padFraction = 0.04;
+		$padAmount = (1.0/$divs) * $padFraction;
+		$vMin += $padAmount;
+		$vMax -= $padAmount;
+	}
+		
+	boltStitch.CreateUVs($sel, $vMin, $vMax, $uScale, $flipV, $quads);
+
+}
+
+
+global proc boltStitch.CreateUVs(string $sel[], float $vMin, float $vMax, float $uScale, int $flipV, int $quads)
+{
+	//error checking - no selected
+	if (size($sel) < 2) error "select at least 2 polygons";
+	
+	//check no sides
+	for ($poly in $sel)
+	{
+		int $edges = size(boltNorms.ToEdges({$poly}));
+		if (($edges != 3)&&($edges != 4)) 
+		{
+			error ($poly + " has " + $edges + " sides. Only triangles and quads supported.");
+		}
+		if (($edges == 3) && ($quads == 1))
+		{
+			warning "cannot straighten quads - triangle found in selection";
+			$quads = 0;
+		}
+	}
+	
+	
+	
+	//work out ordered list of polys
+	string $sortedPolyList[] = {};
+	
+	//find an end of the list
+	for ($poly in $sel)
+	{
+		string $adjacentPolys[] = boltNorms.ToVerts({$poly});
+		$adjacentPolys = boltNorms.ToFaces($adjacentPolys);
+		$adjacentPolys = stringArrayRemove({$poly},$adjacentPolys);
+		string $adjacentSelPolys[] = boltNorms.StringArrayIntersect($adjacentPolys, $sel);
+		if (size($adjacentSelPolys) == 1) 
+		{
+			$sortedPolyList[0] = $poly;
+			break;
+		}
+	}
+	
+	//take care of a complete loop by starting at a random poly
+	if (size($sortedPolyList) == 0) 
+	{
+		$sortedPolyList[0] = $sel[0];
+	}
+	
+	//get the complete ordered poly loop
+	for ($i=0; $i<=size($sel); $i++)
+	{
+		string $poly = $sortedPolyList[size($sortedPolyList)-1];
+		string $adjacentPolys[] = boltNorms.ToEdges({$poly});
+		$adjacentPolys = boltNorms.ToFaces($adjacentPolys);
+		$adjacentPolys = stringArrayRemove($sortedPolyList,$adjacentPolys);
+		string $adjacentSelPolys[] = boltNorms.StringArrayIntersect($adjacentPolys, $sel);
+		
+		if (size($adjacentSelPolys) > 0) $sortedPolyList[size($sortedPolyList)] = $adjacentSelPolys[0];
+		if (size($adjacentSelPolys) == 0) break;
+	}
+	
+	//print "\n"; print $sel;
+	//print "\n"; print $sortedPolyList;
+	
+	if (size($sortedPolyList) != size($sel))
+	{
+		error "Selection must be a continuous loop";
+	}
+	
+	//print "\nSorted poly list: "; print $sortedPolyList;
+	
+	//find outside edges	
+	//string $outerEdges[] = boltNorms.ToEdges({$sortedPolyList[0]});
+	//string $edgesOnPoly2[] = boltNorms.ToEdges({$sortedPolyList[1]});
+	//string $edgesOnPoly2Verts[] = boltNorms.ToVerts({$sortedPolyList[1]});
+	//$edgesOnPoly2Verts = boltNorms.ToEdges($edgesOnPoly2Verts);
+	//$outerEdges = stringArrayRemove($edgesOnPoly2,$outerEdges);
+	//$outerEdges = boltNorms.StringArrayIntersect($outerEdges, $edgesOnPoly2Verts);
+	//if size($outerEdges != 2) error "2 outer edges not found!";
+	
+	//find start verts
+	string $poly1Verts[] = boltNorms.ToVerts({$sortedPolyList[0]});
+	string $poly2Verts[] = boltNorms.ToVerts({$sortedPolyList[1]});
+	string $startVerts[] = stringArrayRemove($poly2Verts,$poly1Verts);
+	if (size($startVerts)>2) error "Too many start verts detected";
+	
+	//deal with a 1st poly being a triangle
+	if (size($startVerts)==1)
+	{ 
+		//not easy to determine the "correct" other vert... so we'll guess for now.
+		string $sharedVerts[] = boltNorms.StringArrayIntersect($poly1Verts,$poly2Verts);
+		$startVerts[size($startVerts)] = $sharedVerts[0];
+	}
+	
+	//get ordered vert list for each side
+	string $side1verts[] = {$startVerts[0]};
+	string $side2verts[] = {$startVerts[1]};
+	
+	//get outer edges
+	$outlineEdges = boltNorms.ToBorderEdges($sel);
+		
+	for ($i=0; $i<(size($sortedPolyList)-1); $i++)
+	{
+		//get the last two verts in the list
+		$vert1 = $side1verts[size($side1verts)-1];
+		$vert2 = $side2verts[size($side2verts)-1];
+		
+		//get the verts shared between this and the next poly
+		string $thisPolyVerts[] = boltNorms.ToVerts({$sortedPolyList[$i]});
+		string $nextPolyVerts[] = boltNorms.ToVerts({$sortedPolyList[$i+1]});
+		string $vertsSharedWithNextPoly[] = boltNorms.StringArrayIntersect($thisPolyVerts,$nextPolyVerts);
+		if ( size($vertsSharedWithNextPoly) != 2 ) warning "wrong number of verts found between polygons";
+		
+		//remove duplicate verts caused by triangles.
+		$vert3 = $vertsSharedWithNextPoly[0];
+		$vert4 = $vertsSharedWithNextPoly[1];
+		
+		//store the next vert on each side by checking shared edges.
+		
+		$edgeV1V3 = boltNorms.GetSharedEdgeFromVerts($vert1, $vert3);
+		$edgeV1V4 = boltNorms.GetSharedEdgeFromVerts($vert1, $vert4);
+		$edgeV2V3 = boltNorms.GetSharedEdgeFromVerts($vert2, $vert3);
+		$edgeV2V4 = boltNorms.GetSharedEdgeFromVerts($vert2, $vert4);
+		
+		if ( ($edgeV1V3 != "") && (stringArrayContains($edgeV1V3,$outlineEdges)) )
+		{
+				$side1verts[size($side1verts)] = $vert3;
+		}
+		if ( ($edgeV1V4 != "") && (stringArrayContains($edgeV1V4,$outlineEdges)) )
+		{
+				$side1verts[size($side1verts)] = $vert4;
+		}
+		if ( ($edgeV2V3 != "") && (stringArrayContains($edgeV2V3,$outlineEdges)) )
+		{
+				$side2verts[size($side2verts)] = $vert3;
+		}
+		if ( ($edgeV2V4 != "") && (stringArrayContains($edgeV2V4,$outlineEdges)) )
+		{
+				$side2verts[size($side2verts)] = $vert4;
+		}
+	}
+	
+	//find end verts
+	//get the last two verts in the list
+	$vert1 = $side1verts[size($side1verts)-1];
+	$vert2 = $side2verts[size($side2verts)-1];
+	
+	string $lastPolyVerts[] = boltNorms.ToVerts({$sortedPolyList[size($sortedPolyList)-1]});
+	$lastPolyVerts = stringArrayRemove({$vert1,$vert2},$lastPolyVerts);
+		
+	//if last poly is a quad
+	if (size($lastPolyVerts)==2)
+	{
+		$vert3 = $lastPolyVerts[0];
+		$vert4 = $lastPolyVerts[1];
+		if (boltNorms.GetSharedEdgeFromVerts($vert1, $vert3) != "") $side1verts[size($side1verts)] = $vert3;
+		if (boltNorms.GetSharedEdgeFromVerts($vert1, $vert4) != "") $side1verts[size($side1verts)] = $vert4;
+		if (boltNorms.GetSharedEdgeFromVerts($vert2, $vert3) != "") $side2verts[size($side2verts)] = $vert3;
+		if (boltNorms.GetSharedEdgeFromVerts($vert2, $vert4) != "") $side2verts[size($side2verts)] = $vert4;
+	}
+	
+	//if last poly is a triangle... guess for now
+	if (size($lastPolyVerts)==1)
+	{
+		$side1verts[size($side1verts)] = $lastPolyVerts[0];
+	}
+	
+	//get rid of any duplicate verts caused by triangles
+	$side1verts = stringArrayRemoveDuplicates($side1verts);
+	$side2verts = stringArrayRemoveDuplicates($side2verts);
+	
+	//print "\nSide 1 vert list: "; print $side1verts;
+	//print "\nSide 2 vert list: "; print $side2verts;
+
+	
+	float $side1Positions[] = {0.0};
+	float $side2Positions[] = {0.0};
+	
+	//place uvs along line, depending on scale
+	
+	print "\nCalculating UVs....";
+	
+	//go through 1st vert list
+	for ($i=1; $i<size($side1verts); $i++)
+	{
+		//set positions based on edge length
+		$edge = boltNorms.GetSharedEdgeFromVerts($side1verts[$i-1], $side1verts[$i]);
+		$length = boltNorms.GetEdgeLength($edge) * $uScale;
+		$side1Positions[$i] = $side1Positions[$i-1] + $length;
+	}
+	
+	//go through 2nd vert list
+	for ($i=1; $i<size($side2verts); $i++)
+	{
+		//set positions based on edge length
+		$edge = boltNorms.GetSharedEdgeFromVerts($side2verts[$i-1], $side2verts[$i]);
+		$length = boltNorms.GetEdgeLength($edge) * $uScale;
+		$side2Positions[$i] = $side2Positions[$i-1] + $length;
+	}
+	
+	//print "\nSide 1 position list: "; print $side1Positions;
+	//print "\nSide 2 position list: "; print $side2Positions;
+	
+	//rescale second list so that both lists are same length.
+	float $max1 = $side1Positions[size($side1Positions)-1];
+	float $max2 = $side2Positions[size($side2Positions)-1];
+	float $rescale = $max1/$max2;
+	for ($i=0; $i<size($side2verts); $i++)
+	{ 
+		$side2Positions[$i] = $side2Positions[$i] * $rescale;
+	}
+	
+	//maybe do some quad straightening if this is a problem
+	//find linked verts on other list
+	//string $edges[] = boltNorms.toEdges($side2verts[$i]);
+	//string $verts[] = boltNorms.toVerts($edges);
+	//string $linkedVerts[] = boltNorms.StringArrayIntersect($verts, $side2verts)
+
+	print "\nCutting out UVs....";
+		
+	//get uv outline + seperate uvs
+	polyMapCut $outlineEdges;
+	
+	//get list of UVs to move (inside seam)
+	$uvsToMove = boltNorms.ToUVs($sel);
+
+	print "\nPlacing UVs........";
+	
+	//turn history of, other wise move uvs is super slow
+	int $turnHistoryBackOn = 0;
+	if (`constructionHistory -q -tgl` == 1)
+	{
+		constructionHistory -tgl 0;
+		$turnHistoryBackOn = 1;
+	}
+	
+	//offset helps keep UV values from getting too extreme 
+	$uOffset = 0.5 - ($max1 / 2);
+	
+	//straighten out all quads if ticked	
+	if ($quads == 1) $side2Positions = $side1Positions;
+		
+	//place all uvs from lists
+	for ($i=0; $i<size($side1verts); $i++)
+	{
+		//print ("\nPlacing UV from side 1: " +$side1verts[$i]);
+		string $uvs[] = boltNorms.ToUVs({$side1verts[$i]});
+		$uvs = boltNorms.StringArrayIntersect($uvs,$uvsToMove);
+		polyEditUV -relative false -uValue ($side1Positions[$i] + $uOffset)  -vValue $vMin $uvs;
+	}
+	for ($i=0; $i<size($side2verts); $i++)
+	{
+		//print ("\nPlacing UV from side 2: " +$side2verts[$i]);
+		string $uvs[] = boltNorms.ToUVs({$side2verts[$i]});
+		$uvs = boltNorms.StringArrayIntersect($uvs,$uvsToMove);
+		polyEditUV -relative false -uValue ($side2Positions[$i] + $uOffset) -vValue $vMax $uvs;
+	}
+	
+	
+	//get flip pivots
+	float $uPivot = 0.5;
+	float $vPivot = ($vMin + $vMax)/2;
+	
+	
+	print "\nVertical flip....";
+	//flip vertical if requested
+	if ($flipV == 1)
+	{
+		polyMoveUV -scaleV -1 -pivotU $uPivot -pivotV $vPivot $sel;
+	}
+
+	//flip horizontal if normals are found to be flipped
+	{
+		print "\nChecking for flipped UVs....";
+		string $flipped[] = boltListFlippedPolygons({$sel[0]});
+		if (size($flipped) > 0)
+		{
+			print "\nFlipped normals found - flipping UVs in U...";
+			polyMoveUV -scaleU -1 -pivotU $uPivot -pivotV $vPivot $sel;
+		}
+	}
+
+	if ($turnHistoryBackOn == 1)
+	{
+		constructionHistory -tgl 1;
+	}
+
+
+
+	select -cl; select $sel;
+	
+	print "\nStich mapping complete";
+//check for UV winding and flip normal map if necessary.
+
+}
+
+
+global proc string[] boltListUnmappedVerts(string $obj)
+//returns a list of unmapped vertices on the given obj (shape or transform node is ok)
+{
+	string $verts[] = `ls -fl ($obj+".vtxFace[*]")`;
+	string $unMapped[] = {};
+	for ($vert in $verts)
+	{
+		string $result[] = `polyListComponentConversion -fromVertexFace -toUV $vert`;
+		if ($result[0] == "") $unMapped[size($unMapped)] = $vert;
+	}
+	return $unMapped;
+}
+
+global proc boltSelectUnmappedVerts()
+//selects all unmapped verts on selected objects
+{
+	
+	string $objs[] = `ls -sl`;
+	$objs = `boltTransformsToShapes	$objs`;
+	$objs = `boltShapesToTransformsNoPath $objs`;
+	//bodge to get just mesh shape transforms
+	
+	select -cl;
+	
+	for ($obj in $objs)
+	{
+		string $verts[] = `boltListUnmappedVerts $obj`;
+		select -add $verts;
+	}
+}
+
+
+global proc string[] boltListFlippedPolygons (string $polys[])
+//given a list of polys to check, returns those that have flipped uv winding
+{
+	string $flippedPolys[] = {};
+	
+	for ($poly in $polys)
+	{
+		 
+		if (boltReturnUVWinding2(boltGetVertexOrder($poly))==1)
+		{
+			$flippedPolys[size($flippedPolys)] = $poly;
+		}
+	}
+	return $flippedPolys;
+}
+	
+
+global proc boltSelectPolysWithFlippedMapping()
+//selects all normal mapped polys with dodgy uv winding, on selected objects
+{
+	string $objs[] = `ls -sl`;
+	$objs = `boltTransformsToShapes	$objs`;
+	$objs = `boltShapesToTransformsNoPath $objs`;
+	//bodge to get just mesh shape transforms
+	
+	select -cl;
+	
+	for ($obj in $objs)
+	{
+		///removed slective material based check - now checks all polys
+		string $polys[] = `ls -fl ($obj + ".f[*]")`;  ////`boltListNormalMappedPolygons $obj`;
+		$polys = `boltListFlippedPolygons $polys`;
+		select -add $polys;
+		
+		print ("\n" + size($polys) + " polys with flipped UVs found on " + $obj);
+	}
+}
+
+global proc string[] boltGetVertexOrder(string $poly)
+//returns a string of vertexfaces on a face in correct anticlockwise render order
+{
+	//print $poly;
+	
+	string $polyNum = `match "\\..*" $poly`; //get the component part
+	string $polyNum = `match "[0-9]+" $polyNum`; //get the poly number
+	string $obj = `match "^[^\.]*" $poly`; //strips the component
+	
+	string $ftv[] = `polyInfo -faceToVertex $poly`;
+	// Eg Result: FACE    278:    295     12     14    296 //
+
+	string $tokens[];
+	tokenize $ftv[0] " :\n\r" $tokens;
+	string $vfOrder[] = {};
+	
+	for ( $i = 2; $i < `size $tokens`; $i++ )
+	{
+  		$vfOrder[`size $vfOrder`] = ($obj + ".vtxFace[" + $tokens[$i] + "][" + $polyNum + "]");
+	}
+
+	return $vfOrder;
+}
+
+global proc int boltReturnUVWinding(string $vfs[])
+//given a list of vertex faces in render order, returns wether uvs are flipped or not
+//
+//returns 1 if flipped, 0 if ok, -1 if no UVs found
+{
+	//print ("\nVFs=");
+	//print $vfs;
+	
+	//python ("import boltUVWinding");
+	
+	float $totalAngle = 0;
+	
+	for ($i=0; $i<size($vfs); $i++)
+	{
+		int $j = $i+1; //next vf
+		int $k = $i+2;
+		if ($j>=size($vfs)) $j = 0; //wrap round to zero
+		if ($k==size($vfs)) $k = 0; //wrap round to zero
+		if ($k> size($vfs)) $k = 1; //wrap round 
+		
+		string $iMap[] = `polyListComponentConversion -fromVertexFace -toUV $vfs[$i]`;
+		string $jMap[] = `polyListComponentConversion -fromVertexFace -toUV $vfs[$j]`;
+		string $kMap[] = `polyListComponentConversion -fromVertexFace -toUV $vfs[$k]`;
+		
+		if (($iMap[0]=="")||($jMap[0]=="")||($kMap[0]=="")) return -1;
+		//catches error if no UVs found
+			
+		float $iUVs[] = `polyEditUV -q $iMap[0]`; //get co-ords of uv
+		float $jUVs[] = `polyEditUV -q $jMap[0]`; //get co-ords of uv
+		float $kUVs[] = `polyEditUV -q $kMap[0]`; //get co-ords of uv
+		
+		vector $iVector = << $iUVs[0] , $iUVs[1] , 0 >>;
+		vector $jVector = << $jUVs[0] , $jUVs[1] , 0 >>;
+		vector $kVector = << $kUVs[0] , $kUVs[1] , 0 >>;  //uv coords as vectors
+		
+		vector $edge1 = $iVector - $jVector;
+		vector $edge2 = $jVector - $kVector;	//edges as vectors
+		
+		//$totalAngle = $totalAngle + python( "boltUVWinding.boltSignedAngleBetweenVectorsPy( " + ($edge1.x) +","+ ($edge1.y) +","+ ($edge1.z) +"," + ($edge2.x) +","+ ($edge2.y) +","+ ($edge2.z) +" , [0,0,1])"); 
+		$totalAngle = $totalAngle + `boltSignedAngleBetweenVectors $edge1 $edge2 <<0,0,1>>`; //add up angles between all uv edges
+		
+	}
+	
+	if ($totalAngle < 0) return 1;
+	return 0;
+}
+	
+	
+	
+global proc int boltReturnUVWinding2(string $vfs[])
+//given a list of vertex faces in render order, returns whether uvs are flipped or not
+//
+//returns 1 if flipped, 0 if ok, -1 if no UVs found
+//
+//faster version just looks at direction of cross product of two uv edges
+{
+	//print ("\nVFs=");
+	//print $vfs;
+
+	string $iMap[] = `polyListComponentConversion -fromVertexFace -toUV $vfs[0]`;
+	string $jMap[] = `polyListComponentConversion -fromVertexFace -toUV $vfs[1]`;
+	string $kMap[] = `polyListComponentConversion -fromVertexFace -toUV $vfs[2]`;
+
+	if (($iMap[0]=="")||($jMap[0]=="")||($kMap[0]=="")) return -1;
+	//catches error if no UVs found
+			
+	float $iUVs[] = `polyEditUV -q $iMap[0]`; //get co-ords of uv
+	float $jUVs[] = `polyEditUV -q $jMap[0]`; //get co-ords of uv
+	float $kUVs[] = `polyEditUV -q $kMap[0]`; //get co-ords of uv
+		
+	vector $iVector = << $iUVs[0] , $iUVs[1] , 0 >>;
+	vector $jVector = << $jUVs[0] , $jUVs[1] , 0 >>;
+	vector $kVector = << $kUVs[0] , $kUVs[1] , 0 >>;  //uv coords as vectors
+
+	vector $edge1 = $iVector - $jVector;
+	vector $edge2 = $jVector - $kVector;	//edges as vectors
+
+	vector $crossProduct =  crossProduct($edge1,$edge2,1,0); 
+
+	if (($crossProduct.z) < 0) return 1; 
+	return 0;
+}
+
+
+global proc float boltSignedAngleBetweenVectors(vector $v1, vector $v2, vector $n)
+//returns a signed angle between two vectors, needs a normal direction too
+{
+	//print "\nV1: "; print $v1;
+	//print "\nV2: "; print $v2;
+	//print "\nn: "; print $n;
+	
+	return  atan2(  dotProduct($n, crossProduct($v1, $v2, 1, 0), 1) , dotProduct($v1, $v2, 1) );
+	// signed_angle = atan2(  N * ( V1 x V2 ), V1 * V2  )
+	// where * is dot product and x is cross product
+	// N is the normal to the polygon
+	// ALL vectors: N, V1, V2 must be normalized
+}
+
+
+
