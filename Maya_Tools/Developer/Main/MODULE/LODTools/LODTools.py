@@ -6,16 +6,29 @@ import os, sys, inspect
 import functools 
 
 LODsChain = ['_LOD0_','_LOD1_','_LOD2_','_LOD3_','_LOD4_','_LOD5_','_LOD6_']
+# SONY Lods:
+Sony_mapping_LODs = ['_LOD0_','_LOD1_','_LOD2_','_LOD3_','_LOD4_','_LOD5_','_LOD6_']
+Sony_nohide = []
+# IronMonkey Lods:
+IronMonkey_mapping_LODs = ['lod_00_layer', 'lod_01_layer', 'lod_02_layer', 'lod_03_layer', 'lod_04_layer', 'lod_05_layer', 'lod_06_layer']
+IronMonkey_nohide = ['base_car_layer']
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/LODTools.ui'
 
 form_class, base_class = uic.loadUiType(dirUI)        
+
+def mappingLODs(projectName, lod):
+    try:
+        return globals()[projectName + '_mapping_LODs'][LODsChain.index(lod)]
+    except:
+        return False # cannot find matched imte with lod
 
 class LODTools(form_class,base_class):
     def __init__(self, inputFile):
         super(base_class,self).__init__()
         self.setupUi(self)
         self.__name__ = 'LOD Tools'
+        self._projectName = 'IronMonkey'
         self.btnSetupLOD.clicked.connect(self.check)
         self.btnSwitchLOD.clicked.connect(self.SwapLOD)
         self.btnCleanUp.clicked.connect(self.CleanUp)
@@ -159,40 +172,41 @@ class LODTools(form_class,base_class):
     def SwapLOD(self):
         LODa, LODb = '_LOD0_','_LOD1_'
         if self.rdbSourceLOD0.isChecked():
-            LODa = '_LOD0_'
+            LODa = mappingLODs(self._projectName,'_LOD0_')
         elif self.rdbSourceLOD1.isChecked():
-            LODa = '_LOD1_'
+            LODa = mappingLODs(self._projectName,'_LOD1_')
         elif self.rdbSourceLOD2.isChecked():
-            LODa = '_LOD2_'
+            LODa = mappingLODs(self._projectName,'_LOD2_')
         elif self.rdbSourceLOD3.isChecked():
-            LODa = '_LOD3_'
+            LODa = mappingLODs(self._projectName,'_LOD3_')
         elif self.rdbSourceLOD4.isChecked():
-            LODa = '_LOD4_'
+            LODa = mappingLODs(self._projectName,'_LOD4_')
         elif self.rdbSourceLOD5.isChecked():
-            LODa = '_LOD5_'
+            LODa = mappingLODs(self._projectName,'_LOD5_')
         elif self.rdbSourceLOD6.isChecked():
-            LODa = '_LOD6_'
+            LODa = mappingLODs(self._projectName,'_LOD6_')
         elif self.rdbSourceSHADOW.isChecked():
-            LODa = '_SHADOW_'
+            LODa = mappingLODs(self._projectName,'_SHADOW_')
             
         if self.rdbTargetLOD0.isChecked():
-            LODb = '_LOD0_'
+            LODb = mappingLODs(self._projectName,'_LOD0_')
         elif self.rdbTargetLOD1.isChecked():
-            LODb = '_LOD1_'
+            LODb = mappingLODs(self._projectName,'_LOD1_')
         elif self.rdbTargetLOD2.isChecked():
-            LODb = '_LOD2_'
+            LODb = mappingLODs(self._projectName,'_LOD2_')
         elif self.rdbTargetLOD3.isChecked():
-            LODb = '_LOD3_'
+            LODb = mappingLODs(self._projectName,'_LOD3_')
         elif self.rdbTargetLOD4.isChecked():
-            LODb = '_LOD4_'
+            LODb = mappingLODs(self._projectName,'_LOD4_')
         elif self.rdbTargetLOD5.isChecked():
-            LODb = '_LOD5_'
+            LODb = mappingLODs(self._projectName,'_LOD5_')
         elif self.rdbTargetLOD6.isChecked():
-            LODb = '_LOD6_'
+            LODb = mappingLODs(self._projectName,'_LOD6_')
         elif self.rdbTargetSHADOW.isChecked():
-            LODb = '_SHADOW_'
+            LODb = mappingLODs(self._projectName,'_SHADOW_')
         
         # --
+        nohideLayer = [LODa, LODb,'defaultLayer']
         displayLayerNotWork = [layer for layer in cmds.ls(type = 'displayLayer') if layer not in [LODa, LODb, 'defaultLayer']]
         for l in displayLayerNotWork:
             cmds.setAttr(l + '.visibility', 0)
