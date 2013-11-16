@@ -7,6 +7,8 @@ import pymel.core as py
 
 def execute():
     print '--------------- Clean up redundant shaders and textures-----------------'
+    print '-- remove redundant textures--'
+    textures = py.ls(textures = True)
     
   
     

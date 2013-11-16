@@ -33,6 +33,11 @@ class UVTools(form_class,base_class):
         self.btnUVRatio.clicked.connect(self.openUVRatioToolBox)
         self.btnMirrorU.clicked.connect(functools.partial(self.mirrorUV,'H'))
         self.btnMirrorV.clicked.connect(functools.partial(self.mirrorUV,'V'))
+        self.cbbSourceMat.addItems(['Materials from source'])
+        self.cbbTargetMat.addItems(['Materials from target'])
+        self.actionAdd.triggered.connect(self.getNameFromSelected)
+        self.ldtSource.customContextMenuRequested.connect(self.createRightClickonMenu_on_selectedItems)
+        self.ldtTarget.customContextMenuRequested.connect(self.createRightClickonMenu_on_selectedItems)
         
     def filterTheFirstFaceInCluster(self, inList):
         out = list()
@@ -106,6 +111,14 @@ class UVTools(form_class,base_class):
                     cmds.polyMoveUV(pivot = [0,0], scaleU = -1)
             except:
                 pass
+            
+    def createRightClickonMenu_on_selectedItems(self,pos):
+            RightClickMenu = QtGui.QMenu(self)
+            RightClickMenu.addAction(self.actionAdd)
+            RightClickMenu.exec_(QtGui.QCursor.pos())
+            
+    def getNameFromSelected(self):
+        pass
         
 def main(xmlFile):
     form = UVTools(xmlFile)
