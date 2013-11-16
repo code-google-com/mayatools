@@ -1,4 +1,4 @@
-description = 'Clean up some bas issues.'
+description = 'Clean up redundant nodes in scene.'
 name = 'CleanUpScene'
 
 import maya.cmds as cmds
@@ -12,9 +12,17 @@ def execute():
     mel.eval('OptimizeScene;')
     
     print '--------------- Convert Instance mesh to object-------------------'
-    
-    
-    print '--------------- Clean up redundant shaders and textures-----------------'
+    shapeNodes = cmds.ls(type = 'mesh')
+    for shape in shapeNodes:
+        parents = cmds.listRelatives(shape, allParents = True)
+        if len(parents) > 1:
+            print shape + ' is instances of mesh'
+            py.select(parents)
+            mel.eval('ConvertInstanceToObject;')
+
+    print '--------------- Export Selected for cleaning up-----------------'
+    mel.eval('SelectAll;')
+    namefile= cmds.file(q= True, sn = True)
     
     print '--------------- Clean up dead shape node-----------------'
     shapeNodes = py.ls(shapes = True, long = True)

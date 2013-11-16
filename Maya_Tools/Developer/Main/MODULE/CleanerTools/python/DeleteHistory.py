@@ -1,4 +1,4 @@
-description = 'Delete history to selected nodes'
+description = 'Delete non deformed history.'
 name = 'DeleteHistory'
 import maya.cmds as cmds
 import maya.mel as mel

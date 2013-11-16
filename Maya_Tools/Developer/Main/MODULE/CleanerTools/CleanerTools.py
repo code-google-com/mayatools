@@ -51,6 +51,7 @@ class ClearTools(form_class,base_class):
             #layout.addWidget(spacer)
             layout.addWidget(button)
             self.CommonLayout.addLayout(layout)
+            chkbox.setChecked(True)
             button.clicked.connect(instanceModule.execute)
             chkbox.clicked.connect(functools.partial(self.updateContent, chkbox,instanceModule.name))
             
