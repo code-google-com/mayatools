@@ -32,7 +32,7 @@ class NamingConvention(form_class,base_class):
         self.edtSelectByName.returnPressed.connect(functools.partial(self.excuteChangNaming, 4))
         self.btnUpperCase.clicked.connect(functools.partial(self.excuteChangNaming, 5))
         self.btnLowerCase.clicked.connect(functools.partial(self.excuteChangNaming, 6))
-        self.btnUnParentShapeNodes.clicked.connect(self.unParent)
+
         if inputFile != '':
             project = inputFile.split('.')[0]
             customFn = inputFile.split('.')[1]
