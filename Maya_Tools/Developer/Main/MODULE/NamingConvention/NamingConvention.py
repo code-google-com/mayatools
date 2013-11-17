@@ -32,7 +32,7 @@ class NamingConvention(form_class,base_class):
         self.edtSelectByName.returnPressed.connect(functools.partial(self.excuteChangNaming, 4))
         self.btnUpperCase.clicked.connect(functools.partial(self.excuteChangNaming, 5))
         self.btnLowerCase.clicked.connect(functools.partial(self.excuteChangNaming, 6))
-        
+        self.btnUnParentShapeNodes.clicked.connect(self.unParent)
         if inputFile != '':
             project = inputFile.split('.')[0]
             customFn = inputFile.split('.')[1]
@@ -114,6 +114,10 @@ class NamingConvention(form_class,base_class):
         
     def selectNode(self, param):
         cmds.select(param)
+        
+    def unParent(self):
+        pass
+        
         
 def main(xmlnput):
     form = NamingConvention(xmlnput)

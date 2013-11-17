@@ -8,6 +8,8 @@ import math
 import Source.IconResource_rc
 reload(Source.IconResource_rc)
 
+import CommonFunctions as cf
+
 import UvRatio
 reload(UvRatio)
 
@@ -35,9 +37,25 @@ class UVTools(form_class,base_class):
         self.btnMirrorV.clicked.connect(functools.partial(self.mirrorUV,'V'))
         self.cbbSourceMat.addItems(['Materials from source'])
         self.cbbTargetMat.addItems(['Materials from target'])
-        self.actionAdd.triggered.connect(self.getNameFromSelected)
-        self.ldtSource.customContextMenuRequested.connect(self.createRightClickonMenu_on_selectedItems)
-        self.ldtTarget.customContextMenuRequested.connect(self.createRightClickonMenu_on_selectedItems)
+        self.ldtSource.addActions([self.actionAddSource, self.actionClearSource, self.actionCopySource, self.actionPasteSource])
+        self.ldtTarget.addActions([self.actionAddTarget,self.actionClearTarget, self.actionCopyTarget, self.actionPasteTarget])
+        
+        self.actionAddSource.triggered.connect(functools.partial(self.getNameFromSelected, 'Source'))
+        self.actionAddTarget.triggered.connect(functools.partial(self.getNameFromSelected, 'Target'))
+        
+        self.actionClearSource.triggered.connect(functools.partial(self.clear, 'Source'))
+        self.actionClearTarget.triggered.connect(functools.partial(self.clear, 'Target'))
+        
+        self.actionCopySource.triggered.connect(functools.partial(self.copy, 'Source'))
+        self.actionCopyTarget.triggered.connect(functools.partial(self.copy, 'Target'))
+        
+        self.actionPasteSource.triggered.connect(functools.partial(self.paste, 'Source'))
+        self.actionPasteTarget.triggered.connect(functools.partial(self.paste, 'Target'))
+        
+        self.ldtSource.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        self.ldtTarget.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        #self.ldtSource.customContextMenuRequested.connect(self.createRightClickonMenu_on_selectedItems)
+        #self.ldtTarget.customContextMenuRequested.connect(self.createRightClickonMenu_on_selectedItems)
         
     def filterTheFirstFaceInCluster(self, inList):
         out = list()
@@ -117,8 +135,46 @@ class UVTools(form_class,base_class):
             RightClickMenu.addAction(self.actionAdd)
             RightClickMenu.exec_(QtGui.QCursor.pos())
             
-    def getNameFromSelected(self):
-        pass
+    def getNameFromSelected(self, widget):
+        objName = cmds.ls(sl = True)[0]
+        # get shader from nodes
+        shapeNode = cmds.listRelatives(c = True, f = True)[0]
+        sgs = cmds.listConnections(shapeNode, t = 'shadingEngine')
+        shaders = list()
+        for sg in sgs:
+            if cmds.connectionInfo(sg + '.surfaceShader', sfd = True):
+                shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
+                shaders.append(shader)
+        # ---------------------------
+        if widget =='Source':
+            self.ldtSource.setText(objName)
+            self.cbbSourceMat.clear()
+            self.cbbSourceMat.addItems(shaders)
+            # test whether material in source and target matched together
+            
+        if widget =='Target':
+            self.ldtTarget.setText(objName)
+            self.cbbTargetMat.clear()
+            self.cbbTargetMat.addItems(shaders)
+            
+    def clear(self, widget):
+        if widget =='Source':
+            self.ldtSource.setText('')
+        if widget =='Target':
+            self.ldtTarget.setText('')
+            
+    def copy(self, widget):
+        if widget =='Source':
+            cf.setDataToClipboard(self.ldtSource.text())
+        if widget =='Target':
+            cf.setDataToClipboard(self.ldtTarget.text())
+            
+    def paste(self, widget):
+        if widget =='Source':
+            self.ldtSource.setText(cf.getDataFromClipboard())
+        if widget =='Target':
+            self.ldtTarget.setText(cf.getDataFromClipboard())
+        
         
 def main(xmlFile):
     form = UVTools(xmlFile)

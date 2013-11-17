@@ -47,7 +47,8 @@ class LODTools(form_class,base_class):
         self.btnLOD4.clicked.connect(functools.partial(self.selectLOD,'4'))
         self.btnLOD5.clicked.connect(functools.partial(self.selectLOD,'5'))
         self.btnLOD6.clicked.connect(functools.partial(self.selectLOD,'6'))
-        self.btnSHADOW.clicked.connect(functools.partial(self.selectLOD,'shadow'))
+        self.btnLOD7.clicked.connect(functools.partial(self.selectLOD,'7'))
+        self.btnLOD8.clicked.connect(functools.partial(self.selectLOD,'8'))
         if not cmds.objExists('LayerSetup'):
             self.btnCleanUp.setEnabled(False)
             self.btnSpreadHonrizonal.setEnabled(False)
@@ -304,12 +305,28 @@ class LODTools(form_class,base_class):
             self._currentPart = 'type_z_layer'
             cmds.setAttr(self._currentPart + '.visibility', 1)
         if lod == '6':
-            cmds.select('*LOD6')
-            self._currentPart = ''
-        if lod == 'shadow':
-            cmds.select('*SHADOW') 
-        print self._currentPart
-   
+            try:
+                cmds.select('*LOD6')
+            except:
+                pass
+            self._currentPart = 'pulled_wheel_arch_layer'
+            cmds.setAttr(self._currentPart + '.visibility', 1)
+        if lod == '7':
+            try:
+                cmds.select('*LOD7')
+            except:
+                pass 
+            self._currentPart = 'small_overfenders_layer'
+            cmds.setAttr(self._currentPart + '.visibility', 1)
+            #self._nohide.remove('base_car_layer')
+        if lod == '8':
+            try:
+                cmds.select('*LOD7')
+            except:
+                pass 
+            self._currentPart = 'large_overfenders_layer'
+            cmds.setAttr(self._currentPart + '.visibility', 1)
+       
 def main(xmlFile):
     form = LODTools(xmlFile)
     return form 

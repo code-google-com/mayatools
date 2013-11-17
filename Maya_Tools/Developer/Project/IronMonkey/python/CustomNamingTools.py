@@ -11,7 +11,9 @@ fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/CustomNamingTool.ui'
 locators = ['pivot_bumper_front_left','pivot_bumper_front_right','pivot_bumper_rear_left','pivot_bumper_rear_right','locator_headlights_00','locator_brakelights_00','locator_wheel_smoke_00 ','locator_nitro_00','wheel_arch_loc']
 lods = ['lod_00','lod_01','lod_02','lod_03','lod_04','lod_05','lod_06']
-parts = ['type_a','type_b','type_c','type_d','type_y','type_z']#,'pull_wheelarch','large_overfender','small_overfender']
+parts = ['type_a','type_b','type_c','type_d','type_y','type_z', 'pulled_type_a','pulled_type_b', 'pulled_type_c', 'pulled_type_d',
+         'large_type_a', 'large_type_b', 'large_type_c', 'large_type_d',
+         'small_type_a','small_type_b', 'small_type_c', 'small_type_d']#,'pull_wheelarch','large_overfender','small_overfender']
 form_class, base_class = uic.loadUiType(dirUI)    
 
 class CustomNamingTool(form_class,base_class):
@@ -99,7 +101,7 @@ class CustomNamingTool(form_class,base_class):
         # select lod06 and add them to layer
         cmds.editDisplayLayerMembers('lod_06_layer', cmds.ls('lod_06'), noRecurse = True)
         # select base car and add them to layer
-        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor','caliper','chassis_','body'), noRecurse = True)
+        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor|type_a','caliper|type_a','chassis|type_a','body|type_a','interior|type_a'), noRecurse = True)
         # select pull wheel arch
         cmds.editDisplayLayerMembers('pulled_wheel_arch_layer', cmds.ls('pulled'), noRecurse = True)
         # select small over fender
@@ -143,7 +145,7 @@ class CustomNamingTool(form_class,base_class):
                 lod = node.split('_')[-1]
                 parts = [x for x in self.part if re.search('(.*){p}(\.*)'.format(p = x), node.split('|')[-1])]
                 if parts[0] in ['bumper_front', 'bumper_rear','side_skirts', 'wheel_arch']:
-                    if kit == 'a':
+                    if kit != ['z','y']:
                         parent = parts[0]+'|standard_type_'+kit+'|'+ lod.replace('lod','lod_')
                         if not cmds.objExists(parent):
                             nullGroup = cmds.group(em = True)
