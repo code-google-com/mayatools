@@ -1,4 +1,5 @@
 import maya.cmds as cmds
+import maya.mel as mel
 import re
 
 from PyQt4 import QtGui, QtCore, uic
@@ -174,6 +175,7 @@ class LODTools(form_class,base_class):
         cmds.showHidden(all = True)
         
     def SwapLOD(self):
+        mel.eval('showHidden -all;')        
         self._nohide = ['base_car_layer']#globals()[self._projectName+'_nohide']
         #LODa, LODb = '_LOD0_','_LOD1_'
         if self.rdbSourceLOD0.isChecked():
@@ -209,7 +211,34 @@ class LODTools(form_class,base_class):
             LODb = mappingLODs(self._projectName,'_LOD6_')
         elif self.rdbTargetSHADOW.isChecked():
             LODb = mappingLODs(self._projectName,'_SHADOW_')
-        # --
+        # ------------------------------------------------
+        type_a = list()
+        if not self.btnLOD0.isChecked():
+            if self.chkBumper_front.isChecked():
+                if 'type_a_layer' not in self._nohide:
+                    self._nohide.append('type_a_layer')
+                type_a.append('bumper_front|standard_type_a')
+            if self.chkBumper_rear.isChecked():
+                if 'type_a_layer' not in self._nohide:
+                    self._nohide.append('type_a_layer')
+                type_a.append('bumper_rear|standard_type_a')
+            if self.chkSide_skirt.isChecked():
+                if 'type_a_layer' not in self._nohide:
+                    self._nohide.append('type_a_layer')
+                type_a.append('side_skirts|standard_type_a')
+            if self.chkHood.isChecked():
+                if 'type_a_layer' not in self._nohide:
+                    self._nohide.append('type_a_layer')
+                type_a.append('hood|type_a')
+                
+            groups = [group.split('.')[0] for group in cmds.connectionInfo('type_a_layer.drawInfo', dfs = True)]
+            for g in groups:
+                if g not in type_a:
+                    try:
+                        cmds.setAttr(g + '.visibility', 0)
+                    except:
+                        pass    
+        # ------------------------------------------------
         self._nohide.append(LODa)
         self._nohide.append(LODb)
         self._nohide.append('defaultLayer')

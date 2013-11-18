@@ -101,7 +101,7 @@ class CustomNamingTool(form_class,base_class):
         # select lod06 and add them to layer
         cmds.editDisplayLayerMembers('lod_06_layer', cmds.ls('lod_06'), noRecurse = True)
         # select base car and add them to layer
-        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor|type_a','caliper|type_a','chassis|type_a','body|type_a','interior|type_a'), noRecurse = True)
+        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor|type_a','caliper|type_a','chassis|type_a','body|type_a','interior|type_a','windows|type_a','headlights|type_a','taillights|type_a'), noRecurse = True)
         # select pull wheel arch
         cmds.editDisplayLayerMembers('pulled_wheel_arch_layer', cmds.ls('pulled'), noRecurse = True)
         # select small over fender
@@ -149,7 +149,7 @@ class CustomNamingTool(form_class,base_class):
                         parent = parts[0]+'|standard_type_'+kit+'|'+ lod.replace('lod','lod_')
                         if not cmds.objExists(parent):
                             nullGroup = cmds.group(em = True)
-                            cmds.parent(nullGroup, parts[0]+'|standard_type_'+kit)
+                            cmds.parent(nullGroup, parts[0]+'|standard_type_' + kit)
                             cmds.rename(nullGroup,lod.replace('lod','lod_'))
                     else:
                         parent = parts[0]+'|type_'+kit+'|'+ lod.replace('lod','lod_')
