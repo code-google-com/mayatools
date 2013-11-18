@@ -148,6 +148,10 @@ class CustomNamingTool(form_class,base_class):
                     if kit != ['z','y']:
                         parent = parts[0]+'|standard_type_'+kit+'|'+ lod.replace('lod','lod_')
                         if not cmds.objExists(parent):
+                            if not cmds.objExists(parts[0]+'|standard_type_'+kit):
+                                nullGroup = cmds.group(em = True)
+                                cmds.parent(nullGroup, parts[0])
+                                cmds.rename(nullGroup,'standard_type_'+kit) 
                             nullGroup = cmds.group(em = True)
                             cmds.parent(nullGroup, parts[0]+'|standard_type_' + kit)
                             cmds.rename(nullGroup,lod.replace('lod','lod_'))
