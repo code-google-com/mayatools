@@ -72,7 +72,7 @@
     </group>
         <group name = "Batch_14">
 		<asset name = "ferrari_599_gto" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "ariel_atom_500_v8" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "ariel_atom_500_v8" start_date = "" due_date = "" stage = ""  image = "" keepAnimation="True"/>
 		<asset name = "mclaren_f1_lm" start_date = "" due_date = "" stage = ""  image = ""/>
 		<asset name = "vw_beetle_gsr" start_date = "" due_date = "" stage = ""  image = ""/>
     </group>

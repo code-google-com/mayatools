@@ -20,13 +20,6 @@ def execute():
             py.select(parents)
             mel.eval('ConvertInstanceToObject;')
 
-    print '--------------- Export Selected for cleaning up-----------------'
-    mel.eval('SelectAll;')
-    namefile= cmds.file(q= True, sn = True)
-    cmds.file(namefile, f= True, es = True, type = 'mayaBinary')
-    cmds.file(namefile, f= True, o = True)
-    cmds.viewFit(all = True)
-    
     print '--------------- Clean up dead shape node-----------------'
     shapeNodes = py.ls(shapes = True, long = True)
     liveShapes = list()
@@ -50,6 +43,13 @@ def execute():
             print '-- delete dead shape: ' + dead
         except:
             pass
+        
+    print '--------------- Export Selected for cleaning up-----------------'
+    mel.eval('SelectAll;')
+    namefile= cmds.file(q= True, sn = True)
+    cmds.file(namefile, f= True, es = True, type = 'mayaBinary')
+    cmds.file(namefile, f= True, o = True)
+    cmds.viewFit(all = True)
 
     
     
