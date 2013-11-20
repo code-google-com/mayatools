@@ -1,5 +1,5 @@
 description = 'Clean up shaders and textures.'
-name = 'CleanUpShader'
+name = 'CleanupShader'
 
 import maya.cmds as cmds
 import maya.mel as mel

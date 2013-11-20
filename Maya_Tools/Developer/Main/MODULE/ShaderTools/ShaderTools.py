@@ -2,9 +2,12 @@ import maya.cmds as cmds
 from PyQt4 import QtGui, QtCore, uic
 import maya.mel as mel
 import os, sys, inspect
-from pymel.core import *
+import pymel.core as py
 import functools, imp
 
+import Source.IconResource_rc
+
+checkerList = ['Custom_checker','IronMonkey_checker','Sony_checker_01', 'Sony_checker_02']
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 dirUI= fileDirCommmon +'/UI/ShaderTools.ui'
@@ -42,6 +45,28 @@ class ShaderTools(form_class,base_class):
             instanceModule = loadModule(customPath + '/Project/' + project + '/python', customFn)
             form = instanceModule.main()
             self.customUI.addWidget(form)
+       
+        # add Combobox to change checker texture
+        self.combobox = QtGui.QComboBox(self)
+        #self.combobox.addItems(['Caro_checker','IronMonkey_checker','Sony_checker_01', 'Sony_checker_02'])
+        for c in checkerList:
+            icon = QtGui.QIcon(':/Project/' + c + '.tif')
+            self.combobox.addItem(icon, c)
+        self.combobox.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
+        self.actionSwitch = QtGui.QWidgetAction(self.combobox)
+        self.actionSwitch.setDefaultWidget(self.combobox)
+        self.btnCheckerView.addAction(self.actionSwitch)
+         # add slider to adjust checker size    
+        self.slider = QtGui.QSlider(self)
+        self.slider.setOrientation (QtCore.Qt.Horizontal)
+        self.slider.setMaximum(100)
+        self.slider.setMinimum(1)
+        self.actionSlide = QtGui.QWidgetAction(self.slider)
+        self.actionSlide.setDefaultWidget(self.slider)
+        self.btnCheckerView.addAction(self.actionSlide)
+        #----------
+        self.combobox.currentIndexChanged.connect(self.updateChecker)
+        self.slider.valueChanged.connect(self.updateTilingChecker)
         
     def removeDebugShader(self):
         if cmds.objExists('restoreTechniqueNode'):
@@ -86,20 +111,12 @@ class ShaderTools(form_class,base_class):
             
     def tweakingCheckerShader(self):
         self.removeDebugShader()
-        
-        widget = QtGui.QSlider(self)
-        widget.setOrientation (QtCore.Qt.Horizontal)
-        widget.setMaximum(100)
-        widget.setMinimum(1)
-        widgetAction = QtGui.QWidgetAction(widget)
-        widgetAction.setDefaultWidget(widget)
-        
         if self.btnCheckerView.isChecked():
             debugShader = cmds.shadingNode('lambert', n = 'TEMP_DEBUG_SHADER', asShader = True)
             textureNode = cmds.shadingNode('file',n = 'TEMP_DEBUG_TEXTURE', asTexture = True)
             utilityNode = cmds.shadingNode('place2dTexture', n = 'TEMP_DEBUG_UTILITY', asUtility = True)
             #tilingNode = cmds.
-            cmds.setAttr('TEMP_DEBUG_TEXTURE.fileTextureName',self._textures + 'custom_uv_diag.png', type = 'string')
+            cmds.setAttr('TEMP_DEBUG_TEXTURE.fileTextureName',self._textures + 'Custom_checker.tif', type = 'string')
             #---
             cmds.connectAttr(utilityNode + '.outUV', textureNode +  '.uvCoord')
             cmds.connectAttr(utilityNode + '.outUvFilterSize', textureNode + '.uvFilterSize') 
@@ -122,14 +139,8 @@ class ShaderTools(form_class,base_class):
             #---
             cmds.connectAttr(textureNode + '.outColor', debugShader + '.color')
             self.assignDebugShader()
-            # -- setup custom widget for changing checker size
-            self.btnCheckerView.addAction(widgetAction)
+            
         else:
-            print 'remove checker debug'
-            print self.btnCheckerView.actions() 
-            #widgetAction.deleteWidget(widget) 
-            self.btnCheckerView.actions().remove(widgetAction)
-            print self.btnCheckerView.actions() 
             self.removeDebugShader()
             
     def tweakingNormalView(self):
@@ -144,9 +155,18 @@ class ShaderTools(form_class,base_class):
             self.removeDebugShader()
             
     def updateTilingChecker(self):
-        pass
+        value = self.slider.value()
+        if cmds.objExists('TEMP_DEBUG_UTILITY'):
+            node = py.ls('TEMP_DEBUG_UTILITY')[0]
+            node.setAttr('repeatU', value)
+            node.setAttr('repeatV', value)
+            
+    def updateChecker(self):
+        texture = self.combobox.currentText() 
+        if cmds.objExists('TEMP_DEBUG_TEXTURE'):
+            node = py.ls('TEMP_DEBUG_TEXTURE')[0]
+            cmds.setAttr('TEMP_DEBUG_TEXTURE.fileTextureName', self._textures + '/' + texture + '.tif', type = 'string')
         
-
 def main(xmlnput):
     form = ShaderTools(xmlnput)
     return form 

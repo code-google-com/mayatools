@@ -5,7 +5,7 @@ import maya.mel as mel
 import imp
 import functools
 
-
+#BGColors = [[202,202,202],[255,255,255]]
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 dirUI= fileDirCommmon +'/UI/CleanerTools.ui'
 
@@ -31,6 +31,7 @@ class ClearTools(form_class,base_class):
         self.loadFunction()
         
     def loadFunction(self):
+        #idColor = 0
         contentToCleanUp = [f for f in os.listdir(fileDirCommmon + '/python/') if f.endswith('py')]
         if self._customCheck != '':
             project = self._customCheck.split('.')[0]
@@ -42,13 +43,14 @@ class ClearTools(form_class,base_class):
             except ImportError:
                 instanceModule = loadModule(customPath + '/Project/' + project + '/python/checkingContents/', module.split('.')[0])
             label = QtGui.QLabel(instanceModule.description)
+            #label.setStyleSheet('background-color: rgb(' + str(BGColors[idColor][0]) + ',' + str(BGColors[idColor][1]) + ',' + str(BGColors[idColor][2]) + ');')
+            #idColor *= -1
             button = QtGui.QPushButton('Execute')
             chkbox = QtGui.QCheckBox()
             layout = QtGui.QHBoxLayout()
             layout.addWidget(chkbox)
             layout.addWidget(label)
             layout.addStretch(1)
-            #layout.addWidget(spacer)
             layout.addWidget(button)
             self.CommonLayout.addLayout(layout)
             chkbox.setChecked(True)
