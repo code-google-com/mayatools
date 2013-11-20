@@ -29,7 +29,7 @@ class ShaderTools(form_class,base_class):
         super(base_class,self).__init__()
         self.setupUi(self)
         self.__name__ = 'Shader Toolbox'
-        self._textures = fileDirCommmon + '/textures/'
+        self._textures = [texture for texture in os.listdir(fileDirCommmon + '/textures/') if texture.endswith('tif') ]
         self._shaders = fileDirCommmon + '/shaders/'
         self.statusScene = 1
         
@@ -48,10 +48,9 @@ class ShaderTools(form_class,base_class):
        
         # add Combobox to change checker texture
         self.combobox = QtGui.QComboBox(self)
-        #self.combobox.addItems(['Caro_checker','IronMonkey_checker','Sony_checker_01', 'Sony_checker_02'])
-        for c in checkerList:
-            icon = QtGui.QIcon(':/Project/' + c + '.tif')
-            self.combobox.addItem(icon, c)
+        for c in self._textures:
+            icon = QtGui.QIcon(':/Project/' + os.path.split(c)[1])
+            self.combobox.addItem(icon, os.path.splitext(os.path.split(c)[1])[0])
         self.combobox.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
         self.actionSwitch = QtGui.QWidgetAction(self.combobox)
         self.actionSwitch.setDefaultWidget(self.combobox)
@@ -115,11 +114,10 @@ class ShaderTools(form_class,base_class):
             debugShader = cmds.shadingNode('lambert', n = 'TEMP_DEBUG_SHADER', asShader = True)
             textureNode = cmds.shadingNode('file',n = 'TEMP_DEBUG_TEXTURE', asTexture = True)
             utilityNode = cmds.shadingNode('place2dTexture', n = 'TEMP_DEBUG_UTILITY', asUtility = True)
-            #tilingNode = cmds.
-            cmds.setAttr('TEMP_DEBUG_TEXTURE.fileTextureName',self._textures + 'Custom_checker.tif', type = 'string')
+            cmds.setAttr('TEMP_DEBUG_TEXTURE.fileTextureName',fileDirCommmon + '/textures/Custom_checker.tif', type = 'string')
             #---
             cmds.connectAttr(utilityNode + '.outUV', textureNode +  '.uvCoord')
-            cmds.connectAttr(utilityNode + '.outUvFilterSize', textureNode + '.uvFilterSize') 
+            cmds.connectAttr(utilityNode + '.outUvFilterSize', textureNode + '.uvFilterSize')
             cmds.connectAttr(utilityNode + '.coverage', textureNode + '.coverage') 
             cmds.connectAttr(utilityNode + '.translateFrame', textureNode + '.translateFrame') 
             cmds.connectAttr(utilityNode + '.rotateFrame', textureNode + '.rotateFrame') 
@@ -165,7 +163,7 @@ class ShaderTools(form_class,base_class):
         texture = self.combobox.currentText() 
         if cmds.objExists('TEMP_DEBUG_TEXTURE'):
             node = py.ls('TEMP_DEBUG_TEXTURE')[0]
-            cmds.setAttr('TEMP_DEBUG_TEXTURE.fileTextureName', self._textures + '/' + texture + '.tif', type = 'string')
+            cmds.setAttr('TEMP_DEBUG_TEXTURE.fileTextureName', fileDirCommmon + '/textures/' + texture + '.tif', type = 'string')
         
 def main(xmlnput):
     form = ShaderTools(xmlnput)
