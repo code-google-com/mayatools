@@ -10,12 +10,6 @@ reload(Source.IconResource_rc)
 
 import CommonFunctions as cf
 
-import UvRatio
-reload(UvRatio)
-
-#import PolyTools.ExporterandImporter
-#reload(PolyTools.ExporterandImporter)
-
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/UVTools.ui'
 
@@ -30,9 +24,10 @@ class UVTools(form_class,base_class):
         self.btnDown.clicked.connect(functools.partial(self.moveUVShell,'down'))
         self.btnLeft.clicked.connect(functools.partial(self.moveUVShell,'left'))
         self.btnRight.clicked.connect(functools.partial(self.moveUVShell,'right'))
-        self.btnAssignRatio.clicked.connect(self.applyScale)
-        self.btnSetTexel.clicked.connect(functools.partial(self.applyScale))
-        self.btnUVRatio.clicked.connect(self.openUVRatioToolBox)
+        self.btnSetUVScale.clicked.connect(self.setUVScale)
+        self.btnGetUVScale.clicked.connect(self.getUVScale)
+        self.btnSetTexel.clicked.connect(functools.partial(self.setUVScale))
+        #self.btnUVRatio.clicked.connect(self.openUVRatioToolBox)
         self.btnMirrorU.clicked.connect(functools.partial(self.mirrorUV,'H'))
         self.btnMirrorV.clicked.connect(functools.partial(self.mirrorUV,'V'))
         self.cbbSourceMat.addItems(['Materials from source'])
@@ -54,12 +49,13 @@ class UVTools(form_class,base_class):
         
         self.ldtSource.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         self.ldtTarget.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        
         #self.ldtSource.customContextMenuRequested.connect(self.createRightClickonMenu_on_selectedItems)
         #self.ldtTarget.customContextMenuRequested.connect(self.createRightClickonMenu_on_selectedItems)
+        self.cbbSourceMat.currentIndexChanged.connect(self.autoSync)
         
     def filterTheFirstFaceInCluster(self, inList):
         out = list()
-        #firstFilter = filterShaderNodes(inList) # filter 01
         exit = False
         while not exit:
             cmds.select(mesh[0])
@@ -85,13 +81,13 @@ class UVTools(form_class,base_class):
         except:
             QtGui.QMessageBox.information(self, 'Wrong data', 'Vui long xem lai cac thong so can thiet da dung chua?', buttons=QMessageBox_Ok, defaultButton=QMessageBox_NoButton)
     
-    def applyScale(self):
+    def setUVScale(self):
         boltUvRatio.collect_shells_and_set_shells_UV_ratio(float(self.ldtRatio.text()))
-        #selFaces = cmds.ls(sl = True, fl =True)
-        #scalePara = float(self.ldtTexel.text()) /int(self.ldtRes.text())  
-        #for face in selFaces:
-        #    cmds.unfold(face, i = 0, ss=0.001, gb = 0, gmb = 1, pub = 0, ps = 0, oa = 0, us = True, s = scalePara)
-            
+    
+    def getUVScale(self):
+        ratio = boltUvRatio.get_sel_faces_UV_ratio(1)
+        self.ldtRatio.setText(str(1/ratio))
+        
     def on_ldtRes_returnPressed(self):
         #self.validateInfo()
         self.ldtTexel.setText( str(float(self.ldtRes.text())/math.sqrt(float(self.ldtRatio.text()))))
@@ -142,26 +138,33 @@ class UVTools(form_class,base_class):
         sgs = cmds.listConnections(shapeNode, t = 'shadingEngine')
         shaders = list()
         for sg in sgs:
+            print sg
             if cmds.connectionInfo(sg + '.surfaceShader', sfd = True):
                 shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
                 shaders.append(shader)
+        #print shaders
         # ---------------------------
         if widget =='Source':
             self.ldtSource.setText(objName)
             self.cbbSourceMat.clear()
-            self.cbbSourceMat.addItems(shaders)
+            self.cbbSourceMat.addItems(list(set(shaders)))
             # test whether material in source and target matched together
             
         if widget =='Target':
             self.ldtTarget.setText(objName)
             self.cbbTargetMat.clear()
-            self.cbbTargetMat.addItems(shaders)
+            self.cbbTargetMat.addItems(list(set(shaders)))
             
     def clear(self, widget):
         if widget =='Source':
             self.ldtSource.setText('')
+            self.cbbSourceMat.clear()
+            self.cbbSourceMat.addItems(['Materials from source'])
+        
         if widget =='Target':
             self.ldtTarget.setText('')
+            self.cbbTargetMat.clear()
+            self.cbbTargetMat.addItems(['Materials from target'])
             
     def copy(self, widget):
         if widget =='Source':
@@ -174,6 +177,15 @@ class UVTools(form_class,base_class):
             self.ldtSource.setText(cf.getDataFromClipboard())
         if widget =='Target':
             self.ldtTarget.setText(cf.getDataFromClipboard())
+            
+    def autoSync(self):
+        mat = self.cbbSourceMat.currentText()
+        id = self.cbbTargetMat.findText(mat, QtCore.Qt.MatchExactly|QtCore.Qt.MatchCaseSensitive)
+        if id != -1:
+            self.cbbTargetMat.setCurrentIndex(id)
+            
+    def transferUV(self):
+        pass
         
         
 def main(xmlFile):

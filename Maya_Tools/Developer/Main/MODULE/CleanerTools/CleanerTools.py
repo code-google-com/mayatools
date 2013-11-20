@@ -27,7 +27,6 @@ class ClearTools(form_class,base_class):
         self._contentCleanUp = list()
         self._customCheck = inputFile
         self.btnCheckAll.clicked.connect(self.executeAll)
-        #self.btnFixMesh.clicked.connect(self.fixMesh)
         self.loadFunction()
         
     def loadFunction(self):

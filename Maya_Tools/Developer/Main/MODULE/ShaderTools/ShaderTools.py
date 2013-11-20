@@ -58,7 +58,7 @@ class ShaderTools(form_class,base_class):
          # add slider to adjust checker size    
         self.slider = QtGui.QSlider(self)
         self.slider.setOrientation (QtCore.Qt.Horizontal)
-        self.slider.setMaximum(100)
+        self.slider.setMaximum(10)
         self.slider.setMinimum(1)
         self.actionSlide = QtGui.QWidgetAction(self.slider)
         self.actionSlide.setDefaultWidget(self.slider)

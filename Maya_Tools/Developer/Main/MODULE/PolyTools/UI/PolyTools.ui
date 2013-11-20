@@ -62,6 +62,12 @@
         <string>Set up Display Scene:</string>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <property name="leftMargin">
+         <number>5</number>
+        </property>
+        <property name="rightMargin">
+         <number>5</number>
+        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_7">
           <property name="spacing">
@@ -79,7 +85,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
               <normaloff>:/Project/Y_up.png</normaloff>:/Project/Y_up.png</iconset>
             </property>
             <property name="iconSize">
@@ -102,7 +108,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
               <normaloff>:/Project/background.png</normaloff>:/Project/background.png</iconset>
             </property>
             <property name="iconSize">
@@ -125,7 +131,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
               <normaloff>:/Project/normal_off.png</normaloff>:/Project/normal_off.png</iconset>
             </property>
             <property name="iconSize">
@@ -169,6 +175,9 @@
         <string>Export and Import tools</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_6">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
@@ -182,7 +191,7 @@
                <string>Export to 3dsMax</string>
               </property>
               <property name="icon">
-               <iconset>
+               <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
                 <normaloff>:/Project/Export.png</normaloff>:/Project/Export.png</iconset>
               </property>
               <property name="iconSize">
@@ -199,7 +208,7 @@
                <string>Import from 3dsMax</string>
               </property>
               <property name="icon">
-               <iconset>
+               <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
                 <normaloff>:/Project/Import.png</normaloff>:/Project/Import.png</iconset>
               </property>
               <property name="iconSize">
@@ -250,6 +259,12 @@
         <string>Modelling ToolBox</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
+        <property name="leftMargin">
+         <number>5</number>
+        </property>
+        <property name="rightMargin">
+         <number>5</number>
+        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
@@ -455,6 +470,12 @@
         <string>Mirror Toolbox</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_4">
+        <property name="leftMargin">
+         <number>5</number>
+        </property>
+        <property name="rightMargin">
+         <number>5</number>
+        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_8">
           <item>
@@ -472,7 +493,7 @@
              <bool>false</bool>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup</string>
+             <string notr="true">buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -491,7 +512,7 @@
              <bool>true</bool>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup</string>
+             <string notr="true">buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -507,7 +528,7 @@
              <string>Instance</string>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup</string>
+             <string notr="true">buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -546,7 +567,7 @@
              <string>Parent Only</string>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup</string>
+             <string notr="true">buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -748,6 +769,12 @@ color: rgb(255, 255, 255);</string>
         <string>Normal ToolBox</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_5">
+        <property name="leftMargin">
+         <number>5</number>
+        </property>
+        <property name="rightMargin">
+         <number>5</number>
+        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_14">
           <item>
@@ -964,7 +991,7 @@ color: rgb(255, 255, 255);</string>
   </layout>
  </widget>
  <resources>
-  <include location="../../../Source/IconResource.qrc"/>
+  <include location="../../../../../../../FoxForest/Source/IconResource.qrc"/>
  </resources>
  <connections/>
  <buttongroups>
