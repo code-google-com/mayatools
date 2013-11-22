@@ -79,13 +79,22 @@ class CustomNamingTool(form_class,base_class):
             except:
                 pass
         # select all locator and put them in 
-        cmds.editDisplayLayerMembers('locator_layer', cmds.ls(type = 'locator'), noRecurse = True)
+        try:
+            cmds.editDisplayLayerMembers('locator_layer', cmds.ls(type = 'locator'), noRecurse = True)
+        except:
+            pass
         # select wheel place holder and put them in
-        cmds.editDisplayLayerMembers('wheel_placeholder_layer', cmds.ls('*placeholder*'), noRecurse = True)
+        try:
+            cmds.editDisplayLayerMembers('wheel_placeholder_layer', cmds.ls('*placeholder*'), noRecurse = True)
+        except:
+            pass
         # select decal placeholder and put them in
         # cmds.editDisplayLayerMembers('decal_placement_layer', [x for x in cmds.ls('*decal_*') if x not in cmds.ls(materials = True)], noRecurse = True)
         # select decal placeholder and put them in
-        cmds.editDisplayLayerMembers('collision_layer', cmds.ls('*collider*'), noRecurse = True)
+        try:
+            cmds.editDisplayLayerMembers('collision_layer', cmds.ls('*collider*'), noRecurse = True)
+        except:
+            pass
         # select lod00 and add them to layer
         cmds.editDisplayLayerMembers('lod_00_layer', cmds.ls('lod_00'), noRecurse = True)
         # select lod01 and add them to layer
@@ -103,11 +112,20 @@ class CustomNamingTool(form_class,base_class):
         # select base car and add them to layer
         cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor|type_a','caliper|type_a','chassis|type_a','body|type_a','interior|type_a','windows|type_a','headlights|type_a','taillights|type_a'), noRecurse = True)
         # select pull wheel arch
-        cmds.editDisplayLayerMembers('pulled_wheel_arch_layer', cmds.ls('pulled'), noRecurse = True)
+        try:
+            cmds.editDisplayLayerMembers('pulled_wheel_arch_layer', cmds.ls('pulled'), noRecurse = True)
+        except:
+            pass
         # select small over fender
-        cmds.editDisplayLayerMembers('small_overfenders_layer', cmds.ls('small'), noRecurse = True)
+        try:
+            cmds.editDisplayLayerMembers('small_overfenders_layer', cmds.ls('small'), noRecurse = True)
+        except:
+            pass
         # select large over fender
-        cmds.editDisplayLayerMembers('large_overfenders_layer', cmds.ls('large'), noRecurse = True)
+        try:
+            cmds.editDisplayLayerMembers('large_overfenders_layer', cmds.ls('large'), noRecurse = True)
+        except:
+            pass
         
     def updateActivedList(self):
         selObjs = cmds.ls(sl = True, l = True)
@@ -143,9 +161,10 @@ class CustomNamingTool(form_class,base_class):
             #try:
                 kit = node.split('_')[-2]
                 lod = node.split('_')[-1]
+                #ext = node.split('_')[-3]
                 parts = [x for x in self.part if re.search('(.*){p}(\.*)'.format(p = x), node.split('|')[-1])]
                 if parts[0] in ['bumper_front', 'bumper_rear','side_skirts', 'wheel_arch']:
-                    if kit != ['z','y']:
+                    if kit not in  ['z','y']:
                         parent = parts[0]+'|standard_type_'+kit+'|'+ lod.replace('lod','lod_')
                         if not cmds.objExists(parent):
                             if not cmds.objExists(parts[0]+'|standard_type_'+kit):
@@ -155,6 +174,26 @@ class CustomNamingTool(form_class,base_class):
                             nullGroup = cmds.group(em = True)
                             cmds.parent(nullGroup, parts[0]+'|standard_type_' + kit)
                             cmds.rename(nullGroup,lod.replace('lod','lod_'))
+                        if re.search('(.*){p}(\.*)'.format(p = 'pulled'),node):
+                            parent = parts[0]+'|pulled_type_'+kit+'|'+ lod.replace('lod','lod_')
+                            if not cmds.objExists(parent):
+                                if not cmds.objExists(parts[0]+'|pulled_type_'+kit):
+                                    nullGroup = cmds.group(em = True)
+                                    cmds.parent(nullGroup, parts[0])
+                                    cmds.rename(nullGroup,'pulled_type_'+kit)
+                                nullGroup = cmds.group(em = True)
+                                cmds.parent(nullGroup, parts[0]+'|pulled_type_' + kit)
+                                cmds.rename(nullGroup,lod.replace('lod','lod_')) 
+                        if re.search('(.*){p}(\.*)'.format(p = 'large'), node):
+                            parent = parts[0]+'|large_type_'+kit+'|'+ lod.replace('lod','lod_')
+                            if not cmds.objExists(parent):
+                                if not cmds.objExists(parts[0]+'|large_type_'+kit):
+                                    nullGroup = cmds.group(em = True)
+                                    cmds.parent(nullGroup, parts[0])
+                                    cmds.rename(nullGroup,'large_type_'+kit)
+                                nullGroup = cmds.group(em = True)
+                                cmds.parent(nullGroup, parts[0]+'|large_type_' + kit)
+                                cmds.rename(nullGroup,lod.replace('lod','lod_')) 
                     else:
                         parent = parts[0]+'|type_'+kit+'|'+ lod.replace('lod','lod_')
                         if not cmds.objExists(parent):

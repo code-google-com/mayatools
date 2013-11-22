@@ -65,7 +65,7 @@
 		<Template file = "Sony_template_file.mb"/>
 		<AssetList file = "IronMonkey_AssetList.xml"/>
 		<Module>
-			<module name = "NamingConvention" params = "CustomNamingTools"/>
+			<module name = "NamingConvention" params = "CustomNamingTools" disableOrigin = "True"/>
 			<module name = "CleanerTools" params = "CustomCheck"/>
 			<module name = "Pivots" />
 			<module name = "LODTools" />
