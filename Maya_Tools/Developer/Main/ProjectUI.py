@@ -17,10 +17,10 @@ try:
 except: 
     import GE_QA
 
-# try:
-#     reload(AssetTracking)
-# except:
-#     import AssetTracking
+try:
+    reload(AssetForm)
+except:
+    import AssetForm
     
 try:
     reload(UploadForm)
@@ -72,6 +72,7 @@ class ProjectUI(form_class,base_class):
         self.assetListModel = QtGui.QStringListModel()
         cmds.scriptJob(killAll = True, f = True)
         self.loadProjectData()
+        self.xmlFile = XMLProject
         #-------------- FUNCTION UI
         self.actionQA.triggered.connect(self.QAChecking)
         self.actionAsset_Tracking.triggered.connect(self.AssetTracking)
@@ -108,8 +109,8 @@ class ProjectUI(form_class,base_class):
         
     def AssetTracking(self):
         pass
-        #self.AssetFrom = AssetTracking.AssetTracking(self.Proj.managers)
-        #self.AssetFrom.show()
+        self.AssetFrom = AssetForm.AssetForm(self.xmlFile)
+        self.AssetFrom.show()
 
         
 

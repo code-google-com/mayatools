@@ -31,7 +31,7 @@ class ProjectBaseClass():
         self.FeedbacksPath = ""
         self.LibraryPath = ""
         self.PluginsPath = ''
-        self.AssetList = ""
+        self.AssetList = os.path.split(XMLRootFile)[0] + '/AssetList.xml'
         self.NamingConvetion = ""
         self.LOD = list()
         self.stages = list()
