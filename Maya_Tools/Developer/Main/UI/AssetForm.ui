@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>356</width>
-    <height>356</height>
+    <width>358</width>
+    <height>391</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -229,104 +229,110 @@
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_8">
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_20">
-        <item>
-         <widget class="QPushButton" name="btnCreateLocalFolders">
-          <property name="text">
-           <string>Create Local Folders</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>:/Project/New.png</normaloff>:/Project/New.png</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="btnCreateServerFolders">
-          <property name="locale">
-           <locale language="Vietnamese" country="VietNam"/>
-          </property>
-          <property name="text">
-           <string>Create Server Folders</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>:/Project/New.png</normaloff>:/Project/New.png</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <widget class="QPushButton" name="btnCreateLocalFolders">
+        <property name="text">
+         <string>Create Local Folders</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>:/Project/New.png</normaloff>:/Project/New.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+       </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_21">
-        <item>
-         <widget class="QPushButton" name="btnOpenLocalFolder">
-          <property name="text">
-           <string>Open Local Folder</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>:/Project/Documents.png</normaloff>:/Project/Documents.png</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="btnOpenServerFolder">
-          <property name="text">
-           <string>Open Server Folder</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>:/Project/Documents.png</normaloff>:/Project/Documents.png</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <widget class="QPushButton" name="btnCreateServerFolders">
+        <property name="locale">
+         <locale language="Vietnamese" country="VietNam"/>
+        </property>
+        <property name="text">
+         <string>Create Server Folders</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>:/Project/New.png</normaloff>:/Project/New.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_21">
+      <item>
+       <widget class="QPushButton" name="btnOpenLocalFolder">
+        <property name="text">
+         <string>Open Local Folder</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>:/Project/Documents.png</normaloff>:/Project/Documents.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnOpenServerFolder">
+        <property name="text">
+         <string>Open Server Folder</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>:/Project/Documents.png</normaloff>:/Project/Documents.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_9">
+      <item>
+       <widget class="QPushButton" name="btn">
+        <property name="text">
+         <string>Open feedbacks</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_2">
+        <property name="text">
+         <string>Open Document</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
    </layout>
-   <zorder>layoutWidget</zorder>
-   <zorder>layoutWidget_2</zorder>
-   <zorder>layoutWidget_3</zorder>
-   <zorder>layoutWidget_4</zorder>
-   <zorder>layoutWidget_5</zorder>
-   <zorder>layoutWidget_6</zorder>
-   <zorder>label_3</zorder>
-   <zorder>label_3</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>356</width>
+     <width>358</width>
      <height>26</height>
     </rect>
    </property>
@@ -336,7 +342,7 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup"/>
   <buttongroup name="buttonGroup_2"/>
+  <buttongroup name="buttonGroup"/>
  </buttongroups>
 </ui>

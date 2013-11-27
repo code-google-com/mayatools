@@ -31,19 +31,19 @@ class ClearTools(form_class,base_class):
         
     def loadFunction(self):
         #idColor = 0
-        contentToCleanUp = [f for f in os.listdir(fileDirCommmon + '/python/') if f.endswith('py')]
+        contentToCleanUpCommon = [f for f in os.listdir(fileDirCommmon + '/python/') if f.endswith('py')]
+        contentToCleanUpProject = ''
         if self._customCheck != '':
             project = self._customCheck.split('.')[0]
             customPath = os.path.split(os.path.split(os.path.split(fileDirCommmon)[0])[0])[0]
-            contentToCleanUp += [f for f in os.listdir(customPath + '/Project/' + project + '/python/checkingContents/')if f.endswith('py')]
-        for module in contentToCleanUp:
+            print customPath
+            contentToCleanUpProject = [f for f in os.listdir(customPath + '/Project/' + project + '/python/checkingContents/')if f.endswith('py')]
+        for module in contentToCleanUpCommon + contentToCleanUpProject:
             try:
                 instanceModule = loadModule(fileDirCommmon + '/python/', module.split('.')[0])
             except ImportError:
                 instanceModule = loadModule(customPath + '/Project/' + project + '/python/checkingContents/', module.split('.')[0])
             label = QtGui.QLabel(instanceModule.description)
-            #label.setStyleSheet('background-color: rgb(' + str(BGColors[idColor][0]) + ',' + str(BGColors[idColor][1]) + ',' + str(BGColors[idColor][2]) + ');')
-            #idColor *= -1
             button = QtGui.QPushButton('Execute')
             chkbox = QtGui.QCheckBox()
             layout = QtGui.QHBoxLayout()
@@ -51,10 +51,14 @@ class ClearTools(form_class,base_class):
             layout.addWidget(label)
             layout.addStretch(1)
             layout.addWidget(button)
-            self.CommonLayout.addLayout(layout)
+            if module in contentToCleanUpCommon:
+                self.CommonLayout.addLayout(layout)
+            if module in contentToCleanUpProject:
+                self.CustomLayout.addLayout(layout)
             chkbox.setChecked(True)
             button.clicked.connect(instanceModule.execute)
             chkbox.clicked.connect(functools.partial(self.updateContent, chkbox,instanceModule.name))
+        
             
     def updateContent(self, chkbContent, content):
         if chkbContent.isChecked():

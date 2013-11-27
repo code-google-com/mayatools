@@ -56,7 +56,7 @@
 		<TechInfo file = "Sony_TechInfo.ini"/>
 		<Module>
 			<module name = "NamingConvention"/>
-			<module name = "CleanerTools"/>
+			<module name = "CleanerTools" params = "CustomCheck"/>
 			<module name = "Pivots"/>
 			<module name = "LODTools"/>
 			<module name = "CrydevTools"/>

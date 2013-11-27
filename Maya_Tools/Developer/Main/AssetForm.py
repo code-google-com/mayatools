@@ -24,6 +24,7 @@ except:
     
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/AssetForm.ui'
+
 try:
     form_class, base_class = uic.loadUiType(dirUI)
 except IOError:
@@ -46,7 +47,7 @@ class AssetForm(form_class,base_class):
         super(base_class,self).__init__(parent)
         self.setupUi(self)
         self.setObjectName('ProjectUIWindow')
-        self.Proj = ProjectBaseClass.ProjectBaseClass(XMLProject)
+        self.Proj = ProjectBaseClass(XMLProject)
         self.setWindowTitle(self.Proj.ProjectName)
         self.assetGroupModel = QtGui.QStringListModel()
         self.assetListModel = QtGui.QStringListModel()
@@ -64,10 +65,14 @@ class AssetForm(form_class,base_class):
     def openFeedbacksFolder(self):
         group = self.cbbGroup.currentText()
         item = self.cbbAssets.currentText()
+        lod = self.cbbType.currentText()
+        stage = self.cbbWorkingStage.currentText()
         try:
-            os.startfile(self.Proj.FeedbacksPath + '\\' + str(group) + '\\' + str(item))
+            os.startfile(self.Proj.FeedbacksPath + '\\' + str(group) + '\\' + str(item) + '\\' + str(lod) + '\\' + str(stage))
+            print self.Proj.FeedbacksPath + '\\' + str(group) + '\\' + str(item) + '\\' + str(lod) + '\\' + str(stage)
         except:
-            os.startfile(self.Proj.FeedbacksPath + '\\' + str(group))
+            os.startfile(self.Proj.FeedbacksPath + '\\' + str(group) + '\\' + str(item))
+            print self.Proj.FeedbacksPath + '\\' + str(group) + '\\' + str(item)
             
     def openServerFolder(self):
         group = self.cbbGroup.currentText()
@@ -173,9 +178,7 @@ class AssetForm(form_class,base_class):
         else:
             self.cbbWorkingStage.addItems(self.Proj.stages) 
         self.cbbType.addItems(self.Proj.LOD)                
-        #-- load module to Project
-        #self.loadProjectModules()
-        
+  
     def on_cbbGroup_currentIndexChanged (self, groupName):
         assetList = list()
         groupList = self.assetGroupModel.stringList()

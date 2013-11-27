@@ -53,8 +53,8 @@
 	<material name = "glass_taillight_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_tail"/>
 	<material name = "glass_window_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_alpha"/>
 	<material name = "glass_window_black_opaque_twosided_shatter" shortname = "glass_black"/>
-	<material name = "headlight_type_a_opaque" shortname = "headlights_cluster"/>
-	<material name = "headlight_type_a_alphaadd" shortname = "headlights_alpha"/>
+	<material name = "headlight_type_a_opaque" shortname = "headlight_cluster"/>
+	<material name = "headlight_type_a_alphaadd" shortname = "headlight_alpha"/>
 	<material name = "grill_alpha_layer92_nozwrite" shortname = "grill"/>
 	<material name = "interior_opaque" shortname = "interior"/>
 	<material name = "misc_opaque" shortname = "misc"/>
@@ -64,6 +64,7 @@
 	<material name = "plastic_dull_opaque" shortname = "plastic"/>
 	<material name = "brake_lights_type_a_alphaadd_nozwrite_twosided_layer70" shortname = "brake_lights"/>
 	<material name = "taillight_type_a_opaque" shortname = "taillights"/>
+	<material name = "taillight_additive_type_a_opaque" shortname = "additive"/>
 	<material name = "wheel_rim_tint_blur_alpha" shortname = "rim_tint_blur"/>
 	<material name = "wheel_tire_opaque" shortname = "tire_opaque"/>
 	<material name = "wheel_rim_tint" shortname = "rim_tint"/>
