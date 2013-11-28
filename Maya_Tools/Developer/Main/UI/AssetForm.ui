@@ -249,6 +249,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="btnCreateServerFolders">
+        <property name="toolTip">
+         <string>create server folders and feedbacks folders</string>
+        </property>
         <property name="locale">
          <locale language="Vietnamese" country="VietNam"/>
         </property>
@@ -290,6 +293,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="btnOpenServerFolder">
+        <property name="toolTip">
+         <string/>
+        </property>
         <property name="text">
          <string>Open Server Folder</string>
         </property>
@@ -310,7 +316,7 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_9">
       <item>
-       <widget class="QPushButton" name="btn">
+       <widget class="QPushButton" name="btnFeedbacks">
         <property name="text">
          <string>Open feedbacks</string>
         </property>

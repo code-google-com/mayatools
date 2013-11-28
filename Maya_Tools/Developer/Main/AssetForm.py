@@ -61,26 +61,25 @@ class AssetForm(form_class,base_class):
         self.btnOpenLocalFolder.clicked.connect(self.openLocalFolder)
         self.btnOpenServerFolder.clicked.connect(self.openServerFolder)
         self.btnOpenfile.clicked.connect(self.openMayafile)
+        self.btnFeedbacks.clicked.connect(self.openFeedbacksFolder)
         
     def openFeedbacksFolder(self):
         group = self.cbbGroup.currentText()
         item = self.cbbAssets.currentText()
         lod = self.cbbType.currentText()
         stage = self.cbbWorkingStage.currentText()
-        try:
-            os.startfile(self.Proj.FeedbacksPath + '\\' + str(group) + '\\' + str(item) + '\\' + str(lod) + '\\' + str(stage))
-            print self.Proj.FeedbacksPath + '\\' + str(group) + '\\' + str(item) + '\\' + str(lod) + '\\' + str(stage)
-        except:
-            os.startfile(self.Proj.FeedbacksPath + '\\' + str(group) + '\\' + str(item))
-            print self.Proj.FeedbacksPath + '\\' + str(group) + '\\' + str(item)
+        dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item) + '/' + str(lod) + '/' + str(stage)
+        if not os.path.isdir(dirFile):
+            dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item)
+        os.startfile(dirFile.replace('/','\\'))
             
     def openServerFolder(self):
         group = self.cbbGroup.currentText()
         item = self.cbbAssets.currentText()
         type = self.cbbType.currentText()
         lod = self.cbbWorkingStage.currentText()
-        serverPath = self.Proj.ServerPath + str(group) + '\\' + str(item) + '\\'+ self.Proj.ProjectLocalPath + '\\' + str(lod) + '\\' + str(type)
-        serverPath = serverPath.replace('/','\\')
+        serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(lod) + '/' + str(type)
+        #serverPath = serverPath.replace('/','\\')
         os.startfile(serverPath)
         
     def openLocalFolder(self):
@@ -88,12 +87,10 @@ class AssetForm(form_class,base_class):
         item = self.cbbAssets.currentText()
         type = self.cbbType.currentText()
         lod = self.cbbWorkingStage.currentText()
-        #localPath = self.Proj.LocalPath + '\\' + str(item)
         if self.Proj.group == False:
             localPath = self.Proj.LocalPath + str(item) 
         else:
             localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(lod) + '/' + str(type)
-        #localPath = localPath.replace('/','\\')
         os.startfile(localPath)
         
     def createLocal(self):
@@ -191,6 +188,10 @@ class AssetForm(form_class,base_class):
                     assetList.append(assetName)
         self.assetListModel.setStringList(assetList)
         self.cbbAssets.setModel(self.assetListModel)
+        
+    def syncFileWithServer(self):
+        pass
+        
         
 
 

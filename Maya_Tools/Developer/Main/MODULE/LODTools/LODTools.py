@@ -30,7 +30,7 @@ class LODTools(form_class,base_class):
         super(base_class,self).__init__()
         self.setupUi(self)
         self.__name__ = 'LOD Tools'
-        self._projectName = 'IronMonkey'
+        self._projectName = 'Sony'
         self._nohide = list()#['base_car_layer']
         self._currentPart = ''
         self.btnSetupLOD.clicked.connect(self.check)
