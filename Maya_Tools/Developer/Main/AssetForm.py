@@ -54,6 +54,7 @@ class AssetForm(form_class,base_class):
         self.xmlAssetList = xml.dom.minidom.parse(self.Proj.AssetList)
         cmds.scriptJob(killAll = True, f = True)
         self.loadProjectData()
+        print self.Proj.structureFolders
         
         #-------------- FUNCTION UI
         self.btnCreateLocalFolders.clicked.connect(self.createLocal)
@@ -62,6 +63,7 @@ class AssetForm(form_class,base_class):
         self.btnOpenServerFolder.clicked.connect(self.openServerFolder)
         self.btnOpenfile.clicked.connect(self.openMayafile)
         self.btnFeedbacks.clicked.connect(self.openFeedbacksFolder)
+        self.btnUploadandDownload.clicked.connect(self.syncFileWithServer)
         
     def openFeedbacksFolder(self):
         group = self.cbbGroup.currentText()
@@ -78,8 +80,8 @@ class AssetForm(form_class,base_class):
         item = self.cbbAssets.currentText()
         type = self.cbbType.currentText()
         lod = self.cbbWorkingStage.currentText()
-        serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(lod) + '/' + str(type)
-        #serverPath = serverPath.replace('/','\\')
+        serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
+        serverPath = serverPath.replace('/','\\')
         os.startfile(serverPath)
         
     def openLocalFolder(self):
@@ -114,13 +116,28 @@ class AssetForm(form_class,base_class):
                     pass
                 
     def createServer(self):
+        serverFolder = ''
         group = self.cbbGroup.currentText()
-        item = self.cbbAssets.currentText()
-        for f in self.Proj.structureFolders:
-            try:
-                os.makedirs(self.Proj.ServerPath + str(group) + '\\' + str(item) + '\\' + f)
-            except:
-                pass
+        assets = list(self.cbbAssets.model().stringList())
+        #templateFile = os.path.split(fileDirCommmon)[0] + '/Project/' + self.Proj.ProjectName + '/' + self.Proj.templateFile
+        for asset in assets:
+            feedbackFolder = self.Proj.FeedbacksPath + str(group) + '\\' + str(asset) + '\\'
+            for i in range(len(self.Proj.structureFolders)):
+                serverFolder = self.Proj.ServerPath + str(group) + '\\' + str(asset) + '\\' + self.Proj.structureFolders[i]
+                try:
+                    if len(self.Proj.structureFolders[i].split('/')) == 4:
+                        feedbackFolder = self.Proj.FeedbacksPath + str(group) + '\\' + str(asset) + '\\' + self.Proj.structureFolders[i].split('/')[-2] + '\\' + self.Proj.structureFolders[i].split('/')[-1] 
+                        os.makedirs(feedbackFolder + '\\art')
+                        os.makedirs(feedbackFolder + '\\tech')
+                        os.makedirs(feedbackFolder + '\\client')
+                    os.makedirs(serverFolder)
+                except:
+                    pass
+                if self.Proj.placeFileAndName[i] != '':
+                    try:
+                        shutil.copyfile(templateFile,(serverFolder + '\\' + str(asset) +  self.Proj.placeFileAndName[i]))
+                    except:
+                        pass
             
     def openMayafile(self):
         group = self.cbbGroup.currentText()
@@ -190,7 +207,14 @@ class AssetForm(form_class,base_class):
         self.cbbAssets.setModel(self.assetListModel)
         
     def syncFileWithServer(self):
-        pass
+        #currentFile = cmds.file(q = True, n = True)
+        group = self.cbbGroup.currentText()
+        item = self.cbbAssets.currentText()
+        localPath = self.Proj.LocalPath + str(item)
+        serverPath = self.Proj.ServerPath + str(group)+ '/' + str(item)
+        syncForm = UploadForm.UploadForm(localPath, serverPath)
+        syncForm.show()
+        
         
         
 

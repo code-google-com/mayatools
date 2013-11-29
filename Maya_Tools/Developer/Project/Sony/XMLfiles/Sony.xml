@@ -34,20 +34,23 @@
 		<folder name = "source" >
 			<folder name = "maya_wip" filename = "_all_vlast" filetype = "mb">
 				<folder name = "Exterior_LOD0" type = "LOD">
-					<folder name = "model" type = "stage" filename = "_Exterior_LOD0_model_v00" filetype = "mb"/>
+					<folder name = "models" type = "stage" filename = "_Exterior_LOD0_model_v00" filetype = "mb"/>
 					<folder name = "textures" type = "stage" filename = "_Exterior_LOD0_textures_v00" filetype = "mb"/>
 				</folder>
 				<folder name = "Interior_LOD0" type = "LOD">
-					<folder name = "model" type = "stage" filename = "_Interior_LOD0_model_v00" filetype = "mb"/>
+					<folder name = "models" type = "stage" filename = "_Interior_LOD0_model_v00" filetype = "mb"/>
 					<folder name = "textures" type = "stage" filename = "_Interior_LOD0_textures_v00" filetype = "mb"/>
 				</folder>
-				<folder name = "Tech_LOD0" type = "LOD">
-					<folder name = "model" type = "stage" filename = "_Tech_LOD0_model_v00" filetype = "mb"/>
-					<folder name = "textures" type = "stage" filename = "_Tech_LOD0_textures_v00" filetype = "mb"/>
+				<folder name = "Wheel_LODs" type = "LOD" filename = "_Wheel_LODs_v00" filetype = "mb">
+					<folder name = "models" type = "stage" filename = "_Interior_LOD0_model_v00" filetype = "mb"/>
+					<folder name = "textures" type = "stage" filename = "_Interior_LOD0_textures_v00" filetype = "mb"/>
 				</folder>
-				<folder name = "Wheel_LODs" type = "LOD" filename = "_Wheel_LODs_v00" filetype = "mb"/>
-				<folder name = "LOD1" type = "LOD" filename = "_LOD1_v00" filetype = "mb"/>
-				<folder name = "LODs" type = "LOD" filename = "_LODs_v00" filetype = "mb"/>
+				<folder name = "LOD1" type = "LOD" filename = "_LOD1_v00" filetype = "mb">
+					<folder name = "textures" type = "stage" filename = "_Interior_LOD0_textures_v00" filetype = "mb"/>
+				</folder>
+				<folder name = "LODs" type = "LOD" filename = "_LODs_v00" filetype = "mb">
+					<folder name = "textures" type = "stage" filename = "_Interior_LOD0_textures_v00" filetype = "mb"/>
+				</folder>
 			</folder>
 			<folder name = "textures_wip" filetype = "psd"/>
 		</folder>

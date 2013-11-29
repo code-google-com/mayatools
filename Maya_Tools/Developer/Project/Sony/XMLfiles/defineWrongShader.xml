@@ -1,0 +1,44 @@
+<define>
+	<mesh name="WINDOW_F">
+		<shader name = "glass_laminated_damage" use = "Only"/>
+	</mesh>
+	<mesh name="DISC_FL">
+		<shader name = "disc_ceramic_01_left" use = "Contain"/>
+	</mesh>
+	<mesh name="DISC_BL">
+		<shader name = "disc_ceramic_01_left" use = "Contain"/>
+	</mesh>
+	<mesh name="DISC_FR">
+		<shader name = "disc_ceramic_01_right" use = "Contain"/>
+	</mesh>
+	<mesh name="DISC_BR">
+		<shader name = "disc_ceramic_01_right" use = "Contain"/>
+	</mesh>
+	<mesh name="WINDOW_FL">
+		<shader name = "glass_toughened_damage" use = "Only"/>
+	</mesh>
+	<mesh name="WINDOW_BL">
+		<shader name = "glass_toughened_damage" use = "Only"/>
+	</mesh>
+	<mesh name="WINDOW_FR">
+		<shader name = "glass_toughened_damage" use = "Only"/>
+	</mesh>
+	<mesh name="WINDOW_BR">
+		<shader name = "glass_toughened_damage" use = "Only"/>
+	</mesh>
+	<mesh name="WINDOW_B">
+		<shader name = "glass_toughened_damage" use = "Only"/>
+	</mesh>
+	<mesh name="BUMPER_B">
+		<shader name = "body_livery_carbon_damage" use = "Contain"/>
+	</mesh>
+	<mesh name="BUMPER_F">
+		<shader name = "body_livery_carbon_damage" use = "Contain"/>
+	</mesh>
+	<mesh name="INTERIOR_SHELL">
+		<shader name = "*suede_touched*" use = "No_use"/>
+	</mesh>
+	<mesh name="LIGHT_LENS_FL">
+		<shader name = "plastic_lens_thinfilm_damage" use = "Contain"/>
+	</mesh>
+</define>

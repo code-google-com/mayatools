@@ -63,26 +63,38 @@ class UploadForm(form_class,base_class):
         
         self.treeViewLocal.setModel(modelLocal)
         self.treeViewLocal.setRootIndex(modelLocal.index(pLocal))
-        #self.treeViewLocal.hideColumn(2)
+        self.treeViewLocal.hideColumn(2)
         
         self.treeViewServer.setModel(modelServer)
         self.treeViewServer.setRootIndex(modelServer.index(pServer))
-        #self.treeViewServer.hideColumn(2)
+        self.treeViewServer.hideColumn(2)
     
     def toLocal(self):
+        localIndex = list()
+        serverIndex = list()
         for index in self.treeViewServer.selectedIndexes():
             fpathServer = str(index.model().filePath(index))
+            serverIndex.append(fpathServer)
             fpathLocal =  fpathServer.replace(self.showdataonServer,self.showdataonLocal)
-            cf.copytree(fpathServer,fpathLocal)
+            localIndex.append(fpathLocal)
+        localIndex = list(set(localIndex))
+        serverIndex = list(set(serverIndex))
+        for i in localIndex:
+            cf.copytree(serverIndex[localIndex.index(i)],i)
         QtGui.QMessageBox.information(self,'Copy Asset','Copy done',QtGui.QMessageBox.Ok)
     
     def toServer(self):
+        localIndex = list()
+        serverIndex = list()
         for index in self.treeViewLocal.selectedIndexes():
             fpathLocal = str(index.model().filePath(index))
-            #print self.showdataonLocal
+            serverIndex.append(fpathServer)
             fpathServer =  fpathLocal.replace(self.showdataonLocal, self.showdataonServer)
-            #print self.showdataonServer
-            cf.copytree(fpathLocal,fpathServer)
+            localIndex.append(fpathLocal)
+        localIndex = list(set(localIndex))
+        serverIndex = list(set(serverIndex))
+        for i in localIndex:
+            cf.copytree(i,serverIndex[localIndex.index(i)])
         QtGui.QMessageBox.information(self,'Copy Asset','Copy done',QtGui.QMessageBox.Ok)
         self.showData(self.showdataonLocal, self.showdataonServer)
                 
