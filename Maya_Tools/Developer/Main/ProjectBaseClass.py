@@ -41,7 +41,7 @@ class ProjectBaseClass():
         self.moduleList = list()
         self.checkList = list()
         self.workingStage = list()
-        self.templateFile = ''
+        self.templateStructure = ''
         self.group = False
         self.readXMLFile(XMLRootFile)
    

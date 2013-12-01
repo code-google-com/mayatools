@@ -44,6 +44,14 @@ def execute():
         except:
             pass
         
+    print '--------------- Delete MaxHandle node --------------------------'
+    transformNode = cmds.ls(transforms = True)
+    for node in transformNode:
+        try:
+            cmds.deleteAttr(node + '.MaxHandle')
+        except:
+            pass
+        
     print '--------------- Export Selected for cleaning up-----------------'
     mel.eval('SelectAll;')
     namefile= cmds.file(q= True, sn = True)

@@ -174,8 +174,10 @@ class PolyTools(form_class,base_class):
         importToTransferUV.transferFromRefPath(path)
         
     def attachMesh(self):
+        # check shader assigned to faces before attaching
         attachFileSource = fileDirCommmon + '/mel/flattenCombine.mel'
         mel.eval('source \"{f}\";'.format(f = attachFileSource))
+
         
     def detachMesh(self):
         attachFileSource = fileDirCommmon + '/mel/detachComponent.mel'
@@ -329,11 +331,14 @@ class PolyTools(form_class,base_class):
         attachFileSource = fileDirCommmon + '/mel/boltNormalToolbox.mel'
         mel.eval('source \"{f}\";'.format(f = attachFileSource))
         mel.eval('$s=`ls -sl`; boltNorms.EdgeToVF(1); boltNorms.LockSelectedVFs(0); select $s')
+        # set locked norml edges to softedge
+        cmds.polySoftEdge( a= 180, ch = False)
         
     def lockNormalToSmallFace(self):
         attachFileSource = fileDirCommmon + '/mel/boltNormalToolbox.mel'
         mel.eval('source \"{f}\";'.format(f = attachFileSource))
         mel.eval('$s=`ls -sl`; boltNorms.EdgeToVF(0); boltNorms.LockSelectedVFs(0); select $s')
+        cmds.polySoftEdge( a= 180, ch = False)
         
     def copyNormal(self):
         attachFileSource = fileDirCommmon + '/mel/geNFS14_NFS13NormalTools_UI.mel'

@@ -49,6 +49,16 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
+     <layout class="QFormLayout" name="formLayout">
+      <property name="horizontalSpacing">
+       <number>0</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>0</number>
+      </property>
+     </layout>
+    </item>
+    <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="acceptDrops">
        <bool>true</bool>
@@ -128,7 +138,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionImport_Module">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/arrow_6.png</normaloff>:/Project/arrow_6.png</iconset>
    </property>
    <property name="text">
@@ -137,7 +147,7 @@
   </action>
   <action name="actionRemove_Module">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/arrow_12.png</normaloff>:/Project/arrow_12.png</iconset>
    </property>
    <property name="text">
@@ -146,7 +156,7 @@
   </action>
   <action name="actionImport_Asset">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
@@ -155,7 +165,7 @@
   </action>
   <action name="actionRemove_Items">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
    </property>
    <property name="text">
@@ -164,7 +174,7 @@
   </action>
   <action name="actionCreate_Workflow">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
@@ -173,7 +183,7 @@
   </action>
   <action name="actionEdit">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
    </property>
    <property name="text">
@@ -182,7 +192,7 @@
   </action>
   <action name="actionChange">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Refresh.png</normaloff>:/Project/Refresh.png</iconset>
    </property>
    <property name="text">
@@ -201,7 +211,7 @@
   </action>
   <action name="actionQA">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
    </property>
    <property name="text">
@@ -239,7 +249,7 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/About.png</normaloff>:/Project/About.png</iconset>
    </property>
    <property name="text">
@@ -253,7 +263,7 @@
   </action>
   <action name="actionCheck_in">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Check.png</normaloff>:/Project/Check.png</iconset>
    </property>
    <property name="text">
@@ -262,7 +272,7 @@
   </action>
   <action name="actionCheck_out">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Uninstall.png</normaloff>:/Project/Uninstall.png</iconset>
    </property>
    <property name="text">
@@ -271,7 +281,7 @@
   </action>
   <action name="actionAdd">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
@@ -280,7 +290,7 @@
   </action>
   <action name="actionRevert">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Refresh.png</normaloff>:/Project/Refresh.png</iconset>
    </property>
    <property name="text">
@@ -289,7 +299,7 @@
   </action>
   <action name="actionDelete">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
    </property>
    <property name="text">
@@ -298,7 +308,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../Source/IconResource.qrc"/>
+  <include location="../../../../../FoxForest/Source/IconResource.qrc"/>
  </resources>
  <connections/>
 </ui>

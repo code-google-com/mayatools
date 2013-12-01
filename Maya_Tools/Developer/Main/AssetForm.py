@@ -54,7 +54,7 @@ class AssetForm(form_class,base_class):
         self.xmlAssetList = xml.dom.minidom.parse(self.Proj.AssetList)
         cmds.scriptJob(killAll = True, f = True)
         self.loadProjectData()
-        print self.Proj.structureFolders
+        self.resetToFileOpened()
         
         #-------------- FUNCTION UI
         self.btnCreateLocalFolders.clicked.connect(self.createLocal)
@@ -215,8 +215,23 @@ class AssetForm(form_class,base_class):
         syncForm = UploadForm.UploadForm(localPath, serverPath)
         syncForm.show()
         
-        
-        
+    def validateCurrentFile(self):
+        fileName = cmds.file(q = True, sn = True)
+        groups = self.xmlAssetList.getElementsByTagName('group')
+        for g in groups:
+            assets = g.getElementsByTagName('asset')
+            for a in assets:
+                if a.getAttribute('name') in fileName:
+                    return(g.getAttribute('name'), a.getAttribute('name'))
+        return(False, False)
+                
+    def resetToFileOpened(self):
+        result = self.validateCurrentFile()
+        print result
+        if result != (False, False):
+            self.cbbGroup.setCurrentIndex(list(self.cbbGroup.model().stringList()).index(result[0]))
+            self.cbbAssets.setCurrentIndex(list(self.cbbAssets.model().stringList()).index(result[1]))
+
 
 
 

@@ -11,6 +11,11 @@ try:
     reload(Source.IconResource_rc)
 except:
     import Source.IconResource_rc
+    
+try:
+    reload(dockWidget)
+except:
+    import dockWidget
 
 try:
     reload(GE_QA)
@@ -71,8 +76,9 @@ class ProjectUI(form_class,base_class):
         self.assetGroupModel = QtGui.QStringListModel()
         self.assetListModel = QtGui.QStringListModel()
         cmds.scriptJob(killAll = True, f = True)
-        self.loadProjectData()
         self.xmlFile = XMLProject
+        self.loadProjectData()
+        
         #-------------- FUNCTION UI
         self.actionQA.triggered.connect(self.QAChecking)
         self.actionAsset_Tracking.triggered.connect(self.AssetTracking)
@@ -89,9 +95,6 @@ class ProjectUI(form_class,base_class):
 #        self.TeamWorkForm.show()
         
     def loadProjectData(self):
-        self.loadProjectModules()
-        
-    def loadProjectModules(self):
         for index in range(len(self.Proj.moduleList[0])):
             #try:
                 instanceModule = loadModule(self.Proj.moduleList[0][index])
@@ -99,6 +102,12 @@ class ProjectUI(form_class,base_class):
                 self.tabWidget.insertTab(index,form,form.__name__)
             #except: 
                 print 'Error to loading module:' + self.Proj.moduleList[0][index]
+        #add dock widget
+        self.AssetForm = AssetForm.AssetForm(self.xmlFile)
+        self.dockWidget = dockWidget.DockWidget()
+        self.dockWidget.setWidget(self.AssetForm)
+        self.formLayout.addWidget(self.dockWidget)
+        
 
     def unloadProjectModule(self, module):
         pass
@@ -108,9 +117,8 @@ class ProjectUI(form_class,base_class):
         self.QAform.show()
         
     def AssetTracking(self):
-        pass
-        self.AssetFrom = AssetForm.AssetForm(self.xmlFile)
-        self.AssetFrom.show()
+        self.AssetTracking = AssetTracking.AssetTracking(self.xmlFile)
+        self.AssetTracking.show()
 
         
 

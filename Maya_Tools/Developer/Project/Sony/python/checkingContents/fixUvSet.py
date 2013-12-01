@@ -1,9 +1,9 @@
-description = 'Select meshes with redundant UVSet'
+description = 'Select meshes with wrong UVSet.'
 name = 'fixUvSet'
 import maya.cmds as cmds
 import maya.mel as mel
 
-stdUVSet = set(['map1','2_scratch'])
+stdUVSet = set(['map1'])
 def execute():
     print '--------------- SELECTE MESHES WRONG UVSET-------------------------'
     errorMesh = []
