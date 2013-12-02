@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>322</width>
+    <width>317</width>
     <height>670</height>
    </rect>
   </property>
@@ -85,7 +85,7 @@
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+            <iconset>
              <normaloff>:/Project/arrow_10.png</normaloff>:/Project/arrow_10.png</iconset>
            </property>
            <property name="iconSize">
@@ -114,7 +114,7 @@
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+            <iconset>
              <normaloff>:/Project/arrow_12.png</normaloff>:/Project/arrow_12.png</iconset>
            </property>
            <property name="iconSize">
@@ -143,7 +143,7 @@
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+            <iconset>
              <normaloff>:/Project/arrow_2.png</normaloff>:/Project/arrow_2.png</iconset>
            </property>
            <property name="iconSize">
@@ -172,7 +172,7 @@
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+            <iconset>
              <normaloff>:/Project/arrow_9.png</normaloff>:/Project/arrow_9.png</iconset>
            </property>
            <property name="iconSize">
@@ -256,7 +256,7 @@ font:  bold 11px
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+            <iconset>
              <normaloff>:/Project/arrow_U.png</normaloff>:/Project/arrow_U.png</iconset>
            </property>
            <property name="iconSize">
@@ -285,7 +285,7 @@ font:  bold 11px
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+            <iconset>
              <normaloff>:/Project/arrow_8.png</normaloff>:/Project/arrow_8.png</iconset>
            </property>
            <property name="iconSize">
@@ -326,7 +326,7 @@ font:  bold 11px
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+            <iconset>
              <normaloff>:/Project/arrow_6.png</normaloff>:/Project/arrow_6.png</iconset>
            </property>
            <property name="iconSize">
@@ -355,7 +355,7 @@ font:  bold 11px
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+            <iconset>
              <normaloff>:/Project/arrow_4.png</normaloff>:/Project/arrow_4.png</iconset>
            </property>
            <property name="iconSize">
@@ -777,7 +777,7 @@ font:  bold 11px
   </layout>
   <action name="actionAddSource">
    <property name="icon">
-    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
@@ -786,7 +786,7 @@ font:  bold 11px
   </action>
   <action name="actionAddTarget">
    <property name="icon">
-    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
@@ -795,7 +795,7 @@ font:  bold 11px
   </action>
   <action name="actionClearSource">
    <property name="icon">
-    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
    </property>
    <property name="text">
@@ -804,7 +804,7 @@ font:  bold 11px
   </action>
   <action name="actionClearTarget">
    <property name="icon">
-    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
    </property>
    <property name="text">
@@ -813,7 +813,7 @@ font:  bold 11px
   </action>
   <action name="actionCopySource">
    <property name="icon">
-    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Export.png</normaloff>:/Project/Export.png</iconset>
    </property>
    <property name="text">
@@ -822,7 +822,7 @@ font:  bold 11px
   </action>
   <action name="actionCopyTarget">
    <property name="icon">
-    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Export.png</normaloff>:/Project/Export.png</iconset>
    </property>
    <property name="text">
@@ -831,7 +831,7 @@ font:  bold 11px
   </action>
   <action name="actionPasteTarget">
    <property name="icon">
-    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Reference.png</normaloff>:/Project/Reference.png</iconset>
    </property>
    <property name="text">
@@ -840,7 +840,7 @@ font:  bold 11px
   </action>
   <action name="actionPasteSource">
    <property name="icon">
-    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Reference.png</normaloff>:/Project/Reference.png</iconset>
    </property>
    <property name="text">
