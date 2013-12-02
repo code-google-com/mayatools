@@ -31,7 +31,7 @@ class LODTools(form_class,base_class):
         self.setupUi(self)
         self.__name__ = 'LOD Tools'
         self._projectName = 'Sony'
-        self._nohide = list()#['base_car_layer']
+        self._nohide = list()
         self._currentPart = ''
         self.btnSetupLOD.clicked.connect(self.check)
         self.btnSwitchLOD.clicked.connect(self.SwapLOD)
@@ -175,9 +175,8 @@ class LODTools(form_class,base_class):
         cmds.showHidden(all = True)
         
     def SwapLOD(self):
-        mel.eval('showHidden -all;')        
-        self._nohide = ['base_car_layer']#globals()[self._projectName+'_nohide']
-        #LODa, LODb = '_LOD0_','_LOD1_'
+        #mel.eval('showHidden -all;')        
+        self._nohide = ['base_car_layer']
         if self.rdbSourceLOD0.isChecked():
             LODa = mappingLODs(self._projectName,'_LOD0_')
         elif self.rdbSourceLOD1.isChecked():

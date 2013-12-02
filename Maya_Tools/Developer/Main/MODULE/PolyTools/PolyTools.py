@@ -50,6 +50,26 @@ def rearrangeEdgeList(edgeList, edge_01):
     while not stop:
         vertexes = cmds.polyListComponentConversion(edge, tv = True)
         connEdges_00 = cmds.polyListComponentConversion(vertex[0], te = True)
+    
+def attachMesh():
+        # check shader assigned to faces before attaching
+        selObjs = s
+        attachFileSource = fileDirCommmon + '/mel/flattenCombine.mel'
+        mel.eval('source \"{f}\";'.format(f = attachFileSource))
+
+def detachMesh():
+        attachFileSource = fileDirCommmon + '/mel/detachComponent.mel'
+        mel.eval('source \"{f}\";'.format(f = attachFileSource))
+        
+def extractMesh():
+        desMesh = cmds.ls(sl = True)[0].split('.')[0]
+        midMesh = cmds.duplicate(desMesh, n = desMesh + '_duplicated' ,rr = True)[0]
+        selectFaces = [x.replace(desMesh,midMesh) for x in cmds.ls(sl = True)]
+        cmds.select(cl = True)
+        cmds.select(selectFaces)
+        mel.eval('InvertSelection')
+        cmds.delete()
+        cmds.select(midMesh)
             
 class PolyTools(form_class,base_class):
     closeTransferTool = QtCore.pyqtSignal('QString', name = 'closeTransferTool')
@@ -63,9 +83,9 @@ class PolyTools(form_class,base_class):
         self.btnSetNormalSize.clicked.connect(self.changeNormalSize)
         self.btnSetupBackground.clicked.connect(self.changColorBackGround)
         # -- POLY MODELING TOOL
-        self.btnAttach.clicked.connect(self.attachMesh)
-        self.btnDetach.clicked.connect(self.detachMesh)
-        self.btnDuplicate.clicked.connect(self.extractMesh)
+        self.btnAttach.clicked.connect(attachMesh)
+        self.btnDetach.clicked.connect(detachMesh)
+        self.btnDuplicate.clicked.connect(extractMesh)
         self.btnLoopEdges.clicked.connect(self.LoopEdges)
         self.btnRingEdges.clicked.connect(self.RingEdges)
         self.btnSmartCollapse.clicked.connect(self.smartCollapsing)
@@ -173,27 +193,6 @@ class PolyTools(form_class,base_class):
         path  = cf.getDataFromClipboard()
         importToTransferUV.transferFromRefPath(path)
         
-    def attachMesh(self):
-        # check shader assigned to faces before attaching
-        attachFileSource = fileDirCommmon + '/mel/flattenCombine.mel'
-        mel.eval('source \"{f}\";'.format(f = attachFileSource))
-
-        
-    def detachMesh(self):
-        attachFileSource = fileDirCommmon + '/mel/detachComponent.mel'
-        mel.eval('source \"{f}\";'.format(f = attachFileSource))
-        
-    def extractMesh(self):
-        #attachFileSource = fileDirCommmon + '/mel/extractPoly.mel'
-        #mel.eval('source \"{f}\";'.format(f = attachFileSource))
-        desMesh = cmds.ls(hilite = True)[0]
-        midMesh = cmds.duplicate(desMesh, n = desMesh + '_duplicated' ,rr = True)[0]
-        selectFaces = [x.replace(desMesh,midMesh) for x in cmds.ls(sl = True)]
-        cmds.select(cl = True)
-        cmds.select(selectFaces)
-        mel.eval('InvertSelection')
-        cmds.delete()
-        cmds.select(midMesh)
         
     def LoopEdges(self):
         N = self.spnLoop.value() + 1

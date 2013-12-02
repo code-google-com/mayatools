@@ -11,20 +11,15 @@ global proc NinjaMesh_Extract()
 			int $numTokens = `tokenize $FaceSelection[$f] "." $buf`;
 			$SelectedFaceIndex[$f] = $buf[1];
         }
-
  	select -cl;
 	for ($s = 0; $s < `size $SelectedFaceIndex`; $s++)
 		{
-
 			$DupFaceSelection[$s] = ($DupObject[0] + "." + $SelectedFaceIndex[$s]);
-
         }
-
 		select $DupFaceSelection;
 		InvertSelection;
 		delete;
 		select $DupObject;
-
 }
 
 NinjaMesh_Extract;

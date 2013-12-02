@@ -108,6 +108,5 @@ global proc LikeMaxDetach()
 
 }
 
-
 LikeMaxDetach();
 

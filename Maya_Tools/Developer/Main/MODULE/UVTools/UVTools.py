@@ -1,14 +1,19 @@
 import maya.cmds as cmds
+import pymel.core as py
 from PyQt4 import QtGui, QtCore, uic
 import os, sys, inspect
 from pymel.core import *
 import functools 
 import boltUvRatio
 import math
+
 import Source.IconResource_rc
 reload(Source.IconResource_rc)
 
 import CommonFunctions as cf
+
+import MODULE.PolyTools as pt
+#reload(MODULE.PolyTools)
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/UVTools.ui'
@@ -19,19 +24,24 @@ class UVTools(form_class,base_class):
     def __init__(self, inputFile):
         super(base_class,self).__init__()
         self.setupUi(self)
-        self.__name__ = 'UV tools' 
+        self.__name__ = 'UV tools'
+        
         self.btnUp.clicked.connect(functools.partial(self.moveUVShell,'up'))
         self.btnDown.clicked.connect(functools.partial(self.moveUVShell,'down'))
         self.btnLeft.clicked.connect(functools.partial(self.moveUVShell,'left'))
         self.btnRight.clicked.connect(functools.partial(self.moveUVShell,'right'))
+        
         self.btnSetUVScale.clicked.connect(self.setUVScale)
         self.btnGetUVScale.clicked.connect(self.getUVScale)
+        
         self.btnSetTexel.clicked.connect(functools.partial(self.setUVScale))
-        #self.btnUVRatio.clicked.connect(self.openUVRatioToolBox)
+
         self.btnMirrorU.clicked.connect(functools.partial(self.mirrorUV,'H'))
         self.btnMirrorV.clicked.connect(functools.partial(self.mirrorUV,'V'))
+        
         self.cbbSourceMat.addItems(['Materials from source'])
         self.cbbTargetMat.addItems(['Materials from target'])
+        
         self.ldtSource.addActions([self.actionAddSource, self.actionClearSource, self.actionCopySource, self.actionPasteSource])
         self.ldtTarget.addActions([self.actionAddTarget,self.actionClearTarget, self.actionCopyTarget, self.actionPasteTarget])
         
@@ -49,10 +59,12 @@ class UVTools(form_class,base_class):
         
         self.ldtSource.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         self.ldtTarget.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
-        
-        #self.ldtSource.customContextMenuRequested.connect(self.createRightClickonMenu_on_selectedItems)
-        #self.ldtTarget.customContextMenuRequested.connect(self.createRightClickonMenu_on_selectedItems)
+
         self.cbbSourceMat.currentIndexChanged.connect(self.autoSync)
+        self.btnTransferUV.clicked.connect(self.transferUV)
+        
+        self.ldtTarget.returnPressed.connect(functools.partial(self.updateShader, 'Source'))
+        self.ldtSource.returnPressed.connect(functools.partial(self.updateShader, 'Target'))
         
     def filterTheFirstFaceInCluster(self, inList):
         out = list()
@@ -133,15 +145,7 @@ class UVTools(form_class,base_class):
             
     def getNameFromSelected(self, widget):
         objName = cmds.ls(sl = True)[0]
-        # get shader from nodes
-        shapeNode = cmds.listRelatives(c = True, f = True)[0]
-        sgs = cmds.listConnections(shapeNode, t = 'shadingEngine')
-        shaders = list()
-        for sg in sgs:
-            print sg
-            if cmds.connectionInfo(sg + '.surfaceShader', sfd = True):
-                shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
-                shaders.append(shader)
+        shaders = cf.getShadersFromMesh(objName)
         #print shaders
         # ---------------------------
         if widget =='Source':
@@ -175,9 +179,21 @@ class UVTools(form_class,base_class):
     def paste(self, widget):
         if widget =='Source':
             self.ldtSource.setText(cf.getDataFromClipboard())
+            shaders = cf.getShadersFromMesh(str(self.ldtSource.text()))
+            self.cbbSourceMat.addItems(list(set(shaders)))
         if widget =='Target':
             self.ldtTarget.setText(cf.getDataFromClipboard())
+            shaders = cf.getShadersFromMesh(str(self.ldtTarget.text()))
+            self.cbbTargetMat.addItems(list(set(shaders)))
             
+    def updateShader(self, widget):
+        if widget =='Source':
+            shaders = cf.getShadersFromMesh(str(self.ldtSource.text()))
+            self.cbbSourceMat.addItems(list(set(shaders)))
+        if widget =='Target':
+            shaders = cf.getShadersFromMesh(str(self.ldtTarget.text()))
+            self.cbbTargetMat.addItems(list(set(shaders)))
+        
     def autoSync(self):
         mat = self.cbbSourceMat.currentText()
         id = self.cbbTargetMat.findText(mat, QtCore.Qt.MatchExactly|QtCore.Qt.MatchCaseSensitive)
@@ -185,7 +201,25 @@ class UVTools(form_class,base_class):
             self.cbbTargetMat.setCurrentIndex(id)
             
     def transferUV(self):
-        pass
+        cf.selectFaceByShaderPerMesh(str(self.ldtSource.text()), str(self.cbbSourceMat.currentText()))
+        pt.extractMesh()
+        sourceMesh = py.ls(sl = True)[0]
+        #------------------------------------
+        cf.selectFaceByShaderPerMesh(str(self.ldtTarget.text()), str(self.cbbTargetMat.currentText()))
+        pt.detachMesh()
+        targetMesh = py.ls(sl = True)[0]
+        # transfer source mesh to target
+        cmds.transferAttribute(sourceMesh, targetMesh, uvs = 2)
+        # post-processing 
+        cmds.select(targetMesh)
+        me.eval('DeleteHistory;')
+        
+        cmds.select(str(self.ldtTarget.text()))
+        cmds.select(targetMesh, add = True)
+        
+        pt.attachMesh()
+        
+        cmds.delete(sourceMesh)
         
         
 def main(xmlFile):
