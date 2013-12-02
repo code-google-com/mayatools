@@ -12,8 +12,8 @@ reload(Source.IconResource_rc)
 
 import CommonFunctions as cf
 
-import MODULE.PolyTools as pt
-#reload(MODULE.PolyTools)
+from MODULE.PolyTools import PolyTools as pt
+#reload(MODULE.PolyTools.PolysTools)
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/UVTools.ui'
@@ -180,18 +180,22 @@ class UVTools(form_class,base_class):
         if widget =='Source':
             self.ldtSource.setText(cf.getDataFromClipboard())
             shaders = cf.getShadersFromMesh(str(self.ldtSource.text()))
+            self.cbbSourceMat.clear()
             self.cbbSourceMat.addItems(list(set(shaders)))
         if widget =='Target':
             self.ldtTarget.setText(cf.getDataFromClipboard())
             shaders = cf.getShadersFromMesh(str(self.ldtTarget.text()))
+            self.cbbTargetMat.clear()
             self.cbbTargetMat.addItems(list(set(shaders)))
             
     def updateShader(self, widget):
         if widget =='Source':
             shaders = cf.getShadersFromMesh(str(self.ldtSource.text()))
+            self.cbbSourceMat.clear()
             self.cbbSourceMat.addItems(list(set(shaders)))
         if widget =='Target':
             shaders = cf.getShadersFromMesh(str(self.ldtTarget.text()))
+            self.cbbTargetMat.clear()
             self.cbbTargetMat.addItems(list(set(shaders)))
         
     def autoSync(self):
