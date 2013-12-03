@@ -58,7 +58,7 @@ def selectFaceByShaderPerMesh(mesh, shader):
         cmds.select(mesh)  
 
 def reassignShaderToFace(mesh, shader):
-    
+    pass
 
 def loadModule(path ,moduleName):
     sys.path.append(path)

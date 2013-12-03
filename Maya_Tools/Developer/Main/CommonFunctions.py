@@ -59,33 +59,7 @@ def setDataToClipboard(text):
     clipboard = QtGui.QApplication.clipboard()
     out = clipboard.setText(text)
 
-def selectFaceByShaderPerMesh(mesh, shader):
-    # get shading group from shader
-    try:
-        shape = cmds.listRelatives(mesh, shapes = True)[0]
-    except ValueError:
-        return
-    shadingGroups = py.listConnections(shader, type = 'shadingEngine')
-    #print shadingGroups
-    faceList = py.sets(shadingGroups, q = True)
-    #print faceList
-    selectedFaces = []
-    for f in faceList:
-        shapefromFace = f.split('.')[0]
-        if shapefromFace == shape:
-            selectedFaces.append(f)
-    #print selectedFaces
-    if shape not in selectedFaces:
-        cmds.select(selectedFaces)
-        if len(cmds.ls(sl = True, fl = True)) == cmds.polyEvaluate(mesh, f = True):# in case selected faces is equal to the number of  faces
-            cmds.select(mesh)
-        else:
-            #attachFileSource = fileDirCommmon + '/detachComponent.mel'
-            #mel.eval('source \"{f}\";'.format(f = attachFileSource))
-            cmds.select(selectedFaces)
-    else: # object has only one material
-        #print 'select: ' + mesh
-        cmds.select(mesh)
+
 
 def copytreewithFilter(src, dst, filter, backup = True):
         if os.path.isfile(src):
@@ -170,15 +144,3 @@ def copytree(src, dst, backup = True):
                     pass
                     #raise Error(errors)
         
-def getShadersFromMesh(mesh):                    
-        # get shader from nodes
-        shapeNode = cmds.listRelatives(mesh, c = True, f = True)[0]
-        sgs = cmds.listConnections(shapeNode, t = 'shadingEngine')
-        shaders = list()
-        for sg in sgs:
-            print sg
-            if cmds.connectionInfo(sg + '.surfaceShader', sfd = True):
-                shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
-                shaders.append(shader)
-        return shaders
-    

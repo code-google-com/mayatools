@@ -1,6 +1,5 @@
 import maya.cmds as cmds
 import pymel.core as py
-import maya.mel as mel
 from PyQt4 import QtGui, QtCore, uic
 import os, sys, inspect
 from pymel.core import *
@@ -12,9 +11,13 @@ import Source.IconResource_rc
 reload(Source.IconResource_rc)
 
 import CommonFunctions as cf
+reload(cf)
 
 from MODULE.PolyTools import PolyTools as pt
-#reload(PolyTools.PolysTools)
+reload(pt)
+
+from MODULE.ShaderTools import ShaderTools as st
+reload(st)
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/UVTools.ui'
@@ -64,8 +67,8 @@ class UVTools(form_class,base_class):
         self.cbbSourceMat.currentIndexChanged.connect(self.autoSync)
         self.btnTransferUV.clicked.connect(self.transferUV)
         
-        self.ldtSource.returnPressed.connect(functools.partial(self.updateShader, 'Source'))
-        self.ldtTarget.returnPressed.connect(functools.partial(self.updateShader, 'Target'))
+        self.ldtTarget.returnPressed.connect(functools.partial(self.updateShader, 'Source'))
+        self.ldtSource.returnPressed.connect(functools.partial(self.updateShader, 'Target'))
         
     def filterTheFirstFaceInCluster(self, inList):
         out = list()
@@ -146,7 +149,7 @@ class UVTools(form_class,base_class):
             
     def getNameFromSelected(self, widget):
         objName = cmds.ls(sl = True)[0]
-        shaders = cf.getShadersFromMesh(objName)
+        shaders = st.getShadersFromMesh(objName)
         #print shaders
         # ---------------------------
         if widget =='Source':
@@ -180,22 +183,22 @@ class UVTools(form_class,base_class):
     def paste(self, widget):
         if widget =='Source':
             self.ldtSource.setText(cf.getDataFromClipboard())
-            shaders = cf.getShadersFromMesh(str(self.ldtSource.text()))
+            shaders = st.getShadersFromMesh(str(self.ldtSource.text()))
             self.cbbSourceMat.clear()
             self.cbbSourceMat.addItems(list(set(shaders)))
         if widget =='Target':
             self.ldtTarget.setText(cf.getDataFromClipboard())
-            shaders = cf.getShadersFromMesh(str(self.ldtTarget.text()))
+            shaders = st.getShadersFromMesh(str(self.ldtTarget.text()))
             self.cbbTargetMat.clear()
             self.cbbTargetMat.addItems(list(set(shaders)))
             
     def updateShader(self, widget):
         if widget =='Source':
-            shaders = cf.getShadersFromMesh(str(self.ldtSource.text()))
+            shaders = st.getShadersFromMesh(str(self.ldtSource.text()))
             self.cbbSourceMat.clear()
             self.cbbSourceMat.addItems(list(set(shaders)))
         if widget =='Target':
-            shaders = cf.getShadersFromMesh(str(self.ldtTarget.text()))
+            shaders = st.getShadersFromMesh(str(self.ldtTarget.text()))
             self.cbbTargetMat.clear()
             self.cbbTargetMat.addItems(list(set(shaders)))
         
@@ -206,25 +209,25 @@ class UVTools(form_class,base_class):
             self.cbbTargetMat.setCurrentIndex(id)
             
     def transferUV(self):
-        cf.selectFaceByShaderPerMesh(str(self.ldtSource.text()), str(self.cbbSourceMat.currentText()))
+        st.selectFaceByShaderPerMesh(str(self.ldtSource.text()), str(self.cbbSourceMat.currentText()))
         pt.extractMesh()
-        sourceMesh = py.ls(sl = True)[0].listRelatives(c = True, type = 'mesh')[0]
+        sourceMesh = py.ls(sl = True)[0]
         #------------------------------------
-        cf.selectFaceByShaderPerMesh(str(self.ldtTarget.text()), str(self.cbbTargetMat.currentText()))
+        st.selectFaceByShaderPerMesh(str(self.ldtTarget.text()), str(self.cbbTargetMat.currentText()))
         pt.detachMesh()
-        targetMesh = py.ls(sl = True)[0].listRelatives(c = True, type = 'mesh')[0]
+        targetMesh = py.ls(sl = True)[0]
         # transfer source mesh to target
-        cmds.transferAttributes(str(sourceMesh), str(targetMesh), uvs = 2)
+        cmds.transferAttribute(sourceMesh, targetMesh, uvs = 2)
         # post-processing 
-        cmds.select(str(targetMesh.listRelatives(p = True)[0]))
-        mel.eval('DeleteHistory;')
+        cmds.select(targetMesh)
+        me.eval('DeleteHistory;')
         
         cmds.select(str(self.ldtTarget.text()))
-        cmds.select(str(targetMesh.listRelatives(p = True)[0]), add = True)
+        cmds.select(targetMesh, add = True)
         
         pt.attachMesh()
         
-        cmds.delete(str(sourceMesh.listRelatives(p = True)[0]))
+        cmds.delete(sourceMesh)
         
         
 def main(xmlFile):
