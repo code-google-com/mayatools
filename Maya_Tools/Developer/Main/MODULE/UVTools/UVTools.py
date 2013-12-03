@@ -1,5 +1,6 @@
 import maya.cmds as cmds
 import pymel.core as py
+import maya.mel as mel
 from PyQt4 import QtGui, QtCore, uic
 import os, sys, inspect
 from pymel.core import *
@@ -13,7 +14,7 @@ reload(Source.IconResource_rc)
 import CommonFunctions as cf
 
 from MODULE.PolyTools import PolyTools as pt
-#reload(MODULE.PolyTools.PolysTools)
+#reload(PolyTools.PolysTools)
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/UVTools.ui'
@@ -63,8 +64,8 @@ class UVTools(form_class,base_class):
         self.cbbSourceMat.currentIndexChanged.connect(self.autoSync)
         self.btnTransferUV.clicked.connect(self.transferUV)
         
-        self.ldtTarget.returnPressed.connect(functools.partial(self.updateShader, 'Source'))
-        self.ldtSource.returnPressed.connect(functools.partial(self.updateShader, 'Target'))
+        self.ldtSource.returnPressed.connect(functools.partial(self.updateShader, 'Source'))
+        self.ldtTarget.returnPressed.connect(functools.partial(self.updateShader, 'Target'))
         
     def filterTheFirstFaceInCluster(self, inList):
         out = list()
@@ -207,23 +208,23 @@ class UVTools(form_class,base_class):
     def transferUV(self):
         cf.selectFaceByShaderPerMesh(str(self.ldtSource.text()), str(self.cbbSourceMat.currentText()))
         pt.extractMesh()
-        sourceMesh = py.ls(sl = True)[0]
+        sourceMesh = py.ls(sl = True)[0].listRelatives(c = True, type = 'mesh')[0]
         #------------------------------------
         cf.selectFaceByShaderPerMesh(str(self.ldtTarget.text()), str(self.cbbTargetMat.currentText()))
         pt.detachMesh()
-        targetMesh = py.ls(sl = True)[0]
+        targetMesh = py.ls(sl = True)[0].listRelatives(c = True, type = 'mesh')[0]
         # transfer source mesh to target
-        cmds.transferAttribute(sourceMesh, targetMesh, uvs = 2)
+        cmds.transferAttributes(str(sourceMesh), str(targetMesh), uvs = 2)
         # post-processing 
-        cmds.select(targetMesh)
-        me.eval('DeleteHistory;')
+        cmds.select(str(targetMesh.listRelatives(p = True)[0]))
+        mel.eval('DeleteHistory;')
         
         cmds.select(str(self.ldtTarget.text()))
-        cmds.select(targetMesh, add = True)
+        cmds.select(str(targetMesh.listRelatives(p = True)[0]), add = True)
         
         pt.attachMesh()
         
-        cmds.delete(sourceMesh)
+        cmds.delete(str(sourceMesh.listRelatives(p = True)[0]))
         
         
 def main(xmlFile):

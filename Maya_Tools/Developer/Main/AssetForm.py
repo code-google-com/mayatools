@@ -123,14 +123,20 @@ class AssetForm(form_class,base_class):
         for asset in assets:
             feedbackFolder = self.Proj.FeedbacksPath + str(group) + '\\' + str(asset) + '\\'
             for i in range(len(self.Proj.structureFolders)):
+                #print self.Proj.structureFolders[i]
                 serverFolder = self.Proj.ServerPath + str(group) + '\\' + str(asset) + '\\' + self.Proj.structureFolders[i]
+                #print serverFolder
+                try:
+                    os.makedirs(serverFolder)
+                except:
+                    pass
                 try:
                     if len(self.Proj.structureFolders[i].split('/')) == 4:
                         feedbackFolder = self.Proj.FeedbacksPath + str(group) + '\\' + str(asset) + '\\' + self.Proj.structureFolders[i].split('/')[-2] + '\\' + self.Proj.structureFolders[i].split('/')[-1] 
                         os.makedirs(feedbackFolder + '\\art')
                         os.makedirs(feedbackFolder + '\\tech')
                         os.makedirs(feedbackFolder + '\\client')
-                    os.makedirs(serverFolder)
+                    
                 except:
                     pass
                 if self.Proj.placeFileAndName[i] != '':

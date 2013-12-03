@@ -53,7 +53,6 @@ def rearrangeEdgeList(edgeList, edge_01):
     
 def attachMesh():
         # check shader assigned to faces before attaching
-        selObjs = s
         attachFileSource = fileDirCommmon + '/mel/flattenCombine.mel'
         mel.eval('source \"{f}\";'.format(f = attachFileSource))
 
@@ -101,6 +100,7 @@ class PolyTools(form_class,base_class):
         self.btnUnlock.clicked.connect(self.unclockNormal)
         self.btnSmoothAdjacentEdges.clicked.connect(self.smoothBorderEdges)
         self.btnTransferNormalWithoutDetachMesh.clicked.connect(self.transferNormalWithoutDetachMesh)
+        self.btnMirrorTools.clicked.connect(self.mirrorNormalTool)
         # -- MIRROR TOOL
                               
         self.btnAxisX.clicked.connect(functools.partial(self.mirror,'x', 'By axis'))

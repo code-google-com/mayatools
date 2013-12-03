@@ -87,9 +87,9 @@ class UploadForm(form_class,base_class):
         localIndex = list()
         serverIndex = list()
         for index in self.treeViewLocal.selectedIndexes():
-            fpathLocal = str(index.model().filePath(index))
+            fpathServer = str(index.model().filePath(index))
             serverIndex.append(fpathServer)
-            fpathServer =  fpathLocal.replace(self.showdataonLocal, self.showdataonServer)
+            fpathLocal =  fpathServer.replace(self.showdataonLocal, self.showdataonServer)
             localIndex.append(fpathLocal)
         localIndex = list(set(localIndex))
         serverIndex = list(set(serverIndex))

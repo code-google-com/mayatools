@@ -916,6 +916,9 @@ color: rgb(255, 255, 255);</string>
             <property name="text">
              <string>X</string>
             </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item>

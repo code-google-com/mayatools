@@ -30,7 +30,7 @@ class LODTools(form_class,base_class):
         super(base_class,self).__init__()
         self.setupUi(self)
         self.__name__ = 'LOD Tools'
-        self._projectName = 'Sony'
+        self._projectName = 'IronMonkey'
         self._nohide = list()
         self._currentPart = ''
         self.btnSetupLOD.clicked.connect(self.check)
@@ -116,49 +116,56 @@ class LODTools(form_class,base_class):
         try:
             cmds.select('*LOD1*')
             cmds.group(n = 'LOD1')
-            cmds.createDisplayLayer(e = False, n = '_LOD1_')
+            cmds.createDisplayLayer(n = '_LOD1_')
+            cmds.editDisplayLayerMembers('_LOD1_', cmds.ls(type = 'LOD1'), noRecurse = True)
         except:
             pass
         
         try:
             cmds.select('*LOD2*')
             cmds.group(n = 'LOD2')
-            cmds.createDisplayLayer(e = False, n = '_LOD2_')
+            cmds.createDisplayLayer(n = '_LOD2_')
+            cmds.editDisplayLayerMembers('_LOD2_', cmds.ls(type = 'LOD2'), noRecurse = True)
         except:
             pass
         
         try:
             cmds.select('*LOD3*')
             cmds.group(n = 'LOD3')
-            cmds.createDisplayLayer(e = False, n = '_LOD3_')
+            cmds.createDisplayLayer(n = '_LOD3_')
+            cmds.editDisplayLayerMembers('_LOD3_', cmds.ls(type = 'LOD3'), noRecurse = True)
         except:
             pass
         
         try:
             cmds.select('*LOD4*')
             cmds.group(n = 'LOD4')
-            cmds.createDisplayLayer(e = False, n = '_LOD4_')
+            cmds.createDisplayLayer(n = '_LOD4_')
+            cmds.editDisplayLayerMembers('_LOD4_', cmds.ls(type = 'LOD4'), noRecurse = True)
         except:
             pass
         
         try:
             cmds.select('*LOD5')
             cmds.group(n = 'LOD5')
-            cmds.createDisplayLayer(e = False, n = '_LOD5_')
+            cmds.createDisplayLayer(n = '_LOD5_')
+            cmds.editDisplayLayerMembers('_LOD5_', cmds.ls(type = 'LOD5'), noRecurse = True)
         except: 
             pass
         
         try:
             cmds.select('*LOD6')
             cmds.group(n = 'LOD6')
-            cmds.createDisplayLayer(e = False, n = '_LOD6_')
+            cmds.createDisplayLayer(n = '_LOD6_')
+            cmds.editDisplayLayerMembers('_LOD6_', cmds.ls(type = 'LOD6'), noRecurse = True)
         except:
             pass
         
         try:
             cmds.select('*SHADOW')
             cmds.group(n = 'SHADOW')
-            cmds.createDisplayLayer(e = False, n = '_SHADOW_')
+            cmds.createDisplayLayer(n = '_SHADOW_')
+            cmds.editDisplayLayerMembers('_SHADOW_', cmds.ls(type = 'SHADOW'), noRecurse = True)
         except:
             pass
         
@@ -168,7 +175,8 @@ class LODTools(form_class,base_class):
             LOD0s = [x for x in cmds.ls(transforms = True) if not re.search(patternLOD,x) and not re.search(patternSHADOW,x) ]
             cmds.select(LOD0s)
             cmds.group(n = 'LOD0')
-            cmds.createDisplayLayer(e = False, n = '_LOD0_', nr = False)
+            cmds.createDisplayLayer(n = '_LOD0_', nr = False)
+            cmds.editDisplayLayerMembers('_LOD0_', cmds.ls(type = 'LOD0'), noRecurse = True)
         except:
             pass
         
