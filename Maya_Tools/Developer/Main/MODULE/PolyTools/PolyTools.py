@@ -442,10 +442,11 @@ class PolyTools(form_class,base_class):
                     cmds.setAttr(dupMesh[0] + '.scaleY', -1)
                 if axis == 'z':   
                     cmds.setAttr(dupMesh[0] + '.scaleZ', -1)
-            mel.eval('FreezeTransformations')
+            #mel.eval('FreezeTransformations')
+            cmds.makeIdentity(a = True, t = 1, r = 0, s = 1, n = 0)
             mel.eval('DeleteHistory')
-            if  float(cmds.about(version = True).split(' ')[0]) < 2014.0:
-                cmds.polyNormal(dupMesh, nm = 0)
+            
+            cmds.polyNormal(dupMesh, nm = 0, userNormalMode = 0)
             dupMeshShape = cmds.listRelatives(dupMesh, type = 'mesh', fullPath = True)
             cmds.setAttr(dupMeshShape[0] + '.opposite', False)
             cmds.select(cl = True)
