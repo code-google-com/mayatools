@@ -12,7 +12,53 @@ checkerList = ['Custom_checker','IronMonkey_checker','Sony_checker_01', 'Sony_ch
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 dirUI= fileDirCommmon +'/UI/ShaderTools.ui'
 
-form_class, base_class = uic.loadUiType(dirUI)  
+form_class, base_class = uic.loadUiType(dirUI)
+
+def getShadersFromMesh(mesh):                    
+        # get shader from nodes
+        shapeNode = cmds.listRelatives(mesh, c = True, f = True)[0]
+        sgs = cmds.listConnections(shapeNode, t = 'shadingEngine')
+        shaders = list()
+        for sg in sgs:
+            #print sg
+            if cmds.connectionInfo(sg + '.surfaceShader', sfd = True):
+                shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
+                shaders.append(shader)
+        return shaders
+    
+def setShaderToSelectedFaces(selFaces, shader):
+    # get shadingGroup from shader
+    sg = cmds.connectionInfo(shader + '.outColor', dfs = True).split('.')[0]
+    cmds.sets(selFaces, e = True, forceElement = sg)
+
+def selectFaceByShaderPerMesh(mesh, shader):
+    # get shading group from shader
+    try:
+        shape = cmds.listRelatives(mesh, shapes = True)[0]
+    except ValueError:
+        return
+    shadingGroups = py.listConnections(shader, type = 'shadingEngine')
+    #print shadingGroups
+    faceList = py.sets(shadingGroups, q = True)
+    #print faceList
+    selectedFaces = []
+    for f in faceList:
+        shapefromFace = f.split('.')[0]
+        if shapefromFace == shape:
+            selectedFaces.append(f)
+    #print selectedFaces
+    if shape not in selectedFaces:
+        cmds.select(selectedFaces)
+        if len(cmds.ls(sl = True, fl = True)) == cmds.polyEvaluate(mesh, f = True):# in case selected faces is equal to the number of  faces
+            cmds.select(mesh)
+        else:
+            cmds.select(selectedFaces)
+    else: # object has only one material
+        #print 'select: ' + mesh
+        cmds.select(mesh)  
+
+def reassignShaderToFace(mesh, shader):
+    
 
 def loadModule(path ,moduleName):
     sys.path.append(path)
