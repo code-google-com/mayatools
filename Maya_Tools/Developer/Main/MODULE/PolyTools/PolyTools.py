@@ -1,5 +1,4 @@
 import maya.cmds as cmds
-
 from PyQt4 import QtGui, QtCore, uic
 import maya.OpenMaya as om
 import maya.OpenMayaUI as OpenMayaUI
@@ -11,22 +10,15 @@ from xml.dom.minidom import *
 import pymel.core as pm
 import pymel.core.datatypes as dt
 from math import *
-import functools
 import sip
 
 import CommonFunctions as cf
-
-import importToTransferUV
-reload(importToTransferUV)
 
 import ExporterandImporter
 reload(ExporterandImporter)
 
 import Source.IconResource_rc
 reload(Source.IconResource_rc)
-
-import TransferTools
-reload(TransferTools)
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 dirUI= fileDirCommmon +'/UI/PolyTools.ui'
@@ -69,6 +61,80 @@ def extractMesh():
         mel.eval('InvertSelection')
         cmds.delete()
         cmds.select(midMesh)
+        
+def mirrorTool(axis, isKeepHistory, isClone, method):
+        selObjs = cmds.ls(sl = True)
+        for obj in selObjs:
+            if axis == 'x':
+                matchName = [x for x in presetNameforLeft if re.search(r'(.*)\{pattern}(\.*)'.format(pattern = x), obj)]
+                if len(matchName):
+                    index = presetNameforLeft.index(matchName[0])
+                    newname = obj.replace(matchName[0], presetNameforRight[index])
+                else:
+                    matchName = [x for x in presetNameforRight if re.search(r'(.*)\{pattern}(\*.)'.format(pattern = x), obj)]
+                    if len(matchName):
+                        index = presetNameforRight.index(matchName[0])
+                        newname = obj.replace(matchName[0], presetNameforLeft[index])
+                    
+            if isClone == 'Clone':
+                if isKeepHistory:
+                    try: 
+                        dupMesh = cmds.duplicate(n = newname, ic = True)
+                    except NameError:
+                        dupMesh = cmds.duplicate(n = obj + '_mirrored', ic = True)
+                else:
+                    try:
+                        dupMesh = cmds.duplicate(n = newname, ic = True)
+                    except NameError:
+                        dupMesh = cmds.duplicate(n = obj + '_mirrored', ic = False)
+            elif isClone == 'Instance':
+                try:
+                    dupMesh = cmds.duplicate(n = newname, ilf = True)
+                except NameError:
+                    dupMesh = cmds.duplicate(n = obj + '_mirrored', ilf = True)
+            else:
+                dupMesh = obj
+            if method == 'By axis':
+                locator = cmds.spaceLocator()
+                cmds.parent(dupMesh, locator)
+                if axis == 'x':   
+                    cmds.setAttr(locator[0] + '.scaleX', -1)
+                if axis == 'y':   
+                    cmds.setAttr(locator[0] + '.scaleY', -1)
+                if axis == 'z':   
+                    cmds.setAttr(locator[0] + '.scaleZ', -1)
+                cmds.parent(dupMesh,world = True)
+                cmds.delete(locator[0])
+            elif method == 'By pivot':
+                if axis == 'x':   
+                    cmds.setAttr(dupMesh[0] + '.scaleX', -1)
+                if axis == 'y':   
+                    cmds.setAttr(dupMesh[0] + '.scaleY', -1)
+                if axis == 'z':   
+                    cmds.setAttr(dupMesh[0] + '.scaleZ', -1)
+            #mel.eval('FreezeTransformations')
+            cmds.makeIdentity(a = True, t = 1, r = 0, s = 1, n = 0)
+            mel.eval('DeleteHistory')
+            
+            cmds.polyNormal(dupMesh, nm = 0, userNormalMode = 0)
+            dupMeshShape = cmds.listRelatives(dupMesh, type = 'mesh', fullPath = True)
+            cmds.setAttr(dupMeshShape[0] + '.opposite', False)
+            cmds.select(cl = True)
+            cmds.select(dupMesh)
+            
+def exportMesh():
+        exp = ExporterandImporter.exporterShader()
+        exp.exportMaya()
+        
+def importMesh():
+        imp = ExporterandImporter.importerShader()
+        imp.importMaya()
+
+def RingEdges(N):
+    mel.eval('polySelectEdgesEveryN "edgeRing" \"{num}\";'.format(num = N))
+        
+def LoopEdges(N):
+    mel.eval('polySelectEdgesEveryN "edgeLoop" \"{num}\";'.format(num = N))
             
 class PolyTools(form_class,base_class):
     closeTransferTool = QtCore.pyqtSignal('QString', name = 'closeTransferTool')
@@ -76,8 +142,8 @@ class PolyTools(form_class,base_class):
         super(base_class,self).__init__(parent)
         self.setupUi(self)
         self.__name__ = 'Poly tools'
-        self.btnExport.clicked.connect(self.exportMesh)
-        self.btnImport.clicked.connect(self.importMesh)
+        self.btnExport.clicked.connect(exportMesh)
+        self.btnImport.clicked.connect(importMesh)
         self.btnSetupAxis.clicked.connect(self.changeAxis)
         self.btnSetNormalSize.clicked.connect(self.changeNormalSize)
         self.btnSetupBackground.clicked.connect(self.changColorBackGround)
@@ -85,8 +151,8 @@ class PolyTools(form_class,base_class):
         self.btnAttach.clicked.connect(attachMesh)
         self.btnDetach.clicked.connect(detachMesh)
         self.btnDuplicate.clicked.connect(extractMesh)
-        self.btnLoopEdges.clicked.connect(self.LoopEdges)
-        self.btnRingEdges.clicked.connect(self.RingEdges)
+        self.btnLoopEdges.clicked.connect(functools.partial(LoopEdges, str(self.spnLoop.value() + 1)))
+        self.btnRingEdges.clicked.connect(functools.partial(RingEdges, str(self.spnRing.value() + 1)))
         self.btnSmartCollapse.clicked.connect(self.smartCollapsing)
         self.btnSnapVertexTool.clicked.connect(self.snapTool)
         # -- LOCK NORMAL TOOLBOX
@@ -174,47 +240,7 @@ class PolyTools(form_class,base_class):
             elif sizeNormal[0] not in [0.1,1]:
                 self.btnSetNormalSize.setIcon(QtGui.QIcon(':/Project/normal_small.png'))
                 cmds.polyOptions(gl = True, dn = True, pt = True, sn = 0.1)
-        
-    def toggleBorderMeshTexture(self):
-        status = ['standard','borderMesh','borderUV']
-        selObjs = cmds.ls(sl = True)
-        if len(selObjs) == 0:
-            cmds.error('Please select one mesh')
-        
-    def exportMesh(self):
-        exp = ExporterandImporter.exporterShader()
-        exp.exportMaya()
-        
-    def importMesh(self):
-        imp = ExporterandImporter.importerShader()
-        imp.importMaya()
-        
-    def importTransferUVs(self):
-        path  = cf.getDataFromClipboard()
-        importToTransferUV.transferFromRefPath(path)
-        
-        
-    def LoopEdges(self):
-        N = self.spnLoop.value() + 1
-        eId = int(cmds.ls(sl = True)[0].split('.e[')[1].rstrip(']'))
-        mesh = cmds.ls(sl = True)[0].split('.')[0]
-        cmds.polySelect(eb = eId)
-        selEdges = cmds.ls(sl = True,fl = True)
-        if len(selEdges):
-            aIdE = [int(x.split('.e[')[1].rstrip(']')) for x in selEdges]
-            aIdSE1 = [eId + i*N for i in range(len(selEdges) + 1) if eId + i*N <= max(aIdE)]
-            aIdSE2 = [eId - i*N for i in range(len(selEdges) + 1) if eId - i*N >= min(aIdE)]
-            aIDSE = sorted(aIdSE1 + aIdSE2)
-            aIDSES = [mesh + '.e[' + str(x) + ']' for x in aIDSE]
-            cmds.select(aIDSES)
-        else:    
-            cmds.select(mesh + '.e[' + str(eId) + ']')
-            mel.eval('polySelectEdgesEveryN "edgeLoop" \"{num}\";'.format(num = N))
-            
-    def RingEdges(self):
-        N = self.spnRing.value() + 1
-        mel.eval('polySelectEdgesEveryN "edgeRing" \"{num}\";'.format(num = N))
-        
+    
     def lineIntersect(self,A, B, C, D):
         a = B - A
         b = D - C
@@ -223,7 +249,6 @@ class PolyTools(form_class,base_class):
         cross2 = c.cross(b)
         intersectPoint = A + a* cross2.dot(cross1)/math.pow(cross1.length(),2)
         return intersectPoint
-        
         
     def getConnectedEdges(self):
         #if not cmds.selectType(q = True, e = True):   
@@ -391,66 +416,6 @@ class PolyTools(form_class,base_class):
         attachFileSource = fileDirCommmon + '/mel/boltNormalToolbox.mel'
         mel.eval('source \"{f}\";'.format(f = attachFileSource))
         mel.eval('boltNorms.MirrorGUI(0.0005)')
-        
-    def mirrorTool(self, axis, isKeepHistory, isClone, method):
-        selObjs = cmds.ls(sl = True)
-        for obj in selObjs:
-            if axis == 'x':
-                matchName = [x for x in presetNameforLeft if re.search(r'(.*)\{pattern}(\.*)'.format(pattern = x), obj)]
-                if len(matchName):
-                    index = presetNameforLeft.index(matchName[0])
-                    newname = obj.replace(matchName[0], presetNameforRight[index])
-                else:
-                    matchName = [x for x in presetNameforRight if re.search(r'(.*)\{pattern}(\*.)'.format(pattern = x), obj)]
-                    if len(matchName):
-                        index = presetNameforRight.index(matchName[0])
-                        newname = obj.replace(matchName[0], presetNameforLeft[index])
-                    
-            if isClone == 'Clone':
-                if isKeepHistory:
-                    try: 
-                        dupMesh = cmds.duplicate(n = newname, ic = True)
-                    except NameError:
-                        dupMesh = cmds.duplicate(n = obj + '_mirrored', ic = True)
-                else:
-                    try:
-                        dupMesh = cmds.duplicate(n = newname, ic = True)
-                    except NameError:
-                        dupMesh = cmds.duplicate(n = obj + '_mirrored', ic = False)
-            elif isClone == 'Instance':
-                try:
-                    dupMesh = cmds.duplicate(n = newname, ilf = True)
-                except NameError:
-                    dupMesh = cmds.duplicate(n = obj + '_mirrored', ilf = True)
-            else:
-                dupMesh = obj
-            if method == 'By axis':
-                locator = cmds.spaceLocator()
-                cmds.parent(dupMesh, locator)
-                if axis == 'x':   
-                    cmds.setAttr(locator[0] + '.scaleX', -1)
-                if axis == 'y':   
-                    cmds.setAttr(locator[0] + '.scaleY', -1)
-                if axis == 'z':   
-                    cmds.setAttr(locator[0] + '.scaleZ', -1)
-                cmds.parent(dupMesh,world = True)
-                cmds.delete(locator[0])
-            elif method == 'By pivot':
-                if axis == 'x':   
-                    cmds.setAttr(dupMesh[0] + '.scaleX', -1)
-                if axis == 'y':   
-                    cmds.setAttr(dupMesh[0] + '.scaleY', -1)
-                if axis == 'z':   
-                    cmds.setAttr(dupMesh[0] + '.scaleZ', -1)
-            #mel.eval('FreezeTransformations')
-            cmds.makeIdentity(a = True, t = 1, r = 0, s = 1, n = 0)
-            mel.eval('DeleteHistory')
-            
-            cmds.polyNormal(dupMesh, nm = 0, userNormalMode = 0)
-            dupMeshShape = cmds.listRelatives(dupMesh, type = 'mesh', fullPath = True)
-            cmds.setAttr(dupMeshShape[0] + '.opposite', False)
-            cmds.select(cl = True)
-            cmds.select(dupMesh)
                     
     def mirror(self, axis, method):
         isKeepHistory = True
@@ -465,7 +430,7 @@ class PolyTools(form_class,base_class):
             isClone = 'Clone'
         elif self.rdbInstance.isChecked():
             isClone = 'Instance'
-        self.mirrorTool(axis, isKeepHistory, isClone, method)
+        mirrorTool(axis, isKeepHistory, isClone, method)
         
     def transferNormalWithoutDetachMesh(self):
         selObjs = cmds.ls(sl = True)
