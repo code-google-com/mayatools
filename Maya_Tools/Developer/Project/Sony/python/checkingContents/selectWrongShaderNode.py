@@ -36,41 +36,80 @@ def execute():
     form = shaderValidator()
     form.show()
     
-class shaderButton(QtGui.QAbstractButton):
+class shaderButton(QtGui.QWidget):
     def __init__(self, mesh, shader, color):
-        super(QtGui.QWidget, self).__init__(shader)
+        super(shaderButton, self).__init__()
         self._mesh = mesh
         self._shader = shader
         self._color = color
+        self.setText(shader)
         
-    def pressedEvent(self, event):
+    def enterEvent(self, event):
         if self.isEnabled():
             self.update()
-        st.selectFaceByShaderPerMesh(self._mesh, self._shader)
+        QAbstractButton.enterEvent(self, event)
+
+    def leaveEvent(self, event):
+        if self.isEnabled():
+            self.update()
+        QAbstractButton.leaveEvent(self, event)
         
-    def paintEvent(self):
-        pass
-    
-class shaderDockMesh(dW.DockWidget):
+    def paintEvent(self, event):
+        p = QPainter(self)
+        r = self.rect()
+        opt = QStyleOptionToolButton()
+        opt.init(self)
+        opt.state |= QStyle.State_AutoRaise
+        if self.isEnabled() and self.underMouse() and \
+           not self.isChecked() and not self.isDown():
+            opt.state |= QStyle.State_Raised
+        if self.isChecked():
+            opt.state |= QStyle.State_On
+        if self.isDown():
+            opt.state |= QStyle.State_Sunken
+        self.style().drawPrimitive(
+            QStyle.PE_PanelButtonTool, opt, p, self)
+        opt.icon = self.icon()
+        opt.subControls = QStyle.SubControls()
+        opt.activeSubControls = QStyle.SubControls()
+        opt.features = QStyleOptionToolButton.None
+        opt.arrowType = Qt.NoArrow
+        size = self.style().pixelMetric(QStyle.PM_SmallIconSize, None, self)
+        opt.iconSize = QSize(size, size)
+        self.style().drawComplexControl(QStyle.CC_ToolButton, opt, p, self)
+        
+        
+class shaderDockWidget(dW.DockWidget):
     def __init__(self, mesh):
-        super(dW.DockWidget).__init__(mesh)
+        super(shaderDockWidget, self).__init__(mesh)
         self._mesh = mesh
-        self._vLayout = QtGui.QVLayout()
-        self.setWidget(self._vLayout)
+        self._widget= QtGui.QWidget()
+        self.setWidget(self._widget)
+        self.load()
         
     def load(self):
+        layout = QtGui.QVBoxLayout()
+        margins = QtCore.QMargins(1,1,1,1)
+        layout.setSpacing(1)
+        layout.setContentsMargins(margins) 
+        self._widget.setLayout(layout)
         shaders = st.getShadersFromMesh(self._mesh)
         for s in shaders:
-            button = shaderButton(self._mesh, s, green)
-            self._vLayout.addWidget(button)
+            #button = shaderButton(self._mesh, s, "green")
+            button = QtGui.QPushButton(s)
+            layout.addWidget(button)
     
 class shaderValidator(form_class, base_class):
     def __init__(self,parent = getMayaWindow()):
         super(base_class, self).__init__(parent)
         self.setupUi(self)
+        self.startup()
         
     def startup(self):
-        shapeNode = py.ls(type = 'mesh')
+        shapeNode = [node for node in py.ls(type = 'transform') if py.nodeType(node.listRelatives(c= True)) == 'mesh'] 
+        for node in shapeNode:
+            dockWidget = shaderDockWidget(str(node))
+            self.formLayout.addWidget(dockWidget)
     
         
     
