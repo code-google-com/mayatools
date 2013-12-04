@@ -20,7 +20,6 @@ def getShadersFromMesh(mesh):
         sgs = cmds.listConnections(shapeNode, t = 'shadingEngine')
         shaders = list()
         for sg in sgs:
-            #print sg
             if cmds.connectionInfo(sg + '.surfaceShader', sfd = True):
                 shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
                 shaders.append(shader)
@@ -58,7 +57,8 @@ def selectFaceByShaderPerMesh(mesh, shader):
         cmds.select(mesh)  
 
 def reassignShaderToFace(mesh, shader):
-    pass
+    selectFaceByShaderPerMesh(mesh, shader)
+    isFaces = py.ls(sl = True)
 
 def loadModule(path ,moduleName):
     sys.path.append(path)

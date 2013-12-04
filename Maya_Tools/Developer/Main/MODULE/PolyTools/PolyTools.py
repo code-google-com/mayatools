@@ -474,7 +474,6 @@ class PolyTools(form_class,base_class):
                   
 def main(xmlnput):
     form = PolyTools(xmlnput)
-    #form.show()
     return form 
 
 

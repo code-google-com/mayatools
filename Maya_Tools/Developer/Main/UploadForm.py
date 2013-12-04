@@ -87,11 +87,13 @@ class UploadForm(form_class,base_class):
         localIndex = list()
         serverIndex = list()
         for index in self.treeViewLocal.selectedIndexes():
-            fpathServer = str(index.model().filePath(index))
-            serverIndex.append(fpathServer)
-            fpathLocal =  fpathServer.replace(self.showdataonLocal, self.showdataonServer)
+            fpathLocal = str(index.model().filePath(index))
             localIndex.append(fpathLocal)
+            fpathServer =  fpathLocal.replace(self.showdataonLocal, self.showdataonServer)
+            serverIndex.append(fpathServer)
         localIndex = list(set(localIndex))
+        print localIndex
+        print serverIndex
         serverIndex = list(set(serverIndex))
         for i in localIndex:
             cf.copytree(i,serverIndex[localIndex.index(i)])

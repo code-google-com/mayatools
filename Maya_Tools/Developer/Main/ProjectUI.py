@@ -89,10 +89,6 @@ class ProjectUI(form_class,base_class):
             if i != (len(strList) - 1):
                 out += strList[i] + '_'
         return out    
-#            
-#    def openTeamWorkForm(self):
-#        self.TeamWorkForm = GETeamWork(self.Proj.AssetList)
-#        self.TeamWorkForm.show()
         
     def loadProjectData(self):
         for index in range(len(self.Proj.moduleList[0])):
@@ -104,11 +100,10 @@ class ProjectUI(form_class,base_class):
                 print 'Error to loading module:' + self.Proj.moduleList[0][index]
         #add dock widget
         self.AssetForm = AssetForm.AssetForm(self.xmlFile)
-        self.dockWidget = dockWidget.DockWidget()
+        self.dockWidget = dockWidget.DockWidget('Asset from')
         self.dockWidget.setWidget(self.AssetForm)
         self.formLayout.addWidget(self.dockWidget)
         
-
     def unloadProjectModule(self, module):
         pass
              
