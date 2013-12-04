@@ -42,9 +42,6 @@
 	<mesh name="INTERIOR_SHELL">
 		<shader name = "*suede_touched*" use = "No_use"/>
 	</mesh>
-	<mesh name="LIGHT_LENS_FL">
-		<shader name = "plastic_lens_thinfilm_damage" use = "Contain"/>
-	</mesh>
 	<mesh name="LIGHT_FL">
 		<shader name = "light_shader_standard" use = "Must_use"/>
 	</mesh>

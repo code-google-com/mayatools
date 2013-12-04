@@ -5,6 +5,7 @@ import pymel.core as py
 from PyQt4 import QtGui, QtCore, uic
 import maya.OpenMayaUI as OpenMayaUI
 import sip
+import functools
 
 from MODULE.ShaderTools import ShaderTools as st
 reload(st)
@@ -36,49 +37,37 @@ def execute():
     form = shaderValidator()
     form.show()
     
-class shaderButton(QtGui.QWidget):
+class shaderButton(QtGui.QPushButton):
     def __init__(self, mesh, shader, color):
         super(shaderButton, self).__init__()
         self._mesh = mesh
         self._shader = shader
         self._color = color
         self.setText(shader)
-        
-    def enterEvent(self, event):
-        if self.isEnabled():
-            self.update()
-        QAbstractButton.enterEvent(self, event)
+        self.clicked.connect(functools.partial(st.selectFaceByShaderPerMesh, self._mesh, self._shader))
+        self.setStyleSheet('''QPushButton{
+                            \ncolor: white;
+                            \nbackground-color: qlineargradient(spread:pad, x1:0.478, y1:1, x2:0.467662, y2:0, stop:0 rgba(200, 0, 0, 255), stop:1 rgba(255, 255, 255, 255));
+                            \nborder-color: #339;
+                            \nborder-style: solid;
+                            \nborder-radius: 5;
+                            \npadding: 3px;
+                            \nfont-size: 14px;
+                            \npadding-left: 2px;
+                            \npadding-right: 2px;}
+                            
+                            QPushButton:hover{
+                            \ncolor: white;
+                            \nbackground-color: qlineargradient(spread:pad, x1:0.478, y1:1, x2:0.467662, y2:0, stop:0 rgba(255, 0, 0, 255), stop:1 rgba(255, 255, 255, 255));
+                            \nborder-color: #339;
+                            \nborder-style: solid;
+                            \nborder-radius: 5;
+                            \npadding: 3px;
+                            \nfont-size: 14px;
+                            \npadding-left: 2px;
+                            \npadding-right: 2px;}
+                        ''')
 
-    def leaveEvent(self, event):
-        if self.isEnabled():
-            self.update()
-        QAbstractButton.leaveEvent(self, event)
-        
-    def paintEvent(self, event):
-        p = QPainter(self)
-        r = self.rect()
-        opt = QStyleOptionToolButton()
-        opt.init(self)
-        opt.state |= QStyle.State_AutoRaise
-        if self.isEnabled() and self.underMouse() and \
-           not self.isChecked() and not self.isDown():
-            opt.state |= QStyle.State_Raised
-        if self.isChecked():
-            opt.state |= QStyle.State_On
-        if self.isDown():
-            opt.state |= QStyle.State_Sunken
-        self.style().drawPrimitive(
-            QStyle.PE_PanelButtonTool, opt, p, self)
-        opt.icon = self.icon()
-        opt.subControls = QStyle.SubControls()
-        opt.activeSubControls = QStyle.SubControls()
-        opt.features = QStyleOptionToolButton.None
-        opt.arrowType = Qt.NoArrow
-        size = self.style().pixelMetric(QStyle.PM_SmallIconSize, None, self)
-        opt.iconSize = QSize(size, size)
-        self.style().drawComplexControl(QStyle.CC_ToolButton, opt, p, self)
-        
-        
 class shaderDockWidget(dW.DockWidget):
     def __init__(self, mesh):
         super(shaderDockWidget, self).__init__(mesh)
@@ -95,8 +84,7 @@ class shaderDockWidget(dW.DockWidget):
         self._widget.setLayout(layout)
         shaders = st.getShadersFromMesh(self._mesh)
         for s in shaders:
-            #button = shaderButton(self._mesh, s, "green")
-            button = QtGui.QPushButton(s)
+            button = shaderButton(self._mesh, s, "green")
             layout.addWidget(button)
     
 class shaderValidator(form_class, base_class):
@@ -110,6 +98,8 @@ class shaderValidator(form_class, base_class):
         for node in shapeNode:
             dockWidget = shaderDockWidget(str(node))
             self.formLayout.addWidget(dockWidget)
-    
+            
+    def reload(self):
+        pass
         
     
