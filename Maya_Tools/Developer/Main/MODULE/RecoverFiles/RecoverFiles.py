@@ -104,35 +104,11 @@ class RecoverFiles(form_class,base_class):
         self.analyzeScene()
         
     def updateStatus(self):
-#        row = self.tableWidgetResult.rowCount()
-#        for i in range(row):
-#            self.tableWidgetResult.setRowHidden(i,False)
-#            filter = self.tableWidgetResult.item(i,0)
-#            filtertext = str(filter.text())
-#            if self.cbbFilter.currentText() == 'All':
-#                self.tableWidgetResult.setRowHidden(i,False)
-#            else:
-#                if filtertext == self.cbbFilter.currentText():
-#                    self.tableWidgetResult.setRowHidden(i,False)
-#                else:
-#                    self.tableWidgetResult.setRowHidden(i,True)
         status = self.cbbFilter.currentText()
         type = self.cbbFileFormat.currentText()
         self.reloadTableWidgetResult(status, type)
     
     def updateFormat(self):
-#        row = self.tableWidgetResult.rowCount()
-#        for i in range(row):
-#            self.tableWidgetResult.setRowHidden(i,False)
-#            filter = self.tableWidgetResult.item(i,0)
-#            filtertext = str(filter.text())
-#            if self.cbbFilter.currentText() == 'All':
-#                self.tableWidgetResult.setRowHidden(i,False)
-#            else:
-#                if filtertext == self.cbbFilter.currentText():
-#                    self.tableWidgetResult.setRowHidden(i,False)
-#                else:
-#                    self.tableWidgetResult.setRowHidden(i,True)
         status = self.cbbFilter.currentText()
         type = self.cbbFileFormat.currentText()
         self.reloadTableWidgetResult(status, type)
