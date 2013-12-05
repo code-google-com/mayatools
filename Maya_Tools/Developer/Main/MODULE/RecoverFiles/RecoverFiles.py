@@ -26,6 +26,7 @@ class RecoverFiles(form_class,base_class):
         self.tableWidgetResult.setHorizontalHeaderLabels(['Status','Name','Location','Node'])
         #self.tableWidgetResult.setColumnHidden(2, True) 
         self.tableWidgetResult.setColumnHidden(3, True) 
+        self.ldtNewName.returnPressed.connect(self.changeTextureFiles)
         
     def analyzeScene(self):
         self.tableWidgetResult.clearContents()
@@ -177,6 +178,24 @@ class RecoverFiles(form_class,base_class):
                     cmds.select(str(fileNode.text()))
                     cmds.setAttr(str(fileNode.text()) + '.fileTextureName',changedName,type='string')
         self.analyzeScene()
+        
+    def changeTextureFiles(self):
+        print '-- execute'
+        oldname = str(self.ldtOldName.text())
+        newname = str(self.ldtNewName.text())
+        listSelectedFiles = self.tableWidgetResult.selectedItems()
+        if (len(listSelectedFiles) == 0):
+             QtGui.QMessageBox.warning(self,'Select Files to change format','Please select files you need to change format! Thanks',QtGui.QMessageBox.Ok)
+        else:
+            for file in listSelectedFiles:
+                row = self.tableWidgetResult.row(file)
+                if self.tableWidgetResult.column(file) == 2:
+                    filename = self.tableWidgetResult.item(row,2)
+                    changedName = str(filename.text()).replace(oldname, newname)
+                    fileNode = self.tableWidgetResult.item(row,3)
+                    cmds.select(str(fileNode.text()))
+                    cmds.setAttr(str(fileNode.text()) + '.fileTextureName',changedName,type='string')
+        self.analyzeScene()    
         
 def main():
     form = RecoverFiles()

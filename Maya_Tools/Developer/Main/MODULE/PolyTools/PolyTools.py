@@ -131,9 +131,11 @@ def importMesh():
         imp.importMaya()
 
 def RingEdges(N):
+    print N
     mel.eval('polySelectEdgesEveryN "edgeRing" \"{num}\";'.format(num = N))
         
 def LoopEdges(N):
+    print N
     mel.eval('polySelectEdgesEveryN "edgeLoop" \"{num}\";'.format(num = N))
             
 class PolyTools(form_class,base_class):
@@ -142,11 +144,15 @@ class PolyTools(form_class,base_class):
         super(base_class,self).__init__(parent)
         self.setupUi(self)
         self.__name__ = 'Poly tools'
+        self._ring = 0
+        self._loop = 0
+        
         self.btnExport.clicked.connect(exportMesh)
         self.btnImport.clicked.connect(importMesh)
         self.btnSetupAxis.clicked.connect(self.changeAxis)
         self.btnSetNormalSize.clicked.connect(self.changeNormalSize)
         self.btnSetupBackground.clicked.connect(self.changColorBackGround)
+        
         # -- POLY MODELING TOOL
         self.btnAttach.clicked.connect(attachMesh)
         self.btnDetach.clicked.connect(detachMesh)
@@ -273,6 +279,9 @@ class PolyTools(form_class,base_class):
         return unconnectedSelectedEdges    
         
     def smartCollapsing(self):
+        print str(self.spnRing.value())
+        print str(self.spnLoop.value())
+        
         print '--execute ---'
         edgeSets = self.getConnectedEdges()
         for set in edgeSets:

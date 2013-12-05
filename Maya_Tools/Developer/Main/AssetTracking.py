@@ -198,8 +198,8 @@ class AssetTracking(form_class,base_class):
     def __init__(self, managers, parent = getMayaWindow()):
         super(base_class,self).__init__(parent)
         self.setupUi(self)
-        #self.cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=DUYNGUYEN2;DATABASE=Gem_Tools;UID=sa;PWD=1a2b3c4d5e')
-        self.cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=QUOCTRUNG-PC\SQLEXPRESS;DATABASE=Gem_Tools;UID=sa;PWD=trungswat@521987')
+        self.cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=DUYNGUYEN2;DATABASE=Gem_Tools;UID=sa;PWD=1a2b3c4d5e')
+        #self.cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=QUOCTRUNG-PC\SQLEXPRESS;DATABASE=Gem_Tools;UID=sa;PWD=trungswat@521987')
         cursor = self.cnxn.cursor()
         cursor.execute("{call sp_sel_List_Project}")
         rows = cursor.fetchall()

@@ -42,12 +42,12 @@ class shaderButton(QtGui.QPushButton):
         super(shaderButton, self).__init__()
         self._mesh = mesh
         self._shader = shader
-        self._color = color
+        #self._color = color
         self.setText(shader)
         self.clicked.connect(functools.partial(st.selectFaceByShaderPerMesh, self._mesh, self._shader))
         self.setStyleSheet('''QPushButton{
                             \ncolor: white;
-                            \nbackground-color: qlineargradient(spread:pad, x1:0.478, y1:1, x2:0.467662, y2:0, stop:0 rgba(200, 0, 0, 255), stop:1 rgba(255, 255, 255, 255));
+                            \nbackground-color: #00dc00;
                             \nborder-color: #339;
                             \nborder-style: solid;
                             \nborder-radius: 5;
@@ -58,15 +58,14 @@ class shaderButton(QtGui.QPushButton):
                             
                             QPushButton:hover{
                             \ncolor: white;
-                            \nbackground-color: qlineargradient(spread:pad, x1:0.478, y1:1, x2:0.467662, y2:0, stop:0 rgba(255, 0, 0, 255), stop:1 rgba(255, 255, 255, 255));
+                            \nbackground-color: #00ff00;
                             \nborder-color: #339;
                             \nborder-style: solid;
                             \nborder-radius: 5;
                             \npadding: 3px;
                             \nfont-size: 14px;
                             \npadding-left: 2px;
-                            \npadding-right: 2px;}
-                        ''')
+                            \npadding-right: 2px;}''')#.format(color0 = color[0], color1 = color[1]))
 
 class shaderDockWidget(dW.DockWidget):
     def __init__(self, mesh):
@@ -84,7 +83,8 @@ class shaderDockWidget(dW.DockWidget):
         self._widget.setLayout(layout)
         shaders = st.getShadersFromMesh(self._mesh)
         for s in shaders:
-            button = shaderButton(self._mesh, s, "green")
+            colors = ['rgb(220,0,0)', 'rgb(220,0,0)']
+            button = shaderButton(self._mesh, s, colors)
             layout.addWidget(button)
     
 class shaderValidator(form_class, base_class):
