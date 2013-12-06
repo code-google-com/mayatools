@@ -22,6 +22,8 @@ reload(dW)
 description = 'Select Mesh using wrong shader'
 name = 'selectWrongShaderNode'
 
+color_code = {'right':['00dc00', '00ff00'], 'wrong':['fa0000','ff0000'], 'missing':['ffdc00','ffff00']}
+
 fileDirCommmon = os.path.split(os.path.split(inspect.getfile(inspect.currentframe()))[0])[0]
 dirUI= fileDirCommmon +'/UI/shader_Validator.ui'
 try:    
@@ -45,28 +47,31 @@ class shaderButton(QtGui.QPushButton):
         #self._color = color
         self.setText(shader)
         self.clicked.connect(functools.partial(st.selectFaceByShaderPerMesh, self._mesh, self._shader))
-        self.setStyleSheet('''QPushButton{
-                            \ncolor: white;
-                            \nbackground-color: #00dc00;
-                            \nborder-color: #339;
-                            \nborder-style: solid;
-                            \nborder-radius: 5;
-                            \npadding: 3px;
-                            \nfont-size: 14px;
-                            \npadding-left: 2px;
-                            \npadding-right: 2px;}
+        self.setStyleSheet('''QPushButton*
+                            color: black;
+                            background-color: #{color0};
+                            border-color: #339;
+                            border-style: solid;
+                            border-radius: 5;
+                            padding: 3px;
+                            font-size: 14px;
+                            padding-left: 2px;
+                            padding-right: 2px;@
                             
-                            QPushButton:hover{
-                            \ncolor: white;
-                            \nbackground-color: #00ff00;
-                            \nborder-color: #339;
-                            \nborder-style: solid;
-                            \nborder-radius: 5;
-                            \npadding: 3px;
-                            \nfont-size: 14px;
-                            \npadding-left: 2px;
-                            \npadding-right: 2px;}''')#.format(color0 = color[0], color1 = color[1]))
-
+                            QPushButton:hover*
+                            color: black;
+                            background-color: #{color1};
+                            border-color: #339;
+                            border-style: solid;
+                            border-radius: 5;
+                            padding: 3px;
+                            font-size: 14px;
+                            padding-left: 2px;
+                            padding-right: 2px;@'''.format(color0 = color[0], color1 = color[1]).replace('*','{').replace('@','}'))
+        
+    def checkShader(self):
+        pass
+        
 class shaderDockWidget(dW.DockWidget):
     def __init__(self, mesh):
         super(shaderDockWidget, self).__init__(mesh)
@@ -74,6 +79,9 @@ class shaderDockWidget(dW.DockWidget):
         self._widget= QtGui.QWidget()
         self.setWidget(self._widget)
         self.load()
+        
+    def checkShader(self, mesh, shader):
+        return 'wrong'
         
     def load(self):
         layout = QtGui.QVBoxLayout()
@@ -83,8 +91,8 @@ class shaderDockWidget(dW.DockWidget):
         self._widget.setLayout(layout)
         shaders = st.getShadersFromMesh(self._mesh)
         for s in shaders:
-            colors = ['rgb(220,0,0)', 'rgb(220,0,0)']
-            button = shaderButton(self._mesh, s, colors)
+            result = self.checkShader(self._mesh, s)
+            button = shaderButton(self._mesh, s, color_code[result])
             layout.addWidget(button)
     
 class shaderValidator(form_class, base_class):
@@ -94,7 +102,7 @@ class shaderValidator(form_class, base_class):
         self.startup()
         
     def startup(self):
-        shapeNode = [node for node in py.ls(type = 'transform') if py.nodeType(node.listRelatives(c= True)) == 'mesh'] 
+        shapeNode = [node for node in py.ls(type = 'transform') if py.nodeType(node.listRelatives(c= True)[0]) == 'mesh'] 
         for node in shapeNode:
             dockWidget = shaderDockWidget(str(node))
             self.formLayout.addWidget(dockWidget)

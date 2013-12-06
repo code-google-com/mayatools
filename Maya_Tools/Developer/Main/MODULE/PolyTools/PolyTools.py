@@ -129,14 +129,6 @@ def exportMesh():
 def importMesh():
         imp = ExporterandImporter.importerShader()
         imp.importMaya()
-
-def RingEdges(N):
-    print N
-    mel.eval('polySelectEdgesEveryN "edgeRing" \"{num}\";'.format(num = N))
-        
-def LoopEdges(N):
-    print N
-    mel.eval('polySelectEdgesEveryN "edgeLoop" \"{num}\";'.format(num = N))
             
 class PolyTools(form_class,base_class):
     closeTransferTool = QtCore.pyqtSignal('QString', name = 'closeTransferTool')
@@ -157,8 +149,8 @@ class PolyTools(form_class,base_class):
         self.btnAttach.clicked.connect(attachMesh)
         self.btnDetach.clicked.connect(detachMesh)
         self.btnDuplicate.clicked.connect(extractMesh)
-        self.btnLoopEdges.clicked.connect(functools.partial(LoopEdges, str(self.spnLoop.value() + 1)))
-        self.btnRingEdges.clicked.connect(functools.partial(RingEdges, str(self.spnRing.value() + 1)))
+        self.btnLoopEdges.clicked.connect(self.LoopEdges)
+        self.btnRingEdges.clicked.connect(self.RingEdges)
         self.btnSmartCollapse.clicked.connect(self.smartCollapsing)
         self.btnSnapVertexTool.clicked.connect(self.snapTool)
         # -- LOCK NORMAL TOOLBOX
@@ -202,6 +194,14 @@ class PolyTools(form_class,base_class):
         angle = dt.degrees(dt.acos(cos0))
         print angle
         return angle
+    
+    def RingEdges(self):
+        #print N
+        mel.eval('polySelectEdgesEveryN "edgeRing" \"{num}\";'.format(num = str(self.spnRing.value() + 1)))
+        
+    def LoopEdges(self):
+        #print N
+        mel.eval('polySelectEdgesEveryN "edgeLoop" \"{num}\";'.format(num = str(self.spnLoop.value() + 1)))
     
     def rotateVectorToZAxis(self, vector):
         vectorLength = sqrt(pow(vector.x,2) + pow(vector.z,2))
