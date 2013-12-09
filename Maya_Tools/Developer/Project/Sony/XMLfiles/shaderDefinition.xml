@@ -48,4 +48,20 @@
 	<mesh name="LIGHT_FR">
 		<shader name = "light_shader_standard" use = "Must_use"/>
 	</mesh>
+	<mesh name="LIGHT_LENS_BR">
+		<shader name = "plastic_lens_thinfim_rearlights_damage" use = "Must_use"/>
+	</mesh>
+	<mesh name="LIGHT_LENS_BL">
+		<shader name = "plastic_lens_thinfim_rearlights_damage" use = "Must_use"/>
+	</mesh>
+	<mesh name="LIGHT_LENS_INNER_BL">
+		<shader name = "LIGHT_LENS_BACKFACE_RED" use = "Must_use"/>
+	</mesh>
+	<mesh name="LIGHT_LENS_INNER_BR">
+		<shader name = "LIGHT_LENS_BACKFACE_RED" use = "Must_use"/>
+	</mesh>
+	<mesh name = "WHEEL_S_20">
+		<shader name = "wheel" use = "No_use"/>
+		<shader name = "wheel_01" use = "Must_use"/>
+	</mesh>
 </define>

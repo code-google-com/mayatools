@@ -31,7 +31,8 @@ class ProjectBaseClass():
         self.FeedbacksPath = ""
         self.LibraryPath = ""
         self.PluginsPath = ''
-        self.AssetList = os.path.split(XMLRootFile)[0] + '/AssetList.xml'
+        self.projectData = os.path.split(XMLRootFile)[0]
+        self.AssetList = self.projectData + '/AssetList.xml'
         self.NamingConvetion = ""
         self.LOD = list()
         self.stages = list()
@@ -42,6 +43,7 @@ class ProjectBaseClass():
         self.checkList = list()
         self.workingStage = list()
         self.templateStructure = ''
+        
         self.group = False
         self.readXMLFile(XMLRootFile)
    
@@ -159,6 +161,8 @@ class ProjectBaseClass():
         
         templateNode =  ProjectNode.getElementsByTagName('Template')[0]
         self.templateFile = 'template' + '/' + templateNode.getAttribute('file')
+        
+        # get project data 
         
         print self.templateFile
             

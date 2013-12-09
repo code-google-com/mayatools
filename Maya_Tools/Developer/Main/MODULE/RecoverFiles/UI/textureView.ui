@@ -10,16 +10,31 @@
     <height>609</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+    <horstretch>0</horstretch>
+    <verstretch>1</verstretch>
+   </sizepolicy>
+  </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="sizeConstraint">
+    <enum>QLayout::SetMaximumSize</enum>
+   </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QRadioButton" name="radioButton_5">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>RGBA</string>
          </property>
@@ -30,6 +45,12 @@
        </item>
        <item>
         <widget class="QRadioButton" name="radioButton">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="styleSheet">
           <string notr="true">color: rgb(255, 0, 0);</string>
          </property>
@@ -40,6 +61,12 @@
        </item>
        <item>
         <widget class="QRadioButton" name="radioButton_2">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="styleSheet">
           <string notr="true">color: rgb(0, 255, 0);</string>
          </property>
@@ -50,6 +77,12 @@
        </item>
        <item>
         <widget class="QRadioButton" name="radioButton_3">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="styleSheet">
           <string notr="true">color: rgb(0, 0, 255);</string>
          </property>
@@ -60,6 +93,12 @@
        </item>
        <item>
         <widget class="QRadioButton" name="radioButton_4">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>ALPHA</string>
          </property>
@@ -76,7 +115,7 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset resource="../../../Source/IconResource.qrc">
+        <iconset>
          <normaloff>:/Project/zoom_out.png</normaloff>:/Project/zoom_out.png</iconset>
        </property>
        <property name="iconSize">
@@ -105,7 +144,7 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset resource="../../../Source/IconResource.qrc">
+        <iconset>
          <normaloff>:/Project/zoom_in.png</normaloff>:/Project/zoom_in.png</iconset>
        </property>
        <property name="iconSize">

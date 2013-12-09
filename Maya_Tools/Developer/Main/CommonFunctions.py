@@ -59,7 +59,9 @@ def setDataToClipboard(text):
     clipboard = QtGui.QApplication.clipboard()
     out = clipboard.setText(text)
 
-
+def clearLayout(layout):
+    for i in reversed(range(layout.count())):
+        layout.itemAt(i).widget().deleteLater()
 
 def copytreewithFilter(src, dst, filter, backup = True):
         if os.path.isfile(src):

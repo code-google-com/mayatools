@@ -1,28 +1,42 @@
 # Author: Tran Quoc Trung - GlassEgg Digtal Media
 # Date: 9-SEP-2012
-import maya.cmds as cmds
-
-from PyQt4 import QtGui, QtCore, uic
-import sip
 
 #from array import *
-import Source.IconResource_rc
-reload(Source.IconResource_rc)
-import functools
-import maya.OpenMayaUI as OpenMayaUI
 
-import os
-import sys
-import inspect
+import maya.OpenMayaUI as OpenMayaUI
+import inspect, os, sys
+import maya.mel as mel
+import maya.cmds as cmds
+import pymel.core as py
+from PyQt4 import QtGui, QtCore, uic
+import maya.OpenMayaUI as OpenMayaUI
+import sip
+import functools
 import imp
+from xml.dom.minidom import *
 
 #import MySQLdb
+from MODULE.ShaderTools import ShaderTools as st
+reload(st)
+
+from MODULE.PolyTools import PolyTools as pt
+reload(pt)
+
+import CommonFunctions as cf
+reload(cf)
+
+import dockWidget as dW
+reload(dW)
+
+import Source.IconResource_rc
+reload(Source.IconResource_rc)
 
 import getShaderATG
 reload(getShaderATG)
 
 import CommonFunctions
 reload(CommonFunctions)
+
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/GE_QA_v3.ui'
@@ -198,15 +212,16 @@ class GE_hintModel(QtCore.QAbstractTableModel):
         return False
                 
 class GE_QA(form_class,base_class):
-    def __init__(self, checkList, parent = getMayaWindow()):
+    def __init__(self, projData, checkList, parent = getMayaWindow()):
         super(base_class,self).__init__(parent)
         self.setupUi(self)
         self.btnRefresh.clicked.connect(self.getDAGNodeinScene)
         self.btnStartQA.clicked.connect(self.startQA)
-        self.listShader.itemClicked.connect(self.selectFacesOnSelectedItem)
+        #self.listShader.itemClicked.connect(self.selectFacesOnSelectedItem)
         #self.listShader.itemDoubleClicked.connect(self.selectShaderForEditing)
         #self.scriptjobQA = cmds.scriptJob(e = ['SelectionChanged', self.updateInverseFromScene] , protected = True)
         self._checkList = checkList 
+        self._data = projData
         self.valueQA = [] # list return value after checking.
         self.hintListQA = []
         self.tmpArr = [] # list of DAG Node need to be checked.
@@ -234,17 +249,14 @@ class GE_QA(form_class,base_class):
         textureView = loadRequest('textureView')    
         self.form = textureForm.main()
         self.view = textureView.main()
-        self.horizontalLayout_8.addWidget(self.form)
-        self.horizontalLayout_8.addWidget(self.view)
+        self.formLayout_2.addWidget(self.form)
+        self.formLayout_3.addWidget(self.view)
         #newway:
         self.form.textureChanged.connect(self.view.showImage)
-        #old way: 
-        #    self.form.connect(self.form, QtCore.SIGNAL('textureChanged(QString)'), self.view, QtCore.SLOT('showImage(QString)'))
-        
-        self.getDAGNodeinScene()
-        dagModel = QtGui.QStringListModel(self.tmpArr)
-        self.lstViewDAGNode.setModel(dagModel)
-        
+        print self._data + '/shaderDefinition.xml'
+        formshader = shaderValidator(self._data + '/shaderDefinition.xml')
+        self.formLayout_6.addWidget(formshader)
+
     def startQA(self):
         self.hintListQA = []
         self.tmpArr = []
@@ -330,19 +342,11 @@ class GE_QA(form_class,base_class):
             cmds.select(geometryName)
             #----------------------------------------------------------------
             messages = [] #-- message ouput to comprehend evrything
-            #details = []  #-- details e.g the number of issued faces
             display = []  #-- right or wrong to highlight red or green
             checkName = self.hintListQA[len(self.hintListQA) - 1]
             for iter in range(len(self._checkList)):
                 messages.append(self.hintListQA[0][iter][row])
                 display.append(self.hintListQA[2][iter][row])
-#                try:
-#                    if self.hintListQA[2*iter + 1][row] != '':
-#                        details.append(len(self.hintListQA[2*iter + 1][row]))
-#                    else:
-#                        details.append('No more Information')
-#                except:    
-#                    print 'Type error'
             checkName = self._checkList
                 
             #----set hint info to model
@@ -351,8 +355,6 @@ class GE_QA(form_class,base_class):
                 self.hintModel.setData(index, checkName[i], QtCore.Qt.DisplayRole)
                 index = self.hintModel.createIndex(i,1)
                 self.hintModel.setData(index, messages[i], QtCore.Qt.DisplayRole)    
-                #index = self.hintModel.createIndex(i,2)    
-                #self.hintModel.setData(index, details[i], QtCore.Qt.DisplayRole)
                 index = self.hintModel.createIndex(i,3)
                 self.hintModel.setData(index, display[i], QtCore.Qt.DisplayRole)
                 
@@ -368,11 +370,8 @@ class GE_QA(form_class,base_class):
         for i in range(len(iconList)):
             icon = QtGui.QIcon(iconList[i])
             paletteShaderItem = QtGui.QListWidgetItem(icon,nameList[i],self.listShader, QtGui.QListWidgetItem.Type)
-            self.listShader.addItem(paletteShaderItem)
-            #palette = paletteShader.paletteShader(iconList[i], nameList[i])
-            #item = QtGui.QListWidgetItem()
-            #self.listShader.addItem(item)
-            #self.listShader.setItemWidget(item, palette)
+            #self.listShader.addItem(paletteShaderItem)
+
         
     def refreshList(self):
         refreshList = []
@@ -397,4 +396,145 @@ class GE_QA(form_class,base_class):
                     continue
                 else:
                     instance_rc.run(node)
+                          
+description = 'Select Mesh using wrong shader'
+name = 'selectWrongShaderNode'
+
+color_code = {'right':['00dc00', '00ff00'], 'wrong':['fa0000','ff0000'], 'missing':['ffdc00','ffff00'], 'undefined':['','']}
+status = {1: 'mesh', -1: 'shader'}
+
+fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
+dirUI= fileDirCommmon +'/UI/shader_Validator.ui'
+try:    
+    form_class, base_class = uic.loadUiType(dirUI)
+except IOError:
+    print (dirUI + ' not found.')
+    
+def getMayaWindow():
+    ptr = OpenMayaUI.MQtUtil.mainWindow()
+    return sip.wrapinstance(long(ptr), QtCore.QObject)
+
+def execute():
+    form = shaderValidator()
+    form.show()
+    
+class shaderButton(QtGui.QPushButton):
+    def __init__(self, mesh, shader, color = None):
+        super(shaderButton, self).__init__()
+        self._mesh = mesh
+        self._shader = shader
+        #self._color = color
+        self.setText(shader)
+        self.clicked.connect(functools.partial(st.selectFaceByShaderPerMesh, self._mesh, self._shader))
+        self.setStyleSheet('''QPushButton*
+                            color: black;
+                            background-color: #{color0};
+                            border-color: #339;
+                            border-style: solid;
+                            border-radius: 5;
+                            padding: 3px;
+                            font-size: 14px;
+                            padding-left: 2px;
+                            padding-right: 2px;@
+                            
+                            QPushButton:hover*
+                            color: black;
+                            background-color: #{color1};
+                            border-color: #339;
+                            border-style: solid;
+                            border-radius: 5;
+                            padding: 3px;
+                            font-size: 14px;
+                            padding-left: 2px;
+                            padding-right: 2px;@'''.format(color0 = color[0], color1 = color[1]).replace('*','{').replace('@','}'))
+        
+    def checkShader(self):
+        pass
+        
+class shaderDockWidget(dW.DockWidget):
+    def __init__(self, mesh, node = None):
+        super(shaderDockWidget, self).__init__(mesh)
+        self._mesh = mesh
+        self._widget= QtGui.QWidget()
+        self.setWidget(self._widget)
+        self._shaderValidator = node
+        self.loadShadersOfMesh()
+        
+    def loadShadersOfMesh(self):
+        layout = QtGui.QVBoxLayout()
+        margins = QtCore.QMargins(1,1,1,1)
+        layout.setSpacing(1)
+        layout.setContentsMargins(margins) 
+        self._widget.setLayout(layout)
+        shadersInMesh = st.getShadersFromMesh(self._mesh)
+        shadersInXMLNode = ''
+        if self._shaderValidator:
+            shadersInXMLNode = [shader.getAttribute('name') for shader in self._shaderValidator.getElementsByTagName('shader')]
+            conds = [c.getAttribute('use') for c in self._shaderValidator.getElementsByTagName('shader')]
+            shaders = list(set(shadersInXMLNode + shadersInMesh))
+            print shadersInXMLNode
+        else:
+            shaders =  shadersInMesh
+        for s in shaders:
+            try:
+                result = 'right'
+                if s not in shadersInMesh:
+                    if conds[shadersInXMLNode.index(s)] != 'No_use':
+                        result = 'missing'
+                elif s not in shadersInXMLNode:
+                    if conds[0] == 'Only':
+                        result = 'wrong'
+                else:
+                    if conds[0] == 'No_use':
+                        result = 'wrong'
+                
+            except:
+                result = 'undefined'
+            #print result        
+            button = shaderButton(self._mesh, s, color_code[result])
+            layout.addWidget(button)
+            
+    def loadMeshesUseShader(self):
+        pass
+    
+class shaderValidator(form_class, base_class):
+    def __init__(self, xmlFile = None, parent = getMayaWindow()):
+        super(base_class, self).__init__(parent)
+        self.setupUi(self)
+        self._status = 1
+        
+        if xmlFile:
+            self.xmlDoc = xml.dom.minidom.parse(xmlFile)
+        self.startup()
+        self.btnRefresh.clicked.connect(self.startup)
+        self.ldtFind.returnPressed.connect(self.startup)
+        
+    def startup(self):
+        cf.clearLayout(self.formLayout) # remove all items in layout if possible
+        if self.ldtFind.text() == '':
+            shapeNode = [node for node in py.ls(type = 'transform') if py.nodeType(node.listRelatives(c= True)[0]) == 'mesh']
+        else:
+            shapeNode = [node for node in py.ls('*' + str(self.ldtFind.text()) + '*', type = 'transform') if py.nodeType(node.listRelatives(c= True)[0]) == 'mesh'] 
+        for s in shapeNode:
+            try:
+                node  = [node for node in self.xmlDoc.getElementsByTagName('mesh') if node.getAttribute('name')  == s][0]
+                #print node.getAttribute('name')
+                dockWidget = shaderDockWidget(str(s), node)
+                self.formLayout.addWidget(dockWidget)
+            except:
+                #print 'No XML file to filter'
+                dockWidget = shaderDockWidget(str(s))
+                self.formLayout.addWidget(dockWidget)
+                
+    def changeStatus(self):
+        cf.clearLayout(self.formLayout)
+        shaders = cmds.ls(materials = True)
+        for s in shaders:
+            pass
+        
+            
+    def reload(self):
+        pass
+        
+    
                     

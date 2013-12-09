@@ -78,6 +78,7 @@ class ProjectUI(form_class,base_class):
         cmds.scriptJob(killAll = True, f = True)
         self.xmlFile = XMLProject
         self.loadProjectData()
+        #print self.Proj.projectData 
         
         #-------------- FUNCTION UI
         self.actionQA.triggered.connect(self.QAChecking)
@@ -91,6 +92,9 @@ class ProjectUI(form_class,base_class):
         return out    
         
     def loadProjectData(self):
+        print 'okie'
+        print self.Proj.projectData 
+        print 'okie'
         for index in range(len(self.Proj.moduleList[0])):
             #try:
                 instanceModule = loadModule(self.Proj.moduleList[0][index])
@@ -103,12 +107,9 @@ class ProjectUI(form_class,base_class):
         self.dockWidget = dockWidget.DockWidget('Asset from')
         self.dockWidget.setWidget(self.AssetForm)
         self.formLayout.addWidget(self.dockWidget)
-        
-    def unloadProjectModule(self, module):
-        pass
              
     def QAChecking(self):
-        self.QAform = GE_QA.GE_QA(self.Proj.checkList)
+        self.QAform = GE_QA.GE_QA(self.Proj.projectData, self.Proj.checkList)
         self.QAform.show()
         
     def AssetTracking(self):
