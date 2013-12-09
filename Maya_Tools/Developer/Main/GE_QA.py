@@ -472,12 +472,11 @@ class shaderDockWidget(dW.DockWidget):
             shadersInXMLNode = [shader.getAttribute('name') for shader in self._shaderValidator.getElementsByTagName('shader')]
             conds = [c.getAttribute('use') for c in self._shaderValidator.getElementsByTagName('shader')]
             shaders = list(set(shadersInXMLNode + shadersInMesh))
-            print shadersInXMLNode
         else:
             shaders =  shadersInMesh
         for s in shaders:
             try:
-                result = 'right'
+                result = 'undefined'
                 if s not in shadersInMesh:
                     if conds[shadersInXMLNode.index(s)] != 'No_use':
                         result = 'missing'
@@ -485,9 +484,10 @@ class shaderDockWidget(dW.DockWidget):
                     if conds[0] == 'Only':
                         result = 'wrong'
                 else:
-                    if conds[0] == 'No_use':
+                    if conds[shadersInXMLNode.index(s)] == 'No_use':
                         result = 'wrong'
-                
+                    else:
+                        result = 'right'
             except:
                 result = 'undefined'
             #print result        
@@ -502,7 +502,6 @@ class shaderValidator(form_class, base_class):
         super(base_class, self).__init__(parent)
         self.setupUi(self)
         self._status = 1
-        
         if xmlFile:
             self.xmlDoc = xml.dom.minidom.parse(xmlFile)
         self.startup()
@@ -511,10 +510,14 @@ class shaderValidator(form_class, base_class):
         
     def startup(self):
         cf.clearLayout(self.formLayout) # remove all items in layout if possible
-        if self.ldtFind.text() == '':
-            shapeNode = [node for node in py.ls(type = 'transform') if py.nodeType(node.listRelatives(c= True)[0]) == 'mesh']
-        else:
-            shapeNode = [node for node in py.ls('*' + str(self.ldtFind.text()) + '*', type = 'transform') if py.nodeType(node.listRelatives(c= True)[0]) == 'mesh'] 
+        shapeNode = ''
+        try:
+            if self.ldtFind.text() == '':
+                shapeNode = [node for node in py.ls(type = 'transform') if py.nodeType(node.listRelatives(c= True)[0]) == 'mesh']
+            else:
+                shapeNode = [node for node in py.ls('*' + str(self.ldtFind.text()) + '*', type = 'transform') if py.nodeType(node.listRelatives(c= True)[0]) == 'mesh']
+        except:
+            pass 
         for s in shapeNode:
             try:
                 node  = [node for node in self.xmlDoc.getElementsByTagName('mesh') if node.getAttribute('name')  == s][0]

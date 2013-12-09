@@ -9,13 +9,30 @@ fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/Pivots.ui'
 form_class, base_class = uic.loadUiType(dirUI)
 
+def setPivotLocation():
+        vertexes = cmds.polyListComponentConversion(tv = True)
+        cmds.select(vertexes)
+        vertex = cmds.ls(sl=True,fl=True) 
+        pivPos = [0,0,0]
+        count = len(vertex)
+        for i in vertex:
+            iPos = cmds.pointPosition(i)
+            pivPos[0] =  pivPos[0] + iPos[0]
+            pivPos[1] =  pivPos[1] + iPos[1]
+            pivPos[2] =  pivPos[2] + iPos[2]
+        pivPos = [pivPos[0]/count,pivPos[1]/count,pivPos[2]/count]
+        # get obj's component
+        mainObj = cmds.ls(hilite=True)
+        cmds.select(mainObj)
+        cmds.xform(rp = pivPos, ws= True)
+
 class Pivots(form_class,base_class):
     def __init__(self, inputFile):
         super(base_class,self).__init__()
         self.setupUi(self)
         self.__name__ = 'Pivots'
         self.scriptjobPivot = cmds.scriptJob(e = ['SelectionChanged',self.clearAll] , protected = True)
-        self.btnPivottoCenterElement.clicked.connect(self.setPivotLocation)
+        self.btnPivottoCenterElement.clicked.connect(setPivotLocation)
         self.rdbXmin.clicked.connect(self.updatePivotPosition)
         self.rdbXmid.clicked.connect(self.updatePivotPosition)
         self.rdbXmax.clicked.connect(self.updatePivotPosition)
@@ -30,7 +47,7 @@ class Pivots(form_class,base_class):
         self.rdbZ.clicked.connect(functools.partial(self.pivotOnAxis,'z'))
         self.chkStatus.clicked.connect(self.checkStatus)
         self.edtX.textChanged.connect(self.updateLineEdit)
-        self.btnPivottoCenterElement.clicked.connect(self.setPivotLocation)
+        self.btnPivottoCenterElement.clicked.connect(setPivotLocation)
         self.btnCenterPivot.clicked.connect(self.qtCenterPivotForSelectedMeshes)
         self.btnPivottoOrigin.clicked.connect(self.qtPivotToOriginForSelectedMeshes)
         self.btnPivottoanotherObj.clicked.connect(self.qtPivotToAnotherObject)
@@ -53,23 +70,6 @@ class Pivots(form_class,base_class):
         except RuntimeError:
             pass
         
-    def setPivotLocation(self):
-        vertexes = cmds.polyListComponentConversion(tv = True)
-        cmds.select(vertexes)
-        vertex = cmds.ls(sl=True,fl=True) 
-        pivPos = [0,0,0]
-        count = len(vertex)
-        for i in vertex:
-            iPos = cmds.pointPosition(i)
-            pivPos[0] =  pivPos[0] + iPos[0]
-            pivPos[1] =  pivPos[1] + iPos[1]
-            pivPos[2] =  pivPos[2] + iPos[2]
-        pivPos = [pivPos[0]/count,pivPos[1]/count,pivPos[2]/count]
-        # get obj's component
-        mainObj = cmds.ls(hilite=True)
-        cmds.select(mainObj)
-        cmds.xform(rp = pivPos, ws= True)
-
     def pivots_to_pos(self,obj, Xpos, Ypos, Zpos):
         cmds.xform(cp=True)
         #selObjs = cmds.ls(sl=True)

@@ -221,6 +221,7 @@ class LODTools(form_class,base_class):
         # ------------------------------------------------
         type_a = list()
         if not self.btnLOD0.isChecked():
+            cmds.setAttr('type_a_layer.visibility', 1)
             if self.chkBumper_front.isChecked():
                 if 'type_a_layer' not in self._nohide:
                     self._nohide.append('type_a_layer')

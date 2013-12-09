@@ -1,8 +1,7 @@
 <?xml version="1.0" ?>
-<Project name="IronMonkey">
+<Project name="FireMonkey">
 	<Managers>
 		<Tech>
-			<user>kingnguyen</user>
 			<user>trungtran</user>
 		</Tech>
 		<ArtDirector>
@@ -14,12 +13,12 @@
 		</Producer>
 	</Managers>
 	<Directories>
-		<ServerPath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/3DScene/</ServerPath>
-		<LocalPath>D:/2013_GlassEgg_Vehicles2014/3DScene/</LocalPath>
-		<ProjectLocalPath>maya</ProjectLocalPath>
-		<DocumentsPath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/Documents/</DocumentsPath>
-		<FeedbacksPath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/Feedbacks/</FeedbacksPath>
-		<ReferencesImagePath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/Documents/</ReferencesImagePath>
+		<ServerPath>//glassegg.com/projects/Scenes/RR_2014/</ServerPath>
+		<LocalPath>Z:/Project/RR_2014</LocalPath>
+		<ProjectLocalPath></ProjectLocalPath>
+		<DocumentsPath></DocumentsPath>
+		<FeedbacksPath>//glassegg.com/Documents_Feedbacks/RR_2014</FeedbacksPath>
+		<ReferencesImagePath></ReferencesImagePath>
 	</Directories>
 	<Structures_Asset group = "True">
 		<folder name = "maya">
@@ -71,7 +70,7 @@
 			<module name = "LODTools" />
 			<module name = "UVTools" />
 			<module name = "PolyTools" />
-			<module name = "CrydevTools" />
+			<inmodule name = "CrydevTools" />
 			<module name = "ShaderTools" params = "CustomShaderTools"/>
 		</Module>
 		<CheckList>
@@ -82,7 +81,6 @@
 			<check name = "Lamina"/>
 			<check name = "UVFlipped"/>
 			<check name = "UVSetCount"/>
-			<check name = "ShortestEdges"/>
 		</CheckList>
 	</ProjectData>
 </Project>

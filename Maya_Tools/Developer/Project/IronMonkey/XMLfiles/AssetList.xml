@@ -1,87 +1,22 @@
 <?xml version="1.0" ?>
 <AssetList>
-	<group name = "Batch_1">
-		<asset name = "bmw_m5" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "hennessey_venom_gt" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "pagani_huayra" start_date = "" due_date = "" stage = ""  image = ""/>
-	</group>
-	<group name = "Batch_2">
-		<asset name = "audi_rs5" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "audi_r8_V10" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "bmw_m3_gts" start_date = "" due_date = "" stage = ""  image = ""/>
-	</group>
-	<group name = "Batch_3">
-		<asset name = "ruf_rt12r" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "ruf_ctr3_clubsport" start_date = "" due_date = "" stage = ""  image = ""/>
-	</group>
-	<group name = "Batch_4">
-		<asset name = "aston_martin_vanquish" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "lotus_exige_s" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "mercedes_c63_amg_coupe_black_series" start_date = "" due_date = "" stage = ""  image = ""/>
-	</group>
-	<group name = "Batch_5">
-		<asset name = "aston_martin_one77" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "mclaren_mp4-12c" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "merc_sls_black" start_date = "" due_date = "" stage = ""  image = ""/>
-	</group>
-	<group name = "Batch_6">
-		<asset name = "audi_a1_quattro" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "bac_mono" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "mercedes_cla45_amg" start_date = "" due_date = "" stage = ""  image = ""/>
-	</group>
-	<group name = "Batch_7">
-		<asset name = "audi_ttrs_plus" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "bmw_m135i" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "mercedes_a45_amg" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "ferrari_458_italia" start_date = "" due_date = "" stage = ""  image = ""/>
-	</group>
-	<group name = "Batch_8">
-		<asset name = "aston_martin_zagato" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "mercedes_sl65_amg" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "ferrari_california" start_date = "" due_date = "" stage = ""  image = ""/>
-	</group>
-	<group name = "Batch_9">
-		<asset name = "ferrari_f12_berlinetta" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "ferrari_ff" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "gumpert_apollo_enraged" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "spyker_c8_aileron" start_date = "" due_date = "" stage = ""  image = ""/>
-	</group>
-	<group name = "Batch_10">
-		<asset name = "bentley_gt_speed" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "bentley_gt_v8" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "ruf_rgt8" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "savage_rivale_gtrs" start_date = "" due_date = "" stage = ""  image = ""/>
-	</group>
-        <group name = "Batch_11">
-		<asset name = "alfa_romeo_4c" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "bmw_mini_jcwgp" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "marussia_b2" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "renault_clio_rs" start_date = "" due_date = "" stage = ""  image = ""/>
-        </group>
-        <group name = "Batch_12">
-		<asset name = "gta_spano" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "pagani_zonda_r" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "vw_golf_gti" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "aston_martin_vantage_s" start_date = "" due_date = "" stage = ""  image = ""/>
-        </group>
-        <group name = "Batch_13">
-		<asset name = "caterham_r500" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "caterham_sp300r" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "ferrari_599xx_evolution" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "renault_alpine_a110-50" start_date = "" due_date = "" stage = ""  image = ""/>
-        </group>
-        <group name = "Batch_14">
-		<asset name = "ferrari_599_gto" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "ariel_atom_500_v8" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "mclaren_f1_lm" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "vw_beetle_gsr" start_date = "" due_date = "" stage = ""  image = ""/>
-        </group>
-		<group name = "Batch_15">
-		<asset name = "ferrari_430_scuderia" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "mclaren_p1" start_date = "" due_date = "" stage = ""  image = ""/>
-        </group>
-		<group name = "Batch_16">
-		<asset name = "bmw_dc" start_date = "" due_date = "" stage = "" image = ""/>
-        </group>
-		
+	<group name = "Cars">
+		<asset name = "nissan_skyline_r32" start_date = "" due_date = "" stage = "" image = ""/>
+		<asset name = "bmw_e63_m3" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "mazda_rx7_fd" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "porsche_911" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "subaru_brz" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "ford_fiesta_st" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "volkswagen_golf_gti" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "subara_impreza_wrx" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "toyota_gt86" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "ford_mustang_2014" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "ford_mustang_2015" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "ford_crown_victoria" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "ford_explorer" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "dodge_charger_srt8" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "ford_f650_box" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "nissan_leaf" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "nissan_quest" start_date = "" due_date = "" stage = ""  image = ""/>
+	</group>	
 </AssetList>
