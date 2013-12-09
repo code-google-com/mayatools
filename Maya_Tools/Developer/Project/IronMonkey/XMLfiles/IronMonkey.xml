@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<Project name="FireMonkey">
+<Project name="IronMonkey">
 	<Managers>
 		<Tech>
 			<user>trungtran</user>
@@ -15,10 +15,10 @@
 	<Directories>
 		<ServerPath>//glassegg.com/projects/Scenes/RR_2014/</ServerPath>
 		<LocalPath>Z:/Project/RR_2014</LocalPath>
-		<ProjectLocalPath></ProjectLocalPath>
-		<DocumentsPath></DocumentsPath>
+		<ProjectLocalPath>temp</ProjectLocalPath>
+		<DocumentsPath>ttt</DocumentsPath>
 		<FeedbacksPath>//glassegg.com/Documents_Feedbacks/RR_2014</FeedbacksPath>
-		<ReferencesImagePath></ReferencesImagePath>
+		<ReferencesImagePath>tmp</ReferencesImagePath>
 	</Directories>
 	<Structures_Asset group = "True">
 		<folder name = "maya">

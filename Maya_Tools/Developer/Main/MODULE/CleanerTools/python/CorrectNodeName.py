@@ -17,8 +17,8 @@ def execute():
     print '--------------- RENAME SHADINGNODE-------------------------'
     shaders = py.ls(materials = True)
     for s in shaders:
-        sg = str(s.listConnections(s= True, t= 'shadingEngine')[0])
         try:
+            sg = str(s.listConnections(s= True, t= 'shadingEngine')[0])
             py.rename(sg, s+'SG')
             print '-- Renamed shading node: ' + sg + ' to: ' + s + 'SG'
         except:
