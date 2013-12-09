@@ -52,12 +52,12 @@ def execute():
         except:
             pass
         
-    print '--------------- Export Selected for cleaning up-----------------'
-    mel.eval('SelectAll;')
-    namefile= cmds.file(q= True, sn = True)
-    cmds.file(namefile, f= True, es = True, type = 'mayaBinary')
-    cmds.file(namefile, f= True, o = True)
-    cmds.viewFit(all = True)
+    #print '--------------- Export Selected for cleaning up-----------------'
+    #mel.eval('SelectAll;')
+    #namefile= cmds.file(q= True, sn = True)
+    #cmds.file(namefile, f= True, es = True, type = 'mayaBinary')
+    #cmds.file(namefile, f= True, o = True)
+    #cmds.viewFit(all = True)
 
     
     

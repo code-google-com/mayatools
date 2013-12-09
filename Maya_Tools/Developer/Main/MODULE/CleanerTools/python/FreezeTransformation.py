@@ -1,4 +1,4 @@
-description = 'Freeze transformatiom of node'
+description = 'Freeze transformatiom of node.'
 name = 'FreezeTransformation'
 
 import maya.cmds as cmds
