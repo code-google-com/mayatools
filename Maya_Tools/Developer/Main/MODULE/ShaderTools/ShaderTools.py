@@ -18,6 +18,9 @@ def getShadersFromMesh(mesh):
         # get shader from nodes
         shapeNode = cmds.listRelatives(mesh, c = True, f = True)[0]
         sgs = cmds.listConnections(shapeNode, t = 'shadingEngine')
+        if not sgs:
+            print mesh
+            return
         shaders = list()
         for sg in sgs:
             if cmds.connectionInfo(sg + '.surfaceShader', sfd = True):
