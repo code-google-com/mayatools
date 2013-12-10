@@ -5,7 +5,6 @@ from PyQt4.QtGui import *
 def hasFeature(dockwidget, feature):
     return dockwidget.features() & feature == feature
 
-
 class DockWidgetTitleBarButton(QAbstractButton):
     def __init__(self, titlebar):
         QAbstractButton.__init__(self, titlebar)

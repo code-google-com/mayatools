@@ -106,7 +106,7 @@ class ProjectUI(form_class,base_class):
         self.AssetForm = AssetForm.AssetForm(self.xmlFile)
         self.dockWidget = dockWidget.DockWidget('Asset from')
         self.dockWidget.setWidget(self.AssetForm)
-        self.formLayout.addWidget(self.dockWidget)
+        self.verticalLayout.addWidget(self.dockWidget)
              
     def QAChecking(self):
         self.QAform = GE_QA.GE_QA(self.Proj.projectData, self.Proj.checkList)
