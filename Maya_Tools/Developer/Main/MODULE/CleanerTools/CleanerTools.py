@@ -36,7 +36,7 @@ class ClearTools(form_class,base_class):
         if self._customCheck != '':
             project = self._customCheck.split('.')[0]
             customPath = os.path.split(os.path.split(os.path.split(fileDirCommmon)[0])[0])[0]
-            print customPath
+            
             contentToCleanUpProject = [f for f in os.listdir(customPath + '/Project/' + project + '/python/checkingContents/')if f.endswith('py')]
         for module in contentToCleanUpCommon + contentToCleanUpProject:
             try:
@@ -59,7 +59,6 @@ class ClearTools(form_class,base_class):
             button.clicked.connect(instanceModule.execute)
             chkbox.clicked.connect(functools.partial(self.updateContent, chkbox,instanceModule.name))
         
-            
     def updateContent(self, chkbContent, content):
         if chkbContent.isChecked():
             #print 'add'

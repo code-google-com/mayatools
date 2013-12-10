@@ -2,7 +2,7 @@ import inspect, os
 import maya.mel as mel
 import maya.cmds as cmds
 
-description = 'Fix missing shader and cleanup Hypershader'
+description = 'Fix missing shader.'
 name = 'fixMissingShader'
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 

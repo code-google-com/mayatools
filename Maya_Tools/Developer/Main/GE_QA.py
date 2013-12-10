@@ -253,8 +253,10 @@ class GE_QA(form_class,base_class):
         self.formLayout_3.addWidget(self.view)
         #newway:
         self.form.textureChanged.connect(self.view.showImage)
-        print self._data + '/shaderDefinition.xml'
-        formshader = shaderValidator(self._data + '/shaderDefinition.xml')
+        if os.path.isfile(self._data + '/shaderDefinition.xml'):
+            formshader = shaderValidator(self._data + '/shaderDefinition.xml')
+        else:
+            formshader = shaderValidator()
         self.formLayout_6.addWidget(formshader)
 
     def startQA(self):
@@ -410,13 +412,7 @@ try:
 except IOError:
     print (dirUI + ' not found.')
     
-def getMayaWindow():
-    ptr = OpenMayaUI.MQtUtil.mainWindow()
-    return sip.wrapinstance(long(ptr), QtCore.QObject)
 
-def execute():
-    form = shaderValidator()
-    form.show()
     
 class shaderButton(QtGui.QPushButton):
     def __init__(self, mesh, shader, color = None):
