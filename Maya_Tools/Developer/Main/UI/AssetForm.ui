@@ -86,7 +86,7 @@
              <bool>true</bool>
             </property>
             <attribute name="buttonGroup">
-             <string notr="true">buttonGroup</string>
+             <string>buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -96,7 +96,7 @@
              <string>Any</string>
             </property>
             <attribute name="buttonGroup">
-             <string notr="true">buttonGroup</string>
+             <string>buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -113,7 +113,7 @@
              <string>Server</string>
             </property>
             <attribute name="buttonGroup">
-             <string notr="true">buttonGroup_2</string>
+             <string>buttonGroup_2</string>
             </attribute>
            </widget>
           </item>
@@ -126,7 +126,7 @@
              <bool>true</bool>
             </property>
             <attribute name="buttonGroup">
-             <string notr="true">buttonGroup_2</string>
+             <string>buttonGroup_2</string>
             </attribute>
            </widget>
           </item>

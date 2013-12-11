@@ -14,48 +14,20 @@
 	</Managers>
 	<Directories>
 		<ServerPath>//glassegg.com/projects/Scenes/RR_2014/</ServerPath>
-		<LocalPath>Z:/Project/RR_2014</LocalPath>
-		<ProjectLocalPath>temp</ProjectLocalPath>
+		<LocalPath>Z:/Project/RR_2014/</LocalPath>
+		<ProjectLocalPath>maya</ProjectLocalPath>
 		<DocumentsPath>ttt</DocumentsPath>
 		<FeedbacksPath>//glassegg.com/Documents_Feedbacks/RR_2014</FeedbacksPath>
 		<ReferencesImagePath>tmp</ReferencesImagePath>
 	</Directories>
 	<Structures_Asset group = "True">
 		<folder name = "maya">
-			<folder name = "wheel" type = "stage"/>		
-			<folder name = "typea" type = "stage">
-				<folder name = "lod00" type = "LOD"/>
-				<folder name = "lod01" type = "LOD"/>
-				<folder name = "lod02" type = "LOD"/>
-				<folder name = "lod03" type = "LOD"/>
-				<folder name = "lod04" type = "LOD"/>
-				<folder name = "lod05" type = "LOD"/>
+			<folder name = "wheel" type = "LOD"/>		
+			<folder name = "car" type = "LOD">
+				<folder name = "lod00" type = "stage"/>
+				<folder name = "lods" type = "stage"/>
 			</folder>
-			<folder name = "typeb" type = "stage">
-				<folder name = "lod00" type = "LOD"/>
-				<folder name = "lod00" type = "LOD"/>
-				<folder name = "lod01" type = "LOD"/>
-				<folder name = "lod02" type = "LOD"/>
-				<folder name = "lod03" type = "LOD"/>
-				<folder name = "lod04" type = "LOD"/>
-				<folder name = "lod05" type = "LOD"/>
-			</folder>
-			<folder name = "typec" type = "stage">
-				<folder name = "lod00" type = "LOD"/>
-				<folder name = "lod01" type = "LOD"/>
-				<folder name = "lod02" type = "LOD"/>
-				<folder name = "lod03" type = "LOD"/>
-				<folder name = "lod04" type = "LOD"/>
-				<folder name = "lod05" type = "LOD"/>
-			</folder>
-			<folder name = "typed" type = "stage">
-				<folder name = "lod00" type = "LOD"/>
-				<folder name = "lod01" type = "LOD"/>
-				<folder name = "lod02" type = "LOD"/>
-				<folder name = "lod03" type = "LOD"/>
-				<folder name = "lod04" type = "LOD"/>
-				<folder name = "lod05" type = "LOD"/>
-			</folder>
+			
 		</folder>
 		<folder name = "textures"/>
 		<folder name = "export"/>

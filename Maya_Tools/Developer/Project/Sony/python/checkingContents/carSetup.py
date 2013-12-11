@@ -6,11 +6,14 @@ import pymel.core as py
 import pymel.core.datatypes as dt
 from PyQt4 import QtGui
 
+import setAOForWindows as ao
+reload(ao)
+
 def execute():
     print '--------------- SETUP CAR s\' POSITION, SCALE, ROTATE -------------------------'
     # check WHEELs present in scene
     wheelNodes = py.ls('WHEEL*', type = 'transform')
-    match = [wheel for wheel in wheelNodes if wheel not in ['WHEEL_FL', 'WHEEL_FR', 'WHEEL_BR', 'WHEEL_BL']]
+    match = [wheel for wheel in ['WHEEL_FL', 'WHEEL_FR', 'WHEEL_BR', 'WHEEL_BL'] if wheel not in wheelNodes]
     if len(match):
         QtGui.QMessageBox.critical(None, 'Missing wheel nodes', 'Please make sure that all wheels are imported! Thanks', QtGui.QMessageBox.Ok)
     else:
@@ -38,8 +41,15 @@ def execute():
         g.rotateY.set(90)
         
         # clean up
+        try:
+            cmds.makeIdentity(str(g), a = True, t = 1, r = 1, s = 1, n = 0)
+        except:
+            pass
         
-        cmds.makeIdentity(str(g), a = True, t = 1, r = 1, s = 1, n = 0)
+    # set AO
+    ao.setupColorSetWholeScene()
+        
+      
         
         
     

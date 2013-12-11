@@ -75,7 +75,7 @@ class NamingConvention(form_class,base_class):
         selObjs = cmds.ls(sl = True)
         if not self.chkHierrachy.isChecked():
             for i in selObjs:
-                newName = i.replace(searchStr, newStr)
+                newName = i.split('|')[-1].replace(searchStr, newStr)
                 cmds.rename(i, newName)
         else:
             childNodes = cmds.listRelatives(ad = True, pa = True)
@@ -84,6 +84,7 @@ class NamingConvention(form_class,base_class):
                 cmds.rename(node, newname)
             # rename selected nodes
             for node in selObjs:
+                newName = node.split('|')[-1].replace(searchStr, newStr)
                 cmds.rename(node, newname)
     
     def upperCase(self):

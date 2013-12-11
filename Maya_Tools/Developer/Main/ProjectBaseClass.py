@@ -144,14 +144,14 @@ class ProjectBaseClass():
             if node.getAttribute("type") == "LOD":
                 self.LOD.append(node.getAttribute("name"))
                 #print node.getAttribute("name")
-        self.LOD = list(set(self.LOD))
+        self.LOD = sorted(list(set(self.LOD)))
                 
         # get stage
         stages = ProjectNode.getElementsByTagName("folder")
         for node in stages:
             if node.getAttribute("type") == "stage":
                 self.stages.append(node.getAttribute("name"))
-        self.stages = list(set(self.stages))
+        self.stages = sorted(list(set(self.stages)))
         
         # get group
         if StructureNode.getAttribute('group') == 'True':

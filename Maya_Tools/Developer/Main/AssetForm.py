@@ -52,7 +52,6 @@ class AssetForm(form_class,base_class):
         self.assetGroupModel = QtGui.QStringListModel()
         self.assetListModel = QtGui.QStringListModel()
         self.xmlAssetList = xml.dom.minidom.parse(self.Proj.AssetList)
-        cmds.scriptJob(killAll = True, f = True)
         self.loadProjectData()
         self.resetToFileOpened()
         
