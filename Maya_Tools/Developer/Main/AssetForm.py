@@ -89,7 +89,7 @@ class AssetForm(form_class,base_class):
         type = self.cbbType.currentText()
         lod = self.cbbWorkingStage.currentText()
         if self.Proj.group == False:
-            localPath = self.Proj.LocalPath + str(item) 
+            localPath = self.Proj.LocalPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
         else:
             localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
         os.startfile(localPath)
