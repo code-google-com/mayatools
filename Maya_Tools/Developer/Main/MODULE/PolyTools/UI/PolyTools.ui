@@ -12,7 +12,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>313</width>
+    <width>312</width>
     <height>994</height>
    </rect>
   </property>
@@ -401,7 +401,7 @@
              </font>
             </property>
             <property name="text">
-             <string>Make Even Loop</string>
+             <string>Edit Edge Flow</string>
             </property>
            </widget>
           </item>
@@ -493,7 +493,7 @@
              <bool>false</bool>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup</string>
+             <string notr="true">buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -512,7 +512,7 @@
              <bool>true</bool>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup</string>
+             <string notr="true">buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -528,7 +528,7 @@
              <string>Instance</string>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup</string>
+             <string notr="true">buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -567,7 +567,7 @@
              <string>Parent Only</string>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup</string>
+             <string notr="true">buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -741,13 +741,6 @@ color: rgb(255, 255, 255);</string>
           </item>
          </layout>
         </item>
-        <item>
-         <widget class="QPushButton" name="pushButton_18">
-          <property name="text">
-           <string>Replace By Last Node</string>
-          </property>
-         </widget>
-        </item>
        </layout>
       </widget>
       <widget class="QGroupBox" name="groupBox_4">
@@ -821,7 +814,7 @@ color: rgb(255, 255, 255);</string>
              <string>unlock selected vertexes normal</string>
             </property>
             <property name="text">
-             <string>Unlock</string>
+             <string>Lock Unlocked</string>
             </property>
            </widget>
           </item>

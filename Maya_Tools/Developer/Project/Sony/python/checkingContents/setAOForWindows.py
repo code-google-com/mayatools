@@ -3,9 +3,8 @@ name = 'setAOForWindows'
 import maya.cmds as cmds
 import maya.mel as mel
 
-
 def execute():
-    setupAOToWhite()
+    setupAOToWhiteForWindow()
     
 def setupAOToWhiteForWindow():
     print '--------------- PAINT PURE WHITE FOR AO WINDOWs-------------------------'

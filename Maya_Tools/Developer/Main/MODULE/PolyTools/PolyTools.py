@@ -129,6 +129,17 @@ def exportMesh():
 def importMesh():
         imp = ExporterandImporter.importerShader()
         imp.importMaya()
+
+def editFlowEdges(edgeList):
+    vertexes = cmds.polyListComponentConversion(edgeList, tv = True)
+    #conjugateEdges = cmds.polyListComponentConversion(vertexes, te = True)
+    #vertexesExpanding = cmds.polyListComponentConversion(conjugateEdges, tv = True)
+    # filter 
+    for v in vertexes:
+        conjugateEdges = cmds.polyListComponentConversion(v, te = True)
+        conjugateVertexes = cmds.polyListComponentConversion(conjugateEdges, te = True)
+        filteredVertexes = [v for v in conjugateVertexes if v not in vertexes]
+        interpolatePosition(v, filteredVertexes)
             
 class PolyTools(form_class,base_class):
     closeTransferTool = QtCore.pyqtSignal('QString', name = 'closeTransferTool')
@@ -161,7 +172,7 @@ class PolyTools(form_class,base_class):
         self.btnPasteNormal.clicked.connect(self.pasteNormal)
         self.btnSmoothBevel.clicked.connect(self.smoothBevelNormal)
         self.btnmatchSeamNormal.clicked.connect(self.matchseamNormal)
-        self.btnUnlock.clicked.connect(self.unclockNormal)
+        self.btnUnlock.clicked.connect(self.lockUnLocked)
         self.btnSmoothAdjacentEdges.clicked.connect(self.smoothBorderEdges)
         self.btnTransferNormalWithoutDetachMesh.clicked.connect(self.transferNormalWithoutDetachMesh)
         self.btnMirrorTools.clicked.connect(self.mirrorNormalTool)
@@ -393,8 +404,13 @@ class PolyTools(form_class,base_class):
         mel.eval('source \"{f}\";'.format(f = attachFileSource))
         mel.eval('boltNorms.SmoothBevel(0)') 
         
-    def unclockNormal(self):
-        mel.eval('polyNormalPerVertex -ufn true;') 
+    def lockUnLocked(self):
+        #mel.eval('polyNormalPerVertex -ufn true;')
+        selObject = cmds.ls(sl = True)[0]
+        vertNum = cmds.polyEvaluate(v=True)
+        for i in range(vertNum):
+            if not cmds.polyNormalPerVertex(selObject + '.vtx[' + str(i) + ']', q= True, ufn = True):
+                 cmds.polyNormalPerVertex(selObject + '.vtx[' + str(i) + ']', fn = True)
     
     def matchseamNormal(self):
         attachFileSource = fileDirCommmon + '/mel/boltNormalToolbox.mel'

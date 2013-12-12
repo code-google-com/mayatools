@@ -91,7 +91,7 @@ class AssetForm(form_class,base_class):
         if self.Proj.group == False:
             localPath = self.Proj.LocalPath + str(item) 
         else:
-            localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(lod) + '/' + str(type)
+            localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
         os.startfile(localPath)
         
     def createLocal(self):
