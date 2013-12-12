@@ -15,7 +15,7 @@
 	<Directories>
 		<ServerPath>//glassegg.com/projects/Scenes/RR_2014/</ServerPath>
 		<LocalPath>Z:/Project/RR_2014/</LocalPath>
-		<ProjectLocalPath>maya</ProjectLocalPath>
+		<ProjectLocalPath>maya/</ProjectLocalPath>
 		<DocumentsPath>ttt</DocumentsPath>
 		<FeedbacksPath>//glassegg.com/Documents_Feedbacks/RR_2014</FeedbacksPath>
 		<ReferencesImagePath>tmp</ReferencesImagePath>
@@ -39,7 +39,7 @@
 			<module name = "NamingConvention" params = "CustomNamingTools" disableOrigin = "True"/>
 			<module name = "CleanerTools" params = "CustomCheck"/>
 			<module name = "Pivots" />
-			<module name = "LODTools" />
+			<module name = "LODTools" params = "IronMonkey" />
 			<module name = "UVTools" />
 			<module name = "PolyTools" />
 			<inmodule name = "CrydevTools" />

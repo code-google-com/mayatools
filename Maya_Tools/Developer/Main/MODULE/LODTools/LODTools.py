@@ -6,6 +6,8 @@ from PyQt4 import QtGui, QtCore, uic
 import os, sys, inspect
 import functools 
 
+
+
 LODsChain = ['_LOD0_','_LOD1_','_LOD2_','_LOD3_','_LOD4_','_LOD5_','_LOD6_']
 # SONY Lods:
 Sony_mapping_LODs = ['_LOD0_','_LOD1_','_LOD2_','_LOD3_','_LOD4_','_LOD5_','_LOD6_']
@@ -30,7 +32,7 @@ class LODTools(form_class,base_class):
         super(base_class,self).__init__()
         self.setupUi(self)
         self.__name__ = 'LOD Tools'
-        self._projectName = 'IronMonkey'
+        self._projectName = inputFile.split('.')[0]
         self._nohide = list()
         self._currentPart = ''
         self.btnSetupLOD.clicked.connect(self.check)
@@ -50,18 +52,21 @@ class LODTools(form_class,base_class):
         self.btnLOD6.clicked.connect(functools.partial(self.selectLOD,'6'))
         self.btnLOD7.clicked.connect(functools.partial(self.selectLOD,'7'))
         self.btnLOD8.clicked.connect(functools.partial(self.selectLOD,'8'))
-        if not cmds.objExists('LayerSetup'):
-            self.btnCleanUp.setEnabled(False)
-            self.btnSpreadHonrizonal.setEnabled(False)
-            self.btnSpreadVertical.setEnabled(False)
-            self.btnPreviousLOD.setEnabled(False)
-            self.btnNextLOD.setEnabled(False)
-        else:
-            self.btnCleanUp.setEnabled(True)
-            self.btnSpreadHonrizonal.setEnabled(True)
-            self.btnSpreadVertical.setEnabled(True)
-            self.btnNextLOD.setEnabled(True)
-            self.btnPreviousLOD.setEnabled(True)
+#         if not cmds.objExists('LayerSetup'):
+#             self.btnCleanUp.setEnabled(False)
+#             self.btnSpreadHonrizonal.setEnabled(False)
+#             self.btnSpreadVertical.setEnabled(False)
+#             self.btnPreviousLOD.setEnabled(False)
+#             self.btnNextLOD.setEnabled(False)
+#         else:
+#             self.btnCleanUp.setEnabled(True)
+#             self.btnSpreadHonrizonal.setEnabled(True)
+#             self.btnSpreadVertical.setEnabled(True)
+#             self.btnNextLOD.setEnabled(True)
+#             self.btnPreviousLOD.setEnabled(True)
+
+    def setupLOD(self):
+        pass
             
     def UnParent(self):
         transformEvo = [x for x in cmds.ls(dag = True) if cmds.nodeType(cmds.pickWalk(x,d = 'down')) == 'evoAttributeNode']
@@ -183,6 +188,7 @@ class LODTools(form_class,base_class):
         cmds.showHidden(all = True)
         
     def SwapLOD(self):
+        print self._projectName
         mel.eval('showHidden -all;')        
         self._nohide = ['base_car_layer']
         if self.rdbSourceLOD0.isChecked():

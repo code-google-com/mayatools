@@ -126,13 +126,16 @@ class ShaderTools(form_class,base_class):
         #commonPath = self.commonTexturePath
         shaders = [x for x in cmds.ls(materials = True)if x not in ['particleCloud1','shaderGlow1','TEMP_DEBUG_SHADER']]
         for shader in shaders:
-            sgs = cmds.listConnections(shader,type = 'shadingEngine')
-            for s in sgs:
-                try:
-                    cmds.connectAttr('TEMP_DEBUG_SHADER' + '.outColor', s + '.surfaceShader', f = True)
-                except RuntimeError: # zero idea why Maya throw this error
-                    pass
-                restoreTechniqueScript += 'cmds.connectAttr(\'' + shader + '.outColor\',\'' + s + '.surfaceShader\', f = True)\n'
+            try:
+                sgs = cmds.listConnections(shader,type = 'shadingEngine')
+                for s in sgs:
+                    try:
+                        cmds.connectAttr('TEMP_DEBUG_SHADER' + '.outColor', s + '.surfaceShader', f = True)
+                    except RuntimeError: # zero idea why Maya throw this error
+                        pass
+                    restoreTechniqueScript += 'cmds.connectAttr(\'' + shader + '.outColor\',\'' + s + '.surfaceShader\', f = True)\n'
+            except:
+                pass
         restoreTechniqueScript += 'cmds.select(\'*TEMP_DEBUG*\')\n'
         restoreTechniqueScript += 'cmds.delete()\n'
         print restoreTechniqueScript
