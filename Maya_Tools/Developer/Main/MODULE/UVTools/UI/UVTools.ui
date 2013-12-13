@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>317</width>
-    <height>670</height>
+    <width>332</width>
+    <height>668</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -41,21 +41,6 @@
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
-       <property name="spacing">
-        <number>15</number>
-       </property>
-       <property name="leftMargin">
-        <number>1</number>
-       </property>
-       <property name="topMargin">
-        <number>9</number>
-       </property>
-       <property name="rightMargin">
-        <number>1</number>
-       </property>
-       <property name="bottomMargin">
-        <number>20</number>
-       </property>
        <item>
         <layout class="QGridLayout" name="gridLayout">
          <property name="sizeConstraint">
@@ -677,12 +662,24 @@ font:  bold 11px
            <number>3</number>
           </property>
           <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Source -- (mesh with correct UVs)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <layout class="QHBoxLayout" name="horizontalLayout_4">
             <property name="spacing">
              <number>6</number>
             </property>
             <item>
              <widget class="QLineEdit" name="ldtSource">
+              <property name="font">
+               <font>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
               <property name="contextMenuPolicy">
                <enum>Qt::CustomContextMenu</enum>
               </property>
@@ -716,12 +713,24 @@ font:  bold 11px
            </layout>
           </item>
           <item>
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Target -- (mesh with wrong UVs)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <layout class="QHBoxLayout" name="horizontalLayout_5">
             <property name="spacing">
              <number>6</number>
             </property>
             <item>
              <widget class="QLineEdit" name="ldtTarget">
+              <property name="font">
+               <font>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
               <property name="focusPolicy">
                <enum>Qt::StrongFocus</enum>
               </property>

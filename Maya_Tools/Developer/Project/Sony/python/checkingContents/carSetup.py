@@ -17,6 +17,8 @@ def execute():
     if len(match):
         QtGui.QMessageBox.critical(None, 'Missing wheel nodes', 'Please make sure that all wheels are imported! Thanks', QtGui.QMessageBox.Ok)
     else:
+        # zero pivot offset
+        
         wheel = py.ls('WHEEL_FL')[0]
         a = wheel.translateX.get()
         wheel = py.ls('WHEEL_BL')[0]

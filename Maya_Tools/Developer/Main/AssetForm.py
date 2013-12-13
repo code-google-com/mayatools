@@ -215,7 +215,10 @@ class AssetForm(form_class,base_class):
         #currentFile = cmds.file(q = True, n = True)
         group = self.cbbGroup.currentText()
         item = self.cbbAssets.currentText()
-        localPath = self.Proj.LocalPath + str(item)
+        if self.Proj.group:
+            localPath = self.Proj.LocalPath + str(group) + '/' + str(item)
+        else:
+            localPath = self.Proj.LocalPath + str(item)
         serverPath = self.Proj.ServerPath + str(group)+ '/' + str(item)
         syncForm = UploadForm.UploadForm(localPath, serverPath)
         syncForm.show()

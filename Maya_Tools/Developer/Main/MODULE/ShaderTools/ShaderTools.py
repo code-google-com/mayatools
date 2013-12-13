@@ -197,6 +197,18 @@ class ShaderTools(form_class,base_class):
         else:
             self.removeDebugShader()
             
+    def tweakingShininessView(self):
+        self.removeDebugShader()
+        if self.btnReflectionView.isChecked():
+            debugShader = cmds.shadingNode('cgfxShader', n = 'TEMP_DEBUG_SHADER', asShader = True)
+            textureNode = cmds.shadingNode('file',n = 'TEMP_DEBUG_TEXTURE', asTexture = True)
+            cmds.cgfxShader('TEMP_DEBUG_SHADER', fx = self._shaders + 'KoddeShader_v0.7.cgfx', e = True)
+            cmds.setAttr('TEMP_DEBUG_SHADER.Display_Camera_Normals', True)
+            self.assignDebugShader()
+        else:
+            self.removeDebugShader()
+        
+            
     def tweakingNormalView(self):
         self.removeDebugShader()
         if self.btnNormalView.isChecked():

@@ -74,6 +74,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="btnReflectionView">
+       <property name="toolTip">
+        <string>change to Shininess</string>
+       </property>
        <property name="text">
         <string/>
        </property>

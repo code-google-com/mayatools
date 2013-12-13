@@ -1,4 +1,5 @@
 import maya.cmds as cmds
+import maya.mel as mel
 import pymel.core as py
 from PyQt4 import QtGui, QtCore, uic
 import os, sys, inspect
@@ -194,10 +195,12 @@ class UVTools(form_class,base_class):
             
     def updateShader(self, widget):
         if widget =='Source':
+            self.ldtSource.update()
             shaders = st.getShadersFromMesh(str(self.ldtSource.text()))
             self.cbbSourceMat.clear()
             self.cbbSourceMat.addItems(list(set(shaders)))
         if widget =='Target':
+            self.ldtTarget.update()
             shaders = st.getShadersFromMesh(str(self.ldtTarget.text()))
             self.cbbTargetMat.clear()
             self.cbbTargetMat.addItems(list(set(shaders)))
@@ -209,25 +212,44 @@ class UVTools(form_class,base_class):
             self.cbbTargetMat.setCurrentIndex(id)
             
     def transferUV(self):
-        st.selectFaceByShaderPerMesh(str(self.ldtSource.text()), str(self.cbbSourceMat.currentText()))
-        pt.extractMesh()
-        sourceMesh = py.ls(sl = True)[0]
+        isAttached = False
+        isDeleted = False
+        # testing if node just have one shader
+        shaders = st.getShadersFromMesh(str(self.ldtSource.text()))
+        if len(shaders) > 1:
+            st.selectFaceByShaderPerMesh(str(self.ldtSource.text()), str(self.cbbSourceMat.currentText()))
+            pt.extractMesh()
+            sourceMesh = py.ls(sl = True)[0]
+            isDeleted = True
+        elif len(shaders) == 1: 
+            sourceMesh = str(self.ldtSource.text())
+        elif len(shaders) == 0:
+            QtGui.QMessageBox.critical(None, 'No shader found', 'Exit!', QtGui.QMessageBox.Ok)
+            return
         #------------------------------------
-        st.selectFaceByShaderPerMesh(str(self.ldtTarget.text()), str(self.cbbTargetMat.currentText()))
-        pt.detachMesh()
-        targetMesh = py.ls(sl = True)[0]
+        shaders = st.getShadersFromMesh(str(self.ldtTarget.text()))
+        if len(shaders) > 1:
+            st.selectFaceByShaderPerMesh(str(self.ldtTarget.text()), str(self.cbbTargetMat.currentText()))
+            pt.detachMesh()
+            targetMesh = py.ls(sl = True)[0]
+        elif len(shaders) == 1:
+            isAttached = False 
+            targetMesh = str(self.ldtTarget.text())
+        elif len(shaders) == 0:
+            QtGui.QMessageBox.critical(None, 'No shader found', 'Exit!', QtGui.QMessageBox.Ok)
+            return
         # transfer source mesh to target
-        cmds.transferAttribute(sourceMesh, targetMesh, uvs = 2)
+        cmds.transferAttributes(sourceMesh, targetMesh, uvs = 2)
         # post-processing 
         cmds.select(targetMesh)
-        me.eval('DeleteHistory;')
+        mel.eval('DeleteHistory;')
         
         cmds.select(str(self.ldtTarget.text()))
         cmds.select(targetMesh, add = True)
-        
-        pt.attachMesh()
-        
-        cmds.delete(sourceMesh)
+        if isAttached:
+            pt.attachMesh()
+        if isDeleted:
+            cmds.delete(sourceMesh)
         
         
 def main(xmlFile):
