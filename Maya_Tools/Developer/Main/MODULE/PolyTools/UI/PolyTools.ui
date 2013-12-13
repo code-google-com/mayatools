@@ -109,7 +109,7 @@
             </property>
             <property name="icon">
              <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
-              <normaloff>:/Project/shini.png</normaloff>:/Project/shini.png</iconset>
+              <normaloff>:/Project/background.png</normaloff>:/Project/background.png</iconset>
             </property>
             <property name="iconSize">
              <size>
