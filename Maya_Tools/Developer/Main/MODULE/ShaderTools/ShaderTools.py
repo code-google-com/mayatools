@@ -73,6 +73,10 @@ def loadModule(path ,moduleName):
 
 cmds.loadPlugin('cgfxShader.mll')  
 
+class shaderDebug(QtGui.QPushButton):
+    def __init__(self, ):
+        pass
+    
 class ShaderTools(form_class,base_class):
     def __init__(self, inputFile):
         super(base_class,self).__init__()
