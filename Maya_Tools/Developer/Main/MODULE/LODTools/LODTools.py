@@ -1,5 +1,6 @@
 import maya.cmds as cmds
 import maya.mel as mel
+import pymel.core as py
 import re
 
 from PyQt4 import QtGui, QtCore, uic
@@ -14,7 +15,12 @@ Sony_mapping_LODs = ['_LOD0_','_LOD1_','_LOD2_','_LOD3_','_LOD4_','_LOD5_','_LOD
 Sony_nohide = []
 # IronMonkey Lods:
 IronMonkey_mapping_LODs = ['lod_00_layer', 'lod_01_layer', 'lod_02_layer', 'lod_03_layer', 'lod_04_layer', 'lod_05_layer', 'lod_06_layer']
-IronMonkey_nohide = ['base_car_layer']
+IronMonkey_nohide = ['base_car_layer','spoilers']
+
+lods = ['lod_00','lod_01','lod_02','lod_03','lod_04','lod_05','lod_06']
+parts = ['type_a','type_b','type_c','type_d','type_y','type_z', 'pulled_type_a','pulled_type_b', 'pulled_type_c', 'pulled_type_d',
+         'large_type_a', 'large_type_b', 'large_type_c', 'large_type_d',
+         'small_type_a','small_type_b', 'small_type_c', 'small_type_d']#,'pull_wheelarch','large_overfender','small_overfender']
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/LODTools.ui'
@@ -26,6 +32,93 @@ def mappingLODs(projectName, lod):
         return globals()[projectName + '_mapping_LODs'][LODsChain.index(lod)]
     except:
         return False # cannot find matched imte with lod
+    
+def setupLOD():
+        #----- remove current layers. An setup correct structures
+        layers = cmds.ls(type = 'displayLayer')
+        cmds.delete(layers)
+        
+        #----- create structure layers. --------------------------------------------------
+        cmds.createDisplayLayer(n = 'decal_placement_layer')
+        cmds.createDisplayLayer(n = 'locator_layer')
+        cmds.createDisplayLayer(n = 'collision_layer')
+        cmds.createDisplayLayer(n = 'wheel_placeholder_layer')
+        cmds.createDisplayLayer(n = 'base_car_layer')
+        cmds.createDisplayLayer(n = 'pulled_wheel_arch_layer')
+        cmds.createDisplayLayer(n = 'small_overfenders_layer')
+        cmds.createDisplayLayer(n = 'large_overfenders_layer')
+        cmds.createDisplayLayer(n = 'base_unwrap')
+        cmds.createDisplayLayer(n = 'spoilers')
+        for part in parts:
+            try:
+                py.select('*' + part + '*')
+                cmds.createDisplayLayer(e = False, n = part + '_layer')
+            except:
+                pass
+        for lod in lods:
+            try: 
+                py.select('*' + lod + '*')
+                cmds.createDisplayLayer(e = False, n = lod + '_layer')
+            except:
+                pass
+        # select all locator and put them in 
+        try:
+            cmds.editDisplayLayerMembers('locator_layer', cmds.ls(type = 'locator'), noRecurse = True)
+        except:
+            pass
+        # select wheel place holder and put them in
+        try:
+            cmds.editDisplayLayerMembers('wheel_placeholder_layer', cmds.ls('*placeholder*'), noRecurse = True)
+        except:
+            pass
+        # select decal placeholder and put them in
+        # cmds.editDisplayLayerMembers('decal_placement_layer', [x for x in cmds.ls('*decal_*') if x not in cmds.ls(materials = True)], noRecurse = True)
+        # select decal placeholder and put them in
+        try:
+            cmds.editDisplayLayerMembers('collision_layer', cmds.ls('*collider*'), noRecurse = True)
+        except:
+            pass
+        # select lod00 and add them to layer
+        cmds.editDisplayLayerMembers('lod_00_layer', cmds.ls('lod_00'), noRecurse = True)
+        # select lod01 and add them to layer
+        cmds.editDisplayLayerMembers('lod_01_layer', cmds.ls('lod_01'), noRecurse = True)
+        # select lod02 and add them to layer
+        cmds.editDisplayLayerMembers('lod_02_layer', cmds.ls('lod_02'), noRecurse = True)
+        # select lod03 and add them to layer
+        cmds.editDisplayLayerMembers('lod_03_layer', cmds.ls('lod_03'), noRecurse = True)
+        # select lod04 and add them to layer
+        cmds.editDisplayLayerMembers('lod_04_layer', cmds.ls('lod_04'), noRecurse = True)
+        # select lod05 and add them to layer
+        cmds.editDisplayLayerMembers('lod_05_layer', cmds.ls('lod_05'), noRecurse = True)
+        # select lod06 and add them to layer
+        cmds.editDisplayLayerMembers('lod_06_layer', cmds.ls('lod_06'), noRecurse = True)
+        # select base car and add them to layer
+        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor|type_a','caliper|type_a','chassis|type_a','body|type_a','interior|type_a','windows|type_a','headlights|type_a','taillights|type_a', 'wheel_arch|standard*'), noRecurse = True)
+        # select pull wheel arch
+        try:
+            cmds.editDisplayLayerMembers('pulled_wheel_arch_layer', cmds.ls('pulled'), noRecurse = True)
+        except:
+            pass
+        # select small over fender
+        try:
+            cmds.editDisplayLayerMembers('small_overfenders_layer', cmds.ls('small'), noRecurse = True)
+        except:
+            pass
+        # select large over fender
+        try:
+            cmds.editDisplayLayerMembers('large_overfenders_layer', cmds.ls('large'), noRecurse = True)
+        except:
+            pass
+        # select misc meshes
+        try:
+            cmds.editDisplayLayerMembers('base_unwrap', cmds.ls('base_unwrap'), noRecurse = True)
+        except:
+            pass
+        # add spoilers to layers
+        try:
+            cmds.editDisplayLayerMembers('spoilers', cmds.ls('spoiler|*'), noRecurse = True)
+        except:
+            pass
 
 class LODTools(form_class,base_class):
     def __init__(self, inputFile):
@@ -52,22 +145,9 @@ class LODTools(form_class,base_class):
         self.btnLOD6.clicked.connect(functools.partial(self.selectLOD,'6'))
         self.btnLOD7.clicked.connect(functools.partial(self.selectLOD,'7'))
         self.btnLOD8.clicked.connect(functools.partial(self.selectLOD,'8'))
-#         if not cmds.objExists('LayerSetup'):
-#             self.btnCleanUp.setEnabled(False)
-#             self.btnSpreadHonrizonal.setEnabled(False)
-#             self.btnSpreadVertical.setEnabled(False)
-#             self.btnPreviousLOD.setEnabled(False)
-#             self.btnNextLOD.setEnabled(False)
-#         else:
-#             self.btnCleanUp.setEnabled(True)
-#             self.btnSpreadHonrizonal.setEnabled(True)
-#             self.btnSpreadVertical.setEnabled(True)
-#             self.btnNextLOD.setEnabled(True)
-#             self.btnPreviousLOD.setEnabled(True)
+        self.cbbSpoilers.currentIndexChanged.connect(self.showSpoilers)
 
-    def setupLOD(self):
-        pass
-            
+
     def UnParent(self):
         transformEvo = [x for x in cmds.ls(dag = True) if cmds.nodeType(cmds.pickWalk(x,d = 'down')) == 'evoAttributeNode']
         try:
@@ -104,8 +184,21 @@ class LODTools(form_class,base_class):
         self.UnParent()
         
     def check(self):
-        if not cmds.objExists('LayerSetup'):
-            self.createLOD()
+        if self._projectName == 'IronMonkey':
+            setupLOD()
+            childrenOfSpoilers = cmds.listRelatives('spoiler', c = True)
+            self.cbbSpoilers.addItems(childrenOfSpoilers)
+        else:
+            if not cmds.objExists('LayerSetup'):
+                self.createLOD()
+                
+    def showSpoilers(self):
+        spoiler = self.cbbSpoilers.currentText()
+        for s in cmds.listRelatives('spoiler', c = True, f= True):
+            if str(spoiler) in s:
+                cmds.setAttr(s + '.visibility', 1)
+            else:
+                cmds.setAttr(s + '.visibility', 0)
         
     def createLOD(self):
         # --
@@ -190,7 +283,7 @@ class LODTools(form_class,base_class):
     def SwapLOD(self):
         print self._projectName
         mel.eval('showHidden -all;')        
-        self._nohide = ['base_car_layer']
+        self._nohide = ['base_car_layer', 'spoilers']
         if self.rdbSourceLOD0.isChecked():
             LODa = mappingLODs(self._projectName,'_LOD0_')
         elif self.rdbSourceLOD1.isChecked():
@@ -264,6 +357,7 @@ class LODTools(form_class,base_class):
         flag = cmds.getAttr(LODa + '.visibility')
         cmds.setAttr(LODa + '.visibility', not flag)
         cmds.setAttr(LODb + '.visibility', flag)
+        self.showSpoilers()
     
     def setPosition(self):
         if not self.btnSpreadHonrizonal.isChecked():

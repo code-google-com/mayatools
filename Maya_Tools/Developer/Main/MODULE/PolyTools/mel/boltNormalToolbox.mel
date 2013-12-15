@@ -23,6 +23,47 @@ global proc string[] boltTransformsToShapes(string $transforms[])
 	return $shapes;
 }
 
+global proc float[] bolt.MatrixToFloat(matrix $m)
+//returns the matrix as a float list
+{
+	float $matList[] = {};
+	
+	for ($i=0; $i<4; $i++)
+	{
+		for ($j=0; $j<4; $j++)
+		{
+			$index = ($i*4)+$j;
+			$matList[$index] = $m[$i][$j];
+		}
+	}
+	return $matList;
+}
+
+
+global proc matrix bolt.getWorldMatrix(string $transform, int $inverse)
+//returns the world / inverseWorld transform matrix for a given obj.
+{
+	matrix $m[4][4];
+	float $mat[] = {};
+	if($inverse==0)
+	{
+		$mat = `getAttr($transform + ".worldMatrix")`;
+	}
+	else
+	{
+		$mat = `getAttr($transform + ".worldInverseMatrix")`;
+	}
+	for ($i=0; $i<4; $i++)
+	{
+		for ($j=0; $j<4; $j++)
+		{
+			$index = ($i*4)+$j;
+			$m[$i][$j] = $mat[$index];
+		}
+	}
+	return $m;
+}
+
 proc float boltGetTri3DArea(vector $v1, vector $v2, vector $v3)
 //uses heron's formula to return area of 3d triangle, given 3 points as vectors
 {	

@@ -29,7 +29,7 @@ class CustomNamingTool(form_class,base_class):
         self.cbbKit.currentIndexChanged.connect(self.updateActivedList)
         self.btnHierrachy.clicked.connect(self.buildHierrachy)
         self.btnPlace.clicked.connect(self.placeLocators)
-        self.btnSetupLOD.clicked.connect(self.setupLOD)
+        #self.btnSetupLOD.clicked.connect(self.setupLOD)
         self.material = list()
         self.loadXML(inputFile)
         self.cbbLocatorList.addItems(locators)
@@ -65,7 +65,8 @@ class CustomNamingTool(form_class,base_class):
         cmds.createDisplayLayer(n = 'pulled_wheel_arch_layer')
         cmds.createDisplayLayer(n = 'small_overfenders_layer')
         cmds.createDisplayLayer(n = 'large_overfenders_layer')
-        
+        cmds.createDisplayLayer(n = 'base_unwrap')
+        cmds.createDisplayLayer(n = 'spoilers')
         for part in parts:
             try:
                 py.select('*' + part + '*')
@@ -110,7 +111,7 @@ class CustomNamingTool(form_class,base_class):
         # select lod06 and add them to layer
         cmds.editDisplayLayerMembers('lod_06_layer', cmds.ls('lod_06'), noRecurse = True)
         # select base car and add them to layer
-        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor|type_a','caliper|type_a','chassis|type_a','body|type_a','interior|type_a','windows|type_a','headlights|type_a','taillights|type_a', 'wheel_arch|standard_type_a'), noRecurse = True)
+        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor|type_a','caliper|type_a','chassis|type_a','body|type_a','interior|type_a','windows|type_a','headlights|type_a','taillights|type_a', 'wheel_arch|standard*'), noRecurse = True)
         # select pull wheel arch
         try:
             cmds.editDisplayLayerMembers('pulled_wheel_arch_layer', cmds.ls('pulled'), noRecurse = True)
@@ -124,6 +125,16 @@ class CustomNamingTool(form_class,base_class):
         # select large over fender
         try:
             cmds.editDisplayLayerMembers('large_overfenders_layer', cmds.ls('large'), noRecurse = True)
+        except:
+            pass
+        # select misc meshes
+        try:
+            cmds.editDisplayLayerMembers('base_unwrap', cmds.ls('base_unwrap'), noRecurse = True)
+        except:
+            pass
+        # add spoilers to layers
+        try:
+            cmds.editDisplayLayerMembers('spoilers', cmds.ls('spoiler*'), noRecurse = True)
         except:
             pass
         

@@ -7,13 +7,22 @@
     <x>0</x>
     <y>0</y>
     <width>440</width>
-    <height>199</height>
+    <height>204</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>3</number>
+   </property>
+   <property name="topMargin">
+    <number>3</number>
+   </property>
+   <property name="bottomMargin">
+    <number>5</number>
+   </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_6">
      <item>
@@ -160,13 +169,6 @@ font:  bold 11px
       </widget>
      </item>
     </layout>
-   </item>
-   <item>
-    <widget class="QPushButton" name="btnSetupLOD">
-     <property name="text">
-      <string>Setup LOD</string>
-     </property>
-    </widget>
    </item>
    <item>
     <widget class="Line" name="line">
