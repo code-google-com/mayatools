@@ -6,6 +6,23 @@
 //////////////////////////////////////////////////////////////////////// 
 //from boltShaderTools.mel
 
+global proc string[] boltTransformsToShapes(string $transforms[])
+{
+	string $shapes[] = {};
+	for ($transform in $transforms)
+	{
+		if (objExists($transform))
+		{
+			string $newShapes[] = `listRelatives -fullPath -type "mesh" $transform`;
+			if ($newShapes[0]!="")
+			{
+				$shapes = `stringArrayCatenate $shapes {$newShapes[0]}`;
+			}
+		}	
+	}
+	return $shapes;
+}
+
 proc float boltGetTri3DArea(vector $v1, vector $v2, vector $v3)
 //uses heron's formula to return area of 3d triangle, given 3 points as vectors
 {	
