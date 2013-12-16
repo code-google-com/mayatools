@@ -281,8 +281,8 @@ class LODTools(form_class,base_class):
         cmds.showHidden(all = True)
         
     def SwapLOD(self):
-        print self._projectName
-        mel.eval('showHidden -all;')        
+        if self._projectName == 'IronMonkey':
+            mel.eval('showHidden -all;')        
         self._nohide = ['base_car_layer', 'spoilers']
         if self.rdbSourceLOD0.isChecked():
             LODa = mappingLODs(self._projectName,'_LOD0_')

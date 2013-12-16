@@ -45,33 +45,33 @@
 	<part name = "small_overfenders" shortname = "same"/>
 	<part name = "wheel" shortname = "same"/>
 	
-	<material name = "badging_alpha" shortname = "badging_alpha"/>
-	<material name = "brake_caliper_opaque" shortname = "caliper"/>
-	<material name = "carbon_opaque" shortname = "carbon" uvset = "2_scratch"/>
-	<material name = "brake_rotor_opaque" shortname = "rotor"/>
-	<material name = "car_seam_multi" shortname = "seam"/>
-	<material name = "chassis_opaque" shortname = "chassis"/>
-	<material name = "chrome_opaque" shortname = "chrome"/>
-	<material name = "exhaust_opaque" shortname = "exhaust"/>
-	<material name = "glass_headlight_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_head"/>
-	<material name = "glass_taillight_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_tail"/>
-	<material name = "glass_window_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_alpha"/>
-	<material name = "glass_window_black_opaque_twosided_shatter" shortname = "glass_black"/>
-	<material name = "headlight_type_a_opaque" shortname = "headlight_cluster"/>
-	<material name = "headlight_type_a_alphaadd" shortname = "headlight_alpha"/>
-	<material name = "grill_alpha_layer92_nozwrite" shortname = "grill"/>
-	<material name = "interior_opaque" shortname = "interior"/>
-	<material name = "misc_opaque" shortname = "misc"/>
-	<material name = "numberplate_alpha" shortname = "numberplate"/>
-	<material name = "paint_shader_opaque" shortname = "paint" uvset = "2_scratch"/>
-	<material name = "paint_shader_nodecal_opaque" shortname = "paintnod" uvset = "2_scratch"/>
-	<material name = "plastic_dull_opaque" shortname = "plastic"/>
-	<material name = "brake_lights_type_a_alphaadd_nozwrite_twosided_layer70" shortname = "brake_lights"/>
-	<material name = "taillight_type_a_opaque" shortname = "taillights"/>
-	<material name = "taillight_additive_type_a_opaque" shortname = "additive"/>
-	<material name = "wheel_rim_tint_blur_alpha" shortname = "rim_tint_blur"/>
-	<material name = "wheel_tire_opaque" shortname = "tire_opaque"/>
-	<material name = "wheel_rim_tint" shortname = "rim_tint"/>
-	<material name = "wheel_rim_tint_blurop" shortname = "rim_tint_blurop"/>
-	<material name = "wheel_notint_rim_alpha" shortname = "notint_rim_alpha"/>
+	<material name = "badging_alpha" shortname = "badging_alpha" id = "badging"/>
+	<material name = "brake_caliper_opaque" shortname = "caliper" id = "brakecaliper"/>
+	<material name = "carbon_opaque" shortname = "carbon" uvset = "2_scratch" id = "carbon"/>
+	<material name = "brake_rotor_opaque" shortname = "rotor" id = "brakerotor"/>
+	<material name = "car_seam_multi" shortname = "seam" id = "seam"/>
+	<material name = "chassis_opaque" shortname = "chassis" id = "chassis"/>
+	<material name = "chrome_opaque" shortname = "chrome" id = "chrome"/>
+	<material name = "exhaust_opaque" shortname = "exhaust" id = "standard"/>
+	<material name = "glass_headlight_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_head" id = "glassheadlight"/>
+	<material name = "glass_taillight_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_tail" id = "glasstailight"/>
+	<material name = "glass_window_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_alpha" id = "glasswindow"/>
+	<material name = "glass_window_black_opaque_twosided_shatter" shortname = "glass_black" id = "glassopaque"/>
+	<material name = "headlight_type_a_opaque" shortname = "headlight_cluster" id = "standard"/>
+	<material name = "headlight_type_a_alphaadd" shortname = "headlight_alpha" id = "standard"/>
+	<material name = "grill_alpha_layer92_nozwrite" shortname = "grill" id = "grill"/>
+	<material name = "interior_opaque" shortname = "interior" id = "interior"/>
+	<material name = "misc_opaque" shortname = "misc" id = "standard"/>
+	<material name = "numberplate_alpha" shortname = "numberplate" id = "numberplate" />
+	<material name = "paint_shader_opaque" shortname = "paint" uvset = "2_scratch" id = "paint"/>
+	<material name = "paint_shader_nodecal_opaque" shortname = "paintnod" uvset = "2_scratch" id = "paintnodecal"/>
+	<material name = "plastic_dull_opaque" shortname = "plastic" id = "plasticdull"/>
+	<material name = "brake_lights_type_a_alphaadd_nozwrite_twosided_layer70" shortname = "brake_lights" id = "standard"/>
+	<material name = "taillight_type_a_opaque" shortname = "taillights" id = "standard"/>
+	<material name = "taillight_additive_type_a_opaque" shortname = "additive" id = "standard"/>
+	<material name = "wheel_rim_tint_blur_alpha" shortname = "rim_tint_blur" id = "standard"/>
+	<material name = "wheel_tire_opaque" shortname = "tire_opaque" id = "standard"/>
+	<material name = "wheel_rim_tint" shortname = "rim_tint" id = "standard"/>
+	<material name = "wheel_rim_tint_blurop" shortname = "rim_tint_blurop" id = "standard"/>
+	<material name = "wheel_notint_rim_alpha" shortname = "notint_rim_alpha" id = "standard"/>
 </NamingHierrachy>
