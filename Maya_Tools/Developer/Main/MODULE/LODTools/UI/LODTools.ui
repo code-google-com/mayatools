@@ -234,7 +234,7 @@
           <string>LOD0</string>
          </property>
          <attribute name="buttonGroup">
-          <string notr="true">buttonGroup</string>
+          <string>buttonGroup</string>
          </attribute>
         </widget>
        </item>
@@ -247,7 +247,7 @@
           <bool>true</bool>
          </property>
          <attribute name="buttonGroup">
-          <string notr="true">buttonGroup</string>
+          <string>buttonGroup</string>
          </attribute>
         </widget>
        </item>
@@ -257,7 +257,7 @@
           <string>LOD2</string>
          </property>
          <attribute name="buttonGroup">
-          <string notr="true">buttonGroup</string>
+          <string>buttonGroup</string>
          </attribute>
         </widget>
        </item>
@@ -267,7 +267,7 @@
           <string>LOD3</string>
          </property>
          <attribute name="buttonGroup">
-          <string notr="true">buttonGroup</string>
+          <string>buttonGroup</string>
          </attribute>
         </widget>
        </item>
@@ -277,7 +277,7 @@
           <string>LOD4</string>
          </property>
          <attribute name="buttonGroup">
-          <string notr="true">buttonGroup</string>
+          <string>buttonGroup</string>
          </attribute>
         </widget>
        </item>
@@ -287,7 +287,7 @@
           <string>LOD5</string>
          </property>
          <attribute name="buttonGroup">
-          <string notr="true">buttonGroup</string>
+          <string>buttonGroup</string>
          </attribute>
         </widget>
        </item>
@@ -297,7 +297,7 @@
           <string>LOD6</string>
          </property>
          <attribute name="buttonGroup">
-          <string notr="true">buttonGroup</string>
+          <string>buttonGroup</string>
          </attribute>
         </widget>
        </item>
@@ -307,7 +307,7 @@
           <string>SHADOW</string>
          </property>
          <attribute name="buttonGroup">
-          <string notr="true">buttonGroup</string>
+          <string>buttonGroup</string>
          </attribute>
         </widget>
        </item>
@@ -335,7 +335,7 @@
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string notr="true">buttonGroup_2</string>
+        <string>buttonGroup_2</string>
        </attribute>
       </widget>
      </item>
@@ -348,7 +348,7 @@
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string notr="true">buttonGroup_2</string>
+        <string>buttonGroup_2</string>
        </attribute>
       </widget>
      </item>
@@ -361,7 +361,7 @@
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string notr="true">buttonGroup_2</string>
+        <string>buttonGroup_2</string>
        </attribute>
       </widget>
      </item>
@@ -374,7 +374,7 @@
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string notr="true">buttonGroup_2</string>
+        <string>buttonGroup_2</string>
        </attribute>
       </widget>
      </item>
@@ -394,7 +394,7 @@
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string notr="true">buttonGroup_2</string>
+        <string>buttonGroup_2</string>
        </attribute>
       </widget>
      </item>
@@ -407,7 +407,7 @@
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string notr="true">buttonGroup_2</string>
+        <string>buttonGroup_2</string>
        </attribute>
       </widget>
      </item>
@@ -420,7 +420,7 @@
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string notr="true">buttonGroup_2</string>
+        <string>buttonGroup_2</string>
        </attribute>
       </widget>
      </item>
@@ -433,7 +433,7 @@
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string notr="true">buttonGroup_2</string>
+        <string>buttonGroup_2</string>
        </attribute>
       </widget>
      </item>
@@ -446,7 +446,7 @@
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string notr="true">buttonGroup_2</string>
+        <string>buttonGroup_2</string>
        </attribute>
       </widget>
      </item>

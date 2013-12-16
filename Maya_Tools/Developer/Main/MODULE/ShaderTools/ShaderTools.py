@@ -229,6 +229,7 @@ class ShaderTools(form_class,base_class):
             cmds.setAttr('TEMP_DEBUG_SHADER.SpecularFresnelPower', -0.143)
             cmds.setAttr('TEMP_DEBUG_SHADER.GlossFactor', 0.419355)
             cmds.setAttr('TEMP_DEBUG_SHADER.EmissiveColor', 0, 0.940394, 1, type = 'double3')
+            cmds.setAttr('TEMP_DEBUG_SHADER.vertexAttributeSource', ['position', 'normal', '', 'uv:map1', 'tangent:map1', 'binormal:map1'], type = 'stringArray')
             fileNode = cmds.connectionInfo('TEMP_DEBUG_SHADER.diffuseSampler', sfd = True).split('.')[0]
             #cmds.setAttr(fileNode + '.fileTextureName',fileDirCommmon + '/textures/BasketballCourt_3k.hdr', type = 'string')
             self.assignDebugShader()
