@@ -17,9 +17,19 @@ def loadXML(xmlFile, content, proper):
         return kit
 
 def execute():
+    print 'EXECUTING: CHECKING SHADER NAME AND ADD MATERIAL ID----------------------------------'
     xmlDir = os.path.split(os.path.split(fileDirCommmon)[0])[0] + '/XMLfiles/IronMonkey_CustomNamingTool.xml'
     matNames = loadXML(xmlDir, 'material', 'name')
     matIDs = loadXML(xmlDir, 'material', 'id')
-    shaders = [s for s in cmds.ls(material = 'True') if s not in ['particleCloud1', 'lambert1']]
-    for s in shaders:
-        if 
+    shaders = [s for s in cmds.ls(materials = True) if s not in ['particleCloud1', 'lambert1']]
+    wrong_shaders = [s for s in shaders if s not in matNames]
+    right_shaders = [s for s in shaders if s in matNames]
+    for s in right_shaders:
+        try:
+            id = cmds.getAttr(s + '.material_id')
+            cmds.setAttr(s + '.material_id', matIDs[matNames.index(s)], type = 'string')
+        except:
+            cmds.addAttr(s, ln = 'material_id', dt = 'string')
+            cmds.setAttr(s + '.material_id', matIDs[matNames.index(s)], type = 'string')
+    for i in wrong_shaders:
+        print 'Cannot set Material_ID for shader: ' + i + '. The shader name is wrong.'

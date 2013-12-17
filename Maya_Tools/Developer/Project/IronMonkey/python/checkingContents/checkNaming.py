@@ -3,7 +3,7 @@ import maya.mel as mel
 import maya.cmds as cmds
 from xml.dom.minidom import *
 
-description = 'Checking Naming Convention'
+description = 'Checking Hierrachy is correct'
 name = 'checkNaming'
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 
@@ -15,6 +15,20 @@ def loadXML(xmlFile, content, proper):
         kit = [x.getAttribute(proper) for x in kitNodes]
         #kit.append([x.getAttribute('shortname') for x in kitNodes])
         return kit
+    
+def checkAndFixCollision():
+    colliderMeshes = cmds.ls('*collider*')
+    match = [mesh for mesh in ['collider_chassis','mesh_collider_roof', 'mesh_collider_rain'] if mesh not in colliderMeshes]
+    if len(match) < 3:
+        print '---- Some collisions are missing from scene.'
+    elif len(match) == 3: #
+        print '---- No missing collision was found.'
+    try:
+        col = cmds.ls('collision')[0]
+        cmds.parent(col, colliderMeshes)
+    except:
+        col = cmds.group(n = 'collision', em = True)
+        cmds.parent(col, colliderMeshes)
 
 def execute():
     xmlDir = os.path.split(os.path.split(fileDirCommmon)[0])[0] + '/XMLfiles/IronMonkey_CustomNamingTool.xml'

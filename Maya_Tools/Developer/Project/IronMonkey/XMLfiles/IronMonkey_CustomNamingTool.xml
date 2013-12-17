@@ -70,8 +70,8 @@
 	<material name = "taillight_type_a_opaque" shortname = "taillights" id = "standard"/>
 	<material name = "taillight_additive_type_a_opaque" shortname = "additive" id = "standard"/>
 	<material name = "wheel_rim_tint_blur_alpha" shortname = "rim_tint_blur" id = "standard"/>
-	<material name = "wheel_tire_opaque" shortname = "tire_opaque" id = "standard"/>
-	<material name = "wheel_rim_tint" shortname = "rim_tint" id = "standard"/>
-	<material name = "wheel_rim_tint_blurop" shortname = "rim_tint_blurop" id = "standard"/>
-	<material name = "wheel_notint_rim_alpha" shortname = "notint_rim_alpha" id = "standard"/>
+	<material name = "wheel_tire_opaque" shortname = "tire_opaque" id = "tire"/>
+	<material name = "wheel_rim_tint" shortname = "rim_tint" id = "wheel"/>
+	<material name = "wheel_rim_tint_blurop" shortname = "rim_tint_blurop" id = "wheel"/>
+	<material name = "wheel_notint_rim_alpha" shortname = "notint_rim_alpha" id = "wheelnotint"/>
 </NamingHierrachy>
