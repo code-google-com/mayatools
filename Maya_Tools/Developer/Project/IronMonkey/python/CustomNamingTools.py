@@ -9,7 +9,7 @@ from xml.dom.minidom import *
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/CustomNamingTool.ui'
-locators = ['pivot_bumper_front_left','pivot_bumper_front_right','pivot_bumper_rear_left','pivot_bumper_rear_right','locator_headlights_00','locator_brakelights_00','locator_wheel_smoke_00 ','locator_nitro_00','wheel_arch_loc']
+locators = ['pivot_bumper_front_left','pivot_bumper_front_right','pivot_bumper_rear_left','pivot_bumper_rear_right','locator_headlights_00','locator_headlights_01','locator_brakelights_00','locator_brakelights_01','locator_wheel_smoke_00','locator_wheel_smoke_01','locator_nitro_00','locator_nitro_01','locator_nitro_02','locator_nitro_03','wheel_arch_loc']
 lods = ['lod_00','lod_01','lod_02','lod_03','lod_04','lod_05','lod_06']
 parts = ['type_a','type_b','type_c','type_d','type_y','type_z', 'pulled_type_a','pulled_type_b', 'pulled_type_c', 'pulled_type_d',
          'large_type_a', 'large_type_b', 'large_type_c', 'large_type_d',
@@ -259,7 +259,19 @@ class CustomNamingTool(form_class,base_class):
         #-----------------
         locator = py.spaceLocator(n = str(self.cbbLocatorList.currentText()))
         locator.translate.set(dt.Vector(pivPos))
-                             
+        
+        if 'bumper' in str(locator):
+            cmds.parent(str(locator), 'J_chassis')
+        if 'brake' in str(locator):    
+            cmds.parent(cmds.ls(sl = True), 'taillights|type_a')
+        if 'head' in str(locator):    
+            cmds.parent(cmds.ls(sl = True), 'headlights|type_a')
+            locator.rotateY.set(180)
+        if 'nitro' in str(locator):    
+            cmds.parent(cmds.ls(sl = True), 'exhaust|type_a')
+        if 'wheel_smoke' in str(locator):
+            cmds.parent(str(locator), 'J_wheel_rear_left')
+        
 def main():
     xmlFile = os.path.split(fileDirCommmon)[0] + '/XMLfiles/IronMonkey_CustomNamingTool.xml'
     form = CustomNamingTool(xmlFile)

@@ -28,7 +28,7 @@ def execute():
     curr_pos = J_Root.translateY.get()
     J_Root.translateY.set(-pos_loc[1] + curr_pos)
     J_Root.translateZ.set(0)
-    print 'set position for J_chassis'
+    print 'Set position for J_chassis'
     
     cp_archos_01 = getCenterPointOfMesh('mesh_rotor_front_left_a_lod00')
     cp_archos_02 = getCenterPointOfMesh('mesh_rotor_rear_left_a_lod00')
@@ -49,7 +49,7 @@ def execute():
     cyl_02[0].rotateZ.set(90)
     cyl_02[0].translate.set(cp_archos_02)
     
-    print 'Set up position for J_Chassis\n'
+    print 'Set up position for locator\n'
     print '---------------------------'
     
     
