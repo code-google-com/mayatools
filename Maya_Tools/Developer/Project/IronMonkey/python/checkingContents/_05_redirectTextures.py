@@ -17,7 +17,7 @@ def execute():
     if os.path.isdir(f_dir):
         for t in textures:
             print t
-            if 'common' in t:
+            if 'common' in t.getAttr('fileTextureName'):
                 new_dir = common_dir + t.getAttr('fileTextureName').split('/')[-1]
                 t.setAttr('fileTextureName', new_dir, type='string')
             else:
