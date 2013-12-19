@@ -9,7 +9,7 @@ import subprocess as s
 
 model_dir = 'C:/development/marmoset/app/res/master/models/cars/'
 prefab_dir = 'C:/development/marmoset/app/res/master/prefabs/cars/'
-build_file = 'C:/development/marmoset/scripts/Windows/build_add.bat'
+build_file = 'C:/development/marmoset/scripts/Windows/build_all.bat'
 
 def execute():
     print '--------------- Export Collada files ------------------------'
