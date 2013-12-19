@@ -2,18 +2,30 @@ description = 'Assign textures to correct path.'
 name = 'fixUvSet'
 import maya.cmds as cmds
 import maya.mel as mel
+import pymel.core as py
+import os
+from PyQt4 import QtGui
 
-stdUVSet = set(['map1', '2_scratch'])
+car_dir = 'C:/development/marmoset/app/res/master/textures/cars/'
+common_dir = car_dir + 'common/'
+
 def execute():
-    print '--------------- SELECTE MESHES WRONG UVSET-------------------------'
-    errorMesh = []
-    meshes = cmds.ls(type = 'mesh')
-    for mesh in meshes:
-        uvSets = set(cmds.polyUVSet(mesh, q= True,  auv = True))
-        if not uvSets.issubset(stdUVSet) or 'map1' not in uvSets:
-            errorMesh.append(mesh)  
-            print mesh + ' khong dap ung duoc so luong uvset can co, uvset hien tai: ' + str(uvSets) + '.\n'
-    cmds.select(cl = True)
-    cmds.select(errorMesh)
-    mel.eval('HideUnselectedObjects;')
+    print '--------------- ASSIGN TEXTURES TO CORRECT PATH-------------------------'
+    textures = py.ls(tex = True)
+    car_name= cmds.file(q= True, sn = True).split('/')[-1].split('.')[0]
+    f_dir = car_dir + car_name
+    if os.path.isdir(f_dir):
+        for t in textures:
+            print t
+            if 'common' in t:
+                new_dir = common_dir + t.getAttr('fileTextureName').split('/')[-1]
+                t.setAttr('fileTextureName', new_dir, type='string')
+            else:
+                try:
+                    new_dir = f_dir + '/' + t.getAttr('fileTextureName').split('/')[-1]
+                    t.setAttr('fileTextureName', new_dir, type='string')
+                except:
+                    pass
+    else:
+        QtGui.QMessageBox.critical(None,'Wrong car name','Please correct filename following asset name.',QtGui.QMessageBox.Ok)
     

@@ -27,7 +27,10 @@ def execute():
     print '--------------- RENAME TEXTURENODE-------------------------' 
     textures = py.ls(tex = True)
     for t in textures:
-        name = t.getAttr('fileTextureName').split('/')[-1].split('.')[0]
-        py.rename(t, name)   
-        print '-- Renamed texture node: ' + t + ' to: ' + name
+        try:
+            name = t.getAttr('fileTextureName').split('/')[-1].split('.')[0]
+            py.rename(t, name)   
+            print '-- Renamed texture node: ' + t + ' to: ' + name
+        except:
+            pass
     

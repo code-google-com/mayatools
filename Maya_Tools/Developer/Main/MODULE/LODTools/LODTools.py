@@ -61,6 +61,8 @@ def setupLOD():
                 cmds.createDisplayLayer(e = False, n = lod + '_layer')
             except:
                 pass
+        # adding wheelarch standard to type a
+        cmds.editDisplayLayerMembers('type_a_layer', cmds.ls('wheel_arch|standard'), noRecurse = True)
         # select all locator and put them in 
         try:
             cmds.editDisplayLayerMembers('locator_layer', cmds.ls(type = 'locator'), noRecurse = True)
@@ -93,7 +95,7 @@ def setupLOD():
         # select lod06 and add them to layer
         cmds.editDisplayLayerMembers('lod_06_layer', cmds.ls('lod_06'), noRecurse = True)
         # select base car and add them to layer
-        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor|type_a','caliper|type_a','chassis|type_a','body|type_a','interior|type_a','windows|type_a','headlights|type_a','taillights|type_a', 'wheel_arch|standard*'), noRecurse = True)
+        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor|type_a','caliper|type_a','chassis|type_a','body|type_a','interior|type_a','windows|type_a','headlights|type_a','taillights|type_a'), noRecurse = True)
         # select pull wheel arch
         try:
             cmds.editDisplayLayerMembers('pulled_wheel_arch_layer', cmds.ls('pulled'), noRecurse = True)
@@ -337,6 +339,7 @@ class LODTools(form_class,base_class):
                 if 'type_a_layer' not in self._nohide:
                     self._nohide.append('type_a_layer')
                 type_a.append('hood|type_a')
+            
                 
             groups = [group.split('.')[0] for group in cmds.connectionInfo('type_a_layer.drawInfo', dfs = True)]
             for g in groups:
