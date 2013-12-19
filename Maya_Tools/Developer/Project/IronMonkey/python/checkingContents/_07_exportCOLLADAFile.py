@@ -19,13 +19,9 @@ def execute():
         cmds.select('car')
         cmds.file(f_dir + '/' + car_name + '.dae', type = 'COLLADA exporter', es = True, f = True)
         # master if dae
-        p = s.Popen([build_file, f_dir + '/' + car_name + '.dae'], stdout = PIPE, stderr=PIPE)
-        output, errors = p.communicate() 
-        p.wait()
+        os.system('{b_f} {s_f}'.format(b_f = build_file, s_f = f_dir + '/' + car_name + '.dae'))
         # master prefab file
-        p = s.Popen([build_file, f_dir.replace(model_dir, prefab_dir) + '/' + car_name + '.prefabs'], stdout = PIPE, stderr=PIPE)
-        output, errors = p.communicate() 
-        p.wait()
+        os.system('{b_f} {s_f}'.format(b_f = build_file, s_f = f_dir.replace(model_dir, prefab_dir) + '/' + car_name + '.prefabs'))
     else:
         QtGui.QMessageBox.critical(None,'Wrong car name','Please correct filename following asset name.',QtGui.QMessageBox.Ok)
     
