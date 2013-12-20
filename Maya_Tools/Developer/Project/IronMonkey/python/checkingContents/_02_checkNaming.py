@@ -30,6 +30,9 @@ def checkAndFixCollision():
         col = cmds.group(n = 'collision', em = True)
         cmds.parent(col, colliderMeshes)
 
+def checkHierrachy():
+    pattern = 'car|J_car|J_chassis'
+
 def execute():
     xmlDir = os.path.split(os.path.split(fileDirCommmon)[0])[0] + '/XMLfiles/IronMonkey_CustomNamingTool.xml'
     print xmlDir
