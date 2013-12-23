@@ -3,7 +3,7 @@ import pymel.core as py
 from PyQt4 import QtGui
 import maya.OpenMayaUI as OpenMayaUI
 from xml.dom.minidom import *
-import sys, os, shutil
+import sys, os, shutil, re
 
 def gcd(a, b):
     while b:
@@ -148,14 +148,14 @@ def copytree(src, dst, backup = True):
                     
 def saveFileIncrement():
         #print 'OK'
-        curentFileName = os.path.split(cmds.file(q = True, sn = True))[1]
-        #print curentFileName
-        strList = os.path.splitext(os.path.split(curentFileName)[1])[0].split('_')
-        try:
-            index = int(strList[len(strList)-1].replace('v', ''))
-        except:
-            index = 0
-        namefile = os.path.split(cmds.file(q = True, sn = True))[0] + '\\' + self.combineString(strList) + 'v' + str(index + 1) + '.mb'
-        cmds.file(rn = namefile)
+        currentFileName = os.path.split(cmds.file(q = True, sn = True))[1]
+        if re.search('.*_v[0-9]*\.*', currentFileName):
+            index = os.path.splitext(os.path.split(currentFileName)[1])[0].split('_v')[-1]
+            nameFile = currentFileName.replace(index, '0' + str(int(index)+1))
+            print nameFile 
+        else:
+            nameFile = os.path.splitext(currentFileName)[0] + '_v00' + os.path.splitext(currentFileName)[1] 
+            print nameFile
+        cmds.file(rn = nameFile)
         cmds.file(s = True, type = 'mayaBinary')
         

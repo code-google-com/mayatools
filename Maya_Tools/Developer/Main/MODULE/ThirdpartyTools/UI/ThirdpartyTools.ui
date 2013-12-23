@@ -32,6 +32,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../../../../../../FoxForest/Source/IconResource.qrc"/>
+ </resources>
  <connections/>
 </ui>

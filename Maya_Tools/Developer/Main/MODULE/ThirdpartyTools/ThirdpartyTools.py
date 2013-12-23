@@ -38,7 +38,16 @@ class ThirdpartyTools(form_class,base_class):
         for script in melScripts + pythonScripts:
             if script in melScripts:
                 attachFileSource = (fileDirCommmon + '/mel/' +  script).replace('\\' ,'/')
-                button = QtGui.QPushButton(script.split('.')[0])
+                ### add icon to button
+                icon = QtGui.QIcon()
+                size = QtCore.QSize(200, 30)
+                size.scale(200, 30, QtCore.Qt.KeepAspectRatio)
+                icon.addFile(fileDirCommmon + '/icons/' + script.split('.')[0] + '.png', size)
+                ###
+                print size
+                button = QtGui.QPushButton('')
+                button.setIcon(icon)
+                button.setIconSize(size)
                 button.clicked.connect(functools.partial(self.sourceMelScript, attachFileSource))
                 self.verticalLayout.addWidget(button)
                 

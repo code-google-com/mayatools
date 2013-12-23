@@ -7,6 +7,8 @@ import sip
 from xml.dom.minidom import *
 import maya.OpenMayaUI as OpenMayaUI
 
+import CommonFunctions as cf
+
 try:
     reload(UploadForm)
 except:
@@ -62,6 +64,7 @@ class AssetForm(form_class,base_class):
         self.btnOpenServerFolder.clicked.connect(self.openServerFolder)
         self.btnOpenfile.clicked.connect(self.openMayafile)
         self.btnFeedbacks.clicked.connect(self.openFeedbacksFolder)
+        self.btnSaveIncrement.clicked.connect(cf.saveFileIncrement)
         self.btnUploadandDownload.clicked.connect(self.syncFileWithServer)
         
     def openFeedbacksFolder(self):

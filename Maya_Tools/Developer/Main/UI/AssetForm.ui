@@ -86,7 +86,7 @@
              <bool>true</bool>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup</string>
+             <string notr="true">buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -96,7 +96,7 @@
              <string>Any</string>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup</string>
+             <string notr="true">buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -113,7 +113,7 @@
              <string>Server</string>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup_2</string>
+             <string notr="true">buttonGroup_2</string>
             </attribute>
            </widget>
           </item>
@@ -126,7 +126,7 @@
              <bool>true</bool>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup_2</string>
+             <string notr="true">buttonGroup_2</string>
             </attribute>
            </widget>
           </item>
@@ -155,7 +155,7 @@
            <string>Open</string>
           </property>
           <property name="icon">
-           <iconset>
+           <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
             <normaloff>:/Project/Open.png</normaloff>:/Project/Open.png</iconset>
           </property>
           <property name="iconSize">
@@ -178,7 +178,7 @@
            <string>Upload  Download</string>
           </property>
           <property name="icon">
-           <iconset>
+           <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
             <normaloff>:/Project/Exchange.png</normaloff>:/Project/Exchange.png</iconset>
           </property>
           <property name="iconSize">
@@ -190,6 +190,24 @@
          </widget>
         </item>
        </layout>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnSaveIncrement">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Save Increment</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
+          <normaloff>:/Project/Save_increment.png</normaloff>:/Project/Save_increment.png</iconset>
+        </property>
+       </widget>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_6">
@@ -330,7 +348,9 @@
    </layout>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../../../../FoxForest/Source/IconResource.qrc"/>
+ </resources>
  <connections/>
  <buttongroups>
   <buttongroup name="buttonGroup_2"/>
