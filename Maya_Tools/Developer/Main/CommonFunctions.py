@@ -145,4 +145,17 @@ def copytree(src, dst, backup = True):
                 if errors:
                     pass
                     #raise Error(errors)
+                    
+def saveFileIncrement():
+        #print 'OK'
+        curentFileName = os.path.split(cmds.file(q = True, sn = True))[1]
+        #print curentFileName
+        strList = os.path.splitext(os.path.split(curentFileName)[1])[0].split('_')
+        try:
+            index = int(strList[len(strList)-1].replace('v', ''))
+        except:
+            index = 0
+        namefile = os.path.split(cmds.file(q = True, sn = True))[0] + '\\' + self.combineString(strList) + 'v' + str(index + 1) + '.mb'
+        cmds.file(rn = namefile)
+        cmds.file(s = True, type = 'mayaBinary')
         
