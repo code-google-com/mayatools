@@ -131,8 +131,8 @@ def copytree(src, dst, backup = True):
             # XXX What about devices, sockets etc.?
                 except (IOError, os.error) as why:
                     errors.append((srcname, dstname, str(why)))
-        # catch the Error from the recursive copytree so that we can
-        # continue with other files
+            # catch the Error from the recursive copytree so that we can
+            # continue with other files
                 except Error as err:
                     errors.extend(err.args[0])
                 try:
