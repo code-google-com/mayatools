@@ -44,6 +44,7 @@
 			<module name = "PolyTools" />
 			<inmodule name = "CrydevTools" />
 			<module name = "ShaderTools" params = "CustomShaderTools"/>
+			<module name = "ThirdpartyTools"/>
 		</Module>
 		<CheckList>
 			<check name = "PolyCount"/>

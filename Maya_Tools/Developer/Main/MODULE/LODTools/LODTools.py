@@ -62,7 +62,7 @@ def setupLOD():
             except:
                 pass
         # adding wheelarch standard to type a
-        cmds.editDisplayLayerMembers('type_a_layer', cmds.ls('wheel_arch|standard'), noRecurse = True)
+        #cmds.editDisplayLayerMembers('type_a_layer', cmds.ls('wheel_arch|standard'), noRecurse = True)
         # select all locator and put them in 
         try:
             cmds.editDisplayLayerMembers('locator_layer', cmds.ls(type = 'locator'), noRecurse = True)
@@ -95,7 +95,7 @@ def setupLOD():
         # select lod06 and add them to layer
         cmds.editDisplayLayerMembers('lod_06_layer', cmds.ls('lod_06'), noRecurse = True)
         # select base car and add them to layer
-        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor|type_a','caliper|type_a','chassis|type_a','body|type_a','interior|type_a','windows|type_a','headlights|type_a','taillights|type_a'), noRecurse = True)
+        cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor|type_a','caliper|type_a','chassis|type_a','body|type_a','interior|type_a','windows|type_a','headlights|type_a','taillights|type_a','wheel_arch|standard'), noRecurse = True)
         # select pull wheel arch
         try:
             cmds.editDisplayLayerMembers('pulled_wheel_arch_layer', cmds.ls('pulled'), noRecurse = True)
@@ -339,7 +339,6 @@ class LODTools(form_class,base_class):
                 if 'type_a_layer' not in self._nohide:
                     self._nohide.append('type_a_layer')
                 type_a.append('hood|type_a')
-            
                 
             groups = [group.split('.')[0] for group in cmds.connectionInfo('type_a_layer.drawInfo', dfs = True)]
             for g in groups:
@@ -348,6 +347,8 @@ class LODTools(form_class,base_class):
                         cmds.setAttr(g + '.visibility', 0)
                     except:
                         pass    
+        if self.btnLOD5.isChecked() or self.btnLOD4.isChecked():
+            cmds.setAttr('wheel_arch|standard.visibility', 0)
         # ------------------------------------------------
         self._nohide.append(LODa)
         self._nohide.append(LODb)
@@ -402,6 +403,7 @@ class LODTools(form_class,base_class):
         cmds.setAttr(LODsChain[indexofCurrentLOD] + '.visibility', False)
         
     def selectLOD(self, lod):
+        type_layer = cmds.ls('type_*_layer')
         if lod == '0':
             patternLOD = re.compile(r'(.*)LOD(\.*)',re.I)
             patternSHADOW = re.compile(r'(.*)SHADOW(\.*)',re.I)
@@ -416,6 +418,7 @@ class LODTools(form_class,base_class):
                 pass
             self._currentPart = 'type_b_layer'
             cmds.setAttr(self._currentPart + '.visibility', 1)
+            
         if lod == '2':
             try:
                 cmds.select('*LOD2')
@@ -466,8 +469,12 @@ class LODTools(form_class,base_class):
                 pass 
             self._currentPart = 'large_overfenders_layer'
             cmds.setAttr(self._currentPart + '.visibility', 1)
-       
+            
+        for l in type_layer:
+             if l != self._currentPart:
+                 cmds.setAttr(l + '.visibility', 0)
 def main(xmlFile):
+    
     form = LODTools(xmlFile)
     return form 
     
