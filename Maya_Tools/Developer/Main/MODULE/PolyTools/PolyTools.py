@@ -93,7 +93,7 @@ def mirrorTool(axis, isKeepHistory, isClone, method):
                 except NameError:
                     dupMesh = cmds.duplicate(n = obj + '_mirrored', ilf = True)
             else:
-                dupMesh = obj
+                dupMesh = [obj]
             if method == 'By axis':
                 locator = cmds.spaceLocator()
                 cmds.parent(dupMesh, locator)
