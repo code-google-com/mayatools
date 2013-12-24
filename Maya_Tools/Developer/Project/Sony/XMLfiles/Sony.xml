@@ -72,6 +72,7 @@
 			<module name = "UVTools"/>
 			<module name = "PolyTools"/>
 			<module name = "ShaderTools"/>
+			<module name = "ThirdpartyTools"/>
 		</Module>
 		<CheckList>
 			<uncheck name = "PolyCount"/>
