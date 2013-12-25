@@ -12,6 +12,7 @@ prefab_dir = 'C:/development/marmoset/app/res/master/prefabs/cars/'
 build_file = 'C:/development/marmoset/scripts/Windows/build_all.bat'
 
 def execute():
+    cmds.loadPlugin('COLLADA.mll') 
     print '--------------- Export Collada files ------------------------'
     mel.eval('showHidden -all;')
     car_name= cmds.file(q= True, sn = True).split('/')[-1].split('.')[0]

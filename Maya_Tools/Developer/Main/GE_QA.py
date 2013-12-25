@@ -215,7 +215,7 @@ class GE_QA(form_class,base_class):
     def __init__(self, projData, checkList, parent = getMayaWindow()):
         super(base_class,self).__init__(parent)
         self.setupUi(self)
-        self.btnRefresh.clicked.connect(self.getDAGNodeinScene)
+        
         self.btnStartQA.clicked.connect(self.startQA)
         #self.listShader.itemClicked.connect(self.selectFacesOnSelectedItem)
         #self.listShader.itemDoubleClicked.connect(self.selectShaderForEditing)

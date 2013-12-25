@@ -4,7 +4,7 @@ import maya.cmds as cmds
 import maya.mel as mel
 
 def execute():
-    setupColorSetWholeScene()
+    setupAOToWhiteForWindow()
     
 def setupAOToWhiteForWindow():
     print '--------------- PAINT PURE WHITE FOR AO WINDOWs-------------------------'

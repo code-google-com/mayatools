@@ -93,77 +93,9 @@
             <bool>false</bool>
            </attribute>
           </widget>
-          <widget class="QWidget" name="">
-           <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,0">
-            <property name="spacing">
-             <number>15</number>
-            </property>
-            <property name="sizeConstraint">
-             <enum>QLayout::SetMinAndMaxSize</enum>
-            </property>
-            <item>
-             <layout class="QVBoxLayout" name="verticalLayout_2">
-              <item>
-               <widget class="QPushButton" name="btnStartQA">
-                <property name="font">
-                 <font>
-                  <pointsize>14</pointsize>
-                  <weight>75</weight>
-                  <bold>true</bold>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>Start QA</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnRefresh">
-                <property name="text">
-                 <string>Refresh</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
-                  <normaloff>:/Project/Refresh.png</normaloff>:/Project/Refresh.png</iconset>
-                </property>
-                <property name="checkable">
-                 <bool>false</bool>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-                <property name="autoDefault">
-                 <bool>true</bool>
-                </property>
-                <property name="default">
-                 <bool>false</bool>
-                </property>
-                <property name="flat">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <spacer name="verticalSpacer">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>208</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </widget>
          </widget>
         </item>
        </layout>
-       <zorder></zorder>
       </widget>
       <widget class="QWidget" name="tab_3">
        <attribute name="title">
@@ -239,6 +171,20 @@
       </widget>
      </widget>
     </item>
+    <item>
+     <widget class="QPushButton" name="btnStartQA">
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Start QA</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -272,7 +218,7 @@
   </widget>
   <action name="actionExport_to_HTML">
    <property name="icon">
-    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/HTML_icon.png</normaloff>:/Project/HTML_icon.png</iconset>
    </property>
    <property name="text">
@@ -281,7 +227,7 @@
   </action>
   <action name="actionExport_to_PDF">
    <property name="icon">
-    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/pdf_icon.png</normaloff>:/Project/pdf_icon.png</iconset>
    </property>
    <property name="text">
@@ -300,7 +246,7 @@
   </action>
   <action name="actionQuit">
    <property name="icon">
-    <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
    </property>
    <property name="text">
