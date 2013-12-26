@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>493</width>
+    <width>582</width>
     <height>694</height>
    </rect>
   </property>
@@ -19,7 +19,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_5">
+  <layout class="QVBoxLayout" name="verticalLayout_6">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
@@ -335,7 +335,7 @@
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string>buttonGroup_2</string>
+        <string>buttonGroup_3</string>
        </attribute>
       </widget>
      </item>
@@ -348,7 +348,7 @@
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string>buttonGroup_2</string>
+        <string>buttonGroup_3</string>
        </attribute>
       </widget>
      </item>
@@ -361,7 +361,7 @@
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string>buttonGroup_2</string>
+        <string>buttonGroup_3</string>
        </attribute>
       </widget>
      </item>
@@ -374,7 +374,33 @@
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
-        <string>buttonGroup_2</string>
+        <string>buttonGroup_3</string>
+       </attribute>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnLOD4">
+       <property name="text">
+        <string>Type Y</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <attribute name="buttonGroup">
+        <string>buttonGroup_3</string>
+       </attribute>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnLOD5">
+       <property name="text">
+        <string>Type Z</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <attribute name="buttonGroup">
+        <string>buttonGroup_3</string>
        </attribute>
       </widget>
      </item>
@@ -386,24 +412,14 @@
       <number>1</number>
      </property>
      <item>
-      <widget class="QPushButton" name="btnLOD4">
+      <widget class="QPushButton" name="pushButton">
        <property name="text">
-        <string>Type Y</string>
+        <string>Standard</string>
        </property>
        <property name="checkable">
         <bool>true</bool>
        </property>
-       <attribute name="buttonGroup">
-        <string>buttonGroup_2</string>
-       </attribute>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btnLOD5">
-       <property name="text">
-        <string>Type Z</string>
-       </property>
-       <property name="checkable">
+       <property name="checked">
         <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
@@ -453,22 +469,50 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_7">
+    <layout class="QHBoxLayout" name="horizontalLayout_9">
      <item>
-      <widget class="QLabel" name="label">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Spoiler:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QComboBox" name="cbbSpoilers"/>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_7">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Spoiler:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="cbbSpoilers"/>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Exhaust</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBox"/>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </item>
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -554,7 +598,8 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_2"/>
   <buttongroup name="buttonGroup"/>
+  <buttongroup name="buttonGroup_2"/>
+  <buttongroup name="buttonGroup_3"/>
  </buttongroups>
 </ui>

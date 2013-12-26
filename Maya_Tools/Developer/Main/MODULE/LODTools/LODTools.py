@@ -347,6 +347,7 @@ class LODTools(form_class,base_class):
                         cmds.setAttr(g + '.visibility', 0)
                     except:
                         pass    
+                    
         if self.btnLOD5.isChecked() or self.btnLOD4.isChecked():
             cmds.setAttr('wheel_arch|standard.visibility', 0)
         # ------------------------------------------------
