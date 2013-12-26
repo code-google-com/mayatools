@@ -149,8 +149,8 @@ class LODTools(form_class,base_class):
         self.btnLOD8.clicked.connect(functools.partial(self.selectLOD,'8'))
         self.cbbSpoilers.currentIndexChanged.connect(self.showSpoilers)
         
-        self.btnStandard.setChecked(True)
         self.btnLOD0.setChecked(True)
+        self.btnStandard.setChecked(True)
 
 
     def UnParent(self):
@@ -326,60 +326,10 @@ class LODTools(form_class,base_class):
         type_a = list()
         if not self.btnLOD0.isChecked():
             cmds.setAttr('type_a_layer.visibility', 1)
-            
             if self.chkBumper_front.isChecked():
                 if 'type_a_layer' not in self._nohide:
                     self._nohide.append('type_a_layer')
-                if self.btnStandard.isChecked():
-                    if self.btnLOD1.isChecked():
-                        type_a.append('bumper_front|standard_type_b')
-                    if self.btnLOD2.isChecked():
-                        type_a.append('bumper_front|standard_type_c')
-                    if self.btnLOD3.isChecked():
-                        type_a.append('bumper_front|standard_type_d')
-                        
-                if self.btnLOD6.isChecked():
-                    if self.btnLOD1.isChecked():
-                        if cmds.objExists('bumper_front|pulled_type_b'):
-                            type_a.append('bumper_front|pulled_type_b')
-                        else:
-                            type_a.append('bumper_front|standard_type_b')
-                            
-                    if self.btnLOD2.isChecked():
-                        if cmds.objExists('bumper_front|pulled_type_c'):
-                            type_a.append('bumper_front|pulled_type_c')
-                        else:
-                            type_a.append('bumper_front|standard_type_c')
-                            
-                    if self.btnLOD3.isChecked():
-                        if cmds.objExists('bumper_front|pulled_type_d'):
-                            type_a.append('bumper_front|pulled_type_d')
-                        else:
-                            type_a.append('bumper_front|standard_type_d')
-                        
-                if self.btnLOD8.isChecked():
-                    if self.btnLOD1.isChecked():
-                        if cmds.objExists('bumper_front|large_type_b'):
-                            type_a.append('bumper_front|large_type_b')
-                        else:
-                            type_a.append('bumper_front|standard_type_b')
-                            
-                    if self.btnLOD2.isChecked():
-                        if cmds.objExists('bumper_front|large_type_c'):
-                            type_a.append('bumper_front|large_type_c')
-                        else:
-                            type_a.append('bumper_front|standard_type_c')
-                            
-                    if self.btnLOD3.isChecked():
-                        if cmds.objExists('bumper_front|large_type_d'):
-                            type_a.append('bumper_front|large_type_d')
-                        else:
-                            type_a.append('bumper_front|standard_type_d')
-                    
-                    
-                if self.btnLOD8.isChecked():
-                    type_a.append('bumper_front|large_type_a')
-                    
+                type_a.append('bumper_front|standard_type_a')
             if self.chkBumper_rear.isChecked():
                 if 'type_a_layer' not in self._nohide:
                     self._nohide.append('type_a_layer')
@@ -399,62 +349,46 @@ class LODTools(form_class,base_class):
                     try:
                         cmds.setAttr(g + '.visibility', 0)
                     except:
-                        pass    
+                        pass 
+        else:
+            type_a = cmds.ls('standard_type_a')
+            for g in type_a:
+                cmds.setAttr(g + '.visibility', 1)
                     
-        if self.btnLOD5.isChecked() or self.btnLOD4.isChecked():
+        if self.btnLOD5.isChecked() or self.btnLOD4.isChecked(): # kit Y and kit Z
             cmds.setAttr('wheel_arch.visibility', 0)
             
-        if self.btnStandard.isChecked():
-            
-            cmds.setAttr('wheel_arch.visibility', 1)
-            cmds.setAttr('wheel_arch|standard.visibility', 1)
-            cmds.setAttr('wheel_arch|pulled.visibility', 0)
-            cmds.setAttr('wheel_arch|small.visibility', 0)
-            cmds.setAttr('wheel_arch|large.visibility', 0)
-            
-            self.btnLOD4.setChecked(False)
-            self.btnLOD5.setChecked(False)
-            self.btnLOD0.setChecked(True)
-            
-        if self.btnLOD6.isChecked():
-            cmds.setAttr('wheel_arch.visibility', 1)
-            cmds.setAttr('wheel_arch|standard.visibility', 0)
-            cmds.setAttr('wheel_arch|pulled.visibility', 1)
-            cmds.setAttr('wheel_arch|small.visibility', 0)
-            cmds.setAttr('wheel_arch|large.visibility', 0)
-            
-            self.btnLOD4.setChecked(False)
-            self.btnLOD5.setChecked(False)
-            self.btnLOD0.setChecked(True)
-     
-        if self.btnLOD7.isChecked():
-            cmds.setAttr('wheel_arch.visibility', 1)
-            cmds.setAttr('wheel_arch|standard.visibility', 0)
-            cmds.setAttr('wheel_arch|pulled.visibility', 0)
-            cmds.setAttr('wheel_arch|small.visibility', 1)
-            cmds.setAttr('wheel_arch|large.visibility', 0)
-            
-            self.btnLOD4.setChecked(False)
-            self.btnLOD5.setChecked(False)
-            self.btnLOD0.setChecked(True)
- 
-        if self.btnLOD8.isChecked():
-            cmds.setAttr('wheel_arch.visibility', 1)
-            cmds.setAttr('wheel_arch|standard.visibility', 0)
-            cmds.setAttr('wheel_arch|pulled.visibility', 0)
-            cmds.setAttr('wheel_arch|small.visibility', 0)
-            cmds.setAttr('wheel_arch|large.visibility', 1)
-            
-            self.btnLOD4.setChecked(False)
-            self.btnLOD5.setChecked(False)
-            self.btnLOD0.setChecked(True)
-      
-            #cmds.setAttr('wheel_arch|standard.visibility', 0)
+        
         # ------------------------------------------------
         self._nohide.append(LODa)
         self._nohide.append(LODb)
         self._nohide.append('defaultLayer')
         self._nohide.append(self._currentPart)
+        if self.btnLOD6.isChecked():
+            cmds.setAttr('wheel_arch|standard.visibility', 0)
+            print 'pulled'
+            self._nohide.append('pulled_wheel_arch_layer') 
+            if self.btnLOD0.isChecked():
+                self._nohide.append('pulled_type_a_layer')
+            if self.btnLOD1.isChecked():
+                self._nohide.append('pulled_type_b_layer')
+            if self.btnLOD2.isChecked():
+                self._nohide.append('pulled_type_c_layer')
+            if self.btnLOD3.isChecked():
+                self._nohide.append('pulled_type_d_layer')
+                 
+        if self.btnLOD8.isChecked():
+            cmds.setAttr('wheel_arch|standard.visibility', 1)
+            print 'large'
+            self._nohide.append('large_overfenders_layer')
+            if self.btnLOD0.isChecked():
+                self._nohide.append('large_type_a_layer')
+            if self.btnLOD1.isChecked():
+                self._nohide.append('large_type_b_layer')
+            if self.btnLOD2.isChecked():
+                self._nohide.append('large_type_c_layer')
+            if self.btnLOD3.isChecked():
+                self._nohide.append('large_type_d_layer')
         displayLayerNotWork = [layer for layer in cmds.ls(type = 'displayLayer') if layer not in self._nohide]
         for l in displayLayerNotWork:
             cmds.setAttr(l + '.visibility', 0)
@@ -548,29 +482,29 @@ class LODTools(form_class,base_class):
                 pass
             self._currentPart = 'type_z_layer'
             cmds.setAttr(self._currentPart + '.visibility', 1)
-        if lod == '6':
-            try:
-                cmds.select('*LOD6')
-            except:
-                pass
-            self._currentPart = 'pulled_wheel_arch_layer'
-            cmds.setAttr(self._currentPart + '.visibility', 1)
-        if lod == '7':
-            try:
-                cmds.select('*LOD7')
-            except:
-                pass 
-            self._currentPart = 'small_overfenders_layer'
-            cmds.setAttr(self._currentPart + '.visibility', 1)
-            #self._nohide.remove('base_car_layer')
-        if lod == '8':
-            try:
-                cmds.select('*LOD7')
-            except:
-                pass 
-            self._currentPart = 'large_overfenders_layer'
-            cmds.setAttr(self._currentPart + '.visibility', 1)
-            
+#         if lod == '6':
+#             try:
+#                 cmds.select('*LOD6')
+#             except:
+#                 pass
+#             self._currentPart = 'pulled_wheel_arch_layer'
+#             cmds.setAttr(self._currentPart + '.visibility', 1)
+#         if lod == '7':
+#             try:
+#                 cmds.select('*LOD7')
+#             except:
+#                 pass 
+#             self._currentPart = 'small_overfenders_layer'
+#             cmds.setAttr(self._currentPart + '.visibility', 1)
+#             #self._nohide.remove('base_car_layer')
+#         if lod == '8':
+#             try:
+#                 cmds.select('*LOD7')
+#             except:
+#                 pass 
+#             self._currentPart = 'large_overfenders_layer'
+#             cmds.setAttr(self._currentPart + '.visibility', 1)
+#             
         for l in type_layer:
              if l != self._currentPart:
                  cmds.setAttr(l + '.visibility', 0)
