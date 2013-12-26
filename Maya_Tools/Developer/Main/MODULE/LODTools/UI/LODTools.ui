@@ -412,7 +412,7 @@
       <number>1</number>
      </property>
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="btnStandard">
        <property name="text">
         <string>Standard</string>
        </property>

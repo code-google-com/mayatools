@@ -61,6 +61,7 @@ class CustomShaderTools(form_class,base_class):
             cmds.scriptNode(st = 0, afterScript = restoreTechniqueScript, n = 'restoreTechniqueNode', stp = 'python')
                 
     def tweakingDamageShader(self):
+        cmds.undoInfo(openChunk = True)
         self.removeDebugShader()
         if self.btnSetDamageShader.isChecked():
             if cmds.objExists('TEMP_DEBUG_SHADER'):
@@ -92,9 +93,12 @@ class CustomShaderTools(form_class,base_class):
                         print result
                     except ValueError:
                         print m + ' khong co uvset can co.'
+                #cmds.undoInfo(openChunk = True)
                 self.assignDebugShader(debugShader)
+                #cmds.undoInfo(closeChunk = True)
         else:
             self.removeDebugShader()
+        cmds.undoInfo(closeChunk = True)
             
 def main():
     form = CustomShaderTools('')

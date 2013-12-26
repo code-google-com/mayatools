@@ -251,8 +251,6 @@ global proc boltSetupDebugEnv(string $envType)
 	}
 }
 
-
-
 global proc boltSetATGEnv(string $envName)
 {
 

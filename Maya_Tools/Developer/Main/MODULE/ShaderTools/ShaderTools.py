@@ -168,6 +168,7 @@ class ShaderTools(form_class,base_class):
             self.statusScene = 0
             
     def tweakingCheckerShader(self):
+        cmds.undoInfo(openChunk = True)
         self.removeDebugShader()
         if self.btnCheckerView.isChecked():
             debugShader = cmds.shadingNode('lambert', n = 'TEMP_DEBUG_SHADER', asShader = True)
@@ -195,24 +196,30 @@ class ShaderTools(form_class,base_class):
             cmds.connectAttr(utilityNode + '.rotateUV', textureNode + '.rotateUV')
             #---
             cmds.connectAttr(textureNode + '.outColor', debugShader + '.color')
+            #cmds.undoInfo(openChunk = True)
             self.assignDebugShader()
-            
+            #cmds.undoInfo(closeChunk = True)
         else:
             self.removeDebugShader()
+        cmds.undoInfo(closeChunk = True)
             
     def tweakingNormalView(self):
+        cmds.undoInfo(openChunk = True)
         self.removeDebugShader()
         if self.btnNormalView.isChecked():
             debugShader = cmds.shadingNode('cgfxShader', n = 'TEMP_DEBUG_SHADER', asShader = True)
             textureNode = cmds.shadingNode('file',n = 'TEMP_DEBUG_TEXTURE', asTexture = True)
             cmds.cgfxShader('TEMP_DEBUG_SHADER', fx = self._shaders + 'KoddeShader_v0.7.cgfx', e = True)
             cmds.setAttr('TEMP_DEBUG_SHADER.Display_Camera_Normals', True)
+            #cmds.undoInfo(openChunk = True)
             self.assignDebugShader()
+            #cmds.undoInfo(closeChunk = True)
         else:
             self.removeDebugShader()
-        
+        cmds.undoInfo(closeChunk = True)
             
     def tweakingShininessView(self):
+        cmds.undoInfo(openChunk = True)
         self.removeDebugShader()
         if self.btnReflectionView.isChecked():
             debugShader = cmds.shadingNode('cgfxShader', n = 'TEMP_DEBUG_SHADER', asShader = True)
@@ -232,9 +239,12 @@ class ShaderTools(form_class,base_class):
             #cmds.setAttr('TEMP_DEBUG_SHADER.vertexAttributeSource', ['position', 'normal', '', 'uv:map1', 'tangent:map1', 'binormal:map1'], type = 'stringArray')
             fileNode = cmds.connectionInfo('TEMP_DEBUG_SHADER.diffuseSampler', sfd = True).split('.')[0]
             #cmds.setAttr(fileNode + '.fileTextureName',fileDirCommmon + '/textures/BasketballCourt_3k.hdr', type = 'string')
+            cmds.undoInfo(openChunk = True)
             self.assignDebugShader()
+            cmds.undoInfo(closeChunk = True)
         else:
             self.removeDebugShader()
+        cmds.undoInfo(closeChunk = True)
             
     def updateTilingChecker(self):
         value = self.slider.value()
