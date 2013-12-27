@@ -77,8 +77,10 @@ class UploadForm(form_class,base_class):
             serverIndex.append(fpathServer)
             fpathLocal =  fpathServer.replace(self.showdataonServer,self.showdataonLocal)
             localIndex.append(fpathLocal)
-        localIndex = list(set(localIndex))
-        serverIndex = list(set(serverIndex))
+        localIndex = sorted(list(set(localIndex)))
+        print localIndex
+        serverIndex = sorted(list(set(serverIndex)))
+        print serverIndex
         for i in localIndex:
             cf.copytree(serverIndex[localIndex.index(i)],i)
         QtGui.QMessageBox.information(self,'Copy Asset','Copy done',QtGui.QMessageBox.Ok)
@@ -91,10 +93,10 @@ class UploadForm(form_class,base_class):
             localIndex.append(fpathLocal)
             fpathServer =  fpathLocal.replace(self.showdataonLocal, self.showdataonServer)
             serverIndex.append(fpathServer)
-        localIndex = list(set(localIndex))
-        print localIndex
-        print serverIndex
-        serverIndex = list(set(serverIndex))
+        localIndex = sorted(list(set(localIndex)))
+        #print localIndex
+        #print serverIndex
+        serverIndex = sorted(list(set(serverIndex)))
         for i in localIndex:
             cf.copytree(i,serverIndex[localIndex.index(i)])
         QtGui.QMessageBox.information(self,'Copy Asset','Copy done',QtGui.QMessageBox.Ok)
