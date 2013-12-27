@@ -18,7 +18,7 @@ IronMonkey_mapping_LODs = ['lod_00_layer', 'lod_01_layer', 'lod_02_layer', 'lod_
 IronMonkey_nohide = ['base_car_layer','spoilers']
 
 lods = ['lod_00','lod_01','lod_02','lod_03','lod_04','lod_05','lod_06']
-parts = ['type_a','type_b','type_c','type_d','type_y','type_z', 'pulled_type_a','pulled_type_b', 'pulled_type_c', 'pulled_type_d',
+parts = ['type_a','type_b','type_c','type_d','kit_y','kit_z', 'pulled_type_a','pulled_type_b', 'pulled_type_c', 'pulled_type_d',
          'large_type_a', 'large_type_b', 'large_type_c', 'large_type_d',
          'small_type_a','small_type_b', 'small_type_c', 'small_type_d']#,'pull_wheelarch','large_overfender','small_overfender']
 
@@ -486,14 +486,14 @@ class LODTools(form_class,base_class):
                 cmds.select('*LOD4')
             except:
                 pass
-            self._currentPart = 'type_y_layer'
+            self._currentPart = 'kit_y_layer'
             cmds.setAttr(self._currentPart + '.visibility', 1)
         if lod == '5':
             try:
                 cmds.select('*LOD5')
             except:
                 pass
-            self._currentPart = 'type_z_layer'
+            self._currentPart = 'kit_z_layer'
             cmds.setAttr(self._currentPart + '.visibility', 1)
 #         if lod == '6':
 #             try:

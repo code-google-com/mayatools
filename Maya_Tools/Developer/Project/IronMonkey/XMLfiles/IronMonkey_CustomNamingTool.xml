@@ -28,8 +28,10 @@
 	<part name = "interior" shortname = "same"/>
 	<part name = "mirrors" shortname = "same"/>
 	<part name = "rear_wiper" shortname = "same"/>
-	<part name = "side_skirts" shortname = "same"/>
+	<part name = "rear_wiper" shortname = "same"/>
+	<part name = "roof_scoop" shortname = "same"/>
 	<part name = "spoiler" shortname = "same"/>
+	<part name = "side_skirts" shortname = "same"/>
 	<part name = "taillights" shortname = "same"/>
 	<part name = "wheel_arch" shortname = "same"/>
 	<part name = "windows" shortname = "same"/>
@@ -59,7 +61,7 @@
 	<material name = "glass_window_black_opaque_twosided_shatter" shortname = "glass_black" id = "glassopaque"/>
 	<material name = "headlight_type_a_opaque" shortname = "headlight_cluster" id = "standard"/>
 	<material name = "headlight_type_a_alphaadd" shortname = "headlight_alpha" id = "standard"/>
-	<material name = "head_lights_type_a_alphaadd_nozwrite_twosided_layer70" shortname = "headlight_additive" id = "standard"/>
+	<material name = "headlight_type_a_alphaadd_nozwrite_twosided_layer70" shortname = "headlight_additive" id = "standard"/>
 	<material name = "grill_alpha_layer92_nozwrite" shortname = "grill" id = "grill"/>
 	<material name = "interior_opaque" shortname = "interior" id = "interior"/>
 	<material name = "misc_opaque" shortname = "misc" id = "standard"/>

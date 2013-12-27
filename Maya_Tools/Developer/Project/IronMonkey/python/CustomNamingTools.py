@@ -206,14 +206,14 @@ class CustomNamingTool(form_class,base_class):
                                 cmds.parent(nullGroup, parts[0]+'|large_type_' + kit)
                                 cmds.rename(nullGroup,lod.replace('lod','lod_')) 
                     else:
-                        parent = parts[0]+'|type_'+kit+'|'+ lod.replace('lod','lod_')
+                        parent = parts[0]+'|kit_'+kit+'|'+ lod.replace('lod','lod_')
                         if not cmds.objExists(parent):
-                            if not cmds.objExists(parts[0]+'|type_'+kit):
+                            if not cmds.objExists(parts[0]+'|kit_'+kit):
                                 nullGroup = cmds.group(em = True)
                                 cmds.parent(nullGroup, parts[0])
-                                cmds.rename(nullGroup,'type_'+kit) 
+                                cmds.rename(nullGroup,'kit_'+kit) 
                             nullGroup = cmds.group(em = True)
-                            cmds.parent(nullGroup, parts[0]+'|type_'+kit)
+                            cmds.parent(nullGroup, parts[0]+'|kit_'+kit)
                             cmds.rename(nullGroup,lod.replace('lod','lod_'))
                         
                 elif parts[0] in ['rotor_rear_left','rotor_rear_right','rotor_front_left','rotor_front_right']:
@@ -230,15 +230,26 @@ class CustomNamingTool(form_class,base_class):
                         cmds.parent(nullGroup, 'J_suspension_bottom_' + parts[0].replace('caliper_','') +'|caliper|type_'+kit)
                         cmds.rename(nullGroup,lod.replace('lod','lod_'))
                 else:
-                    parent = parts[0]+'|type_'+kit+'|'+ lod.replace('lod','lod_')
-                    if not cmds.objExists(parent):
-                        if not cmds.objExists(parts[0]+'|type_'+kit):
+                    if kit not in  ['z','y']:
+                        parent = parts[0]+'|type_'+kit+'|'+ lod.replace('lod','lod_')
+                        if not cmds.objExists(parent):
+                            if not cmds.objExists(parts[0]+'|type_'+kit):
+                                nullGroup = cmds.group(em = True)
+                                cmds.parent(nullGroup, parts[0])
+                                cmds.rename(nullGroup,'type_'+kit) 
                             nullGroup = cmds.group(em = True)
-                            cmds.parent(nullGroup, parts[0])
-                            cmds.rename(nullGroup,'type_'+kit) 
-                        nullGroup = cmds.group(em = True)
-                        cmds.parent(nullGroup, parts[0]+'|type_'+kit)
-                        cmds.rename(nullGroup,lod.replace('lod','lod_'))
+                            cmds.parent(nullGroup, parts[0]+'|type_'+kit)
+                            cmds.rename(nullGroup,lod.replace('lod','lod_'))
+                    else:
+                        parent = parts[0]+'|kit_'+kit+'|'+ lod.replace('lod','lod_')
+                        if not cmds.objExists(parent):
+                            if not cmds.objExists(parts[0]+'|kit_'+kit):
+                                nullGroup = cmds.group(em = True)
+                                cmds.parent(nullGroup, parts[0])
+                                cmds.rename(nullGroup,'kit_'+kit) 
+                            nullGroup = cmds.group(em = True)
+                            cmds.parent(nullGroup, parts[0]+'|kit_'+kit)
+                            cmds.rename(nullGroup,lod.replace('lod','lod_'))
                 cmds.parent(node, parent)
             #except:
                 #errorMesh.append(node)
