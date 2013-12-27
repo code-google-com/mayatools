@@ -204,6 +204,14 @@ class LODTools(form_class,base_class):
                 cmds.setAttr(s + '.visibility', 1)
             else:
                 cmds.setAttr(s + '.visibility', 0)
+                
+    def showExhausted(self):
+        spoiler = self.cbbExhausted.currentText()
+        for s in cmds.listRelatives('exhaust', c = True, f= True):
+            if str(spoiler) in s:
+                cmds.setAttr(s + '.visibility', 1)
+            else:
+                cmds.setAttr(s + '.visibility', 0)
         
     def createLOD(self):
         # --
@@ -356,8 +364,11 @@ class LODTools(form_class,base_class):
                 cmds.setAttr(g + '.visibility', 1)
                     
         if self.btnLOD5.isChecked() or self.btnLOD4.isChecked(): # kit Y and kit Z
-            cmds.setAttr('wheel_arch.visibility', 0)
-            
+            cmds.setAttr('wheel_arch.visibility', 1)
+            cmds.setAttr('wheel_arch|standard.visibility', 0)
+            cmds.setAttr('wheel_arch|pulled.visibility', 0)
+            cmds.setAttr('wheel_arch|small.visibility', 0)
+            cmds.setAttr('wheel_arch|large.visibility', 0)
         
         # ------------------------------------------------
         self._nohide.append(LODa)
@@ -389,6 +400,7 @@ class LODTools(form_class,base_class):
                 self._nohide.append('large_type_c_layer')
             if self.btnLOD3.isChecked():
                 self._nohide.append('large_type_d_layer')
+                
         displayLayerNotWork = [layer for layer in cmds.ls(type = 'displayLayer') if layer not in self._nohide]
         for l in displayLayerNotWork:
             cmds.setAttr(l + '.visibility', 0)
@@ -397,6 +409,7 @@ class LODTools(form_class,base_class):
         cmds.setAttr(LODa + '.visibility', not flag)
         cmds.setAttr(LODb + '.visibility', flag)
         self.showSpoilers()
+        self.showExhausted()
     
     def setPosition(self):
         if not self.btnSpreadHonrizonal.isChecked():
