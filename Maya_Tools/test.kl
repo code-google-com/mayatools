@@ -1,0 +1,18 @@
+require Mat44;
+require Scalar;
+
+operator blendTranslations(Mat44 A, Mat44 B, io Mat44 C, io Vec3 simPos, io Vec3 simVel, Scalar t) {
+  Vec3 aPos = Xfo(A).tr;
+  Vec3 bPos = Xfo(B).tr;
+  
+  Vec3 targetPos = aPos.linearInterpolate(bPos, t);
+  Vec3 targetVel = (targetPos - simPos) * 0.15;
+  
+  simVel = simVel.linearInterpolate(targetVel, 0.01);
+  
+  simPos += simVel;
+  
+  Xfo resultXfo;
+  resultXfo = simPos;
+  C = resultXfo.toMat44();
+}
