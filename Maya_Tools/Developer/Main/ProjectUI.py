@@ -109,7 +109,7 @@ class ProjectUI(form_class,base_class):
         self.verticalLayout.addWidget(self.dockWidget)
              
     def QAChecking(self):
-        self.QAform = GE_QA.GE_QA(self.Proj.projectData, self.Proj.checkList)
+        self.QAform = GE_QA.GE_QA(self.Proj.projectData)#, self.Proj.checkList)
         self.QAform.show()
         
     def AssetTracking(self):

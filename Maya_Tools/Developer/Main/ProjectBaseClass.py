@@ -118,10 +118,10 @@ class ProjectBaseClass():
         self.moduleList.append(names)
         self.moduleList.append(params)    
         # get checklist
-        checkListNode = ProjectNode.getElementsByTagName('CheckList')[0]
-        for check in checkListNode.getElementsByTagName('check'):
-            nameCheck = check.getAttribute('name')
-            self.checkList.append(nameCheck)
+#         checkListNode = ProjectNode.getElementsByTagName('CheckList')[0]
+#         for check in checkListNode.getElementsByTagName('check'):
+#             nameCheck = check.getAttribute('name')
+#             self.checkList.append(nameCheck)
             
         # get managers    
         ManagerDepts = ProjectNode.getElementsByTagName("Managers")[0]

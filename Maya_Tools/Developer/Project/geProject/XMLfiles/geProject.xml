@@ -66,7 +66,7 @@
 		<AssetList file = "geProject_AssetList.xml"/>
 		<Module>
 			<module name = "NamingConvention" params = ''/>
-			<module name = "CleanerTools" params = ""/>
+			<module name = "CleanerTools" params = "yes"/>
 			<module name = "Pivots" />
 			<module name = "LODTools" />
 			<module name = "UVTools" />

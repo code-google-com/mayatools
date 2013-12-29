@@ -84,13 +84,15 @@ class ClearTools(form_class,base_class):
     def loadFunction(self):
         #idColor = 0
         contentToCleanUpCommon = [(fileDirCommmon + '/python/' + f) for f in os.listdir(fileDirCommmon + '/python/') if f.endswith('py')]
-        contentToCleanUpProject = ''
+        contentToCleanUpProject = []
         project = self._customCheck.split('.')[0]
+        print project
         customPath = os.path.split(os.path.split(os.path.split(fileDirCommmon)[0])[0])[0]
         try:
             contentToCleanUpProject = [(customPath + '/Project/' + project + '/python/checkingContents/' + f) for f in os.listdir(customPath + '/Project/' + project + '/python/checkingContents/')if f.endswith('py')]
         except:
             pass
+        print contentToCleanUpProject
         for module in contentToCleanUpCommon + contentToCleanUpProject:
             widget = cleanerWidget(module)
             if module in contentToCleanUpCommon:

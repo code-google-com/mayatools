@@ -53,9 +53,13 @@ class AssetForm(form_class,base_class):
         self.setWindowTitle(self.Proj.ProjectName)
         self.assetGroupModel = QtGui.QStringListModel()
         self.assetListModel = QtGui.QStringListModel()
-        self.xmlAssetList = xml.dom.minidom.parse(self.Proj.AssetList)
-        self.loadProjectData()
-        self.resetToFileOpened()
+        try:
+            self.xmlAssetList = xml.dom.minidom.parse(self.Proj.AssetList)
+            self.loadProjectData()
+            self.resetToFileOpened()
+        except:
+            print 'Cannot locate asset list'
+        
         
         #-------------- FUNCTION UI
         self.btnCreateLocalFolders.clicked.connect(self.createLocal)

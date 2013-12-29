@@ -1,16 +1,19 @@
-import inspect, os, re, ramdom
+import os, re, random, subprocess, inspect
 import maya.mel as mel
 import maya.cmds as cmds
 from xml.dom.minidom import *
 
+fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
+
 description = 'Set up Assembly scene.'
-name = '_01_setupAssembly'
-
-
+name = 'setupAssembly'
+mayaPath = '\"'+os.environ.get("PROGRAMFILES").replace('\\', '/')+'/Autodesk/'+os.environ.get('MAYAVERSION')+'/bin/mayabatch.exe"'
+output = fileDirCommmon + 'log.txt'
 
 def execute():
     print 'EXECUTING: SETUP ASSEMBLY SCENE----------------------------------'
-
+    commScript = '"python(\\\"import sys;sys.path.append(\'' + fileDirCommmon + '\'); import _01_setupAssembly as as; )"'
+    subprocess.Popen('"' + mayaPath + " -log " + errorOutput + " -c " + commScript + '"', shell = True)
 
 def checkNaming():
     namefile = os.path.split(cmds.file(q= True, sn = True))[1].split('.')[0]
@@ -42,7 +45,15 @@ def createCacheMesh():
         print 'cannot create cache mesh'
         return
     
-def createAssembleDef(name):
+def createAssembleDef():
+    try:
+        createBBoxmesh()
+    except:
+        pass
+    try:
+        createCacheMesh()
+    except:
+        pass
     cmds.createNode('assemblyDefinition')
     
 def createAssembleReferences():
