@@ -1,5 +1,5 @@
 import inspect,os
-
+'load project'
 try:
     reload(ProjectUI)
 except:
@@ -12,4 +12,3 @@ ProjectXML = dirfile + '/XMLfiles/' + ProjectName + '.xml'
 def main():
     MainForm = ProjectUI.ProjectUI(ProjectXML)
     MainForm.show()
-

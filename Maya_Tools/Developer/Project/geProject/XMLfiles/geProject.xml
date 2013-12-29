@@ -74,15 +74,6 @@
 			<module name = "CrydevTools" />
 			<module name = "ShaderTools" params = ""/>
 		</Module>
-		<CheckList>
-			<check name = "PolyCount"/>
-			<check name = "FreezeTransforms"/>
-			<uncheck name = "DeleteHistory"/>
-			<check name = "NGon"/>
-			<check name = "Lamina"/>
-			<check name = "UVFlipped"/>
-			<check name = "UVSetCount"/>
-			<check name = "ShortestEdges"/>
-		</CheckList>
+
 	</ProjectData>
 </Project>

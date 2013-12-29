@@ -44,8 +44,12 @@ IF %ERRORLEVEL% == 4 SET MAYAVERSION=2014
 REM #### Set up paths for Maya working properly ### 
 REM #### Get This script path
 
+
+
 SET COMMONPATH=%~dp0
 
+SET PROJECT_DIR=%COMMONPATH%Developer\Project\
+ 
 REM ### Set Python path
 SET PYTHONPATH=%COMMONPATH%MAYA_%MAYAVERSION%\;%COMMONPATH%Developer\Main;%COMMONPATH%Developer\Project\;%COMMONPATH%_Common;%PYTHONPATH%
 

@@ -35,6 +35,14 @@ def loadModule(moduleName):
         return imp.load_module(moduleName, file, pathname, description)
     finally:
         if file: file.close()
+        
+def loadProject(projectName):
+    sys.path.append(fileDirCommmon + '/MODULE/' + moduleName)
+    file, pathname, description = imp.find_module(moduleName)
+    try:
+        return imp.load_module(moduleName, file, pathname, description)
+    finally:
+        if file: file.close()
 
 def writeXML(xmlDoc, location):
     #print xmlDoc.toprettyxml()
