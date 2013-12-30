@@ -73,6 +73,7 @@
 			<module name = "PolyTools" />
 			<module name = "CrydevTools" />
 			<module name = "ShaderTools" params = ""/>
+			<module name = "ThirdpartyTools" params = ""/>
 		</Module>
 
 	</ProjectData>

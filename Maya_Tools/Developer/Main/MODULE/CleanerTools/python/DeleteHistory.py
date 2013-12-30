@@ -8,5 +8,5 @@ def execute():
     transformNodes = cmds.ls(type = 'transform')
     for node in transformNodes:
         cmds.select(node)
-        mel.eval('DeleteHistory;')
-        print '-- Deleted history on mesh: ' + node
+        mel.eval('BakeAllNonDefHistory;')
+        print '-- Deleted non-deformable history on mesh: ' + node

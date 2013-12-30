@@ -11,9 +11,18 @@ mayaPath = '\"'+os.environ.get("PROGRAMFILES").replace('\\', '/')+'/Autodesk/'+o
 output = fileDirCommmon + 'log.txt'
 
 def execute():
-    print 'EXECUTING: SETUP ASSEMBLY SCENE----------------------------------'
-    commScript = '"python(\\\"import sys;sys.path.append(\'' + fileDirCommmon + '\'); import _01_setupAssembly as as; )"'
-    subprocess.Popen('"' + mayaPath + " -log " + errorOutput + " -c " + commScript + '"', shell = True)
+    print 'EXECUTING: SETUP ASSEMBLY SCENE ----------------------------------'
+    try:
+        createBBoxmesh()
+    except:
+        pass
+    try:
+        createCacheMesh()
+    except:
+        pass
+    namefile = os.path.split(cmds.file(q= True, sn = True))[1].split('.')[0]
+    commScript = '"python(\\\"import sys; sys.path.append(\'' + fileDirCommmon + '\'); import _01_setupAssembly as sa; sa.createAssembleDef(' + namefile + '))"'
+    subprocess.Popen('"' + mayaPath + " -log " + output + " -c " + commScript + '"', shell = True)
 
 def checkNaming():
     namefile = os.path.split(cmds.file(q= True, sn = True))[1].split('.')[0]
@@ -45,16 +54,11 @@ def createCacheMesh():
         print 'cannot create cache mesh'
         return
     
-def createAssembleDef():
-    try:
-        createBBoxmesh()
-    except:
-        pass
-    try:
-        createCacheMesh()
-    except:
-        pass
-    cmds.createNode('assemblyDefinition')
+def createAssembleDef(nameAssembly):
+    cmds.assembly(name = nameAssembly)
+    cmds.assembly(nameAssembly, edit = True, cr = 'locator', repName = 'locator', input = nameAssembly)
+    cmds.assembly(nameAssembly, edit = True, cr = 'Scene', repName = 'model', input = nameAssembly)
+    
     
 def createAssembleReferences():
     pass
