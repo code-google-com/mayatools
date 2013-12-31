@@ -7,7 +7,7 @@ fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 
 description = 'Set up Assembly scene.'
 name = 'setupAssembly'
-mayaPath = '\"'+os.environ.get("PROGRAMFILES").replace('\\', '/')+'/Autodesk/'+os.environ.get('MAYAVERSION')+'/bin/mayabatch.exe"'
+mayaPath = '\"'+os.environ.get("PROGRAMFILES").replace('\\', '/')+'/Autodesk/Maya'+os.environ.get('MAYAVERSION')+'/bin/mayabatch.exe"'
 output = fileDirCommmon + 'log.txt'
 
 def execute():
@@ -20,9 +20,11 @@ def execute():
         createCacheMesh()
     except:
         pass
-    namefile = os.path.split(cmds.file(q= True, sn = True))[1].split('.')[0]
+    namefile = cmds.file(q= True, sn = True)
     commScript = '"python(\\\"import sys; sys.path.append(\'' + fileDirCommmon + '\'); import _01_setupAssembly as sa; sa.createAssembleDef(' + namefile + '))"'
-    subprocess.Popen('"' + mayaPath + " -log " + output + " -c " + commScript + '"', shell = True)
+    print commScript
+    print mayaPath 
+    p = subprocess.Popen('"' + mayaPath + " -log " + output + " -c " + commScript + '"', shell = True)
 
 def checkNaming():
     namefile = os.path.split(cmds.file(q= True, sn = True))[1].split('.')[0]
@@ -54,11 +56,25 @@ def createCacheMesh():
         print 'cannot create cache mesh'
         return
     
-def createAssembleDef(nameAssembly):
-    cmds.assembly(name = nameAssembly)
-    cmds.assembly(nameAssembly, edit = True, cr = 'locator', repName = 'locator', input = nameAssembly)
-    cmds.assembly(nameAssembly, edit = True, cr = 'Scene', repName = 'model', input = nameAssembly)
+def createAssembleDef(pathModel): # using file model as input
     
+    nameAssemblyDefinition = os.path.split(pathModel)[1].split('.')[0]
+    cmds.assembly(name = nameAssemblyDefinition)
     
+    cmds.assembly(nameAssemblyDefinition, edit = True, cr = 'Locator', repName = 'locator', input = nameAssemblyDefinition)
+    cmds.assembly(nameAssemblyDefinition, edit = True, rl = 'locator', nrl = 'locator')
+    
+    cmds.assembly(nameAssemblyDefinition, edit = True, cr = 'Scene', repName = 'model', input = pathModel)
+    cmds.assembly(nameAssemblyDefinition, edit = True, rl = 'model', nrl = 'model')
+    
+    cmds.assembly(nameAssemblyDefinition, edit = True, cr = 'Scene', repName = 'bbox', input = pathModel.replace('.mb', '_bbox.mb'))
+    cmds.assembly(nameAssemblyDefinition, edit = True, rl = 'bbox', nrl = 'bbox')
+    
+    cmds.assembly(nameAssemblyDefinition, edit = True, cr = 'Cache', repName = 'cache', input = pathModel.replace('.mb', '.abc'))
+    cmds.assembly(nameAssemblyDefinition, edit = True, rl = 'cache', nrl = 'cache')
+    
+    cmds.file(rn = pathModel.replace('.mb','') + '_AD.mb')
+    cmds.file(s = True)
+   
 def createAssembleReferences():
     pass
