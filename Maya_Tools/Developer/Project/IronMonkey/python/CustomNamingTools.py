@@ -169,7 +169,7 @@ class CustomNamingTool(form_class,base_class):
         selObjs = cmds.ls(sl = True, l = True)
         cmds.select(cl = True)
         for node in selObjs:
-            try:
+            ##try:
                 kit = node.split('_')[-2]
                 lod = node.split('_')[-1]
                 #ext = node.split('_')[-3]
@@ -251,8 +251,8 @@ class CustomNamingTool(form_class,base_class):
                             cmds.parent(nullGroup, parts[0]+'|kit_'+kit)
                             cmds.rename(nullGroup,lod.replace('lod','lod_'))
                 cmds.parent(node, parent)
-            except:
-                errorMesh.append(node)
+            #except:
+                #errorMesh.append(node)
         print errorMesh
         
     def placeLocators(self):
