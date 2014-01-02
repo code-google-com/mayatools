@@ -428,7 +428,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btnLOD6">
+      <widget class="QPushButton" name="btnPulled">
        <property name="text">
         <string>PULLED</string>
        </property>
@@ -441,7 +441,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btnLOD7">
+      <widget class="QPushButton" name="btnSmall">
        <property name="text">
         <string>SMALL</string>
        </property>
@@ -454,7 +454,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btnLOD8">
+      <widget class="QPushButton" name="btnLarge">
        <property name="text">
         <string>LARGE</string>
        </property>
@@ -508,7 +508,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="cbbExhausted"/>
+          <widget class="QComboBox" name="comboBox"/>
          </item>
         </layout>
        </item>
