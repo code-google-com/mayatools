@@ -215,7 +215,7 @@ class TransferTools(form_class,base_class):
 #        self.killBatch()
 #        cmds.pause(sec = 1)  
 #    # load scene in background and update UI
-#        mayaPython = '"python(\\\"import sys;sys.path.append(\'' + fileDirCommmon + '\'); import transferFunction; transferFunction.getAssetBatchMode(execFile = \'' + mayafile + '\')\\\")"'
+        mayaPython = '"python(\\\"import sys;sys.path.append(\'' + fileDirCommmon + '\'); import transferFunction; transferFunction.getAssetBatchMode(execFile = \'' + mayafile + '\')\\\")"'
 #        errorOutput = '"' + transferFunction.root + 'error.txt"'
 #        p = subprocess.Popen('"' + mayaPath + " -log " + errorOutput + " -c " + mayaPython + '"', shell = True)
 #        t0 = time.time()

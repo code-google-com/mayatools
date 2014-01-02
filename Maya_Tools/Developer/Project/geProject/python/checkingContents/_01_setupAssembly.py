@@ -7,7 +7,8 @@ fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 
 description = 'Set up Assembly scene.'
 name = 'setupAssembly'
-mayaPath = '\"'+os.environ.get("PROGRAMFILES").replace('\\', '/')+'/Autodesk/Maya'+os.environ.get('MAYAVERSION')+'/bin/mayabatch.exe"'
+#mayaPath = '\"'+os.environ.get("PROGRAMFILES").replace('\\', '/')+'/Autodesk/Maya'+os.environ.get('MAYAVERSION')+'/bin/mayabatch.exe"'
+mayaPath = '\"'+os.environ.get("PROGRAMFILES").replace('\\', '/')+'/Autodesk/Maya2012/bin/mayabatch.exe"'
 output = fileDirCommmon + 'log.txt'
 
 def execute():
@@ -20,11 +21,12 @@ def execute():
         createCacheMesh()
     except:
         pass
-    namefile = cmds.file(q= True, sn = True)
-    commScript = '"python(\\\"import sys; sys.path.append(\'' + fileDirCommmon + '\'); import _01_setupAssembly as sa; sa.createAssembleDef(' + namefile + '))"'
-    print commScript
-    print mayaPath 
-    p = subprocess.Popen('"' + mayaPath + " -log " + output + " -c " + commScript + '"', shell = True)
+    #namefile = cmds.file(q= True, sn = True)
+    #commScript = '"python(\\\"import sys; sys.path.append(\'' + fileDirCommmon + '\'); import _01_setupAssembly as sa; sa.createAssembleDef(pathModel = \'' + namefile + '\')\\\")"'
+#mayaPython = '"python(\\\"import sys;sys.path.append(\'' + fileDirCommmon + '\'); import transferFunction; transferFunction.getAssetBatchMode(execFile = \'' + mayafile + '\')\\\")"'
+#
+    #p = subprocess.Popen('"' + mayaPath + " -log " + output + " -c " + commScript + '"', shell = True)
+    createAssembleDef(cmds.file(q= True, sn = True))
 
 def checkNaming():
     namefile = os.path.split(cmds.file(q= True, sn = True))[1].split('.')[0]
@@ -57,7 +59,11 @@ def createCacheMesh():
         return
     
 def createAssembleDef(pathModel): # using file model as input
+    if not checkNaming():
+        return False
     
+    cmds.file(s = True)
+    cmds.file(new = True, f = True)
     nameAssemblyDefinition = os.path.split(pathModel)[1].split('.')[0]
     cmds.assembly(name = nameAssemblyDefinition)
     
