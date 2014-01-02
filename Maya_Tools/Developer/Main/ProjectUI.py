@@ -75,7 +75,7 @@ class ProjectUI(form_class,base_class):
         self.setWindowTitle(self.Proj.ProjectName)
         self.assetGroupModel = QtGui.QStringListModel()
         self.assetListModel = QtGui.QStringListModel()
-        cmds.scriptJob(killAll = True, f = True)
+        #cmds.scriptJob(killAll = True, f = True)
         self.xmlFile = XMLProject
         self.loadProjectData()
         #print self.Proj.projectData 

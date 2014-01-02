@@ -63,6 +63,9 @@ class RecoverFiles(form_class,base_class):
                 self.signalChangeTexture.emit(path)
                 break
             
+    def on_tableWidgetResult_cellDoubleClicked(self, row, column):
+        print 'Okie'
+            
     def selectMissingTexture(self):
         row = self.tableWidgetResult.rowCount()
         column = self.tableWidgetResult.columnCount()

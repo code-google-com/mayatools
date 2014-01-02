@@ -18,18 +18,21 @@ def execute():
     f_dir = textures_dir + car_name
     if os.path.isdir(f_dir):
         for t in textures:
-            if 'common' in t.getAttr('fileTextureName'):
-                new_dir = common_dir + t.getAttr('fileTextureName').split('/')[-1]
-                t.setAttr('fileTextureName', new_dir, type='string')
-            else:
-                try:
-                    new_dir = f_dir + '/' + t.getAttr('fileTextureName').split('/')[-1]
-                    if not os.path.isfile(new_dir): # file texture not in engine folder
-                        shutil.copyfile(t.getAttr('fileTextureName'), str(new_dir))
-                        os.system('{b_f} {s_f}'.format(b_f = build_file, s_f = new_dir))
-                    t.setAttr('fileTextureName', new_dir, type='string')    
-                except:
-                    pass
+            try:
+                if 'common' in t.getAttr('fileTextureName'):
+                    new_dir = common_dir + t.getAttr('fileTextureName').split('/')[-1]
+                    t.setAttr('fileTextureName', new_dir, type='string')
+                else:
+                    try:
+                        new_dir = f_dir + '/' + t.getAttr('fileTextureName').split('/')[-1]
+                        if not os.path.isfile(new_dir): # file texture not in engine folder
+                            shutil.copyfile(t.getAttr('fileTextureName'), str(new_dir))
+                            os.system('{b_f} {s_f}'.format(b_f = build_file, s_f = new_dir))
+                        t.setAttr('fileTextureName', new_dir, type='string')    
+                    except:
+                        pass
+            except:
+                pass
     else:
         QtGui.QMessageBox.critical(None,'Wrong car name','Please correct filename following asset name.',QtGui.QMessageBox.Ok)
     
