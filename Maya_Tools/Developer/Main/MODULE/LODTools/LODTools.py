@@ -395,6 +395,12 @@ class LODTools(form_class,base_class):
                 self._nohide.append('large_type_c_layer')
             if self.btnLOD3.isChecked():
                 self._nohide.append('large_type_d_layer')
+<<<<<<< .working
+=======
+                
+        
+        print self._nohide      
+>>>>>>> .merge-right.r127
         displayLayerNotWork = [layer for layer in cmds.ls(type = 'displayLayer') if layer not in self._nohide]
         for l in displayLayerNotWork:
             cmds.setAttr(l + '.visibility', 0)
