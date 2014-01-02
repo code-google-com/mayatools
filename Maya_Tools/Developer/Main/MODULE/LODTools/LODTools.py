@@ -455,8 +455,10 @@ class LODTools(form_class,base_class):
             LODb = mappingLODs(self._projectName,'_SHADOW_')
         # ------------------------------------------------
         ###########################################################################
+        '''
         type_a = list()
         if not self.btnLOD0.isChecked():
+            print '**************************************'
             cmds.setAttr('type_a_layer.visibility', 1)
             if self.chkBumper_front.isChecked():
                 if 'type_a_layer' not in self._nohide:
@@ -486,6 +488,7 @@ class LODTools(form_class,base_class):
             type_a = cmds.ls('standard_type_a')
             for g in type_a:
                 cmds.setAttr(g + '.visibility', 1)
+        '''
         ###########################################################################
         listLayer = [layer for layer in cmds.ls(type='displayLayer') if layer not in ['defaultLayer']]
         #print listLayer
@@ -603,16 +606,35 @@ class LODTools(form_class,base_class):
             
     def loadLODSource(self,lodNum):
         layerLod = ['lod_0'+str(lodNum)+'_layer','spoilers','base_car_layer','locator_layer']
-        if self.btnLOD0.isChecked():
+        if self.chkBumper_front.isChecked():
+            layerLod.append('type_a_layer')
+        if self.chkBumper_rear.isChecked():
+            layerLod.append('type_a_layer')
+        if self.chkSide_skirt.isChecked():
+            layerLod.append('type_a_layer')
+        if self.chkHood.isChecked():
             layerLod.append('type_a_layer')
                     
-        elif self.btnLOD1.isChecked():
-            layerLod.append('type_b_layer')
+        if self.btnLOD0.isChecked():
+            layerLod.append('type_a_layer')
             if self.btnPulled.isChecked():
                 layerLod.append('pulled_type_a_layer')
                 layerLod.append('pulled_wheel_arch_layer')
             elif self.btnSmall.isChecked():
                 layerLod.append('small_overfenders_layer')
+            elif self.btnLarge.isChecked():
+                layerLod.append('large_overfenders_layer')
+                    
+        elif self.btnLOD1.isChecked():
+            layerLod.append('type_b_layer')
+            if self.btnPulled.isChecked():
+                layerLod.append('pulled_type_b_layer')
+                layerLod.append('pulled_wheel_arch_layer')
+            elif self.btnSmall.isChecked():
+                layerLod.append('small_overfenders_layer')
+            elif self.btnLarge.isChecked():
+                layerLod.append('large_overfenders_layer')
+                    
            
         elif self.btnLOD2.isChecked():
             layerLod.append('type_c_layer')
@@ -633,27 +655,36 @@ class LODTools(form_class,base_class):
             elif self.btnSmall.isChecked():
                 layerLod.append('small_overfenders_layer')
             elif self.btnLarge.isChecked():
-                layerLod.append('large_type_d_layer')
+                #layerLod.append('large_type_d_layer')
                 layerLod.append('large_overfenders_layer')
         
         elif self.btnLOD4.isChecked():
-            layerLod.append('type_y_layer')
+            #layerLod.append('type_y_layer')
             if self.btnSmall.isChecked():
                 layerLod.append('small_overfenders_layer')
             elif self.btnLarge.isChecked():
                 layerLod.append('large_overfenders_layer')
         
         elif self.btnLOD5.isChecked():
-            layerLod.append('type_z_layer')
+            #layerLod.append('type_z_layer')
             if self.btnSmall.isChecked():
                 layerLod.append('small_overfenders_layer')
             elif self.btnLarge.isChecked():
-                layerLod.append('large_overfenders_layer')
-            
-        
+                layerLod.append('large_overfenders_layer')      
         return layerLod
+    
     def loadLODTarget(self,lodNum):
         layerLod = ['lod_0'+str(lodNum)+'_layer','spoilers','base_car_layer','locator_layer']
+        
+        if self.chkBumper_front.isChecked():
+            layerLod.append('type_a_layer')
+        if self.chkBumper_rear.isChecked():
+            layerLod.append('type_a_layer')
+        if self.chkSide_skirt.isChecked():
+            layerLod.append('type_a_layer')
+        if self.chkHood.isChecked():
+            layerLod.append('type_a_layer')
+        
         if self.btnLOD0.isChecked():
             layerLod.append('type_a_layer')
             
@@ -682,16 +713,16 @@ class LODTools(form_class,base_class):
             elif self.btnSmall.isChecked():
                 layerLod.append('small_overfenders_layer')
             elif self.btnLarge.isChecked():
-                layerLod.append('large_type_d_layer')
+                #layerLod.append('large_type_d_layer')
                 layerLod.append('large_overfenders_layer')
         elif self.btnLOD4.isChecked():
-            layerLod.append('type_y_layer')
+            #layerLod.append('type_y_layer')
             if self.btnSmall.isChecked():
                 layerLod.append('small_overfenders_layer')
             elif self.btnLarge.isChecked():
                 layerLod.append('large_overfenders_layer')
         elif self.btnLOD5.isChecked():
-            layerLod.append('type_z_layer')
+            #layerLod.append('type_z_layer')
             if self.btnSmall.isChecked():
                 layerLod.append('small_overfenders_layer')
             elif self.btnLarge.isChecked():
@@ -740,33 +771,6 @@ class LODTools(form_class,base_class):
         cmds.setAttr(LODsChain[indexofCurrentLOD] + '.visibility', False)
                 
     ########################## LOAD LAYER
-    '''
-    def nextLayerSwap_Clicked(self):
-        nextLayer = self.getNextLayer()
-        cmds.setAttr(nextLayer + '.visibility', 1)
-        preLayer = self.getPreLayer()
-        cmds.setAttr(preLayer + '.visibility', 0)
-    '''
-    ######################### GETLIST LAYER
-    '''
-    def getPreLayer(self,wheelArch):
-        listLayer = [layer for layer in cmds.ls(type='displayLayer') if layer not in ['defaultLayer']]
-        if wheelArch == 'Standard':
-            listType = [type for type in listLayer if re.search('(.*)type(\.*)', type)]
-            
-        if wheelArch == 'PULLED':
-            listType = [type for type in listLayer if re.search('(.*)type(\.*)', type)]
-        if wheelArch =='SMALL':
-            listType = [type for type in listLayer if re.search('(.*)type(\.*)', type)]
-        if wheelArch =='LARGE':
-            listType = [type for type in listLayer if re.search('(.*)type(\.*)', type)]
-        
-        preIndex=''
-        for index, obj in enumerate(listLayer):
-           preIndex = listLayer[index]
-           break
-        return preIndex
-        '''
     ########################## FUNCTION GET VALUE
     
     def loadStandard_Clicked(self):
@@ -774,15 +778,16 @@ class LODTools(form_class,base_class):
         cmds.setAttr('pulled_type_d_layer.visibility', 0)
         cmds.setAttr('pulled_type_c_layer.visibility', 0)
         cmds.setAttr('pulled_wheel_arch_layer.visibility', 0)
-        cmds.setAttr('large_type_d_layer.visibility', 0)
+        #cmds.setAttr('large_type_d_layer.visibility', 0)
         cmds.setAttr('large_type_c_layer.visibility', 0)
         cmds.setAttr('large_overfenders_layer.visibility', 0)
         cmds.setAttr('small_overfenders_layer.visibility', 0)
          
     def loadPulled_Clicked(self):
+        print 'load Pulled'
         listLayer = [layer for layer in cmds.ls(type='displayLayer') if layer not in ['defaultLayer']]
         listType = [type for type in listLayer if re.search('type', type)]
-        cmds.setAttr('large_type_d_layer.visibility', 0)
+        #cmds.setAttr('large_type_d_layer.visibility', 0)
         cmds.setAttr('large_type_c_layer.visibility', 0)
         cmds.setAttr('large_overfenders_layer.visibility', 0)
         cmds.setAttr('small_overfenders_layer.visibility', 0)
@@ -794,11 +799,19 @@ class LODTools(form_class,base_class):
                     cmds.setAttr('pulled_type_d_layer.visibility', 0)
                     cmds.setAttr('pulled_type_c_layer.visibility', 0)
                     cmds.setAttr('pulled_wheel_arch_layer.visibility', 1)
-        
+            if type == 'type_b_layer':
+                visible = cmds.getAttr(type+'.visibility')
+                if visible ==1:
+                    cmds.setAttr('pulled_type_a_layer.visibility', 0)
+                    cmds.setAttr('pulled_type_b_layer.visibility', 1)
+                    cmds.setAttr('pulled_type_d_layer.visibility', 0)
+                    cmds.setAttr('pulled_type_c_layer.visibility', 0)
+                    cmds.setAttr('pulled_wheel_arch_layer.visibility', 1)
             if type == 'type_c_layer':
                 visible = cmds.getAttr(type+'.visibility')
                 if visible==1:
                     cmds.setAttr('pulled_type_a_layer.visibility', 0)
+                    cmds.setAttr('pulled_type_b_layer.visibility', 0)
                     cmds.setAttr('pulled_type_d_layer.visibility', 0)
                     cmds.setAttr('pulled_type_c_layer.visibility', 1)
                     cmds.setAttr('pulled_wheel_arch_layer.visibility', 1)
@@ -806,17 +819,19 @@ class LODTools(form_class,base_class):
                 visible = cmds.getAttr(type+'.visibility')
                 if visible==1:
                     cmds.setAttr('pulled_type_a_layer.visibility', 0)
+                    cmds.setAttr('pulled_type_b_layer.visibility', 0)
                     cmds.setAttr('pulled_type_d_layer.visibility', 1)
                     cmds.setAttr('pulled_type_c_layer.visibility', 0)
                     cmds.setAttr('pulled_wheel_arch_layer.visibility', 1)
            
     def loadSmall_Clicked(self):
         cmds.setAttr('pulled_type_a_layer.visibility', 0)
+        cmds.setAttr('pulled_type_b_layer.visibility', 0)
         cmds.setAttr('pulled_type_d_layer.visibility', 0)
         cmds.setAttr('pulled_type_c_layer.visibility', 0)
         cmds.setAttr('pulled_wheel_arch_layer.visibility', 0)
-        cmds.setAttr('large_type_d_layer.visibility', 0)
-        cmds.setAttr('large_type_c_layer.visibility', 0)
+        #cmds.setAttr('large_type_d_layer.visibility', 0)
+        #cmds.setAttr('large_type_c_layer.visibility', 0)
         cmds.setAttr('large_overfenders_layer.visibility', 0)
         cmds.setAttr('small_overfenders_layer.visibility', 1)
         
@@ -824,6 +839,7 @@ class LODTools(form_class,base_class):
         listLayer = [layer for layer in cmds.ls(type='displayLayer') if layer not in ['defaultLayer']]
         listType = [type for type in listLayer if re.search('type', type)]
         cmds.setAttr('pulled_type_a_layer.visibility', 0)
+        cmds.setAttr('pulled_type_b_layer.visibility', 0)
         cmds.setAttr('pulled_type_d_layer.visibility', 0)
         cmds.setAttr('pulled_type_c_layer.visibility', 0)
         cmds.setAttr('pulled_wheel_arch_layer.visibility', 0)
@@ -832,13 +848,13 @@ class LODTools(form_class,base_class):
             if type=='type_c_layer':
                 visible = cmds.getAttr(type+'.visibility')
                 if visible==1:
-                    cmds.setAttr('large_type_d_layer.visibility', 0)
+                    #cmds.setAttr('large_type_d_layer.visibility', 0)
                     cmds.setAttr('large_type_c_layer.visibility', 1)
                     cmds.setAttr('large_overfenders_layer.visibility', 1)
             if type =='type_d_layer':
                 visible = cmds.getAttr(type+'.visibility')
                 if visible==1:
-                    cmds.setAttr('large_type_d_layer.visibility', 1)
+                    #cmds.setAttr('large_type_d_layer.visibility', 1)
                     cmds.setAttr('large_type_c_layer.visibility', 0)
                     cmds.setAttr('large_overfenders_layer.visibility', 1)
     
