@@ -46,6 +46,25 @@ class cleanerWidget(QtGui.QWidget):
     def emitSignal(self):
         self.checkedContent.emit(str(self.chkbox.isChecked()) + '_' + self.name)
         print self.name
+        
+class cleanerSetWidget(dW.DockWidget):
+    def __init__(self, folderName):
+        super(dW.DockWidget, self).__init__(os.path.split(folderName)[-1])
+        self._dir = folderName
+        margins = QtCore.QMargins(1,1,1,1)
+        self._layout = QtGui.QVBoxLayout()
+        self._layout.setSpacing(1)
+        self._layout.setContentsMargins(margins) 
+        self._container = QtGui.QWidget()
+        self._container.setLayout(self._layout)
+        self.setWidget(self._container)
+        self.loadChildrenTesting()
+        
+    def loadChildrenTesting(self):
+        contentToCleanUpCommon = [(self._dir + '/' + f) for f in os.listdir(self._dir) if f.endswith('py')]
+        for module in contentToCleanUpCommon:
+            widget = cleanerWidget(module)
+            self._layout.addLayout(widget.layout)
 
 class ClearTools(form_class,base_class):
     def __init__(self, inputFile):
@@ -55,52 +74,62 @@ class ClearTools(form_class,base_class):
         self._contentCleanUp = list()
         self._customCheck = inputFile
         self.btnCheckAll.clicked.connect(self.executeAll)
-        margins = QtCore.QMargins(1,1,1,1)
+#         margins = QtCore.QMargins(1,1,1,1)
+#         
+#         self.commonDock = dW.DockWidget('COMMON TESTING')
+#         self.projectDock = dW.DockWidget('PROJECT TESTING')
         
-        self.commonDock = dW.DockWidget('COMMON TESTING')
-        self.projectDock = dW.DockWidget('PROJECT TESTING')
+#         self.contents.addWidget(self.commonDock)
+#         self.contents.addWidget(self.projectDock)
         
-        self.contents.addWidget(self.commonDock)
-        self.contents.addWidget(self.projectDock)
+#         self._widgetCommon = QtGui.QWidget()
+#         self._widgetProject = QtGui.QWidget()
         
-        self._widgetCommon = QtGui.QWidget()
-        self._widgetProject = QtGui.QWidget()
-        
-        self._layoutCommon = QtGui.QVBoxLayout()
-        self._layoutCommon.setSpacing(1)
-        self._layoutCommon.setContentsMargins(margins) 
-        self._layoutProject = QtGui.QVBoxLayout()
-        self._layoutProject.setSpacing(1)
-        self._layoutProject.setContentsMargins(margins) 
-    
-        self._widgetCommon.setLayout(self._layoutCommon)
-        self._widgetProject.setLayout(self._layoutProject)
-        
-        self.commonDock.setWidget(self._widgetCommon)
-        self.projectDock.setWidget(self._widgetProject)
+#         self._layoutCommon = QtGui.QVBoxLayout()
+#         self._layoutCommon.setSpacing(1)
+#         self._layoutCommon.setContentsMargins(margins) 
+#         self._layoutProject = QtGui.QVBoxLayout()
+#         self._layoutProject.setSpacing(1)
+#         self._layoutProject.setContentsMargins(margins) 
+#     
+#         self._widgetCommon.setLayout(self._layoutCommon)
+#         self._widgetProject.setLayout(self._layoutProject)
+#         
+#         self.commonDock.setWidget(self._widgetCommon)
+#         self.projectDock.setWidget(self._widgetProject)
         
         self.loadFunction()
         
     def loadFunction(self):
-        #idColor = 0
-        contentToCleanUpCommon = [(fileDirCommmon + '/python/' + f) for f in os.listdir(fileDirCommmon + '/python/') if f.endswith('py')]
+        contentToCleanUpCommon = [(fileDirCommmon + '/' + f) for f in os.listdir(fileDirCommmon) if os.path.isdir(fileDirCommmon + '/' + f) and f != 'UI']
         contentToCleanUpProject = []
         project = self._customCheck.split('.')[0]
-        print project
         customPath = os.path.split(os.path.split(os.path.split(fileDirCommmon)[0])[0])[0]
         try:
-            contentToCleanUpProject = [(customPath + '/Project/' + project + '/python/checkingContents/' + f) for f in os.listdir(customPath + '/Project/' + project + '/python/checkingContents/')if f.endswith('py')]
+             contentToCleanUpProject = [(customPath + '/Project/' + project + '/python/' + f) for f in os.listdir(customPath + '/Project/' + project + '/python/')if os.path.isdir(customPath + '/Project/' + project + '/python/' + f) and f != 'UI']
         except:
-            pass
-        print contentToCleanUpProject
-        for module in contentToCleanUpCommon + contentToCleanUpProject:
-            widget = cleanerWidget(module)
-            if module in contentToCleanUpCommon:
-                self._layoutCommon.addLayout(widget.layout)
-            if module in contentToCleanUpProject:
-                self._layoutProject.addLayout(widget.layout)
-            self._contentCleanUp.append(widget.name)
-            widget.tooggledStatus.connect(self.updateContent)
+             pass
+        for f in contentToCleanUpCommon + contentToCleanUpProject:
+            self.contents.addWidget(cleanerSetWidget(f))
+        #idColor = 0
+#         contentToCleanUpCommon = [(fileDirCommmon + '/python/' + f) for f in os.listdir(fileDirCommmon + '/python/') if f.endswith('py')]
+#         contentToCleanUpProject = []
+#         project = self._customCheck.split('.')[0]
+#         print project
+#         customPath = os.path.split(os.path.split(os.path.split(fileDirCommmon)[0])[0])[0]
+#         try:
+#             contentToCleanUpProject = [(customPath + '/Project/' + project + '/python/checkingContents/' + f) for f in os.listdir(customPath + '/Project/' + project + '/python/checkingContents/')if f.endswith('py')]
+#         except:
+#             pass
+#         print contentToCleanUpProject
+#         for module in contentToCleanUpCommon + contentToCleanUpProject:
+#             widget = cleanerWidget(module)
+#             if module in contentToCleanUpCommon:
+#                 self._layoutCommon.addLayout(widget.layout)
+#             if module in contentToCleanUpProject:
+#                 self._layoutProject.addLayout(widget.layout)
+#             self._contentCleanUp.append(widget.name)
+#             widget.tooggledStatus.connect(self.updateContent)
             
     def updateContent(self, strResult):
         if bool(strResult.split('_')[0]):

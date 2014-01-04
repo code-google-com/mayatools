@@ -1,4 +1,4 @@
-import os, re, random, subprocess, inspect
+import os, re, random, inspect
 import maya.mel as mel
 import maya.cmds as cmds
 from xml.dom.minidom import *
@@ -6,7 +6,7 @@ from xml.dom.minidom import *
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 
 description = 'Set up Assembly scene.'
-name = 'setupAssembly'
+name = '_01_setupAssembly'
 #mayaPath = '\"'+os.environ.get("PROGRAMFILES").replace('\\', '/')+'/Autodesk/Maya'+os.environ.get('MAYAVERSION')+'/bin/mayabatch.exe"'
 mayaPath = '\"'+os.environ.get("PROGRAMFILES").replace('\\', '/')+'/Autodesk/Maya2012/bin/mayabatch.exe"'
 output = fileDirCommmon + 'log.txt'

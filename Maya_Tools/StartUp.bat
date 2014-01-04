@@ -39,12 +39,8 @@ IF %ERRORLEVEL% == 2 SET MAYAVERSION=2012
 IF %ERRORLEVEL% == 3 SET MAYAVERSION=2013.5
 IF %ERRORLEVEL% == 4 SET MAYAVERSION=2014
 
-
-
 REM #### Set up paths for Maya working properly ### 
 REM #### Get This script path
-
-
 
 SET COMMONPATH=%~dp0
 
@@ -58,6 +54,7 @@ SET MAYA_PLUG_IN_PATH=%COMMONPATH%Developer\Main\MODULE\CustomNode;%MAYA_PLUG_IN
 
 REM ### Set Script path
 SET MAYA_SCRIPT_PATH=%COMMONPATH%Developer\Main\MODULE\PolyTools\mel;%COMMONPATH%Developer\Main\MODULE\CrydevTools\mel;%MAYA_SCRIPT_PATH%
+SET XBMLANGPATH=%COMMONPATH%Developer\Main\MODULE\ThirdpartyTools\icons;%XBMLANGPATH%
 
 REM ### Start Golaem startup file
 CALL "E:\Program Files\Golaem\GolaemCrowd-2.5.0.1-Maya2014-64bit\bin\glmCrowdForMaya.bat"

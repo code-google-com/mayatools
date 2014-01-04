@@ -3,25 +3,14 @@ import maya.mel as mel
 import pymel.core as py
 from PyQt4 import QtGui, QtCore, uic
 import os, sys, inspect
-# from pymel.core import *
+
 import functools 
-# import boltUvRatio
-# import math
-# 
-# import Source.IconResource_rc
-# reload(Source.IconResource_rc)
-# 
-# import CommonFunctions as cf
-# reload(cf)
-# 
-# from MODULE.PolyTools import PolyTools as pt
-# reload(pt)
-# 
-# from MODULE.ShaderTools import ShaderTools as st
-# reload(st)
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/ThirdpartyTools.ui'
+
+# set icon path
+
 
 form_class, base_class = uic.loadUiType(dirUI)
 

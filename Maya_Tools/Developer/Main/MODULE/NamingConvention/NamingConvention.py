@@ -114,7 +114,7 @@ class NamingConvention(form_class,base_class):
             self.lowerCase()
         
     def selectNode(self, param):
-        cmds.select('*'+ param + '*')
+        cmds.select(param)
         selObjects = cmds.ls(sl = True)
         print 'Co ' +  str(len(selObjects)) + ' object duoc chon.'
         
