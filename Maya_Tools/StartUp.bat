@@ -53,7 +53,7 @@ REM ### Set Plugin path
 SET MAYA_PLUG_IN_PATH=%COMMONPATH%Developer\Main\MODULE\CustomNode;%MAYA_PLUG_IN_PATH%
 
 REM ### Set Script path
-SET MAYA_SCRIPT_PATH=%COMMONPATH%Developer\Main\MODULE\PolyTools\mel;%COMMONPATH%Developer\Main\MODULE\CrydevTools\mel;%MAYA_SCRIPT_PATH%
+SET MAYA_SCRIPT_PATH=%COMMONPATH%Developer\Main\MODULE\PolyTools\mel;%COMMONPATH%Developer\Main\MODULE\CrydevTools\mel;%COMMONPATH%Developer\Main\MODULE\CustomNode\AETemplates;%MAYA_SCRIPT_PATH%
 SET XBMLANGPATH=%COMMONPATH%Developer\Main\MODULE\ThirdpartyTools\icons;%XBMLANGPATH%
 
 REM ### Start Golaem startup file
