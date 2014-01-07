@@ -6,6 +6,11 @@ import imp
 import functools
 import dockWidget as dW
 
+# try:
+#     reload(Source.IconResource_rc)
+# except:
+#     import Source.IconResource_rc
+
 #BGColors = [[202,202,202],[255,255,255]]
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 dirUI= fileDirCommmon +'/UI/CleanerTools.ui'
@@ -50,6 +55,8 @@ class cleanerWidget(QtGui.QWidget):
 class cleanerSetWidget(dW.DockWidget):
     def __init__(self, folderName):
         super(dW.DockWidget, self).__init__(os.path.split(folderName)[-1])
+        self.titleBar = dW.DockWidgetTitleBar(self)
+        self.setTitleBarWidget(self.titleBar)
         self._dir = folderName
         margins = QtCore.QMargins(1,1,1,1)
         self._layout = QtGui.QVBoxLayout()

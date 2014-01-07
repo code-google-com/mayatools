@@ -1,6 +1,11 @@
             
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+
+try:
+    reload(Source.IconResource_rc)
+except:
+    import Source.IconResource_rc
                   
 def hasFeature(dockwidget, feature):
     return dockwidget.features() & feature == feature
