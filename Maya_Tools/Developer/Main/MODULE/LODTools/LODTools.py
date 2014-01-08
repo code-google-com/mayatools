@@ -380,7 +380,7 @@ class LODTools(form_class,base_class):
         self._nohide.append(LODb)
         self._nohide.append('defaultLayer')
         self._nohide.append(self._currentPart)
-        if self.btnLOD6.isChecked(): # pulled
+        if self.btnLOD6.isChecked():
             cmds.setAttr('wheel_arch|standard.visibility', 0)
             print 'pulled'
             self._nohide.append('pulled_wheel_arch_layer') 
@@ -392,11 +392,8 @@ class LODTools(form_class,base_class):
                 self._nohide.append('pulled_type_c_layer')
             if self.btnLOD3.isChecked():
                 self._nohide.append('pulled_type_d_layer')
-                
-        if self.btnLOD7.isChecked(): # small
-            self._nohide.append('small_overfenders_layer') 
                  
-        if self.btnLOD8.isChecked(): # large
+        if self.btnLOD8.isChecked():
             cmds.setAttr('wheel_arch|standard.visibility', 1)
             print 'large'
             self._nohide.append('large_overfenders_layer')
@@ -409,13 +406,8 @@ class LODTools(form_class,base_class):
             if self.btnLOD3.isChecked():
                 self._nohide.append('large_type_d_layer')
                 
-        print self._nohide    
-        for l in self._nohide:
-            if l not in [LODa, LODb]:
-                try:
-                    cmds.setAttr(l + '.visibility', 1)
-                except:
-                    pass  
+        
+        print self._nohide      
         displayLayerNotWork = [layer for layer in cmds.ls(type = 'displayLayer') if layer not in self._nohide]
         for l in displayLayerNotWork:
             cmds.setAttr(l + '.visibility', 0)
