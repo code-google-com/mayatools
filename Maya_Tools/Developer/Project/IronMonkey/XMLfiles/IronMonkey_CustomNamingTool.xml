@@ -6,9 +6,9 @@
 	<kit name = 'type_d' shortname = "d"/>
 	<kit name = 'type_z' shortname = "z"/>
 	<kit name = 'type_y' shortname = "y"/>
-	<kit name = 'pulled' shortname = "same"/>
-	<kit name = 'small' shortname = "same"/>
-	<kit name = 'large' shortname = "same"/>
+	<kit name = 'pulled' shortname = "pulled"/>
+	<kit name = 'small' shortname = "small"/>
+	<kit name = 'large' shortname = "large"/>
 	
 	<lod name = "lod00" shortname = "same"/>
 	<lod name = "lod01" shortname = "same"/>
