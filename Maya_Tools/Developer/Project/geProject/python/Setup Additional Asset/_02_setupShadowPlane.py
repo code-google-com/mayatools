@@ -7,7 +7,7 @@ import pymel.core.datatypes as dt
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 
-description = 'Setup a shadow plane.'
+description = 'Set up Shadow plane.'
 name = '_02_setupShadowPlane'
 
 def checkNaming():
