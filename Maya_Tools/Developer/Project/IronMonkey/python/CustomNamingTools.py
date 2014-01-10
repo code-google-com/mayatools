@@ -224,7 +224,7 @@ class CustomNamingTool(form_class,base_class):
                         cmds.rename(nullGroup,lod.replace('lod','lod_'))
                         
                 elif parts[0] in ['caliper_rear_left','caliper_rear_right','caliper_front_left','caliper_front_right']:
-                    parent = 'J_suspension_bottom_' + parts[0].replace('caliper_','') +'|caliper|type_'+kit+'|'+ lod.replace('lod','lod_')
+                    parent = 'J_suspension_bottom_' + parts[0].replace('caliper_','') +'|caliper|type_a|'+ lod.replace('lod','lod_')
                     if not cmds.objExists(parent):
                         nullGroup = cmds.group(em = True)
                         cmds.parent(nullGroup, 'J_suspension_bottom_' + parts[0].replace('caliper_','') +'|caliper|type_'+kit)

@@ -7,11 +7,6 @@ import sip
 from xml.dom.minidom import *
 import maya.OpenMayaUI as OpenMayaUI
 
-# try:
-#     reload(Source.IconResource_rc)
-# except:
-#     import Source.IconResource_rc
-    
 try:
     reload(dockWidget)
 except:

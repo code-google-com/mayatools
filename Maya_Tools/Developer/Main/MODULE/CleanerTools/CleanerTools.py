@@ -4,14 +4,8 @@ import os, sys, inspect
 import maya.mel as mel
 import imp
 import functools
-import dockWidget as dW
+import dockWidget
 
-# try:
-#     reload(Source.IconResource_rc)
-# except:
-#     import Source.IconResource_rc
-
-#BGColors = [[202,202,202],[255,255,255]]
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 dirUI= fileDirCommmon +'/UI/CleanerTools.ui'
 
@@ -52,10 +46,10 @@ class cleanerWidget(QtGui.QWidget):
         self.checkedContent.emit(str(self.chkbox.isChecked()) + '_' + self.name)
         print self.name
         
-class cleanerSetWidget(dW.DockWidget):
+class cleanerSetWidget(dockWidget.DockWidget):
     def __init__(self, folderName):
-        super(dW.DockWidget, self).__init__(os.path.split(folderName)[-1])
-        self.titleBar = dW.DockWidgetTitleBar(self)
+        super(dockWidget.DockWidget, self).__init__(os.path.split(folderName)[-1])
+        self.titleBar = dockWidget.DockWidgetTitleBar(self)
         self.setTitleBarWidget(self.titleBar)
         self._dir = folderName
         margins = QtCore.QMargins(1,1,1,1)
@@ -81,29 +75,6 @@ class ClearTools(form_class,base_class):
         self._contentCleanUp = list()
         self._customCheck = inputFile
         self.btnCheckAll.clicked.connect(self.executeAll)
-#         margins = QtCore.QMargins(1,1,1,1)
-#         
-#         self.commonDock = dW.DockWidget('COMMON TESTING')
-#         self.projectDock = dW.DockWidget('PROJECT TESTING')
-        
-#         self.contents.addWidget(self.commonDock)
-#         self.contents.addWidget(self.projectDock)
-        
-#         self._widgetCommon = QtGui.QWidget()
-#         self._widgetProject = QtGui.QWidget()
-        
-#         self._layoutCommon = QtGui.QVBoxLayout()
-#         self._layoutCommon.setSpacing(1)
-#         self._layoutCommon.setContentsMargins(margins) 
-#         self._layoutProject = QtGui.QVBoxLayout()
-#         self._layoutProject.setSpacing(1)
-#         self._layoutProject.setContentsMargins(margins) 
-#     
-#         self._widgetCommon.setLayout(self._layoutCommon)
-#         self._widgetProject.setLayout(self._layoutProject)
-#         
-#         self.commonDock.setWidget(self._widgetCommon)
-#         self.projectDock.setWidget(self._widgetProject)
         
         self.loadFunction()
         
