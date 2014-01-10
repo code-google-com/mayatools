@@ -21,45 +21,7 @@
 		<FeedbacksPath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/Feedbacks/</FeedbacksPath>
 		<ReferencesImagePath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/Documents/</ReferencesImagePath>
 	</Directories>
-	<Structures_Asset group = "True">
-		<folder name = "maya">
-			<folder name = "wheel" type = "stage"/>		
-			<folder name = "typea" type = "stage">
-				<folder name = "lod00" type = "LOD"/>
-				<folder name = "lod01" type = "LOD"/>
-				<folder name = "lod02" type = "LOD"/>
-				<folder name = "lod03" type = "LOD"/>
-				<folder name = "lod04" type = "LOD"/>
-				<folder name = "lod05" type = "LOD"/>
-			</folder>
-			<folder name = "typeb" type = "stage">
-				<folder name = "lod00" type = "LOD"/>
-				<folder name = "lod00" type = "LOD"/>
-				<folder name = "lod01" type = "LOD"/>
-				<folder name = "lod02" type = "LOD"/>
-				<folder name = "lod03" type = "LOD"/>
-				<folder name = "lod04" type = "LOD"/>
-				<folder name = "lod05" type = "LOD"/>
-			</folder>
-			<folder name = "typec" type = "stage">
-				<folder name = "lod00" type = "LOD"/>
-				<folder name = "lod01" type = "LOD"/>
-				<folder name = "lod02" type = "LOD"/>
-				<folder name = "lod03" type = "LOD"/>
-				<folder name = "lod04" type = "LOD"/>
-				<folder name = "lod05" type = "LOD"/>
-			</folder>
-			<folder name = "typed" type = "stage">
-				<folder name = "lod00" type = "LOD"/>
-				<folder name = "lod01" type = "LOD"/>
-				<folder name = "lod02" type = "LOD"/>
-				<folder name = "lod03" type = "LOD"/>
-				<folder name = "lod04" type = "LOD"/>
-				<folder name = "lod05" type = "LOD"/>
-			</folder>
-		</folder>
-		<folder name = "textures"/>
-		<folder name = "export"/>
+	<Structures_Asset group = "True">	
 	</Structures_Asset>
 	<ProjectData>
 		<Template file = "Sony_template_file.mb"/>
@@ -68,7 +30,6 @@
 			<module name = "NamingConvention" params = ''/>
 			<module name = "CleanerTools" params = "yes"/>
 			<module name = "Pivots" />
-			<module name = "LODTools" />
 			<module name = "UVTools" />
 			<module name = "PolyTools" />
 			<module name = "CrydevTools" />
