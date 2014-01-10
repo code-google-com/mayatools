@@ -13,7 +13,8 @@ f2_dir=[]
 tempDir = []
 published_dir = 'C:/development/marmoset/app/res/published/data/car_descriptions'
 master_dir = 'C:/development/marmoset/app/res/master/data/car_descriptions'
-localPath = 'Z:/Project/RR_2014'
+#serverPath = '//glassegg.com/Scenes/RR_2014/To_Client/Today'
+serverPath = 'T:/Scenes/RR_2014/To_Client/Today'
 
         
 def execute(self):
@@ -24,31 +25,21 @@ def execute(self):
     mel.eval('showHidden -all;')
     # Get Carname
     car_name= cmds.file(q= True, sn = True).split('/')[-1].split('.')[0]
-    #get LocalPath
-    #LocalPath = readXMLFile(xmlDir)
-    localFolder = localPath +'/'+ 'Cars'+'/'+ car_name +'/'+'To_Client'
+    car_folder = serverPath +'/'+ car_name
+    
     f1_dir = published_dir +'/'+car_name +'.sb'
-    file1 = f1_dir.split('/',2)
-    path,file = os.path.split(f1_dir)
-    
-
-    
+    #file1 = f1_dir.split('/',2)
+    #path,file = os.path.split(f1_dir)
+        
     f2_dir = master_dir +'/'+car_name +'.sx'
-    print 'file1'
-    print file1
-    print 'duong dan thu muc'
-    print localFolder
-    print'file collada F1:'
-    print f1_dir
-    print 'f2_dir'
-    print f2_dir
+   
     
-    if not os.path.exists(localFolder):
-        os.makedirs(localFolder)
+    if not os.path.exists(car_folder):
+        os.makedirs(car_folder)
     
     if os.path.dirname(f1_dir):
         tempDir = 'marmoset/app/res/published/data/car_descriptions/'    
-        dstdir = os.path.join(localFolder, os.path.dirname(tempDir))
+        dstdir = os.path.join(car_folder, os.path.dirname(tempDir))
         print 'dstdir'
         print dstdir
         if not os.path.exists(dstdir):
@@ -57,9 +48,9 @@ def execute(self):
     else:
         QtGui.QMessageBox.critical(None,'Wrong car name','Please import car to Collada before copy file.',QtGui.QMessageBox.Ok)
      
-    if os.path.dirname(f1_dir):
-        temDir1 = 'marmoset/app/res/master/data/car_descriptions/'
-        dstdir2 = os.path.join(localFolder, os.path.dirname(temDir1))
+    if os.path.dirname(f2_dir):
+        temDir2 = 'marmoset/app/res/master/data/car_descriptions/'
+        dstdir2 = os.path.join(car_folder, os.path.dirname(temDir2))
         print 'dstdir2'
         print dstdir2
         if not os.path.exists(dstdir2):
@@ -67,4 +58,4 @@ def execute(self):
         shutil.copy(f2_dir, dstdir2)
     else:
         QtGui.QMessageBox.critical(None,'Wrong car name','Please import car to Collada before copy file.',QtGui.QMessageBox.Ok)
-         
+   
