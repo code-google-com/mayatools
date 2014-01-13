@@ -18,7 +18,7 @@ IronMonkey_mapping_LODs = ['lod_00_layer', 'lod_01_layer', 'lod_02_layer', 'lod_
 IronMonkey_nohide = ['base_car_layer','spoilers']
 
 lods = ['lod_00','lod_01','lod_02','lod_03','lod_04','lod_05','lod_06']
-parts = ['type_a','type_b','type_c','type_d','kit_y','kit_z', 'pulled_type_a','pulled_type_b', 'pulled_type_c', 'pulled_type_d',
+parts = ['type_a','type_b','type_c','type_d','kit_y','kit_z', 'kit_x', 'pulled_type_a','pulled_type_b', 'pulled_type_c', 'pulled_type_d',
          'large_type_a', 'large_type_b', 'large_type_c', 'large_type_d',
          'small_type_a','small_type_b', 'small_type_c', 'small_type_d']#,'pull_wheelarch','large_overfender','small_overfender']
 
@@ -142,8 +142,9 @@ class LODTools(form_class,base_class):
         self.btnLOD1.clicked.connect(functools.partial(self.selectLOD,'1'))
         self.btnLOD2.clicked.connect(functools.partial(self.selectLOD,'2'))
         self.btnLOD3.clicked.connect(functools.partial(self.selectLOD,'3'))
-        self.btnLOD4.clicked.connect(functools.partial(self.selectLOD,'4'))
-        self.btnLOD5.clicked.connect(functools.partial(self.selectLOD,'5'))
+        self.btnTypeX.clicked.connect(functools.partial(self.selectLOD,'x'))
+        self.btnTypeY.clicked.connect(functools.partial(self.selectLOD,'y'))
+        self.btnTypeZ.clicked.connect(functools.partial(self.selectLOD,'z'))
         #self.btnLOD6.clicked.connect(functools.partial(self.selectLOD,'6'))
         #self.btnLOD7.clicked.connect(functools.partial(self.selectLOD,'7'))
         #self.btnLOD8.clicked.connect(functools.partial(self.selectLOD,'8'))
@@ -365,12 +366,21 @@ class LODTools(form_class,base_class):
             for g in type_a:
                 cmds.setAttr(g + '.visibility', 1)
                     
-        if self.btnLOD5.isChecked() or self.btnLOD4.isChecked(): # kit Y and kit Z
+        if self.btnTypeX.isChecked() or self.btnTypeY.isChecked() or self.btnTypeZ.isChecked(): # kit Y and kit Z
+            cmds.setAttr('wheel_arch.visibility', 1)
             try:
-                cmds.setAttr('wheel_arch.visibility', 1)
                 cmds.setAttr('wheel_arch|standard.visibility', 0)
+            except:
+                pass
+            try:
                 cmds.setAttr('wheel_arch|pulled.visibility', 0)
+            except:
+                pass
+            try:
                 cmds.setAttr('wheel_arch|small.visibility', 0)
+            except:
+                pass
+            try:
                 cmds.setAttr('wheel_arch|large.visibility', 0)
             except:
                 pass
@@ -380,7 +390,7 @@ class LODTools(form_class,base_class):
         self._nohide.append(LODb)
         self._nohide.append('defaultLayer')
         self._nohide.append(self._currentPart)
-        if self.btnLOD6.isChecked():
+        if self.btnPulled.isChecked():
             cmds.setAttr('wheel_arch|standard.visibility', 0)
             print 'pulled'
             self._nohide.append('pulled_wheel_arch_layer') 
@@ -393,7 +403,7 @@ class LODTools(form_class,base_class):
             if self.btnLOD3.isChecked():
                 self._nohide.append('pulled_type_d_layer')
                  
-        if self.btnLOD8.isChecked():
+        if self.btnLarge.isChecked():
             cmds.setAttr('wheel_arch|standard.visibility', 1)
             print 'large'
             self._nohide.append('large_overfenders_layer')
@@ -488,17 +498,25 @@ class LODTools(form_class,base_class):
                 pass
             self._currentPart = 'type_d_layer'
             cmds.setAttr(self._currentPart + '.visibility', 1)
-        if lod == '4':
+        if lod == 'x':
             try:
                 cmds.select('*LOD4')
+            except:
+                pass
+            self._currentPart = 'kit_x_layer'
+            cmds.setAttr(self._currentPart + '.visibility', 1)
+            cmds.setAttr('wheel_arch|standard.visibility', 0)
+        if lod == 'y':
+            try:
+                cmds.select('*LOD5')
             except:
                 pass
             self._currentPart = 'kit_y_layer'
             cmds.setAttr(self._currentPart + '.visibility', 1)
             cmds.setAttr('wheel_arch|standard.visibility', 0)
-        if lod == '5':
+        if lod == 'z':
             try:
-                cmds.select('*LOD5')
+                cmds.select('*LOD6')
             except:
                 pass
             self._currentPart = 'kit_z_layer'
@@ -506,6 +524,15 @@ class LODTools(form_class,base_class):
             cmds.setAttr('wheel_arch|standard.visibility', 0)
         if lod == '6':
             cmds.setAttr('wheel_arch|standard.visibility', 1)
+            
+        if lod == '7':
+            try:
+                cmds.select('*LOD5')
+            except:
+                pass
+            self._currentPart = 'kit_x_layer'
+            cmds.setAttr(self._currentPart + '.visibility', 1)
+            cmds.setAttr('wheel_arch|standard.visibility', 0)
 #         if lod == '6':
 #             try:
 #                 cmds.select('*LOD6')

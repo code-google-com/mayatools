@@ -379,7 +379,14 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btnLOD4">
+      <widget class="QPushButton" name="btnTypeX">
+       <property name="text">
+        <string>Type X</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnTypeY">
        <property name="text">
         <string>Type Y</string>
        </property>
@@ -392,7 +399,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btnLOD5">
+      <widget class="QPushButton" name="btnTypeZ">
        <property name="text">
         <string>Type Z</string>
        </property>
