@@ -2,11 +2,170 @@ import maya.cmds as cmds
 from PyQt4 import QtGui, QtCore, uic
 import os, sys, inspect
 
-
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/RecoverFiles.ui'
 
-form_class, base_class = uic.loadUiType(dirUI)        
+form_class, base_class = uic.loadUiType(dirUI)  
+
+class TreeItem(object):
+    def __init__(self, data, parent=None):
+        self._parent = parent
+        self._itemData = data
+        self._children = []
+        
+        if parent is not None:
+            parent.addChild(self)
+
+    def addChild(self, item):
+        self._children.append(item)
+
+    def child(self, row):
+        return self._children[row]
+
+    def childCount(self):
+        return len(self._children)
+
+    def columnCount(self):
+        return len(self.itemData)
+
+    def data(self, column):
+        try:
+            return self._itemData[column]
+        except IndexError:
+            return None
+
+    def parent(self):
+        return self_.parent
+
+    def row(self):
+        if self._parent is not None:
+            return self._parent._children.index(self)
+        return 0
+    
+class TreeModel(QtCore.QAbstractItemModel):
+    def __init__(self, data, header, parent=None):
+        super(TreeModel, self).__init__(parent)
+        self._data = data
+        self.rootItem = TreeItem(header)
+        self.setupModelData(data.split('\n'), self.rootItem)
+
+    def columnCount(self, parent):
+        if parent.isValid():
+            return parent.internalPointer().columnCount()
+        else:
+            return self.rootItem.columnCount()
+
+    def data(self, index, role):
+        if not index.isValid():
+            return None
+
+        if role != QtCore.Qt.DisplayRole:
+            return None
+        else:
+            if index.column() != 0:
+                item = index.internalPointer()
+                return item.data(index.column())
+        
+        if role == QtCore.Qt.DecorationRole:
+            if index.column() == 0:
+                item = index.internalPointer()
+                parent = item._parent()
+                if parent is not None:
+                    result = self._data[self._data.index(parent.data(0))][0][0]
+                    if result == True:
+                        pixmap = QtGui.QPixmap(':/Project/Check.png')
+                        icon = QtGui.QIcon(pixmap)
+                        return icon
+                    elif result == False:
+                        pixmap = QtGui.QPixmap(':/Project/Delete.png')
+                        icon = QtGui.QIcon(pixmap)
+                        return icon
+        
+
+    def flags(self, index):
+        if not index.isValid():
+            return QtCore.Qt.NoItemFlags
+
+        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+
+    def headerData(self, section, orientation, role):
+        return None
+
+    def index(self, row, column, parent):
+        if not self.hasIndex(row, column, parent):
+            return QtCore.QModelIndex()
+
+        if not parent.isValid():
+            parentItem = self.rootItem
+        else:
+            parentItem = parent.internalPointer()
+
+        childItem = parentItem.child(row)
+        if childItem:
+            return self.createIndex(row, column, childItem)
+        else:
+            return QtCore.QModelIndex()
+
+    def parent(self, index):
+        if not index.isValid():
+            return QtCore.QModelIndex()
+
+        childItem = index.internalPointer()
+        parentItem = childItem.parent()
+
+        if parentItem == self.rootItem:
+            return QtCore.QModelIndex()
+
+        return self.createIndex(parentItem.row(), 0, parentItem)
+
+    def rowCount(self, parent):
+        if parent.column() > 0:
+            return 0
+
+        if not parent.isValid():
+            parentItem = self.rootItem
+        else:
+            parentItem = parent.internalPointer()
+
+        return parentItem.childCount()
+
+    def setupModelData(self, lines, parent):
+        parents = [parent]
+        indentations = [0]
+
+        number = 0
+
+        while number < len(lines):
+            position = 0
+            while position < len(lines[number]):
+                if lines[number][position] != ' ':
+                    break
+                position += 1
+
+            lineData = lines[number][position:].trimmed()
+
+            if lineData:
+                # Read the column data from the rest of the line.
+                columnData = [s for s in lineData.split('\t') if s]
+
+                if position > indentations[-1]:
+                    # The last child of the current parent is now the new
+                    # parent unless the current parent has no children.
+
+                    if parents[-1].childCount() > 0:
+                        parents.append(parents[-1].child(parents[-1].childCount() - 1))
+                        indentations.append(position)
+
+                else:
+                    while position < indentations[-1] and len(parents) > 0:
+                        parents.pop()
+                        indentations.pop()
+
+                # Append a new item to the current parent's list of children.
+                parents[-1].appendChild(TreeItem(columnData, parents[-1]))
+
+            number += 1
+ 
 
 class RecoverFiles(form_class,base_class):
     signalChangeTexture = QtCore.pyqtSignal('QString', name = 'textureChanged')
@@ -23,35 +182,42 @@ class RecoverFiles(form_class,base_class):
         self.cbbFilter.addItems(['All','Found','Missing'])
         self.cbbTargetType.addItems(['.psd','.tga','.png','.tif','.dds','.bmp','.jpg'])
         self.cbbFileFormat.addItems(['All files','.psd','.tga','.png','.tif','.dds','.bmp','.jpg'])
-        self.tableWidgetResult.setHorizontalHeaderLabels(['Status','Name','Location','Node'])
-        #self.tableWidgetResult.setColumnHidden(2, True) 
-        self.tableWidgetResult.setColumnHidden(3, True) 
         self.ldtNewName.returnPressed.connect(self.changeTextureFiles)
         
     def analyzeScene(self):
-        self.tableWidgetResult.clearContents()
-        row = 0
-        files = cmds.ls(typ = ['file','psdFileTex','mentalrayTexture'])
-        self.tableWidgetResult.setRowCount(len(files))
-        for f in files:
-            fullpath = cmds.getAttr(f + '.fileTextureName')
-            filename = os.path.split(fullpath)[1]
-            FileName = QtGui.QTableWidgetItem(filename,QtGui.QTableWidgetItem.Type)
-            FileLocation = QtGui.QTableWidgetItem(fullpath,QtGui.QTableWidgetItem.Type)
-            FileNode = QtGui.QTableWidgetItem(f,QtGui.QTableWidgetItem.Type)
-            FileStatus = QtGui.QTableWidgetItem(QtGui.QTableWidgetItem.UserType)
-            if os.path.isfile(fullpath):
-                FileStatus.setText('Found')
-                FileStatus.setTextColor(QtGui.QColor(0,255,0,255))
+        textureNodes = py.ls(typ = ['file','psdFileTex','mentalrayTexture'])
+        shaderNodes = py.ls(type = ['cgfxShader', 'hlslShader', 'dx11Shader'])
+        #-- filter location: filter for first element in files list
+        arrFilter = list()
+        arrFilter.append([])
+        arrFilter.append([])
+        #----
+        for f in textureNodes + shaderNodes:
+            fileInfos = list()
+            # -- get texture infos
+            path = ''
+            if f in textureNodes:
+                status =  os.path.isfile(f.fileTextureName.get())
+                name = os.path.split(f.fileTextureName.get())[1]
+                path = os.path.split(f.fileTextureName.get())[0]
+                res = str(int(f.outSizeX.get())) + 'x' + str(int(f.outSizeY.get()))
+                fileInfos = [status, name, res]
             else:
-                FileStatus.setText('Missing')
-                FileStatus.setTextColor(QtGui.QColor(255,0,0,255))
-            self.tableWidgetResult.setItem(row,0,FileStatus)
-            self.tableWidgetResult.setItem(row,1,FileName)
-            self.tableWidgetResult.setItem(row,2,FileLocation)
-            self.tableWidgetResult.setItem(row,3,FileNode)
-            row += 1
-        self.tableWidgetResult.show()
+                status = os.path.isfile(f.shader.get())
+                name = os.path.split(f.shader.get())[1]
+                path = os.path.split(f.shader.get())[0]
+                fileInfos = [status, name, 'N/A']
+            # -- 
+            if not path in arrFilter[0]: # new texture not in list
+                fileNamesPerPath = list()
+                fileNamesPerPath.append(fileInfos)
+                arrFilter[0].append(path)
+                arrFilter[1].append(fileNamesPerPath)
+            else: # texture already stay in list
+                id = arrFilter[0].index(path)
+                arrFilter[1][id].append(fileInfos)        
+        #-- create treeView model:
+        
            
     def on_tableWidgetResult_cellClicked(self,row,column):
         files = cmds.ls(typ = ['file','psdFileTex','mentalrayTexture'])
