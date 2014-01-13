@@ -1,4 +1,5 @@
 import maya.cmds as cmds
+import pymel.core as py
 from PyQt4 import QtGui, QtCore, uic
 import os, sys, inspect
 
@@ -26,7 +27,7 @@ class TreeItem(object):
         return len(self._children)
 
     def columnCount(self):
-        return len(self.itemData)
+        return len(self._itemData)
 
     def data(self, column):
         try:
@@ -45,9 +46,9 @@ class TreeItem(object):
 class TreeModel(QtCore.QAbstractItemModel):
     def __init__(self, data, header, parent=None):
         super(TreeModel, self).__init__(parent)
-        self._data = data
         self.rootItem = TreeItem(header)
-        self.setupModelData(data.split('\n'), self.rootItem)
+        self._headers = header
+        #self.setupModelData(data, self.rootItem)
 
     def columnCount(self, parent):
         if parent.isValid():
@@ -69,8 +70,8 @@ class TreeModel(QtCore.QAbstractItemModel):
         if role == QtCore.Qt.DecorationRole:
             if index.column() == 0:
                 item = index.internalPointer()
-                parent = item._parent()
-                if parent is not None:
+                children = item.childCount()
+                if not children:
                     result = self._data[self._data.index(parent.data(0))][0][0]
                     if result == True:
                         pixmap = QtGui.QPixmap(':/Project/Check.png')
@@ -80,16 +81,15 @@ class TreeModel(QtCore.QAbstractItemModel):
                         pixmap = QtGui.QPixmap(':/Project/Delete.png')
                         icon = QtGui.QIcon(pixmap)
                         return icon
-        
 
     def flags(self, index):
         if not index.isValid():
             return QtCore.Qt.NoItemFlags
-
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
     def headerData(self, section, orientation, role):
-        return None
+        if role == QtCore.Qt.DisplayRole:
+            return self._headers[section]
 
     def index(self, row, column, parent):
         if not self.hasIndex(row, column, parent):
@@ -129,10 +129,12 @@ class TreeModel(QtCore.QAbstractItemModel):
 
         return parentItem.childCount()
 
-    def setupModelData(self, lines, parent):
+    def setupModelData(self, data, parent):
         parents = [parent]
         indentations = [0]
-
+        # filter parents
+        for f in data:
+            pass
         number = 0
 
         while number < len(lines):
@@ -217,6 +219,10 @@ class RecoverFiles(form_class,base_class):
                 id = arrFilter[0].index(path)
                 arrFilter[1][id].append(fileInfos)        
         #-- create treeView model:
+        
+        header = ('Status', 'File Name', 'Dimension','Tag')
+        model = TreeModel(arrFilter, header)
+        self.treeViewResult.setModel(model)
         
            
     def on_tableWidgetResult_cellClicked(self,row,column):
