@@ -96,7 +96,6 @@ class TreeModel(QtCore.QAbstractItemModel):
                     icon = QtGui.QIcon(pixmap)
                     return icon
                     
-
     def flags(self, index):
         if not index.isValid():
             return QtCore.Qt.NoItemFlags
@@ -148,8 +147,8 @@ class TreeModel(QtCore.QAbstractItemModel):
         parents = [parent]
         indentations = [0]
         # filter parents
-        for id in range(len(data)):
-            pathNode = TreeItem(['',data[id][0],'',''], parent)
+        for id in range(len(data[0])):
+            pathNode = TreeItem(['',data[0][id],'',''], parent)
             #parent.addChild(pathNode)
 #         number = 0
 # 
