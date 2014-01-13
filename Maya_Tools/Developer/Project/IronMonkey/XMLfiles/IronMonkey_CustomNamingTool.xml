@@ -4,6 +4,7 @@
 	<kit name = 'standard_type_b' shortname = "b"/>
 	<kit name = 'type_c' shortname = "c"/>
 	<kit name = 'type_d' shortname = "d"/>
+	<kit name = 'type_x' shortname = "x"/>
 	<kit name = 'type_z' shortname = "z"/>
 	<kit name = 'type_y' shortname = "y"/>
 	<kit name = 'pulled' shortname = "pulled"/>
