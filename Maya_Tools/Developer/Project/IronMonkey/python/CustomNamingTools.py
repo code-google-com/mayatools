@@ -268,6 +268,8 @@ class CustomNamingTool(form_class,base_class):
             pivPos[2] =  pivPos[2] + iPos[2]
         pivPos = [pivPos[0]/count,pivPos[1]/count,pivPos[2]/count]
         #-----------------
+        if cmds.objExists(str(self.cbbLocatorList.currentText())):
+            cmds.delete(str(self.cbbLocatorList.currentText()))
         locator = py.spaceLocator(n = str(self.cbbLocatorList.currentText()))
         locator.translate.set(dt.Vector(pivPos))
         
