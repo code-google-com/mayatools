@@ -3,6 +3,8 @@ import pymel.core as py
 from PyQt4 import QtGui, QtCore, uic
 import os, sys, inspect
 
+import Source.IconResource_rc
+
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/RecoverFiles.ui'
 
@@ -16,6 +18,12 @@ class TreeItem(object):
         
         if parent is not None:
             parent.addChild(self)
+            
+    def nodeType(self):
+        if os.path.isfile(data[1]):
+            return 'file'
+        if os.path.isdir(data[1]):
+            return 'path'
 
     def addChild(self, item):
         self._children.append(item)
@@ -36,7 +44,7 @@ class TreeItem(object):
             return None
 
     def parent(self):
-        return self_.parent
+        return self._parent
 
     def row(self):
         if self._parent is not None:
@@ -48,7 +56,7 @@ class TreeModel(QtCore.QAbstractItemModel):
         super(TreeModel, self).__init__(parent)
         self.rootItem = TreeItem(header)
         self._headers = header
-        #self.setupModelData(data, self.rootItem)
+        self.setupModelData(data, self.rootItem)
 
     def columnCount(self, parent):
         if parent.isValid():
@@ -70,8 +78,8 @@ class TreeModel(QtCore.QAbstractItemModel):
         if role == QtCore.Qt.DecorationRole:
             if index.column() == 0:
                 item = index.internalPointer()
-                children = item.childCount()
-                if not children:
+                #children = item.childCount()
+                if item.nodeType() == 'file':
                     result = self._data[self._data.index(parent.data(0))][0][0]
                     if result == True:
                         pixmap = QtGui.QPixmap(':/Project/Check.png')
@@ -81,6 +89,13 @@ class TreeModel(QtCore.QAbstractItemModel):
                         pixmap = QtGui.QPixmap(':/Project/Delete.png')
                         icon = QtGui.QIcon(pixmap)
                         return icon
+            if index.column() == 1:
+                item = index.internalPointer()
+                if item.nodeType() == 'path':
+                    pixmap = QtGui.QPixmap(':/Project/Documents.png')
+                    icon = QtGui.QIcon(pixmap)
+                    return icon
+                    
 
     def flags(self, index):
         if not index.isValid():
@@ -133,40 +148,41 @@ class TreeModel(QtCore.QAbstractItemModel):
         parents = [parent]
         indentations = [0]
         # filter parents
-        for f in data:
-            pass
-        number = 0
-
-        while number < len(lines):
-            position = 0
-            while position < len(lines[number]):
-                if lines[number][position] != ' ':
-                    break
-                position += 1
-
-            lineData = lines[number][position:].trimmed()
-
-            if lineData:
-                # Read the column data from the rest of the line.
-                columnData = [s for s in lineData.split('\t') if s]
-
-                if position > indentations[-1]:
-                    # The last child of the current parent is now the new
-                    # parent unless the current parent has no children.
-
-                    if parents[-1].childCount() > 0:
-                        parents.append(parents[-1].child(parents[-1].childCount() - 1))
-                        indentations.append(position)
-
-                else:
-                    while position < indentations[-1] and len(parents) > 0:
-                        parents.pop()
-                        indentations.pop()
-
-                # Append a new item to the current parent's list of children.
-                parents[-1].appendChild(TreeItem(columnData, parents[-1]))
-
-            number += 1
+        for id in range(len(data)):
+            pathNode = TreeItem(['',data[id][0],'',''], parent)
+            #parent.addChild(pathNode)
+#         number = 0
+# 
+#         while number < len(lines):
+#             position = 0
+#             while position < len(lines[number]):
+#                 if lines[number][position] != ' ':
+#                     break
+#                 position += 1
+# 
+#             lineData = lines[number][position:].trimmed()
+# 
+#             if lineData:
+#                 # Read the column data from the rest of the line.
+#                 columnData = [s for s in lineData.split('\t') if s]
+# 
+#                 if position > indentations[-1]:
+#                     # The last child of the current parent is now the new
+#                     # parent unless the current parent has no children.
+# 
+#                     if parents[-1].childCount() > 0:
+#                         parents.append(parents[-1].child(parents[-1].childCount() - 1))
+#                         indentations.append(position)
+# 
+#                 else:
+#                     while position < indentations[-1] and len(parents) > 0:
+#                         parents.pop()
+#                         indentations.pop()
+# 
+#                 # Append a new item to the current parent's list of children.
+#                 parents[-1].appendChild(TreeItem(columnData, parents[-1]))
+# 
+#             number += 1
  
 
 class RecoverFiles(form_class,base_class):
@@ -220,7 +236,7 @@ class RecoverFiles(form_class,base_class):
                 arrFilter[1][id].append(fileInfos)        
         #-- create treeView model:
         
-        header = ('Status', 'File Name', 'Dimension','Tag')
+        header = ('', 'File Name', 'Dimension','Tag')
         model = TreeModel(arrFilter, header)
         self.treeViewResult.setModel(model)
         

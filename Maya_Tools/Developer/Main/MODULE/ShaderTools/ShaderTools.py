@@ -28,6 +28,10 @@ def getShadersFromMesh(mesh):
                 shaders.append(shader)
         return list(set(shaders))
     
+def getMeshfromShader(shader):
+    sg = cmds.connectionInfo(shader + '.outColor', dfs = True).split('.')[0]
+    members = cmds.sets(sg, q = True)
+    
 def setShaderToSelectedFaces(selFaces, shader):
     # get shadingGroup from shader
     sg = cmds.connectionInfo(shader + '.outColor', dfs = True).split('.')[0]

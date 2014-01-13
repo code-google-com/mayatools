@@ -4,7 +4,11 @@ import os, sys, inspect
 import maya.mel as mel
 import imp
 import functools
-import dockWidget
+
+try:
+    reload(dockWidget)
+except:
+    import dockWidget
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 dirUI= fileDirCommmon +'/UI/CleanerTools.ui'

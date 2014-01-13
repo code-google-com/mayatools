@@ -175,7 +175,7 @@ class CustomNamingTool(form_class,base_class):
                 #ext = node.split('_')[-3]
                 parts = [x for x in self.part if re.search('(.*){p}(\.*)'.format(p = x), node.split('|')[-1])]
                 if parts[0] in ['bumper_front', 'bumper_rear','side_skirts', 'wheel_arch']:
-                    if kit not in  ['z','y']:
+                    if kit not in  ['x','z','y']:
                         parent = parts[0]+'|standard_type_'+kit+'|'+ lod.replace('lod','lod_')
                         if not cmds.objExists(parent):
                             if not cmds.objExists(parts[0]+'|standard_type_'+kit):
@@ -230,7 +230,7 @@ class CustomNamingTool(form_class,base_class):
                         cmds.parent(nullGroup, 'J_suspension_bottom_' + parts[0].replace('caliper_','') +'|caliper|type_'+kit)
                         cmds.rename(nullGroup,lod.replace('lod','lod_'))
                 else:
-                    if kit not in  ['z','y']:
+                    if kit not in  ['x','z','y']:
                         parent = parts[0]+'|type_'+kit+'|'+ lod.replace('lod','lod_')
                         if not cmds.objExists(parent):
                             if not cmds.objExists(parts[0]+'|type_'+kit):
