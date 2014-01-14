@@ -19,10 +19,11 @@ class TreeItem(object):
         if parent is not None:
             parent.addChild(self)
             
-    def nodeType(self):
-        if os.path.isfile(data[1]):
-            return 'file'
-        if os.path.isdir(data[1]):
+    def node(self):
+        try:
+            if self._itemData[1].split('.')[1]:
+                return 'file'
+        except:
             return 'path'
 
     def addChild(self, item):
@@ -56,6 +57,7 @@ class TreeModel(QtCore.QAbstractItemModel):
         super(TreeModel, self).__init__(parent)
         self.rootItem = TreeItem(header)
         self._headers = header
+        self._missingIndexes = list()
         self.setupModelData(data, self.rootItem)
 
     def columnCount(self, parent):
@@ -67,32 +69,31 @@ class TreeModel(QtCore.QAbstractItemModel):
     def data(self, index, role):
         if not index.isValid():
             return None
+        
+        #if role == QtCore.Qt.TextAlignmentRole:
+        #   return int(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter)
 
-        if role != QtCore.Qt.DisplayRole:
-            return None
-        else:
+        if role == QtCore.Qt.DisplayRole:
             if index.column() != 0:
                 item = index.internalPointer()
                 return item.data(index.column())
-        
+            
         if role == QtCore.Qt.DecorationRole:
-            if index.column() == 0:
+            if index.column() == 1:
                 item = index.internalPointer()
-                #children = item.childCount()
-                if item.nodeType() == 'file':
-                    result = self._data[self._data.index(parent.data(0))][0][0]
+                result = item.data(0)
+                if item.node() == 'file':
                     if result == True:
                         pixmap = QtGui.QPixmap(':/Project/Check.png')
                         icon = QtGui.QIcon(pixmap)
                         return icon
-                    elif result == False:
+                    else:
                         pixmap = QtGui.QPixmap(':/Project/Delete.png')
                         icon = QtGui.QIcon(pixmap)
                         return icon
-            if index.column() == 1:
-                item = index.internalPointer()
-                if item.nodeType() == 'path':
-                    pixmap = QtGui.QPixmap(':/Project/Documents.png')
+
+                elif item.node() == 'path':
+                    pixmap = QtGui.QPixmap(':/Project/Open.png')
                     icon = QtGui.QIcon(pixmap)
                     return icon
                     
@@ -102,6 +103,8 @@ class TreeModel(QtCore.QAbstractItemModel):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
     def headerData(self, section, orientation, role):
+        if role == QtCore.Qt.TextAlignmentRole:
+           return int(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter)
         if role == QtCore.Qt.DisplayRole:
             return self._headers[section]
 
@@ -148,40 +151,14 @@ class TreeModel(QtCore.QAbstractItemModel):
         indentations = [0]
         # filter parents
         for id in range(len(data[0])):
-            pathNode = TreeItem(['',data[0][id],'',''], parent)
-            #parent.addChild(pathNode)
-#         number = 0
-# 
-#         while number < len(lines):
-#             position = 0
-#             while position < len(lines[number]):
-#                 if lines[number][position] != ' ':
-#                     break
-#                 position += 1
-# 
-#             lineData = lines[number][position:].trimmed()
-# 
-#             if lineData:
-#                 # Read the column data from the rest of the line.
-#                 columnData = [s for s in lineData.split('\t') if s]
-# 
-#                 if position > indentations[-1]:
-#                     # The last child of the current parent is now the new
-#                     # parent unless the current parent has no children.
-# 
-#                     if parents[-1].childCount() > 0:
-#                         parents.append(parents[-1].child(parents[-1].childCount() - 1))
-#                         indentations.append(position)
-# 
-#                 else:
-#                     while position < indentations[-1] and len(parents) > 0:
-#                         parents.pop()
-#                         indentations.pop()
-# 
-#                 # Append a new item to the current parent's list of children.
-#                 parents[-1].appendChild(TreeItem(columnData, parents[-1]))
-# 
-#             number += 1
+            pathNode = TreeItem(['',data[0][id],'','', ''], parent)
+            for f in data[1][id]:
+                f[1] = ' '*10 + f[1]
+                fileNode = TreeItem(f, pathNode)
+                if f[0] == False:
+                    self._missingIndexes.append(f)
+                
+    
  
 
 class RecoverFiles(form_class,base_class):
@@ -191,6 +168,7 @@ class RecoverFiles(form_class,base_class):
         self.setupUi(self)
         self.__name__ = 'File Managers'
         self.btnAnalyzeScene.clicked.connect(self.analyzeScene)
+        self.treeViewResult.clicked.connect(self.selectItem)
         self.btnSelectMissingTextures.clicked.connect(self.selectMissingTexture)
         self.btnAssigntoDirectories.clicked.connect(self.assigntoAnotherDir)
         self.cbbFileFormat.currentIndexChanged.connect(self.updateFormat)
@@ -218,12 +196,12 @@ class RecoverFiles(form_class,base_class):
                 name = os.path.split(f.fileTextureName.get())[1]
                 path = os.path.split(f.fileTextureName.get())[0]
                 res = str(int(f.outSizeX.get())) + 'x' + str(int(f.outSizeY.get()))
-                fileInfos = [status, name, res]
+                fileInfos = [status, name, res, '',str(f)]
             else:
                 status = os.path.isfile(f.shader.get())
                 name = os.path.split(f.shader.get())[1]
                 path = os.path.split(f.shader.get())[0]
-                fileInfos = [status, name, 'N/A']
+                fileInfos = [status, name, 'N/A', '',str(f)]
             # -- 
             if not path in arrFilter[0]: # new texture not in list
                 fileNamesPerPath = list()
@@ -235,24 +213,30 @@ class RecoverFiles(form_class,base_class):
                 arrFilter[1][id].append(fileInfos)        
         #-- create treeView model:
         
-        header = ('', 'File Name', 'Dimension','Tag')
+        header = ('', 'File Name', 'Dimension','Tag', 'File Node')
         model = TreeModel(arrFilter, header)
         self.treeViewResult.setModel(model)
+        self.treeViewResult.expandAll()
+        for i in range(len(header)):
+            self.treeViewResult.resizeColumnToContents(i) 
+            
+    def selectItem(self, index):
+        item = index.internalPointer()
+        dir = item.parent().data(1)
+        fullPath = dir + '/' + item.data(1).strip()
+        try:
+            cmds.select(item.data(4))
+        except:
+            pass
+        self.signalChangeTexture.emit(fullPath)
+        print index.row()
         
-           
-    def on_tableWidgetResult_cellClicked(self,row,column):
-        files = cmds.ls(typ = ['file','psdFileTex','mentalrayTexture'])
-        for file in files:
-            path = cmds.getAttr(file + '.fileTextureName')
-            itemSelected = self.tableWidgetResult.item(row,2)
-            if itemSelected.text() == path:
-                cmds.select(file)
-                self.signalChangeTexture.emit(path)
-                break
-            
-    def on_tableWidgetResult_cellDoubleClicked(self, row, column):
-        print 'Okie'
-            
+    def selectMissingTextures(self):
+        missingTextures = list()
+        model = self.treeViewResult.selectionModel()
+        rootItem = model.rootItem()
+        
+
     def selectMissingTexture(self):
         row = self.tableWidgetResult.rowCount()
         column = self.tableWidgetResult.columnCount()

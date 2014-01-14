@@ -83,10 +83,16 @@
       <bool>true</bool>
      </property>
      <property name="selectionMode">
-      <enum>QAbstractItemView::MultiSelection</enum>
+      <enum>QAbstractItemView::ExtendedSelection</enum>
      </property>
      <property name="selectionBehavior">
       <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>20</width>
+       <height>20</height>
+      </size>
      </property>
      <property name="sortingEnabled">
       <bool>true</bool>
@@ -195,6 +201,26 @@ font:  bold 11px
     </layout>
    </item>
   </layout>
+  <action name="actionSelect_Missing_Files">
+   <property name="text">
+    <string>Select Missing Files</string>
+   </property>
+  </action>
+  <action name="actionAssign_to_Another_path">
+   <property name="text">
+    <string>Assign to Another path</string>
+   </property>
+  </action>
+  <action name="actionChange_Format">
+   <property name="text">
+    <string>Change Format</string>
+   </property>
+  </action>
+  <action name="actionRename_File">
+   <property name="text">
+    <string>Rename File</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
