@@ -7,18 +7,11 @@ description = 'Checking No Decal.'
 name = 'checkNoDecal'
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 
-def loadXML(xmlFile, content, proper):
-        kit = list()
-        xmlDoc = xml.dom.minidom.parse(xmlFile)
-        root = xmlDoc.firstChild
-        kitNodes = root.getElementsByTagName(content)
-        kit = [x.getAttribute(proper) for x in kitNodes]
-        #kit.append([x.getAttribute('shortname') for x in kitNodes])
-        return kit
 
 def execute():
     print 'EXECUTING: CHECKING NO DECAL----------------------------------'
     import re
+    objectOrror = list()
     #meshes = cmds.ls(type = 'mesh')#.split('|')[0]
     all_transform = [f for f in cmds.listRelatives(cmds.ls('mesh')[0], ad = True,f=True) if cmds.nodeType(f) != 'mesh'] 
     allMesh = [tran for tran in all_transform if re.search('mesh_',tran)]#.split('|')[-1]
@@ -40,7 +33,8 @@ def execute():
                 if shader == 'paint_shader_nodecal_opaque':
                     print(shader,'Shaders corect assign')
                 else:
-                    print(object,shader,'Error, shaders incorect assign')
+                    objectOrror.append(object)
+                    #print(object,shader,'Error, shaders incorect assign')
     print'################# INCORRECT MATERIAL ################################'    
     for mes in listNo_mir_spoil:
         object=mes.split('|')[-1]
@@ -52,4 +46,15 @@ def execute():
             if cmds.connectionInfo(sg + '.surfaceShader', sfd = True):
                 shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
                 if shader == 'paint_shader_nodecal_opaque':
-                    print(object,'Incorrect material',shader)
+                    objectOrror.append(object)
+                    #print(object,'Incorrect material',shader)
+                    
+    print objectOrror
+    objectHide = [obj for obj in allMesh if obj not in objectOrror]
+    if len(objectOrror)>0:
+        for ob in objectOrror:
+            cmds.select(ob)
+    if len(objectHide)>0:
+        for obj in objectHide:
+            cmds.setAttr(obj + '.visibility', 0)
+            
