@@ -113,8 +113,10 @@ class TreeModel(QtCore.QAbstractItemModel):
             return QtCore.QModelIndex()
 
         if not parent.isValid():
+            #print 'parent not Valid'
             parentItem = self.rootItem
         else:
+            #print 'parent Valid'
             parentItem = parent.internalPointer()
 
         childItem = parentItem.child(row)
@@ -147,20 +149,25 @@ class TreeModel(QtCore.QAbstractItemModel):
         return parentItem.childCount()
 
     def setupModelData(self, data, parent):
-        parents = [parent]
-        indentations = [0]
+        
+        
         # filter parents
         for id in range(len(data[0])):
             pathNode = TreeItem(['',data[0][id],'','', ''], parent)
+            pathID = self.index(id, 1, QtCore.QModelIndex())
             for f in data[1][id]:
                 f[1] = ' '*10 + f[1]
                 fileNode = TreeItem(f, pathNode)
                 if f[0] == False:
-                    self._missingIndexes.append(f)
+                    #print data[1][id].index(f)
+                    #print pathID.row()
+                    if pathID.isValid():
+                        miss_Id = self.index(0, 1, pathID)
+                        print miss_Id.row()
+                    self._missingIndexes.append(miss_Id)
+                    
                 
     
- 
-
 class RecoverFiles(form_class,base_class):
     signalChangeTexture = QtCore.pyqtSignal('QString', name = 'textureChanged')
     def __init__(self):
@@ -169,7 +176,7 @@ class RecoverFiles(form_class,base_class):
         self.__name__ = 'File Managers'
         self.btnAnalyzeScene.clicked.connect(self.analyzeScene)
         self.treeViewResult.clicked.connect(self.selectItem)
-        self.btnSelectMissingTextures.clicked.connect(self.selectMissingTexture)
+        self.btnSelectMissingTextures.clicked.connect(self.selectMissingTextures)
         self.btnAssigntoDirectories.clicked.connect(self.assigntoAnotherDir)
         self.cbbFileFormat.currentIndexChanged.connect(self.updateFormat)
         self.cbbFilter.currentIndexChanged.connect(self.updateStatus)
@@ -229,12 +236,15 @@ class RecoverFiles(form_class,base_class):
         except:
             pass
         self.signalChangeTexture.emit(fullPath)
-        print index.row()
+        print str(index.row()) + ' ' + str(index.column())
         
     def selectMissingTextures(self):
+        print 'select missing textures'
         missingTextures = list()
-        model = self.treeViewResult.selectionModel()
-        rootItem = model.rootItem()
+        selModel = self.treeViewResult.selectionModel()
+        for id in self.treeViewResult.model()._missingIndexes:
+            print id.row()
+            selModel.select(id, selModel.Select|selModel.Rows)
         
 
     def selectMissingTexture(self):
