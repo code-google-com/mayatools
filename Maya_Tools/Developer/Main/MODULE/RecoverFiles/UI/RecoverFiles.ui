@@ -105,7 +105,7 @@
    <item>
     <widget class="QPushButton" name="btnSelectMissingTextures">
      <property name="text">
-      <string>Select Missing Textures</string>
+      <string>Select  Missing Textures</string>
      </property>
     </widget>
    </item>
@@ -206,27 +206,27 @@ font:  bold 11px
   </layout>
   <action name="actionSelect_Missing_Files">
    <property name="text">
-    <string>Select Missing Files</string>
+    <string>Select missing files in folder</string>
    </property>
   </action>
   <action name="actionAssign_to_Another_path">
    <property name="text">
-    <string>Assign to Another path</string>
+    <string>Assign to another path</string>
    </property>
   </action>
   <action name="actionChange_Format">
    <property name="text">
-    <string>Change Format</string>
+    <string>Change format</string>
    </property>
   </action>
   <action name="actionRename_File">
    <property name="text">
-    <string>Rename File</string>
+    <string>Rename file</string>
    </property>
   </action>
   <action name="actionSelect_Textures_Inside">
    <property name="text">
-    <string>Select Textures Inside </string>
+    <string>Select all</string>
    </property>
   </action>
  </widget>

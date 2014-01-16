@@ -182,6 +182,7 @@ class RecoverFiles(form_class,base_class):
         
         self.actionSelect_Textures_Inside.triggered.connect(self.selectAllTextures)
         self.actionSelect_Missing_Files.triggered.connect(self.selectMissingTextures)
+        self.actionAssign_to_Another_path.triggered.connect(self.assigntoAnotherDir)
         
     def analyzeScene(self):
         textureNodes = py.ls(typ = ['file','psdFileTex','mentalrayTexture'])
@@ -241,6 +242,7 @@ class RecoverFiles(form_class,base_class):
         if item.node() == 'path':
             childCount = item.childCount()
             selectModel = self.treeViewResult.selectionModel()
+            selectModel.clearSelection()     
             for id in range(childCount):
                 idx = self.treeViewResult.model().index(id,1,index)
                 selectModel.select(idx, selectModel.Select|selectModel.Rows)
@@ -251,29 +253,12 @@ class RecoverFiles(form_class,base_class):
         if item.node() == 'path':
             childCount = item.childCount()
             selectModel = self.treeViewResult.selectionModel()
+            selectModel.clearSelection()     
             for id in range(childCount):
                 idx = self.treeViewResult.model().index(id,1,index)
                 status = idx.internalPointer().data(0)
                 if status == False:
-                    selectModel.select(idx, selectModel.Select|selectModel.Rows)
-
-    def selectMissingTexture(self):
-        row = self.tableWidgetResult.rowCount()
-        column = self.tableWidgetResult.columnCount()
-        self.tableWidgetResult.setRangeSelected(QtGui.QTableWidgetSelectionRange(0,0,row-1,column-1),False)
-        for i in range(row):
-            setitem = self.tableWidgetResult.item(i,0)
-            if setitem.text() == 'Missing':
-                fileName = self.tableWidgetResult.item(i,1)
-                fileLocation = self.tableWidgetResult.item(i,2)
-                fileNode = self.tableWidgetResult.item(i,3)
-                #self.tableWidgetResult.selectRow(i)
-                self.tableWidgetResult.setItemSelected (setitem,True)
-                self.tableWidgetResult.setItemSelected (fileName,True)
-                self.tableWidgetResult.setItemSelected (fileLocation,True)
-                self.tableWidgetResult.setItemSelected (fileNode,True)
-                
-        self.tableWidgetResult.show()
+                    selectModel.select(idx, selectModel.Deselect|selectModel.Rows)
         
     def createCustomContextMenu(self,pos):
         type_ID = [f.internalPointer().node() for f in self.treeViewResult.selectedIndexes()] 
@@ -286,8 +271,8 @@ class RecoverFiles(form_class,base_class):
             RightClickMenu.exec_(QtGui.QCursor.pos())
         if 'path' in type_ID:
             RightClickMenu = QtGui.QMenu(self)
-            RightClickMenu.addAction(self.actionSelect_Missing_Files)
             RightClickMenu.addAction(self.actionSelect_Textures_Inside)
+            RightClickMenu.addAction(self.actionSelect_Missing_Files)
             RightClickMenu.addAction(self.actionAssign_to_Another_path)
             RightClickMenu.addAction(self.actionChange_Format)
             RightClickMenu.addAction(self.actionRename_File)
@@ -295,29 +280,28 @@ class RecoverFiles(form_class,base_class):
             RightClickMenu.exec_(QtGui.QCursor.pos())
         
     def assigntoAnotherDir(self):
-        pass
-    
-    def assigntoAnotherDir(self):
-        #-- get dir of current scene
-        dirfile = os.path.split(cmds.file(q= True,sn= True))[0]
-        #-- get selected items from Table widget
-        listSelectedFiles = self.tableWidgetResult.selectedItems()
-        #-- warnning if nothing is selected
-        if (len(listSelectedFiles) == 0):
-             QtGui.QMessageBox.warning(self,'Select Files to redirect location','Please select files you need to redirect location! Thanks',QtGui.QMessageBox.Ok)
-        else:
-            print dirfile
+        if not self.treeViewResult.selectedIndexes():
+            QtGui.QMessageBox.warning(self,'Select Files to redirect location','Please select files you need to redirect location! Thanks',QtGui.QMessageBox.Ok)
+        else: 
+            dirfile = os.path.split(cmds.file(q = True, sn = True))[0]
             returnfromDialog = QtGui.QFileDialog.getOpenFileNames(self,'Select a new location for files',dirfile)
-            Dir = os.path.split(str(returnfromDialog[0]))[0]
-            for file in listSelectedFiles:
-                row = self.tableWidgetResult.row(file)
-                if self.tableWidgetResult.column(file) == 2:
-                    filename = self.tableWidgetResult.item(row,1)
-                    file.setText(Dir + '/' +  filename.text())
-                    fileNode = self.tableWidgetResult.item(row,3)
-                    cmds.select(str(fileNode.text()))
-                    cmds.setAttr(str(fileNode.text()) + '.fileTextureName',Dir + '/' +  str(filename.text()),type='string')
-        self.analyzeScene()
+            dir = os.path.split(str(returnfromDialog[0]))[0]
+            for i in self.treeViewResult.selectedIndexes():
+                item = i.internalPointer()
+                if item.node() == 'path':
+                    childCount = item.childCount()
+                    for id in range(childCount):
+                        try:
+                            idx = self.treeViewResult.model().index(id, 1, i)
+                            itemx = idx.internalPointer()
+                            cmds.setAttr(itemx.data(4) + '.fileTextureName', dir + '/' + itemx.data(1), type = 'string')
+                        except:
+                            pass
+                if item.node() == 'file':
+                    cmds.setAttr(item.data(4) + '.fileTextureName', dir + '/' + item.data(1), type = 'string')
+            self.analyzeScene()
+    
+
         
     def updateStatus(self):
         status = self.cbbFilter.currentText()
