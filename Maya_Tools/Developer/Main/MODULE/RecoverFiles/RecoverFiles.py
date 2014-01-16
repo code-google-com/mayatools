@@ -149,8 +149,6 @@ class TreeModel(QtCore.QAbstractItemModel):
         return parentItem.childCount()
 
     def setupModelData(self, data, parent):
-        
-        
         # filter parents
         for id in range(len(data[0])):
             pathNode = TreeItem(['',data[0][id],'','', ''], parent)
@@ -164,10 +162,8 @@ class TreeModel(QtCore.QAbstractItemModel):
                     if pathID.isValid():
                         miss_Id = self.index(0, 1, pathID)
                         print miss_Id.row()
-                    self._missingIndexes.append(miss_Id)
+                        self._missingIndexes.append(miss_Id)
                     
-                
-    
 class RecoverFiles(form_class,base_class):
     signalChangeTexture = QtCore.pyqtSignal('QString', name = 'textureChanged')
     def __init__(self):
@@ -185,6 +181,7 @@ class RecoverFiles(form_class,base_class):
         self.cbbTargetType.addItems(['.psd','.tga','.png','.tif','.dds','.bmp','.jpg'])
         self.cbbFileFormat.addItems(['All files','.psd','.tga','.png','.tif','.dds','.bmp','.jpg'])
         self.ldtNewName.returnPressed.connect(self.changeTextureFiles)
+        self.treeViewResult.customContextMenuRequested.connect(self.createCustomContextMenu)
         
     def analyzeScene(self):
         textureNodes = py.ls(typ = ['file','psdFileTex','mentalrayTexture'])
@@ -264,6 +261,28 @@ class RecoverFiles(form_class,base_class):
                 self.tableWidgetResult.setItemSelected (fileNode,True)
                 
         self.tableWidgetResult.show()
+        
+    def createCustomContextMenu(self,pos):
+        type_ID = [f.internalPointer().node() for f in self.treeViewResult.selectedIndexes()] 
+        if 'file'in type_ID:  
+            RightClickMenu = QtGui.QMenu(self)
+            #RightClickMenu.addAction(self.actionSelect_Missing_Files)
+            RightClickMenu.addAction(self.actionAssign_to_Another_path)
+            RightClickMenu.addAction(self.actionChange_Format)
+            RightClickMenu.addAction(self.actionRename_File)
+            RightClickMenu.exec_(QtGui.QCursor.pos())
+        if 'path' in type_ID:
+            RightClickMenu = QtGui.QMenu(self)
+            RightClickMenu.addAction(self.actionSelect_Missing_Files)
+            RightClickMenu.addAction(self.actionSelect_Textures_Inside)
+            RightClickMenu.addAction(self.actionAssign_to_Another_path)
+            RightClickMenu.addAction(self.actionChange_Format)
+            RightClickMenu.addAction(self.actionRename_File)
+            
+            RightClickMenu.exec_(QtGui.QCursor.pos())
+        
+    def assigntoAnotherDir(self):
+        pass
     
     def assigntoAnotherDir(self):
         #-- get dir of current scene

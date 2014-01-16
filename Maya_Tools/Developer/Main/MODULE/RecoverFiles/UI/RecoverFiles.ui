@@ -76,6 +76,9 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="contextMenuPolicy">
+      <enum>Qt::CustomContextMenu</enum>
+     </property>
      <property name="editTriggers">
       <set>QAbstractItemView::NoEditTriggers</set>
      </property>
@@ -219,6 +222,11 @@ font:  bold 11px
   <action name="actionRename_File">
    <property name="text">
     <string>Rename File</string>
+   </property>
+  </action>
+  <action name="actionSelect_Textures_Inside">
+   <property name="text">
+    <string>Select Textures Inside </string>
    </property>
   </action>
  </widget>
