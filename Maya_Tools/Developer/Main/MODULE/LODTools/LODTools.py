@@ -145,6 +145,9 @@ class LODTools(form_class,base_class):
         self.btnTypeX.clicked.connect(functools.partial(self.selectLOD,'x'))
         self.btnTypeY.clicked.connect(functools.partial(self.selectLOD,'y'))
         self.btnTypeZ.clicked.connect(functools.partial(self.selectLOD,'z'))
+        self.btnPulled.clicked.connect(functools.partial(self.selectLOD,'pulled'))
+        self.btnSmall.clicked.connect(functools.partial(self.selectLOD,'small'))
+        self.btnLarge.clicked.connect(functools.partial(self.selectLOD,'large'))
         #self.btnLOD6.clicked.connect(functools.partial(self.selectLOD,'6'))
         #self.btnLOD7.clicked.connect(functools.partial(self.selectLOD,'7'))
         #self.btnLOD8.clicked.connect(functools.partial(self.selectLOD,'8'))
@@ -300,6 +303,7 @@ class LODTools(form_class,base_class):
         if self._projectName == 'IronMonkey':
             mel.eval('showHidden -all;')        
         self._nohide = ['base_car_layer', 'spoilers']
+        
         if self.rdbSourceLOD0.isChecked():
             LODa = mappingLODs(self._projectName,'_LOD0_')
         elif self.rdbSourceLOD1.isChecked():
@@ -391,7 +395,6 @@ class LODTools(form_class,base_class):
         self._nohide.append('defaultLayer')
         self._nohide.append(self._currentPart)
         if self.btnPulled.isChecked():
-            cmds.setAttr('wheel_arch|standard.visibility', 0)
             print 'pulled'
             self._nohide.append('pulled_wheel_arch_layer') 
             if self.btnLOD0.isChecked():
@@ -402,6 +405,10 @@ class LODTools(form_class,base_class):
                 self._nohide.append('pulled_type_c_layer')
             if self.btnLOD3.isChecked():
                 self._nohide.append('pulled_type_d_layer')
+                
+        if self.btnSmall.isChecked():
+            print 'pulled'
+            self._nohide.append('small_overfenders_layer') 
                  
         if self.btnLarge.isChecked():
             cmds.setAttr('wheel_arch|standard.visibility', 1)
@@ -416,9 +423,10 @@ class LODTools(form_class,base_class):
             if self.btnLOD3.isChecked():
                 self._nohide.append('large_type_d_layer')
                 
-        
+    
         print self._nohide      
         displayLayerNotWork = [layer for layer in cmds.ls(type = 'displayLayer') if layer not in self._nohide]
+
         for l in displayLayerNotWork:
             cmds.setAttr(l + '.visibility', 0)
             
@@ -522,45 +530,26 @@ class LODTools(form_class,base_class):
             self._currentPart = 'kit_z_layer'
             cmds.setAttr(self._currentPart + '.visibility', 1)
             cmds.setAttr('wheel_arch|standard.visibility', 0)
-        if lod == '6':
-            cmds.setAttr('wheel_arch|standard.visibility', 1)
             
-        if lod == '7':
-            try:
-                cmds.select('*LOD5')
-            except:
-                pass
-            self._currentPart = 'kit_x_layer'
-            cmds.setAttr(self._currentPart + '.visibility', 1)
-            cmds.setAttr('wheel_arch|standard.visibility', 0)
-#         if lod == '6':
-#             try:
-#                 cmds.select('*LOD6')
-#             except:
-#                 pass
-#             self._currentPart = 'pulled_wheel_arch_layer'
-#             cmds.setAttr(self._currentPart + '.visibility', 1)
-#         if lod == '7':
-#             try:
-#                 cmds.select('*LOD7')
-#             except:
-#                 pass 
-#             self._currentPart = 'small_overfenders_layer'
-#             cmds.setAttr(self._currentPart + '.visibility', 1)
-#             #self._nohide.remove('base_car_layer')
-#         if lod == '8':
-#             try:
-#                 cmds.select('*LOD7')
-#             except:
-#                 pass 
-#             self._currentPart = 'large_overfenders_layer'
-#             cmds.setAttr(self._currentPart + '.visibility', 1)
-#             
-        for l in type_layer:
-             if l != self._currentPart:
-                 cmds.setAttr(l + '.visibility', 0)
+        if lod == 'pulled':
+            cmds.setAttr('wheel_arch|standard.visibility', 1)
+            cmds.setAttr('pulled_wheel_arch_layer.visibility', 1)
+            cmds.setAttr('large_overfenders_layer.visibility', 0)
+            cmds.setAttr('small_overfenders_layer.visibility', 0)
+        
+        if lod == 'small':
+            cmds.setAttr('wheel_arch|standard.visibility', 1)
+            cmds.setAttr('pulled_wheel_arch_layer.visibility', 0)
+            cmds.setAttr('large_overfenders_layer.visibility', 0)
+            cmds.setAttr('small_overfenders_layer.visibility', 1)
+        
+        if lod == 'large':
+            cmds.setAttr('wheel_arch|standard.visibility', 1)
+            cmds.setAttr('pulled_wheel_arch_layer.visibility', 0)
+            cmds.setAttr('large_overfenders_layer.visibility', 1)
+            cmds.setAttr('small_overfenders_layer.visibility', 0)
+
 def main(xmlFile):
-    
     form = LODTools(xmlFile)
     return form 
     
