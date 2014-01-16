@@ -35,7 +35,8 @@ def execute():
                 else:
                     objectOrror.append(object)
                     #print(object,shader,'Error, shaders incorect assign')
-    print'################# INCORRECT MATERIAL ################################'    
+    print'################# INCORRECT MATERIAL ################################'
+        
     for mes in listNo_mir_spoil:
         object=mes.split('|')[-1]
         shapeNode = cmds.listRelatives(mes, c = True, f = True)[0]
@@ -46,15 +47,20 @@ def execute():
             if cmds.connectionInfo(sg + '.surfaceShader', sfd = True):
                 shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
                 if shader == 'paint_shader_nodecal_opaque':
-                    objectOrror.append(object)
+                    objectOrror.append(mes)
                     #print(object,'Incorrect material',shader)
                     
     print objectOrror
     objectHide = [obj for obj in allMesh if obj not in objectOrror]
     if len(objectOrror)>0:
+        print'####################### OBJECT ERROR ##########'
         for ob in objectOrror:
-            cmds.select(ob)
+            #print ob
+            cmds.setAttr(ob + '.visibility', 1)
     if len(objectHide)>0:
+        print'#######################OBJECT HIDEN ##########'
         for obj in objectHide:
+                 
+            #print obj
             cmds.setAttr(obj + '.visibility', 0)
             
