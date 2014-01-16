@@ -539,11 +539,20 @@ class LODTools(form_class,base_class):
             if self.btnLOD0.isChecked():
                 cmds.setAttr('pulled_type_a_layer.visibility',1)
             if self.btnLOD1.isChecked():
-                cmds.setAttr('pulled_type_b_layer.visibility',1)
+                if cmds.objExists('pulled_type_b_layer'):
+                    cmds.setAttr('pulled_type_b_layer.visibility',1)
+                else:
+                    cmds.setAttr('pulled_type_a_layer.visibility',1)
             if self.btnLOD2.isChecked():
-                cmds.setAttr('pulled_type_c_layer.visibility',1)
+                if cmds.objExists('pulled_type_c_layer'):
+                    cmds.setAttr('pulled_type_c_layer.visibility',1)
+                else:
+                    cmds.setAttr('pulled_type_a_layer.visibility',1)
             if self.btnLOD3.isChecked():
-                cmds.setAttr('pulled_type_d_layer.visibility',1)
+                if cmds.objExists('pulled_type_d_layer'):
+                    cmds.setAttr('pulled_type_d_layer.visibility',1)
+                else:
+                    cmds.setAttr('pulled_type_a_layer.visibility',1)
         
         if lod == 'small':
             cmds.setAttr('wheel_arch|standard.visibility', 1)
@@ -560,11 +569,20 @@ class LODTools(form_class,base_class):
             if self.btnLOD0.isChecked():
                 cmds.setAttr('large_type_a_layer.visibility',1)
             if self.btnLOD1.isChecked():
-                cmds.setAttr('large_type_b_layer.visibility',1)
+                if cmds.objExists('large_type_b_layer'):
+                    cmds.setAttr('large_type_b_layer.visibility',1)
+                else:
+                    cmds.setAttr('large_type_a_layer.visibility',1)
             if self.btnLOD2.isChecked():
-                cmds.setAttr('large_type_c_layer.visibility',1)
+                if cmds.objExists('large_type_c_layer'):
+                    cmds.setAttr('large_type_c_layer.visibility',1)
+                else:
+                    cmds.setAttr('large_type_a_layer.visibility',1)
             if self.btnLOD3.isChecked():
-                cmds.setAttr('large_type_d_layer.visibility',1)
+                if cmds.objExists('large_type_d_layer'):
+                    cmds.setAttr('large_type_d_layer.visibility',1)
+                else:
+                    cmds.setAttr('large_type_a_layer.visibility',1)
 
 def main(xmlFile):
     form = LODTools(xmlFile)

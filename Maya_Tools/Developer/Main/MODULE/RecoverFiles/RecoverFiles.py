@@ -69,9 +69,6 @@ class TreeModel(QtCore.QAbstractItemModel):
     def data(self, index, role):
         if not index.isValid():
             return None
-        
-        #if role == QtCore.Qt.TextAlignmentRole:
-        #   return int(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter)
 
         if role == QtCore.Qt.DisplayRole:
             if index.column() != 0:
@@ -183,6 +180,9 @@ class RecoverFiles(form_class,base_class):
         self.ldtNewName.returnPressed.connect(self.changeTextureFiles)
         self.treeViewResult.customContextMenuRequested.connect(self.createCustomContextMenu)
         
+        self.actionSelect_Textures_Inside.triggered.connect(self.selectAllTextures)
+        self.actionSelect_Missing_Files.triggered.connect(self.selectMissingTextures)
+        
     def analyzeScene(self):
         textureNodes = py.ls(typ = ['file','psdFileTex','mentalrayTexture'])
         shaderNodes = py.ls(type = ['cgfxShader', 'hlslShader', 'dx11Shader'])
@@ -235,14 +235,27 @@ class RecoverFiles(form_class,base_class):
         self.signalChangeTexture.emit(fullPath)
         print str(index.row()) + ' ' + str(index.column())
         
+    def selectAllTextures(self):
+        index = self.treeViewResult.selectedIndexes()[0]
+        item = index.internalPointer()
+        if item.node() == 'path':
+            childCount = item.childCount()
+            selectModel = self.treeViewResult.selectionModel()
+            for id in range(childCount):
+                idx = self.treeViewResult.model().index(id,1,index)
+                selectModel.select(idx, selectModel.Select|selectModel.Rows)
+            
     def selectMissingTextures(self):
-        print 'select missing textures'
-        missingTextures = list()
-        selModel = self.treeViewResult.selectionModel()
-        for id in self.treeViewResult.model()._missingIndexes:
-            print id.row()
-            selModel.select(id, selModel.Select|selModel.Rows)
-        
+        index = self.treeViewResult.selectedIndexes()[0]
+        item = index.internalPointer()
+        if item.node() == 'path':
+            childCount = item.childCount()
+            selectModel = self.treeViewResult.selectionModel()
+            for id in range(childCount):
+                idx = self.treeViewResult.model().index(id,1,index)
+                status = idx.internalPointer().data(0)
+                if status == False:
+                    selectModel.select(idx, selectModel.Select|selectModel.Rows)
 
     def selectMissingTexture(self):
         row = self.tableWidgetResult.rowCount()
