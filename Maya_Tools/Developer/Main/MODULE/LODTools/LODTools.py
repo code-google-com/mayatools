@@ -536,18 +536,35 @@ class LODTools(form_class,base_class):
             cmds.setAttr('pulled_wheel_arch_layer.visibility', 1)
             cmds.setAttr('large_overfenders_layer.visibility', 0)
             cmds.setAttr('small_overfenders_layer.visibility', 0)
+            if self.btnLOD0.isChecked():
+                cmds.setAttr('pulled_type_a_layer.visibility',1)
+            if self.btnLOD1.isChecked():
+                cmds.setAttr('pulled_type_b_layer.visibility',1)
+            if self.btnLOD2.isChecked():
+                cmds.setAttr('pulled_type_c_layer.visibility',1)
+            if self.btnLOD3.isChecked():
+                cmds.setAttr('pulled_type_d_layer.visibility',1)
         
         if lod == 'small':
             cmds.setAttr('wheel_arch|standard.visibility', 1)
             cmds.setAttr('pulled_wheel_arch_layer.visibility', 0)
             cmds.setAttr('large_overfenders_layer.visibility', 0)
             cmds.setAttr('small_overfenders_layer.visibility', 1)
+            
         
         if lod == 'large':
             cmds.setAttr('wheel_arch|standard.visibility', 1)
             cmds.setAttr('pulled_wheel_arch_layer.visibility', 0)
             cmds.setAttr('large_overfenders_layer.visibility', 1)
             cmds.setAttr('small_overfenders_layer.visibility', 0)
+            if self.btnLOD0.isChecked():
+                cmds.setAttr('large_type_a_layer.visibility',1)
+            if self.btnLOD1.isChecked():
+                cmds.setAttr('large_type_b_layer.visibility',1)
+            if self.btnLOD2.isChecked():
+                cmds.setAttr('large_type_c_layer.visibility',1)
+            if self.btnLOD3.isChecked():
+                cmds.setAttr('large_type_d_layer.visibility',1)
 
 def main(xmlFile):
     form = LODTools(xmlFile)
