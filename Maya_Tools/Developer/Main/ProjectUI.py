@@ -91,11 +91,11 @@ class ProjectUI(form_class,base_class):
         print self.Proj.projectData 
         print 'okie'
         for index in range(len(self.Proj.moduleList[0])):
-            #try:
+            try:
                 instanceModule = loadModule(self.Proj.moduleList[0][index])
                 form = instanceModule.main(self.Proj.moduleList[1][index])
                 self.tabWidget.insertTab(index,form,form.__name__)
-            #except: 
+            except: 
                 print 'Error to loading module:' + self.Proj.moduleList[0][index]
         #add dock widget
         self.AssetForm = AssetForm.AssetForm(self.xmlFile)
