@@ -171,8 +171,8 @@ class RecoverFiles(form_class,base_class):
         self.treeViewResult.clicked.connect(self.selectItem)
         self.btnSelectMissingTextures.clicked.connect(self.selectMissingTextures)
         self.btnAssigntoDirectories.clicked.connect(self.assigntoAnotherDir)
-        self.cbbFileFormat.currentIndexChanged.connect(self.updateFormat)
-        self.cbbFilter.currentIndexChanged.connect(self.updateStatus)
+        #self.cbbFileFormat.currentIndexChanged.connect(self.updateFormat)
+        #self.cbbFilter.currentIndexChanged.connect(self.updateStatus)
         self.btnchangeFormat.clicked.connect(self.changeFormatType)
         self.cbbFilter.addItems(['All','Found','Missing'])
         self.cbbTargetType.addItems(['.psd','.tga','.png','.tif','.dds','.bmp','.jpg'])
@@ -183,6 +183,7 @@ class RecoverFiles(form_class,base_class):
         self.actionSelect_Textures_Inside.triggered.connect(self.selectAllTextures)
         self.actionSelect_Missing_Files.triggered.connect(self.selectMissingTextures)
         self.actionAssign_to_Another_path.triggered.connect(self.assigntoAnotherDir)
+        self.actionChange_Format.triggered.connect(self.changeFormatType)
         
     def analyzeScene(self):
         textureNodes = py.ls(typ = ['file','psdFileTex','mentalrayTexture'])
@@ -258,7 +259,7 @@ class RecoverFiles(form_class,base_class):
                 idx = self.treeViewResult.model().index(id,1,index)
                 status = idx.internalPointer().data(0)
                 if status == False:
-                    selectModel.select(idx, selectModel.Deselect|selectModel.Rows)
+                    selectModel.select(idx, selectModel.Select|selectModel.Rows)
         
     def createCustomContextMenu(self,pos):
         type_ID = [f.internalPointer().node() for f in self.treeViewResult.selectedIndexes()] 
@@ -301,55 +302,16 @@ class RecoverFiles(form_class,base_class):
                     cmds.setAttr(item.data(4) + '.fileTextureName', dir + '/' + item.data(1), type = 'string')
             self.analyzeScene()
     
-    def updateStatus(self):
-        status = self.cbbFilter.currentText()
-        type = self.cbbFileFormat.currentText()
-        self.reloadTableWidgetResult(status, type)
-    
-    def updateFormat(self):
-        status = self.cbbFilter.currentText()
-        type = self.cbbFileFormat.currentText()
-        self.reloadTableWidgetResult(status, type)
-    
-    def reloadTableWidgetResult(self, status, type):
 
-        row = self.tableWidgetResult.rowCount()
-        for i in range(row):
-            self.tableWidgetResult.setRowHidden(i,False)
-            filterStatus = self.tableWidgetResult.item(i,0).text()
-            filterFormat = os.path.splitext(str(self.tableWidgetResult.item(i,1).text()))[1]
-            if status == 'All':
-                if type == 'All files':
-                    self.tableWidgetResult.setRowHidden(i,False)
-                else:
-                    if filterFormat == type:
-                        self.tableWidgetResult.setRowHidden(i,False)
-                    else:
-                        self.tableWidgetResult.setRowHidden(i,True)
-            else:
-                if type == 'All files':
-                    if filterStatus == status:
-                        self.tableWidgetResult.setRowHidden(i,False)
-                    else:
-                        self.tableWidgetResult.setRowHidden(i,True)
-                else:
-                    if filterFormat == type and filterStatus == status:
-                        self.tableWidgetResult.setRowHidden(i,False)
-                    else:
-                        self.tableWidgetResult.setRowHidden(i,True)
-            
     def changeFormatType(self):
         if not self.treeViewResult.selectedIndexes():
             QtGui.QMessageBox.warning(self,'Select Files to redirect location','Please select files you need to redirect location! Thanks',QtGui.QMessageBox.Ok)
         else: 
             for i in self.treeViewResult.selectedIndexes():
-                row = self.tableWidgetResult.row(file)
-                if self.tableWidgetResult.column(file) == 2:
-                    filename = self.tableWidgetResult.item(row,2)
-                    changedName = os.path.splitext(str(filename.text()))[0] + str(self.cbbTargetType.currentText())
-                    fileNode = self.tableWidgetResult.item(row,3)
-                    cmds.select(str(fileNode.text()))
-                    cmds.setAttr(str(fileNode.text()) + '.fileTextureName',changedName,type='string')
+                item = i.internalPointer()
+                parent = item.parent()
+                if item.node() == 'file':
+                    cmds.setAttr(item.data(4) + '.fileTextureName', parent + '/' + item.data(1).split('|')[0] +  str(self.cbbTargetType.currentText()), type = 'string')
         self.analyzeScene()
         
     def changeTextureFiles(self):
