@@ -301,8 +301,6 @@ class RecoverFiles(form_class,base_class):
                     cmds.setAttr(item.data(4) + '.fileTextureName', dir + '/' + item.data(1), type = 'string')
             self.analyzeScene()
     
-
-        
     def updateStatus(self):
         status = self.cbbFilter.currentText()
         type = self.cbbFileFormat.currentText()
@@ -341,11 +339,10 @@ class RecoverFiles(form_class,base_class):
                         self.tableWidgetResult.setRowHidden(i,True)
             
     def changeFormatType(self):
-        listSelectedFiles = self.tableWidgetResult.selectedItems()
-        if (len(listSelectedFiles) == 0):
-             QtGui.QMessageBox.warning(self,'Select Files to change format','Please select files you need to change format! Thanks',QtGui.QMessageBox.Ok)
-        else:
-            for file in listSelectedFiles:
+        if not self.treeViewResult.selectedIndexes():
+            QtGui.QMessageBox.warning(self,'Select Files to redirect location','Please select files you need to redirect location! Thanks',QtGui.QMessageBox.Ok)
+        else: 
+            for i in self.treeViewResult.selectedIndexes():
                 row = self.tableWidgetResult.row(file)
                 if self.tableWidgetResult.column(file) == 2:
                     filename = self.tableWidgetResult.item(row,2)
