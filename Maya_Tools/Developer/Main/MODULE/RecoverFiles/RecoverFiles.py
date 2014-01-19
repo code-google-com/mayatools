@@ -2,6 +2,7 @@ import maya.cmds as cmds
 import pymel.core as py
 from PyQt4 import QtGui, QtCore, uic
 import os, sys, inspect
+import functools
 
 import Source.IconResource_rc
 
@@ -53,12 +54,12 @@ class TreeItem(object):
         return 0
     
 class TreeModel(QtCore.QAbstractItemModel):
-    def __init__(self, data, header, parent=None):
+    def __init__(self, data = None, header = None, parent=None):
         super(TreeModel, self).__init__(parent)
         self.rootItem = TreeItem(header)
         self._headers = header
-        self._missingIndexes = list()
-        self.setupModelData(data, self.rootItem)
+        if data is not None:
+            self.setupModelData(data, self.rootItem)
 
     def columnCount(self, parent):
         if parent.isValid():
@@ -153,13 +154,7 @@ class TreeModel(QtCore.QAbstractItemModel):
             for f in data[1][id]:
                 f[1] = ' '*10 + f[1]
                 fileNode = TreeItem(f, pathNode)
-                if f[0] == False:
-                    #print data[1][id].index(f)
-                    #print pathID.row()
-                    if pathID.isValid():
-                        miss_Id = self.index(0, 1, pathID)
-                        print miss_Id.row()
-                        self._missingIndexes.append(miss_Id)
+
                     
 class RecoverFiles(form_class,base_class):
     signalChangeTexture = QtCore.pyqtSignal('QString', name = 'textureChanged')
@@ -171,9 +166,7 @@ class RecoverFiles(form_class,base_class):
         self.treeViewResult.clicked.connect(self.selectItem)
         self.btnSelectMissingTextures.clicked.connect(self.selectMissingTextures)
         self.btnAssigntoDirectories.clicked.connect(self.assigntoAnotherDir)
-        #self.cbbFileFormat.currentIndexChanged.connect(self.updateFormat)
-        #self.cbbFilter.currentIndexChanged.connect(self.updateStatus)
-        self.btnchangeFormat.clicked.connect(self.changeFormatType)
+        self.btnchangeFormat.clicked.connect(functools.partial(self.changeFormatType,str(self.cbbTargetType.currentText())))
         self.cbbFilter.addItems(['All','Found','Missing'])
         self.cbbTargetType.addItems(['.psd','.tga','.png','.tif','.dds','.bmp','.jpg'])
         self.cbbFileFormat.addItems(['All files','.psd','.tga','.png','.tif','.dds','.bmp','.jpg'])
@@ -184,6 +177,23 @@ class RecoverFiles(form_class,base_class):
         self.actionSelect_Missing_Files.triggered.connect(self.selectMissingTextures)
         self.actionAssign_to_Another_path.triggered.connect(self.assigntoAnotherDir)
         self.actionChange_Format.triggered.connect(self.changeFormatType)
+        
+        self._filterProxyModel = QtGui.QSortFilterProxyModel()
+        self._filterProxyModel.setDynamicSortFilter(True)
+        #self._model = TreeModel(None, None, None)
+        #self._filterProxyModel.setSourceModel(self._model)
+        
+        self.cbbFileFormat.currentIndexChanged.connect(self.setFilterForProxyModel)
+        self.cbbFilter.currentIndexChanged.connect(self.setFilterForProxyModel)
+        
+    def setFilterForProxyModel(self):
+        fileType = self.cbbFileFormat.currentText()
+        fileStatus = self.cbbFilter.currentText()
+        if fileType == 'All files':
+            self._filterProxyModel.setFilterRegExp('')
+        else:
+            self._filterProxyModel.setFilterRegExp(fileType)
+        self.treeViewResult.expandAll()
         
     def analyzeScene(self):
         textureNodes = py.ls(typ = ['file','psdFileTex','mentalrayTexture'])
@@ -201,7 +211,10 @@ class RecoverFiles(form_class,base_class):
                 status =  os.path.isfile(f.fileTextureName.get())
                 name = os.path.split(f.fileTextureName.get())[1]
                 path = os.path.split(f.fileTextureName.get())[0].lower()
-                res = str(int(f.outSizeX.get())) + 'x' + str(int(f.outSizeY.get()))
+                try:
+                    res = str(int(f.outSizeX.get())) + 'x' + str(int(f.outSizeY.get()))
+                except AttributeError:
+                    res = 'not available'
                 fileInfos = [status, name, res, '',str(f)]
             else:
                 status = os.path.isfile(f.shader.get())
@@ -220,65 +233,103 @@ class RecoverFiles(form_class,base_class):
         #-- create treeView model:
         
         header = ('', 'File Name', 'Dimension','Tag', 'File Node')
-        model = TreeModel(arrFilter, header)
-        self.treeViewResult.setModel(model)
+        self._model = TreeModel(arrFilter, header)
+        self._filterProxyModel.setSourceModel(self._model)
+        self.treeViewResult.setModel(self._filterProxyModel)
         self.treeViewResult.expandAll()
         for i in range(len(header)):
             self.treeViewResult.resizeColumnToContents(i) 
             
     def selectItem(self, index):
-        item = index.internalPointer()
+        mappedIndex = self._filterProxyModel.mapToSource(index)
+        item = mappedIndex.internalPointer()
         dir = item.parent().data(1)
         fullPath = dir + '/' + item.data(1).strip()
         try:
-            cmds.select(item.data(4))
+             cmds.select(item.data(4))
         except:
-            pass
+             pass
         self.signalChangeTexture.emit(fullPath)
-        print str(index.row()) + ' ' + str(index.column())
         
     def selectAllTextures(self):
         index = self.treeViewResult.selectedIndexes()[0]
-        item = index.internalPointer()
+        mappedIndex = self._filterProxyModel.mapToSource(index)
+        item = mappedIndex.internalPointer()
         if item.node() == 'path':
             childCount = item.childCount()
             selectModel = self.treeViewResult.selectionModel()
             selectModel.clearSelection()     
             for id in range(childCount):
-                idx = self.treeViewResult.model().index(id,1,index)
-                selectModel.select(idx, selectModel.Select|selectModel.Rows)
+                idx = self._model.index(id,1,mappedIndex)
+                mappedIdx = self._filterProxyModel.mapFromSource(idx)
+                selectModel.select(mappedIdx, selectModel.Select|selectModel.Rows)
             
     def selectMissingTextures(self):
         index = self.treeViewResult.selectedIndexes()[0]
-        item = index.internalPointer()
+        mappedIndex = self._filterProxyModel.mapToSource(index)
+        item = mappedIndex.internalPointer()
         if item.node() == 'path':
             childCount = item.childCount()
             selectModel = self.treeViewResult.selectionModel()
             selectModel.clearSelection()     
             for id in range(childCount):
-                idx = self.treeViewResult.model().index(id,1,index)
+                idx = self._model.index(id,1,mappedIndex)
                 status = idx.internalPointer().data(0)
                 if status == False:
-                    selectModel.select(idx, selectModel.Select|selectModel.Rows)
+                    mappedIdx = self._filterProxyModel.mapFromSource(idx)
+                    selectModel.select(mappedIdx, selectModel.Select|selectModel.Rows)
         
     def createCustomContextMenu(self,pos):
-        type_ID = [f.internalPointer().node() for f in self.treeViewResult.selectedIndexes()] 
+        type_ID = [self._filterProxyModel.mapToSource(index).internalPointer().node() for index in self.treeViewResult.selectedIndexes()] 
+        RightClickMenu = QtGui.QMenu(self)
+        formatMenu = QtGui.QMenu('Change Format to',RightClickMenu)
+        
+        psdAction = QtGui.QAction('.psd', None)
+        formatMenu.addAction(psdAction)
+        
+        tgaAction = QtGui.QAction('.tga', None)
+        formatMenu.addAction(tgaAction)
+        
+        pngAction = QtGui.QAction('.pnj', None) 
+        formatMenu.addAction(pngAction)
+        
+        tifAction = QtGui.QAction('.tif', None)
+        formatMenu.addAction(tifAction)
+        
+        ddsAction = QtGui.QAction('.dds', None)
+        formatMenu.addAction(ddsAction)
+        
+        bmpAction = QtGui.QAction('.bmp', None)
+        formatMenu.addAction(bmpAction)
+        
+        jpgAction = QtGui.QAction('.jpg', None)
+        formatMenu.addAction(jpgAction)
+        
         if 'file'in type_ID:  
-            RightClickMenu = QtGui.QMenu(self)
+            
             #RightClickMenu.addAction(self.actionSelect_Missing_Files)
             RightClickMenu.addAction(self.actionAssign_to_Another_path)
-            RightClickMenu.addAction(self.actionChange_Format)
+            #RightClickMenu.addAction(self.actionChange_Format)
+            RightClickMenu.addMenu(formatMenu)
             RightClickMenu.addAction(self.actionRename_File)
-            RightClickMenu.exec_(QtGui.QCursor.pos())
         if 'path' in type_ID:
-            RightClickMenu = QtGui.QMenu(self)
+            
             RightClickMenu.addAction(self.actionSelect_Textures_Inside)
             RightClickMenu.addAction(self.actionSelect_Missing_Files)
             RightClickMenu.addAction(self.actionAssign_to_Another_path)
-            RightClickMenu.addAction(self.actionChange_Format)
+            #RightClickMenu.addAction(self.actionChange_Format)
+            RightClickMenu.addMenu(formatMenu)
             RightClickMenu.addAction(self.actionRename_File)
             
-            RightClickMenu.exec_(QtGui.QCursor.pos())
+        psdAction.triggered.connect(functools.partial(self.changeFormatType,'.psd'))
+        tgaAction.triggered.connect(functools.partial(self.changeFormatType,'.tga'))
+        tifAction.triggered.connect(functools.partial(self.changeFormatType,'.tif'))
+        pngAction.triggered.connect(functools.partial(self.changeFormatType,'.png'))
+        jpgAction.triggered.connect(functools.partial(self.changeFormatType,'.jpg'))
+        jpgAction.triggered.connect(functools.partial(self.changeFormatType,'.jpg'))
+        ddsAction.triggered.connect(functools.partial(self.changeFormatType,'.dds')) 
+            
+        RightClickMenu.exec_(QtGui.QCursor.pos())
         
     def assigntoAnotherDir(self):
         if not self.treeViewResult.selectedIndexes():
@@ -288,48 +339,50 @@ class RecoverFiles(form_class,base_class):
             returnfromDialog = QtGui.QFileDialog.getOpenFileNames(self,'Select a new location for files',dirfile)
             dir = os.path.split(str(returnfromDialog[0]))[0]
             for i in self.treeViewResult.selectedIndexes():
-                item = i.internalPointer()
+                mappedI = self._filterProxyModel.mapToSource(i)
+                item = mappedI.internalPointer()
                 if item.node() == 'path':
                     childCount = item.childCount()
                     for id in range(childCount):
                         try:
-                            idx = self.treeViewResult.model().index(id, 1, i)
+                            idx = self._model.index(id, 1, mappedI)
                             itemx = idx.internalPointer()
-                            cmds.setAttr(itemx.data(4) + '.fileTextureName', dir + '/' + itemx.data(1), type = 'string')
+                            cmds.setAttr(itemx.data(4) + '.fileTextureName', dir + '/' + itemx.data(1).strip(), type = 'string')
                         except:
                             pass
                 if item.node() == 'file':
-                    cmds.setAttr(item.data(4) + '.fileTextureName', dir + '/' + item.data(1), type = 'string')
+                    cmds.setAttr(item.data(4) + '.fileTextureName', dir + '/' + item.data(1).strip(), type = 'string')
             self.analyzeScene()
     
 
-    def changeFormatType(self):
+    def changeFormatType(self, formatType):
         if not self.treeViewResult.selectedIndexes():
             QtGui.QMessageBox.warning(self,'Select Files to redirect location','Please select files you need to redirect location! Thanks',QtGui.QMessageBox.Ok)
         else: 
             for i in self.treeViewResult.selectedIndexes():
-                item = i.internalPointer()
-                parent = item.parent()
+                mappedI = self._filterProxyModel.mapToSource(i)
+                item = mappedI.internalPointer()
+                parent = item.parent().data(1)
                 if item.node() == 'file':
-                    cmds.setAttr(item.data(4) + '.fileTextureName', parent + '/' + item.data(1).split('|')[0] +  str(self.cbbTargetType.currentText()), type = 'string')
+                    cmds.setAttr(item.data(4) + '.fileTextureName', parent + '/' + item.data(1).split('.')[0].strip() +  formatType, type = 'string')
         self.analyzeScene()
         
     def changeTextureFiles(self):
         print '-- execute'
         oldname = str(self.ldtOldName.text())
         newname = str(self.ldtNewName.text())
-        listSelectedFiles = self.tableWidgetResult.selectedItems()
-        if (len(listSelectedFiles) == 0):
+        if not self.treeViewResult.selectedIndexes():
              QtGui.QMessageBox.warning(self,'Select Files to change format','Please select files you need to change format! Thanks',QtGui.QMessageBox.Ok)
         else:
-            for file in listSelectedFiles:
-                row = self.tableWidgetResult.row(file)
-                if self.tableWidgetResult.column(file) == 2:
-                    filename = self.tableWidgetResult.item(row,2)
-                    changedName = str(filename.text()).replace(oldname, newname)
-                    fileNode = self.tableWidgetResult.item(row,3)
-                    cmds.select(str(fileNode.text()))
-                    cmds.setAttr(str(fileNode.text()) + '.fileTextureName',changedName,type='string')
+            for i in self.treeViewResult.selectedIndexes():
+                mappedI = self._filterProxyModel.mapToSource(i)
+                item = mappedI.internalPointer()
+                if item.node() == 'file':
+                    oldName = item.data(1)
+                    newName = oldName.replace(oldname, newname).strip()
+                    parent = item.parent().data(1)
+                    fileNode = item.data(4)
+                    cmds.setAttr(fileNode + '.fileTextureName',parent + '/' + newName,type='string')
         self.analyzeScene()    
         
 def main():
