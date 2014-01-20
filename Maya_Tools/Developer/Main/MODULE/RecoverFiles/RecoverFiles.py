@@ -154,7 +154,11 @@ class TreeModel(QtCore.QAbstractItemModel):
             for f in data[1][id]:
                 f[1] = ' '*10 + f[1]
                 fileNode = TreeItem(f, pathNode)
-
+                
+class CustomFilterSortModel(QtGui.QFilterSortProxyModel):
+    def __init__(self):
+        super(QtGui.QFilterSortProxyModel, self).__init__()
+    
                     
 class RecoverFiles(form_class,base_class):
     signalChangeTexture = QtCore.pyqtSignal('QString', name = 'textureChanged')
