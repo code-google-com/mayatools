@@ -158,8 +158,14 @@ class TreeModel(QtCore.QAbstractItemModel):
 class CustomFilterSortModel(QtGui.QFilterSortProxyModel):
     def __init__(self):
         super(QtGui.QFilterSortProxyModel, self).__init__()
+        
+    def filterAcceptsRows(self, row_num, source_parent):
+        if self.filter_accepts_row_itself(row_num, source):
+            pass
+        
+    def  filter_accepts_row_itself(self):
+        pass
     
-                    
 class RecoverFiles(form_class,base_class):
     signalChangeTexture = QtCore.pyqtSignal('QString', name = 'textureChanged')
     def __init__(self):
@@ -310,14 +316,12 @@ class RecoverFiles(form_class,base_class):
         formatMenu.addAction(jpgAction)
         
         if 'file'in type_ID:  
-            
             #RightClickMenu.addAction(self.actionSelect_Missing_Files)
             RightClickMenu.addAction(self.actionAssign_to_Another_path)
             #RightClickMenu.addAction(self.actionChange_Format)
             RightClickMenu.addMenu(formatMenu)
             RightClickMenu.addAction(self.actionRename_File)
         if 'path' in type_ID:
-            
             RightClickMenu.addAction(self.actionSelect_Textures_Inside)
             RightClickMenu.addAction(self.actionSelect_Missing_Files)
             RightClickMenu.addAction(self.actionAssign_to_Another_path)
