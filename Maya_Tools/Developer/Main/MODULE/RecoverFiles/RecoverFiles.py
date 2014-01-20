@@ -155,16 +155,17 @@ class TreeModel(QtCore.QAbstractItemModel):
                 f[1] = ' '*10 + f[1]
                 fileNode = TreeItem(f, pathNode)
                 
-class CustomFilterSortModel(QtGui.QFilterSortProxyModel):
+class CustomFilterSortModel(QtGui.QSortFilterProxyModel):
     def __init__(self):
-        super(QtGui.QFilterSortProxyModel, self).__init__()
+        super(QtGui.QSortFilterProxyModel, self).__init__()
         
-    def filterAcceptsRows(self, row_num, source_parent):
-        if self.filter_accepts_row_itself(row_num, source):
-            pass
-        
-    def  filter_accepts_row_itself(self):
-        pass
+    def filterAcceptsRow(self, row_num, source_parent):
+        srcModel = self.sourceModel()
+        srcIndex = srcModel.index(row_num, 1, source_parent)
+        if srcIndex.internalPointer().node() == 'path':
+            return True
+        if srcIndex.internalPointer().node() == 'file':
+            return super(CustomFilterSortModel, self).filterAcceptsRow(row_num, source_parent)
     
 class RecoverFiles(form_class,base_class):
     signalChangeTexture = QtCore.pyqtSignal('QString', name = 'textureChanged')
@@ -188,7 +189,8 @@ class RecoverFiles(form_class,base_class):
         self.actionAssign_to_Another_path.triggered.connect(self.assigntoAnotherDir)
         self.actionChange_Format.triggered.connect(self.changeFormatType)
         
-        self._filterProxyModel = QtGui.QSortFilterProxyModel()
+        self._filterProxyModel = CustomFilterSortModel()#QtGui.QSortFilterProxyModel()
+        self._filterProxyModel.setFilterKeyColumn(1)
         self._filterProxyModel.setDynamicSortFilter(True)
         #self._model = TreeModel(None, None, None)
         #self._filterProxyModel.setSourceModel(self._model)
@@ -203,6 +205,13 @@ class RecoverFiles(form_class,base_class):
             self._filterProxyModel.setFilterRegExp('')
         else:
             self._filterProxyModel.setFilterRegExp(fileType)
+            
+        if fileStatus == 'All':
+            pass
+        elif fileStatus == 'Missing':
+            pass
+        elif fileStatus == 'Found':
+            pass
         self.treeViewResult.expandAll()
         
     def analyzeScene(self):
@@ -221,11 +230,12 @@ class RecoverFiles(form_class,base_class):
                 status =  os.path.isfile(f.fileTextureName.get())
                 name = os.path.split(f.fileTextureName.get())[1]
                 path = os.path.split(f.fileTextureName.get())[0].lower()
+                tag = QtGui.QPictureIO(str(f),'.tif')
                 try:
                     res = str(int(f.outSizeX.get())) + 'x' + str(int(f.outSizeY.get()))
                 except AttributeError:
                     res = 'not available'
-                fileInfos = [status, name, res, '',str(f)]
+                fileInfos = [status, name, res, tag.description(),str(f)]
             else:
                 status = os.path.isfile(f.shader.get())
                 name = os.path.split(f.shader.get())[1]
@@ -242,7 +252,7 @@ class RecoverFiles(form_class,base_class):
                 arrFilter[1][id].append(fileInfos)        
         #-- create treeView model:
         
-        header = ('', 'File Name', 'Dimension','Tag', 'File Node')
+        header = ('', 'File Name', 'Resolution','Tag', 'File Node')
         self._model = TreeModel(arrFilter, header)
         self._filterProxyModel.setSourceModel(self._model)
         self.treeViewResult.setModel(self._filterProxyModel)
@@ -374,6 +384,9 @@ class RecoverFiles(form_class,base_class):
                 if item.node() == 'file':
                     cmds.setAttr(item.data(4) + '.fileTextureName', parent + '/' + item.data(1).split('.')[0].strip() +  formatType, type = 'string')
         self.analyzeScene()
+        
+    def selectAllMissingFiles(self):
+        numPath = self._model.rootItem.childCount()
         
     def changeTextureFiles(self):
         print '-- execute'
