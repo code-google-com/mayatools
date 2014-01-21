@@ -7,8 +7,6 @@ from PyQt4 import QtGui, QtCore, uic
 import os, sys, inspect
 import functools 
 
-
-
 LODsChain = ['_LOD0_','_LOD1_','_LOD2_','_LOD3_','_LOD4_','_LOD5_','_LOD6_']
 # SONY Lods:
 Sony_mapping_LODs = ['_LOD0_','_LOD1_','_LOD2_','_LOD3_','_LOD4_','_LOD5_','_LOD6_']
