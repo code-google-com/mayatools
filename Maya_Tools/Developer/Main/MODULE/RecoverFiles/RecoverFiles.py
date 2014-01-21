@@ -158,15 +158,45 @@ class TreeModel(QtCore.QAbstractItemModel):
 class CustomFilterSortModel(QtGui.QSortFilterProxyModel):
     def __init__(self):
         super(QtGui.QSortFilterProxyModel, self).__init__()
+        self._fileStatus = 'All'
+        
+    def update(self, status):
+        self._fileStatus = status
         
     def filterAcceptsRow(self, row_num, source_parent):
-        srcModel = self.sourceModel()
-        srcIndex = srcModel.index(row_num, 1, source_parent)
-        if srcIndex.internalPointer().node() == 'path':
+        srcId = self.sourceModel().index(row_num, 1, source_parent)
+        if srcId.internalPointer().node() == 'file':
+            #self.filterMissingFiles(row_num, source_parent)
+            return super(CustomFilterSortModel, self).filterAcceptsRow(row_num, source_parent) and self.filterMissingFiles(row_num, source_parent)
+        if srcId.internalPointer().node() == 'path':
             return True
-        if srcIndex.internalPointer().node() == 'file':
-            return super(CustomFilterSortModel, self).filterAcceptsRow(row_num, source_parent)
+            #return self.hasChildrenAccepts(srcId)
+
+    def hasChildrenAccepts(self, parent):
+        result = False
+        num = parent.internalPointer().childCount()
+        id = 0
+        while id < num and not result:
+            result = self.filterAcceptsRow(id, parent)
+            id += 1
+        return result
     
+    def filterMissingFiles(self, row, parent):
+        if self._fileStatus == 'All':
+            return True
+        elif self._fileStatus == 'Found':
+            item = self.sourceModel().index(row, 1, parent).internalPointer()
+            if item.data(0) == True:
+                return True
+            else:
+                return False
+        elif self._fileStatus == 'Missing':
+            item = self.sourceModel().index(row, 1, parent).internalPointer()
+            if item.data(0) == True:
+                return False
+            else:
+                return True
+        
 class RecoverFiles(form_class,base_class):
     signalChangeTexture = QtCore.pyqtSignal('QString', name = 'textureChanged')
     def __init__(self):
@@ -175,7 +205,7 @@ class RecoverFiles(form_class,base_class):
         self.__name__ = 'File Managers'
         self.btnAnalyzeScene.clicked.connect(self.analyzeScene)
         self.treeViewResult.clicked.connect(self.selectItem)
-        self.btnSelectMissingTextures.clicked.connect(self.selectMissingTextures)
+        self.btnSelectMissingTextures.clicked.connect(self.selectAllMissingFiles)
         self.btnAssigntoDirectories.clicked.connect(self.assigntoAnotherDir)
         self.btnchangeFormat.clicked.connect(functools.partial(self.changeFormatType,str(self.cbbTargetType.currentText())))
         self.cbbFilter.addItems(['All','Found','Missing'])
@@ -201,17 +231,19 @@ class RecoverFiles(form_class,base_class):
     def setFilterForProxyModel(self):
         fileType = self.cbbFileFormat.currentText()
         fileStatus = self.cbbFilter.currentText()
+        if fileStatus == 'All':
+            self._filterProxyModel.update('All')
+        elif fileStatus == 'Missing':
+            self._filterProxyModel.update('Missing')
+        elif fileStatus == 'Found':
+            self._filterProxyModel.update('Found')
+        
         if fileType == 'All files':
             self._filterProxyModel.setFilterRegExp('')
         else:
             self._filterProxyModel.setFilterRegExp(fileType)
             
-        if fileStatus == 'All':
-            pass
-        elif fileStatus == 'Missing':
-            pass
-        elif fileStatus == 'Found':
-            pass
+        
         self.treeViewResult.expandAll()
         
     def analyzeScene(self):
@@ -387,6 +419,16 @@ class RecoverFiles(form_class,base_class):
         
     def selectAllMissingFiles(self):
         numPath = self._model.rootItem.childCount()
+        selectModel = self.treeViewResult.selectionModel()
+        for i in range(numPath):
+            pathID = self._model.index(i, 1, QtCore.QModelIndex())
+            num = pathID.internalPointer().childCount()   
+            for id in range(num):
+                idx = self._model.index(id, 1, pathID)
+                status = idx.internalPointer().data(0)
+                if status == False:
+                    mappedIdx = self._filterProxyModel.mapFromSource(idx)
+                    selectModel.select(mappedIdx, selectModel.Select|selectModel.Rows)
         
     def changeTextureFiles(self):
         print '-- execute'
