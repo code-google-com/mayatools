@@ -146,6 +146,7 @@ class LODTools(form_class,base_class):
         self.btnPulled.clicked.connect(functools.partial(self.selectLOD,'pulled'))
         self.btnSmall.clicked.connect(functools.partial(self.selectLOD,'small'))
         self.btnLarge.clicked.connect(functools.partial(self.selectLOD,'large'))
+        self.chkSpoiler.clicked.connect(self.loadSpoilerTypeA)
         #self.btnLOD6.clicked.connect(functools.partial(self.selectLOD,'6'))
         #self.btnLOD7.clicked.connect(functools.partial(self.selectLOD,'7'))
         #self.btnLOD8.clicked.connect(functools.partial(self.selectLOD,'8'))
@@ -638,7 +639,13 @@ class LODTools(form_class,base_class):
                     cmds.setAttr('large_type_d_layer.visibility',1)
                 else:
                     cmds.setAttr('large_type_a_layer.visibility',1)
-
+            
+    def loadSpoilerTypeA(self):
+        if self.chkSpoiler.isChecked():
+            cmds.setAttr('spoiler|type_a.visibility', 1)
+        else:
+            cmds.setAttr('spoiler|type_a.visibility', 0)
+            
 def main(xmlFile):
     form = LODTools(xmlFile)
     return form 
