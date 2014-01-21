@@ -8,6 +8,14 @@ import os, sys, re, inspect , imp, shutil
 from xml.dom.minidom import *
 from PyQt4 import QtGui, QtCore, uic
 import subprocess as s
+################################### IMPORT MAIL #####################
+import smtplib
+from email.mime.text import MIMEText
+# Here are the email package modules we'll need
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+
+################################## END IMPORT MAIL #################################
 f1_dir =[]
 f2_dir=[]
 tempDir = []
@@ -17,7 +25,35 @@ master_dir = 'C:/development/marmoset/app/res/master/data/car_descriptions'
 serverPath = 'T:/Scenes/RR_2014/To_Client/Today'
 clientPath ='Z:/Project/RR_2014/Cars/'
         
-def execute(self):
+def sendemail(from_addr, to_addr_list, cc_addr_list,
+              subject, message,
+              login, password,
+              #smtpserver='smtp.gmail.com:587'):
+              #smtpserver='gesvr01.glassegg.com:25'):
+              smtpserver = 'secure.emailsrvr.com:465'):
+    header  = 'From: %s\n' % from_addr
+    header += 'To: %s\n' % ','.join(to_addr_list)
+    header += 'Cc: %s\n' % ','.join(cc_addr_list)
+    header += 'Subject: %s\n\n' % subject
+    message = header + message
+ 
+    server = smtplib.SMTP(smtpserver)
+    server.starttls()
+    server.login(login,password)
+    problems = server.sendmail(from_addr, to_addr_list, message)
+    server.quit()
+    return problems
+    
+def execute():
+    from_ad = 'thohoang@glassegg.com'
+    to_ad ='hoangvantho@gmail.com'
+    
+    cc_ad = 'thohoang@glassegg.com'
+    subject = 'How are you?'
+    message = ' Di nhau de anh em :D'
+    login = 'thohoang@glassegg.com'
+    password ='S#CpkG$TT'
+    ##################################################
     file1=[]
     localFolder=[]
     #tempDir = []
@@ -64,4 +100,8 @@ def execute(self):
     if os.path.isfile(carName_copy):
         shutil.copy(carName_copy,car_folder)
     
+    print '################## SEND MAIL ###########################'
+    sendMail = sendemail(from_ad,to_ad,cc_ad,subject,message,login,password)
+    
+    print sendMail
     
