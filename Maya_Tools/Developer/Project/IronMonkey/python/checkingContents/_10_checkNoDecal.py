@@ -42,14 +42,15 @@ def execute():
         shapeNode = cmds.listRelatives(mes, c = True, f = True)[0]
         sgs = cmds.listConnections(shapeNode, t = 'shadingEngine')
         shaders = list()
-        #print sgs
-        for sg in sgs:
-            if cmds.connectionInfo(sg + '.surfaceShader', sfd = True):
-                shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
-                if shader == 'paint_shader_nodecal_opaque':
-                    objectOrror.append(mes)
+               
+        if not (sgs is None):
+            for sg in sgs:
+                if cmds.connectionInfo(sg + '.surfaceShader', sfd = True):
+                    shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
+                    if shader == 'paint_shader_nodecal_opaque':
+                        objectOrror.append(mes)
                     #print(object,'Incorrect material',shader)
-                    
+                      
     print objectOrror
     objectHide = [obj for obj in allMesh if obj not in objectOrror]
     if len(objectOrror)>0:
@@ -62,5 +63,4 @@ def execute():
         for obj in objectHide:
                  
             #print obj
-            cmds.setAttr(obj + '.visibility', 0)
-            
+            cmds.setAttr(obj + '.visibility', 0)    
