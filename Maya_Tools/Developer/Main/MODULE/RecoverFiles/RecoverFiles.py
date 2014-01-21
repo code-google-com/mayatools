@@ -404,7 +404,6 @@ class RecoverFiles(form_class,base_class):
                     cmds.setAttr(item.data(4) + '.fileTextureName', dir + '/' + item.data(1).strip(), type = 'string')
             self.analyzeScene()
     
-
     def changeFormatType(self, formatType):
         if not self.treeViewResult.selectedIndexes():
             QtGui.QMessageBox.warning(self,'Select Files to redirect location','Please select files you need to redirect location! Thanks',QtGui.QMessageBox.Ok)
