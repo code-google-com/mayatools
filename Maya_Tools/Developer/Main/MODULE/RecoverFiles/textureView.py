@@ -8,6 +8,9 @@ dirUI= fileDirCommmon +'/UI/textureView.ui'
 
 form_class, base_class = uic.loadUiType(dirUI)  
 
+class QCustomImage():
+    pass
+
 class textureView(QtGui.QGraphicsView, form_class,base_class):
     def __init__(self):
         super(base_class,self).__init__()

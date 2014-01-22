@@ -57,6 +57,7 @@ class TreeModel(QtCore.QAbstractItemModel):
     def __init__(self, data = None, header = None, parent=None):
         super(TreeModel, self).__init__(parent)
         self.rootItem = TreeItem(header)
+        self.rootIndex = self.createIndex(0, 0, self.rootItem)
         self._headers = header
         if data is not None:
             self.setupModelData(data, self.rootItem)
@@ -166,7 +167,6 @@ class CustomFilterSortModel(QtGui.QSortFilterProxyModel):
     def filterAcceptsRow(self, row_num, source_parent):
         srcId = self.sourceModel().index(row_num, 1, source_parent)
         if srcId.internalPointer().node() == 'file':
-            #self.filterMissingFiles(row_num, source_parent)
             return super(CustomFilterSortModel, self).filterAcceptsRow(row_num, source_parent) and self.filterMissingFiles(row_num, source_parent)
         if srcId.internalPointer().node() == 'path':
             return True
@@ -205,7 +205,7 @@ class RecoverFiles(form_class,base_class):
         self.__name__ = 'File Managers'
         self.btnAnalyzeScene.clicked.connect(self.analyzeScene)
         self.treeViewResult.clicked.connect(self.selectItem)
-        self.btnSelectMissingTextures.clicked.connect(self.selectAllMissingFiles)
+        self.btnSelectMissingTextures.clicked.connect(self.selectMissingTextures)
         self.btnAssigntoDirectories.clicked.connect(self.assigntoAnotherDir)
         self.btnchangeFormat.clicked.connect(functools.partial(self.changeFormatType,str(self.cbbTargetType.currentText())))
         self.cbbFilter.addItems(['All','Found','Missing'])
@@ -302,6 +302,7 @@ class RecoverFiles(form_class,base_class):
         except:
              pass
         self.signalChangeTexture.emit(fullPath)
+        print index.row()
         
     def selectAllTextures(self):
         index = self.treeViewResult.selectedIndexes()[0]
@@ -416,18 +417,18 @@ class RecoverFiles(form_class,base_class):
                     cmds.setAttr(item.data(4) + '.fileTextureName', parent + '/' + item.data(1).split('.')[0].strip() +  formatType, type = 'string')
         self.analyzeScene()
         
-    def selectAllMissingFiles(self):
-        numPath = self._model.rootItem.childCount()
-        selectModel = self.treeViewResult.selectionModel()
-        for i in range(numPath):
-            pathID = self._model.index(i, 1, QtCore.QModelIndex())
-            num = pathID.internalPointer().childCount()   
-            for id in range(num):
-                idx = self._model.index(id, 1, pathID)
-                status = idx.internalPointer().data(0)
-                if status == False:
-                    mappedIdx = self._filterProxyModel.mapFromSource(idx)
-                    selectModel.select(mappedIdx, selectModel.Select|selectModel.Rows)
+#     def selectAllMissingFiles(self):
+#         numPath = self._model.rootItem.childCount()
+#         selectModel = self.treeViewResult.selectionModel()
+#         for i in range(numPath):
+#             pathID = self._model.index(i, 1, self._model.rootIndex)
+#             num = pathID.internalPointer().childCount()   
+#             for id in range(num):
+#                 idx = self._model.index(id, 1, pathID)
+#                 status = idx.internalPointer().data(0)
+#                 if status == False:
+#                     mappedIdx = self._filterProxyModel.mapFromSource(idx)
+#                     selectModel.select(mappedIdx, selectModel.Select|selectModel.Rows)
         
     def changeTextureFiles(self):
         print '-- execute'
