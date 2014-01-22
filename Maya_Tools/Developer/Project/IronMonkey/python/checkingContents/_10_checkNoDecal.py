@@ -27,14 +27,18 @@ def execute():
         sgs = cmds.listConnections(shapeNode, t = 'shadingEngine')
         shaders = list()
         #print sgs
-        for sg in sgs:
-            if cmds.connectionInfo(sg + '.surfaceShader', sfd = True):
-                shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
-                if shader == 'paint_shader_nodecal_opaque':
-                    print(shader,'Shaders corect assign')
-                else:
-                    objectOrror.append(object)
-                    #print(object,shader,'Error, shaders incorect assign')
+        if not (sgs is None):
+            for sg in sgs:
+                if cmds.connectionInfo(sg + '.surfaceShader', sfd = True):
+                    shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
+                    if shader == 'paint_shader_nodecal_opaque':
+                        print(shader,'Shaders corect assign')
+                    else:
+                        objectOrror.append(object)
+                        #print(object,shader,'Error, shaders incorect assign')
+        if sgs is None:
+            print(shapeNode,', Error connection.')
+            
     print'################# INCORRECT MATERIAL ################################'
         
     for mes in listNo_mir_spoil:
@@ -50,8 +54,9 @@ def execute():
                     if shader == 'paint_shader_nodecal_opaque':
                         objectOrror.append(mes)
                     #print(object,'Incorrect material',shader)
-                      
-    print objectOrror
+        if sgs is None:
+            print(shapeNode,', Error connection.')
+    #print objectOrror
     objectHide = [obj for obj in allMesh if obj not in objectOrror]
     if len(objectOrror)>0:
         print'####################### OBJECT ERROR ##########'
