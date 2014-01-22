@@ -197,6 +197,8 @@ class LODTools(form_class,base_class):
         if self._projectName == 'IronMonkey':
             setupLOD()
             childrenOfSpoilers = cmds.listRelatives('spoiler', c = True)
+            childrenOfSpoilers.append('---Nothing---')
+            childrenOfExhaust = cmds.listRelatives('spoiler', c = True)
             self.cbbSpoilers.addItems(childrenOfSpoilers)
         else:
             if not cmds.objExists('LayerSetup'):
@@ -205,10 +207,13 @@ class LODTools(form_class,base_class):
     def showSpoilers(self):
         spoiler = self.cbbSpoilers.currentText()
         for s in cmds.listRelatives('spoiler', c = True, f= True):
-            if str(spoiler) in s:
-                cmds.setAttr(s + '.visibility', 1)
-            else:
+            if spoiler == '---Nothing---':
                 cmds.setAttr(s + '.visibility', 0)
+            else:
+                if str(spoiler) in s:
+                    cmds.setAttr(s + '.visibility', 1)
+                else:
+                    cmds.setAttr(s + '.visibility', 0)
                 
     def showExhausted(self):
         spoiler = self.cbbExhausted.currentText()
