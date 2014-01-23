@@ -19,6 +19,7 @@ def execute():
     spoiler = [spoil for spoil in allMesh if re.search('_spoiler_',spoil)]
     mir_spoil = list(set(mirror + spoiler))
     listNo_mir_spoil = [tran for tran in allMesh if tran not in mir_spoil]
+    
     print'################# CORRECT MATERIAL MIRRORS AND SPOILER ################################'
     for mes in mir_spoil:
         #print mes
