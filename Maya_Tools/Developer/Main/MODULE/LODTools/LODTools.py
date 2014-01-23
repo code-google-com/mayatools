@@ -13,7 +13,7 @@ Sony_mapping_LODs = ['_LOD0_','_LOD1_','_LOD2_','_LOD3_','_LOD4_','_LOD5_','_LOD
 Sony_nohide = []
 # IronMonkey Lods:
 IronMonkey_mapping_LODs = ['lod_00_layer', 'lod_01_layer', 'lod_02_layer', 'lod_03_layer', 'lod_04_layer', 'lod_05_layer', 'lod_06_layer']
-IronMonkey_nohide = ['base_car_layer','spoilers']
+IronMonkey_nohide = ['base_car_layer','spoilers','exhausts']
 
 lods = ['lod_00','lod_01','lod_02','lod_03','lod_04','lod_05','lod_06']
 parts = ['type_a','type_b','type_c','type_d','kit_y','kit_z', 'kit_x', 'pulled_type_a','pulled_type_b', 'pulled_type_c', 'pulled_type_d',
@@ -324,7 +324,7 @@ class LODTools(form_class,base_class):
     def SwapLODIronMonkey(self):
         if self._projectName == 'IronMonkey':
             mel.eval('showHidden -all;')        
-        self._nohide = ['base_car_layer', 'spoilers']
+        self._nohide = ['base_car_layer', 'spoilers','exhausts']
         
         if self.rdbSourceLOD0.isChecked():
             LODa = mappingLODs(self._projectName,'_LOD0_')
