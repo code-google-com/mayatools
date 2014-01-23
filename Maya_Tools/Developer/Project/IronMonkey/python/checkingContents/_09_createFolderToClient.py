@@ -56,26 +56,15 @@ def sendMailHTML(from_ad,to_ad,car_folder):
     #xmlDir = os.path.split(os.path.split(fileDirCommmon)[0])[0] + '/XMLfiles/MailList.xml'
     # THONG SO GUI MAIL
     smtpserver='gemail01.glassegg.com'
-    #from_ad = 'thohoang@glassegg1.com'
-    #to_ad ='duynguyen2@glassegg.com'
-    #to_ad = loadXML(xmlDir,'Tech','mail')
-    #print 'DANH SACH MAIL NE PA CON'
-    #print to_ad
-    
-    #cc_ad = 'thohoang@glassegg.com'
-    #subject = 'How are you?'
-    #message = ' Di nhau de anh em :D'
-    login = 'thohoang@glassegg1.com'
+    login = 'technical@glassegg1.com'
     password ='abc123'
-    #password ='S#CpkG$TT'
     # Create message container - the correct MIME type is multipart/alternative.
     msg = MIMEMultipart('alternative')
     msg['Subject'] = "GUI SAN SAN PHAM CHO KHACH HANG"
     msg['From'] = from_ad
     msg['To'] = ', '.join(to_ad)
     #smtpserver = 'secure.emailsrvr.com:465'
-    
-    
+        
     # Create the body of the message (a plain-text and an HTML version).
     text = "Xin chao!\nSan pham da duoc kiem tra, Producer co the gui cho khach hang. Thanks!"
     html = """\
@@ -93,8 +82,7 @@ def sendMailHTML(from_ad,to_ad,car_folder):
       </body>
     </html>
     """.format(car_folder=car_folder)    
-    #s = Template(html).safe_substitute(code="We Says Thanks!")
-    # Record the MIME types of both parts - text/plain and text/html.
+    
     part1 = MIMEText(text, 'plain')
     part2 = MIMEText(html, 'html')
     
@@ -165,7 +153,7 @@ def execute():
     
     #--------------SEND MAIL TO PRODUCER
     xmlDir = os.path.split(os.path.split(fileDirCommmon)[0])[0] + '/XMLfiles/MailList.xml'
-    from_ad = 'thohoang@glassegg1.com'
+    from_ad = 'technical@glassegg1.com'
     to_ad = loadXML(xmlDir,'Producer','mail')
     print 'SEND MAIL DI'
     print to_ad
