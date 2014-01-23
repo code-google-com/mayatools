@@ -47,6 +47,7 @@ def setupLOD():
         cmds.createDisplayLayer(n = 'large_overfenders_layer')
         cmds.createDisplayLayer(n = 'base_unwrap')
         cmds.createDisplayLayer(n = 'spoilers')
+        cmds.createDisplayLayer(n = 'exhausts')
         for part in parts:
             try:
                 py.select('*' + part + '*')
@@ -119,6 +120,11 @@ def setupLOD():
             cmds.editDisplayLayerMembers('spoilers', cmds.ls('spoiler|*'), noRecurse = True)
         except:
             pass
+        
+        try:
+            cmds.editDisplayLayerMembers('exhausts', cmds.ls('exhaust|*'), noRecurse = True)
+        except:
+            pass
 
 class LODTools(form_class,base_class):
     def __init__(self, inputFile):
@@ -153,6 +159,7 @@ class LODTools(form_class,base_class):
         self.btnStandard.clicked.connect(functools.partial(self.selectLOD,'6'))
   
         self.cbbSpoilers.currentIndexChanged.connect(self.showSpoilers)
+        self.cbbExhausted.currentIndexChanged.connect(self.showExhausted)
         
         self.btnLOD0.setChecked(True)
         self.btnStandard.setChecked(True)
@@ -198,8 +205,10 @@ class LODTools(form_class,base_class):
             setupLOD()
             childrenOfSpoilers = cmds.listRelatives('spoiler', c = True)
             childrenOfSpoilers.append('---Nothing---')
-            childrenOfExhaust = cmds.listRelatives('spoiler', c = True)
+            childrenOfExhaust = cmds.listRelatives('exhaust', c = True)
+            childrenOfExhaust.append('---Nothing---')
             self.cbbSpoilers.addItems(childrenOfSpoilers)
+            self.cbbExhausted.addItems(childrenOfExhaust)
         else:
             if not cmds.objExists('LayerSetup'):
                 self.createLOD()
@@ -216,12 +225,15 @@ class LODTools(form_class,base_class):
                     cmds.setAttr(s + '.visibility', 0)
                 
     def showExhausted(self):
-        spoiler = self.cbbExhausted.currentText()
+        exhaust = self.cbbExhausted.currentText()
         for s in cmds.listRelatives('exhaust', c = True, f= True):
-            if str(spoiler) in s:
-                cmds.setAttr(s + '.visibility', 1)
-            else:
+            if exhaust == '---Nothing---':
                 cmds.setAttr(s + '.visibility', 0)
+            else:
+                if str(exhaust) in s:
+                    cmds.setAttr(s + '.visibility', 1)
+                else:
+                    cmds.setAttr(s + '.visibility', 0)
         
     def createLOD(self):
         # --
