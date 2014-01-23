@@ -261,7 +261,7 @@ class RecoverFiles(form_class,base_class):
             if f in textureNodes:
                 status =  os.path.isfile(f.fileTextureName.get())
                 name = os.path.split(f.fileTextureName.get())[1]
-                path = os.path.split(f.fileTextureName.get())[0].lower()
+                path = os.path.split(f.fileTextureName.get())[0].lower().replace('\\','/')
                 tag = QtGui.QPictureIO(str(f),'.tif')
                 try:
                     res = str(int(f.outSizeX.get())) + 'x' + str(int(f.outSizeY.get()))
