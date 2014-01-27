@@ -7,5 +7,5 @@ fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].repla
 
 def execute():
     print '--------------- FCC-------------------------'
-    attachFileSource = os.path.split(fileDirCommmon)[0] + '/geNFS14_SpecialFCCOnSelectedMeshes.mel'
+    attachFileSource = fileDirCommmon + '/geNFS14_SpecialFCCOnSelectedMeshes.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))

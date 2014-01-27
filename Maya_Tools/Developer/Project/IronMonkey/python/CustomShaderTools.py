@@ -87,7 +87,7 @@ class CustomShaderTools(form_class,base_class):
                     cmds.setAttr(fileNode + '.fileTextureName', glassTexture, type = 'string')
                 for m in mesh:
                     try:
-                    #print m
+                        print m
                         id = cmds.polyUVSet(m, q= True, auv = True).index('2_scratch')              # avoid a bad case is two uvset are swapped to each other
                         result = cmds.uvLink(uvSet = m + '.uvSet[' + str(id) + '].uvSetName', t = texture)
                         print result

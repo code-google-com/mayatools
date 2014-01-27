@@ -45,7 +45,7 @@ def setupLOD():
         cmds.createDisplayLayer(n = 'pulled_wheel_arch_layer')
         cmds.createDisplayLayer(n = 'small_overfenders_layer')
         cmds.createDisplayLayer(n = 'large_overfenders_layer')
-        cmds.createDisplayLayer(n = 'base_unwrap')
+        cmds.createDisplayLayer(n = 'base_unwrap_layer')
         cmds.createDisplayLayer(n = 'spoilers')
         cmds.createDisplayLayer(n = 'exhausts')
         for part in parts:
@@ -76,7 +76,17 @@ def setupLOD():
         # cmds.editDisplayLayerMembers('decal_placement_layer', [x for x in cmds.ls('*decal_*') if x not in cmds.ls(materials = True)], noRecurse = True)
         # select decal placeholder and put them in
         try:
-            cmds.editDisplayLayerMembers('collision_layer', cmds.ls('*collider*'), noRecurse = True)
+            cmds.editDisplayLayerMembers('base_unwrap_layer', cmds.ls('*base_unwrap*'), noRecurse = True)
+        except:
+            pass
+        
+        try:
+            cmds.editDisplayLayerMembers('decal_placement_layer', cmds.ls('mesh_decal_placement_shell'), noRecurse = True)
+        except:
+            pass
+        
+        try:
+            cmds.editDisplayLayerMembers('collision_layer', cmds.ls('mesh_collider_roof','mesh_collider_rain','mesh_collider_chassis'), noRecurse = True)
         except:
             pass
         # select lod00 and add them to layer
@@ -225,6 +235,8 @@ class LODTools(form_class,base_class):
         self.UnParent()
         
     def check(self):
+        self.cbbSpoilers.clear()
+        self.cbbExhausted.clear()
         if self._projectName == 'IronMonkey':
             setupLOD()
             childrenOfSpoilers = cmds.listRelatives('spoiler', c = True)
@@ -442,6 +454,7 @@ class LODTools(form_class,base_class):
         self._nohide.append(self._currentPart)
         if self.btnPulled.isChecked():
             print 'pulled'
+            cmds.setAttr('wheel_arch|standard.visibility', 0)
             self._nohide.append('pulled_wheel_arch_layer') 
             if self.btnLOD0.isChecked():
                 self._nohide.append('pulled_type_a_layer')
@@ -454,6 +467,7 @@ class LODTools(form_class,base_class):
                 
         if self.btnSmall.isChecked():
             print 'pulled'
+            cmds.setAttr('wheel_arch|standard.visibility', 1)
             self._nohide.append('small_overfenders_layer') 
                  
         if self.btnLarge.isChecked():
@@ -629,7 +643,7 @@ class LODTools(form_class,base_class):
             cmds.setAttr('wheel_arch|standard.visibility', 0)
             
         if lod == 'pulled':
-            cmds.setAttr('wheel_arch|standard.visibility', 1)
+            cmds.setAttr('wheel_arch|standard.visibility', 0)
             cmds.setAttr('pulled_wheel_arch_layer.visibility', 1)
             cmds.setAttr('large_overfenders_layer.visibility', 0)
             cmds.setAttr('small_overfenders_layer.visibility', 0)
