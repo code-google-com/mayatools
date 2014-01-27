@@ -8,7 +8,7 @@ import os, sys, re, inspect , imp, shutil
 from xml.dom.minidom import *
 from PyQt4 import QtGui, QtCore, uic
 import subprocess as s
-################################### IMPORT MAIL #####################
+
 ################################### IMPORT MAIL #####################
 import smtplib
 # Here are the email package modules we'll need
@@ -146,12 +146,42 @@ def execute():
     else:
         QtGui.QMessageBox.critical(None,'Wrong car name','Please import car to Collada before copy file.',QtGui.QMessageBox.Ok)
 
+    # COPY MAYA FILE TO SERVER
     carPath = clientPath + car_name
     carName_copy = carPath + '/' + 'maya' +'/'+'car'+'/'+'lod00' +'/'+ car_name +'.mb'
     if os.path.isfile(carName_copy):
         shutil.copy(carName_copy,car_folder)
+        
+    # COPY TEXTURE DIRECTORY TO SERVER
+    textureDir = carPath +'/'+'textures' 
+    if os.path.dirname(textureDir):
+        print textureDir
+        names = os.listdir(textureDir)
+        dstTex = os.path.join(car_folder,'textures')
+        if not os.path.exists(dstTex):
+            os.makedirs(dstTex)
+        for name in names:
+            #print name
+            fileNam = textureDir + '/' + name
+            #print fileNam 
+            #shutil.copy(fileNam,dstTex)
+            if os.path.isfile(fileNam):
+                shutil.copy(fileNam,dstTex)
+            if os.path.isdir(fileNam):
+                dstSTex = os.path.join(dstTex,name)
+                if not os.path.exists(dstSTex):
+                     os.makedirs(dstSTex)
+                subnames =os.listdir(fileNam)
+                for subname in subnames:
+                    subfileNam = fileNam +'/'+ subname
+                    if os.path.isfile(subfileNam):
+                        shutil.copy(subfileNam, dstSTex)
+                    else:
+                        print 'file khong hop le!'
     
+      
     #--------------SEND MAIL TO PRODUCER
+    
     xmlDir = os.path.split(os.path.split(fileDirCommmon)[0])[0] + '/XMLfiles/MailList.xml'
     from_ad = 'technical@glassegg1.com'
     to_ad = loadXML(xmlDir,'Producer','mail')

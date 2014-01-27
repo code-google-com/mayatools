@@ -44,7 +44,11 @@ def execute():
         
     for mes in listNo_mir_spoil:
         object=mes.split('|')[-1]
+        print 'Mes -------------'
+        print mes
         shapeNode = cmds.listRelatives(mes, c = True, f = True)[0]
+        print 'shape Node'
+        print shapeNode
         sgs = cmds.listConnections(shapeNode, t = 'shadingEngine')
         shaders = list()
                
