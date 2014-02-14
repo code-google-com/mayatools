@@ -257,6 +257,8 @@ class LODTools(form_class,base_class):
             else:
                 if str(spoiler) in s:
                     cmds.setAttr(s + '.visibility', 1)
+                    if self.chkSpoiler.isChecked():
+                        cmds.setAttr('spoiler|type_a.visibility', 1)
                 else:
                     cmds.setAttr(s + '.visibility', 0)
                 
