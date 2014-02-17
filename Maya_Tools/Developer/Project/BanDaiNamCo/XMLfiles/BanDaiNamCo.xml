@@ -17,18 +17,18 @@
 		<ServerPath>//glassegg.com/projects/Scenes/BanDaiNamCo_2014/</ServerPath>
 		<LocalPath>Z:/Project/BanDaiNamCo_2014/</LocalPath>
 		<ProjectLocalPath>maya</ProjectLocalPath>
-		<DocumentsPath>//glassegg.com/Documents_Feedbacks/BanDaiNamCo_2014/Documents</DocumentsPath>
-		<FeedbacksPath>//glassegg.com/Documents_Feedbacks/BanDaiNamCo_2014/Feedbacks</FeedbacksPath>
-		<ReferencesImagePath>//glassegg.com/Documents_Feedbacks/BanDaiNamCo_2014/ReferencesImage</ReferencesImagePath>
+		<DocumentsPath>//glassegg.com/Documents_Feedbacks/BanDaiNamCo_2014/Documents/</DocumentsPath>
+		<FeedbacksPath>//glassegg.com/Documents_Feedbacks/BanDaiNamCo_2014/Feedbacks/</FeedbacksPath>
+		<ReferencesImagePath>//glassegg.com/Documents_Feedbacks/BanDaiNamCo_2014/ReferencesImage/</ReferencesImagePath>
 	</Directories>
 	<Structures_Asset group = "True">
 		<folder name = "maya">
 	  		<folder name = "car" type = "LOD">
-	   			<folder name = "scenes"/>
+	   			<folder name = "scenes" filename = '' filetype = 'mb'/>
 		   		<folder name = "sourceimages"/>
 		  	</folder>
 		  	<folder name = "wheel" type = "LOD">
-				   <folder name = "scenes"/>
+				   <folder name = "scenes" filename = '_WH' filetype = 'mb'/>
 				   <folder name = "sourceimages"/>
 		  	</folder>
 	  	</folder>
