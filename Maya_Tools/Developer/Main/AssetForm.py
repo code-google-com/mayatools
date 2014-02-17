@@ -86,7 +86,10 @@ class AssetForm(form_class,base_class):
         item = self.cbbAssets.currentText()
         type = self.cbbType.currentText()
         lod = self.cbbWorkingStage.currentText()
-        serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
+        if lod == 'Not Available':
+            serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'# + str(lod)
+        else:
+            serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
         serverPath = serverPath.replace('/','\\')
         os.startfile(serverPath)
         
@@ -96,9 +99,15 @@ class AssetForm(form_class,base_class):
         type = self.cbbType.currentText()
         lod = self.cbbWorkingStage.currentText()
         if self.Proj.group == False:
-            localPath = self.Proj.LocalPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
+            if lod == 'Not Available':
+                localPath = self.Proj.LocalPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'## + str(lod)
+            else:
+                localPath = self.Proj.LocalPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
         else:
-            localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
+            if lod == 'Not Available':
+                localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'# + str(lod)
+            else:
+                localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)    
         os.startfile(localPath)
         
     def createLocal(self):
@@ -157,7 +166,7 @@ class AssetForm(form_class,base_class):
         type = self.cbbType.currentText()
         lod = self.cbbWorkingStage.currentText()
         dirFile = str(item) + '\\' + self.Proj.ProjectLocalPath + str(type)
-        if str(self.cbbWorkingStage.currentText()) != 'N':
+        if str(self.cbbWorkingStage.currentText()) != 'Not Available':
             dirFile += '\\' + str(lod) 
         if self.server.isChecked():
             dirFile = (self.Proj.ServerPath + str(group) + '\\' + dirFile + '\\').replace('\\','/')
@@ -171,7 +180,7 @@ class AssetForm(form_class,base_class):
         if self.vLast.isChecked():
             try:
                 filename = ''
-                if str(self.cbbWorkingStage.currentText()) !='N':
+                if str(self.cbbWorkingStage.currentText()) !='Not Available':
                     filename = dirFile + '\\' + str(item) + '_' + str(self.cbbType.currentText()) + '_' + str(self.cbbWorkingStage.currentText()) + '_vLast.mb'
                 else:
                     filename = dirFile + '\\' + str(item) + '_' + str(self.cbbType.currentText()) + '_vLast.mb'
@@ -200,7 +209,7 @@ class AssetForm(form_class,base_class):
         self.assetGroupModel.setStringList(stringList)
         self.cbbGroup.setModel(self.assetGroupModel)
         if len(self.Proj.stages) == 0:
-            self.cbbWorkingStage.addItems('N')
+            self.cbbWorkingStage.addItems(['Not Available'])
         else:
             self.cbbWorkingStage.addItems(self.Proj.stages) 
         self.cbbType.addItems(self.Proj.LOD)                
