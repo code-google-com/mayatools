@@ -36,7 +36,7 @@ class CustomShaderTools(form_class,base_class):
             cmds.delete('restoreTechniqueNode')
     
     def assignDebugShader(self, debugShader):
-        restoreTechniqueScript = ''
+        restoreTechniqueScript = 'import maya.cmds as cmds\n'
         #commonPath = self.commonTexturePath
         shaders = [x for x in cmds.ls(materials = True)if x in self.material]#['lambert1','particleCloud1','shaderGlow1','TEMP_DEBUG_SHADER']]
         for shader in shaders:

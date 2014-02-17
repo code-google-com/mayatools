@@ -27,7 +27,6 @@
 				<folder name = "lod00" type = "stage"/>
 				<folder name = "lods" type = "stage"/>
 			</folder>
-			
 		</folder>
 		<folder name = "textures"/>
 		<folder name = "export"/>
@@ -42,7 +41,7 @@
 			<module name = "LODTools" params = "IronMonkey" />
 			<module name = "UVTools" />
 			<module name = "PolyTools" />
-			<inmodule name = "CrydevTools" />
+			<module name = "CrydevTools" />
 			<module name = "ShaderTools" params = "CustomShaderTools"/>
 			<module name = "ThirdpartyTools"/>
 		</Module>
