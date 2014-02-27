@@ -86,8 +86,8 @@ class AssetForm(form_class,base_class):
         group = self.cbbGroup.currentText()
         item = self.cbbAssets.currentText()
         dirFile = self.Proj.ReferencesImagePath + str(group) + '/' + str(item) + '/'
-        #if not os.path.isdir(dirFile):
-        #    dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item)
+        if not os.path.isdir(dirFile):
+            dirFile = self.Proj.FeedbacksPath + str(group) + '/' 
         os.startfile(dirFile.replace('/','\\'))
             
     def openServerFolder(self):
