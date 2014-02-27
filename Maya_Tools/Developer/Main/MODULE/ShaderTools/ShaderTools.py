@@ -133,7 +133,7 @@ class ShaderTools(form_class,base_class):
             cmds.delete('restoreTechniqueNode')
             
     def assignDebugShader(self):
-        restoreTechniqueScript = ''
+        restoreTechniqueScript = 'import maya.cmds as cmds\n'
         #commonPath = self.commonTexturePath
         shaders = [x for x in cmds.ls(materials = True)if x not in ['particleCloud1','shaderGlow1','TEMP_DEBUG_SHADER']]
         for shader in shaders:

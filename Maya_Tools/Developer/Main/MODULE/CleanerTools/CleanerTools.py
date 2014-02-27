@@ -92,6 +92,7 @@ class ClearTools(form_class,base_class):
         except:
              pass
         for f in contentToCleanUpCommon + contentToCleanUpProject:
+            print f
             self.contents.addWidget(cleanerSetWidget(f))
         #idColor = 0
 #         contentToCleanUpCommon = [(fileDirCommmon + '/python/' + f) for f in os.listdir(fileDirCommmon + '/python/') if f.endswith('py')]

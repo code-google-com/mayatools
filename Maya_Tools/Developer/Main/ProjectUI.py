@@ -42,6 +42,11 @@ try:
 except:
     from GETeamWork import *
     
+# try:
+#     reload(AssetTracking)
+# except:
+#     import AssetTracking
+#     
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/ProjectForm.ui'
 try:
@@ -77,7 +82,7 @@ class ProjectUI(form_class,base_class):
         
         #-------------- FUNCTION UI
         self.actionQA.triggered.connect(self.QAChecking)
-        self.actionAsset_Tracking.triggered.connect(self.AssetTracking)
+        self.actionAsset_Tracking.triggered.connect(self.openAssetTracking)
         
     def combineString(self, strList, remove = 1):
         out = ''
@@ -91,11 +96,11 @@ class ProjectUI(form_class,base_class):
         print self.Proj.projectData 
         print 'okie'
         for index in range(len(self.Proj.moduleList[0])):
-            try:
+            #try:
                 instanceModule = loadModule(self.Proj.moduleList[0][index])
                 form = instanceModule.main(self.Proj.moduleList[1][index])
                 self.tabWidget.insertTab(index,form,form.__name__)
-            except: 
+            #except: 
                 print 'Error to loading module:' + self.Proj.moduleList[0][index]
         #add dock widget
         self.AssetForm = AssetForm.AssetForm(self.xmlFile)
@@ -107,9 +112,9 @@ class ProjectUI(form_class,base_class):
         self.QAform = GE_QA.GE_QA(self.Proj.projectData, [])
         self.QAform.show()
         
-    def AssetTracking(self):
-        self.AssetTracking = AssetTracking.AssetTracking(self.xmlFile)
-        self.AssetTracking.show()
+    def openAssetTracking(self):
+        self.AssetTrackingform = AssetTracking.AssetTracking(self.xmlFile)
+        self.AssetTrackingform.show()
 
         
 
