@@ -77,18 +77,6 @@ class CustomLODTools(form_class,base_class):
                 pass
         
     def CleanUp(self):
-        displayLayerNotWork = [layer for layer in cmds.ls(type = 'displayLayer') if layer not in ['defaultLayer']]
-        try:
-            cmds.delete(displayLayerNotWork)
-            cmds.delete('LayerSetup')
-        except:
-            pass
-        self.btnCleanUp.setEnabled(False)
-        self.btnSpreadHonrizonal.setEnabled(False)
-        self.btnSpreadVertical.setEnabled(False)
-        self.btnPreviousLOD.setEnabled(False)
-        self.btnNextLOD.setEnabled(False)
-        
         try:
             for index in range(len(LODsChain)):
                 cmds.setAttr(LODsChain[index].lstrip('_').rstrip('_') + '.translateX', 0)
@@ -114,13 +102,13 @@ class CustomLODTools(form_class,base_class):
         
     def createLOD(self):
         # --
-        cmds.createNode('test')
-        cmds.rename('unknown1', 'LayerSetup')
-        self.btnCleanUp.setEnabled(True)
-        self.btnSpreadHonrizonal.setEnabled(True)
-        self.btnSpreadVertical.setEnabled(True)
-        self.btnNextLOD.setEnabled(True)
-        self.btnPreviousLOD.setEnabled(True)
+#         cmds.createNode('test')
+#         cmds.rename('unknown1', 'LayerSetup')
+#         self.btnCleanUp.setEnabled(True)
+#         self.btnSpreadHonrizonal.setEnabled(True)
+#         self.btnSpreadVertical.setEnabled(True)
+#         self.btnNextLOD.setEnabled(True)
+#         self.btnPreviousLOD.setEnabled(True)
         lodList = ['LOD1','LOD2','LOD3','LOD4','LOD5','LOD6','SHADOW']
         #-- create LOD1 Layer
         for i in lodList:
