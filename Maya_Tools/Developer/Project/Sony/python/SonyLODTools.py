@@ -15,13 +15,9 @@ Sony_nohide = []
 IronMonkey_mapping_LODs = ['lod_00_layer', 'lod_01_layer', 'lod_02_layer', 'lod_03_layer', 'lod_04_layer', 'lod_05_layer', 'lod_06_layer']
 IronMonkey_nohide = ['base_car_layer','spoilers','exhausts']
 
-lods = ['lod_00','lod_01','lod_02','lod_03','lod_04','lod_05','lod_06']
-parts = ['type_a','type_b','type_c','type_d','kit_y','kit_z', 'kit_x', 'pulled_type_a','pulled_type_b', 'pulled_type_c', 'pulled_type_d',
-         'large_type_a', 'large_type_b', 'large_type_c', 'large_type_d',
-         'small_type_a','small_type_b', 'small_type_c', 'small_type_d']#,'pull_wheelarch','large_overfender','small_overfender']
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
-dirUI= fileDirCommmon +'/UI/customLODTools.ui'
+dirUI= fileDirCommmon +'/UI/SonyLODTools.ui'
 
 form_class, base_class = uic.loadUiType(dirUI)        
 
@@ -31,141 +27,13 @@ def mappingLODs(projectName, lod):
     except:
         return False # cannot find matched imte with lod
     
-def setupLOD():
-        #----- remove current layers. An setup correct structures
-        layers = cmds.ls(type = 'displayLayer')
-        cmds.delete(layers)
-        
-        #----- create structure layers. --------------------------------------------------
-        cmds.createDisplayLayer(n = 'decal_placement_layer')
-        cmds.createDisplayLayer(n = 'locator_layer')
-        cmds.createDisplayLayer(n = 'collision_layer')
-        cmds.createDisplayLayer(n = 'wheel_placeholder_layer')
-        cmds.createDisplayLayer(n = 'base_car_layer')
-        cmds.createDisplayLayer(n = 'pulled_wheel_arch_layer')
-        cmds.createDisplayLayer(n = 'small_overfenders_layer')
-        cmds.createDisplayLayer(n = 'large_overfenders_layer')
-        cmds.createDisplayLayer(n = 'base_unwrap_layer')
-        cmds.createDisplayLayer(n = 'spoilers')
-        cmds.createDisplayLayer(n = 'exhausts')
-        for part in parts:
-            try:
-                py.select('*' + part + '*')
-                cmds.createDisplayLayer(e = False, n = part + '_layer')
-            except:
-                pass
-        for lod in lods:
-            try: 
-                py.select('*' + lod + '*')
-                cmds.createDisplayLayer(e = False, n = lod + '_layer')
-            except:
-                pass
-        # adding wheelarch standard to type a
-        #cmds.editDisplayLayerMembers('type_a_layer', cmds.ls('wheel_arch|standard'), noRecurse = True)
-        # select all locator and put them in 
-        try:
-            cmds.editDisplayLayerMembers('locator_layer', cmds.ls(type = 'locator'), noRecurse = True)
-        except:
-            pass
-        # select wheel place holder and put them in
-        try:
-            cmds.editDisplayLayerMembers('wheel_placeholder_layer', cmds.ls('*placeholder*'), noRecurse = True)
-        except:
-            pass
-        # select decal placeholder and put them in
-        # cmds.editDisplayLayerMembers('decal_placement_layer', [x for x in cmds.ls('*decal_*') if x not in cmds.ls(materials = True)], noRecurse = True)
-        # select decal placeholder and put them in
-        try:
-            cmds.editDisplayLayerMembers('base_unwrap_layer', cmds.ls('*base_unwrap*'), noRecurse = True)
-        except:
-            pass
-        
-        try:
-            cmds.editDisplayLayerMembers('decal_placement_layer', cmds.ls('mesh_decal_placement_shell'), noRecurse = True)
-        except:
-            pass
-        
-        try:
-            cmds.editDisplayLayerMembers('collision_layer', cmds.ls('mesh_collider_roof','mesh_collider_rain','mesh_collider_chassis'), noRecurse = True)
-        except:
-            pass
-        # select lod00 and add them to layer
-        try:
-            cmds.editDisplayLayerMembers('lod_00_layer', cmds.ls('lod_00'), noRecurse = True)
-        except:
-            pass
-        # select lod01 and add them to layer
-        try:
-            cmds.editDisplayLayerMembers('lod_01_layer', cmds.ls('lod_01'), noRecurse = True)
-        except:
-            pass
-        # select lod02 and add them to layer
-        try:
-            cmds.editDisplayLayerMembers('lod_02_layer', cmds.ls('lod_02'), noRecurse = True)
-        except:
-            pass   
-        # select lod03 and add them to layer
-        try:
-            cmds.editDisplayLayerMembers('lod_03_layer', cmds.ls('lod_03'), noRecurse = True)
-        except:
-            pass
-        # select lod04 and add them to layer
-        try:
-            cmds.editDisplayLayerMembers('lod_04_layer', cmds.ls('lod_04'), noRecurse = True)
-        except:
-            pass
-        # select lod05 and add them to layer
-        try:
-            cmds.editDisplayLayerMembers('lod_05_layer', cmds.ls('lod_05'), noRecurse = True)
-        except:
-            pass
-        # select lod06 and add them to layer
-        try:
-            cmds.editDisplayLayerMembers('lod_06_layer', cmds.ls('lod_06'), noRecurse = True)
-        except:
-            pass
-        # select base car and add them to layer
-        try:
-            cmds.editDisplayLayerMembers('base_car_layer', cmds.ls('rotor|type_a','caliper|type_a','chassis|type_a','body|type_a','interior|type_a','windows|type_a','headlights|type_a','taillights|type_a','wheel_arch|standard'), noRecurse = True)
-        except:
-            pass
-        # select pull wheel arch
-        try:
-            cmds.editDisplayLayerMembers('pulled_wheel_arch_layer', cmds.ls('pulled'), noRecurse = True)
-        except:
-            pass
-        # select small over fender
-        try:
-            cmds.editDisplayLayerMembers('small_overfenders_layer', cmds.ls('small'), noRecurse = True)
-        except:
-            pass
-        # select large over fender
-        try:
-            cmds.editDisplayLayerMembers('large_overfenders_layer', cmds.ls('large'), noRecurse = True)
-        except:
-            pass
-        # select misc meshes
-        try:
-            cmds.editDisplayLayerMembers('base_unwrap', cmds.ls('base_unwrap'), noRecurse = True)
-        except:
-            pass
-        # add spoilers to layers
-        try:
-            cmds.editDisplayLayerMembers('spoilers', cmds.ls('spoiler|*'), noRecurse = True)
-        except:
-            pass
-        
-        try:
-            cmds.editDisplayLayerMembers('exhausts', cmds.ls('exhaust|*'), noRecurse = True)
-        except:
-            pass
 
-class LODTools(form_class,base_class):
-    def __init__(self, inputFile):
+
+class CustomLODTools(form_class,base_class):
+    def __init__(self):
         super(base_class,self).__init__()
         self.setupUi(self)
-        self.__name__ = 'LOD Tools'
-        self._projectName = 'IronMonkey'
+        self._projectName = 'Sony'
         self._nohide = list()
         self._currentPart = ''
         self.btnSetupLOD.clicked.connect(self.check)
@@ -180,23 +48,19 @@ class LODTools(form_class,base_class):
         self.btnLOD1.clicked.connect(functools.partial(self.selectLOD,'1'))
         self.btnLOD2.clicked.connect(functools.partial(self.selectLOD,'2'))
         self.btnLOD3.clicked.connect(functools.partial(self.selectLOD,'3'))
-        self.btnTypeX.clicked.connect(functools.partial(self.selectLOD,'x'))
-        self.btnTypeY.clicked.connect(functools.partial(self.selectLOD,'y'))
-        self.btnTypeZ.clicked.connect(functools.partial(self.selectLOD,'z'))
-        self.btnPulled.clicked.connect(functools.partial(self.selectLOD,'pulled'))
-        self.btnSmall.clicked.connect(functools.partial(self.selectLOD,'small'))
-        self.btnLarge.clicked.connect(functools.partial(self.selectLOD,'large'))
-        self.chkSpoiler.clicked.connect(self.loadSpoilerTypeA)
+        self.btnLOD4.clicked.connect(functools.partial(self.selectLOD,'4'))
+        self.btnLOD5.clicked.connect(functools.partial(self.selectLOD,'5'))
+        self.btnLOD6.clicked.connect(functools.partial(self.selectLOD,'6'))
+        self.btnSHADOW.clicked.connect(functools.partial(self.selectLOD,'shadow'))
+        #self.btnPulled.clicked.connect(functools.partial(self.selectLOD,'pulled'))
+        #self.btnSmall.clicked.connect(functools.partial(self.selectLOD,'small'))
+        #self.btnLarge.clicked.connect(functools.partial(self.selectLOD,'large'))
+        #self.chkSpoiler.clicked.connect(self.loadSpoilerTypeA)
         #self.btnLOD6.clicked.connect(functools.partial(self.selectLOD,'6'))
         #self.btnLOD7.clicked.connect(functools.partial(self.selectLOD,'7'))
         #self.btnLOD8.clicked.connect(functools.partial(self.selectLOD,'8'))
-        self.btnStandard.clicked.connect(functools.partial(self.selectLOD,'6'))
+        #self.btnStandard.clicked.connect(functools.partial(self.selectLOD,'6'))
   
-        self.cbbSpoilers.currentIndexChanged.connect(self.showSpoilers)
-        self.cbbExhausted.currentIndexChanged.connect(self.showExhausted)
-        
-        self.btnLOD0.setChecked(True)
-        self.btnStandard.setChecked(True)
 
 
     def UnParent(self):
@@ -235,8 +99,6 @@ class LODTools(form_class,base_class):
         self.UnParent()
         
     def check(self):
-        self.cbbSpoilers.clear()
-        self.cbbExhausted.clear()
         if self._projectName == 'IronMonkey':
             setupLOD()
             childrenOfSpoilers = cmds.listRelatives('spoiler', c = True)
@@ -248,30 +110,7 @@ class LODTools(form_class,base_class):
         else:
             if not cmds.objExists('LayerSetup'):
                 self.createLOD()
-                
-    def showSpoilers(self):
-        spoiler = self.cbbSpoilers.currentText()
-        for s in cmds.listRelatives('spoiler', c = True, f= True):
-            if spoiler == '---Nothing---':
-                cmds.setAttr(s + '.visibility', 0)
-            else:
-                if str(spoiler) in s:
-                    cmds.setAttr(s + '.visibility', 1)
-                    if self.chkSpoiler.isChecked():
-                        cmds.setAttr('spoiler|type_a.visibility', 1)
-                else:
-                    cmds.setAttr(s + '.visibility', 0)
-                
-    def showExhausted(self):
-        exhaust = self.cbbExhausted.currentText()
-        for s in cmds.listRelatives('exhaust', c = True, f= True):
-            if exhaust == '---Nothing---':
-                cmds.setAttr(s + '.visibility', 0)
-            else:
-                if str(exhaust) in s:
-                    cmds.setAttr(s + '.visibility', 1)
-                else:
-                    cmds.setAttr(s + '.visibility', 0)
+
         
     def createLOD(self):
         # --
@@ -282,70 +121,23 @@ class LODTools(form_class,base_class):
         self.btnSpreadVertical.setEnabled(True)
         self.btnNextLOD.setEnabled(True)
         self.btnPreviousLOD.setEnabled(True)
-        
+        lodList = ['LOD1','LOD2','LOD3','LOD4','LOD5','LOD6','SHADOW']
         #-- create LOD1 Layer
-        try:
-            cmds.select('*LOD1*')
-            cmds.group(n = 'LOD1')
-            cmds.createDisplayLayer(n = '_LOD1_')
-            cmds.editDisplayLayerMembers('_LOD1_', cmds.ls(type = 'LOD1'), noRecurse = True)
-        except:
-            pass
-        
-        try:
-            cmds.select('*LOD2*')
-            cmds.group(n = 'LOD2')
-            cmds.createDisplayLayer(n = '_LOD2_')
-            cmds.editDisplayLayerMembers('_LOD2_', cmds.ls(type = 'LOD2'), noRecurse = True)
-        except:
-            pass
-        
-        try:
-            cmds.select('*LOD3*')
-            cmds.group(n = 'LOD3')
-            cmds.createDisplayLayer(n = '_LOD3_')
-            cmds.editDisplayLayerMembers('_LOD3_', cmds.ls(type = 'LOD3'), noRecurse = True)
-        except:
-            pass
-        
-        try:
-            cmds.select('*LOD4*')
-            cmds.group(n = 'LOD4')
-            cmds.createDisplayLayer(n = '_LOD4_')
-            cmds.editDisplayLayerMembers('_LOD4_', cmds.ls(type = 'LOD4'), noRecurse = True)
-        except:
-            pass
-        
-        try:
-            cmds.select('*LOD5')
-            cmds.group(n = 'LOD5')
-            cmds.createDisplayLayer(n = '_LOD5_')
-            cmds.editDisplayLayerMembers('_LOD5_', cmds.ls(type = 'LOD5'), noRecurse = True)
-        except: 
-            pass
-        
-        try:
-            cmds.select('*LOD6')
-            cmds.group(n = 'LOD6')
-            cmds.createDisplayLayer(n = '_LOD6_')
-            cmds.editDisplayLayerMembers('_LOD6_', cmds.ls(type = 'LOD6'), noRecurse = True)
-        except:
-            pass
-        
-        try:
-            cmds.select('*SHADOW')
-            cmds.group(n = 'SHADOW')
-            cmds.createDisplayLayer(n = '_SHADOW_')
-            cmds.editDisplayLayerMembers('_SHADOW_', cmds.ls(type = 'SHADOW'), noRecurse = True)
-        except:
-            pass
+        for i in lodList:
+            try:
+                cmds.select('*' + i + '*')
+                #cmds.group(n = 'LOD1')
+                cmds.createDisplayLayer(n = '_'+ i +'_')
+                cmds.editDisplayLayerMembers('_' + i + '_', cmds.ls(sl = True), noRecurse = True)
+            except:
+                pass
         
         try:
             patternLOD = re.compile(r'(.*)LOD(\.*)',re.I)
             patternSHADOW = re.compile(r'(.*)SHADOW(\.*)',re.I)
-            LOD0s = [x for x in cmds.ls(transforms = True) if not re.search(patternLOD,x) and not re.search(patternSHADOW,x) ]
+            LOD0s = [cmds.listRelatives(x, c = True)[0] for x in cmds.ls(transforms = True) if not re.search(patternLOD,x) and not re.search(patternSHADOW,x) ]
             cmds.select(LOD0s)
-            cmds.group(n = 'LOD0')
+            #cmds.group(n = 'LOD0')
             cmds.createDisplayLayer(n = '_LOD0_', nr = False)
             cmds.editDisplayLayerMembers('_LOD0_', cmds.ls(type = 'LOD0'), noRecurse = True)
         except:
@@ -704,6 +496,6 @@ class LODTools(form_class,base_class):
             cmds.setAttr('spoiler|type_a.visibility', 0)
             
 def main():
-    form = LODTools()
+    form = CustomLODTools()
     return form 
     

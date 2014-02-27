@@ -67,7 +67,7 @@
 			<module name = "NamingConvention"/>
 			<module name = "CleanerTools" params = "CustomCheck"/>
 			<module name = "Pivots"/>
-			<module name = "LODTools" params = "customLODTools"/>
+			<module name = "LODTools" params = "SonyLODTools"/>
 			<unloadmodule name = "TransferTools"/>
 			<module name = "UVTools"/>
 			<module name = "PolyTools"/>

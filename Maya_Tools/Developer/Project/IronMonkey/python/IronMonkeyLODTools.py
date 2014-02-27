@@ -21,7 +21,7 @@ parts = ['type_a','type_b','type_c','type_d','kit_y','kit_z', 'kit_x', 'pulled_t
          'small_type_a','small_type_b', 'small_type_c', 'small_type_d']#,'pull_wheelarch','large_overfender','small_overfender']
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
-dirUI= fileDirCommmon +'/UI/customLODTools.ui'
+dirUI= fileDirCommmon +'/UI/IronMonkeyLODTools.ui'
 
 form_class, base_class = uic.loadUiType(dirUI)        
 
@@ -160,12 +160,12 @@ def setupLOD():
         except:
             pass
 
-class LODTools(form_class,base_class):
+class CustomLODTools(form_class,base_class):
     def __init__(self):
         super(base_class,self).__init__()
         self.setupUi(self)
         self.__name__ = 'LOD Tools'
-        self._projectName = 'Sony'
+        self._projectName = 'IronMonkey'
         self._nohide = list()
         self._currentPart = ''
         self.btnSetupLOD.clicked.connect(self.check)
@@ -180,19 +180,23 @@ class LODTools(form_class,base_class):
         self.btnLOD1.clicked.connect(functools.partial(self.selectLOD,'1'))
         self.btnLOD2.clicked.connect(functools.partial(self.selectLOD,'2'))
         self.btnLOD3.clicked.connect(functools.partial(self.selectLOD,'3'))
-        self.btnLOD4.clicked.connect(functools.partial(self.selectLOD,'4'))
-        self.btnLOD5.clicked.connect(functools.partial(self.selectLOD,'5'))
-        self.btnLOD6.clicked.connect(functools.partial(self.selectLOD,'6'))
-        self.btnSHADOW.clicked.connect(functools.partial(self.selectLOD,'shadow'))
-        #self.btnPulled.clicked.connect(functools.partial(self.selectLOD,'pulled'))
-        #self.btnSmall.clicked.connect(functools.partial(self.selectLOD,'small'))
-        #self.btnLarge.clicked.connect(functools.partial(self.selectLOD,'large'))
-        #self.chkSpoiler.clicked.connect(self.loadSpoilerTypeA)
+        self.btnTypeX.clicked.connect(functools.partial(self.selectLOD,'x'))
+        self.btnTypeY.clicked.connect(functools.partial(self.selectLOD,'y'))
+        self.btnTypeZ.clicked.connect(functools.partial(self.selectLOD,'z'))
+        self.btnPulled.clicked.connect(functools.partial(self.selectLOD,'pulled'))
+        self.btnSmall.clicked.connect(functools.partial(self.selectLOD,'small'))
+        self.btnLarge.clicked.connect(functools.partial(self.selectLOD,'large'))
+        self.chkSpoiler.clicked.connect(self.loadSpoilerTypeA)
         #self.btnLOD6.clicked.connect(functools.partial(self.selectLOD,'6'))
         #self.btnLOD7.clicked.connect(functools.partial(self.selectLOD,'7'))
         #self.btnLOD8.clicked.connect(functools.partial(self.selectLOD,'8'))
-        #self.btnStandard.clicked.connect(functools.partial(self.selectLOD,'6'))
+        self.btnStandard.clicked.connect(functools.partial(self.selectLOD,'6'))
   
+        self.cbbSpoilers.currentIndexChanged.connect(self.showSpoilers)
+        self.cbbExhausted.currentIndexChanged.connect(self.showExhausted)
+        
+        self.btnLOD0.setChecked(True)
+        self.btnStandard.setChecked(True)
 
 
     def UnParent(self):
@@ -231,6 +235,8 @@ class LODTools(form_class,base_class):
         self.UnParent()
         
     def check(self):
+        self.cbbSpoilers.clear()
+        self.cbbExhausted.clear()
         if self._projectName == 'IronMonkey':
             setupLOD()
             childrenOfSpoilers = cmds.listRelatives('spoiler', c = True)
@@ -242,7 +248,30 @@ class LODTools(form_class,base_class):
         else:
             if not cmds.objExists('LayerSetup'):
                 self.createLOD()
-
+                
+    def showSpoilers(self):
+        spoiler = self.cbbSpoilers.currentText()
+        for s in cmds.listRelatives('spoiler', c = True, f= True):
+            if spoiler == '---Nothing---':
+                cmds.setAttr(s + '.visibility', 0)
+            else:
+                if str(spoiler) in s:
+                    cmds.setAttr(s + '.visibility', 1)
+                    if self.chkSpoiler.isChecked():
+                        cmds.setAttr('spoiler|type_a.visibility', 1)
+                else:
+                    cmds.setAttr(s + '.visibility', 0)
+                
+    def showExhausted(self):
+        exhaust = self.cbbExhausted.currentText()
+        for s in cmds.listRelatives('exhaust', c = True, f= True):
+            if exhaust == '---Nothing---':
+                cmds.setAttr(s + '.visibility', 0)
+            else:
+                if str(exhaust) in s:
+                    cmds.setAttr(s + '.visibility', 1)
+                else:
+                    cmds.setAttr(s + '.visibility', 0)
         
     def createLOD(self):
         # --
@@ -253,23 +282,70 @@ class LODTools(form_class,base_class):
         self.btnSpreadVertical.setEnabled(True)
         self.btnNextLOD.setEnabled(True)
         self.btnPreviousLOD.setEnabled(True)
-        lodList = ['LOD1','LOD2','LOD3','LOD4','LOD5','LOD6','SHADOW']
+        
         #-- create LOD1 Layer
-        for i in lodList:
-            try:
-                cmds.select('*' + i + '*')
-                #cmds.group(n = 'LOD1')
-                cmds.createDisplayLayer(n = '_'+ i +'_')
-                cmds.editDisplayLayerMembers('_' + i + '_', cmds.ls(sl = True), noRecurse = True)
-            except:
-                pass
+        try:
+            cmds.select('*LOD1*')
+            cmds.group(n = 'LOD1')
+            cmds.createDisplayLayer(n = '_LOD1_')
+            cmds.editDisplayLayerMembers('_LOD1_', cmds.ls(type = 'LOD1'), noRecurse = True)
+        except:
+            pass
+        
+        try:
+            cmds.select('*LOD2*')
+            cmds.group(n = 'LOD2')
+            cmds.createDisplayLayer(n = '_LOD2_')
+            cmds.editDisplayLayerMembers('_LOD2_', cmds.ls(type = 'LOD2'), noRecurse = True)
+        except:
+            pass
+        
+        try:
+            cmds.select('*LOD3*')
+            cmds.group(n = 'LOD3')
+            cmds.createDisplayLayer(n = '_LOD3_')
+            cmds.editDisplayLayerMembers('_LOD3_', cmds.ls(type = 'LOD3'), noRecurse = True)
+        except:
+            pass
+        
+        try:
+            cmds.select('*LOD4*')
+            cmds.group(n = 'LOD4')
+            cmds.createDisplayLayer(n = '_LOD4_')
+            cmds.editDisplayLayerMembers('_LOD4_', cmds.ls(type = 'LOD4'), noRecurse = True)
+        except:
+            pass
+        
+        try:
+            cmds.select('*LOD5')
+            cmds.group(n = 'LOD5')
+            cmds.createDisplayLayer(n = '_LOD5_')
+            cmds.editDisplayLayerMembers('_LOD5_', cmds.ls(type = 'LOD5'), noRecurse = True)
+        except: 
+            pass
+        
+        try:
+            cmds.select('*LOD6')
+            cmds.group(n = 'LOD6')
+            cmds.createDisplayLayer(n = '_LOD6_')
+            cmds.editDisplayLayerMembers('_LOD6_', cmds.ls(type = 'LOD6'), noRecurse = True)
+        except:
+            pass
+        
+        try:
+            cmds.select('*SHADOW')
+            cmds.group(n = 'SHADOW')
+            cmds.createDisplayLayer(n = '_SHADOW_')
+            cmds.editDisplayLayerMembers('_SHADOW_', cmds.ls(type = 'SHADOW'), noRecurse = True)
+        except:
+            pass
         
         try:
             patternLOD = re.compile(r'(.*)LOD(\.*)',re.I)
             patternSHADOW = re.compile(r'(.*)SHADOW(\.*)',re.I)
-            LOD0s = [cmds.listRelatives(x, c = True)[0] for x in cmds.ls(transforms = True) if not re.search(patternLOD,x) and not re.search(patternSHADOW,x) ]
+            LOD0s = [x for x in cmds.ls(transforms = True) if not re.search(patternLOD,x) and not re.search(patternSHADOW,x) ]
             cmds.select(LOD0s)
-            #cmds.group(n = 'LOD0')
+            cmds.group(n = 'LOD0')
             cmds.createDisplayLayer(n = '_LOD0_', nr = False)
             cmds.editDisplayLayerMembers('_LOD0_', cmds.ls(type = 'LOD0'), noRecurse = True)
         except:
@@ -628,6 +704,6 @@ class LODTools(form_class,base_class):
             cmds.setAttr('spoiler|type_a.visibility', 0)
             
 def main():
-    form = LODTools()
+    form = CustomLODTools()
     return form 
     

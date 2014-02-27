@@ -30,3 +30,7 @@ class LODTools(form_class,base_class):
             instanceModule = loadModule(customPath + '/Project/' + project + '/python', customFn)
             form = instanceModule.main()
             self.customUI.addWidget(form)
+
+def main(xmlFile):
+    form = LODTools(xmlFile)
+    return form 
