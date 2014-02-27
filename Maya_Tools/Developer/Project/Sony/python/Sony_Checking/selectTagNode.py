@@ -2,7 +2,7 @@ import inspect, os
 import maya.mel as mel
 import maya.cmds as cmds
 
-description = 'Select Tag node only'
+description = 'Select Exterior Tag node only'
 name = 'selectTagNode'
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 

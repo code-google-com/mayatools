@@ -10,7 +10,7 @@ fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].repla
 
 def execute():
     print '--------------- Remove duplicate faces -------------------------'
-    attachFileSource = os.path.split(fileDirCommmon)[0] + '/mel/selectDuplicateFaces.mel'
+    attachFileSource = os.path.split(fileDirCommmon)[0] + '/Fix issues per mesh/selectDuplicateFaces.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
     
   

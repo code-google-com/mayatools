@@ -70,6 +70,7 @@ class AssetForm(form_class,base_class):
         self.btnFeedbacks.clicked.connect(self.openFeedbacksFolder)
         self.btnSaveIncrement.clicked.connect(cf.saveFileIncrement)
         self.btnUploadandDownload.clicked.connect(self.syncFileWithServer)
+        self.btnOpenDocuments.clicked.connect(self.openDocumentsFolder)
         
     def openFeedbacksFolder(self):
         group = self.cbbGroup.currentText()
@@ -79,6 +80,14 @@ class AssetForm(form_class,base_class):
         dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item) + '/' + str(lod) + '/' + str(stage)
         if not os.path.isdir(dirFile):
             dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item)
+        os.startfile(dirFile.replace('/','\\'))
+        
+    def openDocumentsFolder(self):
+        group = self.cbbGroup.currentText()
+        item = self.cbbAssets.currentText()
+        dirFile = self.Proj.ReferencesImagePath + str(group) + '/' + str(item) + '/'
+        #if not os.path.isdir(dirFile):
+        #    dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item)
         os.startfile(dirFile.replace('/','\\'))
             
     def openServerFolder(self):

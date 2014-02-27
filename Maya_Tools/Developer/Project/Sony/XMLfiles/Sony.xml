@@ -25,7 +25,7 @@
 		<ProjectLocalPath>source/maya_wip/</ProjectLocalPath>
 		<DocumentsPath>//glassegg.com/projects/Documents_Feedbacks\Sony_Vehicles_2012</DocumentsPath>
 		<FeedbacksPath>//glassegg.com/projects/Documents_Feedbacks/Sony_Vehicles_2012/Feedbacks/</FeedbacksPath>
-		<ReferencesImagePath>//glassegg.com/projects\Documents_Feedbacks\</ReferencesImagePath>
+		<ReferencesImagePath>//glassegg.com/Images_References\Lives\Sony_Vehicles_2012/</ReferencesImagePath>
 		<LibraryPath>M:\art\vehicles\GENERIC_TEXTURES\</LibraryPath>
 		<PluginsPath>testing</PluginsPath>
 	</Directories>
