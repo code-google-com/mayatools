@@ -88,7 +88,7 @@
        <item>
         <widget class="QPushButton" name="btnPreviousLOD">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="text">
           <string>&lt;&lt;&lt; Previous LOD</string>
@@ -98,7 +98,7 @@
        <item>
         <widget class="QPushButton" name="btnNextLOD">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="text">
           <string>Next LOD &gt;&gt;&gt;</string>
@@ -446,7 +446,6 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_2"/>
   <buttongroup name="buttonGroup_3"/>
   <buttongroup name="buttonGroup"/>
  </buttongroups>
