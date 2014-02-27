@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>350</width>
-    <height>335</height>
+    <width>354</width>
+    <height>345</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -86,7 +86,7 @@
              <bool>true</bool>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup</string>
+             <string notr="true">buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -96,7 +96,7 @@
              <string>Any</string>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup</string>
+             <string notr="true">buttonGroup</string>
             </attribute>
            </widget>
           </item>
@@ -113,7 +113,7 @@
              <string>Server</string>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup_2</string>
+             <string notr="true">buttonGroup_2</string>
             </attribute>
            </widget>
           </item>
@@ -126,7 +126,7 @@
              <bool>true</bool>
             </property>
             <attribute name="buttonGroup">
-             <string>buttonGroup_2</string>
+             <string notr="true">buttonGroup_2</string>
             </attribute>
            </widget>
           </item>
@@ -155,7 +155,7 @@
            <string>Open</string>
           </property>
           <property name="icon">
-           <iconset>
+           <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
             <normaloff>:/Project/Open.png</normaloff>:/Project/Open.png</iconset>
           </property>
           <property name="iconSize">
@@ -178,7 +178,7 @@
            <string>Upload  Download</string>
           </property>
           <property name="icon">
-           <iconset>
+           <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
             <normaloff>:/Project/Exchange.png</normaloff>:/Project/Exchange.png</iconset>
           </property>
           <property name="iconSize">
@@ -204,7 +204,7 @@
          <string>Save Increment</string>
         </property>
         <property name="icon">
-         <iconset>
+         <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
           <normaloff>:/Project/Save_increment.png</normaloff>:/Project/Save_increment.png</iconset>
         </property>
        </widget>
@@ -294,7 +294,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_2">
+         <widget class="QPushButton" name="btnOpenDocuments">
           <property name="text">
            <string>Open Document</string>
           </property>
