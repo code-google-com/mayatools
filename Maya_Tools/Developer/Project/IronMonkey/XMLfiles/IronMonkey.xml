@@ -38,7 +38,7 @@
 			<module name = "NamingConvention" params = "CustomNamingTools" disableOrigin = "True"/>
 			<module name = "CleanerTools" params = "CustomCheck"/>
 			<module name = "Pivots" />
-			<module name = "LODTools" params = "IronMonkey" />
+			<module name = "LODTools" params = "customLODTools" />
 			<module name = "UVTools" />
 			<module name = "PolyTools" />
 			<module name = "CrydevTools" />

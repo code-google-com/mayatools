@@ -446,6 +446,13 @@ class shaderButton(QtGui.QPushButton):
         
     def checkShader(self):
         pass
+    
+class customButton(QtGui.QPushButton):
+    def __init__(self):
+        super(customButton,self).__init__()
+        
+    def createCustomMenu(self):
+        pass
         
 class shaderDockWidget(dW.DockWidget):
     def __init__(self, mesh, node = None):
