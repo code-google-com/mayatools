@@ -57,7 +57,7 @@ SET MAYA_SCRIPT_PATH=%COMMONPATH%Developer\Main\MODULE\PolyTools\mel;%COMMONPATH
 SET XBMLANGPATH=%COMMONPATH%Developer\Main\MODULE\ThirdpartyTools\icons;%XBMLANGPATH%
 
 REM ### Start Golaem startup file
-CALL "E:\Program Files\Golaem\GolaemCrowd-2.5.0.1-Maya2014-64bit\bin\glmCrowdForMaya.bat"
+CALL "E:\Program Files\Golaem\GolaemCrowd-3.1.0.1-Maya2014\bin\glmCrowdForMaya.bat"
 
 set MAYA_LAUNCHER=%DRIVE%:\PROGRAM FILES\AUTODESK\maya%MAYAVERSION%
 "%MAYA_LAUNCHER%\bin\maya.exe"
