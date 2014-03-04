@@ -415,14 +415,13 @@ except IOError:
 
     
 class shaderButton(QtGui.QPushButton):
-    def __init__(self, mesh, shader, color = None):
+    def __init__(self, mesh, shader, status, color = None):
         super(shaderButton, self).__init__()
         self._mesh = mesh
         self._shader = shader
-        #self._color = color
-        self.setText(shader)
-        self.clicked.connect(functools.partial(st.selectFaceByShaderPerMesh, self._mesh, self._shader))
-        self.setStyleSheet('''QPushButton*
+        if status == 1:
+            self.setText(shader)
+            self.setStyleSheet('''QPushButton*
                             color: black;
                             background-color: #{color0};
                             border-color: #339;
@@ -443,6 +442,9 @@ class shaderButton(QtGui.QPushButton):
                             font-size: 14px;
                             padding-left: 2px;
                             padding-right: 2px;@'''.format(color0 = color[0], color1 = color[1]).replace('*','{').replace('@','}'))
+        else:
+            self.setText(mesh)
+        self.clicked.connect(functools.partial(st.selectFaceByShaderPerMesh, self._mesh, self._shader))
         
     def checkShader(self):
         pass
@@ -455,20 +457,34 @@ class customButton(QtGui.QPushButton):
         pass
         
 class shaderDockWidget(dW.DockWidget):
-    def __init__(self, mesh, node = None):
-        super(shaderDockWidget, self).__init__(mesh)
+    def __init__(self, mesh, shader, status, node = None):
+        self._title = ''
+        if status == 1:
+            self._title = mesh
+        else:
+            self._title = shader.lower()
+        super(shaderDockWidget, self).__init__(self._title.upper())
         self._mesh = mesh
+        self._shader = shader
         self._widget= QtGui.QWidget()
+        self._status = status
         self.setWidget(self._widget)
         self._shaderValidator = node
-        self.loadShadersOfMesh()
+        if status == 1:
+            #super(shaderDockWidget, self).__init__(mesh)
+            self.loadShadersOfMesh()
+        else:
+            #super(shaderDockWidget, self).__init__(shader)
+            self.loadMeshesUseShader()
         
     def loadShadersOfMesh(self):
+        ##-- setup a rough layout
         layout = QtGui.QVBoxLayout()
         margins = QtCore.QMargins(1,1,1,1)
         layout.setSpacing(1)
         layout.setContentsMargins(margins) 
         self._widget.setLayout(layout)
+        ##
         shadersInMesh = st.getShadersFromMesh(self._mesh)
         shadersInXMLNode = ''
         if self._shaderValidator:
@@ -476,7 +492,7 @@ class shaderDockWidget(dW.DockWidget):
             conds = [c.getAttribute('use') for c in self._shaderValidator.getElementsByTagName('shader')]
             shaders = list(set(shadersInXMLNode + shadersInMesh))
         else:
-            shaders =  shadersInMesh
+            shaders = shadersInMesh
         for s in shaders:
             try:
                 result = 'undefined'
@@ -494,51 +510,75 @@ class shaderDockWidget(dW.DockWidget):
             except:
                 result = 'undefined'
             #print result        
-            button = shaderButton(self._mesh, s, color_code[result])
+            button = shaderButton(self._mesh, s, 1, color_code[result])
             layout.addWidget(button)
             
     def loadMeshesUseShader(self):
-        pass
+        ##-- setup a rough layout
+        layout = QtGui.QVBoxLayout()
+        margins = QtCore.QMargins(1,1,1,1)
+        layout.setSpacing(1)
+        layout.setContentsMargins(margins) 
+        self._widget.setLayout(layout)
+        ##
+        meshes = st.selectMeshesUseShaderOnScene(self._shader)
+        for m in meshes:
+            button = shaderButton(m.replace('Shape',''), self._shader, 0)
+            layout.addWidget(button)
     
 class shaderValidator(form_class, base_class):
     def __init__(self, xmlFile = None, parent = getMayaWindow()):
         super(base_class, self).__init__(parent)
         self.setupUi(self)
-        self._status = 1
+        self._status = 1 # 1: mesh contains shader
+                         # 0: shader used meshes
         if xmlFile:
             self.xmlDoc = xml.dom.minidom.parse(xmlFile)
         self.startup()
         self.btnRefresh.clicked.connect(self.startup)
         self.ldtFind.returnPressed.connect(self.startup)
+        self.btnChangeStatus.clicked.connect(self.changeStatus)
         
     def startup(self):
         cf.clearLayout(self.formLayout) # remove all items in layout if possible
-        shapeNode = ''
-        try:
-            if self.ldtFind.text() == '':
-                shapeNode = [node for node in py.ls(type = 'transform') if py.nodeType(node.listRelatives(c= True)[0]) == 'mesh']
-            else:
-                shapeNode = [node for node in py.ls('*' + str(self.ldtFind.text()) + '*', type = 'transform') if py.nodeType(node.listRelatives(c= True)[0]) == 'mesh']
-        except:
-            pass 
-        for s in shapeNode:
+        if self._status == 1:
+            shapeNode = ''
             try:
-                node  = [node for node in self.xmlDoc.getElementsByTagName('mesh') if node.getAttribute('name')  == s][0]
-                #print node.getAttribute('name')
-                dockWidget = shaderDockWidget(str(s), node)
-                self.formLayout.addWidget(dockWidget)
+                if self.ldtFind.text() == '':
+                    shapeNode = [node for node in py.ls(type = 'transform') if py.nodeType(node.listRelatives(c= True)[0]) == 'mesh']
+                else:
+                    shapeNode = [node for node in py.ls('*' + str(self.ldtFind.text()) + '*', type = 'transform') if py.nodeType(node.listRelatives(c= True)[0]) == 'mesh']
             except:
-                #print 'No XML file to filter'
-                dockWidget = shaderDockWidget(str(s))
+                pass 
+            for s in shapeNode:
+                try:
+                    node  = [node for node in self.xmlDoc.getElementsByTagName('mesh') if node.getAttribute('name')  == s][0]
+                    #print node.getAttribute('name')
+                    dockWidget = shaderDockWidget(str(s), '', 1, node)
+                    self.formLayout.addWidget(dockWidget)
+                except:
+                    #print 'No XML file to filter'
+                    dockWidget = shaderDockWidget(str(s),'',1)
+                    self.formLayout.addWidget(dockWidget)
+        else:
+            try:
+                if self.ldtFind.text() == '':
+                    shaderNode = [node for node in py.ls(mat = True)]
+                else:
+                    shaderNode = [node for node in py.ls('*' + str(self.ldtFind.text()) + '*', mat = True)]
+            except:
+                pass
+            for s in shaderNode:
+                dockWidget = shaderDockWidget('', s, 0)
                 self.formLayout.addWidget(dockWidget)
-                
+               
     def changeStatus(self):
-        cf.clearLayout(self.formLayout)
-        shaders = cmds.ls(materials = True)
-        for s in shaders:
-            pass
+        if self._status == 1:
+            self._status = 0
+        else:
+            self._status = 1
+        self.startup()
         
-            
     def reload(self):
         pass
         

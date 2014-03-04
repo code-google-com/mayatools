@@ -1,6 +1,9 @@
 <define>
 	<mesh name="WINDOW_F">
-		<shader name = "glass_laminated_damage" use = "Only"/>
+		<shader name = "glass_laminated_damage_inside" use = "Only"/>
+	</mesh>
+	<mesh name="WINDOW_F2">
+		<shader name = "glass_laminated_damage_outside" use = "Only"/>
 	</mesh>
 	<mesh name="DISC_FL">
 		<shader name = "disc_ceramic_01_left" use = "Must_use"/>
@@ -31,7 +34,7 @@
 		<shader name = "glass_toughened_damage" use = "Only"/>
 	</mesh>
 	<mesh name="WINDOW_B">
-		<shader name = "glass_toughened_damage" use = "Only"/>
+		<shader name = "glass_toughened_damage_inside" use = "Only"/>
 	</mesh>
 	<mesh name="BUMPER_B">
 		<shader name = "body_livery_carbon_damage" use = "Must_use"/>

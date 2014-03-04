@@ -44,7 +44,7 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
+         <iconset>
           <normaloff>:/Project/Refresh.png</normaloff>:/Project/Refresh.png</iconset>
         </property>
         <property name="flat">
@@ -58,11 +58,18 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../../../../../FoxForest/Source/IconResource.qrc">
+         <iconset>
           <normaloff>:/Project/Exchange.png</normaloff>:/Project/Exchange.png</iconset>
         </property>
         <property name="flat">
          <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="chkAuto">
+        <property name="text">
+         <string>Auto</string>
         </property>
        </widget>
       </item>

@@ -62,6 +62,16 @@ def selectFaceByShaderPerMesh(mesh, shader):
     else: # object has only one material
         #print 'select: ' + mesh
         cmds.select(mesh)  
+        
+def selectMeshesUseShaderOnScene(shader):
+    shadingGroups = py.listConnections(shader, type = 'shadingEngine')
+    #print shadingGroups
+    faceList = py.sets(shadingGroups, q = True)
+    selectedMeshes = []
+    for f in faceList:
+        shapes = f.split('.')[0]
+        selectedMeshes.append(shapes)
+    return list(set(selectedMeshes))
 
 def reassignShaderToFace(mesh, shader):
     selectFaceByShaderPerMesh(mesh, shader)
