@@ -42,11 +42,11 @@ try:
 except:
     from GETeamWork import *
     
-# try:
-#     reload(AssetTracking)
-# except:
-#     import AssetTracking
-#     
+try:
+    reload(AssetTracking)
+except:
+    import AssetTracking
+     
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/ProjectForm.ui'
 try:

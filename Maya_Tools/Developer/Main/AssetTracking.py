@@ -198,7 +198,7 @@ class AssetTracking(form_class,base_class):
     def __init__(self, managers, parent = getMayaWindow()):
         super(base_class,self).__init__(parent)
         self.setupUi(self)
-        self.cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=DUYNGUYEN2;DATABASE=Gem_Tools;UID=sa;PWD=1a2b3c4d5e')
+        self.cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=GESVR05;DATABASE=Gem_Tools_Test;UID=geuser;PWD=Aa@123456')
         #self.cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=QUOCTRUNG-PC\SQLEXPRESS;DATABASE=Gem_Tools;UID=sa;PWD=trungswat@521987')
         cursor = self.cnxn.cursor()
         cursor.execute("{call sp_sel_List_Project}")
@@ -223,9 +223,10 @@ class AssetTracking(form_class,base_class):
         self.listWidgetAsset.clear()
         cursor = self.cnxn.cursor()
         if self._userID in (self._techDepts + self._artDepts + self._producerDepts): 
-            cursor.execute("SELECT Name, URL, Start_Date, End_Date FROM view_Asset_ProjName as a WHERE a.Project_Name = '{project}'".format(project = projectName))
+            cursor.execute("SELECT Name, URL, Start_Date, End_Date FROM view_Asset")
             rows = cursor.fetchall()
             for i in rows:
+                print i[0]
                 asset = Asset(i[0], i[1], i[2], i[3], 'none')
                 self.listWidgetAsset.addItem(asset)
                 

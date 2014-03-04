@@ -63,6 +63,17 @@ def selectFaceByShaderPerMesh(mesh, shader):
         #print 'select: ' + mesh
         cmds.select(mesh)  
         
+def selectFaceByShaderAllMesh(mesh, shader):
+    # get shading group from shader
+    try:
+        shape = cmds.listRelatives(mesh, shapes = True)[0]
+    except ValueError:
+        return
+    shadingGroups = py.listConnections(shader, type = 'shadingEngine')
+    #print shadingGroups
+    faceList = py.sets(shadingGroups, q = True)
+    cmds.select(faceList)  
+        
 def selectMeshesUseShaderOnScene(shader):
     shadingGroups = py.listConnections(shader, type = 'shadingEngine')
     #print shadingGroups

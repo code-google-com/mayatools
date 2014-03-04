@@ -466,6 +466,8 @@ class CustomLODTools(form_class,base_class):
                 self._nohide.append('pulled_type_c_layer')
             if self.btnLOD3.isChecked():
                 self._nohide.append('pulled_type_d_layer')
+            cmds.setAttr('bumper_front|standard_type_a.visibility', 0)
+            cmds.setAttr('bumper_rear|standard_type_a.visibility', 0)
                 
         if self.btnSmall.isChecked():
             print 'pulled'

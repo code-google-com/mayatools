@@ -412,8 +412,6 @@ try:
 except IOError:
     print (dirUI + ' not found.')
     
-
-    
 class shaderButton(QtGui.QPushButton):
     def __init__(self, mesh, shader, status, color = None):
         super(shaderButton, self).__init__()
@@ -445,10 +443,7 @@ class shaderButton(QtGui.QPushButton):
         else:
             self.setText(mesh)
         self.clicked.connect(functools.partial(st.selectFaceByShaderPerMesh, self._mesh, self._shader))
-        
-    def checkShader(self):
-        pass
-    
+
 class customButton(QtGui.QPushButton):
     def __init__(self):
         super(customButton,self).__init__()
