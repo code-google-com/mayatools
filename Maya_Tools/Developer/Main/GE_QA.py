@@ -442,7 +442,11 @@ class shaderButton(QtGui.QPushButton):
                             padding-right: 2px;@'''.format(color0 = color[0], color1 = color[1]).replace('*','{').replace('@','}'))
         else:
             self.setText(mesh)
+#         if scene == True:
+#             self.clicked.connect(functools.partial(st.selectFaceByShaderAllMesh, self._mesh, self._shader))
+#         else:
         self.clicked.connect(functools.partial(st.selectFaceByShaderPerMesh, self._mesh, self._shader))
+            
 
 class customButton(QtGui.QPushButton):
     def __init__(self):

@@ -67,9 +67,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="chkAuto">
+       <widget class="QCheckBox" name="chkAllScene">
         <property name="text">
-         <string>Auto</string>
+         <string>All Scene</string>
         </property>
        </widget>
       </item>

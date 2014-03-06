@@ -25,12 +25,16 @@
 		<asset name = "dodge_challenger_srt8_392" start_date = "" due_date = "" stage = "" image = ""/>
 		<asset name = "icona_vulcano" start_date = "" due_date = "" stage = ""  image = ""/>
 		<asset name = "renault_twin_run"/>
-		<asset name = "w_motor_lykan_hypersport"/>
+		<asset name = "w_motors_lykan_hypersport"/>
 	</group>
 	<group name="Batch_23">
 		<asset name = "ferrari_459_Speciale" start_date = "" due_date = "" stage = "" image = ""/>
 		<asset name = "ferrari_enzo" start_date = "" due_date = "" stage = ""  image = ""/>
 		<asset name = "peugoet_onyx_concept"/>
 		<asset name = "vuhl_05"/>
+	</group>
+	<group name="Batch_24">
+		<asset name = "ferrari_f40" start_date = "" due_date = "" stage = "" image = ""/>
+		<asset name = "ferrari_f50" start_date = "" due_date = "" stage = ""  image = ""/>
 	</group>
 </AssetList>

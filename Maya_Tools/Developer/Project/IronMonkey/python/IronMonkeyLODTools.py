@@ -60,6 +60,7 @@ def setupLOD():
                 cmds.createDisplayLayer(e = False, n = lod + '_layer')
             except:
                 pass
+
         # adding wheelarch standard to type a
         #cmds.editDisplayLayerMembers('type_a_layer', cmds.ls('wheel_arch|standard'), noRecurse = True)
         # select all locator and put them in 
@@ -252,6 +253,7 @@ class CustomLODTools(form_class,base_class):
     def showSpoilers(self):
         spoiler = self.cbbSpoilers.currentText()
         for s in cmds.listRelatives('spoiler', c = True, f= True):
+            print s
             if spoiler == '---Nothing---':
                 cmds.setAttr(s + '.visibility', 0)
             else:
