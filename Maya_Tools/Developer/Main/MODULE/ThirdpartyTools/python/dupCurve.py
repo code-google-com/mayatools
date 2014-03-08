@@ -78,7 +78,7 @@ fnSetMotionAttr:
 import maya.cmds as cmds
 import random
 #Kills EVERYTHING!!!
-cmds.scriptJob(ka=True,f=True)
+#cmds.scriptJob(ka=True,f=True)
 AutoUpdate=0
 
 
