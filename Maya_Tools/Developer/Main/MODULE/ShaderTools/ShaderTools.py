@@ -1,4 +1,5 @@
 import maya.cmds as cmds
+import maya.mel as mel
 from PyQt4 import QtGui, QtCore, uic
 import maya.mel as mel
 import os, sys, inspect
@@ -115,6 +116,17 @@ class ShaderTools(form_class,base_class):
         self.btnCheckerView.clicked.connect(self.tweakingCheckerShader)
         self.btnNormalView.clicked.connect(self.tweakingNormalView)
         self.btnReflectionView.clicked.connect(self.tweakingShininessView)
+        self.chkRed.clicked.connect(self.updateSliderColorSet)
+        self.chkGreen.clicked.connect(self.updateSliderColorSet)
+        self.chkBlue.clicked.connect(self.updateSliderColorSet)
+        self.chkAlpha.clicked.connect(self.updateSliderColorSet)
+        
+        self.sldRed.valueChanged.connect(functools.partial(self.changeColorSet, 'r'))
+        self.sldRed.sliderReleased.connect(self.fixColorSet)
+        
+        self.sldGreen.valueChanged.connect(functools.partial(self.changeColorSet, 'g'))
+        self.sldBlue.valueChanged.connect(functools.partial(self.changeColorSet, 'b'))
+        self.sldAlpha.valueChanged.connect(functools.partial(self.changeColorSet, 'a'))
         
         self.btnCheckerView.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         if inputFile != '':
@@ -147,6 +159,35 @@ class ShaderTools(form_class,base_class):
         #----------
         self.combobox.currentIndexChanged.connect(self.updateChecker)
         self.slider.valueChanged.connect(self.updateTilingChecker)
+        
+        self.updateSliderColorSet()
+        
+        attachFileSource = fileDirCommmon + '/mel/fixVertexColor.mel'
+        mel.eval('source \"{f}\";'.format(f = attachFileSource))
+        
+        #cmds.scriptJob()
+        
+    def updateSliderColorSet(self):
+        if self.chkRed.isChecked():
+            self.sldRed.setEnabled(True)
+        else:
+            self.sldRed.setEnabled(False)
+            
+        if self.chkGreen.isChecked():
+            self.sldGreen.setEnabled(True)
+        else:
+            self.sldGreen.setEnabled(False)
+            
+        if self.chkBlue.isChecked():
+            self.sldBlue.setEnabled(True)
+        else:
+            self.sldBlue.setEnabled(False)
+            
+        if self.chkAlpha.isChecked():
+            self.sldAlpha.setEnabled(True)
+        else:
+            self.sldAlpha.setEnabled(False)
+        
         
     def removeDebugShader(self):
         if cmds.objExists('restoreTechniqueNode'):
@@ -283,6 +324,29 @@ class ShaderTools(form_class,base_class):
         if cmds.objExists('TEMP_DEBUG_TEXTURE'):
             node = py.ls('TEMP_DEBUG_TEXTURE')[0]
             cmds.setAttr('TEMP_DEBUG_TEXTURE.fileTextureName', fileDirCommmon + '/textures/' + texture + '.tif', type = 'string')
+            
+    def changeColorSet(self, channel = None):
+        #colorSet = str(self.cbbColorSet.currentText())
+        
+        currentValue = self.sldRed
+        cmds.polyColorSet(cs = 'colorSet1', ccs = True)
+        cmds.polyColorPerVertex(cla = True)
+        if channel == 'r':
+            value = self.sldRed.value()/50.00
+            print value
+            cmds.polyColorPerVertex(rel= True, r = value)
+        if channel == 'g':
+            value = self.sldGreen.value()
+            cmds.polyColorPerVertex(rel= True, g = value)
+        if channel == 'b':
+            value = self.sldBlue.value()
+            cmds.polyColorPerVertex(rel= True, b = value)
+        if channel == 'a':
+            value = self.sldAlpha.value()
+            cmds.polyColorPerVertex(rel= True, a = value)
+            
+    def fixColorSet(self):
+        mel.eval('boltSCV.fixVertexColours')
         
 def main(xmlnput):
     form = ShaderTools(xmlnput)
