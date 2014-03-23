@@ -125,8 +125,13 @@ class ShaderTools(form_class,base_class):
         self.sldRed.sliderReleased.connect(self.fixColorSet)
         
         self.sldGreen.valueChanged.connect(functools.partial(self.changeColorSet, 'g'))
+        self.sldGreen.sliderReleased.connect(self.fixColorSet)
+        
         self.sldBlue.valueChanged.connect(functools.partial(self.changeColorSet, 'b'))
+        self.sldBlue.sliderReleased.connect(self.fixColorSet)
+        
         self.sldAlpha.valueChanged.connect(functools.partial(self.changeColorSet, 'a'))
+        self.sldAlpha.sliderReleased.connect(self.fixColorSet)
         
         self.btnCheckerView.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         if inputFile != '':
@@ -165,7 +170,10 @@ class ShaderTools(form_class,base_class):
         attachFileSource = fileDirCommmon + '/mel/fixVertexColor.mel'
         mel.eval('source \"{f}\";'.format(f = attachFileSource))
         
-        #cmds.scriptJob()
+        self.updateShader = cmds.scriptJob(e = ['SelectionChanged',self.updateShaderName], protected = True)
+        
+    def updateShaderName(self):
+        pass
         
     def updateSliderColorSet(self):
         if self.chkRed.isChecked():
@@ -332,18 +340,18 @@ class ShaderTools(form_class,base_class):
         cmds.polyColorSet(cs = 'colorSet1', ccs = True)
         cmds.polyColorPerVertex(cla = True)
         if channel == 'r':
-            value = self.sldRed.value()/50.00
-            print value
-            cmds.polyColorPerVertex(rel= True, r = value)
+            value = (-self.sldRed.value()/100.00)
+            #print value
+            cmds.polyColorPerVertex(r = value)
         if channel == 'g':
             value = self.sldGreen.value()
-            cmds.polyColorPerVertex(rel= True, g = value)
+            cmds.polyColorPerVertex( g = value)
         if channel == 'b':
             value = self.sldBlue.value()
-            cmds.polyColorPerVertex(rel= True, b = value)
+            cmds.polyColorPerVertex(b = value)
         if channel == 'a':
             value = self.sldAlpha.value()
-            cmds.polyColorPerVertex(rel= True, a = value)
+            cmds.polyColorPerVertex( a = value)
             
     def fixColorSet(self):
         mel.eval('boltSCV.fixVertexColours')

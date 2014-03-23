@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>305</width>
-    <height>835</height>
+    <width>328</width>
+    <height>866</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -230,6 +230,13 @@
         </item>
        </layout>
       </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_2">
+        <property name="text">
+         <string>Open Validate Shader</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -328,10 +335,10 @@
         <item>
          <widget class="QSlider" name="sldGreen">
           <property name="minimum">
-           <number>-99</number>
+           <number>-100</number>
           </property>
           <property name="maximum">
-           <number>99</number>
+           <number>100</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -362,7 +369,10 @@
         <item>
          <widget class="QSlider" name="sldBlue">
           <property name="minimum">
-           <number>-99</number>
+           <number>-100</number>
+          </property>
+          <property name="maximum">
+           <number>100</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -393,10 +403,10 @@
         <item>
          <widget class="QSlider" name="sldAlpha">
           <property name="minimum">
-           <number>-49</number>
+           <number>-100</number>
           </property>
           <property name="maximum">
-           <number>49</number>
+           <number>100</number>
           </property>
           <property name="tracking">
            <bool>false</bool>
