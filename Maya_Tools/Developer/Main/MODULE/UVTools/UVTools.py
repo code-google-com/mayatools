@@ -11,6 +11,12 @@ import math
 import Source.IconResource_rc
 reload(Source.IconResource_rc)
 
+
+try:
+    reload(uv)
+except:
+    from MODULE.CheckList_QA import UVFlipped as uv
+
 import CommonFunctions as cf
 reload(cf)
 
@@ -70,6 +76,9 @@ class UVTools(form_class,base_class):
         
         self.ldtTarget.returnPressed.connect(functools.partial(self.updateShader, 'Source'))
         self.ldtSource.returnPressed.connect(functools.partial(self.updateShader, 'Target'))
+        
+        self.btnSelectFlippedUVs.pressed.connect(self.selectFlippedUVs)
+        #self.btnSelectUnmappedVertexes.pressed.connect()
         
     def filterTheFirstFaceInCluster(self, inList):
         out = list()
@@ -250,7 +259,12 @@ class UVTools(form_class,base_class):
             pt.attachMesh()
         if isDeleted:
             cmds.delete(sourceMesh)
-        
+            
+    def selectFlippedUVs(self):
+        mesh = cmds.ls(sl = True)[0]
+        result = uv.run(mesh)
+        cmds.select(result(2))
+    
         
 def main(xmlFile):
     form = UVTools(xmlFile)

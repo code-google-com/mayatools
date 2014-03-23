@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>332</width>
-    <height>668</height>
+    <width>467</width>
+    <height>840</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -26,7 +26,7 @@
       <enum>Qt::ScrollBarAlwaysOff</enum>
      </property>
      <property name="widgetResizable">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="alignment">
       <set>Qt::AlignJustify|Qt::AlignTop</set>
@@ -36,11 +36,11 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>291</width>
-        <height>485</height>
+        <width>441</width>
+        <height>814</height>
        </rect>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout">
+      <layout class="QVBoxLayout" name="verticalLayout_6">
        <item>
         <layout class="QGridLayout" name="gridLayout">
          <property name="sizeConstraint">
@@ -70,7 +70,7 @@
             <string/>
            </property>
            <property name="icon">
-            <iconset>
+            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
              <normaloff>:/Project/arrow_10.png</normaloff>:/Project/arrow_10.png</iconset>
            </property>
            <property name="iconSize">
@@ -99,7 +99,7 @@
             <string/>
            </property>
            <property name="icon">
-            <iconset>
+            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
              <normaloff>:/Project/arrow_12.png</normaloff>:/Project/arrow_12.png</iconset>
            </property>
            <property name="iconSize">
@@ -128,7 +128,7 @@
             <string/>
            </property>
            <property name="icon">
-            <iconset>
+            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
              <normaloff>:/Project/arrow_2.png</normaloff>:/Project/arrow_2.png</iconset>
            </property>
            <property name="iconSize">
@@ -157,7 +157,7 @@
             <string/>
            </property>
            <property name="icon">
-            <iconset>
+            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
              <normaloff>:/Project/arrow_9.png</normaloff>:/Project/arrow_9.png</iconset>
            </property>
            <property name="iconSize">
@@ -241,7 +241,7 @@ font:  bold 11px
             <string/>
            </property>
            <property name="icon">
-            <iconset>
+            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
              <normaloff>:/Project/arrow_U.png</normaloff>:/Project/arrow_U.png</iconset>
            </property>
            <property name="iconSize">
@@ -270,7 +270,7 @@ font:  bold 11px
             <string/>
            </property>
            <property name="icon">
-            <iconset>
+            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
              <normaloff>:/Project/arrow_8.png</normaloff>:/Project/arrow_8.png</iconset>
            </property>
            <property name="iconSize">
@@ -311,7 +311,7 @@ font:  bold 11px
             <string/>
            </property>
            <property name="icon">
-            <iconset>
+            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
              <normaloff>:/Project/arrow_6.png</normaloff>:/Project/arrow_6.png</iconset>
            </property>
            <property name="iconSize">
@@ -340,7 +340,7 @@ font:  bold 11px
             <string/>
            </property>
            <property name="icon">
-            <iconset>
+            <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
              <normaloff>:/Project/arrow_4.png</normaloff>:/Project/arrow_4.png</iconset>
            </property>
            <property name="iconSize">
@@ -779,6 +779,46 @@ font:  bold 11px
          </layout>
         </widget>
        </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="title">
+          <string>Selection</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <item>
+             <widget class="QPushButton" name="btnSelectFlippedUVs">
+              <property name="text">
+               <string>Flipped UVs</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btnSelectUnmappedVertexes">
+              <property name="text">
+               <string>Unmapped Vertexes</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>243</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
       </layout>
      </widget>
     </widget>
@@ -786,7 +826,7 @@ font:  bold 11px
   </layout>
   <action name="actionAddSource">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
@@ -795,7 +835,7 @@ font:  bold 11px
   </action>
   <action name="actionAddTarget">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
@@ -804,7 +844,7 @@ font:  bold 11px
   </action>
   <action name="actionClearSource">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
    </property>
    <property name="text">
@@ -813,7 +853,7 @@ font:  bold 11px
   </action>
   <action name="actionClearTarget">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
    </property>
    <property name="text">
@@ -822,7 +862,7 @@ font:  bold 11px
   </action>
   <action name="actionCopySource">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Export.png</normaloff>:/Project/Export.png</iconset>
    </property>
    <property name="text">
@@ -831,7 +871,7 @@ font:  bold 11px
   </action>
   <action name="actionCopyTarget">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Export.png</normaloff>:/Project/Export.png</iconset>
    </property>
    <property name="text">
@@ -840,7 +880,7 @@ font:  bold 11px
   </action>
   <action name="actionPasteTarget">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Reference.png</normaloff>:/Project/Reference.png</iconset>
    </property>
    <property name="text">
@@ -849,7 +889,7 @@ font:  bold 11px
   </action>
   <action name="actionPasteSource">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
      <normaloff>:/Project/Reference.png</normaloff>:/Project/Reference.png</iconset>
    </property>
    <property name="text">

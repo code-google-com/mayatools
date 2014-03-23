@@ -3,7 +3,7 @@ import pymel.core as py
 from PyQt4 import QtGui
 import maya.OpenMayaUI as OpenMayaUI
 from xml.dom.minidom import *
-import sys, os, shutil, re
+import sys, os, shutil, re, imp
 
 def gcd(a, b):
     while b:
@@ -33,6 +33,14 @@ def loadModule(moduleName):
     file, pathname, description = imp.find_module(moduleName)
     try:
         return imp.load_module(moduleName, file, pathname, description)
+    finally:
+        if file: file.close()
+        
+def loadModule_v2(moduleDir):
+    sys.path.append(moduleDir.replace(moduleDir.split('/')[-1],''))
+    file, pathname, description = imp.find_module(moduleDir.split('/')[-1].split('.')[0])
+    try:
+        return imp.load_module(moduleDir.split('/')[-1].split('.')[0], file, pathname, description)
     finally:
         if file: file.close()
         
