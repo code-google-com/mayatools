@@ -70,6 +70,7 @@ class CustomShaderTools(form_class,base_class):
                 mesh = list()
                 sgs = [cmds.listConnections(x, type = 'shadingEngine') for x in self.material]
                 for s in sgs:
+                    print s
                     faceList = cmds.sets(s, q = True)
                     nodes = list(set([f.split('.')[0] for f in faceList])) 
                     mesh += nodes
