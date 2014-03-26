@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?><Project name="Characters">
+	<Managers>
+		<Tech>
+			<user>trungtran</user>
+			<mail>trungtq@glassegg.com</mail>
+			<mail>thohoang@glassegg.com</mail>
+		</Tech>
+		<ArtDirector>
+			<user>thohoang</user>
+			<mail>thohoang@glassegg.com</mail>
+			
+		</ArtDirector>
+		<Producer>
+			<user>nghiatrinh</user>
+			<mail>nghiatrinh@glassegg.com</mail>
+		</Producer>
+		
+	</Managers>
+	<Configuration>
+		<Mail>technical@glassegg1.com</Mail>
+		<Pass>abc123</Pass>
+	</Configuration>
+	<Smtp_config>
+		<Smtp>gemail01.glassegg.com</Smtp>
+		<Port>25</Port>		
+	</Smtp_config>
+	<Directories>
+		<ServerPath>//glassegg.com/projects/Scenes/FrontierWave_characters</ServerPath>
+		<LocalPath>Z:/Project/FrontierWave_characters/</LocalPath>
+		<ProjectLocalPath>Characters/</ProjectLocalPath>
+		<DocumentsPath>ttt</DocumentsPath>
+		<FeedbacksPath>//glassegg.com/Documents_Feedbacks/FrontierWave_characters</FeedbacksPath>
+		<ReferencesImagePath>tmp</ReferencesImagePath>
+	</Directories>
+	
+</Project>
