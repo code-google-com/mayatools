@@ -72,15 +72,18 @@ class UploadForm(form_class,base_class):
     def toLocal(self):
         localIndex = list()
         serverIndex = list()
+        #print self.showdataonServer
+        #print self.showdataonLocal
         for index in self.treeViewServer.selectedIndexes():
             fpathServer = str(index.model().filePath(index))
             serverIndex.append(fpathServer)
             fpathLocal =  fpathServer.replace(self.showdataonServer,self.showdataonLocal)
+            #print fpathLocal
             localIndex.append(fpathLocal)
         localIndex = sorted(list(set(localIndex)))
-        print localIndex
+        #print localIndex
         serverIndex = sorted(list(set(serverIndex)))
-        print serverIndex
+        #print serverIndex
         for i in localIndex:
             cf.copytree(serverIndex[localIndex.index(i)],i)
         QtGui.QMessageBox.information(self,'Copy Asset','Copy done',QtGui.QMessageBox.Ok)
