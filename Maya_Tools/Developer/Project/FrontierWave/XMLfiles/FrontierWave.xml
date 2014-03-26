@@ -14,14 +14,14 @@
 		</Producer>
 	</Managers>
 	<Directories>
-		<ServerPath>//glassegg.com/projects/Scenes/FrontierWave_characters/Characters/</ServerPath>
-		<LocalPath>Z:/Project/FrontierWave_characters/Characters/</LocalPath>
+		<ServerPath>//glassegg.com/projects/Scenes/FrontierWave_characters/</ServerPath>
+		<LocalPath>Z:/Project/FrontierWave_characters/</LocalPath>
 		<ProjectLocalPath> </ProjectLocalPath>
 		<DocumentsPath>//glassegg.com/projects/Documents_Feedbacks/FrontierWave_characters</DocumentsPath>
 		<FeedbacksPath>//glassegg.com/projects/Documents_Feedbacks/FrontierWave_characters</FeedbacksPath>
 		<ReferencesImagePath>//glassegg.com/projects/Documents_Feedbacks/FrontierWave_characters</ReferencesImagePath>
 	</Directories>
-	<Structures_Asset group = "False">
+	<Structures_Asset group = "True">
 	  	<folder name = "Texture"/>
 	</Structures_Asset>
 	<ProjectData>
