@@ -95,23 +95,51 @@ class AssetForm(form_class,base_class):
         item = self.cbbAssets.currentText()
         type = self.cbbType.currentText()
         lod = self.cbbWorkingStage.currentText()
-        if lod == 'Not Available':
-            serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'# + str(lod)
+        #if lod == 'Not Available':
+        #    serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'# + str(lod)
+        #else:
+        #    serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
+        if self.Proj.group == False:
+            if lod == 'Not Available':
+                if self.Proj.ProjectLocalPath == ' ':
+                    #print "Project Local: is wrong" #+self.Proj.ProjectLocalPath
+                    serverPath = self.Proj.ServerPath + str(item) + '/'## + str(lod)
+                else:
+                    #print "Project Local: is true" #+self.Proj.ProjectLocalPath
+                    serverPath = self.Proj.ServerPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'## + str(lod)
+            else:
+                if self.Proj.ProjectLocalPath == ' ':
+                    serverPath = self.Proj.ServerPath + str(item) + '/'
+                else:
+                    serverPath = self.Proj.ServerPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
         else:
-            serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
+            if lod == 'Not Available':
+                serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'# + str(lod)
+            else:
+                serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)    
+        #os.startfile(serverPath)
         serverPath = serverPath.replace('/','\\')
         os.startfile(serverPath)
         
     def openLocalFolder(self):
+        print "Project Local: " +self.Proj.ProjectLocalPath
         group = self.cbbGroup.currentText()
         item = self.cbbAssets.currentText()
         type = self.cbbType.currentText()
         lod = self.cbbWorkingStage.currentText()
         if self.Proj.group == False:
             if lod == 'Not Available':
-                localPath = self.Proj.LocalPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'## + str(lod)
+                if self.Proj.ProjectLocalPath == ' ':
+                    #print "Project Local: is wrong" #+self.Proj.ProjectLocalPath
+                    localPath = self.Proj.LocalPath + str(item) + '/'## + str(lod)
+                else:
+                    #print "Project Local: is true" #+self.Proj.ProjectLocalPath
+                    localPath = self.Proj.LocalPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'## + str(lod)
             else:
-                localPath = self.Proj.LocalPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
+                if self.Proj.ProjectLocalPath == ' ':
+                    localPath = self.Proj.LocalPath + str(item) + '/'
+                else:
+                    localPath = self.Proj.LocalPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
         else:
             if lod == 'Not Available':
                 localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'# + str(lod)
