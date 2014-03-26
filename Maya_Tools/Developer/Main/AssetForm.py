@@ -68,6 +68,7 @@ class AssetForm(form_class,base_class):
         self.btnOpenServerFolder.clicked.connect(self.openServerFolder)
         self.btnOpenfile.clicked.connect(self.openMayafile)
         self.btnFeedbacks.clicked.connect(self.openFeedbacksFolder)
+        self.btnOpenDocuments.clicked.connect(self.openDocumentFolder)
         self.btnSaveIncrement.clicked.connect(cf.saveFileIncrement)
         self.btnUploadandDownload.clicked.connect(self.syncFileWithServer)
         self.btnOpenDocuments.clicked.connect(self.openDocumentsFolder)
@@ -77,10 +78,20 @@ class AssetForm(form_class,base_class):
         item = self.cbbAssets.currentText()
         lod = self.cbbType.currentText()
         stage = self.cbbWorkingStage.currentText()
-        dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item) + '/' + str(lod) + '/' + str(stage)
-        if not os.path.isdir(dirFile):
-            dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item)
-        os.startfile(dirFile.replace('/','\\'))
+        if stage =='Not Available':
+            print 'Feedback Path: '
+            print self.Proj.FeedbacksPath
+            dirFile = self.Proj.FeedbacksPath +'/'+ str(group) + '/' + str(item) #+ '/' #+ str(lod) + '/' #+ str(stage)
+            print dirFile
+        else:
+            dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item) + '/' + str(lod) + '/' + str(stage)
+        #if not os.path.isdir(dirFile):
+        #    dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item)
+        dirFile = dirFile.replace('/','\\')
+        print "Thu muc file: "
+        print dirFile
+        os.startfile(dirFile)
+        #os.startfile(dirFile.replace('/','\\'))
         
     def openDocumentsFolder(self):
         group = self.cbbGroup.currentText()
@@ -90,6 +101,25 @@ class AssetForm(form_class,base_class):
             dirFile = self.Proj.FeedbacksPath + str(group) + '/' 
         os.startfile(dirFile.replace('/','\\'))
             
+    def openDocumentFolder(self):
+        group = self.cbbGroup.currentText()
+        item = self.cbbAssets.currentText()
+        lod = self.cbbType.currentText()
+        stage = self.cbbWorkingStage.currentText()
+        if stage =='Not Available':
+            print 'Feedback Path: '
+            print self.Proj.FeedbacksPath
+            dirFile = self.Proj.DocumentsPath #+'/'+ str(group) #+ '/' + str(item) #+ '/' #+ str(lod) + '/' #+ str(stage)
+            print dirFile
+        else:
+            dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item) + '/' + str(lod) + '/' + str(stage)
+        #if not os.path.isdir(dirFile):
+        #    dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item)
+        dirFile = dirFile.replace('/','\\')
+        print "Thu muc file: "
+        print dirFile
+        os.startfile(dirFile)
+        
     def openServerFolder(self):
         group = self.cbbGroup.currentText()
         item = self.cbbAssets.currentText()
@@ -112,6 +142,9 @@ class AssetForm(form_class,base_class):
                     serverPath = self.Proj.ServerPath + str(item) + '/'
                 else:
                     serverPath = self.Proj.ServerPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
+            print serverPath
+            print"Local Path"
+            print self.Proj.ProjectLocalPath
         else:
             if lod == 'Not Available':
                 if self.Proj.ProjectLocalPath == ' ':
@@ -158,6 +191,8 @@ class AssetForm(form_class,base_class):
         group = self.cbbGroup.currentText()
         item = self.cbbAssets.currentText()
         templateFile = os.path.split(fileDirCommmon)[0] + '/Project/' + self.Proj.ProjectName + '/' + self.Proj.templateFile
+        #print 'template File'
+        #print templateFile
         for i in range(len(self.Proj.structureFolders)):
             if self.Proj.group == False:
                 localFolder = self.Proj.LocalPath + str(item) + '\\' + self.Proj.structureFolders[i]
@@ -209,18 +244,30 @@ class AssetForm(form_class,base_class):
         item = self.cbbAssets.currentText()
         type = self.cbbType.currentText()
         lod = self.cbbWorkingStage.currentText()
-        dirFile = str(item) + '\\' + self.Proj.ProjectLocalPath + str(type)
+        if str(type) =='':
+            dirFile = str(item) 
+            print('duong dan local__:',dirFile)
+        else:
+            dirFile = str(item) + '\\' + self.Proj.ProjectLocalPath + str(type)
+        print('ProjectLocal',self.Proj.ProjectLocalPath)
         if str(self.cbbWorkingStage.currentText()) != 'Not Available':
             dirFile += '\\' + str(lod) 
+            print' duong dan Mya'
+            print dirFile
+        else:
+            print 'Duong dan Maya File'
+            print dirFile
+            
         if self.server.isChecked():
             dirFile = (self.Proj.ServerPath + str(group) + '\\' + dirFile + '\\').replace('\\','/')
-            print dirFile
+            print('duong dan: server',dirFile)
         if self.local.isChecked():
             if self.Proj.group:
                 dirFile = (self.Proj.LocalPath + str(group) + '\\' + dirFile + '\\').replace('\\','/')
+                print('duong dan: local1',dirFile)
             else:
                 dirFile = self.Proj.LocalPath + dirFile
-            print dirFile
+                print('duong dan: local',dirFile)
         if self.vLast.isChecked():
             try:
                 filename = ''
