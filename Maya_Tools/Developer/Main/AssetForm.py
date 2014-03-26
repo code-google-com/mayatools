@@ -175,9 +175,10 @@ class AssetForm(form_class,base_class):
         for asset in assets:
             feedbackFolder = self.Proj.FeedbacksPath + str(group) + '\\' + str(asset) + '\\'
             for i in range(len(self.Proj.structureFolders)):
-                #print self.Proj.structureFolders[i]
-                serverFolder = self.Proj.ServerPath + str(group) + '\\' + str(asset) + '\\' + self.Proj.structureFolders[i]
-                #print serverFolder
+                if self.projectLocalPath != ' ':
+                    serverFolder = self.Proj.ServerPath + str(group) + '\\' + str(asset) + '\\' + self.Proj.structureFolders[i]
+                else:
+                    serverFolder = self.Proj.ServerPath + str(asset) + '\\' + self.Proj.structureFolders[i]
                 try:
                     os.makedirs(serverFolder)
                 except:
