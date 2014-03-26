@@ -114,7 +114,12 @@ class AssetForm(form_class,base_class):
                     serverPath = self.Proj.ServerPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
         else:
             if lod == 'Not Available':
-                serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'# + str(lod)
+                if self.Proj.ProjectLocalPath == ' ':
+                    #print "Project Local: is wrong" #+self.Proj.ProjectLocalPath
+                    serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/'## + str(lod)
+                else:
+                    #print "Project Local: is true" #+self.Proj.ProjectLocalPath
+                    serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'## + str(lod)
             else:
                 serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)    
         #os.startfile(serverPath)
@@ -130,10 +135,8 @@ class AssetForm(form_class,base_class):
         if self.Proj.group == False:
             if lod == 'Not Available':
                 if self.Proj.ProjectLocalPath == ' ':
-                    #print "Project Local: is wrong" #+self.Proj.ProjectLocalPath
                     localPath = self.Proj.LocalPath + str(item) + '/'## + str(lod)
                 else:
-                    #print "Project Local: is true" #+self.Proj.ProjectLocalPath
                     localPath = self.Proj.LocalPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'## + str(lod)
             else:
                 if self.Proj.ProjectLocalPath == ' ':
@@ -142,7 +145,10 @@ class AssetForm(form_class,base_class):
                     localPath = self.Proj.LocalPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
         else:
             if lod == 'Not Available':
-                localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'# + str(lod)
+                if self.Proj.ProjectLocalPath == ' ':
+                    localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/'## + str(lod)
+                else:
+                    localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'## + str(lod)
             else:
                 localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)    
         os.startfile(localPath)
@@ -175,10 +181,10 @@ class AssetForm(form_class,base_class):
         for asset in assets:
             feedbackFolder = self.Proj.FeedbacksPath + str(group) + '\\' + str(asset) + '\\'
             for i in range(len(self.Proj.structureFolders)):
-                if self.projectLocalPath != ' ':
-                    serverFolder = self.Proj.ServerPath + str(group) + '\\' + str(asset) + '\\' + self.Proj.structureFolders[i]
-                else:
+                if self.Proj.group == False:
                     serverFolder = self.Proj.ServerPath + str(asset) + '\\' + self.Proj.structureFolders[i]
+                else:
+                    serverFolder = self.Proj.ServerPath + str(group) + '\\' + str(asset) + '\\' + self.Proj.structureFolders[i]
                 try:
                     os.makedirs(serverFolder)
                 except:
