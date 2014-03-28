@@ -55,7 +55,7 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+        <iconset>
          <normaloff>:/Project/AO.png</normaloff>:/Project/AO.png</iconset>
        </property>
        <property name="iconSize">
@@ -87,7 +87,7 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+        <iconset>
          <normaloff>:/Project/shini.png</normaloff>:/Project/shini.png</iconset>
        </property>
        <property name="iconSize">
@@ -113,7 +113,7 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+        <iconset>
          <normaloff>:/Project/normal.png</normaloff>:/Project/normal.png</iconset>
        </property>
        <property name="iconSize">
@@ -139,7 +139,7 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset resource="../../../../../../../FoxForest/Source/IconResource.qrc">
+        <iconset>
          <normaloff>:/Project/checker.png</normaloff>:/Project/checker.png</iconset>
        </property>
        <property name="iconSize">
@@ -295,10 +295,10 @@
         <item>
          <widget class="QSlider" name="sldRed">
           <property name="minimum">
-           <number>-100</number>
+           <number>0</number>
           </property>
           <property name="maximum">
-           <number>100</number>
+           <number>10</number>
           </property>
           <property name="singleStep">
            <number>1</number>
@@ -308,6 +308,9 @@
           </property>
           <property name="invertedAppearance">
            <bool>true</bool>
+          </property>
+          <property name="tickPosition">
+           <enum>QSlider::TicksBelow</enum>
           </property>
          </widget>
         </item>

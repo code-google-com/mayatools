@@ -65,7 +65,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton">
+         <widget class="QPushButton" name="btnAlternativePath">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -315,8 +315,6 @@
      </layout>
     </item>
    </layout>
-   <zorder>pushButton</zorder>
-   <zorder>verticalSpacer_3</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="enabled">

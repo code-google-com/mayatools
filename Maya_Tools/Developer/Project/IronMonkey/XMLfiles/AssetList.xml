@@ -18,5 +18,10 @@
 		<asset name = "ford_f650_box" start_date = "" due_date = "" stage = ""  image = ""/>
 		<asset name = "nissan_leaf" start_date = "" due_date = "" stage = ""  image = ""/>
 		<asset name = "nissan_quest" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "bmw_m4_f82t" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "srt_viper_2013" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "nissan_gtr_r35" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "porsche_911_991" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "dodge_challenger_lc" start_date = "" due_date = "" stage = ""  image = ""/>
 	</group>	
 </AssetList>

@@ -26,6 +26,7 @@ class ProjectBaseClass():
         self.ClientPath = ""
         self.LocalPath = ""
         self.ProjectLocalPath = ""
+        self.AlternativePath = ""
         self.DocumentsPath = ""
         self.ReferencesImagePath = ""
         self.FeedbacksPath = ""
@@ -100,6 +101,9 @@ class ProjectBaseClass():
                 self.LibraryPath = d.childNodes[0].data
             if name == "PluginsPath":
                 self.PluginsPath = d.childNodes[0].data
+            if name == "AlternativePath":
+                self.AlternativePath = d.childNodes[0].data
+                
                 
         ProjectData = ProjectNode.getElementsByTagName("ProjectData")[0]
                 

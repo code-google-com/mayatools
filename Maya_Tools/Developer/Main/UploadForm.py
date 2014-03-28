@@ -25,14 +25,16 @@ def backupData(file):
             os.rename(file, backupFile)
 	
 class UploadForm(form_class,base_class):
-    def __init__(self, LocalPath, ServerPath, parent = getMayaWindow()):
+    def __init__(self, LocalPath, ServerPath, AlternativePath, parent = getMayaWindow()):
         super(base_class,self).__init__(parent)
         self.setupUi(self)
         self.showData(LocalPath, ServerPath)
         self.showdataonLocal = LocalPath
         self.showdataonServer = ServerPath
+        self.showdataonAlternativePath = AlternativePath
         self.btntoServer.clicked.connect(self.toServer)
         self.btntoLocal.clicked.connect(self.toLocal)
+        self.btnAlternativePath.clicked.connect(self.alternatePath)
         self.actionOpenFolder.triggered.connect(self.openFolder)
         self.actionRefFile.triggered.connect(self.referenceFile)
         self.actionImportFile.triggered.connect(self.importFile)
@@ -68,6 +70,9 @@ class UploadForm(form_class,base_class):
         self.treeViewServer.setModel(modelServer)
         self.treeViewServer.setRootIndex(modelServer.index(pServer))
         self.treeViewServer.hideColumn(2)
+        
+    def copyTo(self, pathSrc, pathDes):
+        pass
     
     def toLocal(self):
         localIndex = list()
@@ -174,7 +179,10 @@ class UploadForm(form_class,base_class):
             cmds.file(fileOpen, o = True, f = True)
         else:
             QtGui.QMessageBox.information(self,'Wrong File Format','Khong the reference file co dinh dang {type}'.format(type = os.path.splitext(fileOpen)[1]),QtGui.QMessageBox.Ok)
-    
+
+    def alternatePath(self):
+        self.lineLocal.setText()
+        
     def createRightClickonMenu_on_selectedItems(self,pos):
         RightClickMenu = QtGui.QMenu(self)
         RightClickMenu.addAction(self.actionRefFile)

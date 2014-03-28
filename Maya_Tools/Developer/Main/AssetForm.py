@@ -125,36 +125,36 @@ class AssetForm(form_class,base_class):
         item = self.cbbAssets.currentText()
         type = self.cbbType.currentText()
         lod = self.cbbWorkingStage.currentText()
-        #if lod == 'Not Available':
-        #    serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'# + str(lod)
-        #else:
-        #    serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
-        if self.Proj.group == False:
-            if lod == 'Not Available':
-                if self.Proj.ProjectLocalPath == ' ':
-                    #print "Project Local: is wrong" #+self.Proj.ProjectLocalPath
-                    serverPath = self.Proj.ServerPath + str(item) + '/'## + str(lod)
-                else:
-                    #print "Project Local: is true" #+self.Proj.ProjectLocalPath
-                    serverPath = self.Proj.ServerPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'## + str(lod)
-            else:
-                if self.Proj.ProjectLocalPath == ' ':
-                    serverPath = self.Proj.ServerPath + str(item) + '/'
-                else:
-                    serverPath = self.Proj.ServerPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
+        if lod == 'Not Available':
+            serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'# + str(lod)
             print serverPath
             print"Local Path"
             print self.Proj.ProjectLocalPath
         else:
-            if lod == 'Not Available':
-                if self.Proj.ProjectLocalPath == ' ':
-                    #print "Project Local: is wrong" #+self.Proj.ProjectLocalPath
-                    serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/'## + str(lod)
-                else:
-                    #print "Project Local: is true" #+self.Proj.ProjectLocalPath
-                    serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'## + str(lod)
-            else:
-                serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)    
+            serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
+#         if self.Proj.group == False:
+#             if lod == 'Not Available':
+#                 if self.Proj.ProjectLocalPath == ' ':
+#                     #print "Project Local: is wrong" #+self.Proj.ProjectLocalPath
+#                     serverPath = self.Proj.ServerPath + str(item) + '/'## + str(lod)
+#                 else:
+#                     #print "Project Local: is true" #+self.Proj.ProjectLocalPath
+#                     serverPath = self.Proj.ServerPath + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/'## + str(lod)
+#             else:
+#                 if self.Proj.ProjectLocalPath == ' ':
+#                     serverPath = self.Proj.ServerPath + str(item) + '/'
+#                 else:
+#                     serverPath = self.Proj.ServerPath + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/' + str(lod)
+#         else:
+#             if lod == 'Not Available':
+#                 if self.Proj.ProjectLocalPath == ' ':
+#                     #print "Project Local: is wrong" #+self.Proj.ProjectLocalPath
+#                     serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/'## + str(lod)
+#                 else:
+#                     #print "Project Local: is true" #+self.Proj.ProjectLocalPath
+#                     serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/'## + str(lod)
+#             else:
+#                 serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/' + str(lod)    
         #os.startfile(serverPath)
         serverPath = serverPath.replace('/','\\')
         os.startfile(serverPath)
@@ -332,7 +332,7 @@ class AssetForm(form_class,base_class):
             serverPath = self.Proj.ServerPath + str(item)
         #serverPath = self.Proj.ServerPath + str(group)+ '/' + str(item)
         
-        syncForm = UploadForm.UploadForm(localPath, serverPath)
+        syncForm = UploadForm.UploadForm(localPath, serverPath, self.Proj.AlternativePath)
         syncForm.show()
         
     def validateCurrentFile(self):
