@@ -127,9 +127,6 @@ class AssetForm(form_class,base_class):
         lod = self.cbbWorkingStage.currentText()
         if lod == 'Not Available':
             serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'# + str(lod)
-            print serverPath
-            print"Local Path"
-            print self.Proj.ProjectLocalPath
         else:
             serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
 #         if self.Proj.group == False:
