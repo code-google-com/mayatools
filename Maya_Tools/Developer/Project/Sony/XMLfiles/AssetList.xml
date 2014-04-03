@@ -30,7 +30,7 @@
 	<group name="Batch_23">
 		<asset name = "ferrari_458_speciale" start_date = "" due_date = "" stage = "" image = ""/>
 		<asset name = "ferrari_enzo" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "peugoet_onyx_concept"/>
+		<asset name = "peugeot_onyx_concept"/>
 		<asset name = "vuhl_05"/>
 	</group>
 	<group name="Batch_24">
