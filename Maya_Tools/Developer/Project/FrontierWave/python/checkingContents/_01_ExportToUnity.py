@@ -17,8 +17,8 @@ import maya.cmds as cmds
 
 import CommonFunctions as cf
 
-import MODULE.PolyTools.ExporterandImporter
-reload(MODULE.PolyTools.ExporterandImporter)
+import ExporterandImporter
+reload(ExporterandImporter)
 
 description = 'Export To Unity.'
 name = 'ExportToUnity'
@@ -47,12 +47,20 @@ def execute():
             for name in names:
                 print name
                 fileName = folderName +"/" + name
-                print 'files mo rong: '
-                if fileName != fileNameFBX:
-                    extion = name.split(".")[-1]
-                    if extion =='psd':
-                        if os.path.isfile(fileName):
-                            shutil.copy(fileName,unityTexture)
+                if os.path.isfile(fileName):
+                    if fileName != fileNameFBX:
+                        extion = name.split(".")[-1]
+                        if extion =='txt':
+                            if os.path.isfile(fileName):
+                                shutil.copy(fileName,UnityPath)
+                if os.path.isdir(fileName):
+                    subname = os.listdir(fileName)
+                    for sub in subname:
+                        subname = fileName +'/'+sub
+                        #extion = name.split(".")[-1]
+                        #if extion =='psd':
+                        if os.path.isfile(subname):
+                            shutil.copy(subname,unityTexture)
             shutil.copy(fileNameFBX,UnityPath)
                     
                
