@@ -68,10 +68,10 @@ class AssetForm(form_class,base_class):
         self.btnOpenServerFolder.clicked.connect(self.openServerFolder)
         self.btnOpenfile.clicked.connect(self.openMayafile)
         self.btnFeedbacks.clicked.connect(self.openFeedbacksFolder)
-        self.btnOpenDocuments.clicked.connect(self.openDocumentFolder)
+        self.btnOpenDocuments.clicked.connect(self.openDocumentsFolder)
         self.btnSaveIncrement.clicked.connect(cf.saveFileIncrement)
         self.btnUploadandDownload.clicked.connect(self.syncFileWithServer)
-        self.btnOpenDocuments.clicked.connect(self.openDocumentsFolder)
+        #self.btnOpenDocuments.clicked.connect(self.openDocumentsFolder)
         
     def openFeedbacksFolder(self):
         group = self.cbbGroup.currentText()
@@ -98,27 +98,27 @@ class AssetForm(form_class,base_class):
         item = self.cbbAssets.currentText()
         dirFile = self.Proj.ReferencesImagePath + str(group) + '/' + str(item) + '/'
         if not os.path.isdir(dirFile):
-            dirFile = self.Proj.FeedbacksPath + str(group) + '/' 
+            dirFile = self.Proj.ReferencesImagePath + str(group) + '/' 
         os.startfile(dirFile.replace('/','\\'))
             
-    def openDocumentFolder(self):
-        group = self.cbbGroup.currentText()
-        item = self.cbbAssets.currentText()
-        lod = self.cbbType.currentText()
-        stage = self.cbbWorkingStage.currentText()
-        if stage =='Not Available':
-            print 'Feedback Path: '
-            print self.Proj.FeedbacksPath
-            dirFile = self.Proj.DocumentsPath #+'/'+ str(group) #+ '/' + str(item) #+ '/' #+ str(lod) + '/' #+ str(stage)
-            print dirFile
-        else:
-            dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item) + '/' + str(lod) + '/' + str(stage)
-        #if not os.path.isdir(dirFile):
-        #    dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item)
-        dirFile = dirFile.replace('/','\\')
-        print "Thu muc file: "
-        print dirFile
-        os.startfile(dirFile)
+#     def openDocumentFolder(self):
+#         group = self.cbbGroup.currentText()
+#         item = self.cbbAssets.currentText()
+#         lod = self.cbbType.currentText()
+#         stage = self.cbbWorkingStage.currentText()
+#         if stage =='Not Available':
+#             print 'Feedback Path: '
+#             print self.Proj.FeedbacksPath
+#             dirFile = self.Proj.DocumentsPath #+'/'+ str(group) #+ '/' + str(item) #+ '/' #+ str(lod) + '/' #+ str(stage)
+#             print dirFile
+#         else:
+#             dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item) + '/' + str(lod) + '/' + str(stage)
+#         #if not os.path.isdir(dirFile):
+#         #    dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item)
+#         dirFile = dirFile.replace('/','\\')
+#         print "Thu muc file: "
+#         print dirFile
+#         os.startfile(dirFile)
         
     def openServerFolder(self):
         group = self.cbbGroup.currentText()
@@ -126,9 +126,9 @@ class AssetForm(form_class,base_class):
         type = self.cbbType.currentText()
         lod = self.cbbWorkingStage.currentText()
         if lod == 'Not Available':
-            serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'# + str(lod)
+            serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/'# + str(lod)
         else:
-            serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)
+            serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/' + str(lod)
 #         if self.Proj.group == False:
 #             if lod == 'Not Available':
 #                 if self.Proj.ProjectLocalPath == ' ':
@@ -213,10 +213,7 @@ class AssetForm(form_class,base_class):
         for asset in assets:
             feedbackFolder = self.Proj.FeedbacksPath + str(group) + '\\' + str(asset) + '\\'
             for i in range(len(self.Proj.structureFolders)):
-                if self.Proj.group == False:
-                    serverFolder = self.Proj.ServerPath + str(asset) + '\\' + self.Proj.structureFolders[i]
-                else:
-                    serverFolder = self.Proj.ServerPath + str(group) + '\\' + str(asset) + '\\' + self.Proj.structureFolders[i]
+                serverFolder = self.Proj.ServerPath + str(group) + '\\' + str(asset) + '\\' + self.Proj.structureFolders[i]
                 try:
                     os.makedirs(serverFolder)
                 except:
