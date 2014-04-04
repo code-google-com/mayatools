@@ -1,183 +1,355 @@
 // ----------------------------------- Per Frame --------------------------------------
-cbuffer UpdatePerFrame : register(b0)
-{
-	float4x4 viewI : ViewInverse < string UIWidget = "None"; >;
+float4x4 viewI : ViewInverse < string UIWidget = "None"; >;
 
-};
 
 // --------------------------------------- Per Object -----------------------------------------
-cbuffer UpdatePerObject : register(b1)
-{
-	float4x4 world : World < string UIWidget = "None"; >;
+float4x4 world : World < string UIWidget = "None"; >;
 
-	int ClampDynamicLights
-	<
-		float UIMin = 0;
-		float UISoftMin = 0;
-		float UIMax = 99;
-		float UISoftMax = 99;
-		float UIStep = 1;
-		string UIName = "ClampDynamicLights";
-		string UIWidget = "Slider";
-	> = 99;
+int ClampDynamicLights
+<
+	float UIMin = 0;
+	float UISoftMin = 0;
+	float UIMax = 99;
+	float UISoftMax = 99;
+	float UIStep = 1;
+	string UIName = "ClampDynamicLights";
+	string UIWidget = "Slider";
+> = 99;
 
-	float4x4 wvp : WorldViewProjection < string UIWidget = "None"; >;
+float4x4 wvp : WorldViewProjection < string UIWidget = "None"; >;
 
-};
-
-// --------------------------------------- Attributes -----------------------------------------
-cbuffer UpdateAttributes : register(b2)
-{
-	float ScaleUV
-	<
-		float UIMin = 0.0;
-		float UISoftMin = 0.0;
-		float UIMax = 99.0;
-		float UISoftMax = 99.0;
-		float UIStep = 0.01;
-		string UIName = "ScaleUV";
-		string UIGroup = "Tiling_Parameters";
-		string UIWidget = "Slider";
-	> = 1.0;
-
-};
 
 // ----------------------------------- Lights --------------------------------------
-cbuffer UpdateLights : register(b3)
-{
-	int Light0Type : LIGHTTYPE
-	<
-		string UIName =  "Light 0 Type";
-		float UIMin = 0;
-		float UIMax = 5;
-		float UIStep = 1;
-		string UIWidget = "None";
-		string Object =  "Light 0";
-	> = {3};
+int Light0Type : LIGHTTYPE
+<
+	string UIName =  "Light 0 Type";
+	float UIMin = 0;
+	float UIMax = 5;
+	float UIStep = 1;
+	string UIWidget = "None";
+	string Object =  "Light 0";
+> = {3};
 
-	float3 Light0Color : LIGHTCOLOR
-	<
-		string UIName =  "Light 0 Color";
-		string UIWidget = "ColorPicker";
-		string Object =  "Light 0";
-	> = { 1.0, 1.0, 1.0};
+int Light1Type : LIGHTTYPE
+<
+	string UIName =  "Light 1 Type";
+	float UIMin = 0;
+	float UIMax = 5;
+	float UIStep = 1;
+	string UIWidget = "None";
+	string Object =  "Light 1";
+> = {3};
 
-	float Light0Intensity : LIGHTINTENSITY
-	<
-		string UIName =  "Light 0 Intensity";
-		float UIMin = 0;
-		float UIStep = 0.1;
-		string Object =  "Light 0";
-	> = 1.0;
+int Light2Type : LIGHTTYPE
+<
+	string UIName =  "Light 2 Type";
+	float UIMin = 0;
+	float UIMax = 5;
+	float UIStep = 1;
+	string UIWidget = "None";
+	string Object =  "Light 2";
+> = {3};
 
-	float3 Light0Pos : POSITION
-	<
-		string UIName =  "Light 0 Position";
-		string Space = "World";
-		string Object =  "Light 0";
-	> = {1.0, 1.0, 1.0};
+float3 Light0Color : LIGHTCOLOR
+<
+	string UIName =  "Light 0 Color";
+	string UIWidget = "ColorPicker";
+	string Object =  "Light 0";
+> = { 1.0, 1.0, 1.0};
 
-	float3 Light0Dir : DIRECTION
-	<
-		string UIName =  "Light 0 Direction";
-		string Space = "World";
-		string Object =  "Light 0";
-	> = {0.0, -1.0, 0.0};
+float3 Light1Color : LIGHTCOLOR
+<
+	string UIName =  "Light 1 Color";
+	string UIWidget = "ColorPicker";
+	string Object =  "Light 1";
+> = { 1.0, 1.0, 1.0};
 
-	float Light0Attenuation : DECAYRATE
-	<
-		string UIName =  "Light 0 Decay";
-		float UIMin = 0;
-		float UIStep = 1;
-		string Object =  "Light 0";
-	> = 0.0;
+float3 Light2Color : LIGHTCOLOR
+<
+	string UIName =  "Light 2 Color";
+	string UIWidget = "ColorPicker";
+	string Object =  "Light 2";
+> = { 1.0, 1.0, 1.0};
 
-	float Light0ConeAngle : HOTSPOT
-	<
-		string UIName =  "Light 0 ConeAngle";
-		float UIMin = 0;
-		float UIMax = 1.571;
-		float UIStep = 0.05;
-		string Space = "World";
-		string Object =  "Light 0";
-	> = 0.46;
+float Light0Intensity : LIGHTINTENSITY
+<
+	string UIName =  "Light 0 Intensity";
+	float UIMin = 0;
+	float UIStep = 0.1;
+	string Object =  "Light 0";
+> = 1.0;
 
-	float Light0Falloff : FALLOFF
-	<
-		string UIName =  "Light 0 Penumbra Angle";
-		float UIMin = 0;
-		float UIMax = 1.571;
-		float UIStep = 0.05;
-		string Object =  "Light 0";
-	> = 0.7;
+float Light1Intensity : LIGHTINTENSITY
+<
+	string UIName =  "Light 1 Intensity";
+	float UIMin = 0;
+	float UIStep = 0.1;
+	string Object =  "Light 1";
+> = 1.0;
 
-	bool Light0ShadowOn : SHADOWFLAG
-	<
-		string UIName =  "Light 0 Shadow";
-		string Object =  "Light 0";
-	> = true;
+float Light2Intensity : LIGHTINTENSITY
+<
+	string UIName =  "Light 2 Intensity";
+	float UIMin = 0;
+	float UIStep = 0.1;
+	string Object =  "Light 2";
+> = 1.0;
 
-	float4x4 Light0ViewPrj : SHADOWMAPMATRIX
-	<
-		string Object =  "Light 0";
-		string UIName =  "Light 0 Matrix";
-		string UIWidget = "None";
-	>;
+float3 Light0Pos : POSITION
+<
+	string UIName =  "Light 0 Position";
+	string Space = "World";
+	string Object =  "Light 0";
+> = {1.0, 1.0, 1.0};
 
-	float3 Light0ShadowColor : SHADOWCOLOR
-	<
-		string UIName =  "Light 0 Shadow Color";
-		string Object =  "Light 0";
-	> = {0, 0, 0};
+float3 Light1Pos : POSITION
+<
+	string UIName =  "Light 1 Position";
+	string Space = "World";
+	string Object =  "Light 1";
+> = {1.0, 1.0, 1.0};
 
-};
+float3 Light2Pos : POSITION
+<
+	string UIName =  "Light 2 Position";
+	string Space = "World";
+	string Object =  "Light 2";
+> = {1.0, 1.0, 1.0};
+
+float3 Light0Dir : DIRECTION
+<
+	string UIName =  "Light 0 Direction";
+	string Space = "World";
+	string Object =  "Light 0";
+> = {0.0, -1.0, 0.0};
+
+float3 Light1Dir : DIRECTION
+<
+	string UIName =  "Light 1 Direction";
+	string Space = "World";
+	string Object =  "Light 1";
+> = {0.0, -1.0, 0.0};
+
+float3 Light2Dir : DIRECTION
+<
+	string UIName =  "Light 2 Direction";
+	string Space = "World";
+	string Object =  "Light 2";
+> = {0.0, -1.0, 0.0};
+
+float Light0Attenuation : DECAYRATE
+<
+	string UIName =  "Light 0 Decay";
+	float UIMin = 0;
+	float UIStep = 1;
+	string Object =  "Light 0";
+> = 0.0;
+
+float Light1Attenuation : DECAYRATE
+<
+	string UIName =  "Light 1 Decay";
+	float UIMin = 0;
+	float UIStep = 1;
+	string Object =  "Light 1";
+> = 0.0;
+
+float Light2Attenuation : DECAYRATE
+<
+	string UIName =  "Light 2 Decay";
+	float UIMin = 0;
+	float UIStep = 1;
+	string Object =  "Light 2";
+> = 0.0;
+
+float Light0ConeAngle : HOTSPOT
+<
+	string UIName =  "Light 0 ConeAngle";
+	float UIMin = 0;
+	float UIMax = 1.571;
+	float UIStep = 0.05;
+	string Space = "World";
+	string Object =  "Light 0";
+> = 0.46;
+
+float Light1ConeAngle : HOTSPOT
+<
+	string UIName =  "Light 1 ConeAngle";
+	float UIMin = 0;
+	float UIMax = 1.571;
+	float UIStep = 0.05;
+	string Space = "World";
+	string Object =  "Light 1";
+> = 0.46;
+
+float Light2ConeAngle : HOTSPOT
+<
+	string UIName =  "Light 2 ConeAngle";
+	float UIMin = 0;
+	float UIMax = 1.571;
+	float UIStep = 0.05;
+	string Space = "World";
+	string Object =  "Light 2";
+> = 0.46;
+
+float Light0Falloff : FALLOFF
+<
+	string UIName =  "Light 0 Penumbra Angle";
+	float UIMin = 0;
+	float UIMax = 1.571;
+	float UIStep = 0.05;
+	string Object =  "Light 0";
+> = 0.7;
+
+float Light1Falloff : FALLOFF
+<
+	string UIName =  "Light 1 Penumbra Angle";
+	float UIMin = 0;
+	float UIMax = 1.571;
+	float UIStep = 0.05;
+	string Object =  "Light 1";
+> = 0.7;
+
+float Light2Falloff : FALLOFF
+<
+	string UIName =  "Light 2 Penumbra Angle";
+	float UIMin = 0;
+	float UIMax = 1.571;
+	float UIStep = 0.05;
+	string Object =  "Light 2";
+> = 0.7;
+
+bool Light0ShadowOn : SHADOWFLAG
+<
+	string UIName =  "Light 0 Shadow";
+	string Object =  "Light 0";
+> = true;
+
+bool Light1ShadowOn : SHADOWFLAG
+<
+	string UIName =  "Light 1 Shadow";
+	string Object =  "Light 1";
+> = true;
+
+bool Light2ShadowOn : SHADOWFLAG
+<
+	string UIName =  "Light 2 Shadow";
+	string Object =  "Light 2";
+> = true;
+
+float4x4 Light0ViewPrj : SHADOWMAPMATRIX
+<
+	string Object =  "Light 0";
+	string UIName =  "Light 0 Matrix";
+	string UIWidget = "None";
+>;
+
+float4x4 Light1ViewPrj : SHADOWMAPMATRIX
+<
+	string Object =  "Light 1";
+	string UIName =  "Light 1 Matrix";
+	string UIWidget = "None";
+>;
+
+float4x4 Light2ViewPrj : SHADOWMAPMATRIX
+<
+	string Object =  "Light 2";
+	string UIName =  "Light 2 Matrix";
+	string UIWidget = "None";
+>;
+
+float3 Light0ShadowColor : SHADOWCOLOR
+<
+	string UIName =  "Light 0 Shadow Color";
+	string Object =  "Light 0";
+> = {0, 0, 0};
+
+float3 Light1ShadowColor : SHADOWCOLOR
+<
+	string UIName =  "Light 1 Shadow Color";
+	string Object =  "Light 1";
+> = {0, 0, 0};
+
+float3 Light2ShadowColor : SHADOWCOLOR
+<
+	string UIName =  "Light 2 Shadow Color";
+	string Object =  "Light 2";
+> = {0, 0, 0};
+
 
 // ---------------------------------------- Textures -----------------------------------------
-Texture2D Detail_D
+texture Detail_D
 <
 	string ResourceName = "weld_ao.tif";
 	string UIName = "Detail_D";
 	string ResourceType = "2D";
 	string UIWidget = "FilePicker";
-	string UIGroup = "Tiling_Parameters";
 >;
 
-SamplerState MMMLWWWSampler
+sampler2D Detail_DSampler = sampler_state 
 {
-	Filter = MIN_MAG_MIP_LINEAR;
+	Texture = <Detail_D>;
+	MinFilter = Linear;
+	MagFilter = Linear;
 	AddressU = WRAP;
 	AddressV = WRAP;
 	AddressW = WRAP;
 };
 
-Texture2D Main_D
+texture Main_D
 <
 	string ResourceName = "badge_diff.tiff";
 	string UIName = "Main_D";
 	string ResourceType = "2D";
 	string UIWidget = "FilePicker";
-	string UIGroup = "Textures";
 >;
 
-Texture2D Main_N
+sampler2D Main_DSampler = sampler_state 
+{
+	Texture = <Main_D>;
+	MinFilter = Linear;
+	MagFilter = Linear;
+	AddressU = WRAP;
+	AddressV = WRAP;
+	AddressW = WRAP;
+};
+
+texture Main_N
 <
 	string ResourceName = "badge_norm.tif";
 	string UIName = "Main_N";
 	string ResourceType = "2D";
 	string UIWidget = "FilePicker";
-	string UIGroup = "Textures";
 >;
 
-Texture2D Detail_N
+sampler2D Main_NSampler = sampler_state 
+{
+	Texture = <Main_N>;
+	MinFilter = Linear;
+	MagFilter = Linear;
+	AddressU = WRAP;
+	AddressV = WRAP;
+	AddressW = WRAP;
+};
+
+texture Detail_N
 <
 	string ResourceName = "weld_norm.tif";
 	string UIName = "Detail_N";
 	string ResourceType = "2D";
 	string UIWidget = "FilePicker";
-	string UIGroup = "Tiling_Parameters";
 >;
 
-Texture2D Light0ShadowMap : SHADOWMAP
+sampler2D Detail_NSampler = sampler_state 
+{
+	Texture = <Detail_N>;
+	MinFilter = Linear;
+	MagFilter = Linear;
+	AddressU = WRAP;
+	AddressV = WRAP;
+	AddressW = WRAP;
+};
+
+texture Light0ShadowMap : SHADOWMAP
 <
 	string ResourceName = "";
 	string ResourceType = "2D";
@@ -185,9 +357,49 @@ Texture2D Light0ShadowMap : SHADOWMAP
 	string Object =  "Light 0";
 >;
 
-SamplerState Light0ShadowMapSampler : SHADOWMAPSAMPLER
+texture Light1ShadowMap : SHADOWMAP
+<
+	string ResourceName = "";
+	string ResourceType = "2D";
+	string UIWidget = "None";
+	string Object =  "Light 1";
+>;
+
+texture Light2ShadowMap : SHADOWMAP
+<
+	string ResourceName = "";
+	string ResourceType = "2D";
+	string UIWidget = "None";
+	string Object =  "Light 2";
+>;
+
+sampler2D Light0ShadowMapSampler = sampler_state 
 {
-	Filter = MIN_MAG_MIP_POINT;
+	Texture = <Light0ShadowMap>;
+	MinFilter = Point;
+	MagFilter = Point;
+	AddressU = BORDER;
+	AddressV = BORDER;
+	AddressW = BORDER;
+	BorderColor = float4(1.0,1.0,1.0,1.0);
+};
+
+sampler2D Light1ShadowMapSampler = sampler_state 
+{
+	Texture = <Light1ShadowMap>;
+	MinFilter = Point;
+	MagFilter = Point;
+	AddressU = BORDER;
+	AddressV = BORDER;
+	AddressW = BORDER;
+	BorderColor = float4(1.0,1.0,1.0,1.0);
+};
+
+sampler2D Light2ShadowMapSampler = sampler_state 
+{
+	Texture = <Light2ShadowMap>;
+	MinFilter = Point;
+	MagFilter = Point;
 	AddressU = BORDER;
 	AddressV = BORDER;
 	AddressW = BORDER;
@@ -198,80 +410,132 @@ SamplerState Light0ShadowMapSampler : SHADOWMAPSAMPLER
 // ---------------------------------------- Functions -----------------------------------------
 int GetLightType(int ActiveLightIndex) 
 { 
-
+	if (ActiveLightIndex == 0) 
 		return Light0Type; 
+	else if (ActiveLightIndex == 1) 
+		return Light1Type; 
+	else 
+		return Light2Type; 
 }
 
 float3 GetLightColor(int ActiveLightIndex) 
 { 
-
+	if (ActiveLightIndex == 0) 
 		return Light0Color; 
+	else if (ActiveLightIndex == 1) 
+		return Light1Color; 
+	else 
+		return Light2Color; 
 }
 
 float GetLightIntensity(int ActiveLightIndex) 
 { 
-
+	if (ActiveLightIndex == 0) 
 		return Light0Intensity; 
+	else if (ActiveLightIndex == 1) 
+		return Light1Intensity; 
+	else 
+		return Light2Intensity; 
 }
 
 float3 GetLightPos(int ActiveLightIndex) 
 { 
-
+	if (ActiveLightIndex == 0) 
 		return Light0Pos; 
+	else if (ActiveLightIndex == 1) 
+		return Light1Pos; 
+	else 
+		return Light2Pos; 
 }
 
 float3 GetLightDir(int ActiveLightIndex) 
 { 
-
+	if (ActiveLightIndex == 0) 
 		return Light0Dir; 
+	else if (ActiveLightIndex == 1) 
+		return Light1Dir; 
+	else 
+		return Light2Dir; 
 }
 
 float GetLightAttenuation(int ActiveLightIndex) 
 { 
-
+	if (ActiveLightIndex == 0) 
 		return Light0Attenuation; 
+	else if (ActiveLightIndex == 1) 
+		return Light1Attenuation; 
+	else 
+		return Light2Attenuation; 
 }
 
 float GetLightConeAngle(int ActiveLightIndex) 
 { 
-
+	if (ActiveLightIndex == 0) 
 		return Light0ConeAngle; 
+	else if (ActiveLightIndex == 1) 
+		return Light1ConeAngle; 
+	else 
+		return Light2ConeAngle; 
 }
 
 float GetLightFalloff(int ActiveLightIndex) 
 { 
-
+	if (ActiveLightIndex == 0) 
 		return Light0Falloff; 
+	else if (ActiveLightIndex == 1) 
+		return Light1Falloff; 
+	else 
+		return Light2Falloff; 
 }
 
 bool GetLightShadowOn(int ActiveLightIndex) 
 { 
-
+	if (ActiveLightIndex == 0) 
 		return Light0ShadowOn; 
+	else if (ActiveLightIndex == 1) 
+		return Light1ShadowOn; 
+	else 
+		return Light2ShadowOn; 
 }
 
 float4x4 GetLightViewPrj(int ActiveLightIndex) 
 { 
-
+	if (ActiveLightIndex == 0) 
 		return Light0ViewPrj; 
+	else if (ActiveLightIndex == 1) 
+		return Light1ViewPrj; 
+	else 
+		return Light2ViewPrj; 
 }
 
-Texture2D GetLightShadowMap(int ActiveLightIndex) 
+texture GetLightShadowMap(int ActiveLightIndex) 
 { 
-
+	if (ActiveLightIndex == 0) 
 		return Light0ShadowMap; 
+	else if (ActiveLightIndex == 1) 
+		return Light1ShadowMap; 
+	else 
+		return Light2ShadowMap; 
 }
 
 float4 SampleFromShadowMap( int ActiveLightIndex, float2 UVs) 
 { 
-
-		return Light0ShadowMap.SampleLevel(Light0ShadowMapSampler, UVs, 0); 
+	if (ActiveLightIndex == 0) 
+		return tex2Dlod(Light0ShadowMapSampler, float4(UVs, 0.0, 0.0) ); 
+	else if (ActiveLightIndex == 1) 
+		return tex2Dlod(Light1ShadowMapSampler, float4(UVs, 0.0, 0.0) ); 
+	else 
+		return tex2Dlod(Light2ShadowMapSampler, float4(UVs, 0.0, 0.0) ); 
 }
 
 float3 GetLightShadowColor(int ActiveLightIndex) 
 { 
-
+	if (ActiveLightIndex == 0) 
 		return Light0ShadowColor; 
+	else if (ActiveLightIndex == 1) 
+		return Light1ShadowColor; 
+	else 
+		return Light2ShadowColor; 
 }
 
 
@@ -288,12 +552,12 @@ struct APPDATA
 
 struct SHADERDATA
 {
-	float4 Position : SV_Position;
+	float4 Position : POSITION;
 	float4 map2 : TEXCOORD0;
 	float4 map1 : TEXCOORD1;
-	float4 Tangent : TANGENT;
-	float4 Normal : NORMAL;
-	float4 WorldPosition : TEXCOORD2;
+	float4 Tangent : TEXCOORD2;
+	float4 Normal : TEXCOORD3;
+	float4 WorldPosition : TEXCOORD4;
 };
 
 // -------------------------------------- CollapseRangeFunction --------------------------------------
@@ -306,7 +570,7 @@ CollapseRangeOutput CollapseRangeFunction(float3 Vector)
 {
 	CollapseRangeOutput OUT;
 
-	float3 NormalMap = (Vector * 0.5);
+	float3 NormalMap = (0.5 * Vector);
 	float3 AddOp = (NormalMap + 0.5);
 	OUT.CollapsedVector = AddOp;
 
@@ -323,11 +587,11 @@ ReorientedNormalMappingOutput ReorientedNormalMappingFunction(float3 Base, float
 {
 	ReorientedNormalMappingOutput OUT;
 
-	float3 MulOp = (float3(2.0, 2.0, 2.0) * Base);
+	float3 MulOp = (Base * float3(2.0, 2.0, 2.0));
 	float3 VarT = (MulOp + float3(-1.0, -1.0, 0.0));
-	float3 MulOp1378 = (Detail * float3(-2.0, -2.0, 2.0));
+	float3 MulOp1378 = (float3(-2.0, -2.0, 2.0) * Detail);
 	float3 VarU = (MulOp1378 + float3(1.0, 1.0, -1.0));
-	float3 MulOp1384 = (VarT * dot(VarT, VarU));
+	float3 MulOp1384 = (dot(VarT, VarU) * VarT);
 	float3 SubOp = ((MulOp1384 / VarT.z) - VarU);
 	float3 NormOp = normalize(SubOp);
 	CollapseRangeOutput CollapseRange1391 = CollapseRangeFunction(NormOp);
@@ -346,7 +610,7 @@ ExpandRangeOutput ExpandRangeFunction(float3 Vector)
 {
 	ExpandRangeOutput OUT;
 
-	float3 NormalMap = (Vector * 2.0);
+	float3 NormalMap = (2.0 * Vector);
 	float3 NormalMap1478 = (NormalMap - 1.0);
 	OUT.ExpandedVector = NormalMap1478;
 
@@ -363,9 +627,9 @@ TangentWorldConvertOutput TangentWorldConvertFunction(float TangentDirection, fl
 {
 	TangentWorldConvertOutput OUT;
 
-	float3 Bn = (cross(Normal, Tangent) * TangentDirection);
-	float3x3 toWorld = float3x3(Tangent, Bn, Normal);
-	float3 TangentToWorld = mul(Vector, toWorld);
+	float3 Bn = (TangentDirection * cross(Normal, Tangent));
+	float3x3 toWorld = transpose(float3x3(Tangent, Bn, Normal));
+	float3 TangentToWorld = mul(toWorld, Vector);
 	OUT.Vector = TangentToWorld;
 
 	return OUT;
@@ -381,7 +645,7 @@ AmbientLightOutput AmbientLightFunction(int ActiveLightIndex, float3 AlbedoColor
 {
 	AmbientLightOutput OUT;
 
-	float3 MulOp = (LightIntensity * (AlbedoColor * LightColor));
+	float3 MulOp = ((LightColor * AlbedoColor) * LightIntensity);
 	OUT.LightColor = MulOp;
 
 	return OUT;
@@ -415,7 +679,7 @@ LambertDiffuseOutput LambertDiffuseFunction(int ActiveLightIndex, float3 AlbedoC
 	LambertDiffuseOutput OUT;
 
 	float SatOp = saturate(dot(Normal, LightVector));
-	float3 Diffuse = (AlbedoColor * SatOp);
+	float3 Diffuse = (SatOp * AlbedoColor);
 	OUT.Color = Diffuse;
 
 	return OUT;
@@ -478,19 +742,19 @@ ShadowMapOutput ShadowMapFunction(int ActiveLightIndex, float4x4 LightViewPrj, f
 
 	float IfElseOp564 = 0.0;
 	float4 VectorConstruct = float4(VertexWorldPosition.x, VertexWorldPosition.y, VertexWorldPosition.z, 1.0);
-	float4 MulOp = mul(VectorConstruct, LightViewPrj);
+	float4 MulOp = mul(LightViewPrj, VectorConstruct);
 	float3 DivOp = (MulOp.xyz / MulOp.w);
 	if (DivOp.x > -1.0 && DivOp.x < 1.0 && DivOp.y > -1.0 && DivOp.y < 1.0 && DivOp.z > 0.0 && DivOp.z < 1.0)
 	{
 		float Val = 0.5;
-		float2 AddOp = ((DivOp.xy * Val) + Val);
+		float2 AddOp = ((Val * DivOp.xy) + Val);
 		float SubOp = (DivOp.z - (ShadowMapBias / MulOp.w));
 		float ShadowTotal = 0.0;
 		for(int i=0; i<10; i+=1)
 		{
-			Texture2D _LightShadowMap = GetLightShadowMap(ActiveLightIndex);
-			float2 MulOp604 = (float2(1.0, 1.0) * 0.00195313);
-			float4 Sampler = SampleFromShadowMap(ActiveLightIndex, (float2(AddOp.x, 1.0-AddOp.y) + MulOp604));
+			texture _LightShadowMap = GetLightShadowMap(ActiveLightIndex);
+			float2 MulOp604 = (0.00195313 * float2(1.0, 1.0));
+			float4 Sampler = SampleFromShadowMap(ActiveLightIndex, (AddOp + MulOp604));
 			float IfElseOp558 = ((SubOp - Sampler.x) >= 0.0) ? (0.0) : (0.1);
 			ShadowTotal += IfElseOp558;
 		}
@@ -550,9 +814,9 @@ LightContributionOutput LightContributionFunction(int ActiveLightIndex, float3 V
 		float ShadowColorMix = lerp(ShadowMap543.LightGain, 1.0, _LightShadowColor.x);
 		ShadowMul530 = ShadowColorMix;
 	}
-	float DecayShadowConeMul = (DecayMul527 * (ConeMul529 * ShadowMul530));
+	float DecayShadowConeMul = ((ShadowMul530 * ConeMul529) * DecayMul527);
 	float3 LightColor = GetLightColor(ActiveLightIndex);
-	float3 MulItensity = (_LightIntensity * (DecayShadowConeMul * LightColor));
+	float3 MulItensity = ((LightColor * DecayShadowConeMul) * _LightIntensity);
 	OUT.Light = MulItensity;
 
 	return OUT;
@@ -570,9 +834,9 @@ BlinnSpecularOutput BlinnSpecularFunction(int ActiveLightIndex, float3 LightVect
 
 	float3 NormOp = normalize((LightVector + CameraVector));
 	float SatOp = saturate(dot(Normal, NormOp));
-	float3 BlinnSpec = (pow(SatOp, SpecularPower) * SpecularColor);
+	float3 BlinnSpec = (SpecularColor * pow(SatOp, SpecularPower));
 	float SatOp978 = saturate(dot(Normal, LightVector));
-	float3 MulOp = (BlinnSpec * SatOp978);
+	float3 MulOp = (SatOp978 * BlinnSpec);
 	OUT.SpecularColor = MulOp;
 
 	return OUT;
@@ -615,9 +879,9 @@ SHADERDATA ShaderVertex(APPDATA IN)
 	OUT.Position = float4(IN.Position, 1);
 	float4 OutUVs = float4(IN.map2.x, IN.map2.y, 0.0, 0.0);
 	OUT.map2 = OutUVs;
-	float4 OutUVs1637 = float4(IN.map1.x, IN.map1.y, 0.0, 0.0);
-	OUT.map1 = OutUVs1637;
-	float3 MulOp = mul(IN.Tangent, ((float3x3)world));
+	float4 OutUVs1270 = float4(IN.map1.x, IN.map1.y, 0.0, 0.0);
+	OUT.map1 = OutUVs1270;
+	float3 MulOp = mul(((float3x3)world), IN.Tangent);
 	float3 TangentNorm = normalize(MulOp);
 	float4 WorldTangent = float4(TangentNorm.x, TangentNorm.y, TangentNorm.z, 1.0);
 	OUT.Tangent = WorldTangent;
@@ -625,13 +889,13 @@ SHADERDATA ShaderVertex(APPDATA IN)
 	float BiNormalDir1415 = (DotOp < 0.0) ? (-1.0) : (1.0);
 	float4 VectorConstruct = float4(OUT.Tangent.xyz.x, OUT.Tangent.xyz.y, OUT.Tangent.xyz.z, BiNormalDir1415);
 	OUT.Tangent = VectorConstruct;
-	float3 MulOp1442 = mul(IN.Normal, ((float3x3)world));
+	float3 MulOp1442 = mul(((float3x3)world), IN.Normal);
 	float3 NormalN = normalize(MulOp1442);
 	float4 WorldNormal = float4(NormalN.x, NormalN.y, NormalN.z, 1.0);
 	OUT.Normal = WorldNormal;
-	float4 WorldPos = mul(OUT.Position, world);
+	float4 WorldPos = mul(world, OUT.Position);
 	OUT.WorldPosition = WorldPos;
-	float4 WVSpace = mul(OUT.Position, wvp);
+	float4 WVSpace = mul(wvp, OUT.Position);
 	OUT.Position = WVSpace;
 
 	return OUT;
@@ -640,36 +904,35 @@ SHADERDATA ShaderVertex(APPDATA IN)
 // -------------------------------------- ShaderPixel --------------------------------------
 struct PIXELDATA
 {
-	float4 Color : SV_Target;
+	float4 Color : COLOR0;
 };
 
-PIXELDATA ShaderPixel(SHADERDATA IN, bool FrontFace : SV_IsFrontFace)
+PIXELDATA ShaderPixel(SHADERDATA IN, bool FrontFace : FACE)
 {
 	PIXELDATA OUT;
 
 	float InvertSatMask = (1.0 - saturate(0.0));
-	float2 MulOp = (IN.map2.xy * ScaleUV);
-	float4 Sampler = Detail_D.Sample(MMMLWWWSampler, float2(MulOp.x, 1-MulOp.y));
-	float4 Sampler1258 = Main_D.Sample(MMMLWWWSampler, float2(IN.map1.xy.x, 1-IN.map1.xy.y));
-	float3 MulOp1304 = (Sampler.xyz * Sampler1258.xyz);
-	float3 ReplaceDiffuseWithReflection = (InvertSatMask * MulOp1304);
+	float4 Sampler = tex2D(Detail_DSampler, float2(IN.map2.xy.x, 1-IN.map2.xy.y));
+	float4 Sampler1258 = tex2D(Main_DSampler, float2(IN.map1.xy.x, 1-IN.map1.xy.y));
+	float3 MulOp = (Sampler1258.xyz * Sampler.xyz);
+	float3 ReplaceDiffuseWithReflection = (MulOp * InvertSatMask);
 	float3 NormOp = normalize(IN.Normal.xyz);
 	float3 NormOp1460 = normalize(IN.Tangent.xyz);
-	float4 Sampler1606 = Main_N.Sample(MMMLWWWSampler, float2(IN.map1.xy.x, 1-IN.map1.xy.y));
-	float4 Sampler1582 = Detail_N.Sample(MMMLWWWSampler, float2(MulOp.x, 1-MulOp.y));
+	float4 Sampler1606 = tex2D(Main_NSampler, float2(IN.map1.xy.x, 1-IN.map1.xy.y));
+	float4 Sampler1582 = tex2D(Detail_NSampler, float2(IN.map2.xy.x, 1-IN.map2.xy.y));
 	ReorientedNormalMappingOutput ReorientedNormalMapping1373 = ReorientedNormalMappingFunction(Sampler1606.xyz, Sampler1582.xyz);
 	ExpandRangeOutput ExpandRange1474 = ExpandRangeFunction(ReorientedNormalMapping1373.Normal);
 	float3 VectorConstruct = float3(1.0, 1.0, 1.0);
-	float3 NormalMapH = (ExpandRange1474.ExpandedVector * VectorConstruct.xyz);
+	float3 NormalMapH = (VectorConstruct.xyz * ExpandRange1474.ExpandedVector);
 	TangentWorldConvertOutput TangentWorldConvert1461 = TangentWorldConvertFunction(IN.Tangent.w, NormOp, NormOp1460, NormalMapH);
 	float3 TangentSpace = normalize(TangentWorldConvert1461.Vector);
 	float3 FlippedNormals = lerp(-(TangentSpace), TangentSpace, FrontFace);
 	float ClampOpacity = saturate(1.0);
-	float3 CameraPosition = viewI[3].xyz;
+	float3 CameraPosition = float3(viewI[0].w, viewI[1].w, viewI[2].w);
 	float3 CamVec = (CameraPosition - IN.WorldPosition.xyz);
 	float3 CamVecNorm = normalize(CamVec);
 	float4 LightLoopTotal11 = float4(0,0,0,0);
-	for (int ActiveLightIndex = 0; ActiveLightIndex < 1; ++ActiveLightIndex)
+	for (int ActiveLightIndex = 0; ActiveLightIndex < 3; ++ActiveLightIndex)
 	{
 		if (ActiveLightIndex >= ClampDynamicLights) {continue;}
 		int _LightType = GetLightType(ActiveLightIndex);
@@ -680,7 +943,7 @@ PIXELDATA ShaderPixel(SHADERDATA IN, bool FrontFace : SV_IsFrontFace)
 			float3 LightColor = GetLightColor(ActiveLightIndex);
 			float _LightIntensity = GetLightIntensity(ActiveLightIndex);
 			AmbientLightOutput AmbientLight409 = AmbientLightFunction(ActiveLightIndex, ReplaceDiffuseWithReflection, LightColor, _LightIntensity);
-			float3 AmbientLightAndAO = (1.0 * AmbientLight409.LightColor);
+			float3 AmbientLightAndAO = (AmbientLight409.LightColor * 1.0);
 			float4 VectorConstruct683 = float4(AmbientLightAndAO.x, AmbientLightAndAO.y, AmbientLightAndAO.z, 0.0);
 			IfAmbientLight404 = VectorConstruct683;
 		}
@@ -693,11 +956,11 @@ PIXELDATA ShaderPixel(SHADERDATA IN, bool FrontFace : SV_IsFrontFace)
 			float3 LightVecNorm = normalize(GetLightVector851.Result);
 			LambertDiffuseOutput LambertDiffuse827 = LambertDiffuseFunction(ActiveLightIndex, ReplaceDiffuseWithReflection, FlippedNormals, LightVecNorm);
 			LightContributionOutput LightContribution417 = LightContributionFunction(ActiveLightIndex, IN.WorldPosition.xyz, GetLightVector851.Result);
-			float3 AddTranslucency = (NoTranslucency.xyz + (LambertDiffuse827.Color * LightContribution417.Light));
+			float3 AddTranslucency = (NoTranslucency.xyz + (LightContribution417.Light * LambertDiffuse827.Color));
 			float3 Col = float3(1.0,1.0,1.0);
 			BlinnSpecularOutput BlinnSpecular966 = BlinnSpecularFunction(ActiveLightIndex, LightVecNorm, FlippedNormals, CamVecNorm, 20.0, Col.xyz);
-			float3 SpecLightIntensity = (LightContribution417.Light * BlinnSpecular966.SpecularColor);
-			float3 Diffuse_Spec = ((AddTranslucency * ClampOpacity) + SpecLightIntensity);
+			float3 SpecLightIntensity = (BlinnSpecular966.SpecularColor * LightContribution417.Light);
+			float3 Diffuse_Spec = ((ClampOpacity * AddTranslucency) + SpecLightIntensity);
 			DesaturateColorOutput DesaturateColor675 = DesaturateColorFunction(ActiveLightIndex, SpecLightIntensity);
 			float4 Color_Alpha = float4(Diffuse_Spec.x, Diffuse_Spec.y, Diffuse_Spec.z, DesaturateColor675.DesaturateColor);
 			IfAmbientLight404 = Color_Alpha;
@@ -706,10 +969,10 @@ PIXELDATA ShaderPixel(SHADERDATA IN, bool FrontFace : SV_IsFrontFace)
 		LightLoopTotal11 += ApplyWeight415;
 	}
 	float3 NoReflection = float3(0.0,0.0,0.0);
-	float3 ReflectXmask = (0.0 * NoReflection.xyz);
+	float3 ReflectXmask = (NoReflection.xyz * 0.0);
 	float3 DefaultEmissiveColor = float3(0.0,0.0,0.0);
 	float3 DefaultIBLColor = float3(0.0,0.0,0.0);
-	float3 PreMultipliedAlpha = ((DefaultEmissiveColor.xyz + DefaultIBLColor.xyz) * ClampOpacity);
+	float3 PreMultipliedAlpha = (ClampOpacity * (DefaultEmissiveColor.xyz + DefaultIBLColor.xyz));
 	float3 AddReflection = (ReflectXmask + PreMultipliedAlpha);
 	DesaturateColorOutput DesaturateColor384 = DesaturateColorFunction(ReflectXmask);
 	float OpacityAndReflection = (ClampOpacity + DesaturateColor384.DesaturateColor);
@@ -723,22 +986,12 @@ PIXELDATA ShaderPixel(SHADERDATA IN, bool FrontFace : SV_IsFrontFace)
 }
 
 // -------------------------------------- technique T0 ---------------------------------------
-technique11 T0
-<
-	bool overridesDrawState = false;
-	int isTransparent = 0;
->
+technique T0
 {
 	pass P0
-	<
-		string drawContext = "colorPass";
-	>
 	{
-		SetVertexShader(CompileShader(vs_5_0, ShaderVertex()));
-		SetPixelShader(CompileShader(ps_5_0, ShaderPixel()));
-		SetHullShader(NULL);
-		SetDomainShader(NULL);
-		SetGeometryShader(NULL);
+		VertexProgram = compile gp4vp ShaderVertex();
+		FragmentProgram = compile gp4fp ShaderPixel();
 	}
 
 }

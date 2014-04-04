@@ -12,6 +12,7 @@
 	<group name = "Batch_20">
 		<asset name = "chevrolet_camaro_zl1" start_date = "" due_date = "" stage = "" image = ""/>
 		<asset name = "chevrolet_corvette_z06" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "chevrolet_corvette_zr1" start_date = "" due_date = "" stage = ""  image = ""/>
 		<asset name="koenigsegg_one_1"/>
 		<asset name="ktm_xbow_r"/>
 	</group>	
