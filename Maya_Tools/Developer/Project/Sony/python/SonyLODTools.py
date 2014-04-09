@@ -399,7 +399,7 @@ class CustomLODTools(form_class,base_class):
                 pass
             self._currentPart = 'type_d_layer'
             cmds.setAttr(self._currentPart + '.visibility', 1)
-        if lod == 'x':
+        if lod == '4':
             try:
                 cmds.select('*LOD4')
             except:
@@ -407,7 +407,7 @@ class CustomLODTools(form_class,base_class):
             self._currentPart = 'kit_x_layer'
             cmds.setAttr(self._currentPart + '.visibility', 1)
             cmds.setAttr('wheel_arch|standard.visibility', 0)
-        if lod == 'y':
+        if lod == '5':
             try:
                 cmds.select('*LOD5')
             except:
@@ -415,7 +415,7 @@ class CustomLODTools(form_class,base_class):
             self._currentPart = 'kit_y_layer'
             cmds.setAttr(self._currentPart + '.visibility', 1)
             cmds.setAttr('wheel_arch|standard.visibility', 0)
-        if lod == 'z':
+        if lod == '6':
             try:
                 cmds.select('*LOD6')
             except:
@@ -423,59 +423,16 @@ class CustomLODTools(form_class,base_class):
             self._currentPart = 'kit_z_layer'
             cmds.setAttr(self._currentPart + '.visibility', 1)
             cmds.setAttr('wheel_arch|standard.visibility', 0)
-            
-        if lod == 'pulled':
+        if lod == 'shadow':
+            try:
+                cmds.select('*_SHADOW')
+            except:
+                pass
+            self._currentPart = 'kit_z_layer'
+            cmds.setAttr(self._currentPart + '.visibility', 1)
             cmds.setAttr('wheel_arch|standard.visibility', 0)
-            cmds.setAttr('pulled_wheel_arch_layer.visibility', 1)
-            cmds.setAttr('large_overfenders_layer.visibility', 0)
-            cmds.setAttr('small_overfenders_layer.visibility', 0)
-            if self.btnLOD0.isChecked():
-                cmds.setAttr('pulled_type_a_layer.visibility',1)
-            if self.btnLOD1.isChecked():
-                if cmds.objExists('pulled_type_b_layer'):
-                    cmds.setAttr('pulled_type_b_layer.visibility',1)
-                else:
-                    cmds.setAttr('pulled_type_a_layer.visibility',1)
-            if self.btnLOD2.isChecked():
-                if cmds.objExists('pulled_type_c_layer'):
-                    cmds.setAttr('pulled_type_c_layer.visibility',1)
-                else:
-                    cmds.setAttr('pulled_type_a_layer.visibility',1)
-            if self.btnLOD3.isChecked():
-                if cmds.objExists('pulled_type_d_layer'):
-                    cmds.setAttr('pulled_type_d_layer.visibility',1)
-                else:
-                    cmds.setAttr('pulled_type_a_layer.visibility',1)
-        
-        if lod == 'small':
-            cmds.setAttr('wheel_arch|standard.visibility', 1)
-            cmds.setAttr('pulled_wheel_arch_layer.visibility', 0)
-            cmds.setAttr('large_overfenders_layer.visibility', 0)
-            cmds.setAttr('small_overfenders_layer.visibility', 1)
             
         
-        if lod == 'large':
-            cmds.setAttr('wheel_arch|standard.visibility', 1)
-            cmds.setAttr('pulled_wheel_arch_layer.visibility', 0)
-            cmds.setAttr('large_overfenders_layer.visibility', 1)
-            cmds.setAttr('small_overfenders_layer.visibility', 0)
-            if self.btnLOD0.isChecked():
-                cmds.setAttr('large_type_a_layer.visibility',1)
-            if self.btnLOD1.isChecked():
-                if cmds.objExists('large_type_b_layer'):
-                    cmds.setAttr('large_type_b_layer.visibility',1)
-                else:
-                    cmds.setAttr('large_type_a_layer.visibility',1)
-            if self.btnLOD2.isChecked():
-                if cmds.objExists('large_type_c_layer'):
-                    cmds.setAttr('large_type_c_layer.visibility',1)
-                else:
-                    cmds.setAttr('large_type_a_layer.visibility',1)
-            if self.btnLOD3.isChecked():
-                if cmds.objExists('large_type_d_layer'):
-                    cmds.setAttr('large_type_d_layer.visibility',1)
-                else:
-                    cmds.setAttr('large_type_a_layer.visibility',1)
             
     def loadSpoilerTypeA(self):
         if self.chkSpoiler.isChecked():

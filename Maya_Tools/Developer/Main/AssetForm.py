@@ -319,12 +319,12 @@ class AssetForm(form_class,base_class):
         if self.Proj.group:
             #print 'Group is True'
             localPath = self.Proj.LocalPath + str(group) + '/' + str(item)
-            serverPath = self.Proj.ServerPath + str(group)+ '/' + str(item)
+            #serverPath = self.Proj.ServerPath + str(group)+ '/' + str(item)
         else:
             #print 'Group is False'
             localPath = self.Proj.LocalPath + str(item)
-            serverPath = self.Proj.ServerPath + str(item)
-        #serverPath = self.Proj.ServerPath + str(group)+ '/' + str(item)
+            #serverPath = self.Proj.ServerPath + str(item)
+        serverPath = self.Proj.ServerPath + str(group)+ '/' + str(item)
         
         syncForm = UploadForm.UploadForm(localPath, serverPath, self.Proj.AlternativePath)
         syncForm.show()
