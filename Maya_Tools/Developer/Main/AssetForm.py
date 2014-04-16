@@ -6,6 +6,7 @@ from PyQt4 import QtGui, QtCore, uic
 import sip
 from xml.dom.minidom import *
 import maya.OpenMayaUI as OpenMayaUI
+import getpass
 
 import CommonFunctions as cf
 
@@ -73,6 +74,11 @@ class AssetForm(form_class,base_class):
         self.btnUploadandDownload.clicked.connect(self.syncFileWithServer)
         #self.btnOpenDocuments.clicked.connect(self.openDocumentsFolder)
         
+        userID = getpass.getuser()
+        print self.Proj.Technical() + self.Proj.Producer()
+        if userID not in self.Proj.Technical() + self.Proj.Producer():
+            self.btnCreateServerFolders.setEnabled(False)
+        
     def openFeedbacksFolder(self):
         group = self.cbbGroup.currentText()
         item = self.cbbAssets.currentText()
@@ -121,6 +127,7 @@ class AssetForm(form_class,base_class):
 #         os.startfile(dirFile)
         
     def openServerFolder(self):
+
         group = self.cbbGroup.currentText()
         item = self.cbbAssets.currentText()
         type = self.cbbType.currentText()
@@ -206,6 +213,7 @@ class AssetForm(form_class,base_class):
                     pass
                 
     def createServer(self):
+        
         serverFolder = ''
         group = self.cbbGroup.currentText()
         assets = list(self.cbbAssets.model().stringList())

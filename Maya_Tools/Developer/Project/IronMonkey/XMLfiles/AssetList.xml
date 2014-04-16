@@ -3,8 +3,10 @@
 	<group name = "Cars">
 		<asset name = "nissan_gtr_r32" start_date = "" due_date = "" stage = "" image = ""/>
 		<asset name = "bmw_m3_e36" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "bmw_m4_f82t" start_date = "" due_date = "" stage = ""  image = ""/>
 		<asset name = "mazda_rx7_fd" start_date = "" due_date = "" stage = ""  image = ""/>
 		<asset name = "porsche_911_993" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "porsche_911_991" start_date = "" due_date = "" stage = ""  image = ""/>
 		<asset name = "subaru_brz_zc6" start_date = "" due_date = "" stage = ""  image = ""/>
 		<asset name = "ford_fiesta_b3" start_date = "" due_date = "" stage = ""  image = ""/>
 		<asset name = "volkswagen_golf_a7" start_date = "" due_date = "" stage = ""  image = ""/>
