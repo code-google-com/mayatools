@@ -1,0 +1,46 @@
+<?xml version="1.0" ?>
+<Project name="DeNA_MeLeeWeapon">
+	<Managers>
+		<Tech>
+			<user>ThoHoang</user>
+			<user>trungtran</user>
+		</Tech>
+		<ArtDirector>
+			<user>huongnguyen</user>
+			<user>chauminh</user>
+		</ArtDirector>
+		<Producer>
+			<user>phucdo</user>
+		</Producer>
+	</Managers>
+	<Directories>
+		<ServerPath>//glassegg.com/projects/Scenes/DeNA_MeLeeWeapon/</ServerPath>
+		<LocalPath>Z:/Project/DeNA_MeLeeWeapon/</LocalPath>
+		<ProjectLocalPath> </ProjectLocalPath>
+		<DocumentsPath>//glassegg.com/projects/Documents_Feedbacks/DeNA_MeLeeWeapon</DocumentsPath>
+		<FeedbacksPath>//glassegg.com/projects/Documents_Feedbacks/DeNA_MeLeeWeapon</FeedbacksPath>
+		<ReferencesImagePath>//glassegg.com/projects/Documents_Feedbacks/DeNA_MeLeeWeapon</ReferencesImagePath>
+	</Directories>
+	<Structures_Asset group = "True">
+	  	<folder name = "Textures"/>
+	</Structures_Asset>
+	<ProjectData>
+		<Template file = "BanDaiNamCo.mb"/>
+		<AssetList file = "AssetList.xml"/>
+		<Module>
+			<module name = "NamingConvention" params = ''/>
+			<module name = "CleanerTools" params = "yes"/>
+			<module name = "Pivots" />
+			<umodule name = "PartLods" params = "yes"/>
+			<umodule name = "LODTools" params = "" />	
+			<umodule name = "UVTools" />
+			<module name = "PolyTools" />
+			<unmodule name = "CrydevTools" />
+			<module name = "ShaderTools" params = ""/>
+			<unmodule name = "ThirdpartyTools" params = ""/>
+			<umodule name = "ArtistWork" params = ""/>
+			<unmodule name = "ArtLead" params = "yes"/>
+		</Module>
+
+	</ProjectData>
+</Project>

@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<AssetList>
+	<group name = "Weapon">
+		<asset name = "MeleeBroad_sword" start_date = "" due_date = "" stage = "" image = ""/>
+		<asset name = "MeleeDiscs" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeMace" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeKatana" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeMachete" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeMaul" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeClaws" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeAxe" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeKatar" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeDouble_Blade" start_date = "" due_date = "" stage = ""  image = ""/>
+	</group>
+	<group name = "Unity">
+		<asset name = "MeleeBroad_sword" start_date = "" due_date = "" stage = "" image = ""/>
+		<asset name = "MeleeDiscs" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeMace" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeKatana" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeMachete" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeMaul" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeClaws" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeAxe" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeKatar" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MeleeDouble_Blade" start_date = "" due_date = "" stage = ""  image = ""/>
+	</group>		
+</AssetList>
