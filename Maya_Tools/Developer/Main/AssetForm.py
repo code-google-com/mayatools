@@ -130,7 +130,8 @@ class AssetForm(form_class,base_class):
 
         group = self.cbbGroup.currentText()
         item = self.cbbAssets.currentText()
-        type = self.cbbType.currentText()
+        type = str(self.cbbType.currentText())
+        print type
         lod = self.cbbWorkingStage.currentText()
         if lod == 'Not Available':
             if type == '':
@@ -320,7 +321,7 @@ class AssetForm(form_class,base_class):
                 for asset in assetNodes:
                     assetName = asset.getAttribute('name')
                     assetList.append(assetName)
-        self.assetListModel.setStringList(sort(assetList))
+        self.assetListModel.setStringList(sorted(assetList))
         self.cbbAssets.setModel(self.assetListModel)
         
     def syncFileWithServer(self):
