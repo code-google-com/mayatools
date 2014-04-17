@@ -133,7 +133,10 @@ class AssetForm(form_class,base_class):
         type = self.cbbType.currentText()
         lod = self.cbbWorkingStage.currentText()
         if lod == 'Not Available':
-            serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/'# + str(lod)
+            if type == '':
+                serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath# + str(type) + '/'# + str(lod)
+            else:
+                serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/'# + str(lod)
         else:
             serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/' + str(lod)
 #         if self.Proj.group == False:
@@ -317,7 +320,7 @@ class AssetForm(form_class,base_class):
                 for asset in assetNodes:
                     assetName = asset.getAttribute('name')
                     assetList.append(assetName)
-        self.assetListModel.setStringList(assetList)
+        self.assetListModel.setStringList(sort(assetList))
         self.cbbAssets.setModel(self.assetListModel)
         
     def syncFileWithServer(self):
