@@ -128,11 +128,11 @@ class AssetForm(form_class,base_class):
         
     def openServerFolder(self):
 
-        group = self.cbbGroup.currentText()
-        item = self.cbbAssets.currentText()
+        group = str(self.cbbGroup.currentText())
+        item = str(self.cbbAssets.currentText())
         type = str(self.cbbType.currentText())
         print type
-        lod = self.cbbWorkingStage.currentText()
+        lod = str(self.cbbWorkingStage.currentText())
         if lod == 'Not Available':
             if type == '':
                 serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath# + str(type) + '/'# + str(lod)
