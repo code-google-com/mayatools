@@ -19,7 +19,7 @@
 		<ProjectLocalPath> </ProjectLocalPath>
 		<DocumentsPath>//glassegg.com/projects/Documents_Feedbacks/DeNA_MeLeeWeapon</DocumentsPath>
 		<FeedbacksPath>//glassegg.com/projects/Documents_Feedbacks/DeNA_MeLeeWeapon</FeedbacksPath>
-		<ReferencesImagePath>//glassegg.com/projects/Documents_Feedbacks/DeNA_MeLeeWeapon</ReferencesImagePath>
+		<ReferencesImagePath>//glassegg.com/projects/Documents_Feedbacks/DeNA_MeLeeWeapon/Documents/FromClient/Melee_Guide/</ReferencesImagePath>
 	</Directories>
 	<Structures_Asset group = "True">
 	  	<folder name = "Textures"/>
