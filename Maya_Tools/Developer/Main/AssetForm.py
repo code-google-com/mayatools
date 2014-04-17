@@ -85,17 +85,15 @@ class AssetForm(form_class,base_class):
         lod = self.cbbType.currentText()
         stage = self.cbbWorkingStage.currentText()
         if stage =='Not Available':
-            print 'Feedback Path: '
-            print self.Proj.FeedbacksPath
             dirFile = self.Proj.FeedbacksPath +'/'+ str(group) + '/' + str(item) #+ '/' #+ str(lod) + '/' #+ str(stage)
             print dirFile
         else:
             dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item) + '/' + str(lod) + '/' + str(stage)
         #if not os.path.isdir(dirFile):
         #    dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item)
+        if not os.path.isdir(dirFile):
+            dirFile = self.Proj.FeedbacksPath
         dirFile = dirFile.replace('/','\\')
-        print "Thu muc file: "
-        print dirFile
         os.startfile(dirFile)
         #os.startfile(dirFile.replace('/','\\'))
         
@@ -105,6 +103,8 @@ class AssetForm(form_class,base_class):
         dirFile = self.Proj.ReferencesImagePath + str(group) + '/' + str(item) + '/'
         if not os.path.isdir(dirFile):
             dirFile = self.Proj.ReferencesImagePath + str(group) + '/' 
+            if not os.path.isdir(dirFile):
+                dirFile = self.Proj.ReferencesImagePath
         os.startfile(dirFile.replace('/','\\'))
             
 #     def openDocumentFolder(self):
@@ -127,15 +127,13 @@ class AssetForm(form_class,base_class):
 #         os.startfile(dirFile)
         
     def openServerFolder(self):
-
         group = str(self.cbbGroup.currentText())
         item = str(self.cbbAssets.currentText())
         type = str(self.cbbType.currentText())
-        print type
         lod = str(self.cbbWorkingStage.currentText())
         if lod == 'Not Available':
             if type == '':
-                serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath# + str(type) + '/'# + str(lod)
+                serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath.rstrip()# + str(type) + '/'# + str(lod)
             else:
                 serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/'# + str(lod)
         else:
@@ -163,7 +161,7 @@ class AssetForm(form_class,base_class):
 #                     serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/'## + str(lod)
 #             else:
 #                 serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/' + str(lod)    
-        #os.startfile(serverPath)
+#        os.startfile(serverPath)
         serverPath = serverPath.replace('/','\\')
         os.startfile(serverPath)
         
