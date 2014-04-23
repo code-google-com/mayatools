@@ -78,6 +78,8 @@ class AssetForm(form_class,base_class):
         print self.Proj.Technical() + self.Proj.Producer()
         if userID not in self.Proj.Technical() + self.Proj.Producer():
             self.btnCreateServerFolders.setEnabled(False)
+            self.server.setEnabled(False)
+            
         
     def openFeedbacksFolder(self):
         group = self.cbbGroup.currentText()
