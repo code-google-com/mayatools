@@ -33,10 +33,22 @@ def getMeshfromShader(shader):
     sg = cmds.connectionInfo(shader + '.outColor', dfs = True).split('.')[0]
     members = cmds.sets(sg, q = True)
     
-def setShaderToSelectedFaces(selFaces, shader):
+def setShaderToSelectedFaces(shader):
     # get shadingGroup from shader
-    sg = cmds.connectionInfo(shader + '.outColor', dfs = True).split('.')[0]
-    cmds.sets(selFaces, e = True, forceElement = sg)
+    selIns = cmds.ls(sl = True)
+    cmds.select(cl = True)
+    sg = cmds.connectionInfo(shader + '.outColor', dfs = True)
+    if len(sg) == 0:#.split('.')[0]
+        #sg = cmds.createNode('shadingEngine', n = shader + 'SG')
+        sg = cmds.sets(r = True, nss = True,  n = shader + 'SG')
+        #print sg
+        cmds.connectAttr(shader + '.outColor', sg + '.surfaceShader', f = True )
+        cmds.sets(selIns,e = True, forceElement = sg)
+    else:
+        sg = sg[0].split('.')[0]
+    #cmds.select(selIns)
+        cmds.sets(selIns, e = True, forceElement = sg)
+    cmds.select(selIns)
 
 def selectFaceByShaderPerMesh(mesh, shader):
     # get shading group from shader
@@ -170,7 +182,10 @@ class ShaderTools(form_class,base_class):
         attachFileSource = fileDirCommmon + '/mel/fixVertexColor.mel'
         mel.eval('source \"{f}\";'.format(f = attachFileSource))
         
-        self.updateShader = cmds.scriptJob(e = ['SelectionChanged',self.updateShaderName], protected = True)
+        self.updateShader = cmds.scriptJob(e = ['SelectTypeChanged',self.updateShaderName], protected = True)
+        self.updateShader = cmds.scriptJob(e = ['SceneOpened',self.updateShaderScene], protected = True)
+        
+        self.updateShaderScene()
         
     def updateShaderName(self):
         pass
@@ -355,6 +370,17 @@ class ShaderTools(form_class,base_class):
             
     def fixColorSet(self):
         mel.eval('boltSCV.fixVertexColours')
+        
+    def updateShaderName(self):
+        pass
+    
+    def updateShaderScene(self):
+        self.cbbShadersScene.clear()
+        shaderList = cmds.ls(mat = True)
+        self.cbbShadersScene.addItems(shaderList)
+        
+    def assignMaterialToSelected(self):
+        pass
         
 def main(xmlnput):
     form = ShaderTools(xmlnput)
