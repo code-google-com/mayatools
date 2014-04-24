@@ -3,6 +3,7 @@ name = 'selectNonManifoldEdges'
 import maya.cmds as cmds
 import maya.mel as mel
 
+
 def executeAll():
     transformNodes = cmds.ls(type = 'transform') # neu khong chon object nao het tool se kiem tra tat ca object
     for node in transformNodes:
