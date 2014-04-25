@@ -83,7 +83,7 @@ class ClearTools(form_class,base_class):
         self.loadFunction()
         
     def loadFunction(self):
-        contentToCleanUpCommon = [(fileDirCommmon + '/' + f) for f in os.listdir(fileDirCommmon) if os.path.isdir(fileDirCommmon + '/' + f) and f != 'UI']
+        contentToCleanUpCommon = [(fileDirCommmon + '/' + f) for f in os.listdir(fileDirCommmon) if os.path.isdir(fileDirCommmon + '/' + f) and f not in ['UI','Technical Setup','Fix issues per mesh']]
         contentToCleanUpProject = []
         project = self._customCheck.split('.')[0]
         customPath = os.path.split(os.path.split(os.path.split(fileDirCommmon)[0])[0])[0]
@@ -92,7 +92,6 @@ class ClearTools(form_class,base_class):
         except:
              pass
         for f in contentToCleanUpCommon + contentToCleanUpProject:
-            print f
             self.contents.addWidget(cleanerSetWidget(f))
         #idColor = 0
 #         contentToCleanUpCommon = [(fileDirCommmon + '/python/' + f) for f in os.listdir(fileDirCommmon + '/python/') if f.endswith('py')]

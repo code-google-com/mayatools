@@ -2,20 +2,18 @@
 <Project name="Sony">
 	<Managers>
 		<Tech>
-			<user>khata</user>
 			<user>trungtran</user>
 			<user>quynguyen</user>
-			<user>khoavinh</user>
 		</Tech>
 		<ArtDirector>
-			<user>namnguyen</user>
+			<user>tungvo</user>
 			<user>huongnguyen</user>
-			<user>daren</user>
+			<user>phuongnguyen</user>
+			<user>minhle</user>
 		</ArtDirector>
 		<Producer>
-			<user>nguyenthuy</user>
-			<user>tulong</user>
-			<user>kimchi</user>
+			<user>thudang</user>
+			<user>phucdo</user>
 		</Producer>
 	</Managers>
 	<Directories>

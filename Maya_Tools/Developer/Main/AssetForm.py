@@ -62,6 +62,7 @@ class AssetForm(form_class,base_class):
             print 'Cannot locate asset list'
             
         self.currentAsset = ''
+        self.currentGroup = ''
         
         #-------------- FUNCTION UI
         self.btnCreateLocalFolders.clicked.connect(self.createLocal)
@@ -73,7 +74,8 @@ class AssetForm(form_class,base_class):
         self.btnOpenDocuments.clicked.connect(self.openDocumentsFolder)
         self.btnSaveIncrement.clicked.connect(cf.saveFileIncrement)
         self.btnUploadandDownload.clicked.connect(self.syncFileWithServer)
-        self.cbbAssets.valueChanged.connect(self.updateCurrentAsset)
+        self.cbbAssets.currentIndexChanged.connect(self.updateCurrentAsset)
+        self.cbbGroup.currentIndexChanged.connect(self.updateCurrentAsset)
         
         userID = getpass.getuser()
         if userID not in self.Proj.Technical() + self.Proj.Producer() + self.Proj.Art():
@@ -82,6 +84,7 @@ class AssetForm(form_class,base_class):
             
     def updateCurrentAsset(self):
         self.currentAsset = str(self.cbbAssets.currentText())
+        self.currentGroup = str(self.cbbGroup.currentText())
         
     def openFeedbacksFolder(self):
         group = self.cbbGroup.currentText()
@@ -239,8 +242,14 @@ class AssetForm(form_class,base_class):
             dirFile = dirFile.replace('/','\\')
             filename = QtGui.QFileDialog.getOpenFileNames(self, 'Open File', dirFile)
             try:
+                ftype = ''
                 cmds.file(str(filename[0]), f = True, o = True)
-                cmds.addRecentFile
+                if os.path.splitext(str(filename[0]))[1] == '.mb':
+                    ftype = 'mayaBinary'
+                if os.path.splitext(str(filename[0]))[1] == '.ma':
+                    ftype = 'mayaAscii'
+                print ftype
+                mel.eval('addRecentFile("{fileName}","{fileType}")'.format(fileName = filename[0].replace('\\','/'), fileType = ftype))
             except RuntimeError:
                 pass
         
@@ -286,7 +295,6 @@ class AssetForm(form_class,base_class):
             localPath = self.Proj.LocalPath + str(item)
             #serverPath = self.Proj.ServerPath + str(item)
         serverPath = self.Proj.ServerPath + str(group)+ '/' + str(item)
-        
         syncForm = UploadForm.UploadForm(localPath, serverPath, self.Proj.AlternativePath)
         syncForm.show()
         

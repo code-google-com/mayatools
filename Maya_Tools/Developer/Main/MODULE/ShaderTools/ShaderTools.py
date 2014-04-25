@@ -7,6 +7,7 @@ import pymel.core as py
 import functools, imp
 
 import Source.IconResource_rc
+import CommonFunctions as cf
 
 checkerList = ['Custom_checker','IronMonkey_checker','Sony_checker_01', 'Sony_checker_02']
 
@@ -144,6 +145,18 @@ class ShaderTools(form_class,base_class):
         
         self.sldAlpha.valueChanged.connect(functools.partial(self.changeColorSet, 'a'))
         self.sldAlpha.sliderReleased.connect(self.fixColorSet)
+        
+        self.btnGetRed.clicked.connect(functools.partial(self.getVertexColor, 'r'))
+        self.btnSetRed.clicked.connect(functools.partial(self.setVertexColor, 'r'))
+        
+        self.btnGetGreen.clicked.connect(functools.partial(self.getVertexColor, 'g'))
+        self.btnSetGreen.clicked.connect(functools.partial(self.setVertexColor, 'g'))
+        
+        self.btnGetBlue.clicked.connect(functools.partial(self.getVertexColor, 'b'))
+        self.btnSetBlue.clicked.connect(functools.partial(self.setVertexColor, 'b'))
+        
+        self.btnGetAlpha.clicked.connect(functools.partial(self.getVertexColor, 'a'))
+        self.btnSetAlpha.clicked.connect(functools.partial(self.setVertexColor, 'a'))
         
         self.btnCheckerView.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         if inputFile != '':
@@ -384,9 +397,34 @@ class ShaderTools(form_class,base_class):
     
     def getVertexColor(self, channel):
         selVertexes = cmds.ls(sl = True)
+        value = 0.0
         for v in selVertexes:
-            pass
-        
+            if channel == 'r':
+                value += cmds.polyColorPerVertex(q= True, r = True)[0]
+            if channel == 'g':
+                value += cmds.polyColorPerVertex(q= True, g = True)[0]
+            if channel == 'b':
+                value += cmds.polyColorPerVertex(q= True, b = True)[0]
+            if channel == 'a':
+                value += cmds.polyColorPerVertex(q= True, a = True)[0]
+        value /= len(selVertexes)
+        cf.setDataToClipboard(str(value))
+    
+    def setVertexColor(self, channel):
+        try:
+            value = float(cf.getDataFromClipboard())
+        except ValueError:
+            QtGui.QMessageBox.information(self,'Invalid number','Khong the gan vertex color voi gia tri mau dang chon.',QtGui.QMessageBox.Ok)
+            return
+        if channel == 'r':
+            cmds.polyColorPerVertex(r = value)
+        if channel == 'g':
+            cmds.polyColorPerVertex(g = value)
+        if channel == 'b':
+            cmds.polyColorPerVertex(b = value)
+        if channel == 'a':
+            cmds.polyColorPerVertex(a = value)
+  
 def main(xmlnput):
     form = ShaderTools(xmlnput)
     return form 
