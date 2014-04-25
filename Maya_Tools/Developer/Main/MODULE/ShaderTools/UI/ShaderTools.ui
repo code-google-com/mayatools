@@ -183,14 +183,14 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="QPushButton" name="btnGetShader">
+         <widget class="QLabel" name="label_7">
           <property name="text">
-           <string>Get mat</string>
+           <string>Material</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="ldt"/>
+         <widget class="QLineEdit" name="edtMaterials"/>
         </item>
        </layout>
       </item>
@@ -213,20 +213,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox"/>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButton">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Update</string>
-          </property>
-         </widget>
+         <widget class="QComboBox" name="cbbShadersScene"/>
         </item>
        </layout>
       </item>
@@ -250,6 +237,12 @@
        <layout class="QHBoxLayout" name="horizontalLayout_5">
         <item>
          <widget class="QLabel" name="label_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
            <string>ColorSet:</string>
           </property>
@@ -258,32 +251,15 @@
         <item>
          <widget class="QComboBox" name="cbbColorSet"/>
         </item>
-        <item>
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_8">
-        <item>
-         <widget class="QCheckBox" name="chkRed">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
         <item>
          <widget class="QLabel" name="label_3">
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
           <property name="styleSheet">
            <string notr="true">color: rgb(255, 0, 0);</string>
           </property>
@@ -310,7 +286,33 @@
            <bool>true</bool>
           </property>
           <property name="tickPosition">
-           <enum>QSlider::TicksBelow</enum>
+           <enum>QSlider::NoTicks</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>G</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_3">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>S</string>
           </property>
          </widget>
         </item>
@@ -319,14 +321,10 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_9">
         <item>
-         <widget class="QCheckBox" name="chkGreen">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QLabel" name="label_4">
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
           <property name="styleSheet">
            <string notr="true">color: rgb(0, 255, 0);</string>
           </property>
@@ -348,19 +346,41 @@
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_5">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>G</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_4">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>S</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_10">
         <item>
-         <widget class="QCheckBox" name="chkBlue">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QLabel" name="label_5">
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
           <property name="styleSheet">
            <string notr="true">color: rgb(0, 0, 255);</string>
           </property>
@@ -382,19 +402,41 @@
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_8">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>G</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_7">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>S</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_11">
         <item>
-         <widget class="QCheckBox" name="chkAlpha">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QLabel" name="label_6">
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
           <property name="styleSheet">
            <string notr="true">color: rgb(255, 255, 255);</string>
           </property>
@@ -422,6 +464,32 @@
           </property>
           <property name="tickInterval">
            <number>1</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_10">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>G</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_9">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>S</string>
           </property>
          </widget>
         </item>

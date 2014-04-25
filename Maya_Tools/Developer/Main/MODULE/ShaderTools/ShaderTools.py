@@ -128,10 +128,10 @@ class ShaderTools(form_class,base_class):
         self.btnCheckerView.clicked.connect(self.tweakingCheckerShader)
         self.btnNormalView.clicked.connect(self.tweakingNormalView)
         self.btnReflectionView.clicked.connect(self.tweakingShininessView)
-        self.chkRed.clicked.connect(self.updateSliderColorSet)
-        self.chkGreen.clicked.connect(self.updateSliderColorSet)
-        self.chkBlue.clicked.connect(self.updateSliderColorSet)
-        self.chkAlpha.clicked.connect(self.updateSliderColorSet)
+        #self.chkRed.clicked.connect(self.updateSliderColorSet)
+        #self.chkGreen.clicked.connect(self.updateSliderColorSet)
+        #self.chkBlue.clicked.connect(self.updateSliderColorSet)
+        #self.chkAlpha.clicked.connect(self.updateSliderColorSet)
         
         self.sldRed.valueChanged.connect(functools.partial(self.changeColorSet, 'r'))
         self.sldRed.sliderReleased.connect(self.fixColorSet)
@@ -177,7 +177,7 @@ class ShaderTools(form_class,base_class):
         self.combobox.currentIndexChanged.connect(self.updateChecker)
         self.slider.valueChanged.connect(self.updateTilingChecker)
         
-        self.updateSliderColorSet()
+        #self.updateSliderColorSet()
         
         attachFileSource = fileDirCommmon + '/mel/fixVertexColor.mel'
         mel.eval('source \"{f}\";'.format(f = attachFileSource))
@@ -190,26 +190,26 @@ class ShaderTools(form_class,base_class):
     def updateShaderName(self):
         pass
         
-    def updateSliderColorSet(self):
-        if self.chkRed.isChecked():
-            self.sldRed.setEnabled(True)
-        else:
-            self.sldRed.setEnabled(False)
-            
-        if self.chkGreen.isChecked():
-            self.sldGreen.setEnabled(True)
-        else:
-            self.sldGreen.setEnabled(False)
-            
-        if self.chkBlue.isChecked():
-            self.sldBlue.setEnabled(True)
-        else:
-            self.sldBlue.setEnabled(False)
-            
-        if self.chkAlpha.isChecked():
-            self.sldAlpha.setEnabled(True)
-        else:
-            self.sldAlpha.setEnabled(False)
+#     def updateSliderColorSet(self):
+#         if self.chkRed.isChecked():
+#             self.sldRed.setEnabled(True)
+#         else:
+#             self.sldRed.setEnabled(False)
+#             
+#         if self.chkGreen.isChecked():
+#             self.sldGreen.setEnabled(True)
+#         else:
+#             self.sldGreen.setEnabled(False)
+#             
+#         if self.chkBlue.isChecked():
+#             self.sldBlue.setEnabled(True)
+#         else:
+#             self.sldBlue.setEnabled(False)
+#             
+#         if self.chkAlpha.isChecked():
+#             self.sldAlpha.setEnabled(True)
+#         else:
+#             self.sldAlpha.setEnabled(False)
         
         
     def removeDebugShader(self):
@@ -381,6 +381,11 @@ class ShaderTools(form_class,base_class):
         
     def assignMaterialToSelected(self):
         pass
+    
+    def getVertexColor(self, channel):
+        selVertexes = cmds.ls(sl = True)
+        for v in selVertexes:
+            pass
         
 def main(xmlnput):
     form = ShaderTools(xmlnput)

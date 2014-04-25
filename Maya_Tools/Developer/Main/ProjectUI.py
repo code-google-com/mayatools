@@ -77,6 +77,7 @@ class ProjectUI(form_class,base_class):
         self.assetListModel = QtGui.QStringListModel()
         #cmds.scriptJob(killAll = True, f = True)
         self.xmlFile = XMLProject
+        self.currentAsset = ''
         self.loadProjectData()
         #print self.Proj.projectData 
         
@@ -92,9 +93,6 @@ class ProjectUI(form_class,base_class):
         return out    
         
     def loadProjectData(self):
-        print 'okie'
-        print self.Proj.projectData 
-        print 'okie'
         for index in range(len(self.Proj.moduleList[0])):
             #try:
                 instanceModule = loadModule(self.Proj.moduleList[0][index])
@@ -104,6 +102,7 @@ class ProjectUI(form_class,base_class):
                 print 'Error to loading module:' + self.Proj.moduleList[0][index]
         #add dock widget
         self.AssetForm = AssetForm.AssetForm(self.xmlFile)
+        self.currentAsset = self.AssetForm.currentAsset
         self.dockWidget = dockWidget.DockWidget('Asset from')
         self.dockWidget.setWidget(self.AssetForm)
         self.verticalLayout.addWidget(self.dockWidget)

@@ -60,7 +60,8 @@ class AssetForm(form_class,base_class):
             self.resetToFileOpened()
         except:
             print 'Cannot locate asset list'
-        
+            
+        self.currentAsset = ''
         
         #-------------- FUNCTION UI
         self.btnCreateLocalFolders.clicked.connect(self.createLocal)
@@ -72,14 +73,15 @@ class AssetForm(form_class,base_class):
         self.btnOpenDocuments.clicked.connect(self.openDocumentsFolder)
         self.btnSaveIncrement.clicked.connect(cf.saveFileIncrement)
         self.btnUploadandDownload.clicked.connect(self.syncFileWithServer)
-        #self.btnOpenDocuments.clicked.connect(self.openDocumentsFolder)
+        self.cbbAssets.valueChanged.connect(self.updateCurrentAsset)
         
         userID = getpass.getuser()
-        print self.Proj.Technical() + self.Proj.Producer()
-        if userID not in self.Proj.Technical() + self.Proj.Producer():
+        if userID not in self.Proj.Technical() + self.Proj.Producer() + self.Proj.Art():
             self.btnCreateServerFolders.setEnabled(False)
             self.server.setEnabled(False)
             
+    def updateCurrentAsset(self):
+        self.currentAsset = str(self.cbbAssets.currentText())
         
     def openFeedbacksFolder(self):
         group = self.cbbGroup.currentText()
@@ -87,18 +89,15 @@ class AssetForm(form_class,base_class):
         lod = self.cbbType.currentText()
         stage = self.cbbWorkingStage.currentText()
         if stage =='Not Available':
-            dirFile = self.Proj.FeedbacksPath +'/'+ str(group) + '/' + str(item) #+ '/' #+ str(lod) + '/' #+ str(stage)
+            dirFile = self.Proj.FeedbacksPath +'/'+ str(group) + '/' + str(item)
             print dirFile
         else:
             dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item) + '/' + str(lod) + '/' + str(stage)
-        #if not os.path.isdir(dirFile):
-        #    dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item)
         if not os.path.isdir(dirFile):
             dirFile = self.Proj.FeedbacksPath
         dirFile = dirFile.replace('/','\\')
         os.startfile(dirFile)
-        #os.startfile(dirFile.replace('/','\\'))
-        
+   
     def openDocumentsFolder(self):
         group = self.cbbGroup.currentText()
         item = self.cbbAssets.currentText()
@@ -108,26 +107,7 @@ class AssetForm(form_class,base_class):
             if not os.path.isdir(dirFile):
                 dirFile = self.Proj.ReferencesImagePath
         os.startfile(dirFile.replace('/','\\'))
-            
-#     def openDocumentFolder(self):
-#         group = self.cbbGroup.currentText()
-#         item = self.cbbAssets.currentText()
-#         lod = self.cbbType.currentText()
-#         stage = self.cbbWorkingStage.currentText()
-#         if stage =='Not Available':
-#             print 'Feedback Path: '
-#             print self.Proj.FeedbacksPath
-#             dirFile = self.Proj.DocumentsPath #+'/'+ str(group) #+ '/' + str(item) #+ '/' #+ str(lod) + '/' #+ str(stage)
-#             print dirFile
-#         else:
-#             dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item) + '/' + str(lod) + '/' + str(stage)
-#         #if not os.path.isdir(dirFile):
-#         #    dirFile = self.Proj.FeedbacksPath + str(group) + '/' + str(item)
-#         dirFile = dirFile.replace('/','\\')
-#         print "Thu muc file: "
-#         print dirFile
-#         os.startfile(dirFile)
-        
+
     def openServerFolder(self):
         group = str(self.cbbGroup.currentText())
         item = str(self.cbbAssets.currentText())
@@ -135,35 +115,11 @@ class AssetForm(form_class,base_class):
         lod = str(self.cbbWorkingStage.currentText())
         if lod == 'Not Available':
             if type == '':
-                serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath.rstrip()# + str(type) + '/'# + str(lod)
+                serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath.rstrip()
             else:
-                serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/'# + str(lod)
+                serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/'
         else:
             serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/' + str(lod)
-#         if self.Proj.group == False:
-#             if lod == 'Not Available':
-#                 if self.Proj.ProjectLocalPath == ' ':
-#                     #print "Project Local: is wrong" #+self.Proj.ProjectLocalPath
-#                     serverPath = self.Proj.ServerPath + str(item) + '/'## + str(lod)
-#                 else:
-#                     #print "Project Local: is true" #+self.Proj.ProjectLocalPath
-#                     serverPath = self.Proj.ServerPath + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/'## + str(lod)
-#             else:
-#                 if self.Proj.ProjectLocalPath == ' ':
-#                     serverPath = self.Proj.ServerPath + str(item) + '/'
-#                 else:
-#                     serverPath = self.Proj.ServerPath + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/' + str(lod)
-#         else:
-#             if lod == 'Not Available':
-#                 if self.Proj.ProjectLocalPath == ' ':
-#                     #print "Project Local: is wrong" #+self.Proj.ProjectLocalPath
-#                     serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/'## + str(lod)
-#                 else:
-#                     #print "Project Local: is true" #+self.Proj.ProjectLocalPath
-#                     serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/'## + str(lod)
-#             else:
-#                 serverPath = self.Proj.ServerPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + str(type) + '/' + str(lod)    
-#        os.startfile(serverPath)
         serverPath = serverPath.replace('/','\\')
         os.startfile(serverPath)
         
@@ -176,9 +132,9 @@ class AssetForm(form_class,base_class):
         if self.Proj.group == False:
             if lod == 'Not Available':
                 if self.Proj.ProjectLocalPath == ' ':
-                    localPath = self.Proj.LocalPath + str(item) + '/'## + str(lod)
+                    localPath = self.Proj.LocalPath + str(item) + '/'
                 else:
-                    localPath = self.Proj.LocalPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'## + str(lod)
+                    localPath = self.Proj.LocalPath + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'
             else:
                 if self.Proj.ProjectLocalPath == ' ':
                     localPath = self.Proj.LocalPath + str(item) + '/'
@@ -187,9 +143,9 @@ class AssetForm(form_class,base_class):
         else:
             if lod == 'Not Available':
                 if self.Proj.ProjectLocalPath == ' ':
-                    localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/'## + str(lod)
+                    localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/'
                 else:
-                    localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'## + str(lod)
+                    localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'
             else:
                 localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)    
         os.startfile(localPath)
@@ -199,8 +155,6 @@ class AssetForm(form_class,base_class):
         group = self.cbbGroup.currentText()
         item = self.cbbAssets.currentText()
         templateFile = os.path.split(fileDirCommmon)[0] + '/Project/' + self.Proj.ProjectName + '/' + self.Proj.templateFile
-        #print 'template File'
-        #print templateFile
         for i in range(len(self.Proj.structureFolders)):
             if self.Proj.group == False:
                 localFolder = self.Proj.LocalPath + str(item) + '\\' + self.Proj.structureFolders[i]
@@ -217,11 +171,9 @@ class AssetForm(form_class,base_class):
                     pass
                 
     def createServer(self):
-        
         serverFolder = ''
         group = self.cbbGroup.currentText()
         assets = list(self.cbbAssets.model().stringList())
-        #templateFile = os.path.split(fileDirCommmon)[0] + '/Project/' + self.Proj.ProjectName + '/' + self.Proj.templateFile
         for asset in assets:
             feedbackFolder = self.Proj.FeedbacksPath + str(group) + '\\' + str(asset) + '\\'
             for i in range(len(self.Proj.structureFolders)):
@@ -236,7 +188,6 @@ class AssetForm(form_class,base_class):
                         os.makedirs(feedbackFolder + '\\art')
                         os.makedirs(feedbackFolder + '\\tech')
                         os.makedirs(feedbackFolder + '\\client')
-                    
                 except:
                     pass
                 if self.Proj.placeFileAndName[i] != '':
@@ -286,13 +237,11 @@ class AssetForm(form_class,base_class):
                 QtGui.QMessageBox.information(self,'Error','Khong mo duoc file Vlast. Vui long mo bang any version',QtGui.QMessageBox.Ok)
         else:
             dirFile = dirFile.replace('/','\\')
-            #print dirFile
             filename = QtGui.QFileDialog.getOpenFileNames(self, 'Open File', dirFile)
-            #print filename
             try:
                 cmds.file(str(filename[0]), f = True, o = True)
+                cmds.addRecentFile
             except RuntimeError:
-                #cmds.file(filename, o = True)
                 pass
         
     def loadProjectData(self):
