@@ -1,81 +1,98 @@
 <?xml version="1.0" ?>
 <NamingHierrachy>
-	<kit name = 'standard_type_a' shortname = "a"/>
-	<kit name = 'standard_type_b' shortname = "b"/>
-	<kit name = 'type_c' shortname = "c"/>
-	<kit name = 'type_d' shortname = "d"/>
-	<kit name = 'type_x' shortname = "x"/>
-	<kit name = 'type_z' shortname = "z"/>
-	<kit name = 'type_y' shortname = "y"/>
-	<kit name = 'pulled' shortname = "pulled"/>
-	<kit name = 'small' shortname = "small"/>
-	<kit name = 'large' shortname = "large"/>
-	
-	<lod name = "lod00" shortname = "same"/>
-	<lod name = "lod01" shortname = "same"/>
-	<lod name = "lod02" shortname = "same"/>
-	<lod name = "lod03" shortname = "same"/>
-	<lod name = "lod04" shortname = "same"/>
-	<lod name = "lod05" shortname = "same"/>
-	<lod name = "lod06" shortname = "same"/>
-	
-	<part name = "body" shortname = "same"/>
-	<part name = "bumper_front" shortname = "same"/>
-	<part name = "bumper_rear" shortname = "same"/>
-	<part name = "chassis" shortname = "same"/>
-	<part name = "exhaust" shortname = "same"/>
-	<part name = "headlights" shortname = "same"/>
-	<part name = "hood" shortname = "same"/>
-	<part name = "interior" shortname = "same"/>
-	<part name = "mirrors" shortname = "same"/>
-	<part name = "rear_wiper" shortname = "same"/>
-	<part name = "rear_wiper" shortname = "same"/>
-	<part name = "roof_scoop" shortname = "same"/>
-	<part name = "spoiler" shortname = "same"/>
-	<part name = "side_skirts" shortname = "same"/>
-	<part name = "taillights" shortname = "same"/>
-	<part name = "wheel_arch" shortname = "same"/>
-	<part name = "windows" shortname = "same"/>
-	<part name = "rotor_rear_left" shortname = "same"/>
-	<part name = "rotor_rear_right" shortname = "same"/>
-	<part name = "rotor_front_left" shortname = "same"/>
-	<part name = "rotor_front_right" shortname = "same"/>
-	<part name = "caliper_rear_left" shortname = "same"/>
-	<part name = "caliper_rear_right" shortname = "same"/>
-	<part name = "caliper_front_left" shortname = "same"/>
-	<part name = "caliper_front_right" shortname = "same"/>
-	<part name = "large_overfenders" shortname = "same"/>
-	<part name = "small_overfenders" shortname = "same"/>
-	<part name = "wheel" shortname = "same"/>
-	
-	<material name = "badging_alpha" shortname = "badging_alpha" id = "badging"/>
-	<material name = "brake_caliper_opaque" shortname = "caliper" id = "brakecaliper"/>
-	<material name = "carbon_opaque" shortname = "carbon" uvset = "2_scratch" id = "carbon"/>
-	<material name = "brake_rotor_opaque" shortname = "rotor" id = "brakerotor"/>
-	<material name = "car_seam_multi" shortname = "seam" id = "seam"/>
-	<material name = "chassis_opaque" shortname = "chassis" id = "chassis"/>
-	<material name = "chrome_opaque" shortname = "chrome" id = "chrome"/>
-	<material name = "exhaust_opaque" shortname = "exhaust" id = "standard"/>
-	<material name = "glass_headlight_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_head" id = "glassheadlight"/>
-	<material name = "glass_taillight_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_tail" id = "glasstailight"/>
-	<material name = "glass_window_tint_alpha_shatter_cull_nozwrite_layer65" shortname = "glass_alpha" id = "glasswindow"/>
-	<material name = "glass_window_black_opaque_twosided_shatter" shortname = "glass_black" id = "glassopaque"/>
-	<material name = "headlight_type_a_opaque" shortname = "headlight_cluster" id = "standard"/>
-	<material name = "headlight_type_a_alphaadd" shortname = "headlight_alpha" id = "standard"/>
-	<material name = "headlight_type_a_alphaadd_nozwrite_twosided_layer70" shortname = "headlight_additive" id = "standard"/>
-	<material name = "grill_alpha_layer92_nozwrite" shortname = "grill" id = "grill"/>
-	<material name = "interior_opaque" shortname = "interior" id = "interior"/>
-	<material name = "misc_opaque" shortname = "misc" id = "standard"/>
-	<material name = "numberplate_alpha" shortname = "numberplate" id = "numberplate" />
-	<material name = "paint_shader_opaque" shortname = "paint" uvset = "2_scratch" id = "paint"/>
-	<material name = "paint_shader_nodecal_opaque" shortname = "paintnod" uvset = "2_scratch" id = "paintnodecal"/>
-	<material name = "plastic_dull_opaque" shortname = "plastic" id = "plasticdull"/>
-	<material name = "brake_lights_type_a_alphaadd_nozwrite_twosided_layer70" shortname = "brake_lights" id = "standard"/>
-	<material name = "taillight_type_a_opaque" shortname = "taillights" id = "standard"/>
-	<material name = "taillight_additive_type_a_opaque" shortname = "additive" id = "standard"/>
-	<material name = "wheel_rim_tint_blur_alpha" shortname = "rim_tint_blur" id = "standard"/>
-	<material name = "wheel_tire_opaque" shortname = "tire_opaque" id = "tire"/>
-	<material name = "wheel_rim_tint" shortname = "rim_tint" id = "wheel"/>
-	<material name = "wheel_rim_tint_blurop" shortname = "rim_tint_blurop" id = "wheel"/>
-	<material name = "wheel_notint_rim_alpha" shortname = "notint_rim_alpha" id = "wheelnotint"/>
+	<kit name='standard_type_a' shortname="a" />
+	<kit name='standard_type_b' shortname="b" />
+	<kit name='type_c' shortname="c" />
+	<kit name='type_d' shortname="d" />
+	<kit name='type_x' shortname="x" />
+	<kit name='type_z' shortname="z" />
+	<kit name='type_y' shortname="y" />
+	<kit name='pulled' shortname="pulled" />
+	<kit name='small' shortname="small" />
+	<kit name='large' shortname="large" />
+
+	<lod name="lod00" shortname="same" />
+	<lod name="lod01" shortname="same" />
+	<lod name="lod02" shortname="same" />
+	<lod name="lod03" shortname="same" />
+	<lod name="lod04" shortname="same" />
+	<lod name="lod05" shortname="same" />
+	<lod name="lod06" shortname="same" />
+
+	<part name="body" shortname="same" />
+	<part name="bumper_front" shortname="same" />
+	<part name="bumper_rear" shortname="same" />
+	<part name="chassis" shortname="same" />
+	<part name="exhaust" shortname="same" />
+	<part name="headlights" shortname="same" />
+	<part name="hood" shortname="same" />
+	<part name="interior" shortname="same" />
+	<part name="mirrors" shortname="same" />
+	<part name="rear_wiper" shortname="same" />
+	<part name="rear_wiper" shortname="same" />
+	<part name="roof_scoop" shortname="same" />
+	<part name="spoiler" shortname="same" />
+	<part name="side_skirts" shortname="same" />
+	<part name="taillights" shortname="same" />
+	<part name="wheel_arch" shortname="same" />
+	<part name="windows" shortname="same" />
+	<part name="rotor_rear_left" shortname="same" />
+	<part name="rotor_rear_right" shortname="same" />
+	<part name="rotor_front_left" shortname="same" />
+	<part name="rotor_front_right" shortname="same" />
+	<part name="caliper_rear_left" shortname="same" />
+	<part name="caliper_rear_right" shortname="same" />
+	<part name="caliper_front_left" shortname="same" />
+	<part name="caliper_front_right" shortname="same" />
+	<part name="large_overfenders" shortname="same" />
+	<part name="small_overfenders" shortname="same" />
+	<part name="wheel" shortname="same" />
+
+	<material name="badging_alpha" shortname="badging_alpha" id="badging" />
+	<material name="brake_caliper_opaque" shortname="caliper" id="brakecaliper" />
+	<material name="carbon_opaque" shortname="carbon" uvset="2_scratch"
+		id="carbon" />
+	<material name="brake_rotor_opaque" shortname="rotor" id="brakerotor" />
+	<material name="car_seam_multi" shortname="seam" id="seam" />
+	<material name="chassis_opaque" shortname="chassis" id="chassis" />
+	<material name="chrome_opaque" shortname="chrome" id="chrome" />
+	<material name="exhaust_opaque" shortname="exhaust" id="standard" />
+	<material name="glass_headlight_tint_alpha_shatter_cull_nozwrite_layer65"
+		shortname="glass_head" id="glassheadlight" />
+	<material name="glass_taillight_tint_alpha_shatter_cull_nozwrite_layer65"
+		shortname="glass_tail" id="glasstailight" />
+	<material name="glass_window_tint_alpha_shatter_cull_nozwrite_layer65"
+		shortname="glass_alpha" id="glasswindow" />
+	<material name="glass_window_black_opaque_twosided_shatter"
+		shortname="glass_black" id="glassopaque" />
+	<material name="headlight_type_a_opaque" shortname="headlight_cluster"
+		id="standard" />
+	<material name="headlight_type_a_alphaadd" shortname="headlight_alpha"
+		id="standard" />
+	<material name="headlight_type_a_alphaadd_nozwrite_twosided_layer70"
+		shortname="headlight_additive" id="standard" />
+	<material name="grill_alpha_layer92_nozwrite" shortname="grill"
+		id="grill" />
+	<material name="interior_opaque" shortname="interior" id="interior" />
+	<material name="misc_opaque" shortname="misc" id="standard" />
+	<material name="numberplate_alpha" shortname="numberplate" id="numberplate" />
+	<material name="paint_shader_opaque" shortname="paint" uvset="2_scratch"
+		id="paint" />
+	<material name="paint_shader_nodecal_opaque" shortname="paintnod"
+		uvset="2_scratch" id="paintnodecal" />
+	<material name="plastic_dull_opaque" shortname="plastic" id="plasticdull" />
+	<material name="brake_lights_type_a_alphaadd_nozwrite_twosided_layer70"
+		shortname="brake_lights" id="standard" />
+	<material name="taillight_type_a_opaque" shortname="taillights"
+		id="standard" />
+	<material name="taillight_additive_type_a_opaque" shortname="additive"
+		id="standard" />
+	<material name="wheel_rim_tint_blur_alpha" shortname="rim_tint_blur"
+		id="standard" />
+	<material name="wheel_tire_opaque" shortname="tire_opaque" id="tire" />
+	<material name="wheel_rim_tint" shortname="rim_tint" id="wheel" />
+	<material name="wheel_rim_tint_blurop" shortname="rim_tint_blurop"
+		id="wheel" />
+	<material name="wheel_notint_rim_alpha" shortname="notint_rim_alpha"
+		id="wheelnotint" />
 </NamingHierrachy>

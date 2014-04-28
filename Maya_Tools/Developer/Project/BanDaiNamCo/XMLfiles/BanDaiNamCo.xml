@@ -21,30 +21,30 @@
 		<FeedbacksPath>//glassegg.com/Documents_Feedbacks/BanDaiNamCo_2014/Feedbacks/</FeedbacksPath>
 		<ReferencesImagePath>//glassegg.com/Documents_Feedbacks/BanDaiNamCo_2014/ReferencesImage/</ReferencesImagePath>
 	</Directories>
-	<Structures_Asset group = "True">
-		<folder name = "maya">
-	  		<folder name = "car" type = "LOD">
-	   			<folder name = "scenes" filename = '' filetype = 'mb'/>
-		   		<folder name = "sourceimages"/>
-		  	</folder>
-		  	<folder name = "wheel" type = "LOD">
-				   <folder name = "scenes" filename = '_WH' filetype = 'mb'/>
-				   <folder name = "sourceimages"/>
-		  	</folder>
-	  	</folder>
+	<Structures_Asset group="True">
+		<folder name="maya">
+			<folder name="car" type="LOD">
+				<folder name="scenes" filename='' filetype='mb' />
+				<folder name="sourceimages" />
+			</folder>
+			<folder name="wheel" type="LOD">
+				<folder name="scenes" filename='_WH' filetype='mb' />
+				<folder name="sourceimages" />
+			</folder>
+		</folder>
 	</Structures_Asset>
 	<ProjectData>
-		<Template file = "BanDaiNamCo.mb"/>
-		<AssetList file = "AssetList.xml"/>
+		<Template file="BanDaiNamCo.mb" />
+		<AssetList file="AssetList.xml" />
 		<Module>
-			<module name = "NamingConvention" params = ''/>
-			<module name = "CleanerTools" params = "yes"/>
-			<module name = "Pivots" />
-			<module name = "UVTools" />
-			<module name = "PolyTools" />
-			<unmodule name = "CrydevTools" />
-			<module name = "ShaderTools" params = ""/>
-			<module name = "ThirdpartyTools" params = ""/>
+			<module name="NamingConvention" params='' />
+			<module name="CleanerTools" params="yes" />
+			<module name="Pivots" />
+			<module name="UVTools" />
+			<module name="PolyTools" />
+			<unmodule name="CrydevTools" />
+			<module name="ShaderTools" params="" />
+			<module name="ThirdpartyTools" params="" />
 		</Module>
 
 	</ProjectData>

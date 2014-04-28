@@ -1,29 +1,53 @@
 <?xml version="1.0" ?>
 <AssetList>
-	<group name = "Cars">
-		<asset name = "nissan_gtr_r32" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "bmw_m3_e36" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "bmw_m4_f82t" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "mazda_rx7_fd" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "porsche_911_993" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "porsche_911_991" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "subaru_brz_zc6" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "ford_fiesta_b3" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "volkswagen_golf_a7" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "subaru_wrx_gv6" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "toyota_gt86_zn6" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "ford_mustang_gt_s197" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "ford_mustang_s550" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "traffic_ford_crown_victoria_taxi" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "ford_explorer" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "dodge_charger_srt8" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "ford_f650_box" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "nissan_leaf" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "nissan_quest" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "bmw_m4_f82t" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "srt_viper_zd" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "nissan_gtr_r35" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "porsche_911_991" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "dodge_challenger_lc" start_date = "" due_date = "" stage = ""  image = ""/>
-	</group>	
+	<group name="Cars">
+		<asset name="nissan_gtr_r32" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="bmw_m3_e36" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="bmw_m4_f82t" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="mazda_rx7_fd" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="porsche_911_993" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="porsche_911_991" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="subaru_brz_zc6" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="ford_fiesta_b3" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="volkswagen_golf_a7" start_date="" due_date=""
+			stage="" image="" />
+		<asset name="subaru_wrx_gv6" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="toyota_gt86_zn6" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="ford_mustang_gt_s197" start_date="" due_date=""
+			stage="" image="" />
+		<asset name="ford_mustang_s550" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="traffic_ford_crown_victoria_taxi" start_date=""
+			due_date="" stage="" image="" />
+		<asset name="ford_explorer" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="dodge_charger_srt8" start_date="" due_date=""
+			stage="" image="" />
+		<asset name="ford_f650_box" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="nissan_leaf" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="nissan_quest" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="bmw_m4_f82t" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="srt_viper_zd" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="nissan_gtr_r35" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="porsche_911_991" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="dodge_challenger_lc" start_date="" due_date=""
+			stage="" image="" />
+	</group>
 </AssetList>

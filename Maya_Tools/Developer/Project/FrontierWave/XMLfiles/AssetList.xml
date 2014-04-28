@@ -1,24 +1,24 @@
 <?xml version="1.0" ?>
 <AssetList>
-	<group name = "Characters">
-		<asset name = "10011" start_date = "" due_date = "" stage = "" image = "">
-			<subasset name = ''>
-				<subasset name = ''/>
+	<group name="Characters">
+		<asset name="10011" start_date="" due_date="" stage="" image="">
+			<subasset name=''>
+				<subasset name='' />
 			</subasset>
-			<subasset name = ''>
-				<subasset name = ''/>
+			<subasset name=''>
+				<subasset name='' />
 			</subasset>
 		</asset>
-		<asset name = "10012" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "10013" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "11313" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "11772" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name="10012" start_date="" due_date="" stage="" image="" />
+		<asset name="10013" start_date="" due_date="" stage="" image="" />
+		<asset name="11313" start_date="" due_date="" stage="" image="" />
+		<asset name="11772" start_date="" due_date="" stage="" image="" />
 	</group>
-	<group name = "Animation">
-		<asset name = "10011" start_date = "" due_date = "" stage = "" image = ""/>
-		<asset name = "10012" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "10013" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "11313" start_date = "" due_date = "" stage = ""  image = ""/>
-		<asset name = "11772" start_date = "" due_date = "" stage = ""  image = ""/>
-	</group>		
+	<group name="Animation">
+		<asset name="10011" start_date="" due_date="" stage="" image="" />
+		<asset name="10012" start_date="" due_date="" stage="" image="" />
+		<asset name="10013" start_date="" due_date="" stage="" image="" />
+		<asset name="11313" start_date="" due_date="" stage="" image="" />
+		<asset name="11772" start_date="" due_date="" stage="" image="" />
+	</group>
 </AssetList>

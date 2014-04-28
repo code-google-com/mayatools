@@ -21,20 +21,20 @@
 		<FeedbacksPath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/Feedbacks/</FeedbacksPath>
 		<ReferencesImagePath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/Documents/</ReferencesImagePath>
 	</Directories>
-	<Structures_Asset group = "True">	
+	<Structures_Asset group="True">
 	</Structures_Asset>
 	<ProjectData>
-		<Template file = "Sony_template_file.mb"/>
-		<AssetList file = "geProject_AssetList.xml"/>
+		<Template file="Sony_template_file.mb" />
+		<AssetList file="geProject_AssetList.xml" />
 		<Module>
-			<module name = "NamingConvention" params = ''/>
-			<module name = "CleanerTools" params = "yes"/>
-			<module name = "Pivots" />
-			<module name = "UVTools" />
-			<module name = "PolyTools" />
-			<module name = "CrydevTools" />
-			<module name = "ShaderTools" params = ""/>
-			<module name = "ThirdpartyTools" params = ""/>
+			<module name="NamingConvention" params='' />
+			<module name="CleanerTools" params="yes" />
+			<module name="Pivots" />
+			<module name="UVTools" />
+			<module name="PolyTools" />
+			<module name="CrydevTools" />
+			<module name="ShaderTools" params="" />
+			<module name="ThirdpartyTools" params="" />
 		</Module>
 
 	</ProjectData>
