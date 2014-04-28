@@ -77,15 +77,16 @@ class DecalScene(QtGui.QGraphicsScene):
             self.decal.setPos(insertedPos)
             #self.decalInserted.emit(decal)
             self.setMode(self.moveDecal)
-            
         super(DecalScene, self).mousePressEvent(mouseEvent)
         
     def mouseMoveEvent(self, mouseEvent):
         if self.myMode == self.moveDecal:
+            if mouseEvent.button() == QtCore.Qt.LeftButton:
+                self.decalMoved.emit(self.cursorPos)    
             super(DecalScene, self).mouseMoveEvent(mouseEvent)
             self.cursorPos = QtCore.QPointF(mouseEvent.scenePos())
-            self.decalMoved.emit(self.cursorPos)
             
+                 
     def mouseReleaseEvent(self, mouseEvent):
         super(DecalScene, self).mouseReleaseEvent(mouseEvent)
     
