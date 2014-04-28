@@ -36,13 +36,26 @@ class Decal(QtGui.QGraphicsPixmapItem):
         if self.scaleFactor < 0.35 or self.scaleFactor > 2:
             return  
         self.setScale(self.scaleFactor)
+        self.resetTransform()
+        print self.boundingRect().width() * self.scaleFactor
+        
+        print self.boundingRect().height() * self.scaleFactor
         
     def setSignalPos(self, dx, dy):
         pos = QtCore.QPointF(dx * 550 / 100.0, dy * 550 / 100.0)
         self.setPos(pos)
         
-    def boundingRect(self, *args, **kwargs):
-        return QtGui.QGraphicsPixmapItem.boundingRect(self, *args, **kwargs)
+    def boundingRectCustom(self):
+        rect = QtCore.QRectF()
+        rect.setWidth(self.boundingRect().width() * self.scaleFactor)
+        rect.setHeight(self.boundingRect().height() * self.scaleFactor)
+        return rect
+    
+    def posCustom(self):
+        posF = QtCore.QPointF()
+        posF.setX(self.pos().x() + self.boundingRectCustom().width()/2)
+        posF.setY(self.pos().y() + self.boundingRectCustom().height()/2)
+        return posF
 
 class DecalScene(QtGui.QGraphicsScene):
     insertDecal, moveDecal = range(2)
@@ -81,12 +94,12 @@ class DecalScene(QtGui.QGraphicsScene):
         
     def mouseMoveEvent(self, mouseEvent):
         if self.myMode == self.moveDecal:
-            if mouseEvent.button() == QtCore.Qt.LeftButton:
+            if self.decal.isSelected() and mouseEvent.buttons() == QtCore.Qt.LeftButton:
                 self.decalMoved.emit(self.cursorPos)    
             super(DecalScene, self).mouseMoveEvent(mouseEvent)
-            self.cursorPos = QtCore.QPointF(mouseEvent.scenePos())
+            #self.cursorPos = QtCore.QPointF(mouseEvent.scenePos())
+            self.cursorPos = QtCore.QPointF(self.decal.posCustom())
             
-                 
     def mouseReleaseEvent(self, mouseEvent):
         super(DecalScene, self).mouseReleaseEvent(mouseEvent)
     
