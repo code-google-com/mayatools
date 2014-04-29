@@ -95,7 +95,6 @@ class Decal(QtGui.QGraphicsPixmapItem):
         
     def wheelEvent(self, event):
         self.scaleFactor += event.delta() / 720.0
-        print self.scaleFactor
         if self.scaleFactor < 0.35: 
             self.scaleFactor = 0.5
         if self.scaleFactor > 2:
@@ -104,7 +103,7 @@ class Decal(QtGui.QGraphicsPixmapItem):
         self.resetTransform()
         
     def setSignalPos(self, dx, dy):
-        pos = QtCore.QPointF(dx * 550 / 100.0, dy * 550 / 100.0)
+        pos = QtCore.QPointF(dx * 550 / 100.0 - self.boundingRectCustom().width()/2, dy * 550 / 100.0 - self.boundingRectCustom().height()/2)
         self.setPos(pos)
         
     def boundingRectCustom(self):
@@ -185,7 +184,7 @@ class DecalsForm(form_class,base_class):
     def updateDecalPos(self):
         hValue = self.hSlider.value()
         vValue = self.vSlider.value()
-        self.scene.decal.setSignalPos(hvalue, vSilder)
+        self.scene.decal.setSignalPos(hValue, vValue)
         
     def animateShader(self):
         pass
