@@ -13,7 +13,7 @@ import functools
 
 #fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 #dirUI= fileDirCommmon +'/UI/Decal_Form.ui'
-dirUI = 'D:/maya_Tools/Maya_Tools/Developer/Main/UI/Decal_Form.ui'
+dirUI = 'Z:/ge_Tools/Maya_Tools/Developer/Main/UI/Decal_Form.ui'
 
 def wrapinstance(ptr, base=None):
     """
@@ -79,7 +79,7 @@ except IOError:
     
 def getMayaWindow():
     ptr = OpenMayaUI.MQtUtil.mainWindow()
-    return wrapinstance(long(ptr), QtCore.QObject)
+    return wrapinstance(long(ptr), QtGui.QWidget)
 
 class Decal(QtGui.QGraphicsPixmapItem):
     lostFosus = QtCore.Signal(QtGui.QGraphicsItem)
@@ -95,8 +95,11 @@ class Decal(QtGui.QGraphicsPixmapItem):
         
     def wheelEvent(self, event):
         self.scaleFactor += event.delta() / 720.0
-        if self.scaleFactor < 0.35 or self.scaleFactor > 2:
-            return  
+        print self.scaleFactor
+        if self.scaleFactor < 0.35: 
+            self.scaleFactor = 0.5
+        if self.scaleFactor > 2:
+            self.scaleFactor = 2
         self.setScale(self.scaleFactor)
         self.resetTransform()
         
@@ -164,22 +167,25 @@ class DecalScene(QtGui.QGraphicsScene):
 
 
 class DecalsForm(form_class,base_class):
-    def __init__(self, backgroundImage, decalImage, parent = None):
+    def __init__(self, backgroundImage, decalImage, parent = getMayaWindow()):
         super(DecalsForm,self).__init__(parent)
         self.setupUi(self)
         self.setObjectName('ProjectUIWindow')
         self.scene = DecalScene(backgroundImage, decalImage)
         self.graphicsView.setScene(self.scene)
         self.scene.decalMoved.connect(self.setValueSlider)
+        self.hSlider.valueChanged.connect(self.updateDecalPos)
+        self.vSlider.valueChanged.connect(self.updateDecalPos)
         self.graphicsView.show()
         
     def setValueSlider(self, QPointF):
         self.vSlider.setValue(QPointF.y()/550.0 * 100)
         self.hSlider.setValue(QPointF.x()/550.0 * 100)
         
-    def on_vSlider_valueChanged(self, value):
-        hSlider = self.hSlider.value()
-        self.scene.decal.setSignalPos(hSlider, value)
+    def updateDecalPos(self):
+        hValue = self.hSlider.value()
+        vValue = self.vSlider.value()
+        self.scene.decal.setSignalPos(hvalue, vSilder)
         
     def animateShader(self):
         pass
@@ -187,9 +193,9 @@ class DecalsForm(form_class,base_class):
         # shader.move_along_Y = self.vSlider.value()/100.0
         
         
-dirUI = 'D:/maya_Tools/Maya_Tools/Developer/Main/UI/Decal_Form.ui'
-backgroundImage = 'D:/3D_Works/Dropbox/wireframe.tif'
-decalsImage = 'D:/3D_Works/Dropbox/logo.tif'
+
+backgroundImage = 'Z:/3D_Works/maya/Dropbox/wireframe.tif'
+decalsImage = 'Z:/3D_Works/maya/Dropbox/logo.tif'
 form = DecalsForm(backgroundImage, decalsImage)
 form.show()
     
