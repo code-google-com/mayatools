@@ -40,7 +40,6 @@ def wrapinstance(ptr, base=None):
 
 
 def loadUiType(uiFile):
-
         parsed = xml.parse(uiFile)
         widget_class = parsed.find('widget').get('class')
         form_class = parsed.find('class').text
@@ -59,7 +58,6 @@ def loadUiType(uiFile):
         return form_class, base_class
 
 try:
-    #form_class, base_class = uic.loadUiType(dirUI)
     form_class, base_class = loadUiType(dirUI)
 except IOError:
     print (dirUI + ' not found')
@@ -69,9 +67,7 @@ def getMayaWindow():
     return wrapinstance(long(ptr), QtGui.QWidget)
 
 class Decal(QtGui.QGraphicsPixmapItem):
-    
-    decalScaled = QtCore.Signal(QtCore.QPointF)
-        
+            
     def __init__(self, path, parent = None):
         super(Decal, self).__init__(parent)
         self.setPixmap(QtGui.QPixmap(path))
@@ -81,14 +77,14 @@ class Decal(QtGui.QGraphicsPixmapItem):
         self.setFlag(QtGui.QGraphicsItem.ItemIsFocusable, enabled = True)
         self.scaleFactor = 1
         
-    def wheelEvent(self, event):
-        self.scaleFactor += event.delta() / 720.0
-        if self.scaleFactor < 0.35: 
-            self.scaleFactor = 0.5
-        if self.scaleFactor > 2:
-            self.scaleFactor = 2
-        self.setScale(self.scaleFactor)
-        self.decalScaled.emit(self.scaleFactor)
+    #def wheelEvent(self, event):
+    #    self.scaleFactor += event.delta() / 720.0
+    #    if self.scaleFactor < 0.35: 
+    #        self.scaleFactor = 0.5
+    #    if self.scaleFactor > 2:
+    #        self.scaleFactor = 2
+    #    self.setScale(self.scaleFactor)
+    #    self.decalScaled.emit(self.scaleFactor)
         
     def setSignalPos(self, dx, dy):
         pos = QtCore.QPointF(dx * 550 / 100.0 - self.boundingRectCustom().width()/2, dy * 550 / 100.0 - self.boundingRectCustom().height()/2)
@@ -119,6 +115,8 @@ class DecalScene(QtGui.QGraphicsScene):
     insertDecal, moveDecal = range(2)
     
     decalMoved = QtCore.Signal(QtCore.QPointF)
+    
+    decalScaled = QtCore.Signal(float)
     
     def __init__(self, bg, dc, parent = None):
         super(DecalScene, self).__init__(0, 0, 550, 550, parent)
@@ -155,8 +153,16 @@ class DecalScene(QtGui.QGraphicsScene):
             
     def mouseReleaseEvent(self, mouseEvent):
         super(DecalScene, self).mouseReleaseEvent(mouseEvent)
-
-
+        
+    def wheelEvent(self, event):
+        self.decal.scaleFactor += event.delta() / 720.0
+        if self.decal.scaleFactor < 0.35: 
+            self.decal.scaleFactor = 0.5
+        if self.decal.scaleFactor > 2:
+            self.decal.scaleFactor = 2
+        self.decal.setScale(self.decal.scaleFactor)
+        self.decalScaled.emit(self.decal.scaleFactor)
+    
 class DecalsForm(form_class,base_class):
     def __init__(self, backgroundImage, decalImage, parent = getMayaWindow()):
         super(DecalsForm,self).__init__(parent)
@@ -165,7 +171,7 @@ class DecalsForm(form_class,base_class):
         self.scene = DecalScene(backgroundImage, decalImage)
         self.graphicsView.setScene(self.scene)
         self.scene.decalMoved.connect(self.setValueSlider)
-        self.scene.decal.decalScaled.connect(self.setScaleDecal)
+        self.scene.decalScaled.connect(self.setScaleDecal)
         self.hSlider.valueChanged.connect(self.updateDecalPos)
         self.vSlider.valueChanged.connect(self.updateDecalPos)
         self.graphicsView.show()
@@ -185,6 +191,8 @@ class DecalsForm(form_class,base_class):
     def setScaleDecal(self, factor):
         cmds.setAttr('DEBUG_UTILITY.repeatV', 550.0/float(factor))
         cmds.setAttr('DEBUG_UTILITY.repeatU', 550.0/float(factor))
+        cmds.setAttr('DEBUG_UTILITY.offsetU', -QPointF.x()/self.scene.decal.boundingRectCustom().width() + 0.5)
+        cmds.setAttr('DEBUG_UTILITY.offsetV', -(550 - QPointF.y())/self.scene.decal.boundingRectCustom().width() + 0.5)
         
     def updateDecalPos(self):
         hValue = self.hSlider.value()
