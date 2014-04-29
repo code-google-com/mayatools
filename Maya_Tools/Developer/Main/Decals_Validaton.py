@@ -13,19 +13,9 @@ import functools
 
 #fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 #dirUI= fileDirCommmon +'/UI/Decal_Form.ui'
-dirUI = 'Z:/ge_Tools/Maya_Tools/Developer/Main/UI/Decal_Form.ui'
+dirUI = 'D:/maya_Tools/Maya_Tools/Developer/Main/UI/Decal_Form.ui'
 
 def wrapinstance(ptr, base=None):
-    """
-    Utility to convert a pointer to a Qt class instance (PySide/PyQt compatible)
-
-    :param ptr: Pointer to QObject in memory
-    :type ptr: long or Swig instance
-    :param base: (Optional) Base class to wrap with (Defaults to QObject, which should handle anything)
-    :type base: QtGui.QWidget
-    :return: QWidget or subclass instance
-    :rtype: QtGui.QWidget
-    """
     if ptr is None:
         return None
     ptr = long(ptr) #Ensure type
@@ -50,10 +40,7 @@ def wrapinstance(ptr, base=None):
 
 
 def loadUiType(uiFile):
-        """
-        Pyside lacks the "loadUiType" command, so we have to convert the ui file to py code in-memory first
-        and then execute it in a special frame to retrieve the form_class.
-        """
+
         parsed = xml.parse(uiFile)
         widget_class = parsed.find('widget').get('class')
         form_class = parsed.find('class').text
@@ -82,8 +69,9 @@ def getMayaWindow():
     return wrapinstance(long(ptr), QtGui.QWidget)
 
 class Decal(QtGui.QGraphicsPixmapItem):
-    lostFosus = QtCore.Signal(QtGui.QGraphicsItem)
-    selectedChanged = QtCore.Signal(QtGui.QGraphicsItem)
+    
+    decalScaled = QtCore.Signal(QtCore.QPointF)
+        
     def __init__(self, path, parent = None):
         super(Decal, self).__init__(parent)
         self.setPixmap(QtGui.QPixmap(path))
@@ -100,11 +88,20 @@ class Decal(QtGui.QGraphicsPixmapItem):
         if self.scaleFactor > 2:
             self.scaleFactor = 2
         self.setScale(self.scaleFactor)
-        self.resetTransform()
+        self.decalScaled.emit(self.scaleFactor)
         
     def setSignalPos(self, dx, dy):
         pos = QtCore.QPointF(dx * 550 / 100.0 - self.boundingRectCustom().width()/2, dy * 550 / 100.0 - self.boundingRectCustom().height()/2)
         self.setPos(pos)
+        
+    def getCenter(self):
+        return self.transformOriginPoint() 
+        
+    def setCenter(self):
+        pos = QtCore.QPointF()
+        pos.setX(self.boundingRectCustom().width()/2)
+        pos.setY(self.boundingRectCustom().height()/2)
+        return pos        
         
     def boundingRectCustom(self):
         rect = QtCore.QRectF()
@@ -121,18 +118,16 @@ class Decal(QtGui.QGraphicsPixmapItem):
 class DecalScene(QtGui.QGraphicsScene):
     insertDecal, moveDecal = range(2)
     
-    decalInserted = QtCore.Signal(Decal)
-    
     decalMoved = QtCore.Signal(QtCore.QPointF)
     
-    def __init__(self, bg, decal, parent = None):
+    def __init__(self, bg, dc, parent = None):
         super(DecalScene, self).__init__(0, 0, 550, 550, parent)
         self._backgroundImage = QtGui.QPixmap(bg).scaled(self.sceneRect().width(), self.sceneRect().height(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-        self._decalImage = QtGui.QPixmap(decal)
+        self._decalImage = QtGui.QPixmap(dc)
         self.myMode = self.insertDecal
         self.cursorPos = QtCore.QPointF()
         self.decal = Decal(self._decalImage)
-        #self.addPixmap(self._backgroundImage)
+        self.originRatio = 550.0/self.decal.boundingRect().height()
         
     def setMode(self, mode):
         self.myMode = mode
@@ -148,8 +143,6 @@ class DecalScene(QtGui.QGraphicsScene):
         if self.myMode == self.insertDecal:
             self.addItem(self.decal)
             insertedPos = QtCore.QPointF(mouseEvent.scenePos().x() - self.decal.boundingRect().width()/2, mouseEvent.scenePos().y() - self.decal.boundingRect().height()/2)
-            self.decal.setPos(insertedPos)
-            #self.decalInserted.emit(decal)
             self.setMode(self.moveDecal)
         super(DecalScene, self).mousePressEvent(mouseEvent)
         
@@ -158,7 +151,6 @@ class DecalScene(QtGui.QGraphicsScene):
             if self.decal.isSelected() and mouseEvent.buttons() == QtCore.Qt.LeftButton:
                 self.decalMoved.emit(self.cursorPos)    
             super(DecalScene, self).mouseMoveEvent(mouseEvent)
-            #self.cursorPos = QtCore.QPointF(mouseEvent.scenePos())
             self.cursorPos = QtCore.QPointF(self.decal.posCustom())
             
     def mouseReleaseEvent(self, mouseEvent):
@@ -173,28 +165,35 @@ class DecalsForm(form_class,base_class):
         self.scene = DecalScene(backgroundImage, decalImage)
         self.graphicsView.setScene(self.scene)
         self.scene.decalMoved.connect(self.setValueSlider)
+        self.scene.decal.decalScaled.connect(self.setScaleDecal)
         self.hSlider.valueChanged.connect(self.updateDecalPos)
         self.vSlider.valueChanged.connect(self.updateDecalPos)
         self.graphicsView.show()
+        self.startup()
+        
+    def startup(self):
+        if cmds.objExists('DEBUG_UTILITY'):
+            cmds.setAttr('DEBUG_UTILITY.repeatV', self.scene.originRatio)
+            cmds.setAttr('DEBUG_UTILITY.repeatU', self.scene.originRatio)
         
     def setValueSlider(self, QPointF):
         self.vSlider.setValue(QPointF.y()/550.0 * 100)
         self.hSlider.setValue(QPointF.x()/550.0 * 100)
+        cmds.setAttr('DEBUG_UTILITY.offsetU', -QPointF.x()/self.scene.decal.boundingRectCustom().width() + 0.5)
+        cmds.setAttr('DEBUG_UTILITY.offsetV', -(550 - QPointF.y())/self.scene.decal.boundingRectCustom().width() + 0.5)
+        
+    def setScaleDecal(self, factor):
+        cmds.setAttr('DEBUG_UTILITY.repeatV', 550.0/float(factor))
+        cmds.setAttr('DEBUG_UTILITY.repeatU', 550.0/float(factor))
         
     def updateDecalPos(self):
         hValue = self.hSlider.value()
         vValue = self.vSlider.value()
         self.scene.decal.setSignalPos(hValue, vValue)
         
-    def animateShader(self):
-        pass
-        # shader.move_along_X = self.hSlider.value()/100.0
-        # shader.move_along_Y = self.vSlider.value()/100.0
-        
-        
 
-backgroundImage = 'Z:/3D_Works/maya/Dropbox/wireframe.tif'
-decalsImage = 'Z:/3D_Works/maya/Dropbox/logo.tif'
+backgroundImage = 'D:/3D_Works/Dropbox/wireframe.tif'
+decalsImage = 'D:/3D_Works/Dropbox/logo.tif'
 form = DecalsForm(backgroundImage, decalsImage)
 form.show()
     
