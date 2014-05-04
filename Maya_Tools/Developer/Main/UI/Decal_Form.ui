@@ -34,20 +34,50 @@
        </widget>
       </item>
       <item>
-       <widget class="QDoubleSpinBox" name="dblBox">
+       <widget class="QDoubleSpinBox" name="spbScale">
         <property name="enabled">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QSlider" name="horizontalSlider_2">
+       <widget class="QSlider" name="sldScaleDecal">
         <property name="enabled">
          <bool>false</bool>
         </property>
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rdbDecal">
+        <property name="text">
+         <string>Decals</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rdbHStrip">
+        <property name="text">
+         <string>H_Strip</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rdbVStrip">
+        <property name="text">
+         <string>V_Stip</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup</string>
+        </attribute>
        </widget>
       </item>
      </layout>
@@ -149,4 +179,7 @@
  </widget>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="buttonGroup"/>
+ </buttongroups>
 </ui>

@@ -13,7 +13,7 @@ import functools
 
 #fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 #dirUI= fileDirCommmon +'/UI/Decal_Form.ui'
-dirUI = 'D:/maya_Tools/Maya_Tools/Developer/Main/UI/Decal_Form.ui'
+dirUI = 'Z:/ge_Tools/Maya_Tools/Developer/Main/UI/Decal_Form.ui'
 
 def wrapinstance(ptr, base=None):
     if ptr is None:
@@ -76,15 +76,6 @@ class Decal(QtGui.QGraphicsPixmapItem):
         self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, enabled = True)
         self.setFlag(QtGui.QGraphicsItem.ItemIsFocusable, enabled = True)
         self.scaleFactor = 1
-        
-    #def wheelEvent(self, event):
-    #    self.scaleFactor += event.delta() / 720.0
-    #    if self.scaleFactor < 0.35: 
-    #        self.scaleFactor = 0.5
-    #    if self.scaleFactor > 2:
-    #        self.scaleFactor = 2
-    #    self.setScale(self.scaleFactor)
-    #    self.decalScaled.emit(self.scaleFactor)
         
     def setSignalPos(self, dx, dy):
         pos = QtCore.QPointF(dx * 550 / 100.0 - self.boundingRectCustom().width()/2, dy * 550 / 100.0 - self.boundingRectCustom().height()/2)
@@ -200,8 +191,5 @@ class DecalsForm(form_class,base_class):
         self.scene.decal.setSignalPos(hValue, vValue)
         
 
-backgroundImage = 'D:/3D_Works/Dropbox/wireframe.tif'
-decalsImage = 'D:/3D_Works/Dropbox/logo.tif'
-form = DecalsForm(backgroundImage, decalsImage)
-form.show()
+
     
