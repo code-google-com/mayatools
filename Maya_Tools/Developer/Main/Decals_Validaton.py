@@ -172,7 +172,6 @@ class DecalsForm(form_class,base_class):
         if cmds.objExists('body_paint'):
             cmds.setAttr('body_paint.Scale', 1/(self.scene.originRatio))
     
-        
     def setValueSlider(self, QPointF):
         self.vSlider.setValue(QPointF.y()/550.0 * 100)
         self.hSlider.setValue(QPointF.x()/550.0 * 100)
@@ -180,10 +179,7 @@ class DecalsForm(form_class,base_class):
         cmds.setAttr('DEBUG_UTILITY.offsetV', -(550 - QPointF.y())/self.scene.decal.boundingRectCustom().width() + 0.5)
         
     def setScaleDecal(self, factor):
-        cmds.setAttr('DEBUG_UTILITY.repeatV', 550.0/float(factor))
-        cmds.setAttr('DEBUG_UTILITY.repeatU', 550.0/float(factor))
-        cmds.setAttr('DEBUG_UTILITY.offsetU', -QPointF.x()/self.scene.decal.boundingRectCustom().width() + 0.5)
-        cmds.setAttr('DEBUG_UTILITY.offsetV', -(550 - QPointF.y())/self.scene.decal.boundingRectCustom().width() + 0.5)
+        cmds.setAttr('body_paint.Scale', factor)
         
     def updateDecalPos(self):
         hValue = self.hSlider.value()
