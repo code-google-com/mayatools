@@ -13,7 +13,7 @@ import functools
 
 #fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 #dirUI= fileDirCommmon +'/UI/Decal_Form.ui'
-dirUI = 'Z:/ge_Tools/Maya_Tools/Developer/Main/UI/Decal_Form.ui'
+dirUI = 'Z:/ge_Tools/Maya_Tools/Developer/Main/UI/Decal_Form_v01.ui'
 
 def wrapinstance(ptr, base=None):
     if ptr is None:
