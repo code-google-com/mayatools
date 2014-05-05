@@ -169,9 +169,9 @@ class DecalsForm(form_class,base_class):
         self.startup()
         
     def startup(self):
-        if cmds.objExists('DEBUG_UTILITY'):
-            cmds.setAttr('DEBUG_UTILITY.repeatV', self.scene.originRatio)
-            cmds.setAttr('DEBUG_UTILITY.repeatU', self.scene.originRatio)
+        if cmds.objExists('body_paint'):
+            cmds.setAttr('body_paint.Scale', 1/(self.scene.originRatio))
+    
         
     def setValueSlider(self, QPointF):
         self.vSlider.setValue(QPointF.y()/550.0 * 100)
