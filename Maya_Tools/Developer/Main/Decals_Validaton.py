@@ -11,9 +11,9 @@ from cStringIO import StringIO
 import shiboken
 import functools
 
-#fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
-#dirUI= fileDirCommmon +'/UI/Decal_Form.ui'
-dirUI = 'Z:/ge_Tools/Maya_Tools/Developer/Main/UI/Decal_Form_v01.ui'
+dirUI = 'D:/maya_Tools/Maya_Tools/Developer/Main/UI/Decal_Form.ui'
+logoPath = 'D:/3D_Works/Dropbox/Shader_Development/logo.tif'
+bgPath = 'D:/3D_Works/Dropbox/wireframe.tif'
 
 def wrapinstance(ptr, base=None):
     if ptr is None:
@@ -37,7 +37,6 @@ def wrapinstance(ptr, base=None):
         return sip.wrapinstance(long(ptr), base)
     else:
         return None
-
 
 def loadUiType(uiFile):
         parsed = xml.parse(uiFile)
@@ -80,6 +79,7 @@ class Decal(QtGui.QGraphicsPixmapItem):
     def setSignalPos(self, dx, dy):
         pos = QtCore.QPointF(dx * 550 / 100.0 - self.boundingRectCustom().width()/2, dy * 550 / 100.0 - self.boundingRectCustom().height()/2)
         self.setPos(pos)
+
         
     def getCenter(self):
         return self.transformOriginPoint() 
@@ -152,7 +152,7 @@ class DecalScene(QtGui.QGraphicsScene):
         if self.decal.scaleFactor > 2:
             self.decal.scaleFactor = 2
         self.decal.setScale(self.decal.scaleFactor)
-        self.decalScaled.emit(self.decal.scaleFactor)
+        self.decalScaled.emit(self.decal.boundingRectCustom().height()/550)
     
 class DecalsForm(form_class,base_class):
     def __init__(self, backgroundImage, decalImage, parent = getMayaWindow()):
@@ -175,8 +175,10 @@ class DecalsForm(form_class,base_class):
     def setValueSlider(self, QPointF):
         self.vSlider.setValue(QPointF.y()/550.0 * 100)
         self.hSlider.setValue(QPointF.x()/550.0 * 100)
-        cmds.setAttr('DEBUG_UTILITY.offsetU', -QPointF.x()/self.scene.decal.boundingRectCustom().width() + 0.5)
-        cmds.setAttr('DEBUG_UTILITY.offsetV', -(550 - QPointF.y())/self.scene.decal.boundingRectCustom().width() + 0.5)
+        
+        cmds.setAttr('body_paint.Move_U', self.hSlider.value()/100.0)
+        cmds.setAttr('body_paint.Move_V', 1 - self.vSlider.value()/100.0)
+
         
     def setScaleDecal(self, factor):
         cmds.setAttr('body_paint.Scale', factor)
@@ -185,6 +187,9 @@ class DecalsForm(form_class,base_class):
         hValue = self.hSlider.value()
         vValue = self.vSlider.value()
         self.scene.decal.setSignalPos(hValue, vValue)
+        
+form = DecalsForm(bgPath, logoPath)
+form.show()
         
 
 
