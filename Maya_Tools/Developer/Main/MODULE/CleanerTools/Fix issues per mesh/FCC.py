@@ -1,11 +1,12 @@
 import inspect, os
 import maya.mel as mel
 
-description = 'FCC on selected node.'
-name = 'FCC'
+description = 'FCO on scene.'
+name = 'FCO'
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 
 def execute():
     print '--------------- FCC-------------------------'
-    attachFileSource = fileDirCommmon + '/geNFS14_SpecialFCCOnSelectedMeshes.mel'
+    attachFileSource = fileDirCommmon + '/geNFS14_FixCorruptObject.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
+    mel.eval('geNFS14_FixCorruptObjectGUI();')
