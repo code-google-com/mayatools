@@ -176,8 +176,12 @@ class DecalsForm(form_class,base_class):
         self.vSlider.setValue(QPointF.y()/550.0 * 100)
         self.hSlider.setValue(QPointF.x()/550.0 * 100)
         
-        cmds.setAttr('body_paint.Move_U', ((self.hSlider.value() - 10) * 5.0/4.0)/100.0)
-        cmds.setAttr('body_paint.Move_V', 1 - ((self.vSlider.value() -10) *5.0/4.0)/100.0)
+        #cmds.setAttr('body_paint.Move_U', ((self.hSlider.value() - 10) * 5.0/4.0)/100.0)
+        #cmds.setAttr('body_paint.Move_V', 1 - ((self.vSlider.value() -10) *5.0/4.0)/100.0)
+        hValue = self.hSlider.value() #- self.scene.decal.boundingRectCustom().width()/2.0/550.0 *100.0
+        vValue = self.vSlider.value() #- self.scene.decal.boundingRectCustom().height()/2.0/550.0 *100.0
+        cmds.setAttr('body_paint.Move_U', hValue/100.0)
+        cmds.setAttr('body_paint.Move_V', 1 - vValue/100.0)
         
     def setScaleDecal(self, factor):
         cmds.setAttr('body_paint.Scale', factor)
