@@ -11,7 +11,7 @@ from cStringIO import StringIO
 import shiboken
 import functools
 
-dirUI = 'D:/maya_Tools/Maya_Tools/Developer/Main/UI/Decal_Form.ui'
+dirUI = 'Z:/ge_Tools/Maya_Tools/Developer/Main/UI/Decal_Form.ui'
 logoPath = 'D:/3D_Works/Dropbox/Shader_Development/logo.tif'
 bgPath = 'D:/3D_Works/Dropbox/wireframe.tif'
 
@@ -176,9 +176,8 @@ class DecalsForm(form_class,base_class):
         self.vSlider.setValue(QPointF.y()/550.0 * 100)
         self.hSlider.setValue(QPointF.x()/550.0 * 100)
         
-        cmds.setAttr('body_paint.Move_U', self.hSlider.value()/100.0)
-        cmds.setAttr('body_paint.Move_V', 1 - self.vSlider.value()/100.0)
-
+        cmds.setAttr('body_paint.Move_U', ((self.hSlider.value() - 10) * 5.0/4.0)/100.0)
+        cmds.setAttr('body_paint.Move_V', 1 - ((self.vSlider.value() -10) *5.0/4.0)/100.0)
         
     def setScaleDecal(self, factor):
         cmds.setAttr('body_paint.Scale', factor)
@@ -188,8 +187,8 @@ class DecalsForm(form_class,base_class):
         vValue = self.vSlider.value()
         self.scene.decal.setSignalPos(hValue, vValue)
         
-form = DecalsForm(bgPath, logoPath)
-form.show()
+#form = DecalsForm(bgPath, logoPath)
+#form.show()
         
 
 
