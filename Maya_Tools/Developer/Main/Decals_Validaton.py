@@ -11,9 +11,13 @@ from cStringIO import StringIO
 import shiboken
 import functools
 
-dirUI = 'Z:/ge_Tools/Maya_Tools/Developer/Main/UI/Decal_Form.ui'
+# -- Custom variables. Please alter these vars
+
+dirUI = 'D:/maya_Tools/Maya_Tools/Developer/Main/UI/Decal_Form.ui'
 logoPath = 'D:/3D_Works/Dropbox/Shader_Development/logo.tif'
 bgPath = 'D:/3D_Works/Dropbox/wireframe.tif'
+
+#-------------------------------------------------------------
 
 def wrapinstance(ptr, base=None):
     if ptr is None:
@@ -118,6 +122,9 @@ class DecalScene(QtGui.QGraphicsScene):
         self.decal = Decal(self._decalImage)
         self.originRatio = 550.0/self.decal.boundingRect().height()
         
+    def addGraphicsItem(self):
+        self.decal = Decal(self._decalImage)
+        
     def setMode(self, mode):
         self.myMode = mode
         
@@ -130,6 +137,7 @@ class DecalScene(QtGui.QGraphicsScene):
         if mouseEvent.button() != QtCore.Qt.LeftButton:
             return
         if self.myMode == self.insertDecal:
+            #self.addGraphicsItem()
             self.addItem(self.decal)
             insertedPos = QtCore.QPointF(mouseEvent.scenePos().x() - self.decal.boundingRect().width()/2, mouseEvent.scenePos().y() - self.decal.boundingRect().height()/2)
             self.setMode(self.moveDecal)
@@ -162,11 +170,19 @@ class DecalsForm(form_class,base_class):
         self.setupUi(self)
         self.scene = DecalScene(backgroundImage, decalImage)
         self.graphicsView.setScene(self.scene)
+        
         self.scene.decalMoved.connect(self.setValueSlider)
         self.scene.decalScaled.connect(self.setScaleDecal)
+        
         self.hSlider.valueChanged.connect(self.updateDecalPos)
         self.vSlider.valueChanged.connect(self.updateDecalPos)
+        
         self.spbScale.valueChanged.connect(self.updateDecalScale)
+        
+        self.rdbHStrip.clicked.connect(self.changeTexture)
+        self.rdbVStrip.clicked.connect(self.changeTexture)
+        self.rdbDecal.clicked.connect(self.changeTexture)
+        
         self.graphicsView.show()
         self.startup()
         
@@ -203,8 +219,23 @@ class DecalsForm(form_class,base_class):
         #--------------------------------------------------------------------
         #uValue = self.hSlider.value()
         #uValue = self.hSlider.value()
-        cmds.setAttr('body_paint.Move_U', uValue/100.0)
-        cmds.setAttr('body_paint.Move_V', 1 - vValue/100.0)
+        if self.rdbDecal.isChecked():
+            cmds.setAttr('body_paint.Move_U', uValue/100.0)
+            cmds.setAttr('body_paint.Move_V', 1 - vValue/100.0)
+            
+        if self.rdbHStrip.isChecked():
+            
+           # -----------------------------do something
+           # ---------------------------------------------------------------------------
+           # ---------------------------------------------------------------------------
+           pass # please remove pass after write your code
+           
+        if self.rdbVStrip.isChecked():
+            
+           # -----------------------------do something
+           # ---------------------------------------------------------------------------
+           # ---------------------------------------------------------------------------
+           pass # please remove pass after write your code
         
     def updateDecalScale(self):
         sValue = self.spbScale.value()
@@ -212,9 +243,30 @@ class DecalsForm(form_class,base_class):
         sFactor = sValue * 550.00/self.scene.decal.boundingRect().width()
         self.scene.decal.setScale(sFactor)
         
-#form = DecalsForm(bgPath, logoPath)
-#form.show()
+    def changeTexture(self):
+        if self.rdbDecal.isChecked():
+           self.scene.setMode(self.scene.insertDecal)
+           
+           # -----------------------------do something
+           # ---------------------------------------------------------------------------
+           # ---------------------------------------------------------------------------
+           
+        if self.rdbHStrip.isChecked():
+            self.scene.removeItem(self.scene.decal)
+          
+           # -----------------------------do something
+           # ---------------------------------------------------------------------------
+           # ---------------------------------------------------------------------------
+          
+        if self.rdbVStrip.isChecked():
+            self.scene.removeItem(self.scene.decal)
+            #self.scene.setMode(self.scene.insertDecal)
+            
+           # -----------------------------do something
+           # ---------------------------------------------------------------------------
+           # ---------------------------------------------------------------------------
+           
+
+form = DecalsForm(bgPath, logoPath)
+form.show()
         
-
-
-    
