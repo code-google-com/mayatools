@@ -157,14 +157,16 @@ class DecalScene(QtGui.QGraphicsScene):
 class DecalsForm(form_class,base_class):
     def __init__(self, backgroundImage, decalImage, parent = getMayaWindow()):
         super(DecalsForm,self).__init__(parent)
-        self.setupUi(self)
         self.setObjectName('ProjectUIWindow')
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setupUi(self)
         self.scene = DecalScene(backgroundImage, decalImage)
         self.graphicsView.setScene(self.scene)
         self.scene.decalMoved.connect(self.setValueSlider)
         self.scene.decalScaled.connect(self.setScaleDecal)
         self.hSlider.valueChanged.connect(self.updateDecalPos)
         self.vSlider.valueChanged.connect(self.updateDecalPos)
+        self.spbScale.valueChanged.connect(self.updateDecalScale)
         self.graphicsView.show()
         self.startup()
         
@@ -184,11 +186,22 @@ class DecalsForm(form_class,base_class):
 
     def setScaleDecal(self, factor):
         cmds.setAttr('body_paint.Scale', factor)
+        self.spbScale.setValue(factor)
         
     def updateDecalPos(self):
-        hValue = self.hSlider.value()
-        vValue = self.vSlider.value()
-        self.scene.decal.setSignalPos(hValue, vValue)
+        self.scene.decal.setSignalPos(self.hSlider.value(), self.vSlider.value())
+        w = self.scene.decal.boundingRectCustom().width()
+        h = self.scene.decal.boundingRectCustom().height()
+        uValue = (self.hSlider.value() - w / 11.0)/(100 - 2 * w / 11.0) *100
+        vValue = (self.vSlider.value() - h / 11.0)/(100 - 2 * h / 11.0) *100
+        cmds.setAttr('body_paint.Move_U', uValue/100.0)
+        cmds.setAttr('body_paint.Move_V', 1 - vValue/100.0)
+        
+    def updateDecalScale(self):
+        sValue = self.spbScale.value()
+        cmds.setAttr('body_paint.Scale', sValue)
+        sFactor = sValue * 550.00/self.scene.decal.boundingRect().width()
+        self.scene.decal.setScale(sFactor)
         
 #form = DecalsForm(bgPath, logoPath)
 #form.show()
