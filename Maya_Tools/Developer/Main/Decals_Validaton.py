@@ -179,8 +179,13 @@ class DecalsForm(form_class,base_class):
         self.hSlider.setValue(QPointF.x()/550.0 * 100)
         w = self.scene.decal.boundingRectCustom().width()
         h = self.scene.decal.boundingRectCustom().height()
+        #------ work with my shader
         uValue = (self.hSlider.value() - w / 11.0)/(100 - 2 * w / 11.0) *100
         vValue = (self.vSlider.value() - h / 11.0)/(100 - 2 * h / 11.0) *100
+        #--------------------------------------------------------------------
+        #uValue = self.hSlider.value()
+        #uValue = self.hSlider.value()
+        
         cmds.setAttr('body_paint.Move_U', uValue/100.0)
         cmds.setAttr('body_paint.Move_V', 1 - vValue/100.0)
 
@@ -192,8 +197,12 @@ class DecalsForm(form_class,base_class):
         self.scene.decal.setSignalPos(self.hSlider.value(), self.vSlider.value())
         w = self.scene.decal.boundingRectCustom().width()
         h = self.scene.decal.boundingRectCustom().height()
+        #------ work with my shader
         uValue = (self.hSlider.value() - w / 11.0)/(100 - 2 * w / 11.0) *100
         vValue = (self.vSlider.value() - h / 11.0)/(100 - 2 * h / 11.0) *100
+        #--------------------------------------------------------------------
+        #uValue = self.hSlider.value()
+        #uValue = self.hSlider.value()
         cmds.setAttr('body_paint.Move_U', uValue/100.0)
         cmds.setAttr('body_paint.Move_V', 1 - vValue/100.0)
         
