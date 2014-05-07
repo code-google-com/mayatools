@@ -219,21 +219,20 @@ class DecalsForm(form_class,base_class):
         #--------------------------------------------------------------------
         #uValue = self.hSlider.value()
         #uValue = self.hSlider.value()
+        
         if self.rdbDecal.isChecked():
-            cmds.setAttr('body_paint.Move_U', uValue/100.0)
-            cmds.setAttr('body_paint.Move_V', 1 - vValue/100.0)
+            cmds.setAttr('body_paint.Move_U', uValue/100.0) # change shader's name and shader properties's name
+            cmds.setAttr('body_paint.Move_V', 1 - vValue/100.0) # change shader's name and shader properties's name
             
         if self.rdbHStrip.isChecked():
             
            # -----------------------------do something
-           # ---------------------------------------------------------------------------
            # ---------------------------------------------------------------------------
            pass # please remove pass after write your code
            
         if self.rdbVStrip.isChecked():
             
            # -----------------------------do something
-           # ---------------------------------------------------------------------------
            # ---------------------------------------------------------------------------
            pass # please remove pass after write your code
         
@@ -248,23 +247,20 @@ class DecalsForm(form_class,base_class):
            self.scene.setMode(self.scene.insertDecal)
            
            # -----------------------------do something
-           # ---------------------------------------------------------------------------
-           # ---------------------------------------------------------------------------
+           # --------------------------------------------------------------------------
            
         if self.rdbHStrip.isChecked():
             self.scene.removeItem(self.scene.decal)
           
            # -----------------------------do something
            # ---------------------------------------------------------------------------
-           # ---------------------------------------------------------------------------
-          
+
         if self.rdbVStrip.isChecked():
             self.scene.removeItem(self.scene.decal)
-            #self.scene.setMode(self.scene.insertDecal)
-            
+           
            # -----------------------------do something
            # ---------------------------------------------------------------------------
-           # ---------------------------------------------------------------------------
+
            
 
 form = DecalsForm(bgPath, logoPath)
