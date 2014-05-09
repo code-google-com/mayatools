@@ -322,6 +322,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="btnToClient">
+          <property name="text">
+           <string>To Client</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="btnOpenServerFolder">
           <property name="toolTip">
            <string/>

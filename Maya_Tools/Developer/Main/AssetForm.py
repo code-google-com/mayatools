@@ -81,6 +81,9 @@ class AssetForm(form_class,base_class):
         if userID not in self.Proj.Technical() + self.Proj.Producer() + self.Proj.Art():
             self.btnCreateServerFolders.setEnabled(False)
             self.server.setEnabled(False)
+        
+        if userID not in self.Proj.Technical():
+            self.btnToClient.setEnabled(False)
             
     def updateCurrentAsset(self):
         self.currentAsset = str(self.cbbAssets.currentText())
