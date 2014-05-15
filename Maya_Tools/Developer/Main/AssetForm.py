@@ -63,6 +63,8 @@ class AssetForm(form_class,base_class):
             
         self.currentAsset = ''
         self.currentGroup = ''
+        self.currentLOD = ''
+        self.currentStage = ''
         
         #-------------- FUNCTION UI
         self.btnCreateLocalFolders.clicked.connect(self.createLocal)
@@ -270,7 +272,9 @@ class AssetForm(form_class,base_class):
             self.cbbWorkingStage.addItems(['Not Available'])
         else:
             self.cbbWorkingStage.addItems(self.Proj.stages) 
-        self.cbbType.addItems(self.Proj.LOD)                
+        self.cbbType.addItems(self.Proj.LOD)   
+        
+    def updateAssetStatus(self):             
   
     def on_cbbGroup_currentIndexChanged (self, groupName):
         assetList = list()
