@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+<AssetList>
+	<group name = "Batch1">
+		<asset name = "LUGE_Barriers_Concrete_Large_A" start_date = "" due_date = "" stage = "" image = ""/>
+		<asset name = "LUGE_Signs_Road_Diversion_Left" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Diversion_Right" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Left_Turn_Easy" start_date = "" due_date = "" stage = ""  image = ""/>
+		
+		
+	</group>
+	<group name = "Batch2">
+		<asset name = "LUGE_Barriers_Concrete_Block_A" start_date = "" due_date = "" stage = "" image = ""/>
+		<asset name = "LUGE_Signs_Advert_Billboard_A" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Broken_Road" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Danger" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Dangerous_Edge" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Destination" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Landslide" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Right_Chevron_Small" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Left_Chevron_Small" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Left_Turn_Chevron_Small" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Left_Turn_Chevron_Large" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Men_At_Work" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_No_Entry" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Right_Turn_Chevron_Large" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Right_Turn_Chevron_Small" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Speed_A" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Road_Speed_B" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Tunnel_Hanging_Digital" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Tunnel_Hanging_Directions" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "LUGE_Signs_Tunnel_Hanging_Resort" start_date = "" due_date = "" stage = ""  image = ""/>
+		
+		
+	</group>	
+</AssetList>
