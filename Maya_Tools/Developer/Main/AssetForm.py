@@ -274,7 +274,8 @@ class AssetForm(form_class,base_class):
             self.cbbWorkingStage.addItems(self.Proj.stages) 
         self.cbbType.addItems(self.Proj.LOD)   
         
-    def updateAssetStatus(self):             
+    def updateAssetStatus(self):   
+        pass          
   
     def on_cbbGroup_currentIndexChanged (self, groupName):
         assetList = list()

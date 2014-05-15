@@ -44,8 +44,13 @@ class ProjectBaseClass():
         self.checkList = list()
         self.workingStage = list()
         self.templateStructure = ''
-        
+        #------------ Project properties -------------------------------
         self.group = False
+        self.depedencies = False
+        self.inverse = False
+        # --------------------------------------------------------------
+        self.structure = ''
+        
         self.readXMLFile(XMLRootFile)
    
     def getFolderFromNode(self, node):
@@ -104,7 +109,6 @@ class ProjectBaseClass():
             if name == "AlternativePath":
                 self.AlternativePath = d.childNodes[0].data
                 
-                
         ProjectData = ProjectNode.getElementsByTagName("ProjectData")[0]
                 
         # get module
@@ -121,11 +125,6 @@ class ProjectBaseClass():
             params.append(paramsModule)
         self.moduleList.append(names)
         self.moduleList.append(params)    
-        # get checklist
-#         checkListNode = ProjectNode.getElementsByTagName('CheckList')[0]
-#         for check in checkListNode.getElementsByTagName('check'):
-#             nameCheck = check.getAttribute('name')
-#             self.checkList.append(nameCheck)
             
         # get managers    
         ManagerDepts = ProjectNode.getElementsByTagName("Managers")[0]
@@ -140,10 +139,39 @@ class ProjectBaseClass():
         StructureNode = xmldoc.getElementsByTagName('Structures_Asset')[0]
         self.getFolderFromNode(StructureNode)
         print self.placeFileAndName
+        
         # get template
+        templateNode =  ProjectNode.getElementsByTagName('Template')[0]
+        self.templateFile = 'template' + '/' + templateNode.getAttribute('file')
+        
+         # get group
+        if StructureNode.getAttribute('group') == 'True':
+            self.group = True
+        else:
+            self.group = False
+            
+        # get dependencies
+        if StructureNode.getAttribute('dependencies') == 'True':
+            self.depedencies = True
+        else:
+            self.dependencies = False
+        
+        # get inverse
+        if StructureNode.getAttribute('inverse') == 'True':
+            self.inverse = True
+        else:
+            self.inverse = False
+        
+        # get structure
+        lodNodes = [node for node in ProjectNode.getElementsByTagName("folder") if node.getAttribute('type') == 'LOD']
+        structure = list()
+        for node in lodNodes:
+            pass
+            
+        
         
         # get LOD
-        lodNodes = ProjectNode.getElementsByTagName("folder")
+        
         for node in lodNodes:
             if node.getAttribute("type") == "LOD":
                 self.LOD.append(node.getAttribute("name"))
@@ -157,14 +185,9 @@ class ProjectBaseClass():
                 self.stages.append(node.getAttribute("name"))
         self.stages = sorted(list(set(self.stages)))
         
-        # get group
-        if StructureNode.getAttribute('group') == 'True':
-            self.group = True
-        else:
-            self.group = False
+       
         
-        templateNode =  ProjectNode.getElementsByTagName('Template')[0]
-        self.templateFile = 'template' + '/' + templateNode.getAttribute('file')
+        
         
         # get project data 
         
