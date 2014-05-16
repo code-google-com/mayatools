@@ -143,20 +143,14 @@ def execute():
         tempDir = 'marmoset/app/res/published/data/car_descriptions/'    
         dstdir = os.path.join(car_folder, os.path.dirname(tempDir))
         #print 'dstdir'
-        #print dstdir
-<<<<<<< .mine
-        if not os.path.exists(dstdir):
-            os.makedirs(dstdir)
-        if os.path.isfile(f1_dir):
-            shutil.copy(f1_dir, dstdir)
-=======
+
         try:
             if not os.path.exists(dstdir):
                 os.makedirs(dstdir)
             shutil.copy(f1_dir, dstdir)
         except:
             print 'Cannot obtain file in game. Please consider!'
->>>>>>> .r295
+
     else:
         QtGui.QMessageBox.critical(None,'Wrong car name','Please import car to Collada before copy file.',QtGui.QMessageBox.Ok)
      
@@ -165,19 +159,14 @@ def execute():
         dstdir2 = os.path.join(car_folder, os.path.dirname(temDir2))
         #print 'dstdir2'
         #print dstdir2
-<<<<<<< .mine
-        if not os.path.exists(dstdir2):
-            os.makedirs(dstdir2)
-        if os.path.isfile(f2_dir):
-            shutil.copy(f2_dir, dstdir2)
-=======
+
         try:
             if not os.path.exists(dstdir2):
                 os.makedirs(dstdir2)
             shutil.copy(f2_dir, dstdir2)
         except:
             print 'Cannot obtain file in game. Please consider!'
->>>>>>> .r295
+
     else:
         QtGui.QMessageBox.critical(None,'Wrong car name','Please import car to Collada before copy file.',QtGui.QMessageBox.Ok)
     
