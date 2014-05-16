@@ -29,6 +29,7 @@ COMMASPACE = ', '
 f1_dir =[]
 f2_dir=[]
 tempDir = []
+car_folder_local=''
 published_dir = 'C:/development/marmoset/app/res/published/data/car_descriptions'
 master_dir = 'C:/development/marmoset/app/res/master/data/car_descriptions'
 #serverPath = '//glassegg.com/Scenes/RR_2014/To_Client/Today'
@@ -52,6 +53,9 @@ def loadXML(xmlFile, content, proper):
         #kit = [x.getAttribute(proper) for x in kitNodes]
         #kit.append([x.getAttribute('shortname') for x in kitNodes])
         return kit
+def remove(sub,s):
+    return s.replace(sub,"",1)
+
 def sendMailHTML(from_ad,to_ad,car_folder):
     #xmlDir = os.path.split(os.path.split(fileDirCommmon)[0])[0] + '/XMLfiles/MailList.xml'
     # THONG SO GUI MAIL
@@ -112,14 +116,25 @@ def execute():
     mel.eval('showHidden -all;')
     # Get Carname
     car_name= cmds.file(q= True, sn = True).split('/')[-1].split('.')[0]
-    car_folder = serverPath +'/'+ car_name
+    car_namelocal = os.path.splitext(cmds.file(q= True, sn = True))[0]
+    print('car_namelocal',str(car_namelocal)) 
     
-    f1_dir = published_dir +'/'+car_name +'.sb'
+    #car_folder_local = car_name.split('_')
+    s = car_name[0:8]
+    if s=='traffic_':
+        car_folder_local = remove(s,car_name)
+    else:
+        car_folder_local = str(car_name)
+   
+     
+    car_folder = serverPath +'/'+ car_folder_local
+    
+    f1_dir = published_dir +'/'+str(car_name) +'.sb'
     #file1 = f1_dir.split('/',2)
     #path,file = os.path.split(f1_dir)
         
-    f2_dir = master_dir +'/'+car_name +'.sx'
-   
+    f2_dir = master_dir +'/'+str(car_name) +'.sx'
+    
    
     if not os.path.exists(car_folder):
         os.makedirs(car_folder)
@@ -129,12 +144,19 @@ def execute():
         dstdir = os.path.join(car_folder, os.path.dirname(tempDir))
         #print 'dstdir'
         #print dstdir
+<<<<<<< .mine
+        if not os.path.exists(dstdir):
+            os.makedirs(dstdir)
+        if os.path.isfile(f1_dir):
+            shutil.copy(f1_dir, dstdir)
+=======
         try:
             if not os.path.exists(dstdir):
                 os.makedirs(dstdir)
             shutil.copy(f1_dir, dstdir)
         except:
             print 'Cannot obtain file in game. Please consider!'
+>>>>>>> .r295
     else:
         QtGui.QMessageBox.critical(None,'Wrong car name','Please import car to Collada before copy file.',QtGui.QMessageBox.Ok)
      
@@ -143,22 +165,32 @@ def execute():
         dstdir2 = os.path.join(car_folder, os.path.dirname(temDir2))
         #print 'dstdir2'
         #print dstdir2
+<<<<<<< .mine
+        if not os.path.exists(dstdir2):
+            os.makedirs(dstdir2)
+        if os.path.isfile(f2_dir):
+            shutil.copy(f2_dir, dstdir2)
+=======
         try:
             if not os.path.exists(dstdir2):
                 os.makedirs(dstdir2)
             shutil.copy(f2_dir, dstdir2)
         except:
             print 'Cannot obtain file in game. Please consider!'
+>>>>>>> .r295
     else:
         QtGui.QMessageBox.critical(None,'Wrong car name','Please import car to Collada before copy file.',QtGui.QMessageBox.Ok)
-
+    
     # COPY MAYA FILE TO SERVER
-    carPath = clientPath + car_name
-    carName_copy = carPath + '/' + 'maya' +'/'+'car'+'/'+'lod00' +'/'+ car_name +'.mb'
+    carPath = clientPath + str(car_folder_local)
+    carName_copy = car_namelocal  +'.mb'
+    #print'carName_copy: '
+    #print carName_copy
     if os.path.isfile(carName_copy):
         shutil.copy(carName_copy,car_folder)
         
     # COPY TEXTURE DIRECTORY TO SERVER
+    
     textureDir = carPath +'/'+'textures' 
     if os.path.dirname(textureDir):
         print textureDir
@@ -172,7 +204,8 @@ def execute():
             #print fileNam 
             #shutil.copy(fileNam,dstTex)
             if os.path.isfile(fileNam):
-                shutil.copy(fileNam,dstTex)
+                if name != 'Thumbs.db':
+                    shutil.copy(fileNam,dstTex)
             if os.path.isdir(fileNam):
                 dstSTex = os.path.join(dstTex,name)
                 if not os.path.exists(dstSTex):
@@ -180,8 +213,11 @@ def execute():
                 subnames =os.listdir(fileNam)
                 for subname in subnames:
                     subfileNam = fileNam +'/'+ subname
-                    if os.path.isfile(subfileNam):
-                        shutil.copy(subfileNam, dstSTex)
+                    if subname != 'Thumbs.db':
+                        if os.path.isfile(subfileNam):
+                            shutil.copy(subfileNam, dstSTex)
+                        else:
+                            print 'file khong hop le!'
                     else:
                         print 'file khong hop le!'
     
@@ -190,7 +226,7 @@ def execute():
     
     xmlDir = os.path.split(os.path.split(fileDirCommmon)[0])[0] + '/XMLfiles/MailList.xml'
     from_ad = 'technical@glassegg1.com'
-    to_ad = loadXML(xmlDir,'Producer','mail')
+    to_ad = loadXML(xmlDir,'Producer','Mail')
     print 'SEND MAIL DI'
     print to_ad
     sendMail = sendMailHTML(from_ad,to_ad,car_folder)
