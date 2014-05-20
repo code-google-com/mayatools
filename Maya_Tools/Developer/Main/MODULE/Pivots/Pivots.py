@@ -205,6 +205,9 @@ class Pivots(form_class,base_class):
         mesh = py.ls(sl = True)[0]
         currentScale = mesh.scaleX.get()
         
+    def setPivotOnEdge(self):
+        pass
+        
 def main(xmlFile):
     form = Pivots(xmlFile)
     return form 
