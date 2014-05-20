@@ -1,0 +1,1290 @@
+
+//fixes the red channel of boost geometry
+global proc boltDam.fixBrokenBoost()
+{
+	string $boosts[] = `ls -long -type "transform" "BOOST_*"`;
+	for ($boost in $boosts)
+	{
+		float $col = 0.0;
+		if (gmatch ($boost, "*BOOST_R1*")) $col = 0.5041; 
+		if (gmatch ($boost, "*BOOST_R2*")) $col = 0.2562; 
+		if (gmatch ($boost, "*BOOST_R3*")) $col = 0.8678; 
+		if (gmatch ($boost, "*BOOST_R4*")) $col = 0.5785; 
+		if (gmatch ($boost, "*BOOST_L1*")) $col = 0.0001; 
+		if (gmatch ($boost, "*BOOST_L2*")) $col = 0.7438; 
+		if (gmatch ($boost, "*BOOST_L3*")) $col = 0.3884; 
+		if (gmatch ($boost, "*BOOST_L4*")) $col = 0.1322; 
+
+		polyColorSet -currentColorSet -colorSet "colorSet1" $boost;
+		$verts = `ls ($boost + ".vtx[*]")`;
+		polyColorPerVertex -r $col $verts;
+	}
+}
+
+
+
+
+global proc boltDam.paintDamageScratchGUI(int $type)
+{
+   	string $cols[]    = `ls -long -type "transform" "*_COL"`;
+   	string $shad[]    = `ls -long -type "transform" "*_SHADOW"`;
+	string $boost[]   = `ls -long -type "transform" "BOOST_*"`;
+	string $objList[] = boltShapesToTransforms(`ls -long -type "mesh"`);
+	
+
+	string $selected[] = `ls -sl -long -type "transform" $objList`;
+	if (size($selected)>0)
+	{
+		$objList = $selected;
+	}
+	//if objs are selected, use those instead
+	else
+	{
+		string $confirm = `confirmDialog -title "WARNING"
+			-message "No objects selected! Do you want to redo scratch colours on all objects in scene?"
+			-button "Yes" -button "No"
+			-defaultButton "No" -cancelButton "No" -dismissString "No"`;
+		if ($confirm == "No") $objList = {};
+	}
+	//warn user before damaging everything
+
+	$objList = `stringArrayRemoveDuplicates $objList`;
+	$objList = `stringArrayRemove $cols     $objList`;
+	$objList = `stringArrayRemove $boost     $objList`;
+	//$objList = `stringArrayRemove $shad     $objList`;
+
+	//print $objList;
+
+	python("import superVertPaint");
+	for ($obj in $objList)
+	{
+		if (gmatch ($obj, "*_LOD1"))
+		{
+			python ("superVertPaint.paintDamageColours('" + $obj + "', 4, 0.45, 1, " + $type + ")");
+		}
+		else if (gmatch ($obj, "*_LOD*"))
+		{
+			python ("superVertPaint.paintDamageColours('" + $obj + "', 4, 0.45, 1, " + $type + ")");
+		}
+		else
+		{
+			if ($type == 1) python ("superVertPaint.paintDamageColours('" + $obj + "', 4, 0.45, 1, " + $type + ")");
+			if ($type == 0) python ("superVertPaint.paintDamageColours('" + $obj + "', 6, 0.5, 1, " + $type + ")");
+		}
+	}
+
+
+}
+
+
+
+global proc boltDam.paintDamageScratchOffGUI()
+//turns of scratch damage
+{
+   	string $cols[]    = `ls -long -type "transform" "*_COL"`;
+   	string $shad[]    = `ls -long -type "transform" "*_SHADOW"`;
+	string $objList[] = boltShapesToTransforms(`ls -long -type "mesh"`);
+
+	string $selected[] = `ls -sl -long -type "transform" $objList`;
+	if (size($selected)>0)
+	{
+		$objList = $selected;
+	}
+	//if objs are selected, use those instead
+	else
+	{
+		string $confirm = `confirmDialog -title "WARNING"
+			-message "No objects selected! Do you want to turn off scratch colours on all objects in scene?"
+			-button "Yes" -button "No"
+			-defaultButton "No" -cancelButton "No" -dismissString "No"`;
+		if ($confirm == "No") $objList = {};
+	}
+	//warn user before non-damaging everything
+
+	$objList = `stringArrayRemoveDuplicates $objList`;
+	$objList = `stringArrayRemove $cols     $objList`;
+	$objList = `stringArrayRemove $shad     $objList`;
+
+	//print $objList;
+
+	python("import superVertPaint");
+	for ($obj in $objList)
+	{
+		python ("superVertPaint.setRedVertColsToBlack('" + $obj + "')");
+	}
+
+}
+
+global proc boltDam.paintDamageVectorOffGUI()
+//turns of scratch damage
+{
+   	string $cols[]    = `ls -long -type "transform" "*_COL"`;
+   	string $shad[]    = `ls -long -type "transform" "*_SHADOW"`;
+	string $objList[] = boltShapesToTransforms(`ls -long -type "mesh"`);
+
+	string $selected[] = `ls -sl -long -type "transform" $objList`;
+	if (size($selected)>0)
+	{
+		$objList = $selected;
+	}
+	//if objs are selected, use those instead
+	else
+	{
+		string $confirm = `confirmDialog -title "WARNING"
+			-message "No objects selected! Do you want to zero damage vectors on all objects in scene?"
+			-button "Yes" -button "No"
+			-defaultButton "No" -cancelButton "No" -dismissString "No"`;
+		if ($confirm == "No") $objList = {};
+	}
+	//warn user before non-damaging everything
+
+	$objList = `stringArrayRemoveDuplicates $objList`;
+	$objList = `stringArrayRemove $cols     $objList`;
+	//$objList = `stringArrayRemove $shad     $objList`;
+
+	//print $objList;
+
+	python("import superVertPaint");
+	for ($obj in $objList)
+	{
+		python ("superVertPaint.setVertColsToNoDamageVector('" + $obj + "')");
+	}
+
+}
+
+
+global proc boltDam.paintDamageScratchDirectionDefaultGUI()
+//sets scratch direction to black (default) - only for paint / carbon
+{
+	string $cols[]    = `ls -long -type "transform" "*_COL"`;
+   	string $shad[]    = `ls -long -type "transform" "*_SHADOW"`;
+	string $obList[] = boltShapesToTransforms(`ls -long -type "mesh"`);
+
+	string $selected[] = `ls -sl -long -type "transform" $obList`;
+	if (size($selected)>0)
+	{
+		$obList = $selected;
+	}
+	//if objs are selected, use those instead
+	else
+	{
+		string $confirm = `confirmDialog -title "WARNING"
+			-message "No objects selected! Do you want to set default damage direction on all objects in scene?"
+			-button "Yes" -button "No"
+			-defaultButton "No" -cancelButton "No" -dismissString "No"`;
+		if ($confirm == "No") $obList = {};
+	}
+	//warn user before defaulting everything
+
+	$obList = `stringArrayRemoveDuplicates $obList`;
+	$obList = `stringArrayRemove $cols     $obList`;
+	$obList = `stringArrayRemove $shad     $obList`;
+
+	//doesn't work with debug shaders on
+	boltRemoveDebugShaders(1);
+	
+	//force update needed
+	refresh -f;
+	
+	for ($ob in $obList)
+	{
+		boltDam.paintDamageScratchDirectionDefault($ob);
+	}
+	print "\nScratch direction painting complete!";
+
+}
+
+global proc boltDam.paintDamageScratchDirectionDefault(string $obj)
+//paints default damage direction - only to damage shaders.
+{
+	//print ( "\nPainting default scratch direction onto " + $obj);
+
+	string $objectSet = `sets -fc 1 ($obj + ".f[*]")`;
+
+	string $damageableSet = `sets -em -fc 1`;
+	string $materials[] = boltGetMaterialsOnObj($obj);
+	for ($mat in $materials)
+	{
+		$xmlpath =  boltGetShaderPreset($mat);
+		if ( 	(`gmatch $xmlpath "*body_livery_carbon_damage.xml"`) ||
+				(`gmatch $xmlpath "*body_livery_metal_damage.xml"`) ||
+				(`gmatch $xmlpath "*carbon_damage_*"`) )
+		{
+			//get light polys
+			string $sgs[] = getSGFromMaterial($mat);
+			if (size($sgs)>0)
+			{
+				string $temp2[] = `sets -un $sgs[0] $damageableSet`;
+				
+				//convert any shape nodes to faces
+				for ($i=0; $i<size($temp2); $i++)
+				{
+					if (`gmatch $temp2[$i] "*\\.f\\[*"` == 0)
+					{
+						$temp2[$i] = $temp2[$i] + ".f[*]";
+					}
+				}
+				
+				
+				$damageableSet = `sets -fc 1 $temp2`;
+			}
+		}
+	}
+	string $polys[] = `sets -intersection $damageableSet $objectSet`;
+	//select -r $polys;
+	if (size($polys)>0) polyColorPerVertex -b 0 $polys;
+	//select -cl;
+
+}
+
+
+global proc boltDam.saveLightColours(int $mode)
+{
+	print ("\nSaving light colours");
+
+	//attempt to open file for writing first, so any errors are caught before data processing
+	string $filePath = `file -q -sn`;
+	string $path = dirname($filePath);
+	string $name = basenameEx($filePath);
+	string $colFile = "";
+	if ($mode == 1) $colFile = ($path + "/" + $name + ".lightcolours");
+	if ($mode == 2) $colFile = ($path + "/" + $name + "_tool.lightcolours");
+	$fileId=`fopen $colFile "w"`;
+	if ($fileId == 0) error ("Error opening file '" + $colFile + "'. Is it write protected?");
+
+	//get colour data as large text string
+	string $file = "";
+
+	string $lightSet = `sets -em -fc 1`;
+	$materials = `ls -materials`;
+	for ($mat in $materials)
+	{
+		$xmlpath =  boltGetShaderPreset($mat);
+		if ( 	(`gmatch $xmlpath "*light_shader_standard.xml"`) ||
+				(`gmatch $xmlpath "*light_shader_standard_damage.xml"`) ||
+				(`gmatch $xmlpath "*light_shader_under_colour.xml"`) )
+		{
+			//get light polys
+			string $sgs[] = getSGFromMaterial($mat);
+			$temp = `sets -un $sgs[0] $lightSet`;
+			$lightSet = `sets -fc 1 $temp`;
+		}
+	}
+
+	string $vfs[] = `polyListComponentConversion -toVertexFace $lightSet`;
+	$vfs = `ls -fl $vfs`;
+	string $cols[] = {};
+
+	for ($vf in $vfs)
+	{
+		$temp = `polyColorPerVertex -q -b $vf`;
+		$file += ($vf + " " + $temp[0] + " ");
+	}
+
+	//write file
+	fprint $fileId $file;
+	fclose $fileId;
+	//write $file to disk
+
+	print ("\nLight colour data written to: " + $colFile);
+}
+
+
+global string $gBoltLightColourVFs[];
+global float $gBoltLightColours[];
+
+global proc boltDam.storeLightColours()
+{
+	print ("\nStoring light colours in memory...");
+
+	boltRemoveDebugShaders(1);
+
+	global string $gBoltLightColourVFs[];
+	global float $gBoltLightColours[];
+
+	//get colour data
+	string $lightSet = `sets -em -fc 1`;
+	$materials = `ls -materials`;
+	for ($mat in $materials)
+	{
+		$xmlpath =  boltGetShaderPreset($mat);
+		if ( 	(`gmatch $xmlpath "*light_shader_standard.xml"`) ||
+				(`gmatch $xmlpath "*light_shader_standard_damage.xml"`) ||
+				(`gmatch $xmlpath "*light_shader_under_colour.xml"`) )
+		{
+			//get light polys
+			string $sgs[] = getSGFromMaterial($mat);
+			$temp = `sets -un $sgs[0] $lightSet`;
+			$lightSet = `sets -fc 1 $temp`;
+		}
+	}
+
+	$gBoltLightColourVFs = `polyListComponentConversion -toVertexFace $lightSet`;
+	$gBoltLightColourVFs = `ls -fl $gBoltLightColourVFs`;
+
+	$gBoltLightColours = {};
+	for ($vf in $gBoltLightColourVFs)
+	{
+		float $temp[] = `polyColorPerVertex -q -b $vf`;
+		$gBoltLightColours[size($gBoltLightColours)] = $temp[0];
+	}
+
+	print ("\nLight colour data written to memory");
+}
+
+global proc boltDam.restoreLightColours()
+{
+	print ("\nRestoring light colours from memory...");
+
+
+	global string $gBoltLightColourVFs[];
+	global float $gBoltLightColours[];
+
+	global string $gMainProgressBar;  // This is defined on maya startup
+	progressBar -e -beginProgress -isInterruptable true -status "Restoring light colours" -maxValue (size($gBoltLightColourVFs)) $gMainProgressBar;
+
+	undoInfo -state 0;
+
+	for ($i=0; $i<size($gBoltLightColourVFs); $i++)
+	{
+		polyColorPerVertex -nun -b $gBoltLightColours[$i] $gBoltLightColourVFs[$i];
+		progressBar -edit -step 1 $gMainProgressBar;
+	}
+
+	undoInfo -state 1 -length 100;
+
+	progressBar -e -endProgress $gMainProgressBar;
+	$gBoltLightColourVFs = {};
+	$gBoltLightColours = {};
+
+	print ("\nLight colour data restored");
+}
+
+global proc boltDam.paintDamageLookupGUI()
+{
+	//doesn't work with debug shaders on
+	boltRemoveDebugShaders(1);
+	
+	string $cols[]    = `ls -long -type "transform" "*_COL"`;
+   	string $shad[]    = `ls -long -type "transform" "*_SHADOW"`;
+   	string $dam[]    = `ls -long -type "transform" "*_DAM"`;
+	string $objList[] = boltShapesToTransforms(`ls -long -type "mesh"`);
+
+	string $selected[] = `ls -sl -long -type "transform" $objList`;
+	if (size($selected)>0)
+	{
+		$objList = $selected;
+	}
+	//if objs are selected, use those instead
+	else
+	{
+		string $confirm = `confirmDialog -title "WARNING"
+			-message "No objects selected! Do you want to redo damage lookup colours on all objects in scene?"
+			-button "Yes" -button "No"
+			-defaultButton "No" -cancelButton "No" -dismissString "No"`;
+		if ($confirm == "No") $objList = {};
+	}
+	//warn user before damaging everything
+
+	$objList = `stringArrayRemoveDuplicates $objList`;
+	$objList = `stringArrayRemove $cols     $objList`;
+	$objList = `stringArrayRemove $dam    $objList`;
+
+	//print $objList;
+
+	//windows to paint an average lookup colour to
+	string $windows[] = {"WINDOW_B","WINDOW_B2","WINDOW_BL","WINDOW_BR","WINDOW_FL","WINDOW_FL2","WINDOW_FR","WINDOW_FR2","WINDOW_T","WINDOW_TL","WINDOW_TR"};
+	$windows = `ls -long -type "transform" $windows`;
+	
+	
+	python("import superVertPaint");
+	
+	for ($obj in $objList)
+	{
+		int $avg = 0;
+		
+		if (`gmatch $obj "*WINDOW_*"`) //a window
+		{
+			print "\nfound window:";
+			
+			string $materials[] = boltGetMaterialsOnObj($obj);
+			for ($mat in $materials)
+			{
+				$xmlpath =  boltGetShaderPreset($mat);
+				if (`gmatch $xmlpath "*glass_toughened_damage.xml"`) $avg = 1;
+				if (`gmatch $xmlpath "*glass_toughened_damage_inside.xml"`) $avg = 1;
+				if (`gmatch $xmlpath "*glass_toughened_damage_outside.xml"`) $avg = 1;
+			}
+		}
+		
+		print ("\nPainting: " + $obj + " avg mode: " + $avg);
+		
+		python (("superVertPaint.paintDamageLookup('" + $obj + "'," + $avg + ")"));
+		
+	}
+
+
+}
+
+
+global proc boltDam.paintDamageVectorGUI()
+//paint damage vectors from _DAM objects to LOD0 colours
+{
+   	string $lod0objs[] = boltDam.GetLod0Transforms();
+	string $objList[] = `ls -long`;
+	string $objList0[] = `ls -long $lod0objs`;
+	string $selected[] = `ls -sl -long -type "transform" $objList`;
+
+	if (size($selected)>0)
+	{
+		$objList = $selected;
+	}
+	//if objs are selected, use those instead
+	else
+	{
+		string $confirm = `confirmDialog -title "WARNING"
+			-message "No objects selected! Do you want to repaint damage vectors on all LOD0 objects in scene?"
+			-button "Yes" -button "No"
+			-defaultButton "No" -cancelButton "No" -dismissString "No"`;
+		if ($confirm == "No") $objList = {};
+		if ($confirm == "Yes") $objList = $objList0;
+	}
+	//warn user before damaging everything
+
+	$objList = stringArrayRemoveDuplicates($objList);
+	//print $objList;
+	
+	boltRemoveHierarchy;
+	
+	python("import superVertPaint");
+	for ($obj in $objList)
+	{
+		string $sObj = `match "[^|]*$" $obj`;
+		if ( (`getAttr ($sObj + ".rotateX")`==0) && (`getAttr ($sObj + ".rotateY")`==0) && (`getAttr ($sObj + ".rotateZ")`==0) )
+		{
+			print ("\nPainting damage vectors for " + $sObj + " (fast)\n");
+			python("superVertPaint.paintDamageVector('" + $sObj + "')");
+		}
+		else
+		{
+			print ("\nPainting damage vectors for " + $sObj + " (correcting for rotated object)\n");
+			boltDam.paintDamageVector($sObj); //deals with rotated objects
+		}
+	}
+
+	boltRestoreHierarchy;
+
+}
+
+
+global proc boltDam.paintDamageVector(string $obj)
+//paint damage vectors from _DAM objects to colour set
+{
+	undoInfo -state off;
+
+	//create newcolour set if needed
+	string $colourSets[] = `polyColorSet -q -allColorSets $obj`;
+	if (sFindItem($colourSets, "damageVector_colorSet") == -1)
+	{
+		polyColorSet -create -colorSet "damageVector_colorSet"  -representation "RGB" $obj;
+	}
+	polyColorSet -currentColorSet -colorSet "damageVector_colorSet" $obj;
+
+
+	//get damage object
+	$damObj = (shortNameOf($obj) + "_DAM");
+
+	if (objExists($damObj))
+	{
+		//store the world transform matrix
+		matrix $m1[4][4];
+		$m1 = bolt.getWorldMatrix("BODY_COL",0);
+		
+		//store the inverse object matrix
+		matrix $m2[4][4];
+		matrix $m3[4][4];
+		$m2 = bolt.getWorldMatrix($obj,1);
+		
+		//get the matrix to transform by, as a list 
+		$m3 = $m1 * $m2;
+		float $m3List[] = bolt.MatrixToFloat($m3);
+		
+		print "\nM3 list: "; print $m3; 
+		
+		//set colours of all verts using python
+		string $vertList = "(";
+		string $colList = "(";
+		int $numVerts[] = `polyEvaluate -vertex $obj`;
+		for ($i=0; $i<$numVerts[0]; $i++)
+		{
+			$vertList = ($vertList + $i + ",");
+
+			string $vert = ($obj + ".vtx[" + $i + "]");
+			string $damVert = ($damObj + ".vtx[" + $i + "]");
+
+			float $pos[3] = `pointPosition -w $vert`;
+			float $damPos[3] = `pointPosition -w $damVert`;
+			
+			float $damVector[] = {($pos[0]-$damPos[0]),($pos[1]-$damPos[1]),($pos[2]-$damPos[2])};
+			$damVector = pointMatrixMult($damVector,$m3List);
+			
+			//store damage offsets
+			$r = clamp ( 0, 1, ( ($damVector[0] *2) +0.5) );
+			$g = clamp ( 0, 1, ( ($damVector[1] *2) +0.5) );
+			$b = clamp ( 0, 1, ( ($damVector[2] *2) +0.5) );
+			$colList = ($colList + $r + "," + $g + "," + $b + ",");
+		}
+		$vertList = substring($vertList, 1, (size($vertList)-1) ) + ")";
+		$colList = substring($colList, 1, (size($colList)-1) ) + ")";
+		python ("import superVertPaint");
+		callPython "superVertPaint" "setVertRGBs" {$vertList,$colList,$obj};
+	}
+	else
+	{
+		print ("\n Damage object: " + $damObj + " not found. Setting vertex colours to zero deformation.");
+
+		//set colours of all verts to 0.5
+		polyColorPerVertex -rgb 0.5 0.5 0.5 $obj;
+
+		//object with no damage
+	}
+
+
+	//switch back to colorSet1
+	if (sFindItem($colourSets, "colorSet1") != -1)
+	{
+		polyColorSet -currentColorSet -colorSet "colorSet1" $obj;
+	}
+
+	undoInfo -state on -infinity on;
+}
+
+
+global proc boltDam.copyDamageVectorToDamObjGUI()
+//transfers damage colours to geometry
+{
+	string $sel[] = `ls -sl -type "transform"`;
+	for ($obj in $sel)
+	{
+		print ("\nCreating _DAM object for " + $obj);
+		boltDam.copyDamageVectorToDamObj($obj);
+	}
+}
+
+global proc boltDam.copyDamageVectorToDamObj(string $obj)
+//copies colours from selected lod to a _DAM object for editing
+{
+	undoInfo -state off;
+	boltRemoveHierarchy;
+
+	//quit if colour set not found
+	string $colourSets[] = `polyColorSet -q -allColorSets $obj`;
+	if (sFindItem($colourSets, "damageVector_colorSet") == -1)
+	{
+		warning ("No damage vector colour set found on " + $obj);
+		return;
+	}
+	polyColorSet -currentColorSet -colorSet "damageVector_colorSet" $obj;
+
+
+	//get damage object name
+	$damObj = ($obj + "_DAM");
+	
+	if (`objExists $damObj`)
+	{
+		warning ($damObj + " already exists - delete manually first if you want to overwrite it!");
+		return;
+	}
+	
+	//duplicate mesh and zero damage
+	duplicate -name $damObj $obj;
+	python("import superVertPaint");
+	python ("superVertPaint.setVertColsToNoDamageVector('" + $damObj + "')");
+	
+	//move all verts
+	int $numVerts[] = `polyEvaluate -vertex $obj`;
+	for ($i=0; $i<$numVerts[0]; $i++)
+	{
+		string $vert = ($obj + ".vtx[" + $i + "]");
+		string $damVert = ($damObj + ".vtx[" + $i + "]");
+		
+		float $col[] = boltGetAverageVertexColourOfVert($vert);
+		
+		float $damVector[] = { ((($col[0]*2)-1)*-0.25) , ((($col[1]*2)-1)*-0.25) , ((($col[2]*2)-1)*-0.25) };
+
+		move -os -r $damVector[0] $damVector[1] $damVector[2] $damVert;
+	}
+	
+
+	//switch back to colorSet1
+	if (sFindItem($colourSets, "colorSet1") != -1)
+	{
+		polyColorSet -currentColorSet -colorSet "colorSet1" $obj;
+	}
+	
+	//add to group
+	if (objExists("DAMAGE_SHAPES_GROUP")==0)
+	{
+		group -empty -name "DAMAGE_SHAPES_GROUP";
+	}
+	if (`objExists "DAMAGE_SHAPES_GROUP"`) parent $damObj "DAMAGE_SHAPES_GROUP";
+	
+	boltRestoreHierarchy;
+	undoInfo -state on -infinity on;
+}
+
+
+
+global proc string[] boltDam.GetLod0Transforms()
+//returns a list of only the lod 0 geometry
+{
+	string $allMeshes[] = `ls -type "mesh"`;
+	string $lodMeshes[] = `ls -type "mesh" "*_LOD*"`;
+	string $shdMeshes[] = `ls -type "mesh" "*_SHADOW*"`;
+	string $refMeshes[] = `ls -type "mesh" "REFLECTION_*"`;
+	string $colMeshes[] = `ls -type "mesh" "*_COL*"`;
+	string $damMeshes[] = `ls -type "mesh" "*_DAMShape*"`;
+	string $oriMeshes[] = `ls -type "mesh" "*ShapeOrig*"`;
+	string $dmgMeshes[] = `ls -type "mesh" "DAMAGE_*"`;
+	$allMeshes = `stringArrayRemoveDuplicates $allMeshes`;
+	$allMeshes = `stringArrayRemove $lodMeshes $allMeshes`;
+	$allMeshes = `stringArrayRemove $refMeshes $allMeshes`;
+    $allMeshes = `stringArrayRemove $colMeshes $allMeshes`;
+    $allMeshes = `stringArrayRemove $damMeshes $allMeshes`;
+    $allMeshes = `stringArrayRemove $dmgMeshes $allMeshes`;
+    $allMeshes = `stringArrayRemove $oriMeshes $allMeshes`;
+    $allMeshes = `stringArrayRemove $shdMeshes $allMeshes`;
+    return boltShapesToTransforms($allMeshes);
+}
+
+global proc string[] boltDam.GetLod1Transforms()
+//returns a list of only the lod 0 geometry
+{
+	string $allMeshes[] = `ls -type "mesh" "*_LOD1*"`;
+	string $shdMeshes[] = `ls -type "mesh" "*_SHADOW*"`;
+	string $refMeshes[] = `ls -type "mesh" "REFLECTION_*"`;
+	string $colMeshes[] = `ls -type "mesh" "*_COL*"`;
+	string $damMeshes[] = `ls -type "mesh" "*_DAMShape*"`;
+	string $oriMeshes[] = `ls -type "mesh" "*ShapeOrig*"`;
+	string $dmgMeshes[] = `ls -type "mesh" "DAMAGE_*"`;
+	$allMeshes = `stringArrayRemoveDuplicates $allMeshes`;
+	$allMeshes = `stringArrayRemove $refMeshes $allMeshes`;
+    $allMeshes = `stringArrayRemove $colMeshes $allMeshes`;
+    $allMeshes = `stringArrayRemove $damMeshes $allMeshes`;
+    $allMeshes = `stringArrayRemove $dmgMeshes $allMeshes`;
+    $allMeshes = `stringArrayRemove $oriMeshes $allMeshes`;
+    $allMeshes = `stringArrayRemove $shdMeshes $allMeshes`;
+    return boltShapesToTransforms($allMeshes);
+}
+
+
+global proc boltDam.transferDamageVectorsGUI(int $method)
+//transfers damage vectors to lods
+{
+	string $objList[] = boltShapesToTransforms(`ls -long -type "mesh" "*_LOD*"`);
+   	string $shad[]    = `ls -long -type "transform" "*_SHADOW"`;
+	$objList = stringArrayCatenate($objList,$shad);
+	
+	
+	string $selected[] = `ls -sl -long -type "transform" $objList`;
+	if (size($selected)>0)
+	{
+		$objList = $selected;
+	}
+	//if objs are selected, use those instead
+	else
+	{
+		string $confirm = `confirmDialog -title "WARNING"
+			-message "No LODs selected! Do you want to transfer damage vector colours to all LODs in scene?"
+			-button "Yes" -button "No"
+			-defaultButton "No" -cancelButton "No" -dismissString "No"`;
+		if ($confirm == "No") return;
+	}
+	//warn user before damaging everything
+
+	$objList = `stringArrayRemoveDuplicates $objList`;
+	//print $objList;
+	
+	if ($method==1) boltDam.transferDamageVectors($objList, 0);
+	if ($method==2) boltDam.transferDamageVectors2($objList, 0);
+}
+
+global proc boltDam.transferDamageVectorsFromLod1GUI(int $method)
+//transfers damage vectors to lods
+{
+	string $objList[] = boltShapesToTransforms(`ls -long -type "mesh" "*_LOD*"`);
+   	string $shad[]    = `ls -long -type "transform" "*_SHADOW"`;
+	$objList = stringArrayCatenate($objList,$shad);
+		
+	string $selected[] = `ls -sl -long -type "transform" $objList`;
+
+	if (size($selected)<0)
+	{
+		error "No Lods selected!";
+	}
+	
+	$selected = `stringArrayRemoveDuplicates $selected`;
+	if ($method==1) boltDam.transferDamageVectors($selected, 1);
+	if ($method==2) boltDam.transferDamageVectors2($selected, 1);
+}
+
+
+global proc boltDam.transferDamageVectors(string $objs[], int $lod)
+//creats a damage lookup proxy, and transfers those colours to selected lods. $lod defines lod to transfer from
+{
+	boltRemoveHierarchy;
+
+	//delete existing damage lookup
+	string $damage_colour_lookups[] = `ls "DAMAGE_COLOUR_LOOKUP*"`;
+	if (size($damage_colour_lookups) > 0)
+	{
+		for ($lookup in $damage_colour_lookups)
+		{
+			delete $lookup;
+		}
+	}
+	//create new damage colour lookup
+
+	string $lodmeshes[] = boltDam.GetLod0Transforms();
+	if ($lod==1) $lodmeshes = boltDam.GetLod1Transforms();
+	
+	string $lod0copy[] = `duplicate -name "DAMAGE_COLOUR_LOOKUP_" $lodmeshes`;
+	string $damLookup[] = `polyUnite -ch 0 -mergeUVSets 1 $lod0copy`;
+	rename $damLookup[0] "DAMAGE_COLOUR_LOOKUP";
+
+	boltRestoreHierarchy;
+
+	//transfer colours to all objs
+	for ($obj in $objs)
+	{
+		print ("\nTransfering Colours to " + $obj);
+		
+		string $shapes[] = `listRelatives -children -type "mesh" $obj`;
+
+		//handle hidden objects
+		int $rehide = 0;
+		if (`getAttr ($shapes[0] + ".visibility")` == 0)
+		{
+			setAttr ($shapes[0] + ".visibility") 1;
+			$rehide = 1;
+		}
+
+		//create newcolour set if needed
+		string $colourSets[] = `polyColorSet -q -allColorSets $obj`;
+		if (sFindItem($colourSets, "damageVector_colorSet") == -1)
+		{
+			polyColorSet -create -colorSet "damageVector_colorSet"  -representation "RGB" $obj;
+			polyColorSet -currentColorSet -colorSet "damageVector_colorSet" $obj;
+			polyColorPerVertex -rgb 0.5 0.5 0.5 $obj; //maya crashes if the colour set is not initialised like this!
+		}
+
+
+		print ("\nObj: " + $obj);
+		transferAttributes -transferPositions 0 -transferNormals 0 -transferUVs 0 -transferColors 1 -sourceColorSet "damageVector_colorSet" -targetColorSet "damageVector_colorSet" -sampleSpace 0 -sourceUvSpace "map1" -targetUvSpace "map1" -searchMethod 0 -flipUVs 0 -colorBorders 0 "DAMAGE_COLOUR_LOOKUP" $obj;
+		delete -ch $obj;
+
+		string $colourSets[] = `polyColorSet -q -allColorSets $obj`;
+		if (sFindItem($colourSets, "colorSet1") != -1)
+		{
+			polyColorSet -currentColorSet -colorSet "colorSet1" $obj;
+		}
+
+
+
+		if ($rehide == 1)
+		{
+			setAttr ($shapes[0] + ".visibility") 0;
+		}
+
+
+
+
+	}
+	
+	print "\nDeleting Damage Colour Lookups....";
+	//delete lookups
+	string $damage_colour_lookups[] = `ls "DAMAGE_COLOUR_LOOKUP*"`;
+	if (size($damage_colour_lookups) > 0)
+	{
+		delete $damage_colour_lookups;
+	}
+
+
+
+}
+
+
+
+global proc boltDam.transferDamageVectors2(string $objs[], int $lod)
+//creats a damage lookup proxy, and transfers those colours to selected lods using closest point on mesh node. $lod defines lod to transfer from
+{
+	boltRemoveHierarchy;
+
+	//delete existing damage lookup
+	string $damage_colour_lookups[] = `ls "DAMAGE_COLOUR_LOOKUP*"`;
+	if (size($damage_colour_lookups) > 0)
+	{
+		for ($lookup in $damage_colour_lookups)
+		{
+			delete $lookup;
+		}
+	}
+	//create new damage colour lookup
+
+	string $lodmeshes[] = boltDam.GetLod0Transforms();
+	if ($lod==1) $lodmeshes = boltDam.GetLod1Transforms();
+	
+	string $lod0copy[] = `duplicate -name "DAMAGE_COLOUR_LOOKUP_" $lodmeshes`;
+	string $damLookup[] = `polyUnite -ch 0 -mergeUVSets 1 $lod0copy`;
+	rename $damLookup[0] "DAMAGE_COLOUR_LOOKUP";
+	polyColorSet -currentColorSet -colorSet "damageVector_colorSet" "DAMAGE_COLOUR_LOOKUP";
+	
+	boltRestoreHierarchy;
+	
+	boltPaintDam.GetClosestOnMeshSetup("DAMAGE_COLOUR_LOOKUP");
+	
+	//transfer colours to all objs
+	for ($obj in $objs)
+	{
+		print ("\nTransfering Colours to " + $obj);
+		
+		string $newColours[] = {};
+		string $shapes[] = `listRelatives -children -type "mesh" $obj`;
+
+		//handle hidden objects
+		int $rehide = 0;
+		if (`getAttr ($shapes[0] + ".visibility")` == 0)
+		{
+			setAttr ($shapes[0] + ".visibility") 1;
+			$rehide = 1;
+		}
+
+		//create newcolour set if needed
+		string $colourSets[] = `polyColorSet -q -allColorSets $obj`;
+		if (sFindItem($colourSets, "damageVector_colorSet") == -1)
+		{
+			polyColorSet -create -colorSet "damageVector_colorSet"  -representation "RGB" $obj;
+			polyColorSet -currentColorSet -colorSet "damageVector_colorSet" $obj;
+			polyColorPerVertex -rgb 0.5 0.5 0.5 $obj; //maya crashes if the colour set is not initialised like this!
+		}
+		polyColorSet -currentColorSet -colorSet "damageVector_colorSet" $obj;
+		
+		
+		//set colours of all verts using python
+		string $vertList = "(";
+		string $colList = "(";
+		int $numVerts[] = `polyEvaluate -vertex $obj`;
+		
+		//start progress bar
+		global string $gMainProgressBar;  // This is defined on maya startup
+		progressBar -e -beginProgress -isInterruptable true -status ("Transfering damage colours to " + $obj) -maxValue $numVerts[0] $gMainProgressBar;
+		undoInfo -state 0;
+
+		for ($i=0; $i<$numVerts[0]; $i++)
+		{
+			progressBar -edit -step 1 $gMainProgressBar;
+			
+			$vertList = ($vertList + $i + ",");
+
+			string $vert = ($obj + ".vtx[" + $i + "]");
+			
+			int $closestVertIndex = boltPaintDam.GetClosestOnMesh("DAMAGE_COLOUR_LOOKUP", $vert);
+			string $closestVert = ("DAMAGE_COLOUR_LOOKUP.vtx[" + $closestVertIndex + "]");
+			float $colour[] = boltGetAverageVertexColourOfVert($closestVert);
+			
+			$colList = ($colList + $colour[0] + "," + $colour[1] + "," + $colour[2] + ",");
+		}
+		$vertList = substring($vertList, 1, (size($vertList)-1) ) + ")";
+		$colList = substring($colList, 1, (size($colList)-1) ) + ")";
+		python ("import superVertPaint");
+		callPython "superVertPaint" "setVertRGBs" {$vertList,$colList,$obj};
+						
+		//tidy up, end progress
+		delete -ch $obj;
+		undoInfo -state 1 -length 100;
+		progressBar -e -endProgress $gMainProgressBar;
+		
+		string $colourSets[] = `polyColorSet -q -allColorSets $obj`;
+		if (sFindItem($colourSets, "colorSet1") != -1)
+		{
+			polyColorSet -currentColorSet -colorSet "colorSet1" $obj;
+		}
+		if ($rehide == 1)
+		{
+			setAttr ($shapes[0] + ".visibility") 0;
+		}
+	}
+	
+	print "\nDeleting Damage Colour Lookups....";
+	//delete lookups
+	string $damage_colour_lookups[] = `ls "DAMAGE_COLOUR_LOOKUP*"`;
+	if (size($damage_colour_lookups) > 0)
+	{
+		delete $damage_colour_lookups;
+	}
+
+
+
+}
+
+
+
+
+global proc boltDam.connectLattice()
+// connect an already existing lattice to a surface
+// Patrick Palmer, ppalmer@aw.sgi.com
+// June 21, 1996
+{
+
+	string $selobjs[] = `ls -sl`;
+
+	int $count = size($selobjs);
+
+	if ($count < 2) {
+		error "must have at least an object and lattice selected";
+		return;
+	}
+
+	// verify that the lead object is a lattice
+	string $lattice = $selobjs[$count-1];
+	if (`objectType $lattice` != "lattice") {
+		string $rels[] = `listRelatives -s $lattice`;
+		$lattice = $rels[0];
+		if (`objectType $lattice` != "lattice") {
+			error "the lead object must be a lattice";
+			return;
+		}
+	}
+
+	// find out the ffd node
+	string $conns[] = `listConnections -s false -d true
+					($lattice + ".latticeOutput")`;
+	string $ffd = $conns[0];
+	if ($ffd == "") {
+		error "the ffd has been deleted";
+		return;
+	}
+
+	// find out what the set is
+	clear($conns);
+	$conns = `listConnections -s false -d true ($ffd + ".message")`;
+	string $set = $conns[0];
+	if ($set == "") {
+		error "the set has been deleted";
+		return;
+	}
+
+	// loop through all of the other selected objects
+	int $i;
+	for ($i = 0; $i < ($count - 1); $i++) {
+		string $obj = $selobjs[$i];
+
+		// transform selected?
+		if (`objectType $obj` == "transform") {
+			string $rels[] = `listRelatives -s $obj`;
+			$obj = $rels[0];
+		}
+
+		// mesh or vertex?
+		else if (`objectType $obj` == "mesh") {
+			if (`match ".vtx" $obj` == "") {
+				int $v[] = `polyEvaluate -v $obj`;
+				$obj = $obj + ".vtx[0:" + ($v[0] - 1) + "]";
+			}
+		}
+
+		// add to the sets
+		sets -add $set $obj;
+	}
+
+}
+
+
+
+global proc boltDam.Lattice.Add()
+//adds an ffd damage lattices to all objects
+{
+	string $cols[]    = `ls -long -type "transform" "*_COL"`;
+   	string $shad[]    = `ls -long -type "transform" "*_SHADOW"`;
+	string $refl[]    = `ls -long -type "transform" "REFLECTION_*"`;
+	string $mech[]    = `ls -long -type "transform" "WHEEL_*" "DISC_*" "HUB_*"`;
+	string $objList[] = boltShapesToTransforms(`ls -long -type "mesh"`);
+
+	$objList = `stringArrayRemoveDuplicates $objList`;
+	$objList = `stringArrayRemove $cols     $objList`;
+	$objList = `stringArrayRemove $shad     $objList`;
+	$objList = `stringArrayRemove $refl     $objList`;
+	$objList = `stringArrayRemove $mech     $objList`;
+
+	print $objList;
+
+
+	//front lattice
+	float $bb_f[] = `polyEvaluate -boundingBox {"BUMPER_F","BONNET"}`;	//xmin xmax ymin ymax zmin zmax
+	float $bb_windscreen[] = `polyEvaluate -boundingBox {"WINDOW_F"}`;
+	$bb_f[4] = $bb_windscreen[5]; // set the front ffd to end at the front of the windscreen
+
+	lattice  -name "DAMAGE_LATTICE_F_" -divisions 15 7 8 -cp -ldv 2 2 2 $objList;
+
+	setAttr "DAMAGE_LATTICE_F_LatticeGroup.scale" ($bb_f[1]-$bb_f[0]) ($bb_f[3]-$bb_f[2]) ($bb_f[5]-$bb_f[4]);
+	setAttr "DAMAGE_LATTICE_F_LatticeGroup.translate" (($bb_f[1]+$bb_f[0])/2) (($bb_f[3]+$bb_f[2])/2) (($bb_f[5]+$bb_f[4])/2);
+
+}
+
+//
+
+
+global proc boltDam.Lattice.Randomise()
+{
+	float $randMax = 0.02;
+	//max amount to move points
+
+	string $sel[] = `ls -sl`;
+	int $count = size($sel);
+	if ($count > 1)
+	{
+		error "select only 1 lattice";
+		return;
+	}
+
+	// verify that the lead object is a lattice
+	string $lattice = $sel[0];
+	if (`objectType $lattice` != "lattice")
+	{
+		string $rels[] = `listRelatives -s $lattice`;
+		$lattice = $rels[0];
+		if (`objectType $lattice` != "lattice")
+		{
+			error "you must select a lattice";
+			return;
+		}
+	}
+
+	int $latticeSize[] = `lattice -q -divisions $lattice`;
+	int $iMax = $latticeSize[0];
+	int $jMax = $latticeSize[1];
+	int $kMax = $latticeSize[2];
+	// get lattice size
+
+
+	for ($i=0; $i<$iMax; $i++)
+	{
+		for ($j=0; $j<$jMax; $j++)
+		{
+			for ($k=0; $k<$kMax; $k++)
+			{
+				select -r ($lattice + ".pt[" + $i + "][" + $j + "][" + $k + "]");
+
+				float $xMov = `rand (-1 * $randMax) $randMax`;
+				float $yMov = `rand (-1 * $randMax) $randMax`;
+				float $zMov = `rand (-1 * $randMax) $randMax`;
+
+				move -r -os -wd $xMov $yMov $zMov;
+			}
+		}
+	}
+
+	select $lattice;
+}
+
+
+
+
+
+global proc boltDam.CreateDamageShapes()
+//clones selected geometry to a damage shape ready for modification
+{
+	string $selection[] = `ls -o -sl`;
+
+	int $spreadFlag = 0;
+	if (objExists("spreadCarScriptNode"))
+	{
+		error "Create Deads tool is disabled while car is spread!";
+	}
+
+	//create damage group if needed
+	if (objExists("DAMAGE_SHAPES_GROUP")==0)
+	{
+		group -empty -name "DAMAGE_SHAPES_GROUP";
+	}
+
+	for ($obj in $selection)
+	{
+		if (`gmatch $obj "*_LOD?" `)
+		{
+			warning ("Cannot make damage object for " + $obj + ". '_DAM' models can only be created for LOD0 models.");
+		}
+		else
+		{
+			boltRemoveHierarchy;
+
+			string $damObj = ($obj + "_DAM");
+			if (`objExists $damObj`) delete $damObj;
+			duplicate -n $damObj $obj;
+			boltDeleteHavokNodes $damObj;
+			print ("\n" + $damObj + " CREATED\n");
+
+			boltRestoreHierarchy;
+			if (`objExists "DAMAGE_SHAPES_GROUP"`) parent $damObj "DAMAGE_SHAPES_GROUP";
+		}
+	}
+
+	print "\nDAMAGE SHAPE CREATION SUCCESSFUL";
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+global float $UNTOP_V[];
+global float $DAMTOP_V[];
+global float $UNLOD_V[];
+global float $DAMLOD_V[];
+
+global proc int GetNbMeshVerts(string $Name)
+{
+	int $fred[] = `polyEvaluate -v $Name`;
+	return $fred[0];
+}
+
+global proc float[] GetVerts(string $Name, int $count)
+{
+	float $Vrts[];
+
+	for($k=0 ; $k < $count; $k++)
+	{
+		float $pos[3] = eval("pointPosition -l "+$Name+".vtx["+$k+"]");
+
+		$Vrts[$k*3+0] = $pos[0];
+		$Vrts[$k*3+1] = $pos[1];
+		$Vrts[$k*3+2] = $pos[2];
+	}
+
+	return $Vrts;
+}
+
+global proc ModMorph(int $id, int $nb_lod, int $nb_top)
+{
+	global float $UNTOP_V[];
+	global float $DAMTOP_V[];
+	global float $UNLOD_V[];
+	global float $DAMLOD_V[];
+
+	//Ok Get Local Position of this Vert in UN_LOD (P)
+	//Find Closest to P in UN_TOP (M, id m)
+	//Find difference in pos in DAM_TOP(m) and M, delta
+	//Add delta to DAM_LOD
+
+	float $diff[3];
+	float $distance = 0.0;
+	int   $best = 0;
+
+
+	float	$px = $UNLOD_V[$id*3+0];
+	float	$py = $UNLOD_V[$id*3+1];
+	float	$pz = $UNLOD_V[$id*3+2];
+
+	int	$testv;
+
+	/* Calc neartest Id in non lodded non damage shape... */
+	for($testv = 0; $testv < $nb_top; $testv++)
+	{
+		$diff[0] = $UNTOP_V[$testv*3+0]-$px;
+		$diff[1] = $UNTOP_V[$testv*3+1]-$py;
+		$diff[2] = $UNTOP_V[$testv*3+2]-$pz;
+
+		float $d = ($diff[0]*$diff[0])+($diff[1]*$diff[1])+($diff[2]*$diff[2]);
+		if(($d < $distance) || ($testv==0))
+		{
+			$distance= $d;
+			$best = $testv;
+		}
+	}
+
+	//Ok Now get delta in top shape
+
+	float	$dx = $DAMTOP_V[$best*3+0] - $UNTOP_V[$best*3+0];
+	float	$dy = $DAMTOP_V[$best*3+1] - $UNTOP_V[$best*3+1];
+	float	$dz = $DAMTOP_V[$best*3+2] - $UNTOP_V[$best*3+2];
+
+	//Make the LOD Damage P+D
+
+	$DAMLOD_V[$id*3+0] = $px+$dx;
+	$DAMLOD_V[$id*3+1] = $py+$dy;
+	$DAMLOD_V[$id*3+2] = $pz+$dz;
+
+}
+
+global proc MakeSimilar(string $UNTOP, string $DAMTOP, string $UNLOD, string $DAMLOD, int $errors)
+//added errors flag to display message boxes on screen - ensures we won't miss any problems.
+{
+	if(objExists($UNTOP) && objExists($DAMTOP) && objExists($UNLOD) && objExists($DAMLOD))
+	{
+		int	$NB_V_UNTOP = GetNbMeshVerts($UNTOP);
+		int	$NB_V_DAMTOP = GetNbMeshVerts($DAMTOP);
+		int	$NB_V_UNLOD = GetNbMeshVerts($UNLOD);
+		int	$NB_V_DAMLOD = GetNbMeshVerts($DAMLOD);
+
+		print ( $UNTOP + " has " + $NB_V_UNTOP + "Verts\n" );
+		print ( $DAMTOP + " has " + $NB_V_DAMTOP + "Verts\n" );
+		print ( $UNLOD + " has " + $NB_V_UNLOD + "Verts\n" );
+		print ( $DAMLOD + " has " + $NB_V_DAMLOD + "Verts\n" );
+
+		if(($NB_V_UNTOP!=$NB_V_DAMTOP) || ($NB_V_UNLOD!=$NB_V_DAMLOD))
+		{
+			print "Mismatch in Vertex Counts";
+			if ($errors == 1)
+			{
+				confirmDialog -title "Error" -button "OK" -message ("Mismatch in Vertex Counts with " + $UNTOP + ". Check vertex count and object names of _DAM objects.");
+			}
+			return;
+		}
+
+		global float $UNTOP_V[];
+		global float $DAMTOP_V[];
+		global float $UNLOD_V[];
+		global float $DAMLOD_V[];
+
+		$UNTOP_V = GetVerts($UNTOP,$NB_V_UNTOP);
+		$DAMTOP_V = GetVerts($DAMTOP,$NB_V_DAMTOP);
+		$UNLOD_V = GetVerts($UNLOD,$NB_V_UNLOD);
+		$DAMLOD_V = GetVerts($DAMLOD,$NB_V_DAMLOD);
+
+		int $v;
+		for($v = 0; $v < $NB_V_DAMLOD; $v++)
+		{
+			ModMorph($v,$NB_V_UNLOD,$NB_V_UNTOP);
+
+			//Write it back..
+			string $cmd;
+			$cmd = "move -a -os";
+			$cmd = $cmd + "$DAMLOD_V[" + $v+ "*3+0] ";
+			$cmd = $cmd + "$DAMLOD_V[" + $v+ "*3+1] ";
+			$cmd = $cmd + "$DAMLOD_V[" + $v+ "*3+2] ";
+			$cmd = $cmd + $DAMLOD + ".vtx[" +$v +"]";
+			eval($cmd);
+		}
+
+	}
+	else
+	{
+		print ("One of the objects doesn't exists");
+		if ($errors == 1)
+		{
+			confirmDialog -title "Error" -button "OK" -message ($UNTOP + " or one of its LOD/DAM parts cannot be found. Check object names of _DAM objects.");
+		}
+	}
+}

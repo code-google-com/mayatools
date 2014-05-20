@@ -1,0 +1,77 @@
+proc geSnapVertex(string $vtxSrc[], string $vtxDst[], float $eps){
+	string $closestVert ;
+	for ($i=0;$i<size($vtxDst);$i++)
+	{
+		float $shortestDistance = 1000000;
+		
+		//select $vtxDst[$i];
+		float $vPos[] = `xform -q -ws -t $vtxDst[$i]`;
+					
+		for ($j=0;$j<size($vtxSrc);$j++)
+		{
+			float $testVert[] = `xform -q -ws -t $vtxSrc[$j]`;
+			float $testLength = ((($testVert[0] - $vPos[0])*($testVert[0] - $vPos[0])) + (($testVert[1] - $vPos[1])*($testVert[1] - $vPos[1])) + (($testVert[2] - $vPos[2])*($testVert[2] - $vPos[2])));
+			
+			if ($testLength < $shortestDistance)
+			{
+				$closestVert = $vtxSrc[$j];
+				$shortestDistance = $testLength;
+			}
+			
+		}
+		if ($shortestDistance < $eps){
+			float $posSrc[] = `xform -q -ws -t $closestVert`;
+			xform -ws -t $posSrc[0] $posSrc[1] $posSrc[2] $vtxDst[$i];
+		}
+	}
+}
+global proc geSnapToTheOtherObject(float $params){
+	//float $eps = `textField -q -text lnThreshole` ;
+	float $eps = $params;
+	string $sel[] = `ls -sl -l -fl`; select -cl;
+	string $vtSel[], $vtSrc[];
+	for ($i=0;$i<(size($sel) - 1);$i++)
+	{
+		$vtSel[$i] = $sel[$i];
+	}
+	select $sel[size($sel)-1];
+	ConvertSelectionToVertices;
+	$vtSrc = `ls -sl -fl -l`;
+	geSnapVertex($vtSrc, $vtSel, $eps);
+}
+global proc geSnapToObjectItself(float $params){
+	string $vtSel[] = `ls -l -fl -sl`;
+	string $objSel[] = `ls -l -hilite` ;
+	select -cl;
+	select $objSel[0] ;
+	ConvertSelectionToVertices ;
+	string $vtSrc[] = `ls -l -fl -sl`;
+	select -cl ;
+	$vtSrc = stringArrayRemove($vtSel, $vtSrc);
+	//float $eps = `textField -q -text lnThreshole` ;
+	float $eps = $params;
+	geSnapVertex($vtSrc, $vtSel, $eps);
+}
+global proc geSnapVetexTools_M10(){
+	global string $GE_SRIPT_SRV_DIR ;
+	if (`window -ex "geSnapVertexWin"`)
+        deleteUI "geSnapVertexWin" ;
+	string $snapVertexWin = `window -wh 305 103 -t "GE Snap Vertex Tools" geSnapVertexWin` ;
+	columnLayout -adj true topCol;
+		frameLayout -collapsable 1 -collapse 0 -l "" -mw 10;
+			columnLayout -adj true sampleCol;
+ 		        separator -style "none" -h 10;
+				rowLayout -numberOfColumns 2 -cw2 150 100 sampleRow;
+					text -label "Threshole:"  -align "right";
+					textField -text "0.01" -w 100 lnThreshole; 
+				setParent ..;
+				separator -style "none" -h 10;
+				rowLayout -numberOfColumns 2 -cw2 120 120 sampleRow1;
+					button -label "Snap to Object itself" -ann "Snap selected vetices to nearest vertex on the same Object" -command geSnapToObjectItself btSnapToObjectItself;
+					button -label "Snap to the other Object" -ann "Snap selected vetices to nearest vertex the next Selected Object" -command geSnapToTheOtherObject btSnapToTheOtherObject;
+				setParent ..;
+				separator -style "none" -h 10;
+ 		    setParent ..; // link to FrameLayout
+ 		setParent ..;     // link to ColumnLayout "sampleCol"
+	showWindow $snapVertexWin ;
+}

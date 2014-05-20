@@ -1,0 +1,593 @@
+proc updateLod0Parts() {  
+    // update parts
+    if (`objExists "|export|lod0|"`) {
+        string $partGroups[] = `listRelatives -c "|export|lod0|"`;
+        if (`size $partGroups` ) {
+            $partGroups = sort($partGroups);
+        	for ($aP in $partGroups){
+        		menuItem -label $aP -p cbLod0PartGroups;
+        	}
+        }
+    }
+    
+    // update LODs
+    string $allLods[] = {"lod0", "lod1", "lod2", "lod3", "lod4", "lod5"};
+    for ($aLod in $allLods) {
+        if (`objExists ("|export|" + $aLod)`)
+            menuItem -label $aLod -p cbLodGroups;
+    }
+    
+    // update deformation parts
+    if (`objExists "|deformation|lod0|"`) {
+        string $partGroups[] = `listRelatives -c "|deformation|lod0|"`;
+        if (`size $partGroups` ) {
+            $partGroups = sort($partGroups);
+        	for ($aP in $partGroups){
+        		menuItem -label $aP -p cbLod0PartGroups_deformation;
+        	}
+        }
+    }
+    
+    // update deformation LODs
+    string $allLods[] = {"lod0", "lod1", "lod2", "lod3", "lod4", "lod5"};
+    for ($aLod in $allLods) {
+        if (`objExists ("|deformation|" + $aLod)`)
+            menuItem -label $aLod -p cbLodGroups_deformation;
+    }
+}
+
+global proc geNFS15_LodSwapping_UI(){
+	global string $GENFS14_UI_PATHs;
+	
+	if (`window -ex "geNFS15LodSwappingWin"`)
+        deleteUI "geNFS15LodSwappingWin" ;
+	
+	string $geNFS15LodSwappingWin = `loadUI -uiFile ($GENFS14_UI_PATHs + "/geNFS15_LodSwapping.ui")` ;
+	
+	updateLod0Parts();
+	
+	windowPref -enableAll false;
+	showWindow $geNFS15LodSwappingWin ;
+	window -e -tlc 150 900 -wh 350 580 $geNFS15LodSwappingWin ;
+	windowPref -enableAll true;
+}
+
+global proc geNFS15_CountPartGroups() {
+    print "\n";
+    
+    if (`objExists "|export|lod0|"`) {
+        string $partGroups[] = `listRelatives -c "|export|lod0|"`;
+        print ( ("'export|lod0' has: ") + (`size $partGroups`) + (" groups! \n") );
+    }
+    else
+        print ("'export|lod0' does not exist! \n");
+        
+    if (`objExists "|hierarchy|"`) {
+        string $partGroups[] = `listRelatives -c "|hierarchy|"`;
+        print ( ("'hierarchy' has: ") + (`size $partGroups`) + (" groups! \n") );
+    }
+    else
+        print ("'hierarchy' does not exist! \n");
+}
+
+proc string[] getKitInvisibleMeshes(string $aLodPath) {
+    string $retMeshes[] = {};
+    
+    string $allUpgradePartsName[] = {"MESHSLATS", "FENDERFLARE_L", "FENDERFLARE_R", "SKIRT_L", "SKIRT_R", "BUMPER_REAR", "DIFFUSER", "MIRROR_L", "MIRROR_R", "FENDER_FRONT_L", "FENDER_FRONT_R", "BUMPER_FRONT", "SPLITTER", "EXHAUST_TIP", "WING"};
+    
+    string $copType = `optionMenu -q -v cbCopParts`;
+    string $curGeneric = `optionMenu -q -v cbKitParts_Generic`;
+    
+    string $all_KitGrps[] = `ls -l ($aLodPath + "|KIT_*")`;
+    string $gt3_KitGrps[] = `ls -l ($aLodPath + "|KIT_*_GT3*")`;
+    string $works_KitGrps[] = `ls -l ($aLodPath + "|KIT_*_WORKS*")`;
+    string $street1_KitGrps[] = `ls -l ($aLodPath + "|KIT_*_STREET1*")`;
+    string $street2_KitGrps[] = `ls -l ($aLodPath + "|KIT_*_STREET2*")`;  
+    string $allGeneric_KitGrps[] = `ls -l ($aLodPath + "|KIT_*_GENERIC*")`; 
+    string $generic_KitGrps[] = {};
+    if ($curGeneric != "NONE")
+        $generic_KitGrps = `ls -l ($aLodPath + "|KIT_*_" + $curGeneric)`;
+        
+    
+    string $invisibleCopGroups[] = {};
+    if ($copType == "NONE") {
+        $invisibleCopGroups = $all_KitGrps; 
+        $invisibleCopGroups = `stringArrayRemove $generic_KitGrps $invisibleCopGroups`;      
+    }
+    else if ($copType == "GT3") {
+        string $relativeStockGrps[] = {};
+        for ($aStockPart in $allUpgradePartsName) {
+            for ($aKitPart in $gt3_KitGrps) {
+                if (`gmatch $aKitPart ("*_" + $aStockPart + "_*")`){
+                    string $stockPartGrps[] = `ls -l ($aLodPath + "|" + $aStockPart)`;
+                    $relativeStockGrps = `stringArrayCatenate $stockPartGrps $relativeStockGrps`;
+                }
+            }
+        }
+        
+        string $moreGrpsOff[] = {};
+        string $moreGrpsOn[] = {};
+        for ($aStockPart in $allUpgradePartsName) {
+            for ($genericKitPart in $generic_KitGrps) {
+                if (`gmatch $genericKitPart ("*_" + $aStockPart + "_*")`){
+                    for ($aKitPart in $gt3_KitGrps) {
+                        if (`gmatch $aKitPart ("*_" + $aStockPart + "_*")`){
+                            $moreGrpsOff[size($moreGrpsOff)] = $aKitPart;
+                            $moreGrpsOn[size($moreGrpsOn)] = $genericKitPart;
+                        }
+                    }
+                }
+            }
+        }
+        
+        $invisibleCopGroups = `stringArrayCatenate $works_KitGrps $street1_KitGrps`;
+        $invisibleCopGroups = `stringArrayCatenate $street2_KitGrps $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayCatenate $allGeneric_KitGrps $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayCatenate $relativeStockGrps $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayRemove $gt3_KitGrps $invisibleCopGroups`;
+        
+        $invisibleCopGroups = `stringArrayRemove $moreGrpsOn $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayCatenate $moreGrpsOff $invisibleCopGroups`;
+    }
+    else if ($copType == "WORKS") {
+        string $relativeStockGrps[] = {};
+        for ($aStockPart in $allUpgradePartsName) {
+            for ($aKitPart in $works_KitGrps) {
+                if (`gmatch $aKitPart ("*_" + $aStockPart + "_*")`){
+                    string $stockPartGrps[] = `ls -l ($aLodPath + "|" + $aStockPart)`;
+                    $relativeStockGrps = `stringArrayCatenate $stockPartGrps $relativeStockGrps`;
+                }
+            } 
+        }
+        
+        string $moreGrpsOff[] = {};
+        string $moreGrpsOn[] = {};
+        for ($aStockPart in $allUpgradePartsName) {
+            for ($genericKitPart in $generic_KitGrps) {
+                if (`gmatch $genericKitPart ("*_" + $aStockPart + "_*")`){
+                    for ($aKitPart in $works_KitGrps) {
+                        if (`gmatch $aKitPart ("*_" + $aStockPart + "_*")`){
+                            $moreGrpsOff[size($moreGrpsOff)] = $aKitPart;
+                            $moreGrpsOn[size($moreGrpsOn)] = $genericKitPart;
+                        }
+                    }
+                }
+            }
+        }
+        
+        $invisibleCopGroups = `stringArrayCatenate $gt3_KitGrps $street1_KitGrps`;
+        $invisibleCopGroups = `stringArrayCatenate $street2_KitGrps $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayCatenate $allGeneric_KitGrps $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayCatenate $relativeStockGrps $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayRemove $works_KitGrps $invisibleCopGroups`;
+        
+        $invisibleCopGroups = `stringArrayRemove $moreGrpsOn $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayCatenate $moreGrpsOff $invisibleCopGroups`;
+    }
+    else if ($copType == "STREET1") {
+        string $relativeStockGrps[] = {};
+        for ($aStockPart in $allUpgradePartsName) {
+            for ($aKitPart in $street1_KitGrps) {
+                if (`gmatch $aKitPart ("*_" + $aStockPart + "_*")`){
+                    string $stockPartGrps[] = `ls -l ($aLodPath + "|" + $aStockPart)`;
+                    $relativeStockGrps = `stringArrayCatenate $stockPartGrps $relativeStockGrps`;
+                }
+            } 
+        }
+        
+        string $moreGrpsOff[] = {};
+        string $moreGrpsOn[] = {};
+        for ($aStockPart in $allUpgradePartsName) {
+            for ($genericKitPart in $generic_KitGrps) {
+                if (`gmatch $genericKitPart ("*_" + $aStockPart + "_*")`){
+                    for ($aKitPart in $street1_KitGrps) {
+                        if (`gmatch $aKitPart ("*_" + $aStockPart + "_*")`){
+                            $moreGrpsOff[size($moreGrpsOff)] = $aKitPart;
+                            $moreGrpsOn[size($moreGrpsOn)] = $genericKitPart;
+                        }
+                    }
+                }
+            }
+        }
+        
+        $invisibleCopGroups = `stringArrayCatenate $gt3_KitGrps $works_KitGrps`;
+        $invisibleCopGroups = `stringArrayCatenate $street2_KitGrps $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayCatenate $allGeneric_KitGrps $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayCatenate $relativeStockGrps $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayRemove $street1_KitGrps $invisibleCopGroups`;
+        
+        $invisibleCopGroups = `stringArrayRemove $moreGrpsOn $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayCatenate $moreGrpsOff $invisibleCopGroups`;
+    }
+    else if ($copType == "STREET2") {
+        string $relativeStockGrps[] = {};
+        for ($aStockPart in $allUpgradePartsName) {
+            for ($aKitPart in $street2_KitGrps) {
+                if (`gmatch $aKitPart ("*_" + $aStockPart + "_*")`){
+                    string $stockPartGrps[] = `ls -l ($aLodPath + "|" + $aStockPart)`;
+                    $relativeStockGrps = `stringArrayCatenate $stockPartGrps $relativeStockGrps`;
+                }
+            } 
+        }
+        
+        string $moreGrpsOff[] = {};
+        string $moreGrpsOn[] = {};
+        for ($aStockPart in $allUpgradePartsName) {
+            for ($genericKitPart in $generic_KitGrps) {
+                if (`gmatch $genericKitPart ("*_" + $aStockPart + "_*")`){
+                    for ($aKitPart in $street2_KitGrps) {
+                        if (`gmatch $aKitPart ("*_" + $aStockPart + "_*")`){
+                            $moreGrpsOff[size($moreGrpsOff)] = $aKitPart;
+                            $moreGrpsOn[size($moreGrpsOn)] = $genericKitPart;
+                        }
+                    }
+                }
+            }
+        }
+        
+        $invisibleCopGroups = `stringArrayCatenate $gt3_KitGrps $works_KitGrps`;
+        $invisibleCopGroups = `stringArrayCatenate $street1_KitGrps $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayCatenate $allGeneric_KitGrps $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayCatenate $relativeStockGrps $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayRemove $street2_KitGrps $invisibleCopGroups`;
+        
+        $invisibleCopGroups = `stringArrayRemove $moreGrpsOn $invisibleCopGroups`;
+        $invisibleCopGroups = `stringArrayCatenate $moreGrpsOff $invisibleCopGroups`;
+    }
+    $invisibleCopGroups = `stringArrayRemoveDuplicates $invisibleCopGroups`;
+    
+    $retMeshes = `listRelatives -f -ad -type "mesh" $invisibleCopGroups`;
+    
+    return $retMeshes;
+}
+
+proc updateVisibility(int $wholeLOD) {
+    string $curPartSelValue = `optionMenu -q -v cbLod0PartGroups`;
+    string $curLodSelValue = `optionMenu -q -v cbLodGroups`;
+    
+    string $allExportMeshes[] = `listRelatives -f -ad -type "mesh" ("|export")` ;
+    string $visibleMeshes[];
+    if (`checkBox -q -v chkShowWholeLOD`) {
+        //print ("|export|" + $curLodSelValue + "\n");
+        $visibleMeshes = `listRelatives -f -ad -type "mesh" ("|export|" + $curLodSelValue)` ;
+        
+        string $wreckGroupsOnLod[] = `ls -l ("|export|" + $curLodSelValue + "|*_wreck")`;
+        if (`size $wreckGroupsOnLod`) {
+            string $nonWreckGroupsOnLod[];
+            for ($aWreck in $wreckGroupsOnLod) {
+                int $num = `size $aWreck`;
+                string $nonWreck = `startString $aWreck ($num - 6)`;
+                if (`objExists $nonWreck`) {
+                    $nonWreckGroupsOnLod[`size $nonWreckGroupsOnLod`] = $nonWreck;
+                }
+            }
+                    
+            global int $lodSwapping_showWreck;
+            string $hiddenMeshes[] = {};
+            if ($lodSwapping_showWreck == 1) {
+               for ($aNonWreck in $nonWreckGroupsOnLod) {
+                    string $meshes[] = `listRelatives -f -ad -type "mesh" $aNonWreck`;
+                    $hiddenMeshes = `stringArrayCatenate $hiddenMeshes $meshes`;
+                }
+            }
+            else {
+                for ($aWreck in $wreckGroupsOnLod) {
+                    string $meshes[] = `listRelatives -f -ad -type "mesh" $aWreck`;
+                    $hiddenMeshes = `stringArrayCatenate $hiddenMeshes $meshes`;
+                }
+            }
+            
+            $visibleMeshes = `stringArrayRemove $hiddenMeshes $visibleMeshes`;
+        }
+        
+        // Cop meshes
+        string $invisibleCopMeshes[] = getKitInvisibleMeshes("|export|" + $curLodSelValue);
+        $visibleMeshes = `stringArrayRemove $invisibleCopMeshes $visibleMeshes`;
+    }
+    else {
+        if (`checkBox -q -v chkShowAllLODsPart`) {
+            string $allLODs[] = {"lod0", "lod1", "lod2", "lod3", "lod4", "lod5"};
+            for ($aLod in $allLODs) {
+                string $meshes[] = {};
+                if (catchQuiet($meshes = `listRelatives -f -ad -type "mesh" ("|export|" + $aLod + "|" + $curPartSelValue)`))
+                    $meshes = {};
+                $visibleMeshes = `stringArrayCatenate $visibleMeshes $meshes`;
+            }
+        }
+        else
+            $visibleMeshes = `listRelatives -f -ad -type "mesh" ("|export|" + $curLodSelValue + "|" + $curPartSelValue)` ;
+    }
+    
+    for ($aMesh in $allExportMeshes) {
+        string $transNode[] = `listRelatives -f -p $aMesh`;
+        if (`size $transNode`) {
+            if (`stringArrayContains $aMesh $visibleMeshes`)
+                setAttr ($transNode[0] + ".visibility") 1 ;
+            else
+                setAttr ($transNode[0] + ".visibility") 0 ;
+        }
+    }
+}
+proc updateVisibility_deformation(int $wholeLOD) {
+    string $curPartSelValue = `optionMenu -q -v cbLod0PartGroups_deformation`;
+    string $curLodSelValue = `optionMenu -q -v cbLodGroups_deformation`;
+    
+    string $allExportMeshes[] = `listRelatives -f -ad -type "mesh" ("|deformation")` ;
+    string $visibleMeshes[];
+    if (`checkBox -q -v chkShowWholeLOD_deformation`) {
+        //print ("|export|" + $curLodSelValue + "\n");
+        $visibleMeshes = `listRelatives -f -ad -type "mesh" ("|deformation|" + $curLodSelValue)` ;
+        
+        string $wreckGroupsOnLod[] = `ls -l ("|deformation|" + $curLodSelValue + "|*_wreck")`;
+        if (`size $wreckGroupsOnLod`) {
+            string $nonWreckGroupsOnLod[];
+            for ($aWreck in $wreckGroupsOnLod) {
+                int $num = `size $aWreck`;
+                string $nonWreck = `startString $aWreck ($num - 6)`;
+                if (`objExists $nonWreck`) {
+                    $nonWreckGroupsOnLod[`size $nonWreckGroupsOnLod`] = $nonWreck;
+                }
+            }
+                    
+            global int $lodSwapping_showWreck;
+            string $hiddenMeshes[] = {};
+            if ($lodSwapping_showWreck == 1) {
+               for ($aNonWreck in $nonWreckGroupsOnLod) {
+                    string $meshes[] = `listRelatives -f -ad -type "mesh" $aNonWreck`;
+                    $hiddenMeshes = `stringArrayCatenate $hiddenMeshes $meshes`;
+                }
+            }
+            else {
+                for ($aWreck in $wreckGroupsOnLod) {
+                    string $meshes[] = `listRelatives -f -ad -type "mesh" $aWreck`;
+                    $hiddenMeshes = `stringArrayCatenate $hiddenMeshes $meshes`;
+                }
+            }
+            
+            $visibleMeshes = `stringArrayRemove $hiddenMeshes $visibleMeshes`; 
+        }
+        
+        // Cop meshes
+        string $invisibleCopMeshes[] = getKitInvisibleMeshes("|deformation|" + $curLodSelValue);
+        $visibleMeshes = `stringArrayRemove $invisibleCopMeshes $visibleMeshes`;
+    }
+    else {
+        if (`checkBox -q -v chkShowAllLODsPart_deformation`) {
+            string $allLODs[] = {"lod0", "lod1", "lod2", "lod3", "lod4", "lod5"};
+            for ($aLod in $allLODs) {
+                string $meshes[] = {};
+                if (catchQuiet($meshes = `listRelatives -f -ad -type "mesh" ("|deformation|" + $aLod + "|" + $curPartSelValue)`))
+                    $meshes = {};
+                $visibleMeshes = `stringArrayCatenate $visibleMeshes $meshes`;
+            }
+        }
+        else
+            $visibleMeshes = `listRelatives -f -ad -type "mesh" ("|deformation|" + $curLodSelValue + "|" + $curPartSelValue)` ;
+    }
+    
+    for ($aMesh in $allExportMeshes) {
+        string $transNode[] = `listRelatives -f -p $aMesh`;
+        if (`size $transNode`) {
+            if (`stringArrayContains $aMesh $visibleMeshes`)
+                setAttr ($transNode[0] + ".visibility") 1 ;
+            else
+                setAttr ($transNode[0] + ".visibility") 0 ;
+        }
+    }
+}
+
+global proc geNFS15_SwapPreviousLOD() {
+    int $curLodSel = `optionMenu -q -select cbLodGroups`;
+    
+    if ($curLodSel > 1)
+        optionMenu -e -select ($curLodSel - 1) cbLodGroups;
+    
+    updateVisibility(1);
+}
+
+global proc geNFS15_SwapNextLOD() {
+    int $curLodSel = `optionMenu -q -select cbLodGroups`;
+    
+    if ($curLodSel < (`optionMenu -q -numberOfItems cbLodGroups`))
+        optionMenu -e -select ($curLodSel + 1) cbLodGroups;
+    
+    updateVisibility(1);
+}
+
+global proc geNFS15_SwapPreviousPart() {
+    int $curPartSel = `optionMenu -q -select cbLod0PartGroups`;
+    
+    if ($curPartSel > 1)
+        optionMenu -e -select ($curPartSel - 1) cbLod0PartGroups;
+        
+    updateVisibility(0);
+}
+
+global proc geNFS15_SwapNextPart() {
+    int $curPartSel = `optionMenu -q -select cbLod0PartGroups`;
+    
+    if ($curPartSel < (`optionMenu -q -numberOfItems cbLod0PartGroups`))
+        optionMenu -e -select ($curPartSel + 1) cbLod0PartGroups;
+    
+    updateVisibility(0);
+}
+
+global proc geNFS15_SwapPreviousLOD_deformation() {
+    int $curLodSel = `optionMenu -q -select cbLodGroups_deformation`;
+    
+    if ($curLodSel > 1)
+        optionMenu -e -select ($curLodSel - 1) cbLodGroups_deformation;
+    
+    updateVisibility_deformation(1);
+}
+
+global proc geNFS15_SwapNextLOD_deformation() {
+    int $curLodSel = `optionMenu -q -select cbLodGroups_deformation`;
+    
+    if ($curLodSel < (`optionMenu -q -numberOfItems cbLodGroups_deformation`))
+        optionMenu -e -select ($curLodSel + 1) cbLodGroups_deformation;
+    
+    updateVisibility_deformation(1);
+}
+
+global proc geNFS15_SwapPreviousPart_deformation() {
+    int $curPartSel = `optionMenu -q -select cbLod0PartGroups_deformation`;
+    
+    if ($curPartSel > 1)
+        optionMenu -e -select ($curPartSel - 1) cbLod0PartGroups_deformation;
+        
+    updateVisibility_deformation(0);
+}
+
+global proc geNFS15_SwapNextPart_deformation() {
+    int $curPartSel = `optionMenu -q -select cbLod0PartGroups_deformation`;
+    
+    if ($curPartSel < (`optionMenu -q -numberOfItems cbLod0PartGroups_deformation`))
+        optionMenu -e -select ($curPartSel + 1) cbLod0PartGroups_deformation;
+    
+    updateVisibility_deformation(0);
+}
+
+global proc geNFS15_CheckReasonablePartsName() {
+    string $lowerLods[] = {"lod1", "lod2", "lod3", "lod4", "lod5"};
+    string $higherLods[] = {"lod0", "lod1", "lod2", "lod3", "lod4"};
+    
+    string $errorPartNames[];
+    for ($i=0; $i<`size $lowerLods`; $i++) {
+        string $lowerParts[] = `listRelatives -c ("|export|" + $lowerLods[$i])`;
+        string $higherParts[] = `listRelatives -c ("|export|" + $higherLods[$i])`;
+        for ($aPart in $lowerParts) {
+            if (0 == `stringArrayContains $aPart $higherParts`) {
+                $errorPartNames[`size $errorPartNames`] = "|export|" + $lowerLods[$i] + "|" + $aPart;
+            }
+        }
+    }
+    
+    int $numErrParts = `size $errorPartNames`;
+    if ($numErrParts) {
+        print "\n";
+        print ("Error: There are " + $numErrParts + " un-reasonable Part Names: \n");
+        for ($aPart in $errorPartNames)
+            print ("\t" + $aPart + "\n");
+    }
+    else
+        print ("All parts have resonable names!");
+}
+
+global proc geNFS15_ToggleWreckGlasses() {
+    string $curLodSel = `optionMenu -q -value cbLodGroups`;
+    string $wreckGroupsOnLod[] = `ls -l ("|export|" + $curLodSel + "|*_wreck")`;
+    if (`size $wreckGroupsOnLod`) {
+        string $nonWreckGroupsOnLod[];
+        for ($aWreck in $wreckGroupsOnLod) {
+            int $num = `size $aWreck`;
+            string $nonWreck = `startString $aWreck ($num - 6)`;
+            if (`objExists $nonWreck`) {
+                $nonWreckGroupsOnLod[`size $nonWreckGroupsOnLod`] = $nonWreck;
+            }
+        }
+        
+        string $allExportMeshes[] = `listRelatives -f -ad -type "mesh" ("|export")` ;
+        string $allLODMeshes[] = `listRelatives -f -ad -type "mesh" ("|export|" + $curLodSel)` ;
+        string $hiddenMeshes[] = {};
+        
+        global int $lodSwapping_showWreck;
+        if ($lodSwapping_showWreck == 0) {
+            $lodSwapping_showWreck = 1;
+            for ($aNonWreck in $nonWreckGroupsOnLod) {
+                string $meshes[] = `listRelatives -f -ad -type "mesh" $aNonWreck`;
+                $hiddenMeshes = `stringArrayCatenate $hiddenMeshes $meshes`;
+            }
+        }
+        else {
+            $lodSwapping_showWreck = 0;
+            for ($aWreck in $wreckGroupsOnLod) {
+                string $meshes[] = `listRelatives -f -ad -type "mesh" $aWreck`;
+                $hiddenMeshes = `stringArrayCatenate $hiddenMeshes $meshes`;
+            }
+        }
+        checkBox -e -v $lodSwapping_showWreck chkShowWreckedGlasses;
+        
+        string $visibleMeshes[] = `stringArrayRemove $hiddenMeshes $allLODMeshes`;
+                
+        for ($aMesh in $allExportMeshes) {
+            string $transNode[] = `listRelatives -f -p $aMesh`;
+            if (`size $transNode`) {
+                if (`stringArrayContains $aMesh $visibleMeshes`)
+                    setAttr ($transNode[0] + ".visibility") 1 ;
+                else
+                    setAttr ($transNode[0] + ".visibility") 0 ;
+            }
+        }
+    }
+}
+
+global proc geNFS15_ToggleWreckGlasses_deformation() {
+    string $curLodSel = `optionMenu -q -value cbLodGroups_deformation`;
+    string $wreckGroupsOnLod[] = `ls -l ("|deformation|" + $curLodSel + "|*_wreck")`;
+    if (`size $wreckGroupsOnLod`) {
+        string $nonWreckGroupsOnLod[];
+        for ($aWreck in $wreckGroupsOnLod) {
+            int $num = `size $aWreck`;
+            string $nonWreck = `startString $aWreck ($num - 6)`;
+            if (`objExists $nonWreck`) {
+                $nonWreckGroupsOnLod[`size $nonWreckGroupsOnLod`] = $nonWreck;
+            }
+        }
+        
+        string $allExportMeshes[] = `listRelatives -f -ad -type "mesh" ("|deformation")` ;
+        string $allLODMeshes[] = `listRelatives -f -ad -type "mesh" ("|deformation|" + $curLodSel)` ;
+        string $hiddenMeshes[] = {};
+        
+        global int $lodSwapping_showWreck;
+        if ($lodSwapping_showWreck == 0) {
+            $lodSwapping_showWreck = 1;
+            for ($aNonWreck in $nonWreckGroupsOnLod) {
+                string $meshes[] = `listRelatives -f -ad -type "mesh" $aNonWreck`;
+                $hiddenMeshes = `stringArrayCatenate $hiddenMeshes $meshes`;
+            }
+        }
+        else {
+            $lodSwapping_showWreck = 0;
+            for ($aWreck in $wreckGroupsOnLod) {
+                string $meshes[] = `listRelatives -f -ad -type "mesh" $aWreck`;
+                $hiddenMeshes = `stringArrayCatenate $hiddenMeshes $meshes`;
+            }
+        }
+        checkBox -e -v $lodSwapping_showWreck chkShowWreckedGlasses;
+        
+        string $visibleMeshes[] = `stringArrayRemove $hiddenMeshes $allLODMeshes`;
+                
+        for ($aMesh in $allExportMeshes) {
+            string $transNode[] = `listRelatives -f -p $aMesh`;
+            if (`size $transNode`) {
+                if (`stringArrayContains $aMesh $visibleMeshes`)
+                    setAttr ($transNode[0] + ".visibility") 1 ;
+                else
+                    setAttr ($transNode[0] + ".visibility") 0 ;
+            }
+        }
+    }
+}
+
+global proc geNFS15_ArrangeLODs() {
+    string $allLODs[] = {"lod0", "lod1", "lod2", "lod3", "lod4", "lod5"};
+    int $xOffsets[] = {0, 2, 4, 6, 8, 10};
+    
+    for ($i = 0; $i < size($allLODs); $i++) {
+        catchQuiet (`setAttr ("export|" + $allLODs[$i] + ".translateY") ($xOffsets[$i])`);
+        catchQuiet (`setAttr ("deformation|" + $allLODs[$i] + ".translateY") ($xOffsets[$i])`);
+    }
+}
+
+global proc geNFS15_StackLODs() {
+    string $allLODs[] = {"lod0", "lod1", "lod2", "lod3", "lod4", "lod5"};
+     
+    for ($i = 0; $i < size($allLODs); $i++) {
+        catchQuiet (`setAttr ("export|" + $allLODs[$i] + ".translateY") 0`);
+        catchQuiet (`setAttr ("deformation|" + $allLODs[$i] + ".translateY") 0`);
+    }
+}
+
+
+//geNFS15_LodSwapping_UI();

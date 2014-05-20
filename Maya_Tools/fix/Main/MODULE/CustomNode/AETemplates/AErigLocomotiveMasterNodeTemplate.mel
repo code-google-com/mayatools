@@ -1,0 +1,81 @@
+global proc AErigLocomotiveMasterNodeTemplate(string $nodeName)
+{
+	//AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+	
+	editorTemplate -beginLayout "Path Input" -collapse 0;
+	editorTemplate -callCustom "AEcreateInput_Curve" "AEupdateInput_Curve" "Input Curve";
+	editorTemplate -callCustom "AECurve_Button" "AEupdateCurve_Button" "Set Path";
+	editorTemplate -endLayout;
+	
+	editorTemplate -beginLayout "Linking Nodes" -collapse 0;
+	editorTemplate -callCustom "AECreateFnUI" "AEUpdate_ListLinkingNodes" "childNodes";
+	editorTemplate -endLayout;
+	
+	editorTemplate -beginLayout "Parameters" -collapse 0;
+	editorTemplate -label "Translation" -addControl "translation"
+	editorTemplate -endLayout;
+	
+	editorTemplate -suppress "matrixEyeToWorld";
+	editorTemplate -suppress "dirtyShaderPlug";
+	editorTemplate -suppress "inIterations";
+	
+	AEdependNodeTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}
+
+global proc AECreateFnUI()
+{	
+	columnLayout;
+		rowLayout -numberOfColumns 2;
+    			textScrollList -w 300 -numberOfRows 10 -allowMultiSelection true;
+    			columnLayout;
+           		button -label "Up" -w 75;
+				button -label "Down" -w 75;
+			setParent..;
+		setParent..;
+		rowLayout -numberOfColumns 2;
+			button -label "Add" -w 75;
+			button -label "Remove" -w 75;
+		setParent..;
+	setParent..;
+}
+
+global proc AEUpdate_ListLinkingNodes(string $attString)
+{
+	string $childs [];
+	
+}
+
+global proc AEupdateCurve_Button(string $attString)
+{
+
+}
+
+global proc AEcreateInput_Curve(string $attString)
+{
+	string $attrLabel [];
+	tokenize $attString "." $attrLabel;
+	rowColumnLayout -nc 2 -cw 1 75 -cw 2 210;
+		text -label $attrLabel[1];
+		textField -text "" -ed 0;
+	setParent..;
+}
+
+global proc AEupdateInput_Curve(string $attString)
+{
+}
+
+global proc AECurve_Button(string $attString)
+{
+	string $attrLabel [];
+	tokenize $attString "." $attrLabel;
+	button -w 100 -label $attrLabel[1] -c ("setCurve" + " nameNode");
+}
+
+global proc setCurve(string $curveName)
+{
+	print $curveName;
+}

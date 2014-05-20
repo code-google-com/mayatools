@@ -1,0 +1,1971 @@
+global string $gBoltMaterialList[]; //hierarchical list of materials in library
+global string $gBoltTextureList[]; //list of all textures in library
+global string $gBoltMatLibSelectedMaterial; //path to xml file of currently selected library material
+global string $gBoltMatLibSelectedSceneMaterial; //name of currently selected scene material
+global string $gBoltLastHighlightedMatEdButton; //reduce flicker by only updating necessary buttons
+global string $gBoltMatLibOpenFolders[]; //keeps track of which folders are open
+global string $gBoltUnFilterList[]; // records which materials to show when unfiltering list
+
+
+
+
+proc int sAppend (string $array[], string $value)
+{
+	$array[`size($array)`] = $value;
+	if ($array[(`size($array)` - 1)] == $value) {
+		return 1;
+	} 
+	return 0;
+}
+
+// Usage: sFindItem array value
+// Returns the 0-based index of the first occurence of the value in the array
+// If the specified value is not in the array, returns -1
+
+proc int sFindItem (string $array[], string $value)
+{
+	int $i;
+	if (`size($array)` > 0) {
+		for ($i = 0; $i <= `size($array)`; $i++)
+		{
+			if ($array[$i] == $value) {
+				return $i;
+			}
+		}
+	}
+	return -1;
+}
+
+proc string rootNode( string $object )
+// Description: Strips the dot-suffix of the specified string.
+{
+  string $buffer[];
+  tokenize $object "." $buffer;
+  return $buffer[0];
+}
+
+
+proc string getFacetSG( string $facet )
+// Input (string) - facet component to query (e.g. "pSphere1.f[0]")
+// Result (string) - Shading Group shading facet (e.g. "lambert2SG")
+{
+  	string $facetSG = "";
+
+
+  	string $shadingGroups[] = `ls -type shadingEngine`;
+	// Get array of all Shading Groups
+
+  	for ( $shadingGroup in $shadingGroups )
+  	{
+    	// If this facet is a member of the shading set for this
+    	// Shading Group, tag this as the facet's shader
+    	if ( `sets -isMember $shadingGroup $facet` )
+    	{
+      		$facetSG = $shadingGroup;
+      		break;
+    	}
+  	}
+  	return $facetSG;
+}
+
+proc string[] getShapes( string $xform )
+//returns list of shape nodes from a transform
+{
+   string $shapes[];
+
+   $shapes[0] = $xform;
+
+   if ( "transform" == `nodeType $xform` )
+   // If given node is not a transform, assume it is a shape
+   // and pass it through
+   {
+      $shapes = `listRelatives -shapes $xform`;
+   }
+
+   return $shapes;
+}
+
+
+
+proc string getMaterialFromSG( string $SG )
+//returns the material of a given shading group.
+{
+  	string $material = "";
+  	if ( "shadingEngine" == `nodeType $SG` && `connectionInfo -id ( $SG + ".surfaceShader" )` )
+  	{
+    	$material = rootNode( `connectionInfo -sfd ( $SG + ".surfaceShader" )` );
+  	}
+  	return $material;
+}
+
+proc string[] getSGFromMaterial( string $material )
+// Description: Returns the Shading Group set whose '.surfaceShader'
+//  attribute is being fed by the specified Material.
+//
+//  Returns an array for all Shading Groups using the Material.
+{
+  string $SG[];
+
+  // First, assert that $material is a Material.
+  // (Returns a string array, unfortunately, so requires variable.)
+  string $class[] = getClassification( `nodeType $material` );
+
+  if ($class[0] == "shader/surface/utility" || $class[0] == "shader/surface" || $class[0] == "shader/surface/utility:swatch/hwTestRenderSwatchGen" || $class[0] == "")
+  {
+    string $outColor = ".outColor";
+    if (!`attributeExists "outColor" $material`) $outColor = ".oc";
+      
+    
+    // Assert that there is a connection from the Material's .outColor
+    if ( `connectionInfo -is ( $material + $outColor )` )
+    {
+      // There may be more than one connection...
+      string $dests[] = `connectionInfo -dfs ( $material + $outColor )`;
+      for ( $dest in $dests )
+      {
+        // Iterate through connections and identify ShadingGroup sets.
+        if ( "shadingEngine" == `nodeType $dest` )
+        {
+          $SG[`size $SG`] = rootNode( $dest );
+          //break;
+        }
+      }
+    }
+  }
+
+  return $SG;
+}
+
+
+
+
+global proc boltDoSelShader(string $material, string $objects[])
+// selects polys in specified objects with the specified shader
+{
+	if ($material == "") return;
+	//quit if no material specced.
+	
+	string $sgs[] = `getSGFromMaterial $material`;
+	//work out its shading group
+
+	string $sg;
+	string $faceList[] = {};
+
+	for ($sg in $sgs)
+	{
+		string $newFaces[] = `sets -q $sg`;
+		$faceList = `stringArrayCatenate $newFaces $faceList`;
+	}
+	//get a list of all faces from all sgs.
+
+	
+	if (`size($objects)` == 0)
+	{
+		$objects = `ls -hilite`;
+	}
+	//get a list of selected or highlighted objects
+
+	if (`size($objects)` == 0)
+	{
+		select $faceList;
+	}
+	//if no objects selected, select all faces with the shader
+
+	else
+	{
+		string $shapes[] = {};
+		for ($object in $objects)
+		{
+			string $shape[] = `getShapes $object`;
+			$shapes = `stringArrayCatenate $shapes $shape`;
+		}
+		//get a list of all shapes for selected objects
+
+		$objects = `stringArrayCatenate $shapes $objects`;
+		//combine shapes and object lists
+		//(faces returned by SGs can be named after either transforms or shapes)
+
+		string $face;
+		string $filteredFaceList[] = {};
+
+		for ($face in $faceList)
+		//check though all faces
+		{
+			string $faceToCheck = `match "^[^\.]*" $face`	;
+			//get the shape/transform name of the face
+
+			if (`sFindItem $objects $faceToCheck` != -1)
+			//check whether this shape/transform is selected
+			{
+				sAppend $filteredFaceList $face;
+				//if it is then add to the list to select
+			}
+
+		select $filteredFaceList;
+		}
+	}
+
+
+}
+
+
+
+global proc string boltTruncateString(string $inString, int $maxLength)
+//returns a truncated string, with "..." prefic, if string is over specified length
+{
+	if (size($inString)<=$maxLength) return $inString;
+	
+	int $end = `size $inString`;
+	int $start = $end - $maxLength + 3; 
+	
+	string $outString = ("..." + `substring $inString $start $end`);
+	
+	return $outString;
+}
+
+
+global proc string[] boltLoadTextFile (string $path)
+//returns a string array containing all the lines of the specified text file 
+{
+	$fileId=`fopen $path "r"`;
+	string $nextLine = `fgetline $fileId`;
+	string $text[]; 
+	$text[0] = $nextLine;
+	while ( size( $nextLine ) > 0 ) 
+   	{
+   		$nextLine = `fgetline $fileId`;
+   		$text[size($text)] = $nextLine;
+   	}
+	fclose $fileId;
+	return $text;
+}
+
+
+global proc string boltGetStringFromXML (string $tag, string $xml[])
+//returns the text string after the first occurance of $tag that is found
+// eg "baseuri="
+{
+	string $text = "";
+	
+	for ($line in $xml)
+	{
+		if (`gmatch $line ("*"+$tag+"*")`)
+		{
+			string $buffer[];
+			$numTokens = `tokenize $line "\"" $buffer`;
+			
+			for ($i=0; $i<size($buffer); $i++)
+			{
+				if (`gmatch $buffer[$i] ("*"+$tag+"*")`)
+				{
+					return $buffer[$i+1];
+				}
+			}
+		}
+	}
+	return $text;	
+}
+
+global proc string boltGetStringFromXML3 (string $tag, string $tag2, string $xml[])
+//returns the text string after the first occurance of $tag that is found
+// eg "baseuri="
+//tag2 must also be found in the line.
+{
+	string $text = "";
+	
+	for ($line in $xml)
+	{
+		if ( (`gmatch $line ("*"+$tag+"*")`) && (`gmatch $line ("*"+$tag2+"*")`) )
+		{
+			string $buffer[];
+			$numTokens = `tokenize $line "\"" $buffer`;
+			
+			for ($i=0; $i<size($buffer); $i++)
+			{
+				if (`gmatch $buffer[$i] ("*"+$tag+"*")`)
+				{
+					return $buffer[$i+1];
+				}
+			}
+		}
+	}
+	return $text;	
+}
+
+global proc string[] boltGetTexturesFromXML (string $xmlPath)
+//finds all textures from material and any parent materials
+//avoids duplicates or unused bindings where they are overwritten by the child material
+{
+	string $textures[] = {};
+	string $bindings[] = {};
+	
+	string $xmlText[] = `boltLoadTextFile $xmlPath`;
+	string $xmlTexts[] = $xmlText;
+	
+	for ($i=0; $i<5; $i++)
+	{
+		string $newPath = `boltGetStringFromXML "baseuri=" $xmlText`;
+		
+		if (!`endsWith $newPath ".material"`)
+		{
+			$xmlText = `boltLoadTextFile $newPath`;
+			$xmlTexts = stringArrayCatenate($xmlTexts, $xmlText);
+		}	
+	}
+	//add all parent xml texts together	
+	
+	for ($line in $xmlTexts)
+	{
+		if (`gmatch $line ("*<binding*")` && `gmatch $line ("*type=\"texture\"*")`)
+		{
+			string $binding = `boltGetStringFromXML "name=" {$line}`;
+						
+			if (`sFindItem $bindings $binding` == -1)
+			//avoid duplicate bindings from parents
+			{
+				string $buffer[];
+				$numTokens = `tokenize $line "<>" $buffer`;
+			
+				for ($i=0; $i<size($buffer); $i++)
+				{
+					if (`gmatch $buffer[$i] ("*binding*")`)
+					{
+						$textures[size($textures)] = $buffer[$i+1];
+						$bindings[size($bindings)] = $binding;
+					}
+				}
+			}
+		}
+	}
+	return $textures;
+}
+	
+
+
+global proc string[] boltMaterialNameSearch(string $searchText)
+{
+	global string $gBoltTextureList[];
+	string $matchingXMLs[] = {};
+	
+	for ($line in $gBoltTextureList)
+	{
+		string $buffer[];
+		$numTokens = `tokenize $line " " $buffer`;
+		
+		if (`gmatch (tolower($buffer[1])) (tolower("*" + $searchText + "*"))`)
+		{
+			$matchingXMLs[size($matchingXMLs)] = $buffer[0];
+		}
+	}
+	return $matchingXMLs;
+}
+
+global proc string[] boltTextureNameSearch(string $searchText)
+{
+	global string $gBoltTextureList[];
+	string $matchingXMLs[] = {};
+	
+	for ($line in $gBoltTextureList)
+	{
+		string $buffer[];
+		$numTokens = `tokenize $line " " $buffer`;
+		
+		for ($i=2; $i<size($buffer); $i++)
+		{	
+			if (`gmatch (tolower($buffer[$i])) (tolower("*" + $searchText + "*"))`)
+			{
+				$matchingXMLs[size($matchingXMLs)] = $buffer[0];
+			}
+		}
+	}
+	
+	$matchingXMLs = stringArrayRemoveDuplicates($matchingXMLs);
+	
+	return $matchingXMLs;
+}		
+		
+
+global proc boltGetGlobalTextureList()
+{
+	global string $gBoltMaterialList[];
+	global string $gBoltTextureList[];
+	
+	$gBoltTextureList = {};
+	
+	for ($mat in $gBoltMaterialList)
+	{
+		if (`endsWith $mat ".xml" `)
+		{
+			string $textures[] = boltGetTexturesFromXML($mat);
+			string $name = boltGetMaterialName($mat);
+			
+			string $output = ($mat + " " + $name);
+			
+			for ($tex in $textures)
+			{
+				$output += (" " + $tex);
+			}
+			
+			$gBoltTextureList[size($gBoltTextureList)] = $output;
+		}
+	}
+}
+
+
+
+
+global proc string[] boltGetStringFromXML2 (string $tag, string $type, string $xml[])
+//returns the dds texture path strings after the $tag that is found
+//tag must also contain $type
+//returns text between pointy brackets of that tag.
+// eg "binding" returns PATH from <binding wioh wjhiedo jdiweojd>PATH</binding>
+{
+	string $paths[] = {};
+	
+	for ($line in $xml)
+	{
+		if (`gmatch $line ("*<"+$tag+"*")` && `gmatch $line ("*"+$type+"*")`)
+		{
+			string $buffer[];
+			$numTokens = `tokenize $line "<>" $buffer`;
+			
+			for ($i=0; $i<size($buffer); $i++)
+			{
+				if (`gmatch $buffer[$i] ("*"+$tag+"*")`)
+				{
+					$paths[size($paths)] = $buffer[$i+1];
+				}
+			}
+		}
+	}
+	return $paths;	
+}
+
+
+
+	
+global proc string boltGetMaterialDescription (string $xmlPath)
+//gets the material description from the xmlfile
+{	
+	string $xmlText[] = `boltLoadTextFile $xmlPath`;
+	return `boltGetStringFromXML "desc=" $xmlText`;
+}
+
+global proc string boltGetMaterialName (string $xmlPath)
+//gets the material name from the xmlfile
+{	
+	string $xmlText[] = `boltLoadTextFile $xmlPath`;
+	return `boltGetStringFromXML "name=" $xmlText`;
+}
+
+
+global proc string[] boltGetSubFoldersInFolder(string $baseFolder)        
+//gets list of sub materials in specified directory	                  
+{                                                                 
+	string $allFilesAndFolders[] = `getFileList -folder $baseFolder`;
+	
+	string $subFolders[] = {};
+	for ($f in $allFilesAndFolders)
+	{
+		if (`filetest -d ($baseFolder + $f)`)
+		{
+			$subFolders[size($subFolders)] = $f;
+		}
+	}
+	
+	return $subFolders;
+}
+
+
+
+global proc string[] boltGetHierarchicalMaterialList(string $baseFolder, string $hierarchicalMaterialList[])
+//gets a final hierarchical list of materials, folders and sub materials.
+{
+	string $xmlFiles[] = `getFileList -folder $baseFolder -filespec "*.xml"`;
+ 	string $subFolders[] = `boltGetSubFoldersInFolder $baseFolder`;
+	
+	for ($file in $xmlFiles)
+	{
+		string $xmlPath = ($baseFolder + $file);
+		
+		if (`optionVar -q "boltMatEdShowParent"` == 0)
+		{
+			if (`boltIsParentMaterial $xmlPath` == 0)
+			{		
+				$hierarchicalMaterialList[size($hierarchicalMaterialList)] = ($baseFolder + $file);
+			}
+		}
+		else
+		{
+			$hierarchicalMaterialList[size($hierarchicalMaterialList)] = ($baseFolder + $file);
+		}
+		//decide wether to include parent materials or not
+	}	
+	
+	for ($subFolder in $subFolders)
+	{
+		if (`endsWith $subFolder ".mayaSwatches"`==0)
+		//ignore .mayaSwatches folder
+		{
+			$hierarchicalMaterialList[size($hierarchicalMaterialList)] = ($baseFolder + $subFolder + "/");
+			//add the folder name to the list
+			boltGetHierarchicalMaterialList ($baseFolder + $subFolder + "/") $hierarchicalMaterialList;
+		}
+	}
+	
+	$hierarchicalMaterialList = `sort $hierarchicalMaterialList`;		
+	return $hierarchicalMaterialList;
+}
+
+
+
+
+global proc string[] boltGetMaterialPaths(string $baseFolder)
+//gets a list of materials and sub materials with full paths 
+{
+	global string $gBoltMaterialList[];
+	
+	string $materialPaths[] = {};
+	
+	for ($mat in $gBoltMaterialList)
+	{
+		if (`endsWith $mat ".xml"`)
+		{
+			$materialPaths[size($materialPaths)] = $mat;
+		}		
+	}
+	
+	return $materialPaths;
+}
+
+
+
+global proc string[] boltGetIconButtonList()
+//returns names of all icon buttons in the library tab GUI
+{
+	global string $gBoltMaterialList[];
+	
+	string $iconButtons[] = {};
+	
+	for ($mat in $gBoltMaterialList)
+	{
+		$iconButtons[size($iconButtons)] = `boltGetButtonNameFromXMLPath $mat`;
+	}
+	
+	return $iconButtons;
+}
+
+global proc string[] boltGetSceneIconButtonList()
+//returns names of all icon buttons in the scene tab GUI
+{
+	string $sceneMaterials[] = `ls -materials`;
+	string $iconButtons[] = {};
+	
+	for ($mat in $sceneMaterials)
+	{
+		$iconButtons[size($iconButtons)] = ("boltIconButtonSceneMat" + $mat);
+	}
+	
+	return $iconButtons;
+}
+	
+	
+global proc string boltGetMaterialFromXML(string $xmlPath)
+//finds the .material used by an xml material
+//recursive routine, so works on nested child materials
+{
+	if (`endsWith $xmlPath ".material"`) return $xmlPath;
+		
+	string $xmlText[] = `boltLoadTextFile $xmlPath`;
+	
+	string $materialPath = `boltGetStringFromXML "baseuri=" $xmlText`;
+	
+	if (`endsWith $materialPath ".xml"`)
+	{
+		$materialPath = `boltGetMaterialFromXML $materialPath`;
+	}
+	
+	return $materialPath;
+}
+
+global proc string boltGetFragCount(string $xmlPath)
+//returns the frag count of a given .xml material 
+//works by looking for the <FragCycles>| catagory in the .material file.
+{
+	string $materialPath = `boltGetMaterialFromXML $xmlPath`;
+	string $materialText[] = `boltLoadTextFile $materialPath`;
+
+	for ($line in $materialText)
+	{
+		if (`gmatch $line ("*&lt;FragCycles&gt;*")`)
+		{
+			string $buffer[];
+			$numTokens = `tokenize $line "|\"" $buffer`;
+			
+			for ($i=0; $i<size($buffer); $i++)
+			{
+				if (`gmatch $buffer[$i] ("*&lt;FragCycles&gt;*")`)
+				{
+					string $frags = $buffer[$i+1];
+					$frags = `substitute "&gt;" $frags ">"`; 
+					$frags = `substitute "&#10;" $frags ""`; 
+					return $frags;
+				}
+			}
+		}
+	}
+	return "";	
+		
+}
+
+global proc int boltIsATGMaterialEnvMapped(string $xmlPath)
+//checks whether this shader uses the no ambient specular node
+//returns 1 for envmap
+//returns 0 if no ambient specular node found
+{
+	string $materialPath = `boltGetMaterialFromXML $xmlPath`;
+	string $materialText[] = `boltLoadTextFile $materialPath`;
+
+	//if there is a LodNoAmbientSpecular node, assume that the top lod is env mapped
+	for ($line in $materialText)
+	{
+		if (`gmatch $line ("*LodNoAmbientSpecular*")`)
+		{
+			return 1;
+		}
+	}
+	
+	//else if there is just a NoAmbientSpecular node, then there is no Env
+	for ($line in $materialText)
+	{
+		if (`gmatch $line ("*NoAmbientSpecular*")`)
+		{
+			return 0;
+		}
+	}
+	
+	//if no "NoAmbientSpecular" nodes, then it must be env mapped.
+	return 1;	
+		
+}
+
+
+
+global proc string[] boltGetListOfXMLMaterialsInScene()
+//returns a list of all atg material xmls found in the scene
+{
+	string $atgMaterials[] = `ls -type "ATGMaterial"`;
+	
+	string $atgXMLs[] = {};
+	
+	for ($mat in $atgMaterials)
+	{
+		string $path = `getAttr ($mat+ ".RawPath")`;
+		if (`endsWith $path ".xml"`) $atgXMLs[size($atgXMLs)] = $path;
+	}
+	
+	return $atgXMLs;
+}
+
+
+
+
+
+
+
+
+
+
+
+global proc boltMatLibRenameShader(string $newName)
+//renames the shader and updates the gui
+{
+	string $material = `text -q -label boltTextMatName`;
+	rename $material $newName;
+		
+	boltMatLibRefresh;
+	boltUpdateMatInfoPanel $newName;
+}
+
+
+
+
+global proc boltMatLibCreate(string $type)
+{
+	string $shaderNode = `shadingNode -asShader $type`;
+	$shadingGroup = `sets -renderable true -noSurfaceShader true -empty -name $shaderNode`;
+	connectAttr -f ($shaderNode+".outColor") ($shadingGroup+".surfaceShader");
+	//add a shading group
+
+	boltMatLibRefresh;	
+	
+}
+
+global proc boltMatLibImport()
+//imports the currently selected material into the scene
+{
+	global string $gBoltMatLibSelectedMaterial;
+	$matName = `basenameEx $gBoltMatLibSelectedMaterial`;
+	
+	if ($gBoltMatLibSelectedMaterial != "")
+	{
+		string $shaderNode = `shadingNode -asShader ATGMaterial -name $matName`;                                                                 
+		setAttr ($shaderNode + ".SelectMode") 0;                                                        
+		setAttr -type "string" ($shaderNode + ".RawPath") $gBoltMatLibSelectedMaterial;
+		
+		$shadingGroup = `sets -renderable true -noSurfaceShader true -empty -name ($shaderNode+"SG")`;
+		connectAttr -f ($shaderNode+".outColor") ($shadingGroup+".surfaceShader");
+		//add a shading group
+		
+	}
+	
+	$buttonName = `boltGetButtonNameFromXMLPath $gBoltMatLibSelectedMaterial`;
+	iconTextButton -e -font "boldLabelFont" $buttonName;
+	//iconTextButton -e -visible 0 $buttonName;
+	//iconTextButton -e -visible 1 $buttonName;
+	//make the button bold
+	
+	//boltMatLibRefresh;
+	//boltUpdateMatInfoPanel $gBoltMatLibSelectedMaterial;
+	
+	
+}
+		
+		
+		
+
+global proc boltMatLibLibraryPath()
+//gui for editing the default materials path
+{
+	string $path = `optionVar -q "boltMatLibBaseFolder"`;
+	
+	if (`window -exists boltMatLibPathWindow`) {deleteUI boltMatLibPathWindow;} 
+	
+	window -title "Edit Material Library Path:" boltMatLibPathWindow;
+		columnLayout;
+			textField -text $path -width 400 boltMatLibPathField;
+			button -width 200 -label "Update Path" -command "boltMatLibUpdatePath `textField -q -text boltMatLibPathField`";
+			
+	showWindow boltMatLibPathWindow;
+	
+	window -e -w 420 -h 100 boltMatLibPathWindow;
+}
+
+global proc boltMatLibLibraryRoot()
+//gui for editing the default materials root
+{
+	string $path = `optionVar -q "boltMatLibRootFolder"`;
+	
+	if (`window -exists boltMatLibPathWindow`) {deleteUI boltMatLibPathWindow;} 
+	
+	window -title "Edit Material Library Root:" boltMatLibPathWindow;
+		columnLayout;
+			textField -text $path -width 400 boltMatLibPathField;
+			button -width 200 -label "Update Path" -command "boltMatLibUpdateRoot `textField -q -text boltMatLibPathField`";
+			
+	showWindow boltMatLibPathWindow;
+	
+	window -e -w 420 -h 100 boltMatLibPathWindow;
+}
+
+
+global proc boltMatLibUpdatePath(string $path)
+//reloads the mat lib with the new path
+{
+	if (!(`endsWith $path "/"`)) $path += "/";
+	
+	optionVar -stringValue "boltMatLibBaseFolder" $path;
+	
+	boltMaterialLibraryBrowser;
+	
+	if (`window -exists boltMatLibPathWindow`) {deleteUI boltMatLibPathWindow;} 
+}
+
+global proc boltMatLibUpdateRoot(string $path)
+//reloads the mat lib with the new root path
+{
+	if (!(`endsWith $path "/"`)) $path += "/";
+	
+	optionVar -stringValue "boltMatLibRootFolder" $path;
+	
+	boltMaterialLibraryBrowser;
+	
+	if (`window -exists boltMatLibPathWindow`) {deleteUI boltMatLibPathWindow;} 
+}	
+	
+
+
+global proc boltMatEdSwatchSize(int $size)
+//edits the swatch size in the gui
+{
+	optionVar -intValue "boltMatEdSwatchSize" $size;
+	
+	int $height = 30;
+	if ($size == 0) $height = 16;
+	if ($size == 1) $height = 30;
+	if ($size == 2) $height = 128;
+	
+	
+	string $buttonList[] = `boltGetIconButtonList`;
+	for ($b in $buttonList)
+	{
+		iconTextButton -e -h $height $b;
+	}
+	
+	string $buttonList[] = `boltGetSceneIconButtonList`;
+	for ($b in $buttonList)
+	{
+		iconTextButton -e -h $height $b;
+	}
+	
+}
+	
+
+global proc boltShowLargeMaterialPreview()
+//displays a window showing the large 512 texture swatch + more info
+{
+	global string $gBoltMatLibSelectedMaterial;
+	
+	string $smallImage = `iconTextButton -q -image1 boltIconButtonSelected`;
+	string $largeImage = `substitute "_swatch_128.bmp" $smallImage "_swatch_512.bmp"`;
+	string $title = `basenameEx $largeImage`;
+	$title = `substitute "_swatch_512" $title ""`;
+	
+	string $window = `window -title $title -w 528 -h 680`;
+		columnLayout ;
+			picture -image $largeImage;
+			scrollField -wordWrap 1 -width 512 -height 130  -text (boltGetShaderInfo($gBoltMatLibSelectedMaterial)) -editable 0;
+					
+		setParent;
+	
+	showWindow $window;
+	window -e -w 528 -h 680 $window;
+}	
+
+
+global proc string boltGetButtonNameFromXMLPath (string $xmlPath)
+//given the xml path, returns the correct name of the corresponding button.
+{
+	string $buttonName = `substituteAllString $xmlPath "." "_"`;
+ 	$buttonName = `substituteAllString $buttonName "/" "_"`;
+	$buttonName = ("boltIconButton" + $buttonName);
+	
+	return $buttonName;
+}
+
+global proc boltUpdateMatInfoPanel (string $xmlPath)
+//updates the material info panel when user selects a material in the list
+//also does highlighting
+{
+	
+	if ($xmlPath == "") return;
+	//quit if nothing passed in
+	
+	if (`endsWith $xmlPath ".xml"`)
+	//an xml path from the library has been passed in
+	{
+		global string $gBoltMatLibSelectedMaterial;
+		$gBoltMatLibSelectedMaterial = $xmlPath;
+		
+		string $baseFolder = `optionVar -q "boltMatLibBaseFolder"`;
+			
+		string $matName = `basenameEx $xmlPath`;
+		string $swatch = `substitute ".xml" $xmlPath "_swatch_128.bmp"`;
+		
+		if (!(`filetest -f $swatch`)) $swatch = ($baseFolder + "missing_swatch.bmp");
+		
+		iconTextButton -e -image1 $swatch boltIconButtonSelected;
+		
+		boltHighlightIconButton `boltGetButtonNameFromXMLPath $xmlPath`; 
+		
+		textField -e -text $xmlPath boltTextMaterialPath;
+		text -e -label $matName boltTextMatName;
+		scrollField -e -text `boltGetMaterialDescription $xmlPath` boltScrollMatDesc;
+		text -e -label ("Frags: " + `boltGetFragCount $xmlPath`) boltTextFragCount; 
+	}
+	else
+	//a scene shader name has been passed in
+	{
+		global string $gBoltMatLibSelectedSceneMaterial;
+		$gBoltMatLibSelectedSceneMaterial = $xmlPath;
+		
+		string $shaderName = $xmlPath;
+		
+		text -e -label $shaderName boltTextMatName;
+		
+		string $icon = `iconTextButton -q -image1 ("boltIconButtonSceneMat" + $shaderName)`;
+		iconTextButton -e -image1 $icon boltIconButtonSelected;
+		
+		boltHighlightIconButton ("boltIconButtonSceneMat" + $shaderName);
+		
+		
+		if (`nodeType $shaderName`=="ATGMaterial")
+		{
+			if (`getAttr ($shaderName + ".SelectMode")` == 0)
+			//if this is an xml material from the library
+			{
+				$xmlPath = `getAttr ($shaderName + ".RawPath")`;
+				textField -e -text $xmlPath boltTextMaterialPath;
+				scrollField -e -text `boltGetMaterialDescription $xmlPath` boltScrollMatDesc;
+				text -e -label ("Frags: " + `boltGetFragCount $xmlPath`) boltTextFragCount; 
+			}
+			else
+			//this is an non library ATG shader
+			{
+				string $materialPath = `getAttr ($shaderName + ".CurrentDefinitionFile")`;
+				text -e -label `boltTruncateString $materialPath 55` boltTextMaterialPath;
+				scrollField -e -text `boltGetMaterialDescription $materialPath` boltScrollMatDesc;
+				text -e -label ("Frags: " + `boltGetFragCount $materialPath`) boltTextFragCount; 
+			}
+			
+			
+		}		
+		if (`nodeType $shaderName`=="evocgfxShader")
+		{
+			scrollField -e -text "evoCGFX shader" boltScrollMatDesc; 
+			text -e -label "Frags: n/a" boltTextFragCount;
+			text -e -label "" boltTextMaterialPath;   
+		}
+		
+		if ( ($shaderName=="lambert1") || ($shaderName=="particleCloud1") || ($shaderName=="shaderGlow1") )
+		{
+			scrollField -e -text "Default Maya Shader - non deletable" boltScrollMatDesc; 
+			text -e -label "Frags: n/a" boltTextFragCount;
+			text -e -label "" boltTextMaterialPath; 
+		}
+		else if ( (`nodeType $shaderName`!="evocgfxShader") && (`nodeType $shaderName`!="ATGMaterial") )
+		{
+			scrollField -e -text (`nodeType $shaderName` + " Shader") boltScrollMatDesc; 
+			text -e -label "Frags: n/a" boltTextFragCount;
+			text -e -label "" boltTextMaterialPath; 
+			
+			
+		}
+	
+	}
+}
+
+
+
+global proc boltToggleChildMaterials (string $folder)
+//given a folder path and HierarchicalMaterialList
+//toggles visibility of all child materials in list
+{
+	global string $gBoltMaterialList[];
+	global string $gBoltMatLibOpenFolders[];
+	
+	for ($mat in $gBoltMaterialList)
+	{
+		string $buttonName = `boltGetButtonNameFromXMLPath $mat`;
+		
+		if ( (`gmatch $mat ($folder + "*")`) && ($folder != $mat) )
+		//if item is in folder, but not the folder itself
+		{
+			if (`iconTextButton -q -visible $buttonName`)
+			{
+				iconTextButton -e -visible 0 $buttonName;
+			}
+			else
+			{
+				if (size (`boltGetSubFoldersBelowBasepath $mat $folder`) == 0)
+				//if item is not in a sub folder
+				{
+					iconTextButton -e -visible 1 $buttonName;
+				}
+				
+			}
+		}
+	}
+	
+	int $i = `sFindItem $gBoltMatLibOpenFolders $folder`;
+	if ($i == -1)
+	{	
+		$gBoltMatLibOpenFolders[size($gBoltMatLibOpenFolders)] = $folder;
+	}
+	else
+	{
+		stringArrayRemoveAtIndex $i $gBoltMatLibOpenFolders;
+	}
+	//keep track of open folders
+
+	
+	
+}
+
+global proc boltFilterMaterialsOff()
+//reverts list back to previous unfiltered state
+{
+	global string $gBoltUnFilterList[];
+	global string $gBoltMaterialList[];
+	
+	if (size($gBoltUnFilterList)==0) return;
+	
+	for ($mat in $gBoltMaterialList)
+	{
+		string $buttonName = `boltGetButtonNameFromXMLPath $mat`;
+		int $buttonState = `iconTextButton -q -visible $buttonName`;
+		
+		if (`sFindItem $gBoltUnFilterList $buttonName` != -1)
+		{
+			if ($buttonState == 0) iconTextButton -e -visible 1 $buttonName;
+		}
+		else
+		{
+			if ($buttonState == 1) iconTextButton -e -visible 0 $buttonName;
+		}
+	}
+	
+	$gBoltUnFilterList = {};
+}	
+	
+
+global proc boltFilterMaterials (string $xmlList[])
+//shows only materials on the given list
+{
+	global string $gBoltUnFilterList[];
+	global string $gBoltMaterialList[];
+	
+	int $recordFlag = 0;
+	
+	if ( size($gBoltUnFilterList) == 0) $recordFlag = 1;
+		
+	for ($mat in $gBoltMaterialList)
+	{
+		string $buttonName = `boltGetButtonNameFromXMLPath $mat`;
+		
+		int $buttonState = `iconTextButton -q -visible $buttonName`;
+		
+		if ($buttonState && $recordFlag)
+		{
+			$gBoltUnFilterList[size($gBoltUnFilterList)] = $buttonName;
+		}
+		//remember which buttons were visible before filtering 
+		
+		if (`sFindItem $xmlList $mat` != -1) 
+		{
+			if ($buttonState == 0) iconTextButton -e -visible 1 $buttonName;
+		}
+		else 
+		{
+			if ($buttonState == 1) iconTextButton -e -visible 0 $buttonName;
+		}
+		
+	}
+	
+}
+
+
+
+
+global proc boltRenderAllSwatches(string $baseFolder)
+{
+	string $materialPaths[] = `boltGetMaterialPaths $baseFolder`;
+
+	for ($path in $materialPaths)
+	{
+		setAttr -type "string" "swatch.RawPath" $path;
+		boltRenderSwatch;
+		
+		print ("\nRendered swatch for " + $path);
+	}
+	
+	
+
+}	
+
+
+global proc boltMatLibRenderSwatch(int $mode)
+//menu command for swatch rendering. 0=current swatch, 1=all swatches, 2=apply current material to swatch
+{
+	string $rootFolder = `optionVar -q "boltMatLibRootFolder"`;
+	string $baseFolder = `optionVar -q "boltMatLibBaseFolder"`;
+	string $swatchScene = ($rootFolder + "swatch_scene.mb");
+	
+	
+	if (`file -q -sn` != $swatchScene)
+	{
+		string $result = `confirmDialog 
+			-message ("Load Swatch Scene? \n" + $swatchScene)
+			-button "Load" 
+			-button "Cancel" 
+			-defaultButton "Cancel" -cancelButton "Cancel" -dismissString "Cancel"`;
+	
+		if ($result == "Cancel") return;
+		if ($result == "Load")
+		{
+			file -open -force $swatchScene;
+		}
+	}	
+	
+	global string $gBoltMatLibSelectedMaterial;
+	
+	if ($mode == 0) //render single swatch
+	{
+		if ($gBoltMatLibSelectedMaterial == "")
+		{
+			warning "No material selected!";
+			return;
+		}
+		
+		setAttr -type "string" "swatch.RawPath" $gBoltMatLibSelectedMaterial;
+		boltRenderSwatch;
+		boltMatLibRefresh;		
+		print ("\nRendered swatch for " + $gBoltMatLibSelectedMaterial);
+		return;
+	}
+	
+	if ($mode == 1) //render all swatches
+	{
+	
+		string $result = `confirmDialog 
+			-message ("Render / Overwite all swatches?")
+			-button "Render All" 
+			-button "Cancel" 
+			-defaultButton "Cancel" -cancelButton "Cancel" -dismissString "Cancel"`;
+	
+		if ($result == "Cancel") return;
+		
+		string $materialPaths[] = `boltGetMaterialPaths $baseFolder`;
+
+		for ($path in $materialPaths)
+		{
+			setAttr -type "string" "swatch.RawPath" $path;
+			boltRenderSwatch;
+			
+			print ("\nRendered swatch for " + $path);
+		}
+		return;
+	}
+	
+	if ($mode == 2) //apply selected material to swatch
+	{
+		if ($gBoltMatLibSelectedMaterial == "")
+		{
+			warning "No material selected!";
+			return;
+		}
+		
+		setAttr -type "string" "swatch.RawPath" $gBoltMatLibSelectedMaterial;
+	}
+		
+}
+
+
+
+global proc boltRenderSwatch()
+//renders swatch bitmaps for the current material
+//they are then copied relative to the material loaded in the "swatch" shader 
+{
+	string $materialPath = `getAttr "swatch.RawPath"`;
+	string $materialDir  = `dirname $materialPath`;
+	string $materialName = `basenameEx $materialPath`;
+	
+	string $dest = ($materialDir + "/" + $materialName + "_swatch_128.bmp"); 
+	string $imageFile = `hwRender -height 128 -width 128 -camera "persp"`;
+	sysFile -copy $dest $imageFile;
+	
+	$dest = ($materialDir + "/" + $materialName + "_swatch_512.bmp"); 
+	$imageFile = `hwRender -height 512 -width 512 -camera "persp"`;
+	sysFile -copy $dest $imageFile;
+
+}
+
+
+
+
+
+
+global proc boltHighlightIconButton(string $buttonToHighlight)
+//switches all buttons to white, then specified button to blue to highlight
+{
+	global string $gBoltLastHighlightedMatEdButton;
+	
+	float $colSel[] = {0.776, 0.835, 0.992};
+	float  $colUnsel[] = {1, 1, 1};
+	
+	if ($gBoltLastHighlightedMatEdButton != "")
+	{
+		iconTextButton -e -bgc $colUnsel[0] $colUnsel[1] $colUnsel[2] $gBoltLastHighlightedMatEdButton;
+		if (`iconTextButton -q -visible $gBoltLastHighlightedMatEdButton` == 1)
+		{
+			iconTextButton -e -visible 0 $gBoltLastHighlightedMatEdButton;
+			iconTextButton -e -visible 1 $gBoltLastHighlightedMatEdButton;
+		}
+	}
+	iconTextButton -e -bgc $colSel[0] $colSel[1] $colSel[2] $buttonToHighlight;
+	iconTextButton -e -visible 0 $buttonToHighlight;
+	iconTextButton -e -visible 1 $buttonToHighlight;
+	
+	$gBoltLastHighlightedMatEdButton = $buttonToHighlight;
+}
+
+
+global proc boltHighlightLoadedShaders()
+//changes materials found in scene to a bold font
+{
+	global string $gBoltMaterialList[];
+	
+	string $baseFolder = `optionVar -q "boltMatLibBaseFolder"`;
+	string $buttonList[] = `boltGetIconButtonList`;
+	string $sceneMaterials[] = `boltGetListOfXMLMaterialsInScene`;
+	
+	for ($b in $buttonList)
+	{
+		iconTextButton -e -font "plainLabelFont" $b;
+	}
+		
+	for ($mat in $sceneMaterials)
+	{
+		//$mat = `tolower $mat`;		
+		if (`sFindItem $gBoltMaterialList $mat` != -1)
+		{
+			 iconTextButton -e -font "boldLabelFont" `boltGetButtonNameFromXMLPath $mat`;
+		}
+	}
+	toggleWindowVisibility boltMatLibWindow; toggleWindowVisibility boltMatLibWindow;
+}
+
+
+
+
+
+
+	
+
+
+global proc string boltGetShaderOnSelected()
+// returns the shader of the currently selected polygon
+{
+	string $selected[] = `ls -sl -fl`;
+	//get selection
+
+	if (`match "\\.f\\[" $selected[0]` == "" )
+	{
+		warning "Please select a face first";
+		return "";
+	}
+	//make sure a face is selected
+	else
+	{
+		string $material = `getFacetSG $selected[0]`;
+		//attempt to find the sg for that face
+
+		if ($material == "")
+		{
+			string $shape = `match "^[^\.]*" $selected[0]`;
+			string $shapes[] = `getShapes $shape`;
+			$shape = $shapes[0];
+			string $materials[] = `getSGsFromShape $shape`;
+			$material = $materials[0];
+		}
+		//if no face sg, find shape sg
+
+		$material = `getMaterialFromSG $material`;
+		
+		return $material;
+
+	}
+}
+
+global proc boltMatLibSelectShaded()
+// selects polys in selected objects with the currently selected shader
+{
+	string $material = `text -q -label boltTextMatName`;
+	//get selected material
+	
+	string $objects[] = `ls -sl -transforms`;
+	
+	boltDoSelShader $material $objects;
+}
+
+
+global proc boltMatLibDeleteShader()
+// deletes the shader currently selected in the material editor. Prompts first. Refreshes list.
+{
+	string $material = `text -q -label boltTextMatName`;
+	//get selected material
+		
+	string $result = `confirmDialog 
+		-message ("Delete " + $material + " from scene?")
+		-button "Delete" 
+		-button "Cancel" 
+		-defaultButton "Cancel" -cancelButton "Cancel" -dismissString "Cancel"`;
+	
+	if ($result == "Cancel") return;
+	if ($result == "Delete")
+	{
+		delete $material;
+		boltMatLibRefresh;
+	}
+}
+
+
+global proc boltMatLibRefresh()
+//refreshes window, preserving currently selected tab
+{
+	global string $gBoltMatLibOpenFolders[];
+	global string $gBoltMatLibSelectedMaterial;
+	
+	string $openFolders[] = $gBoltMatLibOpenFolders;
+	string $shaderToSelect = $gBoltMatLibSelectedMaterial;
+	
+	int $scroll1[] = `scrollLayout -q -scrollAreaValue boltMatLibScroll1`;
+	int $scroll2[] = `scrollLayout -q -scrollAreaValue boltMatLibScroll2`;
+	
+	int $tab = `tabLayout -q -selectTabIndex boltMatLibTabLayout`;
+	boltMaterialLibraryBrowser;
+	tabLayout -e -selectTabIndex $tab boltMatLibTabLayout;
+	boltMatLibTabChange;
+	
+	for ($folder in $openFolders)
+	{
+		boltToggleChildMaterials $folder;
+	}
+		
+	scrollLayout -e -scrollByPixel "down" $scroll1[0] boltMatLibScroll1;
+	scrollLayout -e -scrollByPixel "down" $scroll2[0] boltMatLibScroll2;
+	
+	print $shaderToSelect;
+	
+	boltUpdateMatInfoPanel $shaderToSelect;
+	
+}
+
+
+
+
+
+global proc boltMatLibEditShader()
+// edits the shader currently selected in the material editor.
+{
+	string $material = `text -q -label boltTextMatName`;
+	//get selected material
+	
+	showEditor $material;
+	//show the attribute editor
+}
+
+global proc boltMatLibSetShader(string $material)
+//sets the shader of the currently selected faces to that in the option menu.
+{
+	if ($material == "") return;
+	if ($material == "No Material Selected") return;
+	//quit if no material selected
+	
+	string $sels[] = `ls -sl -fl`;
+	string $selection[] = {}; //contains the final filtered face selection
+
+	for ($sel in $sels)
+	{
+		if (`gmatch $sel "*.f\\[*\\]"`)
+		{
+			$selection[size($selection)] = $sel;
+			//print "\nFace Stored!";			
+		}
+		//store faces
+		else
+		{
+			if (`nodeType $sel` == "transform")
+			{
+				string $newFaces[] = `ls -fl ($sel+".f[*]")`;
+				$selection = `stringArrayCatenate $selection $newFaces`;
+			}
+			//convert objs to faces and add to list	
+		}
+	}
+	//make sure only faces are selected
+
+	string $sg[] = `getSGFromMaterial $material`;
+	//work out its shading group
+
+	print ("\nfaces set to shading group:" + $sg[0] + ", material: " + $material);
+	
+	//print $selection;
+
+	sets -fe $sg[0] $selection;
+
+
+}
+
+global proc boltMatLibTabChange()
+{
+	if (`tabLayout -q -selectTabIndex boltMatLibTabLayout`==1)
+	{
+		  button -e -visible 0 boltButtonDeleteMat; 
+		  button -e -visible 0 boltButtonRenameMat;	  
+          button -e -visible 0 boltButtonGetMat;    
+          button -e -visible 0 boltButtonApplyMat;  
+          button -e -visible 0 boltButtonSelectMat; 
+          button -e -visible 0 boltButtonEditMat;   
+          button -e -visible 1 boltButtonImportMat;
+          button -e -visible 1 boltButtonMatLibSearch;
+          
+          menuItem -e -enable 1 boltMenuItemMatLibSearch;
+          menuItem -e -enable 1 boltMenuItemRenderSwatch0;
+          menuItem -e -enable 1 boltMenuItemRenderSwatch1;
+          menuItem -e -enable 1 boltMenuItemRenderSwatch2;
+    }
+    else
+    {
+    	  button -e -visible 1 boltButtonDeleteMat; 
+    	  button -e -visible 1 boltButtonRenameMat;	
+          button -e -visible 1 boltButtonGetMat;    
+          button -e -visible 1 boltButtonApplyMat;  
+          button -e -visible 1 boltButtonSelectMat; 
+          button -e -visible 1 boltButtonEditMat;   
+          button -e -visible 0 boltButtonImportMat;
+          button -e -visible 0 boltButtonMatLibSearch;
+          
+          menuItem -e -enable 0 boltMenuItemMatLibSearch;
+          menuItem -e -enable 0 boltMenuItemRenderSwatch0;
+          menuItem -e -enable 0 boltMenuItemRenderSwatch1;
+          menuItem -e -enable 0 boltMenuItemRenderSwatch2;
+    }
+}
+
+
+global proc boltMatLibRenameShaderGUI()
+{
+	string $material = `text -q -label boltTextMatName`;
+	
+	if (`window -exists boltMatLibRenameWindow`) {deleteUI boltMatLibRenameWindow;} 
+	
+	window -title "Rename shader:" boltMatLibRenameWindow;
+		columnLayout;
+			textField -text $material -width 300 -aie 1
+				-enterCommand "boltMatLibRenameShader `textField -q -text boltMatLibRenameField`; deleteUI boltMatLibRenameWindow;"
+				boltMatLibRenameField;
+			button -width 300 -label "Rename Shader" 
+				-command "boltMatLibRenameShader `textField -q -text boltMatLibRenameField`; deleteUI boltMatLibRenameWindow;";
+		showWindow boltMatLibRenameWindow;
+	
+	window -e -w 310 -h 80 boltMatLibRenameWindow;
+}
+
+
+global proc boltMatLibSearchGUI()
+{
+	if (`window -exists boltMatLibSearchWindow`) 
+	{
+		deleteUI boltMatLibSearchWindow; 
+	}
+	
+	window -title "Material Library Search" -toolbox 1 boltMatLibSearchWindow;
+		columnLayout;
+			textField -text "" -width 300 -aie 1 boltMatLibSearchField;
+			button -width 300 -label "Search Texture Names" 
+				-command "boltFilterMaterials(boltTextureNameSearch(`textField -q -text boltMatLibSearchField`));";
+			button -width 300 -label "Search Material Names" 
+				-command "boltFilterMaterials(boltMaterialNameSearch(`textField -q -text boltMatLibSearchField`));";
+			
+		showWindow boltMatLibSearchWindow;
+	
+	window -e -w 315 -h 100 boltMatLibSearchWindow;
+		
+	scriptJob -uiDeleted "boltMatLibSearchWindow" "boltFilterMaterialsOff";
+}
+
+
+global proc boltLaunchColourEditor()
+{
+	python "import superColourEdit";
+	python "reload(superColourEdit)";
+	python "superColourEdit.colourEditor()";
+}
+
+
+proc boltMatLibCreateShaderRightClickMenu(string $mat)
+{
+	popupMenu;
+		menuItem -label "Select" -command ("boltUpdateMatInfoPanel " + $mat + "; boltMatLibSelectShaded");
+		menuItem -label "Apply" -command  ("boltUpdateMatInfoPanel " + $mat + "; boltMatLibSetShader `text -q -label boltTextMatName`");
+		menuItem -label "Edit" -command   ("boltUpdateMatInfoPanel " + $mat + "; boltMatLibEditShader");
+		menuItem -label "Rename" -command ("boltUpdateMatInfoPanel " + $mat + "; boltMatLibRenameShaderGUI");
+		menuItem -label "Delete" -command ("boltUpdateMatInfoPanel " + $mat + "; boltMatLibDeleteShader");
+		menuItem -subMenu true -label "Create";
+			radioMenuItemCollection;
+			menuItem -label "ATG"  -command "boltMatLibCreate ATGMaterial";
+			menuItem -label "Blinn" -command "boltMatLibCreate blinn";
+		setParent -menu ..;
+}
+
+
+global proc string[] boltGetSubFoldersBelowBasepath(string $filePath, string $basePath)
+//returns a list of all sub folders between the supplied file path, and the base path.
+{
+	string $folders = `substitute $basePath $filePath ""`;
+	
+	string $buffer[];
+	$numTokens = `tokenize $folders "/" $buffer`;
+	
+	if ($numTokens <=1) return {};
+	
+	stringArrayRemoveAtIndex ($numTokens-1) $buffer;
+	return $buffer;
+}
+	
+
+// Buffer will contain 4 strings, not 2: "A", "B", "C", "D"
+// and $numTokens will be 4.
+
+
+
+
+global proc boltMaterialLibraryBrowser()
+{
+	if (!`optionVar -exists "boltMatLibBaseFolder"`)
+	{
+		optionVar -stringValue "boltMatLibBaseFolder" "m:/assets/noodle/materials/library/vehicles_dc/";
+	}
+	$baseFolder = `optionVar -q "boltMatLibBaseFolder"`;
+	
+	if (!`optionVar -exists "boltMatLibRootFolder"`)
+	{
+		optionVar -stringValue "boltMatLibRootFolder" "m:/assets/noodle/materials/library/";
+	}
+	$rootFolder = `optionVar -q "boltMatLibRootFolder"`;
+	
+	global string $gBoltUnFilterList[];
+	$gBoltUnFilterList = {};
+	
+	global string $gBoltMatLibOpenFolders[];
+	$gBoltMatLibOpenFolders = {};
+		
+	global string $gBoltLastHighlightedMatEdButton;
+	$gBoltLastHighlightedMatEdButton = "";
+	
+	global string $gBoltMaterialList[];
+	$gBoltMaterialList = `boltGetHierarchicalMaterialList $baseFolder {}`;
+	
+	global string $gBoltTextureList[];
+	$gBoltMaterialList = `boltGetHierarchicalMaterialList $baseFolder {}`;
+
+	global string $gBoltMatLibSelectedMaterial;
+	boltGetGlobalTextureList;
+			
+	if (`window -exists boltMatLibWindow`) {deleteUI boltMatLibWindow;} 
+	//delete the window if it already exists
+	
+		window -title "Material Library Browser" -menuBar true -toolbox 1 -retain boltMatLibWindow;
+			
+			menu -label "Tools" -tearOff true -allowOptionBoxes true;
+				
+				menuItem -label "Search" -command "boltMatLibSearchGUI" boltMenuItemMatLibSearch; 
+					menuItem -divider true; 
+				menuItem -label "Render Swatch" -command "boltMatLibRenderSwatch 0"              boltMenuItemRenderSwatch0;
+				menuItem -label "Render All Swatches" -command "boltMatLibRenderSwatch 1"        boltMenuItemRenderSwatch1;
+				menuItem -label "Apply Material To Swatch" -command "boltMatLibRenderSwatch 2"   boltMenuItemRenderSwatch2;
+			         menuItem -divider true;
+			    menuItem -label "Super Colour Editor" -command "boltLaunchColourEditor";
+			         menuItem -divider true; 
+			   	menuItem -label "Refresh Materials" -command "boltMatLibRefresh";      
+			         
+			menu -label "Options" -tearOff true -allowOptionBoxes true;
+				menuItem -subMenu true -label "Swatch Size";
+					radioMenuItemCollection;
+					menuItem -label "Small"  -command "boltMatEdSwatchSize 0" -radioButton 0 boltMenuMatEdSmall;
+					menuItem -label "Medium" -command "boltMatEdSwatchSize 1" -radioButton 1 boltMenuMatEdMedium;
+					menuItem -label "Large"  -command "boltMatEdSwatchSize 2" -radioButton 0 boltMenuMatEdLarge;
+				setParent -menu ..;
+				menuItem -label "Library Path..." -command "boltMatLibLibraryPath";
+				menuItem -label "Library Root..." -command "boltMatLibLibraryRoot";
+				menuItem -label "Show Parent Materials" -command "boltMatEdToggleParentMaterials" -checkBox 0 boltMenuMatEdShowParents;
+				
+			
+			menu -label "Help" -tearOff true -allowOptionBoxes true;
+			 	menuItem -label "SHIP Help Page" -command "showHelp -a \"http://wiki.ship.scea.com/confluence/display/NWSTUDIOWIKI/BPT_MaterialLibraryBrowser\"";
+   
+				
+				//menuItem -divider true;
+				//menuItem -label "Mirror UVs" -command "polyEditUV -pu 0.5 -pv 0.5 -su 1 -sv -1";
+			
+						
+			formLayout -numberOfDivisions 100 boltMatLibForm;
+								
+				formLayout boltMatLibInfoForm;
+					iconTextButton -style "iconOnly" 
+						-bgc 0.5 0.5 0.5 
+						-marginHeight 1 -marginWidth 0 -w 128 -h 128 
+						-command "boltShowLargeMaterialPreview"
+						boltIconButtonSelected;
+					text -font "boldLabelFont" -width 200 -label "No Material Selected" boltTextMatName; 
+					text -font "boldLabelFont" -width 100 -label "Frags:" boltTextFragCount;
+					textField -font "plainLabelFont" -width 300 -text "" -editable 0 boltTextMaterialPath; 
+					
+					scrollField -wordWrap 1 -width 297 -height 89  -text "" -editable 0 boltScrollMatDesc;
+									
+					button -height 20 -width 60 -label "Delete" -ann "Deletes currently selected shader from the scene" 								-command "boltMatLibDeleteShader" 										boltButtonDeleteMat;
+	    			button -height 20 -width 60 -label "Rename" -ann "Renames currently selected shader" 												-command "boltMatLibRenameShaderGUI" 									boltButtonRenameMat;
+	    			button -height 20 -width 60 -label "Get"    -ann "Selects the shader used by the currently selected polygon" 						-command "boltUpdateMatInfoPanel `boltGetShaderOnSelected`" 			boltButtonGetMat;
+	    			button -height 20 -width 60 -label "Apply"  -ann "Applys the currently selected shader to selected polys or objects in the scene" 	-command "boltMatLibSetShader `text -q -label boltTextMatName`" 		boltButtonApplyMat;
+	    			button -height 20 -width 60 -label "Select" -ann "Selects polys with the current shader, on curently slected objects" 				-command "boltMatLibSelectShaded" 										boltButtonSelectMat;
+	    			button -height 20 -width 60 -label "Edit"   -ann "Brings up the attribute editor for the currently selected material" 				-command "boltMatLibEditShader" 										boltButtonEditMat;
+	    			
+	    			button -height 20 -width 60 -label "Import" -ann "Imports the currently selected material into the scene" 							-command "boltMatLibImport" 											boltButtonImportMat;
+	    			button -height 20 -width 60 -label "Search" -ann "Searches the library for specific texture files or material names" 				-command "boltMatLibSearchGUI" 											boltButtonMatLibSearch;
+	    					
+				
+				formLayout -e            
+					-af "boltIconButtonSelected" "left" 	1 		-af "boltIconButtonSelected" "top" 		1 
+					-af "boltTextMatName" "left" 			132		-af "boltTextMatName" "top" 			1 
+					-af "boltTextFragCount" "left" 			352		-af "boltTextFragCount" "top" 			1
+					-af "boltTextMaterialPath" "left" 		131		-af "boltTextMaterialPath" "top" 		20
+					-af "boltScrollMatDesc" "left" 			132		-af "boltScrollMatDesc" "top" 			40  
+					
+					-af "boltButtonDeleteMat" "left" 		69		-af "boltButtonDeleteMat" "top" 		132 
+					-af "boltButtonRenameMat" "left" 		129		-af "boltButtonRenameMat" "top" 		132
+					-af "boltButtonEditMat" "left" 			189		-af "boltButtonEditMat" "top" 			132
+					-af "boltButtonGetMat" "left" 			249		-af "boltButtonGetMat" "top" 			132 
+					-af "boltButtonSelectMat" "left" 		309		-af "boltButtonSelectMat" "top" 		132 	
+					-af "boltButtonApplyMat" "left" 		369		-af "boltButtonApplyMat" "top" 			132 
+					
+					-af "boltButtonMatLibSearch" "left" 	309		-af "boltButtonMatLibSearch" "top" 		132		
+					-af "boltButtonImportMat" "left" 		369		-af "boltButtonImportMat" "top"			132  
+					boltMatLibInfoForm;							
+										
+	    		setParent ..;
+	    		//fixed non scrolling cells 		
+				
+				
+				
+				tabLayout -innerMarginWidth 5 -innerMarginHeight 5 
+					-selectCommand "boltMatLibTabChange"
+					boltMatLibTabLayout;
+				
+						
+					scrollLayout boltMatLibScroll1;
+						columnLayout -rowSpacing 2;
+							
+							string $lastParent = "";
+													
+							for ($mat in $gBoltMaterialList)
+							{
+								string $matName = `basenameEx $mat`;
+								string $matPath = (`dirname $mat` + "/");
+								
+								string $subFolders[] = `boltGetSubFoldersBelowBasepath $mat $baseFolder`;
+								
+								int $visible = 1;
+								if (size($subFolders)>0) $visible = 0;
+								int $margin = size($subFolders) * 20;
+								
+								if (`endsWith $mat ".xml"`)
+								{	 
+									{
+										string $icon = ($matPath + $matName + "_swatch_128.bmp");
+										if (!(`filetest -f $icon`)) $icon = ($rootFolder + "missing_swatch.bmp");
+														
+										iconTextButton -style "iconAndTextHorizontal" 
+											-bgc 1 1 1 -image1 $icon 
+											-label $matName
+											-command ("boltUpdateMatInfoPanel \"" + $mat + "\";")
+											-doubleClickCommand "boltShowLargeMaterialPreview"
+											-marginHeight 1 -marginWidth $margin -w 390 -h 30
+											-visible $visible
+											("boltIconButton" + $mat);
+										popupMenu;
+											menuItem -label "Import" -command ("boltUpdateMatInfoPanel \"" + $mat + "\"; boltMatLibImport");
+									}
+								}
+								
+								if (`endsWith $mat "/"`)
+								{	 
+									iconTextButton -style "iconAndTextHorizontal" 
+										-bgc 1 1 1 -image1 ($rootFolder + "folder_swatch.bmp") 
+										-label $matName
+										-command ("boltToggleChildMaterials \"" + $mat + "\"")
+										-marginHeight 1 -marginWidth $margin -w 390 -h 30
+										-visible $visible
+										("boltIconButton" + $mat); 
+								}
+								
+								
+							}
+							
+						setParent ..;
+	    			setParent ..;
+	    			//scrolling cells
+	    			
+	    			
+	    			string $sceneMaterials[] = `ls -materials`;
+	    			$sceneMaterials = `sort $sceneMaterials`;
+	    			
+	    			scrollLayout boltMatLibScroll2;
+	    				columnLayout -rowSpacing 2;
+	    					
+	    					for ($mat in $sceneMaterials)
+							{
+												
+								if (`nodeType $mat`=="ATGMaterial")
+								{
+									
+									if (`getAttr ($mat + ".SelectMode")` == 0)
+									//if this is an xml material from the library
+									{
+										string $xmlpath = `getAttr ($mat + ".RawPath")`;
+										$matName = `basenameEx $xmlpath`;
+										$baseDir = `dirname $xmlpath`;
+									
+										string $icon = ($baseDir + "/" + $matName + "_swatch_128.bmp");
+										if (!(`filetest -f $icon`)) $icon = ($rootFolder + "missing_swatch.bmp");
+													
+										iconTextButton -style "iconAndTextHorizontal" 
+											-bgc 1 1 1 -image1 $icon 
+											-label $mat
+											-command ("boltUpdateMatInfoPanel \"" + $mat + "\"")
+											-doubleClickCommand "boltMatLibEditShader"
+											-marginHeight 1 -marginWidth 0 -w 390 -h 30
+											("boltIconButtonSceneMat" + $mat);
+											
+										boltMatLibCreateShaderRightClickMenu $mat;
+											
+										}
+								    else
+								    //this is an non library ATG shader
+								    {
+								    	$icon = ($rootFolder + "atg_swatch.bmp");
+													
+										iconTextButton -style "iconAndTextHorizontal" 
+											-bgc 1 1 1 -image1 $icon 
+											-label $mat
+											-command ("boltUpdateMatInfoPanel \"" + $mat + "\"")
+											-doubleClickCommand "boltMatLibEditShader"
+											-marginHeight 1 -marginWidth 0 -w 390 -h 30 
+											("boltIconButtonSceneMat" + $mat);
+										
+										boltMatLibCreateShaderRightClickMenu $mat;
+									}
+								}
+								
+								if (`nodeType $mat`=="evocgfxShader")
+								{
+									$icon = ($rootFolder + "cgfx_swatch.bmp");
+									iconTextButton -style "iconAndTextHorizontal" 
+										-bgc 1 1 1 -image1 $icon 
+										-label $mat
+										-command ("boltUpdateMatInfoPanel \"" + $mat + "\"")
+										-doubleClickCommand "boltMatLibEditShader"
+										-marginHeight 1 -marginWidth 0 -w 390 -h 30 
+										("boltIconButtonSceneMat" + $mat);
+									
+									boltMatLibCreateShaderRightClickMenu $mat;
+								}
+								
+								if ( ($mat=="lambert1") || ($mat=="particleCloud1") || ($mat=="shaderGlow1") )
+								{
+									$icon = ($rootFolder + "mayadefault_swatch.bmp");
+									iconTextButton -style "iconAndTextHorizontal" 
+										-bgc 1 1 1 -image1 $icon 
+										-label $mat
+										-command ("boltUpdateMatInfoPanel \"" + $mat + "\"")
+										-doubleClickCommand "boltMatLibEditShader"
+										-marginHeight 1 -marginWidth 0 -w 390 -h 30 
+										("boltIconButtonSceneMat" + $mat);
+									
+									boltMatLibCreateShaderRightClickMenu $mat;
+								}
+								else if ( (`nodeType $mat`!="evocgfxShader") && (`nodeType $mat`!="ATGMaterial") )
+								{
+									$icon = ($rootFolder + "maya_swatch.bmp");
+									iconTextButton -style "iconAndTextHorizontal" 
+										-bgc 1 1 1 -image1 $icon 
+										-label $mat
+										-command ("boltUpdateMatInfoPanel \"" + $mat + "\"")
+										-doubleClickCommand "boltMatLibEditShader"
+										-marginHeight 1 -marginWidth 0 -w 390 -h 30 
+										("boltIconButtonSceneMat" + $mat);
+									
+									boltMatLibCreateShaderRightClickMenu $mat;
+								}
+									
+	    					}
+	    					
+	    				setParent ..;
+	    			setParent ..;
+	    		
+	    		setParent ..;
+	    				
+    		     
+    		    columnLayout boltMatLibCol1;   		   		
+	    			rowLayout -numberOfColumns 4;
+	    			setParent ..;
+    		    setParent ..;
+    		    //bottom buttons
+    		    
+    		setParent ..;
+    		
+    		tabLayout -edit                                         
+            	-tabLabel "boltMatLibScroll1" "Library" -tabLabel "boltMatLibScroll2" "Scene"
+    	    	boltMatLibTabLayout;                                         
+	    	    	
+	    	formLayout -edit
+	    		-attachForm     "boltMatLibInfoForm"    	 "top"    5
+  				-attachForm     "boltMatLibInfoForm"      	"left"   8
+    			-attachPosition "boltMatLibInfoForm"   	"right"  5 100
+	    		-attachControl  "boltMatLibTabLayout"   		"top"  2 "boltMatLibInfoForm"  
+  				-attachForm     "boltMatLibTabLayout"      	"left"   5
+    			-attachControl  "boltMatLibTabLayout"      	"bottom" 5 "boltMatLibCol1"
+    			-attachPosition "boltMatLibTabLayout"      	"right"  5 100
+    			-attachNone     "boltMatLibCol1"    		"top"
+    			-attachForm     "boltMatLibCol1"  	    "left"   5
+    			-attachForm     "boltMatLibCol1"  	    "bottom" 5
+    			-attachForm     "boltMatLibCol1"   	    "right"  5
+    			boltMatLibForm;	 
+	    	//get the form to work
+	    		    	
+	    	showWindow boltMatLibWindow;
+	//display the window
+	
+	window -e -w 460 boltMatLibWindow;
+	
+	
+	if (!`optionVar -exists "boltMatEdSwatchSize"`)
+	{
+		optionVar -intValue "boltMatEdSwatchSize" 1;
+	}
+		
+	int $size = `optionVar -q "boltMatEdSwatchSize"`;
+	boltMatEdSwatchSize $size;
+	
+	
+	if (!`optionVar -exists "boltMatEdShowParent"`)
+	{
+		optionVar -intValue "boltMatEdShowParent" 0;
+	}
+	menuItem -e -checkBox `optionVar -q "boltMatEdShowParent"` boltMenuMatEdShowParents;  
+
+
+	if ($size == 0) menuItem -e -radioButton 1 boltMenuMatEdSmall;
+	if ($size == 1) menuItem -e -radioButton 1 boltMenuMatEdMedium;
+	if ($size == 2) menuItem -e -radioButton 1 boltMenuMatEdLarge;
+		
+	boltHighlightLoadedShaders;
+	boltMatLibTabChange;
+}
+
+
+
+global proc boltMatEdToggleParentMaterials()
+{
+	if (`menuItem -q -checkBox boltMenuMatEdShowParents` == 0)
+	{
+		optionVar -intValue "boltMatEdShowParent" 0;
+	}
+	else
+	{
+		optionVar -intValue "boltMatEdShowParent" 1;
+	}
+	boltMatLibRefresh;
+
+}
+
+global proc int boltIsParentMaterial(string $xmlPath)
+//returns 1 if this is a parent material - ie has a subfolder of the same name
+{
+	string $baseName = `basenameEx $xmlPath`;
+	string $childFolder = `substitute ".xml" $xmlPath "/"`;
+	string $childMaterial = ($childFolder + $baseName + "*.xml");
+	
+	int $folderFlag = 0;
+	int $childFlag = 0;
+	
+	if (`filetest -d $childFolder`)
+	{
+		//print ("\nTesting for children in " + $childFolder);
+		
+		string $childMaterials[] = `getFileList -folder $childFolder -filespec "*.xml"`;
+		for ($child in $childMaterials)
+		{
+			
+			string $childPath = ($childFolder + $child);
+			
+			//print ("\nTesting for children if " + $childPath + " matches " + $childMaterial);
+			
+			
+			if (`gmatch $childPath $childMaterial`)
+			{
+				return 1;
+			}
+		}
+	}
+	return 0;
+	
+	
+}
+
+
+global proc string boltGetShaderInfo(string $xmlPath)
+//returns info on the shader for the advanced info box
+{
+	string $info = "";
+	
+	$info += ("Preset Name: " + `boltGetMaterialName $xmlPath`);
+	$info += ("\nFrag Cycles: " + `boltGetFragCount $xmlPath`);
+	$info += ("\nPreset, Parent and Material Paths:\n" + $xmlPath);
+		
+	string $parents[] = boltGetMaterialParents($xmlPath);
+	for ($i=0;$i<size($parents);$i++)
+	{
+		$info += ("\n" + $parents[$i]); 
+	}
+	
+	string $xmlText[] = boltLoadTextFile(boltGetMaterialFromXML($xmlPath));
+
+	$info += ("\nNoodle Material Name: " + boltGetStringFromXML("material name=",$xmlText) );
+	$info += ("\nNoodle Material Description:\n" + boltGetStringFromXML3("desc=","material name=",$xmlText) );
+	
+	return $info;
+}
+
+
+
+global proc string[] boltGetMaterialParents(string $xmlPath)
+//returns all parents of this material, including the .material file. 
+{
+	string $parents[] = {};
+	string $materialPath = $xmlPath;
+	
+	for ($i=0;$i<20;$i++) //look up to 20 levels deep - more than enough
+	{
+		string $xmlText[] = `boltLoadTextFile $materialPath`;
+		$materialPath = `boltGetStringFromXML "baseuri=" $xmlText`;
+	
+		if (`endsWith $materialPath ".xml"`)
+		{
+			$parents[size($parents)] = $materialPath;
+		}
+		if (`endsWith $materialPath ".material"`)
+		{
+			$parents[size($parents)] = $materialPath;
+			return $parents;
+		}
+	}
+	return $parents;
+}
+
+
+
+global proc string boltGetShaderPreset(string $shader)	
+//returns the xmlpath of a given preset shader. Returns "" if not a preset.
+{
+	string $xmlpath = "";
+		
+	if (`nodeType $shader` == "ATGMaterial")
+	{
+									
+		if (`getAttr ($shader + ".SelectMode")` == 0)
+		//if this is an xml material from the library
+		{
+			$xmlpath = `getAttr ($shader + ".RawPath")`;
+			//$matName = `basenameEx $xmlpath`;
+			//$baseDir = `dirname $xmlpath`;
+		}
+	}
+	
+	return $xmlpath;
+	
+}
+			
+
+
+
