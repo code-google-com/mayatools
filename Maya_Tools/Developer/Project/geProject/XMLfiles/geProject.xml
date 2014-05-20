@@ -28,12 +28,12 @@
 		<AssetList file="geProject_AssetList.xml" />
 		<Module>
 			<module name="NamingConvention" params='' />
-			<module name="CleanerTools" params="yes" />
+			<module name="PolyTools" />
+			<module name="ShaderTools" params="" />
 			<module name="Pivots" />
 			<module name="UVTools" />
-			<module name="PolyTools" />
-			<module name="CrydevTools" />
-			<module name="ShaderTools" params="" />
+			<module name="CleanerTools" params="yes" />
+			<unmodule name="CrydevTools" />
 			<module name="ThirdpartyTools" params="" />
 		</Module>
 

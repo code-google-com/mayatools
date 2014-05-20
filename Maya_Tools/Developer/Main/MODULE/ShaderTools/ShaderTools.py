@@ -21,7 +21,6 @@ def getShadersFromMesh(mesh):
         shapeNode = cmds.listRelatives(mesh, c = True, f = True)[0]
         sgs = cmds.listConnections(shapeNode, t = 'shadingEngine')
         if not sgs:
-            print mesh
             return
         shaders = list()
         for sg in sgs:
@@ -33,6 +32,12 @@ def getShadersFromMesh(mesh):
 def getMeshfromShader(shader):
     sg = cmds.connectionInfo(shader + '.outColor', dfs = True).split('.')[0]
     members = cmds.sets(sg, q = True)
+    
+def getShaderFromSelectedFace(face):
+        sg = cmds.listSets(type = 1, object = face)[0]
+        shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
+        return shader
+        
     
 def setShaderToSelectedFaces(shader):
     # get shadingGroup from shader
@@ -51,7 +56,7 @@ def setShaderToSelectedFaces(shader):
         cmds.sets(selIns, e = True, forceElement = sg)
     cmds.select(selIns)
 
-def selectFaceByShaderPerMesh(mesh, shader):
+def selectFaceByShaderPerMesh(mesh, shader, condition = False):
     # get shading group from shader
     try:
         shape = cmds.listRelatives(mesh, shapes = True)[0]
@@ -70,12 +75,21 @@ def selectFaceByShaderPerMesh(mesh, shader):
     if shape not in selectedFaces:
         cmds.select(selectedFaces)
         if len(cmds.ls(sl = True, fl = True)) == cmds.polyEvaluate(mesh, f = True):# in case selected faces is equal to the number of  faces
-            cmds.select(mesh)
+            if condition:
+                cmds.select(mesh, a = True)
+            else:
+                cmds.select(mesh, r = True)
         else:
-            cmds.select(selectedFaces)
+            if condition:
+                cmds.select(selectedFaces, a = True)
+            else:
+                cmds.select(selectedFaces, r = True)
     else: # object has only one material
         #print 'select: ' + mesh
-        cmds.select(mesh)  
+        if condition:
+            cmds.select(mesh, a = True)
+        else:
+            cmds.select(mesh, r = True)
         
 def selectFaceByShaderAllMesh(mesh, shader):
     # get shading group from shader
@@ -97,10 +111,6 @@ def selectMeshesUseShaderOnScene(shader):
         shapes = f.split('.')[0]
         selectedMeshes.append(shapes)
     return list(set(selectedMeshes))
-
-def reassignShaderToFace(mesh, shader):
-    selectFaceByShaderPerMesh(mesh, shader)
-    isFaces = py.ls(sl = True)
 
 def loadModule(path ,moduleName):
     sys.path.append(path)
@@ -133,6 +143,8 @@ class ShaderTools(form_class,base_class):
         #self.chkGreen.clicked.connect(self.updateSliderColorSet)
         #self.chkBlue.clicked.connect(self.updateSliderColorSet)
         #self.chkAlpha.clicked.connect(self.updateSliderColorSet)
+        
+        self.btnAssignMat.clicked.connect(self.assignMaterialToSelected)
         
         self.sldRed.valueChanged.connect(functools.partial(self.changeColorSet, 'r'))
         self.sldRed.sliderReleased.connect(self.fixColorSet)
@@ -195,13 +207,19 @@ class ShaderTools(form_class,base_class):
         attachFileSource = fileDirCommmon + '/mel/fixVertexColor.mel'
         mel.eval('source \"{f}\";'.format(f = attachFileSource))
         
-        self.updateShader = cmds.scriptJob(e = ['SelectTypeChanged',self.updateShaderName], protected = True)
-        self.updateShader = cmds.scriptJob(e = ['SceneOpened',self.updateShaderScene], protected = True)
+        self.updateShaderOnFaceSelected = cmds.scriptJob(e = ['SelectionChanged',self.updateShaderName], protected = True)
+        self.updateShaderOnScene = cmds.scriptJob(e = ['SceneOpened',self.updateShaderScene], protected = True)
         
         self.updateShaderScene()
         
     def updateShaderName(self):
-        pass
+        obj = cmds.ls(sl = True,fl = True)
+        if len(obj) == 1:
+            if '.f[' in obj[0]:
+                shader = getShaderFromSelectedFace(obj[0])
+                print shader
+                self.edtMaterials.setText(shader)
+
         
 #     def updateSliderColorSet(self):
 #         if self.chkRed.isChecked():
@@ -383,9 +401,6 @@ class ShaderTools(form_class,base_class):
             
     def fixColorSet(self):
         mel.eval('boltSCV.fixVertexColours')
-        
-    def updateShaderName(self):
-        pass
     
     def updateShaderScene(self):
         self.cbbShadersScene.clear()
@@ -393,7 +408,8 @@ class ShaderTools(form_class,base_class):
         self.cbbShadersScene.addItems(shaderList)
         
     def assignMaterialToSelected(self):
-        pass
+        shader = str(self.cbbShadersScene.currentText())
+        setShaderToSelectedFaces(shader)
     
     def getVertexColor(self, channel):
         selVertexes = cmds.ls(sl = True)

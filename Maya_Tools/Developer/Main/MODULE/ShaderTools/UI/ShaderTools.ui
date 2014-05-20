@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>328</width>
+    <width>502</width>
     <height>866</height>
    </rect>
   </property>
@@ -190,7 +190,23 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="edtMaterials"/>
+         <widget class="QLineEdit" name="edtMaterials">
+          <property name="inputMask">
+           <string/>
+          </property>
+          <property name="text">
+           <string notr="true"/>
+          </property>
+          <property name="maxLength">
+           <number>32767</number>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+          <property name="placeholderText">
+           <string>------- shader from selected face ------</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -200,7 +216,7 @@
          <number>7</number>
         </property>
         <item>
-         <widget class="QPushButton" name="pushButton_6">
+         <widget class="QPushButton" name="btnAssignMat">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -238,7 +254,7 @@
         <item>
          <widget class="QLabel" name="label_3">
           <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
+           <enum>Qt::LeftToRight</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">color: rgb(255, 0, 0);</string>
@@ -274,6 +290,20 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="pushButton">
+          <property name="text">
+           <string>Add</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_3">
+          <property name="text">
+           <string>Rep</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="btnGetRed">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -282,7 +312,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>G</string>
+           <string>Get</string>
           </property>
          </widget>
         </item>
@@ -295,7 +325,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>S</string>
+           <string>Set</string>
           </property>
          </widget>
         </item>
@@ -306,7 +336,7 @@
         <item>
          <widget class="QLabel" name="label_4">
           <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
+           <enum>Qt::LeftToRight</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">color: rgb(0, 255, 0);</string>
@@ -333,6 +363,20 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="pushButton_4">
+          <property name="text">
+           <string>Add</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_5">
+          <property name="text">
+           <string>Rep</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="btnGetGreen">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -341,7 +385,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>G</string>
+           <string>Get</string>
           </property>
          </widget>
         </item>
@@ -354,7 +398,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>S</string>
+           <string>Set</string>
           </property>
          </widget>
         </item>
@@ -365,7 +409,7 @@
         <item>
          <widget class="QLabel" name="label_5">
           <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
+           <enum>Qt::LeftToRight</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">color: rgb(0, 0, 255);</string>
@@ -392,6 +436,20 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="pushButton_7">
+          <property name="text">
+           <string>Add</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_8">
+          <property name="text">
+           <string>Rep</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="btnGetBlue">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -400,7 +458,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>G</string>
+           <string>Get</string>
           </property>
          </widget>
         </item>
@@ -413,7 +471,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>S</string>
+           <string>Set</string>
           </property>
          </widget>
         </item>
@@ -424,7 +482,7 @@
         <item>
          <widget class="QLabel" name="label_6">
           <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
+           <enum>Qt::LeftToRight</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">color: rgb(255, 255, 255);</string>
@@ -460,6 +518,20 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="pushButton_9">
+          <property name="text">
+           <string>Add</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_10">
+          <property name="text">
+           <string>Rep</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="btnGetAlpha">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -468,7 +540,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>G</string>
+           <string>Get</string>
           </property>
          </widget>
         </item>
@@ -481,7 +553,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>S</string>
+           <string>Set</string>
           </property>
          </widget>
         </item>

@@ -417,6 +417,7 @@ class shaderButton(QtGui.QPushButton):
         super(shaderButton, self).__init__()
         self._mesh = mesh
         self._shader = shader
+        self.add = False
         if status == 1:
             self.setText(shader)
             self.setStyleSheet('''QPushButton*
@@ -442,10 +443,19 @@ class shaderButton(QtGui.QPushButton):
                             padding-right: 2px;@'''.format(color0 = color[0], color1 = color[1]).replace('*','{').replace('@','}'))
         else:
             self.setText(mesh)
-#         if scene == True:
-#             self.clicked.connect(functools.partial(st.selectFaceByShaderAllMesh, self._mesh, self._shader))
-#         else:
-        self.clicked.connect(functools.partial(st.selectFaceByShaderPerMesh, self._mesh, self._shader))
+        self.clicked.connect(self.selectFaceByShader)
+        
+    def update(self):
+        if self.add:
+            self.add = False
+        else:
+            self.add = True
+        
+    def selectFaceByShader(self):
+        if self.add:
+            st.selectFaceByShaderPerMesh(self._mesh, self._shader, True) # add more to select
+        else:
+            st.selectFaceByShaderPerMesh(self._mesh, self._shader, False) # replace the new set
             
 
 class customButton(QtGui.QPushButton):

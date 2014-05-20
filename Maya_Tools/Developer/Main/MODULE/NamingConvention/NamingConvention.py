@@ -32,6 +32,7 @@ class NamingConvention(form_class,base_class):
         self.edtSelectByName.returnPressed.connect(functools.partial(self.excuteChangNaming, 4))
         self.btnUpperCase.clicked.connect(functools.partial(self.excuteChangNaming, 5))
         self.btnLowerCase.clicked.connect(functools.partial(self.excuteChangNaming, 6))
+        self.updateNodeName()
 
         if inputFile != '':
             project = inputFile.split('.')[0]
@@ -42,7 +43,7 @@ class NamingConvention(form_class,base_class):
             self.customUI.addWidget(form)
               
     def updateNodeName(self):
-        selObj = cmds.ls(sl= True, transforms = True)
+        selObj = cmds.ls(sl= True, fl = True)
         if len(selObj) != 0:
             self.edtNameStr.setText(str(selObj[0]))
         if len(selObj) == 0:
