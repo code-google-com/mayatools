@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<AssetList>
+	<group name="Cars">
+		<asset name="NISSAN_GT-R_NISMO" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="BMW_M5" start_date="" due_date="" stage="" image="" />
+		<asset name="MINI_CooperS" start_date="" due_date="" stage=""
+			image="" />
+		<asset name="MINI_JohnCooperWorks" start_date="" due_date=""
+			stage="" image="" />
+
+	</group>
+</AssetList>

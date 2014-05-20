@@ -1,0 +1,1009 @@
+//contains all vehicle lod creation tools
+source boltHierarchy;
+source boltRigging; //needed to strip havok
+source boltNormalToolbox; //needed for shrink proc
+source boltVehicleDisplayManager; //needed for "get short edges" (what is part)
+source boltLodStats;
+source boltShaderTools;
+//source boltCarData;
+//source boltGlobalProcs;
+
+global proc boltLodTools.GUI()
+//vehicle naming and hierarchy tools
+{
+
+	global int $boltCarArrayLength;	
+	string $windowName = "boltLodToolsWindow";
+	
+	if (`window -exists $windowName`)
+	{ 
+		deleteUI $windowName;
+	}
+	//delete the window if it already exists
+	
+	window -height 252 -width 208 -title "LOD Tools" -toolbox 1 $windowName;
+	//create window
+		//scrollLayout;
+			frameLayout -mw 0 -mh 0 -bv 0 -lv 0;
+				columnLayout;
+					
+					frameLayout  -collapsable 1 -label "Create LODs:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+							
+							rowLayout -numberOfColumns 5;
+								text -label "Create:" -width 40;
+								button -height 20 -width 38 -label "Lod1" -ann "Copies currently selected objects to LOD1, ready for manual lodding" 	-command "boltCreateLodObjects 1";
+								button -height 20 -width 38 -label "Lod2" -ann "Copies currently selected objects to LOD2, ready for manual lodding" 	-command "boltCreateLodObjects 2";
+								button -height 20 -width 38 -label "Lod3" -ann "Copies currently selected objects to LOD3, ready for manual lodding" 	-command "boltCreateLodObjects 3";
+								button -height 20 -width 38 -label "Lod4" -ann "Copies currently selected objects to LOD4, ready for manual lodding" 	-command "boltCreateLodObjects 4";
+							setParent ..;
+							rowLayout -numberOfColumns 3;
+								text -label "" -width 40;
+								button -height 20 -width 38 -label "Lod5" -ann "Copies currently selected objects to LOD5, ready for manual lodding" 	-command "boltCreateLodObjects 5";
+								button -height 20 -width 120  -recomputeSize 0 -label "Shadow Proxies" -ann "Copies selected objects to shadow proxies" -command "boltCreateShadowProxies";
+							setParent ..;
+							
+						setParent ..;
+					setParent ..;
+								
+					frameLayout  -collapsable 1 -label "LOD Tools:" -marginHeight 5 -marginWidth 5 -labelAlign "center" -borderStyle "etchedOut";
+						columnLayout;
+							
+							rowLayout -numberOfColumns 2;	
+								button -height 20 -width 100 -label "Transfer Colours" -ann "Uses `transfer attributes` to copy all vertex colours from selected component to it's lods. Use sparingly - results often not great" -command "boltTransferColoursToLods";
+								button -height 20 -width 100 -label "Transfer UVs" 		 -ann "Uses `transfer attributes` to copy UVs from selected component to it's lods." -command "boltTransferUVsToLods";
+							setParent ..;
+							
+							rowLayout -numberOfColumns 2;	
+								button -height 20 -width 100  -recomputeSize 0 -label "Shrink Selected" -ann "shrinks the selected object or verts, to aid with shadow volume fitting" -command "boltNorms.ShrinkObj(-0.0025)";
+								button -height 20 -width 100 -label "Delete LODs" -ann "Deletes all *_LOD*s from the scene" 	-command "boltDeleteLods";
+							setParent ..;
+
+							rowLayout -numberOfColumns 2;
+								button -height 20 -width 100 -label "LOD Stats"  -ann "Shows the LOD Stats window" 	-command "boltLodStats";
+								button -height 20 -width 100 -label "Get Short Edges" -ann "Highlights sub pixel length edges on the currently selected objects. Prints summary to script editor" -command "boltSelectEdgesTooShortForLod";
+							setParent ..;
+							
+							rowLayout -numberOfColumns 2;
+								button -height 20 -width 100 -label "Apply lod_shader"  -ann "Remaps shaders on the selected object to use the shader swatches in lod_shader" 	-command "boltApplyLodShadersButton()";
+								text -label "";
+							setParent ..;	
+								
+						setParent ..;
+					setParent ..;
+
+	    			frameLayout -width 218 -collapsable 1 -collapse 1 -label "Placeholder LOD Creation:" -mw 5 -mh 5 -labelAlign "center" -borderStyle "etchedOut";
+	    				columnLayout;
+	    					
+	    					rowLayout -numberOfColumns 2 -cw2 130 70;
+	    						text -label "LOD to create:";
+	    						optionMenu boltLodNoField2;
+ 									menuItem -label "_LOD1";
+ 									menuItem -label "_LOD2";
+									menuItem -label "_LOD3";
+									menuItem -label "_LOD4";
+ 									menuItem -label "_LOD5";
+									menuItem -label "_LOD6";
+	    					setParent ..;	
+	    					
+	    					rowLayout -numberOfColumns 2 -cw2 130 70;
+	    						text -label "Poly Reduction (%)";
+	    						floatField -precision 2 -value 50.0 -ann "Amount to reduce poly count by, in percent" boltPolyReductionField2;
+	    					setParent ..;
+	    					
+	    					rowLayout -numberOfColumns 2 -cw2 130 70;
+	    						text -label "Min Edge Length (mm)";
+	    						floatField -precision 2 -value 2.0 -ann "Minimum edge length permited on this LOD" boltMinEdgeField2;
+	    					setParent ..;
+	    					
+	    					rowLayout -numberOfColumns 2 -cw2 130 70;
+	    						text -label "Loop Removal Max (deg)";
+	    						floatField -precision 2 -value 10 -ann "If the average angle across the loop is higher than this, it won't be lodded." boltAvgLimitField2;
+	    					setParent ..;
+	    					
+	    					rowLayout -numberOfColumns 2 -cw2 130 70;
+	    						text -label "Loop Removal Max (deg)";
+	    						floatField -precision 2 -value 20 -ann "If the max angle across the loop is higher than this, it won't be lodded." boltMaxLimitField2;
+	    					setParent ..;
+	    						
+	    					rowLayout -numberOfColumns 2 -cw2 130 70;
+	    						text -label "Smoothing Angle (deg)";
+	    						floatField -precision 2 -value 45 -ann "Auto smoothing angle to use on lod" boltSmoothingField2;
+	    					setParent ..;
+	    					
+	    					button -height 20 -width 200 -label "Create LOD From Selected" 	 -command "boltPlaceholderLods.CreateGUI2()";
+						setParent ..;
+					setParent ..;	
+	    			
+	    			
+	    			
+	    			frameLayout -width 218 -collapsable 1 -collapse 1 -label "DX Placeholder LOD Creation:" -mw 5 -mh 5 -labelAlign "center" -borderStyle "etchedOut";
+	    				columnLayout;
+	    					
+	    					rowLayout -numberOfColumns 2 -cw2 130 70;
+	    						text -label "LOD to create:";
+	    						optionMenu boltLodNoField;
+ 									menuItem -label "_LOD1";
+ 									menuItem -label "_LOD2";
+									menuItem -label "_LOD3";
+									menuItem -label "_LOD4";
+ 									menuItem -label "_LOD5";
+									menuItem -label "_LOD6";
+	    					setParent ..;	
+	    					
+	    					rowLayout -numberOfColumns 2 -cw2 130 70;
+	    						text -label "Poly Reduction (%)";
+	    						floatField -precision 2 -value 50.0 -ann "Amount to reduce poly count to, in percent" boltPolyReductionField;
+	    					setParent ..;
+							
+							button -height 20 -width 200 -label "Create LOD From Selected" 	 -command "boltPlaceholderLods.CreateGUI()";
+						setParent ..;
+					setParent ..;		
+					
+					/*
+					frameLayout -width 250 -collapsable 1 -label "DX Auto Placeholder LODs:" -mw 10 -mh 10 -labelAlign "center" -borderStyle "etchedOut";
+	    				columnLayout;
+	    					
+	    					text -label "Work through these stages in order:";
+	    					text -label "  1. Create placeholder lods";
+	    					text -label "  2. Freeze (deletes temp evoLodGen nodes)";
+	    					text -label "  3. Collapse Short Edges";
+	    					text -label "  4. Add lods to hierarchy";
+	    					
+							button -height 20 -width 220 -label "Create Missing Placeholder LODs (Selected)" -command "boltPlaceholderLods2.Create(1)";
+							button -height 20 -width 220 -label "Create All Missing Placeholder LODs" -command "boltPlaceholderLods2.Create(0)";
+							button -height 20 -width 220 -label "Freeze Placeholder LODs" -ann "deletes evolodnodes from history of lods, removes temp lod meshes" -command "boltPlaceholderLods.Freeze()";
+							
+							text -label " ";
+							
+							button -height 20 -width 220 -label "Collapse Short Edges (Selected)" -command "boltPlaceholderLods.CollapseShortEdges(1)";
+							button -height 20 -width 220 -label "Collapse All Short Edges" -command "boltPlaceholderLods.CollapseShortEdges(0)";
+						
+							text -label " ";
+										
+							button -height 20 -width 220 -label "Add LODs to hierarchy" -command "boltAddLodsToHierarchy";
+						
+							
+							text -label " ";
+							
+							button -height 20 -width 220 -label "Delete All Placeholder LODs" -command "boltPlaceholderLods.DeleteGUI()";
+						setParent ..;	
+					setParent ..;
+					*/
+	
+				setParent ..;  
+			setParent ..;
+		setParent ..;
+	setParent ..;
+
+	showWindow $windowName;
+	//display the window
+	      
+	window -e -height 252 -width 220 $windowName;    
+
+}
+
+global proc boltCreateShadowProxies()
+//clones selected geometry to create shadow volumes
+{
+	string $selection[] = `ls -o -sl`;
+	
+	int $spreadFlag = 0;
+	if (objExists("spreadCarScriptNode"))
+	{
+		boltUnspreadCar;
+		$spreadFlag = 1;
+	}
+	
+	//boltRestoreHierarchy;
+	boltRemoveHierarchy;
+	//strip hierarchy
+	
+	for ($obj in $selection)
+	{
+		string $baseObj = "";
+		
+		if (`gmatch $obj "*_LOD?" `)
+		{
+			int $sizeObj = size($obj);
+			$baseObj =  `substring $obj 1 ($sizeObj - 5)`;
+		}
+		else
+		{
+			$baseObj = $obj;
+		}
+		//get baseObj name
+		
+		if (objExists ($baseObj + "_SHADOW")) delete ($baseObj + "_SHADOW");
+		duplicate -n ($baseObj + "_SHADOW") $obj;
+		boltDeleteHavokNodes ($baseObj + "_SHADOW");
+		parent ($baseObj + "_SHADOW") $baseObj; 
+		print ("\n" + $baseObj + "_SHADOW CREATED\n");	
+		//create new shadow volume
+		
+		
+		if (objExists("SHADOW_PROXY_SHADER"))
+		{
+			if (objExists("shadow_proxy_shader"))
+			{
+				error "multiple versions of the shadow shader found - please reassign all shadows to a single shader, and delete the other";
+			}
+			rename "SHADOW_PROXY_SHADER" "shadow_proxy_shader";
+		}
+		
+		if (objExists("shadow_proxy_shader")==0)
+		{
+			string $shader = `shadingNode -asShader ATGMaterial -name "shadow_proxy_shader"`;
+			setAttr ($shader + ".SelectMode") 0;
+			setAttr -type "string" ($shader + ".RawPath") "m:/assets/noodle/Materials/Library/Vehicles/shadow_proxy.xml";
+			string $sg = `sets -renderable true -noSurfaceShader true -empty`;
+			connectAttr -f ($shader+".outColor") ($sg+".surfaceShader");
+		}
+		string $sg[] = `listConnections -type "shadingEngine" ("shadow_proxy_shader.outColor")`;
+		sets -fe $sg[0] ($baseObj + "_SHADOW.f[*]");
+		//apply a dark black shader
+		
+		string $shapes[] = `listRelatives -children -type "mesh" ($baseObj + "_SHADOW")`;
+		setAttr ($shapes[0] + ".displayColors") 0;
+		//turn off vertex colour display
+		
+	}
+	boltRestoreHierarchy;
+	print "\nSHADOW CREATION SUCCESSFUL\n";
+	
+	if ($spreadFlag == 1)
+	{
+		boltSpreadCar;
+	}
+	
+	
+}
+
+
+global proc boltCreateLodObjects(string $lodNum)
+//clones selected hires geometry with lod extention
+{
+	string $selection[] = `ls -o -sl`;
+	
+	int $spreadFlag = 0;
+	if (objExists("spreadCarScriptNode"))
+	{
+		error "Please un-spread the car before adding lods";
+	}
+	
+	boltRemoveHierarchy;
+	//strip hierarchy
+	
+	for ($obj in $selection)
+	{
+		if (`gmatch $obj "*_LOD?" `)
+		{
+			int $sizeObj = size($obj);
+			string $baseObj =  `substring $obj 1 ($sizeObj - 5)`;
+			if (objExists ($baseObj + "_LOD" + $lodNum)) delete ($baseObj + "_LOD" + $lodNum);
+			duplicate -n ($baseObj + "_LOD" + $lodNum) $obj;
+			boltDeleteHavokNodes ($baseObj + "_LOD" + $lodNum);
+			parent ($baseObj + "_LOD" + $lodNum) $baseObj; 
+			print ("\n" + $baseObj + "_LOD" + $lodNum + " CREATED\n");			
+		}
+		//creates eg. lod 2 from lod 1
+		else
+		{
+			if (objExists ($obj + "_LOD" + $lodNum)) delete ($obj + "_LOD" + $lodNum);
+			duplicate -n ($obj + "_LOD" + $lodNum) $obj;
+			boltDeleteHavokNodes ($obj + "_LOD" + $lodNum);
+			parent ($obj + "_LOD" + $lodNum) $obj; 
+			print ("\n" + $obj + "_LOD" + $lodNum + " CREATED\n");
+		}
+		//creates lods from base object.
+	}
+	boltRestoreHierarchy;
+	print "\nLod creation complete!\n";
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+global proc boltPlaceholderLods.CreateGUI2()
+//creates lods from selected objects using gui settings, use python super lod
+{
+	string $sourceObjs[] = `ls -sl -transforms`;
+	
+	string $lodToCreate = `optionMenu -q -value boltLodNoField2`;
+	float $lodReduction = `floatField -q -value boltPolyReductionField2`;
+	float $minEdge = (`floatField -q -value boltMinEdgeField2` / 1000); //convert to meters
+	float $avgLimit = `floatField -q -value boltAvgLimitField2`;
+	float $maxLimit = `floatField -q -value boltMaxLimitField2`;
+	float $smoothing = `floatField -q -value boltSmoothingField2`;
+	
+	python ("import superLod");
+	
+	for ($obj in $sourceObjs)
+	{
+		string $lod0 = `substitute "_LOD."  $obj ""`;
+		string $lod = $lod0 + $lodToCreate;
+		
+		print ("\nCreating " + $lod + " using python loop removal method"); 
+		
+		if (objExists($lod)) delete $lod;
+		duplicate -n $lod $obj;
+		boltDeleteHavokNodes($lod);
+		//duplicate the part
+		
+		//fixes non manifold geometry.. in theory
+		print ("\nFixing " + $lod + " non manifold geometry");
+		string $nonManifoldE[] = `polyInfo -nme $lod`;
+		string $nonManifoldV[] = `polyInfo -nmv $lod`;
+		if ( (size($nonManifoldE)>0) || (size($nonManifoldV)>0) )
+		{
+			select -r $lod;
+			polyCleanupArgList 3 { "0","1","0","0","0","0","0","0","0","1e-005","0","1e-005","0","1e-005","0","2","0" };	
+		}
+		$nonManifoldE = `polyInfo -nme $lod`;
+		$nonManifoldV = `polyInfo -nmv $lod`;
+		if ( (size($nonManifoldE)>0) || (size($nonManifoldV)>0) )
+		//we have some bad ass corrupted geometry impervious to maya's cleanup tool
+		{
+			confirmDialog -title "Warning!" -message ("Seriously corrupted geometry found on " + $lod0 + " which could not be cleaned up by Maya. \nCannot perform poly reduce on this part - it must be fixed manually.\nThe problem area can be highlighted (but not fixed) using Maya's mesh>cleanup tool.");
+		}
+		
+		int $loopSize = 10;
+		python ( ("superLod.superLod ('" + $lod +"',"+ $minEdge +","+ $avgLimit +","+ $maxLimit +","+ $smoothing +","+ $lodReduction +","+ $loopSize +")") );
+				
+		//tag as a placeholder
+		addAttr -longName "placeholderLOD" $lod;
+				
+		parent $lod $lod0; 
+		print ("\n" + $lod + " CREATED\n");		
+
+	}
+}
+
+
+
+
+global proc boltPlaceholderLods.Freeze()
+{
+	boltForceLodShaderUpdate;
+		string $objs[] = `ls -transforms`;
+	for ($obj in $objs)
+	{
+		if (attributeExists("placeholderLOD" , $obj))
+		{ 
+			delete -ch $obj;
+			if (objExists ($obj + "_TEMP")) delete ($obj + "_TEMP");
+		}
+	}
+	print "Selected LODs collapsed";
+}
+
+
+global proc boltPlaceholderLods.CreateGUI()
+//creates lods from selected objects using gui settings
+{
+	//ensure mark's lod scripts and plugin are loaded
+	source evolodgen.mel;
+	catchQuiet(`loadPlugin evolodgen.mll`);
+	
+	string $sourceObjs[] = `ls -sl -transforms`;
+	
+	string $lodToCreate = `optionMenu -q -value boltLodNoField`;
+	float $lodReduction = (100 - `floatField -q -value boltPolyReductionField`) / 100; //convert to zero-one ratio
+	
+	for ($obj in $sourceObjs)
+	{
+		string $lod0 = `substitute "_LOD."  $obj ""`;
+		string $lod = $lod0 + $lodToCreate;
+		float $targetPolyCountF = boltPolyCount($obj)*$lodReduction;
+		int $targetPolyCount = $targetPolyCountF;
+		boltPlaceholderLods2.CreateLod($lod, $targetPolyCount);
+	}
+}
+
+global proc boltPlaceholderLods.DeleteGUI()
+//deletes all placeholder lods in the scene, with confirmation
+{
+	string $result = `confirmDialog -message "Delete All placeholder LODs in scene?" -button "Cancel" -button "Delete" -defaultButton "Cancel" -cancelButton "Cancel" -dismissString "Cancel"`;
+	if ($result == "Delete") boltPlaceholderLods.Delete();
+}
+
+
+global proc boltPlaceholderLods2.Create(int $selected)
+//new version, using short edge removal, and MarkL's poly reduction plugin
+//selected = 1 only does selected obj, 0 does all missing lods
+{
+	//ensure mark's lod scripts and plugin are loaded
+	source evolodgen.mel;
+	catchQuiet(`loadPlugin evolodgen.mll`);
+		
+	//LOD SPECS///////////////////////////////////////////////////////////////////////////////////////////////////
+	string $lods[] =    {"_LOD1", "_LOD2", "_LOD3", "_LOD4", "_LOD5", "_LOD6"}; //list of lods to create
+	float $reduction[] = {0.50,    0.25,    0.12,    0.06,    0.03,    0.015};    //amount to reduce each lod
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	string $originalSelection[] = `ls -sl -transforms`;
+	string $missingLods[] = {};
+	
+	if ($selected == 1)
+	{
+		$missingLods = boltPlaceholderLods.GetMissing($originalSelection);
+	}
+	else
+	{
+		$missingLods = boltPlaceholderLods.GetMissing({});
+	}
+	
+	int $spreadFlag = 0;
+	if (objExists("spreadCarScriptNode"))
+	{
+		boltUnspreadCar;
+		$spreadFlag = 1;
+	}
+	boltRemoveHierarchy;
+	//strip hierarchy
+	
+	
+	for ($lod in $missingLods)
+	{
+		//get target poly count
+		int $lodNum = `endString $lod 1`;
+		string $lod0 = `substitute "_LOD."  $lod ""`;
+		int $lodNum = `endString $lod 1`;
+		float $lodReduction = $reduction[$lodNum-1];
+		float $targetPolyCountF = boltPolyCount($lod0)*$lodReduction;
+		int $targetPolyCount = $targetPolyCountF;
+		if ($targetPolyCount < 5) $targetPolyCount = 5;
+						
+		boltPlaceholderLods2.CreateLod($lod, $targetPolyCount);
+	}
+	
+	boltRestoreHierarchy;
+		
+	if ($spreadFlag == 1)
+	{
+		boltSpreadCar;
+	}
+	
+	//boltAddLodsToHierarchy; //causes shaders to vanish! :(
+	
+	select $originalSelection;
+	
+	print "\nPLACEHOLDER LOD CREATION SUCCESSFUL\n";
+	
+}
+
+
+
+global proc boltPlaceholderLods.Create()
+{
+	string $originalSelection[] = `ls -sl`;
+	
+	string $missingLods[] = boltPlaceholderLods.GetMissing({});
+	
+	int $spreadFlag = 0;
+	if (objExists("spreadCarScriptNode"))
+	{
+		boltUnspreadCar;
+		$spreadFlag = 1;
+	}
+	boltRemoveHierarchy;
+	//strip hierarchy
+	
+	
+	for ($lod in $missingLods)
+	{
+		int $targetPolyCount = boltPlaceholderLods.GetTargetPolyCount($lod);
+		
+		if ($targetPolyCount < 5) $targetPolyCount = 5;
+		boltPlaceholderLods.CreateLod($lod, $targetPolyCount);
+		
+	}
+	
+	boltRestoreHierarchy;
+		
+	if ($spreadFlag == 1)
+	{
+		boltSpreadCar;
+	}
+	
+	boltAddLodsToHierarchy;
+	
+	select $originalSelection;
+	
+	print "\nPLACEHOLDER LOD CREATION SUCCESSFUL\n";
+	
+}
+
+global proc boltPlaceholderLods.CreateLod(string $lod, float $targetPolyCount)
+//creates a lod with the given poly count
+//hierarchy must be removed externally to this proc
+{
+	string $lod0 = `substitute "_LOD."  $lod ""`;
+	
+	
+	
+	float $percentage = (100*($targetPolyCount/boltPolyCount($lod0)));
+	
+	$percentage = 2*($percentage);
+	if ($percentage > 99) $percentage = 99;
+	$percentage = 100 - $percentage;
+	//gets a bit closer to correct poly count
+		
+	if (objExists($lod)) delete $lod;
+	duplicate -n $lod $lod0;
+	boltDeleteHavokNodes($lod);
+	//duplicate the part
+	
+	string $nonManifoldE[] = `polyInfo -nme $lod`;
+	string $nonManifoldV[] = `polyInfo -nmv $lod`;
+	
+	if ( (size($nonManifoldE)>0) || (size($nonManifoldV)>0) )
+	{
+		select -r $lod;
+		polyCleanupArgList 3 { "0","1","0","0","0","0","0","0","0","1e-005","0","1e-005","0","1e-005","0","2","0" };	
+		//fixes non manifold geometry.. in theory
+	}
+	
+	$nonManifoldE = `polyInfo -nme $lod`;
+	$nonManifoldV = `polyInfo -nmv $lod`;
+	
+	if ( (size($nonManifoldE)>0) || (size($nonManifoldV)>0) )
+	//we have some bad ass corrupted geometry impervious to maya's cleanup tool
+	{
+		confirmDialog -title "Warning!" -message ("Seriously corrupted geometry found on " + $lod0 + " which could not be cleaned up by Maya. \nCannot perform poly reduce on this part - it must be fixed manually.\nThe problem area can be highlighted (but not fixed) using Maya's mesh>cleanup tool.");
+	}
+		
+	string $polyReduceNode[];
+	
+	if (catch($polyReduceNode = `polyReduce 
+		-percentage $percentage -uvWeights 0 -colorWeights 0 -keepBorder 1 
+		-keepMapBorder 0 -keepHardEdge 0 -compactness 0 
+		-triangulate 1 -replaceOriginal 1 -ch 1 
+		$lod`)) return;
+		
+	boltPlaceholderLods.AdjustPolyReduce($polyReduceNode[0], $lod, $targetPolyCount);
+	
+	boltPlaceholderLods.Cleanup($lod);
+	
+	delete -ch $lod;
+	
+	addAttr -longName "placeholderLOD" $lod;
+	//tag as a placeholder
+		
+	//parent $lod $lod0; 
+	print ("\n" + $lod + " CREATED\n");			
+	
+}
+
+
+global proc boltPlaceholderLods.Cleanup(string $lod)
+//fixes random points added by Maya's crappy poly reduce
+{
+	string $lod0 = `substitute "_LOD."  $lod ""`;
+	
+	float $lodBB[] = `polyEvaluate -boundingBox $lod`;
+	float $topBB[] = `polyEvaluate -boundingBox $lod0`;
+	
+	float $tol = 0.05; //5cm tolerance
+	
+	if ( ($lodBB[0] < ($topBB[0]-$tol)) ||
+	     ($lodBB[2] < ($topBB[2]-$tol)) ||
+	     ($lodBB[4] < ($topBB[4]-$tol)) ||
+	     ($lodBB[1] > ($topBB[1]+$tol)) ||
+	     ($lodBB[3] > ($topBB[3]+$tol)) ||
+	     ($lodBB[5] > ($topBB[5]+$tol)) )
+	{
+		string $verts[] = `ls -flatten ($lod + ".vtx[*]")`;
+		for ($vert in $verts)
+		{
+			float $pos[] = `pointPosition -w $vert`;
+			
+			if ($pos[0] < ($topBB[0]-$tol)) $pos = {$topBB[0] ,$pos[1]  ,$pos[2]  };
+			if ($pos[1] < ($topBB[2]-$tol)) $pos = {$pos[0]   ,$topBB[2],$pos[2]  };
+			if ($pos[2] < ($topBB[4]-$tol)) $pos = {$pos[0]   ,$pos[1]  ,$topBB[4]};
+			if ($pos[0] > ($topBB[1]+$tol)) $pos = {$topBB[1] ,$pos[1]  ,$pos[2]  };
+			if ($pos[1] > ($topBB[3]+$tol)) $pos = {$pos[0]   ,$topBB[3],$pos[2]  };
+			if ($pos[2] > ($topBB[5]+$tol)) $pos = {$pos[0]   ,$pos[1]  ,$topBB[5]};
+		
+			xform -ws -t $pos[0] $pos[1] $pos[2] $vert;
+		}
+	}
+	//Clamp any rogue verts to bb
+}
+
+
+global proc boltPlaceholderLods.Delete()
+//deletes all tagged placeholder lods in the scene
+{
+	string $lods[] = `ls -type "transform" "*_LOD*"`;
+	for($lod in $lods)
+	{
+		if (attributeExists("placeholderLOD" , $lod))
+		{
+			delete $lod;
+			print ("\n" + $lod + " deleted.");
+		}
+	}
+	print ("\nAll placeholder lods deleted!");
+}
+
+
+global proc boltPlaceholderLods.Prune()
+//deletes all unecessary place holder lods in order to reduce node count
+{
+	string $lods[] = `ls -type "transform" "*_LOD*"`;
+	for($lod in $lods)
+	{
+		if (attributeExists("placeholderLOD" , $lod))
+		{
+			string $basePart = boltGetBasePartName($lod);
+			int $maxlod = boltGetPartMaxLod($basePart);
+			int $thisLod = endString($lod, 1);
+			
+			if ($thisLod > $maxlod)
+			{		
+				delete $lod;
+				print ("\n" + $lod + " deleted.");
+			}
+		}
+	}
+	print ("\nAll placeholder lods pruned!");
+	
+	
+	string $lods[] = `ls -type "transform" "BOOST*_LOD*"`;
+	for($lod in $lods)
+	{
+		string $basePart = boltGetBasePartName($lod);
+		int $maxlod = boltGetPartMaxLod($basePart);
+		int $thisLod = endString($lod, 1);
+			
+		if ($thisLod > $maxlod)
+		{		
+			delete $lod;
+			print ("\n" + $lod + " deleted.");
+		}
+	}
+	print ("\nAll excessive boost lods pruned!");
+	
+}
+
+
+
+global proc boltPlaceholderLods.AdjustPolyReduce(string $polyReduceNode, string $lod, float $targetPolyCount)
+//tweaks the poly reduce node by trial and error to get closer to the required poly count.
+{
+	float $percentage = getAttr ($polyReduceNode + ".percentage");
+	
+	while (boltPolyCount($lod) < $targetPolyCount)
+	{
+		$percentage -= 1;
+		if ($percentage < 0.5) break;
+		setAttr ($polyReduceNode + ".percentage") $percentage;
+		//print ("\n- "+$percentage);
+	}
+	while (boltPolyCount($lod) > $targetPolyCount)
+	{
+		$percentage += 1;
+		if ($percentage > 99) break;
+		setAttr ($polyReduceNode + ".percentage") $percentage;
+		//print ("\n+ "+$percentage);
+	}
+	//fine tune the value
+}	
+	
+
+global proc string[] boltPlaceholderLods.GetMissing(string $objs[])
+//returns a list of lods that need to be created
+{
+	if (size($objs) == 0)
+	{
+		$objs = `ls -type "mesh"`;
+		$objs = `boltShapesToTransformsNoPath $objs`;
+	}
+	
+	string $missingLods[] = {};
+	
+	for ($obj in $objs)
+	{
+		string $flags[] = `boltWhatIsPart $obj`;
+		//FLAGS: _DEF _LOC _SHAD _CAM _LIGHT _COL _RAGDOLL _DAMZONE _LOD# _SWP## _DEAD _UNDEAD 
+		//_BODY _TECH _INTERIOR _SUSP _UNKNOWN _WHEELS _GLOW
+		
+		if (`sFindItem $flags "_LOD0"` != -1)
+		//only look at top lods
+		{
+			int $maxLods = 6;
+						
+			string $basePart = boltGetBasePartName($obj);
+			//$maxLods = boltGetPartMaxLod($basePart);
+			//ensure that correct no of lods are created.
+			
+			for ($i=1;$i<=$maxLods;$i++)
+			{
+				string $lodName = ($obj + "_LOD" + $i);
+				if (`sFindItem $objs $lodName` == -1)
+				{
+					$missingLods[size($missingLods)] = $lodName;
+				}
+				//add missing lods to the list
+			}
+		}
+	}
+	
+	
+	
+	return $missingLods;
+	
+}
+
+
+global proc int boltPlaceholderLods.GetTargetPolyCount(string $lodName)
+//returns the target poly count for a given lod part
+{
+	float $lodTargets[] = `boltGetPolyCountsForClass`;
+	string $lod0 = `substitute "_LOD."  $lodName ""`;
+	int $lodNum = `endString $lodName 1`;
+	
+	if ($lodNum == 6) return $lodTargets[6];
+		
+	float $lodReduction = ($lodTargets[$lodNum]/float($lodTargets[0]));
+	
+	float $targetPolyCount = boltPolyCount($lod0)*$lodReduction;
+	
+	int $targetPolyCountInt = $targetPolyCount;
+	
+	return $targetPolyCount;
+}
+
+
+
+global proc boltPlaceholderLods2.CreateLod(string $lod, float $targetPolyCount)
+//creates a lod with the given poly count
+//hierarchy must be removed externally to this proc
+{
+	print ("\nCreating " + $lod + " with " + $targetPolyCount + " target poly count"); 
+	
+	string $lod0 = `substitute "_LOD."  $lod ""`;
+	
+	if (objExists($lod)) delete $lod;
+	duplicate -n $lod $lod0;
+	boltDeleteHavokNodes($lod);
+	//duplicate the part
+	
+	print ("\nFixing " + $lod + " non manifold geometry");
+	
+	string $nonManifoldE[] = `polyInfo -nme $lod`;
+	string $nonManifoldV[] = `polyInfo -nmv $lod`;
+	
+	if ( (size($nonManifoldE)>0) || (size($nonManifoldV)>0) )
+	{
+		select -r $lod;
+		polyCleanupArgList 3 { "0","1","0","0","0","0","0","0","0","1e-005","0","1e-005","0","1e-005","0","2","0" };	
+		//fixes non manifold geometry.. in theory
+	}
+	
+	$nonManifoldE = `polyInfo -nme $lod`;
+	$nonManifoldV = `polyInfo -nmv $lod`;
+	
+	if ( (size($nonManifoldE)>0) || (size($nonManifoldV)>0) )
+	//we have some bad ass corrupted geometry impervious to maya's cleanup tool
+	{
+		confirmDialog -title "Warning!" -message ("Seriously corrupted geometry found on " + $lod0 + " which could not be cleaned up by Maya. \nCannot perform poly reduce on this part - it must be fixed manually.\nThe problem area can be highlighted (but not fixed) using Maya's mesh>cleanup tool.");
+	}
+	
+	//perform lodding
+	$currentPolys = boltPolyCount($lod);
+	if ($currentPolys > $targetPolyCount)
+	{
+		print ("\nPerforming " + $lod + " poly reduction");
+		
+		$reduction = $targetPolyCount / $currentPolys; // get ratio to reduce by
+		evoAddEvoLodGen({$lod}, $reduction, {1.0, 0, 0, 0, 0} );
+		
+		//remove evolod node - can't be done here, results in missing shaders
+		//select $lod;
+		//DeleteHistory;
+		//if (objExists ($lod + "_TEMP")) delete ($lod + "_TEMP");
+	}
+
+	addAttr -longName "placeholderLOD" $lod;
+	//tag as a placeholder
+		
+	//parent $lod $lod0; 
+	print ("\n" + $lod + " CREATED\n");			
+	
+}
+	
+
+global proc boltPlaceholderLods.CollapseShortEdges(int $selected)
+//collapses short edges on lods.
+{
+	$oldSel = `ls -sl`;
+	
+	float $minEdge[] =  {0.0015,   0.003,   0.006,   0.012,   0.025,   0.050};   //min edge length in meters
+	
+	string $objs[] = `ls -type "mesh"`;
+	$objs = boltShapesToTransforms($objs);
+	if ($selected == 1) $objs = `ls -sl -transforms`;
+	
+	
+	for ($obj in $objs)
+	{
+		if (`substring $obj (size($obj)-4) (size($obj)-1)` == "_LOD")
+		{
+			int $lodNum = `endString $obj 1`;
+			$minLength = $minEdge[$lodNum - 1];
+			
+			print ("\nCollapsing edges shorter than " + $minLength + " on " + $obj); 
+			
+			//collapse short edges
+			string $shortEdges[] = `boltGetEdgesShorterThan $minLength $obj`;
+			if (size($shortEdges) > 0)
+			{
+				polyCollapseEdge -ch 0 $shortEdges;
+			}
+		}
+	}
+	
+	select $oldSel;
+}
+
+global proc boltDeleteLods()
+//deletes all lods in the scene, with confirmation
+{
+	string $result = `confirmDialog -message "Delete All LODs in scene?" -button "Cancel" -button "Delete LODs" -defaultButton "Cancel" -cancelButton "Cancel" -dismissString "Cancel"`;
+	if ($result == "Delete LODs") delete "*_LOD*";
+}
+
+global proc string[] boltGetEdgesShorterThan(float $length, string $obj)
+{
+	select -r $obj;
+	polySelectConstraint -m 3 -t 0x8000 -l on -lb 0 $length;
+	string $shortEdges[] = `ls -sl -flatten`;
+	polySelectConstraint -l off;
+	polySelectConstraint -m 0; 
+	select -cl;
+	return $shortEdges;
+}
+
+global proc string[] boltGetEdgesTooShortForLod(string $obj)
+//gets a list of edges deemed too short for the particular lod level of the given part
+{
+	string $partInfo[] = boltWhatIsPart($obj);
+	float $minEdgeLength = 0.0;
+	
+	if (`sFindItem $partInfo "_LOD0"` != -1) $minEdgeLength = 0.001;  //1mm		lod0	1333        
+	if (`sFindItem $partInfo "_LOD1"` != -1) $minEdgeLength = 0.003;  //3mm		lod1	666         
+	if (`sFindItem $partInfo "_LOD2"` != -1) $minEdgeLength = 0.006;  //6mm		lod2	333         
+	if (`sFindItem $partInfo "_LOD3"` != -1) $minEdgeLength = 0.012;  //12mm		lod3	160         
+	if (`sFindItem $partInfo "_LOD4"` != -1) $minEdgeLength = 0.025;  //25mm		lod4	80          
+	if (`sFindItem $partInfo "_LOD5"` != -1) $minEdgeLength = 0.050;  //50mm	lod5	40      
+	if (`sFindItem $partInfo "_LOD6"` != -1) $minEdgeLength = 0.100;  //100mm	lod6	20      
+	
+	string $shortEdges[] = boltGetEdgesShorterThan($minEdgeLength, $obj);
+	
+	if (size($shortEdges)>0)
+		print ("\n" + size($shortEdges) + " sub-pixel length edges found on object " + $obj);
+	
+	
+	return $shortEdges;
+}
+
+global proc boltSelectEdgesTooShortForLod()
+//selects all edges on the selected objects that are too short for their lod level
+{
+	string $objs[] = `ls -sl -transforms`;
+	string $shortEdges[];
+	
+	for ($obj in $objs)
+	{
+		string $shortEdgesOnThisObj[] = boltGetEdgesTooShortForLod($obj);
+		
+		if (size($shortEdgesOnThisObj)>0)
+		{
+			$shortEdges = stringArrayCatenate($shortEdges, $shortEdgesOnThisObj);
+		}
+	}
+	select -cl;
+	hilite -replace $objs;
+	select -add $shortEdges;
+}
+
+
+global proc boltTransferColoursToLods()
+//transfers vertex colours to lods for selected objects 
+{
+	showHidden -all;
+	
+	string $objList[] = `ls -sl -type "transform"`;
+	if (size($objList) == 0)
+	{
+		warning "No objects selected!";
+		//$objList = `ls -type "transform"`;
+	}
+	//get selected transforms, if nothing selected, get all.
+	
+	string $lod1s[] = `ls -type "transform" "*_LOD1"`;  
+	string $lod2s[] = `ls -type "transform" "*_LOD2"`; 
+	string $lod3s[] = `ls -type "transform" "*_LOD3"`; 
+	string $lod4s[] = `ls -type "transform" "*_LOD4"`; 
+	string $lod5s[] = `ls -type "transform" "*_LOD5"`; 
+	
+	$objList = `stringArrayRemove $lod1s $objList`;
+	$objList = `stringArrayRemove $lod2s $objList`;
+	$objList = `stringArrayRemove $lod4s $objList`;
+	$objList = `stringArrayRemove $lod5s $objList`;
+	$objList = `stringArrayRemove $lod5s $objList`;
+	//remove all lods from the list
+	
+	for ($obj in $objList)
+	{
+		print ("\nChecking " + $obj + " for lods");
+				
+		string $lodNums[] = {"_LOD1","_LOD2","_LOD3","_LOD4","_LOD5"};
+		
+		for ($lod in $lodNums)
+		{
+			if (objExists ($obj + $lod))
+			{
+				print ("\nTransfering colours from " + $obj + " to " + $obj + $lod);
+				transferAttributes -pos 0 -nml 0 -uvs 0 -col 2 -sampleSpace 0 -colorBorders 0 $obj ($obj + $lod);
+			}
+		}
+	}
+		
+}
+
+
+global proc boltTransferUVsToLods()
+//transfers UVs to lods for selected objects 
+{
+	showHidden -all;
+	
+	string $objList[] = `ls -sl -type "transform"`;
+	if (size($objList) == 0)
+	{
+		warning "No objects selected!";
+		//$objList = `ls -type "transform"`;
+	}
+	//get selected transforms, if nothing selected, get all.
+	
+	string $lod1s[] = `ls -type "transform" "*_LOD1"`;  
+	string $lod2s[] = `ls -type "transform" "*_LOD2"`; 
+	string $lod3s[] = `ls -type "transform" "*_LOD3"`; 
+	string $lod4s[] = `ls -type "transform" "*_LOD4"`; 
+	string $lod5s[] = `ls -type "transform" "*_LOD5"`; 
+	
+	$objList = `stringArrayRemove $lod1s $objList`;
+	$objList = `stringArrayRemove $lod2s $objList`;
+	$objList = `stringArrayRemove $lod4s $objList`;
+	$objList = `stringArrayRemove $lod5s $objList`;
+	$objList = `stringArrayRemove $lod5s $objList`;
+	//remove all lods from the list
+	
+	for ($obj in $objList)
+	{
+		print ("\nChecking " + $obj + " for lods");
+				
+		string $lodNums[] = {"_LOD1","_LOD2","_LOD3","_LOD4","_LOD5"};
+		
+		for ($lod in $lodNums)
+		{
+			if (objExists ($obj + $lod))
+			{
+				print ("\nTransfering colours from " + $obj + " to " + $obj + $lod);
+				transferAttributes -pos 0 -nml 0 -uvs 1 -col 0 -sampleSpace 0 -colorBorders 0 $obj ($obj + $lod);
+			}
+		}
+	}
+		
+}

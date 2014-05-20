@@ -1,0 +1,711 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ProjectMainForm</class>
+ <widget class="QMainWindow" name="ProjectMainForm">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>356</width>
+    <height>870</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>8</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string/>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <property name="toolButtonStyle">
+   <enum>Qt::ToolButtonIconOnly</enum>
+  </property>
+  <property name="animated">
+   <bool>true</bool>
+  </property>
+  <property name="documentMode">
+   <bool>true</bool>
+  </property>
+  <property name="tabShape">
+   <enum>QTabWidget::Triangular</enum>
+  </property>
+  <property name="dockNestingEnabled">
+   <bool>false</bool>
+  </property>
+  <property name="dockOptions">
+   <set>QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks</set>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_3">
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QComboBox" name="cbbGroup">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="AssetName">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>9</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Sunken</enum>
+          </property>
+          <property name="text">
+           <string>Asset Name</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="cbbAssets"/>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_8">
+      <item>
+       <widget class="QComboBox" name="cbbType"/>
+      </item>
+      <item>
+       <widget class="QComboBox" name="cbbWorkingStage"/>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_7">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetFixedSize</enum>
+          </property>
+          <item>
+           <widget class="QRadioButton" name="vLast">
+            <property name="text">
+             <string>vLast</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+            <attribute name="buttonGroup">
+             <string>buttonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="vAny">
+            <property name="text">
+             <string>Any</string>
+            </property>
+            <attribute name="buttonGroup">
+             <string>buttonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetFixedSize</enum>
+          </property>
+          <item>
+           <widget class="QRadioButton" name="server">
+            <property name="text">
+             <string>Server</string>
+            </property>
+            <attribute name="buttonGroup">
+             <string>buttonGroup_2</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="local">
+            <property name="text">
+             <string>Local</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+            <attribute name="buttonGroup">
+             <string>buttonGroup_2</string>
+            </attribute>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <item>
+       <widget class="QLabel" name="label_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>9</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Open  and Save File</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QPushButton" name="btnSaveIncrement">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Save Increment</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../Source/IconResource.qrc">
+          <normaloff>:/Project/Save_increment.png</normaloff>:/Project/Save_increment.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnSaveLast">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Save vLast</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../Source/IconResource.qrc">
+          <normaloff>:/Project/Save.png</normaloff>:/Project/Save.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnOpenfile">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Open</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../Source/IconResource.qrc">
+          <normaloff>:/Project/Open.png</normaloff>:/Project/Open.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QPushButton" name="btnUploadandDownload">
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Upload  Download</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../Source/IconResource.qrc">
+          <normaloff>:/Project/Exchange.png</normaloff>:/Project/Exchange.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnAssetLibrary">
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Asset Library</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../Source/IconResource.qrc">
+          <normaloff>:/Project/Library_icon.png</normaloff>:/Project/Library_icon.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_6">
+      <item>
+       <widget class="QLabel" name="label_3">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>9</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Open Folders</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="line_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout_8">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_20">
+        <item>
+         <widget class="QPushButton" name="btnCreateLocalFolders">
+          <property name="text">
+           <string>Create Local Folders</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../Source/IconResource.qrc">
+            <normaloff>:/Project/New.png</normaloff>:/Project/New.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnCreateServerFolders">
+          <property name="locale">
+           <locale language="Vietnamese" country="VietNam"/>
+          </property>
+          <property name="text">
+           <string>Create Server Folders</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../Source/IconResource.qrc">
+            <normaloff>:/Project/New.png</normaloff>:/Project/New.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_21">
+        <item>
+         <widget class="QPushButton" name="btnOpenLocalFolder">
+          <property name="text">
+           <string>Open Local Folder</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../Source/IconResource.qrc">
+            <normaloff>:/Project/Documents.png</normaloff>:/Project/Documents.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnOpenServerFolder">
+          <property name="text">
+           <string>Open Server Folder</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../Source/IconResource.qrc">
+            <normaloff>:/Project/Documents.png</normaloff>:/Project/Documents.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="acceptDrops">
+       <bool>true</bool>
+      </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="locale">
+       <locale language="Vietnamese" country="VietNam"/>
+      </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::West</enum>
+      </property>
+      <property name="movable">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>356</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuConfig">
+    <property name="title">
+     <string>Modules</string>
+    </property>
+    <addaction name="actionImport_Module"/>
+    <addaction name="actionRemove_Module"/>
+    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menuAssets">
+    <property name="title">
+     <string>Assets</string>
+    </property>
+    <addaction name="actionAsset_Tracking"/>
+   </widget>
+   <widget class="QMenu" name="menuChecking_Tools">
+    <property name="title">
+     <string>Checking Tools</string>
+    </property>
+    <addaction name="actionQA"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionUpdated_documents"/>
+    <addaction name="actionInstall_Plugins"/>
+    <addaction name="actionAbout"/>
+   </widget>
+   <widget class="QMenu" name="menuPerforce">
+    <property name="title">
+     <string>Perforce</string>
+    </property>
+    <addaction name="actionAdd"/>
+    <addaction name="actionCheck_in"/>
+    <addaction name="actionCheck_out"/>
+    <addaction name="actionRevert"/>
+    <addaction name="actionDelete"/>
+   </widget>
+   <addaction name="menuAssets"/>
+   <addaction name="menuPerforce"/>
+   <addaction name="menuConfig"/>
+   <addaction name="menuChecking_Tools"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionImport_Module">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/arrow_6.png</normaloff>:/Project/arrow_6.png</iconset>
+   </property>
+   <property name="text">
+    <string>Import Module</string>
+   </property>
+  </action>
+  <action name="actionRemove_Module">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/arrow_12.png</normaloff>:/Project/arrow_12.png</iconset>
+   </property>
+   <property name="text">
+    <string>Remove Module</string>
+   </property>
+  </action>
+  <action name="actionImport_Asset">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
+   </property>
+   <property name="text">
+    <string>Add Items</string>
+   </property>
+  </action>
+  <action name="actionRemove_Items">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
+   </property>
+   <property name="text">
+    <string>Remove Items</string>
+   </property>
+  </action>
+  <action name="actionCreate_Workflow">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
+   </property>
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="actionEdit">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
+   </property>
+   <property name="text">
+    <string>Edit</string>
+   </property>
+  </action>
+  <action name="actionChange">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/Refresh.png</normaloff>:/Project/Refresh.png</iconset>
+   </property>
+   <property name="text">
+    <string>Change</string>
+   </property>
+  </action>
+  <action name="actionTo_Left">
+   <property name="text">
+    <string>to Left</string>
+   </property>
+  </action>
+  <action name="actionTo_Right">
+   <property name="text">
+    <string>to Right</string>
+   </property>
+  </action>
+  <action name="actionQA">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
+   </property>
+   <property name="text">
+    <string>QA</string>
+   </property>
+  </action>
+  <action name="actionAsset_Tracking">
+   <property name="text">
+    <string>Asset Tracking</string>
+   </property>
+  </action>
+  <action name="actionUpdated_documents">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/new_Document.png</normaloff>:/Project/new_Document.png</iconset>
+   </property>
+   <property name="text">
+    <string>Updated documents</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionInstall_Plugins">
+   <property name="text">
+    <string>Install Plugins</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/About.png</normaloff>:/Project/About.png</iconset>
+   </property>
+   <property name="text">
+    <string>About</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionCheck_in">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/Check.png</normaloff>:/Project/Check.png</iconset>
+   </property>
+   <property name="text">
+    <string>Check in</string>
+   </property>
+  </action>
+  <action name="actionCheck_out">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/Uninstall.png</normaloff>:/Project/Uninstall.png</iconset>
+   </property>
+   <property name="text">
+    <string>Submit</string>
+   </property>
+  </action>
+  <action name="actionAdd">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
+   </property>
+   <property name="text">
+    <string>Add</string>
+   </property>
+  </action>
+  <action name="actionRevert">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/Refresh.png</normaloff>:/Project/Refresh.png</iconset>
+   </property>
+   <property name="text">
+    <string>Revert</string>
+   </property>
+  </action>
+  <action name="actionDelete">
+   <property name="icon">
+    <iconset resource="../Source/IconResource.qrc">
+     <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
+   </property>
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </action>
+ </widget>
+ <tabstops>
+  <tabstop>btnOpenfile</tabstop>
+  <tabstop>btnCreateLocalFolders</tabstop>
+  <tabstop>btnCreateServerFolders</tabstop>
+  <tabstop>btnOpenLocalFolder</tabstop>
+  <tabstop>btnOpenServerFolder</tabstop>
+ </tabstops>
+ <resources>
+  <include location="../Source/IconResource.qrc"/>
+ </resources>
+ <connections/>
+ <buttongroups>
+  <buttongroup name="buttonGroup_2"/>
+  <buttongroup name="buttonGroup"/>
+ </buttongroups>
+</ui>

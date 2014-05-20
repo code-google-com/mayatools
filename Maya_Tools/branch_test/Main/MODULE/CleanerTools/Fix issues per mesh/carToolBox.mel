@@ -1,0 +1,3261 @@
+
+
+
+global string $carToolBoxVersion;
+global string $p4Root;
+global string $carMatTemplate[];
+global string $validListMats[];
+global string $duplicateEdgeControls [];
+global string $duplicateEdgeSelection[];
+global string $kitSwapperMeshesLOD0[];
+global string $kitSwapperMeshesLOD1[];
+global string $kitSwapperMeshesLOD2[];
+
+clear $duplicateEdgeSelection;
+clear $duplicateEdgeControls;
+clear $kitSwapperMeshesLOD0;
+clear $kitSwapperMeshesLOD1;
+clear $kitSwapperMeshesLOD2;
+
+
+
+$carToolBoxVersion = "Car Toolbox Ver. 1.51";
+$p4Root = `getP4UserInfo 0`;
+$carMatTemplate = `getCarMatTemplate`;
+$validListMats = `getValidMatList $carMatTemplate`;
+
+source "NFS/carImporter.mel";
+source "colorSetEditor.mel";
+
+
+global proc string getP4UserInfo(int $overRide)
+{
+	string $p4LocalFolder = "";
+	if ( `window -exists carToolBoxUI` )
+	{
+		string $textfieldPath = `textField -q -tx p4PathOverrideTF`;
+		if (`checkBox -q -v p4RootOverRideCB`)
+		{
+			string $mayaHomeEnv = `getenv "home"`;
+			if ($textfieldPath == "")
+			{
+				$p4LocalFolder = `toNativePath $mayaHomeEnv`;
+			}
+			else
+			{
+				$p4LocalFolder = $textfieldPath;
+			}
+			return $p4LocalFolder;
+		}
+	}
+	string $result = `system ("p4 sync //c4/dev/Data/Raw/_c4/VEHICLES/matConsolidateTemplate.txt")`;
+	string $templateLocation = `system ("p4 where //c4/dev/Data/Raw/_c4/VEHICLES/matConsolidateTemplate.txt")`;
+	string $pathTokens[]; clear $pathTokens;
+	int $numPathTokens = `tokenize $templateLocation " " $pathTokens`;
+	string $p4Path = `fromNativePath $pathTokens[2]`;
+	$p4Path = `substitute ("/dev/Data/Raw/_c4/VEHICLES/matConsolidateTemplate.txt") $p4Path ""`;
+	$p4LocalFolder = `toNativePath $p4Path`;
+	$p4LocalFolder = `stringTrim $p4LocalFolder`;
+	if ($p4LocalFolder == "must")
+	{
+		string $mayaHomeEnv = `getenv "home"`;
+		$p4LocalFolder = `toNativePath $mayaHomeEnv`;
+		return $p4LocalFolder;
+	}
+	if ($p4LocalFolder == "file(s)")
+	{
+		string $p4Info = `system ("p4 info")`;
+		string $p4InfoTokens[] = `stringToStringArray $p4Info "\n"`;
+		for ($each in $p4InfoTokens)
+		{
+			if (`gmatch $each "*Client root:*"`)
+				$p4LocalFolder = $each;
+		}
+		$p4LocalFolder = `substitute "Client root: " $p4LocalFolder ""`;
+		$p4LocalFolder = `stringTrim $p4LocalFolder`;
+		return $p4LocalFolder;
+	}
+	if ($overRide == 1)
+	{
+		string $mayaHomeEnv = `getenv "home"`;
+		$p4LocalFolder = `toNativePath $mayaHomeEnv`;
+	}
+	return $p4LocalFolder;
+}
+
+global proc targetSnapWeldVerts()
+{
+	string $selections[] = `ls -l -fl -sl`;
+	if (`size $selections` < 2 || `size $selections` > 2)
+	{
+		error "invalid selection... selection 2 verts!";
+	}
+	string $selectionToken[]; clear $selectionToken;
+	int $numTokens = `tokenize $selections[0] "." $selectionToken`;
+	if (! `gmatch $selectionToken[1] "vtx*"`)
+	{
+		error "select verts only...";
+
+	}
+	delete -ch $selectionToken[0];
+	float $destVertLocation[] = `xform -q -ws -t $selections[1]`;
+	xform -ws -t $destVertLocation[0] $destVertLocation[1] $destVertLocation[2] $selections[0];
+	polyMergeVertex -d 0.001 -am 1 -ch 0 $selections[0] $selections[1];
+}
+
+
+global proc string getCarToolBoxFilePathContents(string $paramSearchString)
+{
+	global string $p4Root;
+	string $whereIsMEL = `whatIs "getP4UserInfo"`;
+	string $MELPathTokens[] = `stringToStringArray $whereIsMEL " "`;
+	string $melScriptLocation = ($MELPathTokens[`size $MELPathTokens` -1]);
+	string $openPathToMELScript = "";
+	string $outPutPath = "error";
+	string $pathTokens[]; clear $pathTokens;
+	int $numPathTokens = `tokenize $melScriptLocation "/" $pathTokens`;
+	for ($a = 0; $a < `size $pathTokens` -1; $a++)
+	{
+		$openPathToMELScript += ($pathTokens[$a] + "\\");
+	}
+	string $iniFileContent[] = `getXMLFileContents ($openPathToMELScript + "carToolBoxFilePath.ini")`;
+	for ($b = 0; $b < `size $iniFileContent`; $b++)
+	{
+	 	int $isMatch = `gmatch $iniFileContent[$b] ("*" + $paramSearchString + "*")`;
+		if ($isMatch)
+		{
+			$outPutPath = `stringTrim $iniFileContent[$b]`;
+			$outPutPath = `substitute ($paramSearchString + " => ") $outPutPath ""`;
+		}
+	}
+	return $outPutPath;
+}
+
+
+global proc string[] getCarMatTemplate()
+{
+	global string $p4Root;
+	string $dbxFileFullPath = ($p4Root + "\\dev\\Data\\Source\\_c4\\VEHICLES\\CarMaterialTemplates.dbx");
+	if (!`file -q -ex $dbxFileFullPath`)
+	{
+		$dbxFileFullPath = ($p4Root + `getCarToolBoxFilePathContents "CarMaterialTemplates"`);
+	}
+	string $array[] = `getXMLFileContents $dbxFileFullPath`;
+	string $groupArray[]; clear $groupArray;
+	int $groupArrayCounter = 0;
+	for ($a = 0; $a < `size $array`; $a++)
+	{
+		if (`gmatch $array[$a] "*<instance guid=*"`)
+		{
+			while (`gmatch $array[$a] "*</instance>*"` != 1)
+			{
+			
+				$groupArray[$groupArrayCounter] = ($groupArray[$groupArrayCounter] + $array[$a]);
+				$a++;
+			}
+			$groupArrayCounter++;
+		}
+	}
+	return $groupArray;
+}
+
+
+global proc string[] getValidMatList(string $inputString[])
+{
+	string $validMaterials[]; clear $validMaterials;
+	int $matListCounter = 0;
+	for ($a = 0; $a < `size $inputString`; $a++)
+	{
+		string $inputTokens[] = `stringToStringArray $inputString[$a] "\n "`;
+		for ($b = 0; $b < `size $inputTokens`; $b++)
+		{
+			$inputTokens[$b] = `stringTrim $inputTokens[$b]`;
+			if (`gmatch $inputTokens[$b] "<item>*"`)
+			{
+				$validMaterials[$matListCounter] = `substitute "^<item>" $inputTokens[$b] ""`;
+				$validMaterials[$matListCounter] = `substitute "</item>$" $validMaterials[$matListCounter] ""`;
+				$matListCounter++;
+			}
+		}
+	}	
+	return $validMaterials;
+}
+
+
+global proc string[] checkUVSets(string $UVSet)
+{
+	string $meshes[] = `ls -l -type "mesh"`;
+	int $uvSetCounter = 0;
+	string $invalidMeshes[]; clear $invalidMeshes;
+	for ($eachMesh in $meshes)
+	{
+		string $allUVSets[] = `polyUVSet -q -auv $eachMesh`;
+		int $hasMap1 = 0;
+		for ($eachUVSet in $allUVSets)
+		{
+			if ($eachUVSet == $UVSet)
+			{
+				$hasMap1 = 1;
+				break;
+			}
+		}
+		if ($hasMap1)
+			continue;
+		$invalidMeshes[$uvSetCounter] = $eachMesh;
+		$uvSetCounter++;
+	}
+	return $invalidMeshes;
+}
+
+
+global proc int paintCarVertexColours(int $mode)
+{
+	string $selection[] = `ls -l -sl`;
+	string $allMats[] = `ls -mat`;
+	int $badVertexColour = 0;
+	for ($a = 0; $a < `size $allMats`; $a++)
+	{
+		float $vertexColours[]; clear $vertexColours;
+		int $isColoured = 0;
+		switch ($allMats[$a])
+		{
+			case "GLASS_CLEAR":
+			case "GLASS_REAR":
+			case "GLASS_TOP":
+			case "GLASS_RIGHT":
+			case "GLASS_LEFT":
+			case "BRAKELIGHT_LENS_CLEAR":
+			case "HEADLIGHT_LENS_CLEAR":
+			case "BRAKELIGHT_LENS_RED":
+			{
+				$isColoured = 1;
+				$vertexColours = {0,0,0,1};
+				break;
+			}
+			case "GLASS_MASK_MISC":
+			case "GLASS_MASK_LEFT":
+			case "GLASS_MASK_REAR":
+			case "GLASS_MASK_RIGHT":
+			case "GLASS_MASK_TOP":
+			case "HEADLIGHT_LENS_MASK":
+			{
+				$isColoured = 1;
+				$vertexColours = {1,1,1,1};
+				break;
+			}
+			default:
+			{
+				break;
+			}
+		}
+		if ($isColoured == 0)
+		{
+			continue;
+		}
+		if ($mode == 1)
+		{
+			hyperShade -o $allMats[$a];
+			string $selectedObjects[]  = `ls -l -sl`;
+			if (`size $selectedObjects` == 0)
+				continue;
+			select -r $selectedObjects;
+			polyColorPerVertex -r $vertexColours[0] -g $vertexColours[1] -b $vertexColours[2] -a $vertexColours[3] -cdo;
+		}
+		else
+		{
+			hyperShade -o $allMats[$a];
+			select -r `polyListComponentConversion -ff -fv -fe -fuv -fvf -tf`;
+			string $selectedObjects[]  = `ls -l -fl -sl`;
+			if (`size $selectedObjects` == 0)
+				continue;
+			for ($eachFace in $selectedObjects)
+			{
+				polyColorPerVertex $eachFace;
+				float $vertexColoursQuery[] = `polyColorPerVertex -q -r -g -b -a $eachFace`;
+				if ($vertexColoursQuery[0] != $vertexColours[0])
+					$badVertexColour = 1;
+				if ($vertexColoursQuery[1] != $vertexColours[1])
+					$badVertexColour = 1;
+				if ($vertexColoursQuery[2] != $vertexColours[2])
+					$badVertexColour = 1;
+				if ($vertexColoursQuery[3] != $vertexColours[3])
+					$badVertexColour = 1;
+			}
+			if ($badVertexColour == 1)
+			{
+				if (`size $selection` != 0)
+				{
+					catchQuiet (`select -r $selection`);
+				}
+				else
+				{
+					select -cl;
+				}
+				return 1;
+			}
+		}
+	}
+	select -cl;
+	catchQuiet (`select -r $selection`);
+	//buildCarToolboxUI;
+	return 0;
+}
+
+global proc string stringTrim(string $s) 
+{
+       string $space = " \t\r\n";
+       string $left = `match ("^["+$space+"]*") $s`;
+       $s = (size($left) < size($s) ? substring($s, size($left)+1, size($s)) : "");
+       string $right = `match ("["+$space+"]*$") $s`;
+       $s = (size($right) < size($s) ? substring($s, 1, size($s)-size($right)) : "");
+       return $s;
+}
+
+global proc string trimEndString(string $inputString) 
+{
+       string $space = " _";
+       string $left = `match ("^["+$space+"]*") $inputString`;
+       $inputString = (size($left) < size($inputString) ? substring($inputString, size($left)+1, size($inputString)) : "");
+       string $right = `match ("["+$space+"]*$") $inputString`;
+       $inputString = (size($right) < size($inputString) ? substring($inputString, 1, size($inputString)-size($right)) : "");
+       return $inputString;
+}
+
+global proc toggleVertexColourDisplayOff()
+{
+	string $allMeshes[] = `ls -l -type "mesh"`;
+	for ($each in $allMeshes)
+	{
+		setAttr ($each + ".displayColors") 0;
+	}
+}
+
+global proc toggleVertexColourDisplayOn()
+{
+	catchQuiet (`setAttr "perspShape.nearClipPlane" 0.01`);
+	string $allMeshes[] = `ls -l -type "mesh"`;
+	for ($each in $allMeshes)
+	{
+		setAttr ($each + ".displayColors") 1;
+	}
+}
+
+global proc int setupCarLODLayers()
+{
+	string $selection[] = `ls -l -sl`;
+	select -cl;
+	string $meshes[] = `ls -type "mesh"`;
+	if (!`objExists "Ignore_Layer"`)
+		createDisplayLayer -name "Ignore_Layer" -number 1 -empty;
+	if (!`objExists "Havok_Layer"`)
+		createDisplayLayer -name "Havok_Layer" -number 2 -empty;
+	if (!`objExists "LOD_3_Layer"`)
+		createDisplayLayer -name "LOD_3_Layer" -number 3 -empty;
+	if (!`objExists "LOD_2_Layer"`)
+		createDisplayLayer -name "LOD_2_Layer" -number 4 -empty;
+	if (!`objExists "LOD_1_Layer"`)
+		createDisplayLayer -name "LOD_1_Layer" -number 5 -empty;
+	if (!`objExists "LOD_0_Layer"`)
+		createDisplayLayer -name "LOD_0_Layer" -number 6 -empty;
+	if (`objExists "|export|LOD0"`)
+		editDisplayLayerMembers -nr LOD_0_Layer "|export|LOD0";
+	if (`objExists "|export|LOD1"`)
+		editDisplayLayerMembers -nr LOD_1_Layer "|export|LOD1";
+	if (`objExists "|export|LOD2"`)
+		editDisplayLayerMembers -nr LOD_2_Layer "|export|LOD2";
+	if (`objExists "|export|LOD3"`)
+		editDisplayLayerMembers -nr LOD_3_Layer "|export|LOD3";
+	if (`objExists "havokExport"`)
+		editDisplayLayerMembers -nr Havok_Layer "havokExport";
+	if (`objExists "ignore"`)
+		editDisplayLayerMembers -nr Ignore_Layer "ignore";
+	if (`size $meshes` == 0)
+		return 1;
+	layerEditorSelectUnused;
+	layerEditorDeleteLayer "";
+	catchQuiet (`select -r $selection`);
+	print "Layer Setup complete!";
+	return 0;
+}
+
+global proc string[] getXMLFileContents(string $fileName)
+{
+	string $includeRaw[];
+	clear $includeRaw;
+	int $fileID = `fopen ($fileName) "r"`;
+	string $nextLine = `fgetline $fileID`;
+	int $c=0;
+	while ( `size $nextLine` > 0 )
+	{
+		$includeRaw[$c] = $nextLine;
+		$nextLine = `fgetline $fileID`;
+		$c++;
+	}
+	fclose $fileID;
+	return $includeRaw;
+}
+
+
+global proc string materialCreateTextureNode(string $textureNodeName, string $textureFilePath)
+{
+	string $textureNode = `shadingNode -asTexture file -n $textureNodeName`;
+	string $twodTextureNode = `shadingNode -asUtility place2dTexture -n ($textureNodeName + "_place2dTexture")`;
+	connectAttr -f ($twodTextureNode + ".coverage") ($textureNode + ".coverage");
+	connectAttr -f ($twodTextureNode + ".translateFrame") ($textureNode + ".translateFrame");
+	connectAttr -f ($twodTextureNode + ".rotateFrame") ($textureNode + ".rotateFrame");
+	connectAttr -f ($twodTextureNode + ".mirrorU") ($textureNode + ".mirrorU"); 
+	connectAttr -f ($twodTextureNode + ".mirrorV") ($textureNode + ".mirrorV");
+	connectAttr -f ($twodTextureNode + ".stagger") ($textureNode + ".stagger");
+	connectAttr -f ($twodTextureNode + ".wrapU") ($textureNode + ".wrapU");
+	connectAttr -f ($twodTextureNode + ".wrapV") ($textureNode + ".wrapV"); 
+	connectAttr -f ($twodTextureNode + ".repeatUV") ($textureNode + ".repeatUV"); 
+	connectAttr -f ($twodTextureNode + ".offset") ($textureNode + ".offset");
+	connectAttr -f ($twodTextureNode + ".rotateUV") ($textureNode + ".rotateUV");
+	connectAttr -f ($twodTextureNode + ".noiseUV") ($textureNode + ".noiseUV");
+	connectAttr -f ($twodTextureNode + ".vertexUvOne") ($textureNode + ".vertexUvOne"); 
+	connectAttr -f ($twodTextureNode + ".vertexUvTwo") ($textureNode + ".vertexUvTwo"); 
+	connectAttr -f ($twodTextureNode + ".vertexUvThree") ($textureNode + ".vertexUvThree");
+	connectAttr -f ($twodTextureNode + ".vertexCameraOne") ($textureNode + ".vertexCameraOne");
+	connectAttr ($twodTextureNode + ".outUV") ($textureNode + ".uv");
+	connectAttr ($twodTextureNode + ".outUvFilterSize") ($textureNode + ".uvFilterSize");
+	setAttr -type "string" ($textureNode + ".fileTextureName") ($textureFilePath);
+	return $textureNode;
+}
+
+
+global proc int collapseMaterials(int $mode)
+{
+	global string $validListMats[];
+	string $selection[] = `ls -l -sl`;
+	string $allMats[] = `ls -mat`;
+	string $defaultMats[] = {"lambert1", "particleCloud1"};
+	string $sceneMaterials[] = `stringArrayRemove $defaultMats $allMats`;
+	string $validMatList[] = $validListMats;
+	string $collapsableMats[]; clear $collapsableMats;
+	for ($a = 0; $a < `size $validMatList`; $a++)
+	{
+		string $combineList[]; clear $combineList;
+		int $combineCounter = 0;
+		for ($b = 0; $b < `size $sceneMaterials`; $b++)
+		{
+			if (`gmatch $sceneMaterials[$b] ("*" + $validMatList[$a] + "*")`)
+			{
+				$combineList[$combineCounter] = $sceneMaterials[$b];
+				$combineCounter++;
+			}
+		}
+		if (`size $combineList` <= 1)
+			continue;
+		string $faceArray[] ; clear $faceArray;
+		if ($mode)
+		{
+			for ($c = 0; $c < `size $combineList`; $c++)
+			{
+				catchQuiet (`hyperShade -o $combineList[$c]`);
+				string $tempArray[] = `ls -l -sl`;
+				if (`size $tempArray` == 0)
+				{
+					catchQuiet (`delete $combineList[$c]`);
+					continue;
+				}
+				$faceArray = `stringArrayCatenate $faceArray $tempArray`;
+				if ($combineList[$c] != $validMatList[$a])
+				{
+					string $matUSN[] = `hyperShade -lun $combineList[$c]`;
+					if (`size $matUSN` != 0)
+					{
+						delete $matUSN;
+					}
+					catchQuiet (`delete $combineList[$c]`);
+				}
+			}
+			$faceArray = `stringArrayRemoveDuplicates $faceArray`;
+			select -r  $faceArray;
+			hyperShade -assign $validMatList[$a];
+		}
+		else
+		{
+			$collapsableMats = `stringArrayCatenate $collapsableMats $combineList`;
+		}
+	}
+	if (!$mode)
+	{
+		$collapsableMats = `stringArrayRemoveDuplicates $collapsableMats`;
+		$collapsableMats = `stringArrayRemove $validMatList $collapsableMats`;
+		if (`size $collapsableMats` != 0)
+		{
+			if (`size $selection` != 0)
+			{
+				if (`objExists $selection[0]`)
+				{
+					catchQuiet (`select -r $selection`);
+				}
+			}
+			return 1;
+		}
+		else
+			return 0;
+	}
+	if (`size $selection` != 0)
+	{
+		if (`objExists $selection[0]`)
+		{
+			catchQuiet (`select -r $selection`);
+		}
+	}
+	else
+	{
+		select -cl;
+	}
+	print "Materials Combined!";
+	return 0;
+}
+
+global proc selectObjectsWithMaterial()
+{
+	string $shaderList[] = `ls -sl`;
+	string $allSets[] = `ls -type "objectSet"`;
+	string $modelPreview[];
+	clear $modelPreview;
+	int $r = 0;
+	for ($eachSet in $allSets)
+	{
+		string $isMatch = `match "ViewSelectedSet" $eachSet`;
+		if ($isMatch == "ViewSelectedSet")
+		{
+			$modelPreview[$r] = $eachSet;
+			$r++;
+		}
+	}
+	if (`size $modelPreview` != 0)
+	{
+		string $allSetObjectsLong[] = `listRelatives -c -f $modelPreview[0]`;
+		string $allSetObjects[] = `listRelatives -c $modelPreview[0]`;
+		string $allSetParents[] = `listRelatives -p $allSetObjectsLong`;
+		select -cl;
+		int $g = 0;
+		string $setToggleGroup[];
+		for ($each in $shaderList)
+		{
+			string $nodeType = `nodeType $each`;
+			if ($nodeType == "phong" || $nodeType == "blinn" || $nodeType == "lambert")
+			{
+				string $shadingGrpTemp[] = `connectionInfo -dfs ($each + ".outColor")`;
+				for ($every in $shadingGrpTemp)
+				{
+					string $shadingGrpTemp2[];
+					int $numTokens = `tokenize $every "." $shadingGrpTemp2`;
+					string $assignments[] = `sets -q $shadingGrpTemp2[0]`;
+					for ($k=0;$k<`size $assignments`;$k++)
+					{
+						for ($i=0;$i<`size $allSetParents`;$i++)
+						{
+							string $isMatch = `match $allSetParents[$i] $assignments[$k]`;
+							if ($isMatch == $allSetParents[$i])
+							{
+								$setToggleGroup[$g] = $assignments[$k];
+								$g++;
+							}
+						}
+					}
+				}
+				
+			}
+			else
+			{
+				warning "You must select a shader";
+			}
+		}
+		select -r $setToggleGroup;
+		select -tgl $shaderList;
+	}
+	else
+	{
+		for ($each in $shaderList)
+		{
+			string $nodeType = `nodeType $each`;
+			if ($nodeType == "phong" || $nodeType == "blinn" || $nodeType == "lambert")
+			{
+				string $shadingGrpTemp[] = `connectionInfo -dfs ($each + ".outColor")`;
+				for ($every in $shadingGrpTemp)
+				{
+					string $shadingGrpTemp2[];
+					int $numTokens = `tokenize $every "." $shadingGrpTemp2`;
+					string $assignments[] = `sets -q $shadingGrpTemp2[0]`;
+					select -tgl $assignments;
+				}
+			}
+			else
+			{
+				warning "You must select a shader";
+			}
+		}
+	}
+}
+
+global proc int shiftLODsApart()
+{
+	string $allRootNodes[] = `ls -l -assemblies`;
+	if (!`stringArrayContains "|export" $allRootNodes`)
+	{
+		warning "No \"export\" folder found in Root of scene... cannot Shift LODs...";
+		return 1;
+	}
+	string $validLODs[] = {"LOD0", "LOD1", "LOD2", "LOD3"};
+	int $refCounter = 0;
+	string $refRoots[]; clear $refRoots;
+	for ($eachRootNode in $allRootNodes)
+	{
+		int $isReference = `referenceQuery -inr $eachRootNode`;
+		if ($isReference)
+		{
+			$refRoots[$refCounter] = $eachRootNode;
+			$refCounter++;
+		}
+	}
+	string $refChildren[] = `listRelatives -c -f $refRoots`;
+	int $refCounterNode = 0;
+	for ($eachRefNode in $refChildren)
+	{
+		if (`gmatch $eachRefNode "*LOD0"`)
+		{
+			$validLODs[$refCounterNode] = ($validLODs[$refCounterNode] + " " + $eachRefNode);
+			$refCounterNode++;
+			continue;
+		}
+		if (`gmatch $eachRefNode "*LOD1"`)
+		{
+			$validLODs[$refCounterNode] = ($validLODs[$refCounterNode] + " " + $eachRefNode);
+			$refCounterNode++;
+			continue;
+		}
+		if (`gmatch $eachRefNode "*LOD2"`)
+		{
+			$validLODs[$refCounterNode] = ($validLODs[$refCounterNode] + " " + $eachRefNode);		
+			$refCounterNode++;
+			continue;
+		}
+		if (`gmatch $eachRefNode "*LOD3"`)
+		{
+			$validLODs[$refCounterNode] = ($validLODs[$refCounterNode] + " " + $eachRefNode);
+			$refCounterNode++;
+			continue;
+		}
+	} 
+	float $amountMoved = 0;
+	int $isOffset = 0;
+	for ($g = 0; $g < `size $validLODs`; $g++)
+	{
+		if ($validLODs[$g] == "")
+			continue;
+		string $LODTokens[]; clear $LODTokens;
+		$validLODs[$g] = `stringTrim $validLODs[$g]`;
+		int $numTokens = `tokenize $validLODs[$g] " " $LODTokens`;
+		string $LODMultiples[] = `ls $LODTokens[0]`;
+		if (`size $LODMultiples` > 1)
+		{
+			float $translationAmountArray[] = `getAttr ($LODTokens[0] + ".translateX")`;
+			if ($translationAmountArray[0] != 0)
+			{
+				$isOffset = 1;
+				continue;
+			}
+		}
+		if (`size $LODMultiples` <= 1)
+		{
+			float $translationAmounts = `getAttr ($LODTokens[0] + ".translateX")`;
+			if ($translationAmounts != 0)
+			{
+				$isOffset = 1;
+				continue;
+			}
+		}
+	}
+	if ($isOffset == 1)
+	{
+		for ($eachOffsetLOD in $validLODs)
+		{
+			string $LODTokens[]; clear $LODTokens;
+			tokenize $eachOffsetLOD " " $LODTokens;
+			string $LODMultiples[] = `ls $LODTokens[0]`;
+			if (`size $LODMultiples` > 1)
+			{
+				if (`objExists $LODTokens[0]`)
+					setAttr ($LODTokens[0] + ".translateX") 0 0;
+				if (`objExists $LODTokens[1]`)
+					setAttr ($LODTokens[1] + ".translateX") 0 0;
+			}
+			if (`size $LODMultiples` <= 1)
+			{
+				if (`objExists $LODTokens[0]`)
+					setAttr ($LODTokens[0] + ".translateX") 0;
+				if (`objExists $LODTokens[1]`)
+					setAttr ($LODTokens[1] + ".translateX") 0;
+			}
+		}
+		resetTransFormsToZero;
+		return 0;
+	}
+	for ($eachLOD in $validLODs)
+	{
+		string $LODTokens[]; clear $LODTokens;
+		tokenize $eachLOD " " $LODTokens;
+		if (`objExists $LODTokens[0]`)
+		{
+			if ($LODTokens[0] == "LOD0")
+				continue;
+			$amountMoved = ($amountMoved + 2.5);
+			string $LODMultiples[] = `ls $LODTokens[0]`;
+			if (`size $LODMultiples` > 1)
+			{
+				if (`objExists $LODTokens[0]`)
+					setAttr ($LODTokens[0] + ".translateX") $amountMoved $amountMoved;
+				if (`objExists $LODTokens[1]`)
+					setAttr ($LODTokens[1] + ".translateX") $amountMoved $amountMoved;
+			}
+			if (`size $LODMultiples` <= 1)
+			{
+				if (`objExists $LODTokens[0]`)
+					setAttr ($LODTokens[0] + ".translateX") $amountMoved;
+				if (`objExists $LODTokens[1]`)
+					setAttr ($LODTokens[1] + ".translateX") $amountMoved;
+			}
+		}
+	}
+	return 0;
+}
+
+
+
+global proc int resetTransFormsToZero()
+{
+	string $allRootNodes[] = `ls -assemblies`;
+	string $allTransforms[] = `ls -l -type "transform"`;
+	string $invalidTransforms[] = { "|persp", "|side", "|top", "|front"};
+	$allTransforms = `stringArrayRemove $invalidTransforms $allTransforms`;
+	string $geoWildCards[] = { "_WHEEL", "_CALIPER", "_BRAKE", "MARKER", "|ignore", "*locator*"};
+	if (!`stringArrayContains "export" $allRootNodes`)
+	{
+		warning "No \"export\" folder found in Root of scene... cannot Zero Transforms...";
+		return 1;
+	}
+	for ($a = 0; $a  < `size $allTransforms`; $a++)
+	{
+		int $invalidObject = 0;
+		for ($eachWildCard in $geoWildCards)
+		{
+			if (`gmatch $allTransforms[$a] ("*" + $eachWildCard + "*")`)
+			{
+				$invalidObject = 1;
+			}
+		}
+		if ($invalidObject)
+			continue;
+		string $transformChild[] = `listRelatives -c -f $allTransforms[$a]`;
+		int $isLocator = 0;
+		for ($eachChild in $transformChild)
+		{
+			if (`objectType $eachChild` == "locator")
+				$isLocator = 1;
+		}
+		if ($isLocator)
+			continue;
+		string $transformChild[] = `listRelatives -c -f $allTransforms[$a]`;
+		for ($eachChild in $transformChild)
+		{
+			if (`objectType $eachChild` == "locator")
+			{
+				continue;
+			}
+		}
+		if (!`getAttr -lock ($allTransforms[$a] + ".tx")`)
+			setAttr ($allTransforms[$a] + ".translateX") 0;
+		if (!`getAttr -lock ($allTransforms[$a] + ".ty")`)
+			setAttr ($allTransforms[$a] + ".translateY") 0;
+		if (!`getAttr -lock ($allTransforms[$a] + ".tz")`)
+			setAttr ($allTransforms[$a] + ".translateZ") 0;
+	}
+	return 0;
+}
+
+
+global proc string[] scanFileNodePaths(int $mode)
+{
+	global string $p4Root;
+	string $tempFileTexPath = ($p4Root + "\\dev\\Data\\Raw\\_c4\\VEHICLES\\TEXTURES\\MISSING_TEXTURE.tga");
+	if (!`file -q -ex $tempFileTexPath`)
+	{
+		$tempFileTexPath = ($p4Root + `getCarToolBoxFilePathContents "missingTexturePath"`);
+	}
+	string $fileNodes[] = `ls -type "file"`;
+	string $missingFiles[]; clear $missingFiles;
+	int $missingCounter = 0;
+	for ($a = 0; $a < `size $fileNodes`; $a++)
+	{
+		string $filePath = `getAttr ($fileNodes[$a] + ".fileTextureName")`;
+		if (`attributeExists "missingFilePath" $fileNodes[$a]`)
+		{
+			string $missingPath = `getAttr ($fileNodes[$a] + ".missingFilePath")`;
+			int $doesExist = `file -q -ex $missingPath`;
+			if ($doesExist == 0)
+			{
+				$missingFiles[$missingCounter] = $fileNodes[$a];
+				$missingCounter++;
+				continue;
+			}
+		}
+		int $doesExist = `file -q -ex $filePath`;
+		if ($doesExist == 0)
+		{
+			$missingFiles[$missingCounter] = $fileNodes[$a];
+			$missingCounter++;
+		}
+	}
+	if ($mode == 0)
+		return $missingFiles;
+	else
+	{
+		if (`window -exists missingFileListWindow`)
+		{
+			deleteUI -window missingFileListWindow;
+		}
+		$sizeOfList = 4;
+		if (`size $missingFiles` == 0)
+			return $missingFiles;
+		$sizeOfList = `size $missingFiles`;
+		window -title "File Nodes with invalid Paths" -toolbox 1 -widthHeight 300 $sizeOfList -resizeToFitChildren 1 missingFileListWindow;
+			columnLayout -adj 1 -cal "left" missingFileTabLayout;
+				rowLayout -cw1 100 -numberOfColumns 1 -cal 1 "center";
+				string $thisList = `textScrollList -nr $sizeOfList -aas 1 -ams 0`;
+				for ($eachNode in $missingFiles)
+				{
+					string $singleLine = `textScrollList -e -sc ("select -r `textScrollList -q -si \"" + $thisList + "\"`") -append $eachNode $thisList`;
+				}
+		showWindow missingFileListWindow;
+		return $missingFiles;
+	}
+}
+
+// ------------- Wheel Tool ------------------
+
+global proc processAllSceneWheels()
+{
+	string $oldFrontWheels[] = `ls -l "*WHEEL_TIRE_FRONT"`;
+	$oldFrontWheels = `renameWheelObjects $oldFrontWheels`;
+	string $oldRearWheels[] = `ls -l "*WHEEL_TIRE_REAR"`;
+	$oldRearWheels = `renameWheelObjects $oldRearWheels`;
+
+	string $oldFrontCalipers[] = `ls -l "*BRAKE_FRONT"`;
+	$oldFrontCalipers = `renameWheelObjects $oldFrontCalipers`;
+	string $oldRearCalipers[] = `ls -l "*BRAKE_REAR"`;
+	$oldRearCalipers = `renameWheelObjects $oldRearCalipers`;
+
+	string $oldFrontRotors[] = `ls -l "*BRAKEROTOR_FRONT"`;
+	string $oldRearRotors[] = `ls -l "*BRAKEROTOR_REAR"`;
+
+	string $newFrontWheels[] = `processCarWheels $oldFrontWheels`;
+	renameObject2Right $oldFrontWheels;
+	string $newRearWheels[] = `processCarWheels $oldRearWheels`;
+	renameObject2Right $oldRearWheels;
+	string $newFrontCalipers[] = `processCarWheels $oldFrontCalipers`;
+	renameObject2Right $oldFrontCalipers;
+	string $newRearCalipers[] = `processCarWheels $oldRearCalipers`;
+	renameObject2Right $oldRearCalipers;
+	string $newFrontRotors[] = `processCarWheels $oldFrontRotors`;
+	renameObject2Right $oldFrontRotors;
+	string $newRearRotors[] = `processCarWheels $oldRearRotors`;
+	renameObject2Right $oldRearRotors;
+}
+
+global proc string[] renameWheelObjects(string $inputGeo[])
+{
+	string $outputGeo[]; clear $outputGeo;
+	for ($a = 0; $a < `size $inputGeo`; $a++)
+	{
+		string $shapeNodes[] = `listRelatives -f -c $inputGeo[$a]`;
+		string $shapePathTokens[], $pathTokens[] ; clear $shapePathTokens; clear $pathTokens;
+		int $numShapeTokens = `tokenize $shapeNodes[0] "|" $shapePathTokens`;
+		int $numTokens = `tokenize $inputGeo[$a] "|" $pathTokens`;
+		if (`gmatch $pathTokens[$numTokens -1] "*WHEEL_TIRE_*"`)
+		{
+			string $subedName = `substitute "WHEEL_TIRE_" $pathTokens[$numTokens -1] "WHEEL_"`;
+			string $newObject = `rename $shapeNodes[0] ($shapePathTokens[1] + "_" + $subedName + "Shape")`;
+			string $tempGeoNamerename =  `rename $inputGeo[$a] $subedName`;
+			string $tempListName[] = `ls -l $tempGeoNamerename`;
+			$outputGeo[$a] = $tempListName[0];
+			continue;
+		}
+		if (`gmatch $pathTokens[$numTokens -1] "*_BRAKE_*"`)
+		{
+			string $subedName = `substitute "_BRAKE_" $pathTokens[$numTokens -1] "_CALIPER_"`;
+			string $newObject = `rename $shapeNodes[0] ($shapePathTokens[1] + "_" + $subedName + "Shape")`;
+			string $tempGeoNamerename =  `rename $inputGeo[$a] $subedName`;
+			string $tempListName[] = `ls -l $tempGeoNamerename`;
+			$outputGeo[$a] = $tempListName[0];
+			continue;
+		}
+	}
+	return $outputGeo;
+}
+
+
+global proc string[] renameObject2Right(string $inputGeo[])
+{
+	string $outputGeo[]; clear $outputGeo;
+	int $counter = 0;
+	for ($eachObject in $inputGeo)
+	{
+		string $shapeNodes[] = `listRelatives -f -c $eachObject`;
+		string $shapePathTokens[], $pathTokens[] ; clear $shapePathTokens; clear $pathTokens;
+		int $numShapeTokens = `tokenize $shapeNodes[0] "|" $shapePathTokens`;
+		int $numTokens = `tokenize $eachObject "|" $pathTokens`;
+		string $newObject = `rename $shapeNodes[0] ($shapePathTokens[1] + "_" + $pathTokens[$numTokens -1] + "_RIGHTShape")`;
+		string $tempGeoNamerename =  `rename $eachObject ($pathTokens[$numTokens -1] + "_RIGHT")`;
+		string $tempListName[] = `ls -l $tempGeoNamerename`;
+		$outputGeo[$counter] = $tempListName[0];
+		$counter++;
+	}
+	return $outputGeo;
+}
+
+
+global proc string duplicateRenameWheels(string $inputGeo)
+{
+	string $objectPathTokens[]; clear $objectPathTokens;
+	int $numPathTokens = `tokenize $inputGeo "|" $objectPathTokens`;
+	string $objectOnly = $objectPathTokens[$numPathTokens -1];
+	string $newDuplicateName = ($objectOnly + "_LEFT");
+	string $newObjects[] = `duplicate -rr -n $newDuplicateName $inputGeo`;
+	rename $newObjects[0] $newDuplicateName;
+	$newObjects[0] = $newDuplicateName;
+	string $newObjectPath = "|";
+	for ($a = 0; $a < ($numPathTokens -1); $a++)
+	{
+		$newObjectPath += ($objectPathTokens[$a] + "|");
+	}
+	$newObjectPath = ($newObjectPath + $newObjects[0]);
+	return $newObjectPath;
+}
+
+global proc string[] processCarWheels(string $inputGeos[])
+{
+	string $newOutputGeo[]; clear $newOutputGeo;
+	for ($a = 0; $a < `size $inputGeos`; $a++)
+	{	
+		string $objectPathTokens[], $objectShapePathTokens[]; clear $objectPathTokens; clear $objectShapePathTokens;
+		int $numPathTokens = `tokenize $inputGeos[$a] "|" $objectPathTokens`;
+//----------
+		if (`gmatch $inputGeos[$a] "*WHEEL*"`)
+		{
+			xform -cp $inputGeos[$a];
+			move -rpr 0 0 0 $inputGeos[$a];
+			makeIdentity -apply true -t 1 -r 0 -s 0 -n 0 $inputGeos[$a];		
+		}
+		string $newObject = `duplicateRenameWheels $inputGeos[$a]`;
+		string $newObjectShape[] = `listRelatives -f -c $newObject`;
+		int $numShapePathTokens = `tokenize $newObjectShape[0] "|" $objectShapePathTokens`;
+		string $lodNumber = $objectShapePathTokens[1];
+		string $newShapeNodeName = ($objectShapePathTokens[1] + "_" + $objectShapePathTokens[$numPathTokens -1] + "Shape");
+		rename $newObjectShape[0] $newShapeNodeName;
+		if (`gmatch $inputGeos[$a] "*_BRAKE_*"`)
+		{
+			setAttr ($newObject + ".scaleX") -1;
+			makeIdentity -apply true -t 0 -r 0 -s 1 -n 0 $newObject;
+			polyNormal -normalMode 0 -userNormalMode 0 $newObject;
+			$newOutputGeo[$a] = $newObject;
+			continue;
+		}
+		setAttr ($newObject + ".rotateY") 180;
+		select -r $newObject;
+		makeIdentity -apply true -t 0 -r 1 -s 0 -n 0 $newObject;
+		$newOutputGeo[$a] = $newObject;
+	}
+	return $newOutputGeo;
+}
+
+// selectTangentFaces isnt used in the wheel tool anymore however might be usable somewhere else..
+global proc selectTangentFaces(string $axis, int $posNeg, float $tangentNum)
+{
+	int $xyzTangent = 2;
+	switch ($axis)
+	{
+		case "x":
+		{
+			$xyzTangent = 2;
+			break;
+		}
+		case "y":
+		{
+			$xyzTangent = 3;
+			break;
+		}
+		case "z":
+		{
+			$xyzTangent = 4;
+			break;
+		}
+		default:
+		{
+			$xyzTangent = 2;
+			break;
+		}
+	}
+	string $tempArray[];
+	string $faceArray1[];
+	clear $faceArray1;
+	int $g = 0;
+	string $selection[] = `ls -l -sl `;
+	string $selectionTokens[];
+	clear $selectionTokens;
+	int $numTokens = `tokenize $selection[0] "." $selectionTokens`;
+	if ($numTokens > 1)
+	{
+		clear $selection;
+		$selection[0] = $selectionTokens[0];
+	}
+	for ($eachSelection in $selection)
+	{
+		polySetToFaceNormal $eachSelection; 
+		polySoftEdge -ch 0 -a 0 $eachSelection; 
+		string $faces[] = `polyListComponentConversion -tf $eachSelection`;
+		select -r $faces;
+		string $selectedFaces[] = `ls -sl -fl`;
+		select -cl;
+		for ($eachFace in $selectedFaces)
+		{
+			string $polyFaceNormal[] = `polyInfo -fn $eachFace`;
+			$tempArray = stringToStringArray($polyFaceNormal[0]," ");
+			float $fVal  = $tempArray[$xyzTangent];
+			if ($posNeg > 0)
+			{
+				if  ( $fVal <= $tangentNum) 
+				{
+					$faceArray1[$g] = $eachFace;
+					$g++;
+				}
+			}
+			else
+			{
+				if  ( $fVal >= $tangentNum) 
+				{
+					$faceArray1[$g] = $eachFace;
+					$g++;
+				}
+			}
+		}
+		polySoftEdge -angle 80 -ch 0 $eachSelection;
+		select -r $eachSelection;
+		BakeNonDefHistory;
+		select -r $faceArray1;
+	}
+}
+// -------------- End Wheel Tool ----------------
+
+// -------------- Geo Symmetry Checker/Fixer ----
+
+
+
+global proc int verifySymmetryCars(int $mode, float $varianceFloat, float $centerVarience)
+{
+	string $selectedGeo[] = `ls -l -sl`;
+	if (`size $selectedGeo` == 0)
+	{
+		headsUpMessage -vo 200 -t 8 "Nothing selected, select one or multiple objects!";
+		return 0;
+	}
+	string $badArray[]; clear $badArray;
+	int $arranyCounter = 0, $side2SideCompare = 0;
+	if (`size $selectedGeo` == 2)
+		$side2SideCompare = 1;
+	waitCursor -state on;
+	for ($eachGeo in $selectedGeo)
+	{
+		select -r $eachGeo;
+		if ($side2SideCompare)
+			select -r $selectedGeo;
+		PolySelectConvert 3;
+		string $allVerts[] = `ls -l -fl -sl`;
+		if ($mode)
+		{
+			for ($g = 0; $g < `size $allVerts`; $g++)
+			{
+				float $vertTruncCoOrds[] = `xform -q -t -ws $allVerts[$g]`;
+				$vertTruncCoOrds = `precisionFloatFixer $vertTruncCoOrds 5`;
+				move -a -ws $vertTruncCoOrds[0] $vertTruncCoOrds[1] $vertTruncCoOrds[2] $allVerts[$g];
+			}
+		}
+		string $plusXVerts[], $minusXVerts[], $threshHoldX[]; clear $plusXVerts; clear $minusXVerts; clear $threshHoldX;
+		int $plusXCounter = 0, $minusXCounter = 0, $threshHoldCounter = 0;
+		for ($a = 0; $a < `size $allVerts`; $a++)
+		{
+			float $vertCoOrds[] = `xform -q -t -ws $allVerts[$a]`;
+			if ($vertCoOrds[0] < $centerVarience)
+			{
+				if ($vertCoOrds[0] > ($centerVarience * -1))
+				{
+					$threshHoldX[$threshHoldCounter] = $allVerts[$a];
+					$threshHoldCounter++;
+					continue;
+				}
+			}
+			if ($vertCoOrds[0] > ($centerVarience * -1))
+			{
+				if ($vertCoOrds[0] < $centerVarience)
+				{
+					$threshHoldX[$threshHoldCounter] = $allVerts[$a];
+					$threshHoldCounter++;
+					continue;
+				}
+			}
+			if ($vertCoOrds[0] < 0)
+			{
+				$minusXVerts[$minusXCounter] = $allVerts[$a];
+				$minusXCounter++;
+				continue;
+			}
+			if ($vertCoOrds[0] > 0)
+			{
+				$plusXVerts[$plusXCounter] = $allVerts[$a];
+				$plusXCounter++;
+				continue;
+			}
+		}
+		for ($b = 0; $b < `size $threshHoldX`; $b++)
+		{
+			float $originalPos[] = `xform -q -t -ws $threshHoldX[$b]`;
+			if ($originalPos[0] != 0)
+			{	
+				if ($mode)
+				{
+					xform -a -t 0 $originalPos[1] $originalPos[2] $threshHoldX[$b];
+				}
+				$badArray[$arranyCounter] = $threshHoldX[$b];
+				$arranyCounter++;
+			}
+		}
+// process plusX side and compare to minusX verts for find counterpart
+		for ($c = 0; $c < `size $plusXVerts`; $c++)
+		{
+			string $matchingVert[], $matchingYVert[], $matchingZVert[]; clear $matchingVert; clear $matchingYVert; clear $matchingZVert;
+			int $matchCounter = 0, $matchingYCounter = 0, $matchingZCounter = 0;
+			float $sourceVertCoOrds[] = `xform -q -t -ws $plusXVerts[$c]`;
+			for ($y = 0; $y < `size $minusXVerts`; $y++)
+			{
+				float $targetVertCoOrds[] = `xform -q -t -ws $minusXVerts[$y]`;
+				if ($sourceVertCoOrds[1] < ($targetVertCoOrds[1] + $varianceFloat)) 
+				{
+					if ($sourceVertCoOrds[1] > ($targetVertCoOrds[1] - $varianceFloat))
+					{
+						$matchingYVert[$matchingYCounter] = $minusXVerts[$y];
+						$matchingYCounter++;
+						continue;
+					}
+				}
+			}
+			for ($z = 0; $z < `size $matchingYVert`; $z++)
+			{
+				float $targetYVertCoOrds[] = `xform -q -t -ws $matchingYVert[$z]`;
+				if ($targetYVertCoOrds[2] < 0)
+				{
+				 	if ($sourceVertCoOrds[2] > ($targetYVertCoOrds[2] - $varianceFloat))
+					{
+						if ($sourceVertCoOrds[2] < ($targetYVertCoOrds[2] + $varianceFloat))
+						{
+							$matchingZVert[$matchingZCounter] = $matchingYVert[$z];
+							$matchingZCounter++;
+							continue;
+						}
+					}
+				}
+				else
+				{
+				 	if ($sourceVertCoOrds[2] < ($targetYVertCoOrds[2] + $varianceFloat)) 
+					{
+						if ($sourceVertCoOrds[2] > ($targetYVertCoOrds[2] - $varianceFloat))
+						{
+							$matchingZVert[$matchingZCounter] = $matchingYVert[$z];
+							$matchingZCounter++;
+							continue;
+						}
+					}
+				}
+			}
+			for ($x = 0; $x < `size $matchingZVert`; $x++)
+			{
+				float $targetXVertCoOrds[] = `xform -q -t -ws $matchingZVert[$x]`;
+				if ($sourceVertCoOrds[0] < (($targetXVertCoOrds[0] - $varianceFloat) * -1))
+				{
+					if ($sourceVertCoOrds[0] > (($targetXVertCoOrds[0] + $varianceFloat) * -1))
+					{
+						$matchingVert[$matchCounter] = $matchingZVert[$x];
+						$matchCounter++;
+						continue;
+					}
+				}
+			}
+			if (`size $matchingVert` == 1)
+			{
+				float $foundVertCoOrds[] = `xform -q -t -ws $matchingVert[0]`;
+				string $sourceTotalString = (($sourceVertCoOrds[0]*-1) + $sourceVertCoOrds[1] + $sourceVertCoOrds[2]);
+				string $foundTotalString = ($foundVertCoOrds[0] + $foundVertCoOrds[1] + $foundVertCoOrds[2]);
+				if ($sourceTotalString == $foundTotalString)
+					continue;
+				if ($mode)
+				{
+					move -a -ws ($sourceVertCoOrds[0]*-1) $sourceVertCoOrds[1] $sourceVertCoOrds[2] $matchingVert[0];
+				}
+				$badArray[$arranyCounter] = $matchingVert[0];
+				$arranyCounter++;
+				continue;
+			}
+			if (`size $matchingVert` > 1)
+			{
+				print "\n";
+				print $matchingVert;
+				warning ($matchingVert[0] + " cannot be corrected automatically as there are other verts too close within the threshold");
+			}
+		}
+		if ($side2SideCompare)
+			break;
+	}
+	select -cl;
+	if (`size $badArray` != 0)
+	{
+		headsUpMessage -vo 200 -t 8 "Selected verts do no match their positive X Axis counterparts!";
+		if ($mode)
+		{
+			headsUpMessage -vo 200 -t 8 "Selected verts do no match their positive X Axis counterparts and have been moved to mirror correctly!";
+		}
+		select -r $badArray;
+		waitCursor -state off;
+		return 1;
+	}
+	headsUpMessage -vo 200 -t 8 "Asset appears to be symmetrical!";
+	select -r $selectedGeo;
+	waitCursor -state off;
+	return 0;
+}
+
+global proc float[] precisionFloatFixer(float $values[], int $decAmount)
+{	
+	float $returnFloats[]; clear $returnFloats;
+	for ($a = 0; $a < `size $values`; $a++)
+	{
+		float $bump = 0.5;
+		if ($values[$a] < 0.0)
+			$bump = -0.5;
+		float $value = trunc ($values[$a] * pow (10, $decAmount) + $bump) / pow (10, $decAmount);
+		$returnFloats[$a] = $value;
+	}
+	return $returnFloats;
+}
+
+
+//--------------- End Symmetry Checker/Fixer --------------
+
+
+
+global proc int p4SyncSourceDataFolder(int $mode)
+{
+	waitCursor -state on;
+	string $result = "";
+	if ($mode)
+	{
+		string $OK = `confirmDialog -title "Confirm" -message "Force Sync will take up to 10 mins... are you sure?" -button "OK" -button "Cancel" -defaultButton "Cancel" -cancelButton "Cancel" -dismissString "Cancel"`;
+		if ($OK == "OK")
+		{
+			$result = `system ("p4 sync -f \"//c4/dev/Data/Raw/_c4/VEHICLES/.../*\"")`;
+		}
+		else
+		{
+			waitCursor -state off;
+			return 1;
+		}
+	}
+	else
+	{
+		$result = `system ("p4 sync \"//c4/dev/Data/Raw/_c4/VEHICLES/.../*\"")`;
+	}
+	print $result;
+	waitCursor -state off;
+	return 0;
+}
+
+global proc p4SyncCarToolBox()
+{
+	string $result = `system ("p4 sync -f \"//c4/dev/TnT/Tools/MayaPlugins/2009/scripts/NFS/*\"")`;
+	print $result;
+}
+
+global proc startCarImportTool()
+{
+	string $result = `system ("p4 sync \"//c4/dev/TnT/Tools/MayaPlugins/2009/scripts/NFS/carImporter.mel\"")`;
+	print $result;
+	source "NFS/carImporter.mel";
+	buildCarToolboxUI;
+}
+
+global proc startMaterialRebuilder()
+{
+	string $result = `system ("p4 sync \"//c4/dev/TnT/Tools/MayaPlugins/2009/scripts/NFS/rebuildCarMaterials.mel\"")`;
+	print $result;
+	source "NFS/rebuildCarMaterials.mel";
+	rebuildCarMaterials 1;
+}
+
+global proc startAutoUVTool()
+{
+	string $result = `system ("p4 sync \"//c4/dev/TnT/Tools/MayaPlugins/2009/scripts/NFS/autoUVTool.mel\"")`;
+	print $result;
+	source "NFS/autoUVTool.mel";
+}
+
+global proc replaceTextNamesOnSelection()
+{
+	string $sourceText = `textField -q -tx replaceThisTextTF`;
+	string $replaceText = `textField -q -tx withThisTextTF`;
+	string $selection[] = `ls -l -sl`;
+	for ($a = 0; $a < `size $selection`; $a++)
+	{
+		string $selectionNameTokens[]; clear $selectionNameTokens;
+		int $numTokens = `tokenize $selection[$a] "|" $selectionNameTokens`;
+		string $newName = $selectionNameTokens[$numTokens -1];
+		$newName = `substitute $sourceText $newName $replaceText`;
+		rename $selection[$a] $newName;
+
+		$selection[$a] = `substitute $selectionNameTokens[$numTokens -1] $selection[$a] $newName`;
+	}
+	select -r $selection;
+}
+
+global proc int scanSelectionForSymmetry()
+{
+	string $sceneContents[] = `ls -type "mesh"`;
+	if (`size $sceneContents` == 0)
+	{
+		print "Nothing detected in scene!";
+		return 0;
+	}
+	int $fixSymmetry = `checkBox -q -v fixSymmetryCB`;
+	float $symmetryScanTollerance = `floatField -q -v tolleranceValueCB`;
+	float $centerSymmetryScanTollerance = `floatField -q -v centerTolleranceValueCB`;
+	verifySymmetryCars $fixSymmetry $symmetryScanTollerance $centerSymmetryScanTollerance;
+	return 1;
+}
+
+global proc int runWholeBallOWax()
+{
+	string $OK = `confirmDialog -title "Confirm" -message "                 Process all import steps?" 
+			-button "OK" -button "Cancel" -defaultButton "Cancel" 
+			-cancelButton "Cancel" -dismissString "Cancel"`;
+	if ($OK == "OK")
+	{
+		waitCursor -state on;
+		int $containedErrors = 0;
+		if (`setCarOrientation 0`)
+			setCarOrientation 1;
+		else
+			$containedErrors = 1;
+		if (`cleanCarTransforms 0`)
+			cleanCarTransforms 1;
+		else
+			$containedErrors = 1;
+		setupCarHierarchy;
+		if (`fixModelNames 1` == 0)
+		{
+			waitCursor -state off;
+			warning "Check script editor for errors/warnings";
+			headsUpMessage -vo 200 -t 8 "Some procedures were not run, check script editor for details!";
+			return 0;
+		}
+		moveKitsToIgnore;
+		if (`cleanCarUVSets 0`)
+			cleanCarUVSets 1;
+		else
+			$containedErrors = 1;
+		waitCursor -state off;
+		buildCarToolboxUI;
+		if ($containedErrors)
+		{
+			warning "Check script editor for any errors/warnings";
+			headsUpMessage -vo 200 -t 8 "Some procedures were not run, check script editor for details!";
+			return 1;
+		}
+		headsUpMessage -vo 200 -t 8 "All procedures completed sucessfully!";
+		return 1;
+	}
+	return 0;
+}
+
+global proc int duplicateEdgeToolCreate()
+{
+	global string $duplicateEdgeControls[];
+	if (`size $duplicateEdgeControls` != 0)
+	{
+		warning "Tool already in progress... Clear before starting new process!";
+		headsUpMessage -vo 200 -t 5 "Tool already in progress... Clear before starting new process!";
+		return 0;
+	}
+	float $dupeEdgeDist = `floatSliderGrp -q -v splitFloatSlider`;
+	int $normalEdgeInt = `intField -q -v normalEdgeIntField`;
+	int $splitType = `radioButtonGrp -q -sl splitTypeRBG`;
+	if ($splitType == 2)
+		$splitType = 0;
+	else
+		$splitType = 1;
+	PolySelectConvert 2;
+	string $selection[] = `ls -sl`;
+	if (`size $selection` == 0)
+	{
+		warning "Nothing Selected... select edges to duplicate!";
+		return 0;
+	}
+	string $edgeModels[]; clear $edgeModels;
+	int $edgeCounter = 0;
+	for ($eachEdge in $selection)
+	{
+		string $edgeTokens[]; clear $edgeTokens;
+		int $tokenNum = `tokenize $eachEdge "." $edgeTokens`;
+		if ($tokenNum != 2)
+			continue;
+		$edgeModels[$edgeCounter] = $edgeTokens[0];
+		if ($edgeTokens[0] != $edgeModels[$edgeCounter])
+		{
+			$edgeCounter++;
+		}
+	}
+	if (`size $edgeModels` > 1)
+		warning "Edges across models is not supported, using first geo!";
+	string $dupeEdgeControls[] = `polyDuplicateEdge -of $dupeEdgeDist -sma $normalEdgeInt -stp $splitType`;
+	setAttr ($dupeEdgeControls[0] + ".deleteEdge") 0;
+	string $selectedEdgeNormalControls[] = `polySoftEdge -angle $normalEdgeInt -ch 1 $selection`;
+	$duplicateEdgeControls[0] = $dupeEdgeControls[0];
+	$duplicateEdgeControls[1] = $edgeModels[0];
+	$duplicateEdgeControls[2] = $selectedEdgeNormalControls[0];
+	$duplicateEdgeControls[3] = ".offset";
+	button -e -bgc 1.0 0.4 0.0 dupeEdgeButton;
+	button -e -bgc 1.0 0.1 0.1 edgeToolsLockButton;
+	return 1;
+}
+
+global proc int splitAroundEdgeSelection()
+{
+	global string $duplicateEdgeControls[];
+	if (`size $duplicateEdgeControls` != 0)
+	{
+		warning "Tool already in progress... Clear before starting new process!";
+		headsUpMessage -vo 200 -t 5 "Tool already in progress... Clear before starting new process!";
+		return 0;
+	}
+	float $dupeEdgeDist = `floatSliderGrp -q -v splitFloatSlider`;
+	int $normalEdgeInt = `intField -q -v normalEdgeIntField`;
+	int $splitType = `radioButtonGrp -q -sl splitTypeRBG`;
+	if ($splitType == 2)
+		$splitType = 0;
+	else
+		$splitType = 1;
+	string $selection[] = `ls -sl`;
+	string $edgeModels[]; clear $edgeModels;
+	int $edgeCounter = 0;
+	for ($eachEdge in $selection)
+	{
+		string $edgeTokens[]; clear $edgeTokens;
+		int $tokenNum = `tokenize $eachEdge "." $edgeTokens`;
+		if ($tokenNum != 2)
+			continue;
+		$edgeModels[$edgeCounter] = $edgeTokens[0];
+		if ($edgeTokens[0] != $edgeModels[$edgeCounter])
+		{
+			$edgeCounter++;
+		}
+	}
+	if (`size $edgeModels` > 1)
+		warning "Edges across models is not supported, using first geo!";
+	string $polySplitRingControl[]; clear $polySplitRingControl;
+	ConvertSelectionToVertices;
+	string $originalVerts[] = `getVerts`;
+	ConvertSelectionToContainedEdges;
+	string $originalEdges[] = `ls -sl`;
+	ConvertSelectionToVertices;
+	ConvertSelectionToEdges;
+	string $expandedEdges[] = `ls -sl`;
+	select -d $originalEdges;
+	select -r $expandedEdges;
+	select -d $originalEdges;
+	string $edge[] = `ls -sl -head 1`;
+	if (`gmatch $edge[0] "*.e*"`)
+	{
+		string $edgeTokens[];
+		int $numTokens = `tokenize $edge[0] "[:]" $edgeTokens`;
+		string $cmd = ("polySplitRing -re " + $edgeTokens[1] + " -wt 0.5 -stp " + $splitType + " -sma " + $normalEdgeInt );
+		$polySplitRingControl = `eval ($cmd)`;
+	} 
+	else 
+	{
+		warning "Invalid selection... Select edges only!";
+		return 0;
+	}
+	string $selectedEdgeNormalControls[] = `polySoftEdge -angle $normalEdgeInt -ch 1 $selection`;
+	$duplicateEdgeControls[0] = $polySplitRingControl[0];
+	$duplicateEdgeControls[1] = $edgeModels[0];
+	$duplicateEdgeControls[2] = $selectedEdgeNormalControls[0];
+	$duplicateEdgeControls[3] = ".weight";
+	button -e -bgc 1.0 0.4 0.0 edgeRingLoopButton;
+	button -e -bgc 1.0 0.1 0.1 edgeToolsLockButton;
+	return 1;
+}
+
+
+global proc int duplicateEdgeToolLock()
+{
+	global string $duplicateEdgeControls[];
+	if (`size $duplicateEdgeControls` == 0)
+	{
+		warning "Nothing to Lock...";
+		return 0;
+	}
+	intField -e -v 180 normalEdgeIntField;
+	floatSliderGrp -e -v .5 splitFloatSlider;
+	catchQuiet (`delete -ch $duplicateEdgeControls[1]`);
+	clear $duplicateEdgeControls;
+	button -e -bgc 0.831 0.816 0.784 edgeRingLoopButton;
+	button -e -bgc 0.831 0.816 0.784 edgeToolsLockButton;
+	button -e -bgc 0.831 0.816 0.784 dupeEdgeButton;
+	print "Cleared history and locked edges!";
+	return 1;
+}
+
+global proc duplicateEdgeToolIntField()
+{
+	global string $duplicateEdgeControls[];
+	int $normalEdgeInt = `intField -q -v normalEdgeIntField`;
+	catchQuiet (`setAttr ($duplicateEdgeControls[0] + ".smoothingAngle") $normalEdgeInt`);
+	catchQuiet (`setAttr ($duplicateEdgeControls[2] + ".angle") $normalEdgeInt`);
+	print "";
+}
+
+global proc changeOffsetTypeEdgeTool()
+{
+	global string $duplicateEdgeControls[];
+	int $splitType = `radioButtonGrp -q -sl splitTypeRBG`;
+	if (`size $duplicateEdgeControls` != 0)
+	{ 
+		int $splitInt = 0;
+		if ($splitType == 1)
+			$splitInt = 1;
+		setAttr ($duplicateEdgeControls[0] + ".splitType") $splitInt;
+	}
+}
+
+
+global proc int duplicateEdgeFloatSlider(int $state)
+{
+	global string $duplicateEdgeControls[];
+	if (`size $duplicateEdgeControls` == 0)
+		return 0;
+	if ($state)
+		undoInfo -swf 0;
+	float $dupeEdgeDist = `floatSliderGrp -q -v splitFloatSlider`;
+	setAttr ($duplicateEdgeControls[0] + $duplicateEdgeControls[3]) $dupeEdgeDist;
+	if ($state)
+		undoInfo -swf 1;
+	return 1;
+}
+
+global proc createDoorSeamProc()
+{
+	float $lineMean = `floatField -q -v lineMeanFloatField`;
+	float $indentDepth = `floatField -q -v indentFloatField`;
+	float $bevelWidth = `floatField -q -v bevelWidthFloatField`;
+	int $didComplete = `cutDoorSeam ($lineMean /10) ($indentDepth /10) ($bevelWidth /10)`;
+}
+ 
+
+global proc int cutDoorSeam(float $lineMean, float $indent, float $bevelOffset) 
+{
+	string $selections[] = `ls -sl`;
+	string $selectionVerts[] = `getVerts`;
+	string $oldEdgeVerts[], $modelNames[]; clear $oldEdgeVerts; clear $modelNames;
+	int $tokenNum = `tokenize $selections[0] "." $modelNames`;
+	if (!`gmatch $modelNames[1] "e*"`)
+		return 0;
+	waitCursor -state on;
+	vector $oldVertTransVectors[]; clear $oldVertTransVectors;
+	for ($a = 0; $a < `size $selectionVerts`; $a++)
+	{
+		$oldVertTransVectors[$a] = `xform -q -ws -t $selectionVerts[$a]`;
+	}
+	string $bevelControls[] = `polyBevel 
+					-offset $bevelOffset 
+					-r 0 -offsetAsFraction 0 
+					-autoFit 0 
+					-segments 4 
+					-worldSpace 1 
+					-uvAssignment 1 
+					-fillNgons 0 
+					-mergeVertices 1 
+					-mergeVertexTolerance 0.0001 
+					-smoothingAngle 180 
+					-miteringAngle 180 
+					-angleTolerance 180 
+					-ch 1 $selections`;
+	select -r $modelNames[0];
+	string $allModelVerts[] = `getVerts`;
+	string $newEdgeVerts[]; clear $newEdgeVerts;
+	int $vertCounter = 0;
+	for ($b = 0; $b < `size $oldVertTransVectors`; $b++)
+	{
+		for ($z = 0; $z < `size $allModelVerts`; $z++)
+		{
+			vector $allModelVertVector = `xform -q -ws -t $allModelVerts[$z]`;
+			float $distance = `getDistanceBetween 0 $oldVertTransVectors[$b] $allModelVertVector`;
+			if ($distance <= $lineMean)
+			{
+				$newEdgeVerts[$vertCounter] = $allModelVerts[$z];
+				$vertCounter++;
+				break;
+			}
+		}
+	}
+	select -r $newEdgeVerts;
+	ConvertSelectionToContainedEdges;
+	string $newEdges[] = `ls -sl`;
+	ConvertSelectionToVertices;
+	polySetToFaceNormal;
+	for ($eachVert in $newEdgeVerts)
+	{
+		moveVertexAlongDirection -n $indent $eachVert;
+	}
+	polySoftEdge -a 0 -ch 1 $newEdges;
+	delete -ch $modelNames[0];
+	waitCursor -state off;
+	return 1;
+}
+
+
+
+// mode 0 = a sting containing a vector, mode 1 = any object with a pivot point.
+global proc float getDistanceBetween(int $mode, string $object1, string $object2)
+{
+	if ($object1 == "")
+		return 0;
+	if ($object2 == "")
+		return 0;
+	vector $object1Trans, $object2Trans = <<0,0,0>>;
+	if ($mode == 1)
+	{
+		$object1Trans = `xform -q -ws -t $object1`;
+		$object2Trans = `xform -q -ws -t $object2`;
+	}
+	if ($mode == 0)
+	{
+		string $object1VectorString[] = `stringToStringArray $object1 " "`;
+		if (`size $object1VectorString` != 3)
+			return 0;
+		float $vectorAsemblyFloat1[]; clear $vectorAsemblyFloat1;
+		$vectorAsemblyFloat1[0] = $object1VectorString[0];
+		$vectorAsemblyFloat1[1] = $object1VectorString[1];
+		$vectorAsemblyFloat1[2] = $object1VectorString[2];
+		$object1Trans = $vectorAsemblyFloat1;
+		string $object1VectorString[] = `stringToStringArray $object2 " "`;
+		if (`size $object1VectorString` != 3)
+			return 0;
+		float $vectorAsemblyFloat2[]; clear $vectorAsemblyFloat2;
+		$vectorAsemblyFloat2[0] = $object1VectorString[0];
+		$vectorAsemblyFloat2[1] = $object1VectorString[1];
+		$vectorAsemblyFloat2[2] = $object1VectorString[2];
+		$object2Trans = $vectorAsemblyFloat2;
+	}	
+	vector $objectProduct = ($object1Trans - $object2Trans);
+	float $output = `sqrt (dot ($objectProduct, $objectProduct))`;
+	return $output;
+}
+
+
+global proc kitSwapperShowKit()
+{
+	global string $kitSwapperMeshesLOD0[];
+	global string $kitSwapperMeshesLOD1[];
+	global string $kitSwapperMeshesLOD2[];
+	string $partString =  `optionMenu -q -v selectionSetNameOptionMenu`;
+	showHideKits 0 $partString $kitSwapperMeshesLOD0;
+	showHideKits 0 $partString $kitSwapperMeshesLOD1;
+	showHideKits 0 $partString $kitSwapperMeshesLOD2;
+}
+
+global proc kitSwapperHideKit()
+{
+	global string $kitSwapperMeshesLOD0[];
+	global string $kitSwapperMeshesLOD1[];
+	global string $kitSwapperMeshesLOD2[];
+	string $partString =  `optionMenu -q -v selectionSetNameOptionMenu`;
+	showHideKits 1 $partString $kitSwapperMeshesLOD0;
+	showHideKits 1 $partString $kitSwapperMeshesLOD1;
+	showHideKits 1 $partString $kitSwapperMeshesLOD2;
+}
+
+
+global proc disableKitSwapper()
+{
+	waitCursor -state on;
+	string $partString =  `optionMenu -q -v selectionSetNameOptionMenu`;
+	radioButtonGrp -e -sl 1 kitSelectionRBG;
+	optionMenu -e -sl 1 selectionSetNameOptionMenu;
+	global string $kitSwapperMeshesLOD0[];
+	global string $kitSwapperMeshesLOD1[];
+	global string $kitSwapperMeshesLOD2[];
+	showHideKits 2 $partString $kitSwapperMeshesLOD0;
+	showHideKits 2 $partString $kitSwapperMeshesLOD1;
+	showHideKits 2 $partString $kitSwapperMeshesLOD2;
+	clear $kitSwapperMeshesLOD0;
+	clear $kitSwapperMeshesLOD1;
+	clear $kitSwapperMeshesLOD2;
+	waitCursor -state off;
+}
+
+global proc edableKitSwapper()
+{
+	waitCursor -state on;
+	catchQuiet (`fixModelNames 1`);
+	radioButtonGrp -e -sl 1 kitSelectionRBG;
+	optionMenu -e -sl 1 selectionSetNameOptionMenu;
+	global string $kitSwapperMeshesLOD0[];
+	global string $kitSwapperMeshesLOD1[];
+	global string $kitSwapperMeshesLOD2[];
+	string $partString =  `optionMenu -q -v selectionSetNameOptionMenu`;
+	$kitSwapperMeshesLOD0 = `collectMeshKits "LOD0"`;
+	$kitSwapperMeshesLOD1 = `collectMeshKits "LOD1"`;
+	$kitSwapperMeshesLOD2 = `collectMeshKits "LOD2"`;
+	showHideKits 1 $partString $kitSwapperMeshesLOD0;
+	showHideKits 1 $partString $kitSwapperMeshesLOD1;
+	showHideKits 1 $partString $kitSwapperMeshesLOD2;
+	waitCursor -state off;
+}
+
+global proc kitSwapperPartSelector()
+{
+	int $baseRBGNum = `radioButtonGrp -q -sl kitSelectionRBG`;
+	if ($baseRBGNum == 1)
+		kitSwapperHideKit;
+	if ($baseRBGNum == 2)
+		kitSwapperShowKit;
+}
+
+global proc string[] collectMeshKits(string $LOD)
+{
+	string $allMeshes[] = `ls -l -type "mesh"`;
+	string $validMeshes[] = `returnValidShapes $allMeshes`;
+	string $allMeshes[] = `ls -l -type "mesh"`;
+	string $referenceMeshes[] = `stringArrayRemove $validMeshes $allMeshes`; 
+	string $partCollection[]; clear $partCollection;
+	int $partCollectionCounter = 0;
+	int $validLODCounter = 0;
+	string $validLODMeshes[]; clear $validLODMeshes;
+	for ($eachMesh in $validMeshes)
+	{
+		if (`gmatch $eachMesh ("*ignore*")`)
+			continue;
+		if (`gmatch $eachMesh ("*" + $LOD + "*")`)
+		{
+			$validLODMeshes[$validLODCounter] = $eachMesh;
+			$validLODCounter++;
+		}
+	}
+	for ($a = 0; $a < `size $validLODMeshes`; $a++)
+	{
+		int $hasMatch = 0;
+		string $meshParent[] = `listRelatives -p -f $validLODMeshes[$a]`;
+		string $parentSub = `substitute "_KIT" $meshParent[0] "#"`;
+		string $meshParentTokens[]; clear $meshParentTokens;
+		int $numTokens = `tokenize $parentSub "#|" $meshParentTokens`;
+		string $LODNum = $meshParentTokens[1];
+		string $parentSub = `substitute "[0-9][0-9]_" $meshParentTokens[$numTokens -1] ""`;
+		string $parentMinusNum = `substitute "_[0-9][0-9]" $parentSub ""`;
+		int $hasNumEnd = 0;
+		if ($parentSub != $parentMinusNum)
+			$hasNumEnd = 1;
+		string $partPlusRef = $validLODMeshes[$a];
+		if ($hasNumEnd)
+			$parentSub = $parentMinusNum;
+		for ($z = 0; $z < `size $referenceMeshes`; $z++)
+		{
+			if (`gmatch $referenceMeshes[$z] ("*" + $parentSub + "*")`)
+			{
+				if (`gmatch $referenceMeshes[$z] ("*" + $LODNum + "*")`)
+				{
+					$partPlusRef = ($partPlusRef + " " + $referenceMeshes[$z]);
+					$hasMatch = 1;
+					break;
+				}
+			}
+		}
+		if ($hasMatch)
+		{
+			$partCollection[$partCollectionCounter] = $partPlusRef;
+			$partCollectionCounter++;
+			continue;
+		}
+	}
+	return $partCollection;
+};
+
+
+
+
+// proc to show and hide parts
+global proc int showHideKits(int $showKit, string $partNumString, string $partCollection[])
+{
+	for ($b = 0; $b < `size $partCollection`; $b++)
+	{
+		$isLipKit = 0;
+		string $partTokens[]; clear $partTokens;
+		int $numTokens = `tokenize $partCollection[$b] " " $partTokens`;
+		string $partTokenParents[] = `listRelatives -p -f $partTokens`;
+		string $partNumberTokens[], $partOrigNumberTokens[]; clear $partNumberTokens; clear $partOrigNumberTokens;
+		int $numKitTokens = `tokenize $partTokenParents[0] "_" $partNumberTokens`;
+		int $numOrigTokens = `tokenize $partTokenParents[1] "_" $partOrigNumberTokens`;
+		if ($showKit == 0)
+		{
+			setAttr ($partTokenParents[0] + ".visibility") 1;
+			setAttr ($partTokenParents[1] + ".visibility") 0;
+			if (`gmatch $partTokenParents[0] "*_KIT04_*"`)
+			{
+				if (`gmatch $partTokenParents[1] "*_BUMPER_*"`)
+				{
+					setAttr ($partTokenParents[1] + ".visibility") 1;
+				}
+			}
+			if (`gmatch $partNumberTokens[$numKitTokens-1] "[0-9][0-9]"`)
+			{
+				if (!`gmatch $partNumberTokens[$numKitTokens-1] $partNumString`)
+				{
+					setAttr ($partTokenParents[0] + ".visibility") 0;
+				}
+			}
+		}
+		if ($showKit == 1)
+		{
+			setAttr ($partTokenParents[0] + ".visibility") 0;
+			setAttr ($partTokenParents[1] + ".visibility") 1;
+			if (`gmatch $partOrigNumberTokens[$numOrigTokens-1] "[0-9][0-9]"`)
+			{
+				if (!`gmatch $partOrigNumberTokens[$numOrigTokens-1] $partNumString`)
+				{
+					setAttr ($partTokenParents[1] + ".visibility") 0;
+				}
+			}
+		}
+		if ($showKit == 2)
+		{
+			setAttr ($partTokenParents[0] + ".visibility") 1;
+			setAttr ($partTokenParents[1] + ".visibility") 1;
+		}
+	}
+	return 1;
+}
+
+
+
+
+// procedure to remove history and blendshape nodes from list
+global proc string[] returnValidShapes(string $inputSelection[])
+{
+	string $meshShapes[], $meshTokens[], $blendShapeMeshes[];
+	clear $meshShapes; clear $meshTokens; clear $blendShapeMeshes;
+	int $tokens = `tokenize $inputSelection[0] "." $meshTokens`;
+	string $refFileNodes[]; clear $refFileNodes;
+	int $refCounter = 0;
+	for ($eachNode in $inputSelection)
+	{
+		$isReference = `referenceQuery -inr $eachNode`;
+		if ($isReference)
+		{
+			$refFileNodes[$refCounter] = $eachNode;
+			$refCounter++;
+		}
+	}
+	if (`size $refFileNodes` != 0)
+	{
+		$inputSelection = `stringArrayRemove $refFileNodes $inputSelection`;
+	}	
+	if ($tokens > 1)
+	{
+		clear $inputSelection;
+		$inputSelection[0] = $meshTokens[0];
+		warning ("Select in Object mode to process more than one mesh! Processing " + $meshTokens[0] + " only!");
+	}
+	string $inputDescendants[] = stringArrayCatenate($inputSelection, `listRelatives -ad -f $inputSelection`);
+	string $selectionShapes[] = `ls -l -type mesh $inputDescendants`;
+	$meshShapes = `stringArrayRemoveDuplicates $selectionShapes`; 
+	int $ws = 0;
+	for ($v = 0; $v < `size $meshShapes`; $v++)
+	{
+		string $downStreamConnections[] = `listConnections -d 1 -s 0 $meshShapes[$v]`;
+		string $upStreamConnections[] = `listConnections -d 0 -s 1 $meshShapes[$v]`;
+		int $isBlendShape = 0;
+		int $isVertexShape = 0;
+		int $isHistoryNode = 0;
+		for ($eachConnection in $downStreamConnections)
+		{
+			if (`objectType $eachConnection` == "blendShape")
+			{
+				$isBlendShape = 1;
+			}
+		}
+		for ($eachConnection in $upStreamConnections)
+		{
+			if (`objectType $eachConnection` == "polyColorPerVertex")
+			{
+				$isVertexShape = 1;
+			}
+		}
+		/*
+		//seems to come up with false positives with MAX geo.
+		if (`size $upStreamConnections` == 0)
+			$isHistoryNode = 1;
+		if ($isHistoryNode == 1)
+		{
+			$blendShapeMeshes[$ws] =  $meshShapes[$v];
+			$ws++;
+			continue;
+		}
+		*/
+		if ($isBlendShape == 1)
+		{
+			$blendShapeMeshes[$ws] =  $meshShapes[$v];
+			$ws++;
+			continue;
+		}
+		if ($isVertexShape == 1)
+		{
+			$blendShapeMeshes[$ws] =  $meshShapes[$v];
+			$ws++;
+			continue;
+		}
+	}
+	$blendShapeMeshes = stringArrayRemoveDuplicates ($blendShapeMeshes);
+	string $allWeightMeshShapes[] = stringArrayRemove ($blendShapeMeshes, $meshShapes);
+	return $allWeightMeshShapes;
+}
+
+global proc int carsMirrorGeoAxis()
+{
+	catchQuiet (`bakePartialHistory -all`);
+	string $selection[] = `ls -l -sl`;
+	string $selectionShort[] = `ls -sl`;
+	if (`size $selection` == 0)
+	{
+		warning "Nothing selected to mirror...";
+		return 0;
+	}
+	select -cl;
+	int $mergeSide = `checkBox -q -v carsMirrorAxisCB`;
+	string $mirrorDirection = `optionMenu -q -v deMirrorAxisOM`;
+	for ($a = 0; $a < `size $selection`; $a++)
+	{
+		float $objectTransforms[] = `xform -q -ws -t $selection[$a]`;
+		if ($objectTransforms[0] != 0 || $objectTransforms[1] != 0 || $objectTransforms[2] != 0)
+		{
+			warning ("Selected object \"" + $selection[$a] + "\" had transform data... cannot mirror object! Skipping...");
+			continue;
+		}
+		string $selectionShortTokens[]; clear $selectionShortTokens;
+		int $numTokens = `tokenize $selectionShort[$a] "|" $selectionShortTokens`;
+		string $originalGeoNameShort = $selectionShortTokens[$numTokens -1];
+		string $selectionParent[] = `listRelatives -p -f $selection[$a]`;
+		string $selectionParentShort[] = `listRelatives -p $selection[$a]`;
+		string $selectionGrandParents[] = `listRelatives -p -f $selectionParent[0]`;
+		string $dupedSelection[] = `duplicate -rr -n ($originalGeoNameShort + "_mirrorGeo") $selection[$a]`;
+		string $backupSelection[] = `duplicate -rr -n ($originalGeoNameShort + "_backup") $selection[$a]`;
+		select -r $selection[$a];
+		hyperShade -smn ;
+		string $attachedMaterials[] = `ls -sl`;
+		string $rightMaterials[]; clear $rightMaterials;
+		for ($eachMaterial in $attachedMaterials)
+			if (`gmatch $eachMaterial "*RIGHT*"`)
+				$rightMaterials = `stringArrayCatenate $rightMaterials {$eachMaterial}`;
+		for ($c = 0; $c < `size $rightMaterials`; $c++)
+		{
+			hyperShade -o $rightMaterials[$c];
+			string $appliedFaces[] = `ls -l -sl`;
+			string $rightFaces[]; clear $rightFaces;
+			for ($x = 0; $x < `size $appliedFaces`; $x++)
+				if (`gmatch $appliedFaces[$x] "*_mirrorGeo*"`)
+					$rightFaces = `stringArrayCatenate $rightFaces {$appliedFaces[$x]}`;
+			string $leftMaterial = `substitute "RIGHT" $rightMaterials[$c] "LEFT"`; 
+			select -cl;
+			if (`objExists $leftMaterial`)
+			{
+				select -r $rightFaces;
+				hyperShade -assign $leftMaterial;
+			}
+		}
+		select -cl;
+		setAttr ($dupedSelection[0] + ".scale" + $mirrorDirection) -1;
+		string $backwardsVerts[] = `carToolsGetAxisVerts 1 ($selectionParentShort[0] + "|" + $dupedSelection[0]) $mirrorDirection`;
+		string $axisVerts[] = `carToolsGetAxisVerts 0 ($selectionParentShort[0] + "|" + $dupedSelection[0]) $mirrorDirection`;
+		$backwardsVerts = `stringArrayRemove $axisVerts $backwardsVerts`;
+		string $deletableExtraFaces[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tf $backwardsVerts`;
+		//string $mirrorUVs[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tuv $dupedSelection[0]`;
+		//polyEditUV -pu 0.5 -pv 0.5 -su -1 -sv 0 $mirrorUVs;
+		if (`size $deletableExtraFaces` !=0)
+			delete $deletableExtraFaces;
+		string $combineObjectNames[] = `polyUnite -ch 0 -n ($originalGeoNameShort + "_mirrorGeo") $backupSelection[0] ($selectionParentShort[0] + "|" + $dupedSelection[0])`;
+		if (`objExists ($selectionParentShort[0] + "|" + $backupSelection[0])`)
+			delete ($selectionParentShort[0] + "|" + $backupSelection[0]);
+		if (`objExists ($selectionParentShort[0] + "|" + $dupedSelection[0])`)
+			delete ($selectionParentShort[0] + "|" + $dupedSelection[0]);		
+		if (!`objExists $selectionParent[0]`)
+		{
+			string $replaceGroupNode = `group -em -n $selectionParentShort[0]`;
+			parent $combineObjectNames[0] $replaceGroupNode;
+			if (`size $selectionGrandParents` != 0)
+			{
+				parent $replaceGroupNode $selectionGrandParents[0];
+			}
+		}
+		parent $combineObjectNames[0] $selectionParent[0];
+		if ($mergeSide)
+		{
+			polyMergeVertex  -d 0.001 -am 1 -ch 0 ($selectionParent[0] + "|" + $combineObjectNames[0]);
+			delete $selection[$a];
+			string $renamedObject = `rename ($selectionParent[0] + "|" + $combineObjectNames[0]) $originalGeoNameShort`;
+			string $axisVerts[] = `carToolsGetAxisVerts 0 $renamedObject $mirrorDirection`;
+			if (`size $axisVerts` != 0)
+			{
+				polySoftEdge -a 180 -ch 0 `polyListComponentConversion -fv -fe -fuv -fvf -te -in $axisVerts`;
+			}
+		}
+		else
+		{
+			string $renamedObject = $combineObjectNames[0];
+			if ($mirrorDirection == "X")
+			{
+				if (`gmatch $originalGeoNameShort "*RIGHT*"`)
+				{
+					string $newNameLeft = `substitute "RIGHT" $originalGeoNameShort "LEFT"`;
+					$renamedObject = `rename ($selectionParent[0] + "|" + $combineObjectNames[0]) $newNameLeft`;
+				}
+			}
+			string $finalNameTokens[]; clear $finalNameTokens;
+			int $numFinalTokens = `tokenize $renamedObject "|" $finalNameTokens`;
+			string $mirrorVerts[]; clear $mirrorVerts;
+			if ($numFinalTokens > 1)
+			{
+				$mirrorVerts = `carToolsGetAxisVerts 1 $renamedObject $mirrorDirection`;
+			}
+			else
+			{
+				$mirrorVerts = `carToolsGetAxisVerts 1 ($selectionParent[0] + "|" + $renamedObject) $mirrorDirection`;
+			}
+			delete `polyListComponentConversion -fv -fe -fuv -fvf -tf -in $mirrorVerts`;
+		}
+	}
+	select -r $selection;
+	return 1;
+}
+
+
+global proc int deMirrorSelectedGeo()
+{
+	catchQuiet (`bakePartialHistory -all`);
+	string $selection[] = `ls -l -sl`;
+	float $vertexAxisThreshold = -0.001;
+	if (`size $selection` == 0)
+	{
+		warning "Nothing selected to un-mirror...";
+		return 0;
+	}
+	string $mirrorDirecetion = `optionMenu -q -v deMirrorAxisOM`;
+	for ($a = 0; $a < `size $selection`; $a++)
+	{
+		float $objectTransforms[] = `xform -q -ws -t $selection[$a]`;
+		if ($objectTransforms[0] != 0 || $objectTransforms[1] != 0 || $objectTransforms[2] != 0)
+		{
+			warning ("Selected object \"" + $selection[$a] + "\" had transform data... cannot mirror object! Skipping...");
+			continue;
+		}
+		int $numFacesOrig[] = `polyEvaluate -f $selection[$a]`;
+		string $selectionVerts[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tv $selection[$a]`;
+		string $allVerts[] = `filterExpand -ex 1 -sm 31 $selectionVerts`;
+		string $deleteVerts[]; clear $deleteVerts;
+		for ($b = 0; $b < `size $allVerts`; $b++)
+		{
+			float $transforms[] = `xform -q -ws -t $allVerts[$b]`;
+			if ($mirrorDirecetion == "X")
+			{
+				if ($transforms[0] > $vertexAxisThreshold)
+				{
+					$deleteVerts = `stringArrayCatenate $deleteVerts {$allVerts[$b]}`;
+					continue;
+				}
+			}
+			if ($mirrorDirecetion == "Y")
+			{
+				if ($transforms[1] > $vertexAxisThreshold)
+				{
+					$deleteVerts = `stringArrayCatenate $deleteVerts {$allVerts[$b]}`;
+					continue;
+				}
+			}
+			if ($mirrorDirecetion == "Z")
+			{
+				if ($transforms[2] > $vertexAxisThreshold)
+				{
+					$deleteVerts = `stringArrayCatenate $deleteVerts {$allVerts[$b]}`;
+					continue;
+				}
+			}
+		}
+		string $deleteFaces[] = `polyListComponentConversion -fv -fe -fuv -fvf -tf -in $deleteVerts`;
+		string $deleteFacesFlattened[] = `filterExpand -ex 1 -sm 34 $deleteFaces`;
+		if (`size $deleteFacesFlattened` == $numFacesOrig[0])
+		{
+			delete $selection[$a];
+			continue;
+		}
+		if (`size $deleteFaces` != 0)
+			delete $deleteFaces;
+		else
+			warning "Select geo on positive X size of scene!";
+	}
+	select -cl;
+	for ($eachPart in $selection)
+	{
+		if (`objExists $eachPart`)
+		{
+			select -tgl $eachPart;
+		}
+	}
+	return 1;
+}
+
+global proc string[] carToolsGetAxisVerts(int $mode, string $inputGeo, string $axis)
+{
+	string $allObjectVerts[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tv $inputGeo`;
+	$allObjectVerts = `filterExpand -ex 1 -sm 31 $allObjectVerts`;
+	string $outPutVerts[]; clear $outPutVerts;
+	for ($a = 0; $a < `size $allObjectVerts`; $a++)
+	{
+		float $vertTransforms[] = `xform -q -t -ws $allObjectVerts[$a]`;
+		if ($axis == "X")
+		{
+			if ($mode)
+			{
+				if ($vertTransforms[0] <= 0.001)
+				{
+					$outPutVerts = `stringArrayCatenate $outPutVerts {$allObjectVerts[$a]}`;
+					continue;
+				}
+			}
+			if ($vertTransforms[0] >= -0.001 && $vertTransforms[0] <= 0.001)
+			{
+				$outPutVerts = `stringArrayCatenate $outPutVerts {$allObjectVerts[$a]}`;
+				continue;
+			}
+		}
+		if ($axis == "Y")
+		{
+			if ($mode)
+			{
+				if ($vertTransforms[1] <= 0.001)
+				{
+					$outPutVerts = `stringArrayCatenate $outPutVerts {$allObjectVerts[$a]}`;
+					continue;
+				}
+			}
+			if ($vertTransforms[1] >= -0.001 && $vertTransforms[1] <= 0.001)
+			{
+				$outPutVerts = `stringArrayCatenate $outPutVerts {$allObjectVerts[$a]}`;
+				continue;
+			}
+
+		}
+		if ($axis == "Z")
+		{
+			if ($mode)
+			{
+				if ($vertTransforms[2] <= 0.001)
+				{
+					$outPutVerts = `stringArrayCatenate $outPutVerts {$allObjectVerts[$a]}`;
+					continue;
+				}
+			}
+			if ($vertTransforms[2] >= -0.001 && $vertTransforms[2] <= 0.001)
+			{
+				$outPutVerts = `stringArrayCatenate $outPutVerts {$allObjectVerts[$a]}`;
+				continue;
+			}
+		}
+	}
+	return $outPutVerts;
+}
+
+global proc int carsFlipUVHull()
+{
+	string $selection[] = `ls -l -sl`;
+	if (`size $selection` == 0)
+	{
+		warning "nothing selected...";
+		return 0;
+	}
+	select -r `polyListComponentConversion -ff -fv -fe -fuv -fvf -tuv $selection`;
+	polySelectBorderShell 0;
+	polyEditUV -pu 0.5 -pv 0.5 -su -1 -sv 1 `ls -sl`;
+	select -r $selection;
+	return 1;
+}
+
+global proc int selectFacesWithoutShadingGroup(int $mode)
+{
+	if (`window -exists polyTexturePlacementPanel1Window`)
+		deleteUI -window polyTexturePlacementPanel1Window;
+	string $selection[] = `ls -l -sl`;
+	int $isDirty = 0;
+	if (`size $selection` == 0)
+	{
+		string $OK = `confirmDialog -title "Confirm" -message "You have no geometry selected. Scan Everything?" 
+			-button "OK" -button "Cancel" -defaultButton "Cancel" 
+			-cancelButton "Cancel" -dismissString "Cancel"`;
+		if ($OK != "OK")
+			return $isDirty;
+	}
+	string $allMeshes[]; clear $allMeshes;
+	if (`size $selection` == 0)
+	{
+		$allMeshes = `ls -l -type "mesh"`;
+	}
+	else
+	{
+		$allMeshes = `listRelatives -f -ad -type "mesh" $selection`;
+	}
+	string $invalidMatFaces[]; clear $invalidMatFaces;
+	int $matFaceCounter = 0;
+	waitCursor -state on;
+	for ($a = 0; $a < `size $allMeshes`; $a++)
+	{
+		string $allMeshFaces[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tf $allMeshes[$a]`;
+		string $facesFlat[] = `filterExpand -ex 1 -sm 34 $allMeshFaces`;
+		for ($b = 0; $b < `size $facesFlat`; $b++)
+		{
+			select -r $facesFlat[$b];
+			hyperShade -smn;
+			string $attachedMaterial[] = `ls -sl`;
+			if (`size $attachedMaterial` == 0)
+			{
+				$isDirty = 1;
+				$invalidMatFaces[$matFaceCounter] = $facesFlat[$b];
+				$matFaceCounter++;
+			}
+		}
+	}
+	if ($mode)
+	{
+		select -r $invalidMatFaces;
+		if (`size $invalidMatFaces` == 0)
+		{
+			if (`size $selection` != 0)
+			{
+				catchQuiet (`select -r $selection`);
+			}
+		}
+	}
+	if ($mode == 0)
+	{
+		if (`size $selection` != 0)
+		{
+			catchQuiet (`select -r $selection`);
+		}		
+	}
+	waitCursor -state off;
+	return $isDirty;
+}
+
+global proc int returnDuplicateFaces(int $mode)
+{
+	if (`window -exists polyTexturePlacementPanel1Window`)
+		deleteUI -window polyTexturePlacementPanel1Window;
+	string $selection[] = `ls -l -sl`;
+	string $selectionTokens[]; clear $selectionTokens;
+	int $numTokens = `tokenize $selection[0] "." $selectionTokens`;
+	if ($numTokens == 1)
+	{
+		if (`size $selection` != 1)
+			error "Select one object at a time, or multiple faces!";
+	}
+	if (`size $selection` > 1)
+	{
+		if (!`gmatch $selectionTokens[1] "f*"`)
+			error "Select only faces when scanning multiple selected items!";
+	}
+	string $invalidFaces[]; clear $invalidFaces;
+	int $faceCounter = 0;
+	int $hasDupes = 0;
+	float $threshold = 0.001;
+	string $allMeshFaces[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tf $selection`;
+	string $facesFlatSource[] = `filterExpand -ex 1 -sm 34 $allMeshFaces`;
+	string $facesFlatTarget[] = `filterExpand -ex 1 -sm 34 $allMeshFaces`;
+	int $totalFaces = `size $facesFlatSource`;
+	int $counterAmount = 0;
+	int $breakCounter = 0;
+	progressWindow -title "Scanning for Duplicate Faces..." -progress $counterAmount -max $totalFaces -status ("Scanning Face: 0 of " +  $totalFaces) -isInterruptable true;
+	while (true) 
+	{
+		if ( `progressWindow -query -isCancelled` ) 
+			break;
+		if ( `progressWindow -query -progress` >= $totalFaces ) 
+			break;
+		for ($b = 0; $b < `size $facesFlatSource`; $b++)
+		{
+			if ( `progressWindow -query -isCancelled` ) 
+				break;
+			if ( `progressWindow -query -progress` >= $totalFaces ) 
+				break;
+			$counterAmount += 1;
+			progressWindow -edit -progress $counterAmount -status ("Scanning Face: " + $counterAmount + " of " + $totalFaces);
+			float $faceCenterSource[] = `getCenterFace $facesFlatSource[$b]`;
+			string $faceCenterSourceString = ($faceCenterSource[0] + " " + $faceCenterSource[1] + " " + $faceCenterSource[2]);
+			for ($c = 0; $c < `size $facesFlatTarget`; $c++)
+			{
+				if ($facesFlatSource[$b] != $facesFlatTarget[$c])
+				{
+					float $faceCenterTarget[] = `getCenterFace $facesFlatTarget[$c]`;
+					string $faceCenterTargetString = ($faceCenterTarget[0] + " " + $faceCenterTarget[1] + " " + $faceCenterTarget[2]);
+					float $distanceOfCenter = `getDistanceBetween 0 $faceCenterSourceString $faceCenterTargetString`;
+					if ($distanceOfCenter < $threshold)
+					{
+						if ($mode == 0)
+						{
+							$hasDupes = 1;
+							return $hasDupes;
+						}
+						$invalidFaces[$faceCounter] = $facesFlatSource[$b];
+						$faceCounter++;
+						//acesFlatTarget = `stringArrayRemove {$facesFlatSource[$b]} $facesFlatTarget`;
+					}
+				}
+			}
+			$facesFlatTarget = `stringArrayRemove {$facesFlatSource[$b]} $facesFlatTarget`;
+		}
+	}
+	progressWindow -endProgress;
+	$invalidFaces = `stringArrayRemoveDuplicates $invalidFaces`;
+	select -r $invalidFaces;
+	return $hasDupes;
+}
+
+global proc float[] getCenterFace(string $polyFace) 
+{
+	float $pos[] = `xform -q -t -ws $polyFace`;
+	int $numVerts = (`size($pos)` / 3);
+	float $xPos = 0;  
+	float $yPos = 0;  
+	float $zPos = 0;  
+	for ($i = 0; $i < `size($pos)`;)  
+	{
+		$xPos += $pos[$i];
+		++$i;
+		$yPos += $pos[$i];
+		++$i;
+		$zPos += $pos[$i];
+		++$i;
+	}
+	$xPos = $xPos / $numVerts;
+	$yPos = $yPos / $numVerts;
+	$zPos = $zPos / $numVerts;
+	float $facePosition[];
+	$facePosition[0] = $xPos;
+	$facePosition[1] = $yPos;
+	$facePosition[2] = $zPos;
+	return $facePosition;
+}
+
+global proc int carsFixBrokenGeo()
+{
+	string $selection[] = `ls -l -sl`;
+	if (`size $selection` == 0)
+		return 0;
+	for ($eachSelection in $selection)
+	{
+		float $selectionRotations[] = `xform -q -ws -ro $eachSelection`;
+		for ($eachRotation in $selectionRotations)
+		{
+			if ($eachRotation != 0)
+			{
+				warning ("Cannot fix geo \"" + $eachSelection + "\"! Object has Rotation info...") ;
+				$selection = `stringArrayRemove {$eachSelection} $selection`;
+				break;
+			}			
+		}
+	}
+	for ($eachSelection in $selection)
+	{
+		float $selectionPivots[] = `xform -q -ws -piv $eachSelection`;
+		string $nameTokens[]; clear $nameTokens;
+		int $numNameTokens = `tokenize $eachSelection "|" $nameTokens`;
+		string $selectionName = $nameTokens[$numNameTokens -1];
+		string $selectionParent[] = `listRelatives -p -f $eachSelection`;
+		string $selectionParentParents[] = `listRelatives -p -f $selectionParent[0]`;
+		string $selectionMeshes[] = `listRelatives -c -type "mesh" $eachSelection`;
+		string $newPlanes[] = `polyPlane -n "fixPolyPlane" -w 1 -h 1 -sx 1 -sy 1 -ax 0 1 0 -cuv 0 -ch 0`;
+		select -cl;
+		string $newPlaneVerts[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tv  $newPlanes`;
+		float $faceVertCoOrds[] = `xform -q -ws -t $newPlaneVerts`;
+		string $faceDeleteString = ($faceVertCoOrds[0] + " " + $faceVertCoOrds[1] + " " + $faceVertCoOrds[2] + " " + 
+					$faceVertCoOrds[3] + " " + $faceVertCoOrds[4] + " " + $faceVertCoOrds[5] + " " + 
+					$faceVertCoOrds[6] + " " + $faceVertCoOrds[7] + " " + $faceVertCoOrds[8] + " " + 
+					$faceVertCoOrds[9] + " " + $faceVertCoOrds[10] + " " + $faceVertCoOrds[11]); 
+		string $newCombinedObjects[] = `polyUnite -n "newCombinedFixGeo" -ch 0 $newPlanes[0] $eachSelection`;
+		if (!`objExists $selectionParent[0]`)
+		{
+			string $parentNameTokens[]; clear $parentNameTokens;
+			int $numTokens = `tokenize $selectionParent[0] "|" $parentNameTokens`;
+			string $newGroup = `group -em -n $parentNameTokens[$numTokens -1]`;
+			if (`objExists $selectionParentParents[0]`)
+			{
+				parent $newGroup $selectionParentParents[0];
+			}
+		}
+		string $allNewFaces[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tf $newCombinedObjects[0]`;
+		string $allNewFacesFlat[] = `filterExpand -ex 1 -sm 34 $allNewFaces`;
+		for ($a = 0; $a < `size $allNewFacesFlat`; $a++)
+		{
+			string $faceVerts[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tv $allNewFacesFlat[$a]`;
+			float $singleFace[] = `xform -q -ws -t $faceVerts`;
+			string $singleFaceString = ($singleFace[0] + " " + $singleFace[1] + " " + $singleFace[2] + " " + 
+						$singleFace[3] + " " + $singleFace[4] + " " + $singleFace[5] + " " + 
+						$singleFace[6] + " " + $singleFace[7] + " " + $singleFace[8] + " " + 
+						$singleFace[9] + " " + $singleFace[10] + " " + $singleFace[11]);
+			if ($singleFaceString == $faceDeleteString)
+			{
+				delete $allNewFacesFlat[$a];
+				break;
+			}
+		}
+		xform -ws -piv $selectionPivots[0] $selectionPivots[1] $selectionPivots[2] $newCombinedObjects[0];
+		move -rpr 0 0 0 -puv $newCombinedObjects[0];
+		makeIdentity -apply true -t 1 -r 0 -s 0 -n 0 $newCombinedObjects[0];
+		if ($selectionParent[0] != "")
+		{
+			parent $newCombinedObjects[0] $selectionParent[0];
+		}
+		string $fixedGeo = `rename ($selectionParent[0] + "|" + $newCombinedObjects[0]) $selectionName`;
+		string $fixedGeoMeshes[] = `listRelatives -c -f -type "mesh" $fixedGeo`;
+		rename $fixedGeoMeshes[0] $selectionMeshes[0];
+		move -rpr $selectionPivots[0] $selectionPivots[1] $selectionPivots[2] $fixedGeo;
+	}
+	select -r $selection;
+	print "Selected Geo has been repaired!";
+	return 1;
+}
+
+global proc int carsCombineSelectedGeo()
+{
+	string $selection[] = `ls -l -sl`;
+	int $selectionSize = `size $selection`;
+	if ($selectionSize == 0)
+		error "Nothing Selected...";
+	if ($selectionSize == 1)
+		error "Select 2 or more pieces!";
+	float $selectionPivots[] = `xform -q -ws -piv $selection[$selectionSize -1]`;
+	float $selectionRotations[] = `xform -q -ws -ro $selection[$selectionSize -1]`;
+	for ($eachRotation in $selectionRotations)
+	{
+		if ($eachRotation != 0)
+			error "Selected object has Rotation info... Cannot fix geo!";
+	}
+	string $nameTokens[]; clear $nameTokens;
+	int $numNameTokens = `tokenize $selection[$selectionSize -1] "|" $nameTokens`;
+	string $selectionName = $nameTokens[$numNameTokens -1];
+	string $selectionParent[] = `listRelatives -p -f $selection[$selectionSize -1]`;
+	string $selectionParentParents[] = `listRelatives -p -f $selectionParent[0]`;
+	string $selectionMeshes[] = `listRelatives -c -type "mesh" $selection[$selectionSize -1]`;
+	string $newCombinedObjects[] = `polyUnite -n "newCombinedGeo" -ch 0 $selection`;
+	if (!`objExists $selectionParent[0]`)
+	{
+		string $parentNameTokens[]; clear $parentNameTokens;
+		int $numTokens = `tokenize $selectionParent[0] "|" $parentNameTokens`;
+		string $newGroup = `group -em -n $parentNameTokens[$numTokens -1]`;
+		if (`objExists $selectionParentParents[0]`)
+		{
+			parent $newGroup $selectionParentParents[0];
+		}
+	}	
+	xform -ws -piv $selectionPivots[0] $selectionPivots[1] $selectionPivots[2] $newCombinedObjects[0];
+	move -rpr 0 0 0 -puv $newCombinedObjects[0];
+	makeIdentity -apply true -t 1 -r 0 -s 0 -n 0 $newCombinedObjects[0];
+	if ($selectionParent[0] != "")
+	{
+		parent $newCombinedObjects[0] $selectionParent[0];
+	}
+	string $fixedGeo = `rename ($selectionParent[0] + "|" + $newCombinedObjects[0]) $selectionName`;
+	string $fixedGeoMeshes[] = `listRelatives -c -f -type "mesh" $fixedGeo`;
+	rename $fixedGeoMeshes[0] $selectionMeshes[0];
+	move -rpr $selectionPivots[0] $selectionPivots[1] $selectionPivots[2] $fixedGeo;
+	print "Objects have been successfully combined!";
+	return 1;
+}
+
+global proc int carsAutoUVRims()
+{
+	// get RIM type //
+	// get Type from menu.
+	// 1-3 are RIM types. 1 has one lip, 2 has two, 3 has 3.
+	
+	int $rimTypeOption = `optionMenu -q -v rimTypeSelectionOM`;
+	float $lipType = 0;
+	if ($rimTypeOption == 1)
+		$lipType = 0.18;
+	if ($rimTypeOption == 2)
+		$lipType = 0.50;
+	if ($rimTypeOption == 3)
+		$lipType = 0.82;
+	string $allMeshes[] = `ls -type "mesh"`;
+	if (`size $allMeshes` == 0)
+		return 0;
+	string $selection[] = `ls -l -sl`;
+	catchQuiet (`bakePartialHistory -all`);
+	string $wheelsRearLeft[]; clear $wheelsRearLeft;
+	string $wheelsRearRight[]; clear $wheelsRearRight;
+	string $wheelsFrontLeft[]; clear $wheelsFrontLeft;
+	string $wheelsFrontRight[]; clear $wheelsFrontRight;
+	if (!`objExists "RIM_POLISHED_LIP"`)
+		return 0;
+	hyperShade -o "RIM_POLISHED_LIP";
+	string $rimFaces[] = `ls -l -sl`;
+	for ($a = 0; $a < `size $rimFaces`; $a++)
+	{
+		if (`gmatch $rimFaces[$a] "*REAR_RIGHT*"`)
+		{
+			$wheelsRearRight = `stringArrayCatenate $wheelsRearRight {$rimFaces[$a]}`;
+			continue;
+		}
+		if (`gmatch $rimFaces[$a] "*REAR_LEFT*"`)
+		{
+			$wheelsRearLeft = `stringArrayCatenate $wheelsRearLeft {$rimFaces[$a]}`;
+			continue;
+		}
+		if (`gmatch $rimFaces[$a] "*FRONT_RIGHT*"`)
+		{
+			$wheelsFrontRight = `stringArrayCatenate $wheelsFrontRight {$rimFaces[$a]}`;
+			continue;
+		}
+		if (`gmatch $rimFaces[$a] "*FRONT_LEFT*"`)
+		{
+			$wheelsFrontLeft = `stringArrayCatenate $wheelsFrontLeft {$rimFaces[$a]}`;
+			continue;
+		}
+	}
+	$wheelsRearRight = `stringArrayRemoveDuplicates $wheelsRearRight`;
+	$wheelsRearLeft = `stringArrayRemoveDuplicates $wheelsRearLeft`;
+	$wheelsFrontRight = `stringArrayRemoveDuplicates $wheelsFrontRight`;
+	$wheelsFrontLeft = `stringArrayRemoveDuplicates $wheelsFrontLeft`;
+	string $geoPieces[]; clear $geoPieces;
+	for ($eachFace in $rimFaces)
+	{
+		string $pieceTokens[]; clear $pieceTokens;
+		tokenize $eachFace "." $pieceTokens;
+		$geoPieces = `stringArrayCatenate $geoPieces {$pieceTokens[0]}`;
+	}
+	$geoPieces = `stringArrayRemoveDuplicates $geoPieces`;
+	polyUVSet -currentUVSet -uvSet "map1" $geoPieces;
+	string $rightProjections[]; clear $rightProjections;
+	string $leftProjections[]; clear $leftProjections;
+
+//----------------
+	select -cl;
+	if (`size $wheelsFrontRight` != 0)
+	{
+		string $projectionGroupFR[]; clear $projectionGroupFR;
+		int $groupCounter = 0;
+		$wheelsFrontRight = `sort $wheelsFrontRight`;
+		for ($a = 0; $a < `size $wheelsFrontRight`; $a++)
+		{
+			string $nameTokens[]; clear $nameTokens;
+			string $oldTokens[]; clear $oldTokens;
+			int $numTokens = `tokenize $wheelsFrontRight[$a] "." $nameTokens`;
+			int $numOldTokens = 0;
+			if ($groupCounter != 0)
+				$numOldTokens = `tokenize $projectionGroupFR[$groupCounter-1] "." $oldTokens`;
+			if ($groupCounter == 0)
+			{
+				$projectionGroupFR[$groupCounter] = $wheelsFrontRight[$a];
+				$groupCounter++;
+				continue;
+			}
+			if ($numTokens == 1)
+			{
+				$projectionGroupFR[$groupCounter] = $wheelsFrontRight[$a];
+				$groupCounter++;
+				continue;
+			}
+			if ($nameTokens[0] != $oldTokens[0])
+			{
+				$projectionGroupFR[$groupCounter] = $wheelsFrontRight[$a];
+				$groupCounter++;
+				continue;
+			}
+			if ($nameTokens[0] == $oldTokens[0])
+			{
+				$projectionGroupFR[$groupCounter-1] = ($projectionGroupFR[$groupCounter-1] + " " + $wheelsFrontRight[$a]);
+				continue;
+			}			
+		}
+		for ($b = 0; $b < `size $projectionGroupFR`; $b++)
+		{
+			string $groupTokens[]; clear $groupTokens;
+			int $numGroupTokens = `tokenize $projectionGroupFR[$b] " " $groupTokens`;
+			string $objectFaces[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tf $groupTokens`;
+			select -cl;
+			string $cylinderProjectionsRight[] = `polyProjection -ch 1 -sf 1 -md "x" -type "Cylindrical" $objectFaces`;
+			$rightProjections = `stringArrayCatenate $rightProjections {$cylinderProjectionsRight[0]}`;
+			setAttr ($cylinderProjectionsRight[0] + ".rotateZ") 90;
+			setAttr ($cylinderProjectionsRight[0] + ".projectionHorizontalSweep") 3.6;
+			setAttr ($cylinderProjectionsRight[0] + ".rotationAngle") -90;
+			setAttr ($cylinderProjectionsRight[0] + ".imageScaleU") .28;
+			setAttr ($cylinderProjectionsRight[0] + ".projectionHeight") 0.18;
+			setAttr ($cylinderProjectionsRight[0] + ".imageCenterY") $lipType;
+			string $projectionUVs[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tuv $objectFaces`;
+			float $boundBoxSelection[] = `polyEvaluate -bc2 $objectFaces`;
+			float $uWidth = `getDistanceBetween 0 ($boundBoxSelection[0] + " 0 0") ($boundBoxSelection[1] + " 0 0")`;
+			float $scale = (1 / `sqrt $uWidth`);
+			float $magicNumber = $scale * $scale;
+			polyEditUV -pu 0.5 -pv 0.5 -su $magicNumber -sv 1 $projectionUVs;
+		}
+	}
+//----------------
+	select -cl;
+	if (`size $wheelsRearRight` != 0)
+	{	
+		string $projectionGroupRR[]; clear $projectionGroupRR;
+		int $groupCounter = 0;
+		$wheelsRearRight = `sort $wheelsRearRight`;
+		for ($a = 0; $a < `size $wheelsRearRight`; $a++)
+		{
+			string $nameTokens[]; clear $nameTokens;
+			string $oldTokens[]; clear $oldTokens;
+			int $numTokens = `tokenize $wheelsRearRight[$a] "." $nameTokens`;
+			int $numOldTokens = 0;
+			if ($groupCounter != 0)
+				$numOldTokens = `tokenize $projectionGroupRR[$groupCounter-1] "." $oldTokens`;
+			if ($groupCounter == 0)
+			{
+				$projectionGroupRR[$groupCounter] = $wheelsRearRight[$a];
+				$groupCounter++;
+				continue;
+			}
+			if ($numTokens == 1)
+			{
+				$projectionGroupRR[$groupCounter] = $wheelsRearRight[$a];
+				$groupCounter++;
+				continue;
+			}
+			if ($nameTokens[0] != $oldTokens[0])
+			{
+				$projectionGroupRR[$groupCounter] = $wheelsRearRight[$a];
+				$groupCounter++;
+				continue;
+			}
+			if ($nameTokens[0] == $oldTokens[0])
+			{
+				$projectionGroupRR[$groupCounter-1] = ($projectionGroupRR[$groupCounter-1] + " " + $wheelsRearRight[$a]);
+				continue;
+			}			
+		}
+		for ($b = 0; $b < `size $projectionGroupRR`; $b++)
+		{
+			string $groupTokens[]; clear $groupTokens;
+			int $numGroupTokens = `tokenize $projectionGroupRR[$b] " " $groupTokens`;
+			string $objectFaces[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tf $groupTokens`;
+			select -cl;
+			string $cylinderProjectionsRight[] = `polyProjection -ch 1 -sf 1 -md "x" -type "Cylindrical" $objectFaces`;
+			$rightProjections = `stringArrayCatenate $rightProjections {$cylinderProjectionsRight[0]}`;
+			setAttr ($cylinderProjectionsRight[0] + ".rotateZ") 90;
+			setAttr ($cylinderProjectionsRight[0] + ".projectionHorizontalSweep") 3.6;
+			setAttr ($cylinderProjectionsRight[0] + ".rotationAngle") -90;
+			setAttr ($cylinderProjectionsRight[0] + ".imageScaleU") .25;
+			setAttr ($cylinderProjectionsRight[0] + ".projectionHeight") 0.18;
+			setAttr ($cylinderProjectionsRight[0] + ".imageCenterY") $lipType;
+			string $projectionUVs[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tuv $objectFaces`;
+			float $boundBoxSelection[] = `polyEvaluate -bc2 $objectFaces`;
+			float $uWidth = `getDistanceBetween 0 ($boundBoxSelection[0] + " 0 0") ($boundBoxSelection[1] + " 0 0")`;
+			float $scale = (1 / `sqrt $uWidth`);
+			float $magicNumber = $scale * $scale;
+			polyEditUV -pu 0.5 -pv 0.5 -su $magicNumber -sv 1 $projectionUVs;
+		}
+	}
+//------------------
+	select -cl;
+	if (`size $wheelsRearLeft` != 0)
+	{
+		string $projectionGroupRL[]; clear $projectionGroupRL;
+		int $groupCounter = 0;
+		$wheelsRearLeft = `sort $wheelsRearLeft`;
+		for ($a = 0; $a < `size $wheelsRearLeft`; $a++)
+		{
+			string $nameTokens[]; clear $nameTokens;
+			string $oldTokens[]; clear $oldTokens;
+			int $numTokens = `tokenize $wheelsRearLeft[$a] "." $nameTokens`;
+			int $numOldTokens = 0;
+			if ($groupCounter != 0)
+				$numOldTokens = `tokenize $projectionGroupRL[$groupCounter-1] "." $oldTokens`;
+			if ($groupCounter == 0)
+			{
+				$projectionGroupRL[$groupCounter] = $wheelsRearLeft[$a];
+				$groupCounter++;
+				continue;
+			}
+			if ($numTokens == 1)
+			{
+				$projectionGroupRL[$groupCounter] = $wheelsRearLeft[$a];
+				$groupCounter++;
+				continue;
+			}
+			if ($nameTokens[0] != $oldTokens[0])
+			{
+				$projectionGroupRL[$groupCounter] = $wheelsRearLeft[$a];
+				$groupCounter++;
+				continue;
+			}
+			if ($nameTokens[0] == $oldTokens[0])
+			{
+				$projectionGroupRL[$groupCounter-1] = ($projectionGroupRL[$groupCounter-1] + " " + $wheelsRearLeft[$a]);
+				continue;
+			}			
+		}
+		for ($b = 0; $b < `size $projectionGroupRL`; $b++)
+		{
+			string $groupTokens[]; clear $groupTokens;
+			int $numGroupTokens = `tokenize $projectionGroupRL[$b] " " $groupTokens`;
+			string $objectFaces[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tf $groupTokens`;
+			select -cl;
+			string $cylinderProjectionsLeft[] = `polyProjection -ch 1 -type "Cylindrical" $objectFaces`;
+			$leftProjections = `stringArrayCatenate $leftProjections {$cylinderProjectionsLeft[0]}`;
+			setAttr ($cylinderProjectionsLeft[0] + ".rotateZ") -90;
+			setAttr ($cylinderProjectionsLeft[0] + ".projectionHorizontalSweep") 3.6;
+			setAttr ($cylinderProjectionsLeft[0] + ".rotationAngle") -90;
+			setAttr ($cylinderProjectionsLeft[0] + ".imageScaleU") .28;
+			setAttr ($cylinderProjectionsLeft[0] + ".projectionHeight") 0.18;
+			setAttr ($cylinderProjectionsLeft[0] + ".imageCenterY") $lipType;
+			string $projectionUVs[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tuv $objectFaces`;
+			float $boundBoxSelection[] = `polyEvaluate -bc2 $objectFaces`;
+			float $uWidth = `getDistanceBetween 0 ($boundBoxSelection[0] + " 0 0") ($boundBoxSelection[1] + " 0 0")`;
+			float $scale = (1 / `sqrt $uWidth`);
+			float $magicNumber = $scale * $scale;
+			polyEditUV -pu 0.5 -pv 0.5 -su $magicNumber -sv 1 $projectionUVs;
+		}
+	}
+//-----------------
+	select -cl;
+	if (`size $wheelsFrontLeft` != 0)
+	{	
+		string $projectionGroupFL[]; clear $projectionGroupFL;
+		int $groupCounter = 0;
+		$wheelsFrontLeft = `sort $wheelsFrontLeft`;
+		for ($a = 0; $a < `size $wheelsFrontLeft`; $a++)
+		{
+			string $nameTokens[]; clear $nameTokens;
+			string $oldTokens[]; clear $oldTokens;
+			int $numTokens = `tokenize $wheelsFrontLeft[$a] "." $nameTokens`;
+			int $numOldTokens = 0;
+			if ($groupCounter != 0)
+				$numOldTokens = `tokenize $projectionGroupFL[$groupCounter-1] "." $oldTokens`;
+			if ($groupCounter == 0)
+			{
+				$projectionGroupFL[$groupCounter] = $wheelsFrontLeft[$a];
+				$groupCounter++;
+				continue;
+			}
+			if ($numTokens == 1)
+			{
+				$projectionGroupFL[$groupCounter] = $wheelsFrontLeft[$a];
+				$groupCounter++;
+				continue;
+			}
+			if ($nameTokens[0] != $oldTokens[0])
+			{
+				$projectionGroupFL[$groupCounter] = $wheelsFrontLeft[$a];
+				$groupCounter++;
+				continue;
+			}
+			if ($nameTokens[0] == $oldTokens[0])
+			{
+				$projectionGroupFL[$groupCounter-1] = ($projectionGroupFL[$groupCounter-1] + " " + $wheelsFrontLeft[$a]);
+				continue;
+			}			
+		}
+		for ($b = 0; $b < `size $projectionGroupFL`; $b++)
+		{
+			string $groupTokens[]; clear $groupTokens;
+			int $numGroupTokens = `tokenize $projectionGroupFL[$b] " " $groupTokens`;
+			string $objectFaces[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tf $groupTokens`;
+			select -cl;
+			string $cylinderProjectionsLeft[] = `polyProjection -ch 1 -type "Cylindrical" $objectFaces`;
+			$leftProjections = `stringArrayCatenate $leftProjections {$cylinderProjectionsLeft[0]}`;
+			setAttr ($cylinderProjectionsLeft[0] + ".rotateZ") -90;
+			setAttr ($cylinderProjectionsLeft[0] + ".projectionHorizontalSweep") 3.6;
+			setAttr ($cylinderProjectionsLeft[0] + ".rotationAngle") -90;
+			setAttr ($cylinderProjectionsLeft[0] + ".imageScaleU") .28;
+			setAttr ($cylinderProjectionsLeft[0] + ".projectionHeight") 0.18;
+			setAttr ($cylinderProjectionsLeft[0] + ".imageCenterY") $lipType;
+			string $projectionUVs[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tuv $objectFaces`;
+			float $boundBoxSelection[] = `polyEvaluate -bc2 $objectFaces`;
+			float $uWidth = `getDistanceBetween 0 ($boundBoxSelection[0] + " 0 0") ($boundBoxSelection[1] + " 0 0")`;
+			float $scale = (1 / `sqrt $uWidth`);
+			float $magicNumber = $scale * $scale;
+			polyEditUV -pu 0.5 -pv 0.5 -su $magicNumber -sv 1 $projectionUVs;
+		}
+	}
+	$leftProjections = `stringArrayRemoveDuplicates $leftProjections`;
+	$rightProjections = `stringArrayRemoveDuplicates $rightProjections`;
+	catchQuiet (`bakePartialHistory -all`);
+	select -r $selection;
+	return 1;
+}
+
+//FBX Export Tool
+
+global proc int carsExportSceneFBX()
+{
+	string $selection[] = `ls -l -sl`;
+	string $sceneRoots[] = `ls -l -assemblies`;
+	if (! `stringArrayContains "|export" $sceneRoots`)
+		error "Scene does not contain an \"export\" group!";
+	if (! `stringArrayContains "|havokExport" $sceneRoots`)
+		error "Scene does not contain an \"havokExport\" group!";
+	string $savePath = "";
+	string $p4UserPath = `getP4UserInfo 0`;
+	string $carsRootPath = ($p4UserPath + "\\dev\\Data\\Raw\\_c4\\VEHICLES\\NFS\\");
+	string $sceneFileLocation = `file -q -loc`;
+	if ( $sceneFileLocation == "unknown")
+	{	
+		$savePath = `returnDialogResultCars $carsRootPath`;
+	}
+	if ($savePath == "")
+	{
+		string $scenePathTokens[]; clear $scenePathTokens;
+		int $numSceneTokens = `tokenize $sceneFileLocation "." $scenePathTokens`;
+		if ($numSceneTokens != 2)
+		{
+			$savePath = `returnDialogResultCars $carsRootPath`;
+		}
+		$savePath = `fromNativePath $scenePathTokens[0]`;	
+	}
+	int $exists = `file -q -ex ($savePath + ".fbx")`;
+	if ($exists)
+	{
+		int $isWritable = `filetest -w ($savePath + ".fbx")`;
+		if(!$isWritable)
+		{
+			displayP4CheckoutWindow {($savePath + ".fbx")};
+			error "Export File is read-only... please check-out in perforce or make \"writable\"";
+		}
+	}
+	select -r "|export";
+	select -add "|havokExport";
+	float $mayaVersion = `getApplicationVersionAsFloat`;
+	string $cmd = "";
+	if ($mayaVersion > 2009)
+	{
+		$cmd = ("FBXExport -f $savePath");
+	}
+	else
+	{
+		$cmd = ("file -pmt 0 -op \"\" -typ \"Fbx\" -es \"" + $savePath + "\"");
+	}
+	evalDeferred ($cmd);
+	return 1;
+}
+
+global proc string returnDialogResultCars(string $inputPath)
+{
+	string $dialogResult = `fileDialog -dm ($inputPath + "*.fbx") -m 1`;
+	string $pathTokens[]; clear $pathTokens;
+	int $numPathTokens = `tokenize $dialogResult "." $pathTokens`;
+	if ($numPathTokens == 1)
+		error "invalid file name, please add file extension \".fbx\"";
+	if ($pathTokens[$numPathTokens-1] != "fbx")
+		error "invalid File specified!";
+	if ($numPathTokens > 2)
+		error "File name cannot contain \".\"";
+	string $returnSavePath = $pathTokens[$numPathTokens-2];
+	return $returnSavePath;
+}
+
+
+global proc int displayP4CheckoutWindow(string $inputList[])
+{
+	if (`window -exists carsPerforceFileListWindow`)
+	{
+		deleteUI -window carsPerforceFileListWindow;
+	}
+	int $sizeOfList = 4;
+	if (`size $inputList` == 0)
+		return 0;
+	int $sizeOfList = `size $inputList`;
+	window -title "FBX File Checkout List" -toolbox 1 -widthHeight 300 $sizeOfList -resizeToFitChildren 1 carsPerforceFileListWindow;
+		columnLayout -adj 1 -cal "left" checkoutFileTabLayout;
+			text -l "" -h 5;
+			rowLayout -cw1 100 -numberOfColumns 1 -cal 1 "center";
+			string $thisList = `textScrollList -nr $sizeOfList -aas 1 -ams 0 perforceSelectionList`;
+			for ($eachLine in $inputList)
+			{
+				string $singleLine = `textScrollList -e -append $eachLine $thisList`;
+			}
+			setParent..;
+			text -l "" -h 5;
+			button -al "center" -l "Checkout Selected Read-Only Files in Perforce" -c "carsPerforceCheckoutListGen \"perforceSelectionList\"";
+
+	showWindow carsPerforceFileListWindow;
+	return 1;
+}
+
+
+
+global proc carsPerforceCheckoutListGen(string $scrollListName)
+{
+	string $selectedItems[] = `textScrollList -q -si $scrollListName`;
+	if (`size $selectedItems`== 0)
+		error "Nothing selected, select a file in the list and try again!";
+	for ($eachSelection in $selectedItems)
+	{
+		string $outPut = `system ("p4 edit " + $eachSelection)`;
+		print "\n";
+		print $outPut;
+		if (`gmatch $outPut "*can't*"`)
+			error "Could not complete opperation... check script editor for details!";
+		
+	}
+	if (`window -exists carsPerforceFileListWindow`)
+	{
+		deleteUI -window carsPerforceFileListWindow;
+	}
+
+}
+
+global proc carsDeleteBadNodes()
+{
+	deleteTurtleNodes;
+	fixModelNames 1;
+}
+
+global proc deleteTurtleNodes()
+{
+	string $turtleNodes[] = `ls ("Turtle*")`;
+	string $badNodes[]; clear $badNodes;
+	for ($eachNode in $turtleNodes)
+	{ 
+		if (`objectType $eachNode` == "unknown")
+		{
+			lockNode -lock off $eachNode;
+			delete $eachNode;
+			$badNodes = `stringArrayCatenate {$eachNode} $badNodes` ;
+		}
+	}
+	if (`size $badNodes` > 0)
+	{
+		for ($eachBadNode in $badNodes)
+		{
+			print ("Deleted \"" + $eachBadNode + "\" from scene\n");
+		}
+	}
+	else
+		print "No Turtle nodes found... ";
+}
+
+
+
+global proc buildCarToolboxUI()
+{
+	global string $carToolBoxVersion;
+	global string $duplicateEdgeControls[];
+	waitCursor -state on;
+	string $p4RootPath = "";
+	string $p4MenuPath = "";
+	string $anyMeshes[] = `ls -type "mesh"`;
+	$anyMeshes = `returnValidShapes $anyMeshes`;
+	if (`size $anyMeshes` != 0)
+		catchQuiet (`bakePartialHistory $anyMeshes`);
+	int $visualPanelState = 0;
+	int $importPanelState = 0;
+	int $materialPanelState = 0;
+	int $generalPanelState = 0;
+	int $modelPanelState = 0;
+	int $OSPanelState = 1;
+	int $p4PathOverrideCBState = 0;
+	int $p4PathOverrideCBState = 0;
+	float $grnBtnFt[] = {0.35, 1.0, 0.0};
+	float $rdBtnFt[] = {1.0, 0.02, 0.0};
+	float $orBtnFt[] = {1.0, 0.4, 0.0};
+	float $buttonClr[]; clear $buttonClr;
+	if ( `window -exists carToolBoxUI` )
+	{
+		$visualPanelState = `frameLayout -cl 1 -q visualPanelFrame`;
+		$importPanelState =`frameLayout -cl 1 -q importPanelFrame`;
+		$materialPanelState = `frameLayout -cl 1 -q materialPanelFrame`;
+		$generalPanelState = `frameLayout -cl 1 -q generalPanelFrame`;
+		$modelPanelState = `frameLayout -cl 1 -q modelPanelFrame`;
+		$OSPanelState = `frameLayout -cl 1 -q OSPanelFrame`;
+		$p4PathOverrideCBState = `checkBox -q -v p4RootOverRideCB`;
+		$p4MenuPath = `textField -q -tx p4PathOverrideTF`;
+		deleteUI -window carToolBoxUI;
+	}
+	if ($p4PathOverrideCBState)
+	{
+		if ($p4MenuPath == "")
+		{
+			$p4RootPath = `getP4UserInfo 1 `;
+		}
+		else
+		{
+			$p4RootPath = $p4MenuPath;
+		}
+	}
+	else
+		$p4RootPath = `getP4UserInfo 0 `;
+	window  -width 265 -height 80 -iconName $carToolBoxVersion -title $carToolBoxVersion -toolbox 1 -sizeable 1 -resizeToFitChildren 1 carToolBoxUI;
+	columnLayout -adj 1 -cal "center" -co "both" 2;
+	text -h 3 -l "";
+		frameLayout -bv 1 -mw 1 -bs "etchedIn" -cll 1 -cl $visualPanelState -l "Visual Tools" visualPanelFrame;
+			columnLayout -adj 0 -cal "center";
+			text -h 2 -l "";
+			rowLayout -cl2 "center" "center" -cw2 131 131 -numberOfColumns 2;
+				button -w 131 -l "Vert Colour ON" -c "toggleVertexColourDisplayOn; colorSetDisplay 1 \"-colorMaterialChannel\" None;";
+				button -w 131 -l "Vert Colour OFF" -c "toggleVertexColourDisplayOff;  colorSetDisplay 1 \"-colorMaterialChannel\" Diffuse;";
+			setParent..;
+			columnLayout -adj 1 -cal "center" -co "both" 2;
+			button -w 260 -ann "Shifts LODs into + X direction for viewing" -l "Shift LODs" -c "shiftLODsApart";
+			text -h 5 -l "";
+			rowLayout -cl4 "center" "center" "center" "center" -cw4 60 100 45 40 -numberOfColumns 4;
+				checkBox -w 60 -l "Enable" -v 0 -onc "edableKitSwapper" -ofc "disableKitSwapper" toggleKitPartCB;
+				radioButtonGrp -sl 1 -rat 1 "top" 4 -rat 2 "top" 4 -l1 "Base" -l2 "Kit" -w 100 -cw2 50 50 -nrb 2 -on1 "kitSwapperHideKit" -on2 "kitSwapperShowKit" kitSelectionRBG;
+				text -w 45 -l "Part Num:";
+				optionMenu -ann "Select Part Number to Display" -l "  " -cc "kitSwapperPartSelector" selectionSetNameOptionMenu;
+					menuItem -l "00";
+					menuItem -l "01";
+					menuItem -l "02";
+					menuItem -l "03";
+					menuItem -l "04";
+					menuItem -l "05";
+					menuItem -l "06";
+					menuItem -l "07";
+					menuItem -l "08";
+					menuItem -l "09";
+					menuItem -l "10";
+					menuItem -l "11";
+					menuItem -l "12";
+					menuItem -l "13";
+					menuItem -l "14";
+					menuItem -l "15";
+					menuItem -l "16";
+					menuItem -l "17";
+					menuItem -l "18";
+					menuItem -l "19";
+					menuItem -l "20";					
+				setParent..;
+			text -l "" -h 5;
+		setParent -top ;
+		text -h 5 -l "";
+		frameLayout -bv 1 -mw 1 -bs "etchedIn" -cll 1 -cl $importPanelState -l "Import/Scene Validation" importPanelFrame;
+			columnLayout -adj 0 -cal "center";
+				rowLayout -cl2 "center" "center" -cw2 130 130 -numberOfColumns 2;
+					if (`setCarOrientation 0` == 1)
+						$buttonClr = $rdBtnFt;
+					else
+						$buttonClr = $grnBtnFt;	
+					if (`setCarOrientation 0` == 2)
+						$buttonClr = $orBtnFt;
+					button -bgc $buttonClr[0] $buttonClr[1] $buttonClr[2] -w 130 -l "Set Car Orientation" -ann "Turns car direction down the + Z Axis" -c "setCarOrientation 1; buildCarToolboxUI";
+					if (`cleanCarTransforms 0`)
+						$buttonClr = $rdBtnFt;
+					else
+						$buttonClr = $grnBtnFt;
+					button -bgc $buttonClr[0] $buttonClr[1] $buttonClr[2] -w 130 -l "Clean Transforms" -ann "Cleans and freezes all Valid Transform, Rotation, and Scale Values" -c "cleanCarTransforms 1";
+				setParent ..;
+				rowLayout -cl2 "center" "center" -cw2 130 130 -numberOfColumns 2;
+					button -w 130 -l "Setup Car Hierarchy" -ann "Sorts hierarchy of geo into \"export\", \"ignore\", and LOD groups" -c "setupCarHierarchy";
+					button -w 130 -l "Fix Geo Names" -ann "Removes LOD Suffix and rebuilds Shape Node names according to LODs" -c "fixModelNames 0; buildCarToolboxUI;";
+				setParent ..;
+				rowLayout -cl2 "center" "center" -cw2 130 130 -numberOfColumns 2;
+					if (`findMissingLODMeshes 0`)
+						$buttonClr = $rdBtnFt;
+					else
+						$buttonClr = $grnBtnFt;
+					button -bgc $buttonClr[0] $buttonClr[1] $buttonClr[2] -w 130 -l "Validate LOD Geo" -ann "Scans scene for LODs with missing counterparts" -c "findMissingLODMeshes 1";
+					if (`cleanCarUVSets 0`)
+						$buttonClr = $rdBtnFt;
+					else
+						$buttonClr = $grnBtnFt;	
+					button -bgc $buttonClr[0] $buttonClr[1] $buttonClr[2] -l "Clean UV Sets" -w 130 -ann "Removes any UV Set that isnt \"map1\" or \"dirt\" and copies MAX UVs to correct UV Map" -c "cleanCarUVSets 1";
+				setParent ..;
+
+				rowLayout -cl2 "center" "center" -cw2 130 130 -numberOfColumns 2;
+					button -w 130 -l "Fix Wheels" -ann "Process wheels/discs/calipers from Max to Maya" -c "processAllSceneWheels";
+					if (`clearMiscAttributes 0`)
+						$buttonClr = $rdBtnFt;
+					else
+						$buttonClr = $grnBtnFt;
+					button -bgc $buttonClr[0] $buttonClr[1] $buttonClr[2] -w 130 -l "Clean Attributes" -ann "Cleans all geo in scene of old un-needed Attributes" -c "clearMiscAttributes 1; buildCarToolboxUI;"; 
+				setParent ..;
+				rowLayout -cl2 "center" "center" -cw2 130 130 -numberOfColumns 2;
+					button -w 130 -ann "Scans selection and returns all faces with no Shading Group attached to them" -l "Missing Mat Faces" -c "selectFacesWithoutShadingGroup 1";
+					button -w 130 -l "Delete Bad Nodes" -c "carsDeleteBadNodes";
+				setParent ..;
+				text -l "" -h 5;
+			setParent -top;
+			text -l "" -h 5;
+		frameLayout -bv 1 -mw 1 -bs "etchedIn" -cll 1 -cl $materialPanelState -l "Material/Texture Tools" materialPanelFrame;
+			columnLayout -adj 0 -cal "center";
+				rowLayout -cl2 "center" "center" -cw2 130 130 -numberOfColumns 2;
+					if (`paintCarVertexColours 0`)
+						$buttonClr = $rdBtnFt;
+					else
+						$buttonClr = $grnBtnFt;	
+					button -w 130 -bgc $buttonClr[0] $buttonClr[1] $buttonClr[2] -l "Auto Paint Vtx Colours" -ann "Paints All Glass and Mask textures with White and Black Values" -c "paintCarVertexColours 1; buildCarToolboxUI";
+					if (`collapseMaterials 0`)
+						$buttonClr = $rdBtnFt;
+					else
+						$buttonClr = $grnBtnFt;	
+					button -bgc 0.35 1 0 -w 130 -l "Combine Materials" -ann "Combines all materials in Hypershade that have common names" -c "collapseMaterials 1; buildCarToolboxUI";
+				setParent ..;
+				rowLayout -cl2 "center" "center" -cw2 180 80 -numberOfColumns 2;
+					string $missingTextures[] = `scanFileNodePaths 0`;
+					int $matTest = `rebuildCarMaterials 0`;
+					string $popupInfo = "Rebuilds materials based on Frostbite's .dbx file. GREEN = All Clear";
+					if ($matTest == 1)
+					{
+						$popupInfo = "Rebuilds materials based on Frostbite's .dbx file. RED = Invalid Material Number, run tool to correct!";
+						$buttonClr = $rdBtnFt;
+					}
+					if ($matTest == 2)
+					{
+						$popupInfo = "Rebuilds materials based on Frostbite's .dbx file. ORANGE = Scene contains Temporary Materials that should be deleted or corrected manually!";
+						$buttonClr = $orBtnFt;
+					}
+					else
+						$buttonClr = $grnBtnFt;
+					button -bgc $buttonClr[0] $buttonClr[1] $buttonClr[2] -w 180 -l "Rebuild Materials" -ann $popupInfo -c "startMaterialRebuilder";
+
+					if (`size $missingTextures` != 0)
+						button -bgc $orBtnFt[0] $orBtnFt[1] $orBtnFt[2] -w 80 -l "File Paths" -ann "Scans file paths and returns a list of invalid File Node paths from the Frostbite .dbx file" -c "scanFileNodePaths 1";
+					else
+						button -bgc $grnBtnFt[0] $grnBtnFt[1] $grnBtnFt[2] -w 80 -l "File Paths" -ann "Scans file paths and returns a list of invalid paths in the .dbx file" -c "scanFileNodePaths 1";
+				setParent..;
+				text -h 3 -l "";
+				button -w 260 -l "Select Mat Faces" -ann "Selects all faces that have selected material applied (respects isolated objects)" -c "selectObjectsWithMaterial";
+				text -l "" -h 5;
+			setParent -top;
+		text -h 5 -l "";
+		frameLayout -bv 1 -mw 1 -bs "etchedIn" -cll 1 -cl $modelPanelState -l "Modeling Tools" modelPanelFrame;
+		string $tabLayout = `tabLayout modelingToolsTabLayout`;
+			string $modelPanel1ColumnLayout = `columnLayout -adj 0 -cal "center" modelToolsColumnLayout`;
+				//frameLayout -lv 0 -cll 0 -bs "etchedIn" seamToolBorder;
+					columnLayout -adj 0 -cal "center";
+						rowLayout -cl2 "center" "center" -cw2 128 128 -numberOfColumns 2;
+							button -w 128 -l "Create Edge Ring" -ann "Adds a looped edge around the selected Edges" -c "splitAroundEdgeSelection" edgeRingLoopButton;
+							button -w 128 -l "Create Duplicate Edges" -ann "Adds edges on each side of selected contiguous edges" -c "duplicateEdgeToolCreate" dupeEdgeButton;
+						setParent..;
+						floatSliderGrp -pre 3 -s .01 -l "Distance" -cw3 60 40 160 -w 256 -field true -min 0 -max 1 -v .5 -ann "Relative distance for extra edges" -dc "duplicateEdgeFloatSlider 1" -cc "duplicateEdgeFloatSlider 0" splitFloatSlider;
+						rowLayout -cl4 "center" "center" "center" "center" -cw4 60 45 100 51 -numberOfColumns 4;
+							text -l "  Normals" -h 22 -w 60;
+							intField -cc "duplicateEdgeToolIntField" -ann "Set Normal angle for new and selected edges" -w 40 -v 180 normalEdgeIntField;
+							radioButtonGrp -sl 2 -rat 1 "top" 4 -rat 2 "top" 4 -l1 "Rel" -l2 "Abs" -w 100 -cw2 50 50 -nrb 2 -onc "changeOffsetTypeEdgeTool" splitTypeRBG;
+							button -w 51 -l "Clear" -ann "Deletes history and severs connection to created edges." -c "duplicateEdgeToolLock" edgeToolsLockButton;
+						setParent..;
+					setParent..;
+					text -l "" -h 6;
+				//setParent..;
+			setParent..;
+			string $modelPanelColumnLayout = `columnLayout -adj 0 -cal "center"`;
+				rowLayout -h 40 -cl4 "center" "center" "center" "center" -cw4 52 52 52 100 -numberOfColumns 4;
+					floatField -ann "Center edge selection tollerance" -w 45 -pre 3 -v 0.02 lineMeanFloatField;
+					floatField -ann "Center edge indent depth" -w 45 -pre 3 -v -0.015 indentFloatField;
+					floatField -ann "Seam width" -w 45 -pre 3 -v 0.08 bevelWidthFloatField;
+					button -w 100 -l "Create Seam" -c "createDoorSeamProc";
+				setParent..;
+				text -l "" -h 2;
+				rowLayout -cl4 "left" "center" "center" "right" -cw4 60 70 70 60 -numberOfColumns 4;
+					checkBox -w 60 -l "Merge" -v 1 carsMirrorAxisCB;
+					button -w 70 -l "Mirror" -c "carsMirrorGeoAxis";
+					button -w 70 -l "De-Mirror" -c "deMirrorSelectedGeo";
+					optionMenu -ann "Select Part Number to Display" -l "  " deMirrorAxisOM;
+						menuItem -l "X";
+						menuItem -l "Y";
+						menuItem -l "Z";
+				setParent..;
+				text -l "" -h 2;
+				button -h 22 -w 256 -l "Mirror UVs" -c "carsFlipUVHull";
+			setParent..;
+			string $modelPanel2ColumnLayout = `columnLayout -adj 0 -cal "center"`;
+				rowLayout -cl2 "center" "right" -cw2 200 60 -numberOfColumns 2;
+					button -w 200 -l "Layout Rim UVs" -c "carsAutoUVRims";
+					optionMenu -ann "Select Part Number to Display" -l "  " rimTypeSelectionOM;
+						menuItem -l "1";
+						menuItem -l "2";
+						menuItem -l "3";
+				setParent..;
+				button -w 260 -l "Select Duplicate Faces" -ann "Selects any faces that have no Shading Group attached to them" -c "returnDuplicateFaces 1";
+				text -l "" -h 4;
+				rowLayout -cl2 "center" "center" -cw2 130 130 -numberOfColumns 2;
+					button -ann "Fixes geo that has corrupt normals, or vertex colours" -w 130 -l "Fix Broken Geo" -h 22 -c "carsFixBrokenGeo";
+					button -ann "Combines all selected geo with the last selection, renames and parents it" -w 130 -l "Combine Selected" -h 22 -c "carsCombineSelectedGeo";
+				setParent ..;
+			setParent -top;
+			tabLayout -e -tl $modelPanel1ColumnLayout "Page 1" -tl $modelPanelColumnLayout "Page 2" -tl $modelPanel2ColumnLayout "Page 3" $tabLayout;
+		text -h 5 -l "";
+		frameLayout -bv 1 -mw 1 -bs "etchedIn" -cll 1 -cl $generalPanelState -l "General Tools" generalPanelFrame;
+			columnLayout -adj 0 -cal "center";
+				text -h 5 -l "";
+				text -l "   Replace this text...              With this text!";
+				rowLayout -cl2 "center" "center" -cw2 130 130 -numberOfColumns 2;
+					textField -w 130 -ann "Enter text to search for in this field! ^ = start of string, $ = end of string, eg. \"^TRF\" or \"_A$\"" replaceThisTextTF;
+					textField -w 130 -ann "Enter text to replace above text with in this field!" withThisTextTF;
+				setParent ..;
+				button -w 260 -l "Replace Text" -ann "Enter the text in the fields above and press this button to replace text on multiple selections" -c "replaceTextNamesOnSelection";
+				text -h 3 -l "";
+				rowLayout -cl4 "center" "center" "center" "center" -cw4 135 42 42 40 -numberOfColumns 4;
+					button -ann "Scans selected geo for Symmetry, if two objects are selected, they will be compared" -w 130 -l "Symmetry Checker" -c "scanSelectionForSymmetry";
+					floatField -ann "Vert Scanning Tollerance" -w 40 -pre 3 -v 0.02 tolleranceValueCB;
+					floatField -ann "Z axis snap Tollerance" -w 40 -pre 2 -v 0.05 centerTolleranceValueCB;
+					checkBox -ann "Move \"-X\" Verts to \"+X\" Mirror position" -w 40 -l "Fix" -v 0 fixSymmetryCB;
+				setParent ..;
+				text -h 3 -l "";
+				button -w 260 -l "Car LOD Layers Setup" -c "setupCarLODLayers";
+				text -h 3 -l "";
+				rowLayout -cl2 "center" "center" -cw2 180 80 -numberOfColumns 2;
+					button -w 180 -l "Auto UV Tool" -ann "Starts Auto UV Toolbox" -c "startAutoUVTool";
+					button -w 80 -l "Clear UV Lock" -ann "Clears the UV Tool Lock *** CAUTION - May break UV Tool! ***" -c " $inUVEditMode = 0; ";
+				setParent..;
+				rowLayout -cl2 "center" "center" -cw2 130 130 -numberOfColumns 2;
+					button -w 130 -l "Car Damage Toolbox" -c "source \"NFS/carDamageToolbox.mel\"";
+					button -w 130 -l "Car Lighting Toolbox" -c "source \"NFS/carLightingToolbox.mel\"";
+				setParent..;
+				text -h 3 -l "";
+				button -w 260 -l "Export FBX File" -c "carsExportSceneFBX";
+				text -h 3 -l "";
+				button -w 260 -l "Sync Tool" -ann "Force Syncs all NFS MEL Scripts" -c "p4SyncCarToolBox";
+				text -h 3 -l "";
+				rowLayout -cl2 "center" "right" -cw2 180 70 -numberOfColumns 2;
+					button -w 170 -l "Sync Raw Data Folder" -ann "P4 Sync Raw folder containing all Maya models and textures" -c "if (`checkBox -q -v forceSyncRawFolderCB`) p4SyncSourceDataFolder 1; else p4SyncSourceDataFolder 0;";
+					checkBox -w 50 -l "Force" -v 0 forceSyncRawFolderCB;
+				setParent..;
+				text -h 3 -l "";
+			setParent-top ;
+		text -h 5 -l "";
+		frameLayout -bv 1 -mw 1 -bs "etchedIn" -cll 1 -cl $OSPanelState -l "Outsource Options" OSPanelFrame;
+			columnLayout -adj 0 -cal "center";
+				text -h 5 -l "";
+				rowLayout -cl3 "center" "center" "center" -cw3 105 25 130 -numberOfColumns 3;
+					text -l "  P4 Path Override";
+					checkBox -l "" -ann "Override default P4 Path" -v $p4PathOverrideCBState p4RootOverRideCB;
+					textField -w 130 -ann "Check Override option, and enter path to P4 Root (eg. D:\\root\\)" -tx $p4RootPath p4PathOverrideTF;
+				setParent ..;
+				text -h 5 -l "";
+			setParent-top ;
+		text -h 3 -l "";
+		button -bgc .9 .9 0 -l "Refresh Validation Info" -w 260 -ann "Refreshes all Validation Buttons in Toolbox" -c "buildCarToolboxUI";
+		setParent -top;
+	showWindow carToolBoxUI;
+	waitCursor -state off;
+}
+buildCarToolboxUI;

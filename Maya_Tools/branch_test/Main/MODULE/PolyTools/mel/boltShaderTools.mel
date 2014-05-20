@@ -1,0 +1,2164 @@
+
+//shader procs
+
+//requires boltGlobalProcs
+
+source boltGlobalProcs;
+source boltMaterialLibraryBrowser;
+
+
+global proc boltDoSelShader(string $material, string $objects[])
+// selects polys in specified objects with the specified shader
+{
+	if ($material == "") return;
+	//quit if no material specced.
+
+	string $sgs[] = `getSGFromMaterial $material`;
+	//work out its shading group
+
+	string $sg;
+	string $faceList[] = {};
+
+	for ($sg in $sgs)
+	{
+		string $newFaces[] = `sets -q $sg`;
+		$faceList = `stringArrayCatenate $newFaces $faceList`;
+	}
+	//get a list of all faces from all sgs.
+
+
+	if (`size($objects)` == 0)
+	{
+		$objects = `ls -hilite`;
+	}
+	//get a list of selected or highlighted objects
+
+	if (`size($objects)` == 0)
+	{
+		select $faceList;
+	}
+	//if no objects selected, select all faces with the shader
+
+	else
+	{
+		string $shapes[] = {};
+		for ($object in $objects)
+		{
+			string $shape[] = `boltShaderToolsGetShapes $object`;
+			$shapes = `stringArrayCatenate $shapes $shape`;
+		}
+		//get a list of all shapes for selected objects
+
+		$objects = `stringArrayCatenate $shapes $objects`;
+		$objects = `ls $objects`; //convert to short names 
+		//combine shapes and object lists
+		//(faces returned by SGs can be named after either transforms or shapes)
+
+		string $face;
+		string $filteredFaceList[] = {};
+
+		for ($face in $faceList)
+		//check though all faces
+		{
+			string $faceToCheck = `match "^[^\.]*" $face`	;
+			//get the shape/transform name of the face
+
+			if (`sFindItem $objects $faceToCheck` != -1)
+			//check whether this shape/transform is selected
+			{
+				sAppend $filteredFaceList $face;
+				//if it is then add to the list to select
+			}
+
+		select $filteredFaceList;
+		}
+	}
+
+
+}
+
+
+
+global proc string[] boltGetUsedShaders()
+//returns an array of shaders actually used on geometry in the scene
+{
+	string $shaders[] = `ls -materials`;
+	string $usedShaders[] = {};
+
+	for ($shader in $shaders)
+	{
+		string $conns[]={};
+
+		if (`attributeExists "outColor" $shader`)
+		{
+			$conns = `listConnections ($shader + ".outColor")`;
+		}
+		else if (`attributeExists "oc" $shader`)
+		{
+			$conns = `listConnections ($shader + ".oc")`;
+		}
+
+		if(size($conns) == 1)
+		{
+			string $allSetMembers[] = `sets -q $conns[0]`;
+			if (size($allSetMembers)>0)
+			{
+				$usedShaders[size($usedShaders)] = $shader;
+			}
+		}
+    }
+    $usedShaders = `stringArrayRemoveDuplicates $usedShaders`;
+	//remove duplicates
+
+    return $usedShaders;
+}
+
+
+global proc string[] boltShaderUsedOn(string $shader)
+//returns an array of objects using the specified shader
+{
+	//string $shapes[] = `ls -geometry`;
+
+    string $conns[] = `getSGFromMaterial $shader`;
+	//Find all shading groups whose members are assigned to $shader
+
+	string $allSetMembers[] = {};
+
+	if(size($conns) > 0)
+	{
+		for ($c in $conns)
+		{
+			string $newSetMembers[] = `sets -q $c`;
+			$allSetMembers = `stringArrayCatenate $allSetMembers $newSetMembers`;
+		}
+		//get sg members
+	}
+
+	for ($i=0; $i<size($allSetMembers); $i++)
+	{
+		if (`gmatch $allSetMembers[$i] "*.f*"`)
+		{
+			$allSetMembers[$i] = `match "^[^\.f]*" $allSetMembers[$i]`;
+		}
+	}
+	//strip any face info
+
+	$allSetMembers = `stringArrayRemoveDuplicates $allSetMembers`;
+
+	for ($i=0; $i<size($allSetMembers); $i++)
+	{
+		if (`nodeType $allSetMembers[$i]` != "transform")
+		{
+			string $transform[] = `listRelatives -parent $allSetMembers[$i]`;
+			$allSetMembers[$i] = $transform[0];
+		}
+	}
+	//ensure everything returned is a transform node
+
+   return $allSetMembers;
+}
+
+
+
+global proc string[] boltGetShaderFiles(string $shaders[])
+//returns an array of unique texture files used by a list of shaders
+{
+
+	string $files[] = {};
+
+	for ($shader in $shaders)
+	{
+		string $shaderFiles[] = `listConnections -type "file" $shader`;
+		//get list of files used
+
+		$files = `stringArrayCatenate $files $shaderFiles`;
+	}
+
+	$files = `stringArrayRemoveDuplicates $files`;
+	//remove duplicates
+
+	return $files;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+global proc boltRefreshShaders()
+//refreshes SG links all meshes - fixes lod shader problems
+{
+
+	string $meshes[] = `ls -type mesh`;
+
+	for ($shape in $meshes)
+	{
+		float $startTime = `timerX`;
+
+		boltRefreshShader $shape;
+
+		print ("TIME TAKEN: " + `timerX -startTime $startTime` + "\n");
+	}
+}
+
+global proc boltRefreshShader(string $shape)
+{
+	if (`match "ShapeOrig" $shape` != "ShapeOrig")
+	//hack to prevent blendshape "orig" shapes being done
+	{
+		print ("\n processing shape: " + $shape);
+
+		float $startTime = `timerX`;
+
+		string $sgs[] = `getSGsFromShape $shape`;
+		//get sgs used by shape
+
+		for ($i=0; $i < size($sgs); $i++)
+		{
+			eval("string $faces" + $i + "[] = `sets -q " + $sgs[$i] + "`");
+		}
+		//get a list of all faces from all sgs used by the shape.
+
+		print ("TIME TAKEN: " + `timerX -startTime $startTime` + "\n");
+		float $startTime = `timerX`;
+
+		print ("\n reseting shading groups on shape: " + $shape);
+		sets -e -forceElement initialShadingGroup $shape;
+		//reset to initial shading group
+
+		print ("TIME TAKEN: " + `timerX -startTime $startTime` + "\n");
+
+
+		print "\n SGs removed";
+
+		for ($i=0; $i < size($sgs); $i++)
+		{
+			float $startTime = `timerX`;
+			print ("\nApplying " + $sgs[$i]);
+			eval( "catch(`sets -e -forceElement " + $sgs[$i] + " $faces" + $i + "`)" );
+			//catch fixes crash on rallycar07 due to corrupt nodes in scene
+			print ("TIME TAKEN: " + `timerX -startTime $startTime` + "\n");
+		}
+		print ("\nRefresh Complete: " + $shape);
+
+
+
+	}
+
+	print "\nRefresh complete";
+}
+
+
+
+
+
+global proc boltTidyShaders()
+//removes redundant SG links
+
+{
+	
+	print "\nRunning boltTidyShaders - removing redundant SG links...";
+	
+	string $objects[] =`ls -transforms`;
+	string $obj;
+
+	for ($obj in $objects)
+	//process all selected objects
+	{
+		string $shape[] = `boltShaderToolsGetShapes $obj`;
+		string $sgs[]= `getSGsFromShape $shape[0]`;
+		//get list of sgs for current object
+
+		string $sg;
+
+		string $shortShapeName = `match "[^|]*$" $shape[0]`;
+
+
+		for ($sg in $sgs)
+		{
+			string $sgItems[] = `sets -q $sg`;
+
+			int $i;
+			for ($i = 0; $i < `size($sgItems)`; $i++)
+			{
+				$sgItems[$i] = `rootNode $sgItems[$i]`;
+			}
+			//strip all .* suffixes of everything in the list
+
+			if ((`sFindItem $sgItems $shortShapeName` == -1) && (`sFindItem $sgItems $obj` == -1))
+			//check items in sg for shape or object name
+			{
+
+				string $plugs[] = `listConnections -destination true -source false -plugs on -type "shadingEngine" $shape[0]`;
+                for($p in $plugs)
+				{
+					if(startsWith($p, $sg))
+					{
+						string $src[] = `listConnections -plugs on $p`;
+						if(size($src) > 0)
+						{
+							disconnectAttr $src[0] $p;
+						}
+					}
+				}
+
+				string $plugs[] = `listConnections -destination false -source true -plugs on -type "shadingEngine" $shape[0]`;
+				for($p in $plugs)
+				{
+					if(startsWith($p, $sg))
+					{
+						string $dest[] = `listConnections -plugs on $p`;
+						if(size($dest) > 0)
+						{
+							disconnectAttr $p $dest[0];
+						}
+					}
+				}
+
+				print ("DELETED unused connections from " + $sg + " to " + $shape[0] + "!\n");
+
+
+				//if none found remove sg links to object
+			}
+		}
+	}
+}
+
+
+global proc boltGetShader()
+// gets the shader of the currently selected polygon, and displays in the option menu
+{
+	string $selected[] = `ls -sl -fl`;
+	//get selection
+
+	if (`match "\\.f\\[" $selected[0]` == "" )
+	{
+		error "Please select a face first";
+	}
+	//make sure a face is selected
+	else
+	{
+		string $material = `getFacetSG $selected[0]`;
+		//attempt to find the sg for that face
+
+		if ($material == "")
+		{
+			string $shape = `match "^[^\.]*" $selected[0]`;
+			string $shapes[] = `boltShaderToolsGetShapes $shape`;
+			$shape = $shapes[0];
+			string $materials[] = `getSGsFromShape $shape`;
+			$material = $materials[0];
+		}
+		//if no face sg, find shape sg
+
+		$material = `getMaterialFromSG $material`;
+		print ("face uses material: " + $material);
+
+
+		string $items[] = `optionMenu -q -itemListShort boltOptionMenuShaders`;
+		$index  = `sFindItem $items ("boltShaderList" + $material)`;
+		optionMenu -e -select ($index+1) boltOptionMenuShaders;
+	}
+}
+
+global proc string boltGetMaterialOfPoly(string $poly)
+{
+	string $material = "";
+	$material = `getFacetSG $poly`;
+	//attempt to find the sg for that face
+
+	if ($material == "")
+	{
+		string $shape = `match "^[^\.]*" $poly`;
+		string $shapes[] = `boltShaderToolsGetShapes $shape`;
+		$shape = $shapes[0];
+		string $materials[] = `getSGsFromShape $shape`;
+		$material = $materials[0];
+	}
+	//if no face sg, find shape sg
+
+	//print ("\n getting materialfromSG " + $material + " poly: " + $poly);
+	if ($material != "") $material = `getMaterialFromSG $material`;
+
+	return $material;
+}
+
+
+
+
+global proc boltSelShader()
+// selects polys in selected objects with the currently selected shader
+{
+	string $material = `boltGetSelectedFromShaderOptionMenu`;
+	//get selected material
+
+	string $objects[] = `ls -sl -transforms`;
+
+	boltDoSelShader $material $objects;
+}
+
+
+
+
+
+global proc boltSetShader ()
+//sets the shader of the currently selected faces to that in the option menu.
+{
+	string $sels[] = `ls -sl -fl`;
+	string $selection[]; //contains the final filtered face selection
+
+	for ($sel in $sels)
+	{
+		if (`gmatch $sel "*.f\\[*\\]"`)
+		{
+			$selection[size($selection)] = $sel;
+			print "\nFace Stored!";
+		}
+		//store faces
+		else
+		{
+			if (`nodeType $sel` == "transform")
+			{
+				string $newFaces[] = `ls -fl ($sel+".f[*]")`;
+				$selection = `stringArrayCatenate $selection $newFaces`;
+			}
+			//convert objs to faces and add to list
+		}
+	}
+	//make sure only faces are selected
+
+	string $material = `boltGetSelectedFromShaderOptionMenu`;
+	//get selected material
+
+	string $sg[] = `getSGFromMaterial $material`;
+	//work out its shading group
+
+	print ("faces set to shading group:" + $sg[0] + ", material: " + $material);
+
+	print ("\n" + $sg[0] + "\n");
+	//print $selection;
+
+	sets -fe $sg[0] $selection;
+
+
+}
+
+
+global proc string boltGetSelectedFromShaderOptionMenu()
+//returns the name of the selected item in the shader option menu
+{
+	string $items[] = `optionMenu -q -itemListShort boltOptionMenuShaders`;
+	int $selected = `optionMenu -q -select boltOptionMenuShaders`;
+
+	string $item = $items[$selected-1];
+	$item = `substring $item 15 1000`;
+
+	return $item;
+}
+
+
+
+
+global proc boltEdiShader ()
+{
+	string $material = `boltGetSelectedFromShaderOptionMenu`;
+	//get selected material
+
+	showEditor $material;
+	//show the attribute editor
+}
+
+
+
+global proc Replaceshader2(string $oldShader, string $newShader)
+//replaces one shader in the scene with another
+//improved to reduce output spam and assign sg sets directly
+{
+	//print ("\nConverting " + $oldShader + " to " + $newShader);
+
+	if (!objExists($oldShader))
+	{
+		//print ("\nReplace shader error. Could not find original shader " + $oldShader);
+		return;
+	}
+		if (!objExists($newShader))
+	{
+		//print ("\nReplace shader error. Could not find original shader " + $newShader);
+		return;
+	}
+	//check shaders exist
+
+
+	string $conns[] = `getSGFromMaterial $oldShader`;
+	//Find all shading groups whose members are assigned to $oldshader
+
+	if(size($conns) > 0)
+	{
+		string $allSetMembers[] = {};
+
+		for ($c in $conns)
+		{
+			string $newSetMembers[] = `sets -q $c`;
+			$allSetMembers = `stringArrayCatenate $allSetMembers $newSetMembers`;
+		}
+		//get sg members
+
+		string $sg[] = `getSGFromMaterial $newShader`;
+
+		if (size($sg) == 0)
+		{
+			$sg[0] = ($newShader + "SG");
+			sets -renderable true -noSurfaceShader true -empty -name $sg[0];
+			//defaultNavigation -connectToExisting -source $newShader -destination $sg[0];
+			//connectNodeToNodeOverride($newShader, $sg[0]);
+			connectAttr -f ($newShader + ".outColor") ($sg[0] + ".surfaceShader");
+		}
+		//creates a new shading group if none was found
+
+		if (size($allSetMembers)>0)
+		{
+			//print ("\nSetmembers: "); print $allSetMembers;
+			//print ("\nSG: " + $sg[0]);
+			sets -e -forceElement $sg[0] $allSetMembers;
+		}
+	}
+}
+
+
+global proc boltReplaceShader (string $oldShader, string $newShader)
+//replaces one shader in scene with another
+{
+	select -cl;
+	if (objExists ($oldShader)) catchQuiet(`hyperShade -objects $oldShader`);
+	if (objExists ($newShader)) catchQuiet(`hyperShade -assign  $newShader`);
+}
+
+
+
+//procs below from http://www.ewertb.com
+
+global proc string[] getSGsFromShape( string $shape )
+// Description: Returns an array of the Shading Groups (shadingEngine
+//  nodes) responsible for shading the specified shape node.
+{
+  	string $shadingEngines[];
+
+ 	if ( `objExists $shape` )
+  	{
+    	string $dest[] = `listConnections -destination true -source false -plugs false -type "shadingEngine" $shape`;
+
+    	// listConnections can return duplicates within its list.
+    	// The select below is a quick trick to avoid dupes in the
+    	// returned array.
+    	if ( size( $dest ) )
+    	{
+      		string $select[] = `ls -sl`;
+      		select -r -ne $dest;
+      		$shadingEngines = `ls -sl`;
+      		select -r $select;
+    	}
+  	}
+	return $shadingEngines;
+}
+
+global proc string rootNode( string $object )
+// Description: Strips the dot-suffix of the specified string.
+{
+  string $buffer[];
+  tokenize $object "." $buffer;
+  return $buffer[0];
+}
+
+global proc float boltGetPoly3DArea(string $poly)
+//returns surface area of a 3d poly by iterating through triangles
+//may not work with concave quads
+{
+
+	string $objName = `match "^[^\.]*" $poly`;
+	string $ftv[] = `polyInfo -faceToVertex $poly`;
+	string $tokens[];
+	tokenize $ftv[0] " :\n\r" $tokens;
+	string $verts[] = {};
+	for ( $t = 2; $t < `size $tokens`; $t++ )
+	{
+  		$verts[`size $verts`] = ($objName + ".vtx[" + $tokens[$t] + "]");
+	}
+	int $noVerts = `size $verts`;
+	//get the verts and vertfaces in construction order
+
+	float $area3D = 0;
+
+	for ($i = 0; $i < $noVerts-2; $i++)
+	{
+		vector $v1 = `pointPosition -w $verts[$noVerts-1]`;
+		vector $v2 = `pointPosition -w $verts[$i]`;
+		vector $v3 = `pointPosition -w $verts[$i+1]`;
+
+		float $triArea = `boltGetTri3DArea $v1 $v2 $v3`;
+		$area3D = $area3D + $triArea;
+	}
+	return $area3D;
+}
+
+global proc float boltGetPolyUVArea(string $poly)
+//returns the UV area of a 3d poly by iterating through triangles
+//may not work with concave quads
+{
+	string $objName = `match "^[^\.]*" $poly`;
+	string $ftv[] = `polyInfo -faceToVertex $poly`;
+	string $tokens[];
+	tokenize $ftv[0] " :\n\r" $tokens;
+	string $polyNo = $tokens[1];
+	string $vfs[] = {};
+	for ( $t = 2; $t < `size $tokens`; $t++ )
+	{
+  		$vfs[`size $vfs`] 	 = ($objName + ".vtxFace[" + $tokens[$t] + "][" + $polyNo + "]");
+  	}
+	int $noVerts = `size $vfs`;
+	//get the vertfaces in construction order
+
+	float $area2D = 0;
+
+	for ($i = 0; $i < $noVerts-2; $i++)
+	{
+		string $uv[]={};
+		string $uvNames[]={};
+		$uv = `polyListComponentConversion -fromVertexFace -toUV $vfs[$noVerts-1]`; $uvNames[0] = $uv[0];
+		$uv = `polyListComponentConversion -fromVertexFace -toUV $vfs[$i]`; 			$uvNames[1] = $uv[0];
+		$uv = `polyListComponentConversion -fromVertexFace -toUV $vfs[$i+1]`; 		$uvNames[2] = $uv[0];
+
+		if ($uvNames[0]==""||$uvNames[1]==""||$uvNames[2]=="") return -1;
+		//return error if no uvs found
+
+		float $uvCoords1[] = `polyEditUV -q -u -v $uvNames[0]`;
+		float $uvCoords2[] = `polyEditUV -q -u -v $uvNames[1]`;
+		float $uvCoords3[] = `polyEditUV -q -u -v $uvNames[2]`;
+
+		vector $uv1 = <<$uvCoords1[0],$uvCoords1[1],0>>;
+		vector $uv2 = <<$uvCoords2[0],$uvCoords2[1],0>>;
+		vector $uv3 = <<$uvCoords3[0],$uvCoords3[1],0>>;
+
+		float $uvArea = `boltGetTri3DArea $uv1 $uv2 $uv3`;
+		$area2D = $area2D + $uvArea;
+	}
+	return $area2D;
+}
+
+
+global proc float boltGetTri3DArea(vector $v1, vector $v2, vector $v3)
+//uses heron's formula to return area of 3d triangle, given 3 points as vectors
+{
+	vector $d1 = $v1 - $v2;
+	vector $d2 = $v2 - $v3;
+	vector $d3 = $v3 - $v1;
+
+	float $e1 = sqrt(($d1.x*$d1.x)+($d1.y*$d1.y)+($d1.z*$d1.z));
+	float $e2 = sqrt(($d2.x*$d2.x)+($d2.y*$d2.y)+($d2.z*$d2.z));
+	float $e3 = sqrt(($d3.x*$d3.x)+($d3.y*$d3.y)+($d3.z*$d3.z));
+
+	float $s = (($e1+$e2+$e3)/2);
+
+	float $area = sqrt(($s-$e1)*($s-$e2)*($s-$e3)*$s);
+
+	return $area;
+}
+
+global proc boltShaderImportGUI()
+//gui for shader library and import tools
+{
+	if (`window -exists boltShaderImportWindow`) {deleteUI boltShaderImportWindow;}
+	//delete the window if it already exists
+
+	window -title "Shader Tools" -toolbox 1 boltShaderImportWindow;
+		scrollLayout;
+	    	columnLayout;
+	    		separator -style "in" -horizontal 1 -height 10 -width 250;
+	    		rowLayout -numberOfColumns 2 -cw 1 100 -cw 2 150;
+	    			text -label "Shader Library:";
+	    			optionMenu -ann "Select the shader to import" 	boltOptionMenuImportShaders;
+	    		setParent ..;
+	    		text -label " ";
+
+	    		rowLayout -numberOfColumns 2 -cw 1 100 -cw 2 150;
+	    			text -label "Scene Shaders:";
+	    			optionMenu -ann "Select the shader to replace" 	boltOptionMenuReplaceShaders;
+	    		setParent ..;
+	    		text -label " ";
+
+	    		checkBox -label "Preserve scene shader name"   	boltCheckBoxPreserveName;
+	    		checkBox -label "Preserve scene shader decal map"   	boltCheckBoxPreserveDecal;
+	    		checkBox -label "Preserve scene shader normal map"   	boltCheckBoxPreserveNorm;
+	    		checkBox -label "Preserve scene shader metalic mask"  boltCheckBoxPreserveMask;
+	    		checkBox -label "Preserve scene shader colours" boltCheckBoxPreserveColours;
+	    		checkBox -label "Preserve scene _LV numbers" 	-v 1 boltCheckboxPreserveLVs;
+	    		text -label " ";
+
+	    		button -height 20 -width 250 -label "Import Library Shader Into Scene" -command "boltImportShader `optionMenu -q -value boltOptionMenuImportShaders`" -ann "Imports the above shader into the scene" boltButtonImportShader;
+	    		button -height 20 -width 250 -label "Replace Scene Shader" -command "boltReplaceWithImportShaderGUI" -ann "Replaces the selected scene shader with the selected shader from the library" boltButtonReplaceWithImportShader;
+	    		button -height 20 -width 250 -label "Export selected scene shader" -command "boltSaveShader `optionMenu -q -value boltOptionMenuReplaceShaders` \"usr_\"" -ann "Exports the currently selected scene shader to disk" boltButtonExportShader;
+	    		text -label " ";
+
+	    		separator -style "in" -horizontal 1 -height 10 -width 300;
+
+	    		text -label " ";
+	    		button -height 20 -width 250 -label "Reload All FX Files" 	-command "boltReloadFXFiles" -ann "Reloads the fx files for all shaders in scene - fixes lighting bugs + black shaders" boltButtonReloadFX;
+	    		button -height 20 -width 250 -label "Link all shaders to environment" -command "boltLinkToEnv" -ann "Links all shaders to the happyjungle environment" boltButtonRelinkEnv;
+	    		button -height 20 -width 250 -label "Link all shaders to bodypaint_LV01" -command "boltConnectShaders \"bodypaint_LV01\"" -ann "Links all shader mud and damage settings to bp01" boltButtonLinkShaders;
+
+	    		//button -height 20 -width 250 -label "Auto convert MS1 shaders" -command "boltAutoReplaceShaders" -ann "Exports the currently selected scene shader to disk" boltButtonAutoConvertMS1;
+
+	    		text -label " ";
+	    		separator -style "in" -horizontal 1 -height 10 -width 300;
+	    		text -label "QUICK TEST:";
+
+	    		rowLayout -numberOfColumns 4 -cw 1 50 -cw 2 40 -cw 3 40 -cw 4 40;
+	    			text -label "Mud:";
+	    			button -height 20 -width 40 -label "Off" 	-command "boltSetShaderMud 0" -ann "Switch mud off on bodypaint_LV01" boltButtonMudOff;
+	    			button -height 20 -width 40 -label "Med" 	-command "boltSetShaderMud 0.5" -ann "Switch mud medium on bodypaint_LV01" boltButtonMudMed;
+					button -height 20 -width 40 -label "Full" -command "boltSetShaderMud 1" -ann "Switch mud on full on bodypaint_LV01" boltButtonMudFull;
+	    		setParent ..;
+
+	    		rowLayout -numberOfColumns 4 -cw 1 50 -cw 2 40 -cw 3 40 -cw 4 40;
+	    			text -label "Damage:";
+	    			button -height 20 -width 40 -label "Off" 	-command "boltSetShaderDamage 0" -ann "Switch dam off on bodypaint_LV01" boltButtonDamOff;
+	    			button -height 20 -width 40 -label "Med" 	-command "boltSetShaderDamage 0.5" -ann "Switch dam medium on bodypaint_LV01" boltButtonDamMed;
+					button -height 20 -width 40 -label "Full" -command "boltSetShaderDamage 1" -ann "Switch dam on full on bodypaint_LV01" boltButtonDamFull;
+	    		setParent ..;
+
+	    		text -label " ";
+	    		separator -style "in" -horizontal 1 -height 10 -width 300;
+	    		text -label "CGFX/MAYA SHADER CONVERSION:";
+
+	    		button -height 20 -width 250 -label "Convert CGFX to Maya Shaders (viewport)" -command "boltConvertAllCgfxShadersToMaya 0 0" -ann "Optimised for hires viewport display";
+	    		button -height 20 -width 250 -label "Convert CGFX to Maya Shaders (render)"	  -command "boltConvertAllCgfxShadersToMaya 1 1" -ann "Optimised for most accurate render results";
+	    		button -height 20 -width 250 -label "Switch back to CGFX Shaders"	  -command "boltSwitchBackToCgfxShaders" -ann "Looks for a CGFX version of all maya shaders in the scene, and switches back to it if found";
+
+
+	    		button -height 20 -width 250 -label "Delete Maya Shaders In Scene"	  -command "boltDeleteMayaShaders" -ann "Deletes maya versions of any CGFX Shaders found in the scene";
+	    		button -height 20 -width 250 -label "Delete CGFX Shaders In Scene"	  -command "boltDeleteCgfxShaders" -ann "Deletes all CGFX Shaders found in the scene";
+
+	    		text -label " ";
+	    		separator -style "in" -horizontal 1 -height 10 -width 300;
+	    		text -label "SOFTWARE VERTEX COLOUR DISPLAY + CONVERSION:";
+
+	    		button -height 20 -width 250 -label "Copy Alphas to new colour set"	  			-command "boltCreateColourSet \"occlusion_set\" \"-a\"" -ann "Copies the alpha channel into a new colour set - needed to view the occlusion in maya software shader";
+	    		button -height 20 -width 250 -label "Copy Alphas back into main colour set"	 	-command "boltDeleteOcclusionSet" -ann "Copies the alpha channel back into the main colour set, and deletes the occlusion colour set used by outsourcers";
+
+	    		text -label " ";
+
+	    		button -height 20 -width 250 -label "Show red vertex colours (mud)"	  		 -command "boltShowSoftwareColour 1" -ann "Shows red vertex colour channel";
+	    		button -height 20 -width 250 -label "Show green vertex colours (damage)"	 -command "boltShowSoftwareColour 2" -ann "Shows green vertex colour channel";
+	    		button -height 20 -width 250 -label "Show blue vertex colours (decal)"	  	 -command "boltShowSoftwareColour 3" -ann "Shows blue vertex colour channel";
+	    		button -height 20 -width 250 -label "Show occlusion colour set"	  			 -command "boltShowSoftwareColour 4" -ann "Shows occlusion_set colour set";
+	    		button -height 20 -width 250 -label "Show no vertex colours"	 			 -command "boltShowSoftwareColour 0" -ann "Shows original textured shaders";
+
+
+
+
+//	    		text -label " ";
+//	    		separator -style "in" -horizontal 1 -height 10 -width 300;
+//	    		text -label "BETA FIXES:";
+//
+//	    		rowLayout -numberOfColumns 3 -cw 1 90 -cw 2 60 -cw 3 60;
+//	    			text -label "New brake glows:";
+//	    			button -height 20 -width 60 -label "Square" 		-command "boltNewGlows 1";
+//	    			button -height 20 -width 60 -label "Circular" 	-command "boltNewGlows 0";
+//				setParent ..;
+//				text -label "       check uv mapping of glows";
+//				text -label "       - make sure full texture is being used";
+//				button -height 20 -width 250 -label "Set brake glows to medium mud" -command "boltSetBrakeGlowMudLevel" boltButtonSetBrakeGlowMudLevel;
+//
+//	    		button -height 20 -width 250 -label "Load new scratch/damage shaders" -command "boltAddDamageShaders";
+//
+//	    		text -label "       Note: You may want to convert extra shaders to receive";
+//	    		text -label "       damage and scratches- eg treadplate, exposed chassis";
+//	    		text -label "       rails etc. Just load in the new _damage version of the";
+//	    		text -label "       existing .fx file into the shader.";
+//
+//	    		button -height 20 -width 250 -label "Make sure new shaders are linked to environment" -command "boltLinkToEnv" -ann "Links all shaders to the environment";
+//	    		button -height 20 -width 250 -label "Link all shaders to bodypaint_LV01" -command "boltConnectShaders \"bodypaint_LV01\"" -ann "Links all shader mud and damage settings to bp01";
+//
+//	    		button -height 20 -width 250 -label "Delete game cameras" -command "boltDeleteGameCams";
+//
+
+
+			setParent ..;
+		setParent ..;
+	setParent ..;
+
+   boltUpdateImportShaderOptionMenu;
+   boltUpdateReplaceShaderOptionMenu;
+
+	showWindow boltShaderImportWindow;
+	//display the window
+
+}
+
+
+
+global proc boltDeleteGameCams()
+//deletes all CAM_* cameras from the scene
+{
+	string $gameCams[] = `ls -type "camera" "CAM_*"`;
+	string $gameCamsTransforms[] = `boltShapesToTransforms $gameCams`;
+	for ($cam in $gameCamsTransforms)
+	{
+		delete $cam;
+	}
+}
+
+
+
+global proc string[] boltGetMaterialsOnObj(string $obj)
+//returns a list of materials used by a given object (transform node)
+{
+	string $shapes[] = `listRelatives -type "mesh" $obj`;
+	string $sgs[] = `getSGsFromShape $shapes[0]`;
+	string $materials[] = {};
+	for ($sg in $sgs)
+	{
+		string $mat = `getMaterialFromSG $sg`;
+		if ($mat != "") 
+		{
+			$materials[size($materials)] = $mat;
+		}
+		else
+		{
+			print ("\nboltGetMaterialsOnObj() warning - no material found for shading group '" + $sg + "' on object '" + $obj +"'.");
+		}
+	}
+	return $materials;
+}
+
+
+global proc int boltIsMaterialNormalMapped(string $material)
+//returns 1 if specified material is normal mapped
+{
+	string $normalMapTechniques[] = {"NormalMapped", "NormalMappedDS", "NormalMappedGlass", "SolidNormalMapped"};
+
+	if ($material != "")
+	{
+		if (`nodeType $material` == "ATGMaterial")
+		//works by looking for a "NormalMap" binding.
+		{
+			string $attrs[] = `listAttr $material`;
+
+			if (`sFindItem $attrs "Mat_texture_NormalMap"` != -1)
+			{
+				return 1;
+			}
+		}
+
+		if (`nodeType $material` == "blinn")
+		//works on outsource maya materials
+		{
+			if (size(`listConnections ($material + ".normalCamera")`) > 0)
+			{
+				return 1;
+			}
+		}
+
+	}
+	return 0;
+}
+
+
+
+global proc string[] boltListNormalMappedPolygons(string $obj)
+//returns a list of polygons with normal mapped shaders on a given object
+{
+	string $normalMappedPolys[] = {};
+
+	print ("\n" + $obj);
+
+	int $noPolys[] = `polyEvaluate -face $obj`;
+	for ($i=0; $i<$noPolys[0]; $i++)
+	//go through all polys
+	{
+		string $poly = ($obj + ".f[" + $i + "]");
+		string $material = `boltGetMaterialOfPoly $poly`;
+
+		if (`boltIsMaterialNormalMapped $material`)
+		{
+			$normalMappedPolys[size($normalMappedPolys)] = $poly;
+			//store normal mapped polys
+		}
+	}
+	return $normalMappedPolys;
+}
+
+
+global proc string[] boltListNormalMappedPolygons2(string $obj)
+//returns a list of polygons with normal mapped shaders on a given object
+{
+	//print ("\n" + $obj);
+
+	string $normalMappedPolys[] = {};
+	string $shapes[] = `listRelatives -type "mesh" -children $obj`;
+
+	string $sgs[] = `getSGsFromShape $shapes[0]`;
+
+	for ($sg in $sgs)
+	{
+		if (`boltIsMaterialNormalMapped (getMaterialFromSG($sg))`)
+		{
+			string $sgPolys[] = `sets -q $sg`;
+			for ($sgPoly in $sgPolys)
+			{
+				if ( (`gmatch $sgPoly ($obj + ".f*")`) || (`gmatch $sgPoly ($shapes[0] + ".f*")`) )
+				{
+					$normalMappedPolys[size($normalMappedPolys)] = $sgPoly;
+				}
+			}
+		}
+	}
+
+	$normalMappedPolys = `ls -fl $normalMappedPolys`;
+
+	return $normalMappedPolys;
+}
+
+
+
+
+
+
+
+
+global proc boltConvertAllCgfxShadersToMaya(int $metallic, int $normalOcclusion)
+//converts all shaders in scene to maya, and switches geometry to use them
+//takes a flag to switch metallic on/off
+{
+	string $cgfxShaders[] = `boltGetCGFXShaders`;
+
+	string $sel[] = `ls -sl`;
+	select $cgfxShaders;
+	string $lvCgfxShaders[] = `ls -sl "*_LV*"`;
+	select $sel;
+	//frig to get evocgfx livery shaders
+
+	$cgfxShaders = `stringArrayRemove $lvCgfxShaders $cgfxShaders`;
+
+	for ($cgfxShader in $cgfxShaders)
+	{
+		string $mayaShader;
+		if (!objExists("maya_" + $cgfxShader))
+		{
+			$mayaShader = `boltConvertCgfxShaderToMaya $cgfxShader $metallic $normalOcclusion`;
+		}
+		Replaceshader2 $cgfxShader $mayaShader;
+	}
+
+	string $currentLivery[] = `boltGetCurrentLivery`;
+	for ($cgfxShader in $lvCgfxShaders)
+	{
+		if (`endsWith $cgfxShader $currentLivery[0]`)
+		{
+			string $mayaShader;
+			if (!objExists("maya_" + $cgfxShader))
+			{
+				$mayaShader = `boltConvertCgfxShaderToMaya $cgfxShader $metallic $normalOcclusion`;
+			}
+			Replaceshader2 $cgfxShader $mayaShader;
+		}
+	}
+	//only converts the current livery - helps prevent low memory crashes
+
+	boltSwitchAllDisplayColours 0;
+}
+
+global proc boltSwitchBackToCgfxShaders()
+//switches all geometry back to use original CGFX shaders, as long as they are still in the scene and named correctly
+{
+	string $cgfxShaders[] = `boltGetCGFXShaders`;
+	for ($cgfxShader in $cgfxShaders)
+	{
+		string $mayaShader = ("maya_" + $cgfxShader);
+		if (objExists($mayaShader))
+		{
+			Replaceshader2 $mayaShader $cgfxShader;
+		}
+		string $mayaShader = ("maya_met_" + $cgfxShader);
+		if (objExists($mayaShader))
+		{
+			Replaceshader2 $mayaShader $cgfxShader;
+		}
+	}
+	boltSetAllDoubleSidedFlags 1;
+	//ensures springs/spokes etc render correctly
+}
+
+global proc boltDeleteMayaShaders()
+//deletes maya versions of any cgfx shaders found in the scene.
+{
+	string $cgfxShaders[] = `boltGetCGFXShaders`;
+	for ($cgfxShader in $cgfxShaders)
+	{
+		string $mayaShader = ("maya_" + $cgfxShader);
+		if (objExists($mayaShader))
+		{
+			delete $mayaShader;
+		}
+		string $mayaShader = ("maya_met_" + $cgfxShader);
+		if (objExists($mayaShader))
+		{
+			delete $mayaShader;
+		}
+	}
+}
+
+global proc boltDeleteCgfxShaders()
+//deletes all cgfx shaders found in the scene.
+{
+	string $cgfxShaders[] = `boltGetCGFXShaders`;
+	for ($cgfxShader in $cgfxShaders)
+	{
+		delete $cgfxShader;
+	}
+}
+
+
+global proc boltSetAllDoubleSidedFlags(int $flag)
+//sets the double sided flag on all shapes in scene
+{
+	string $shapes[] = `ls -type "mesh"`;
+	for ($shape in $shapes)
+	{
+		setAttr ($shape + ".doubleSided") $flag;
+	}
+}
+
+
+
+global proc string boltConvertCgfxShaderToMaya (string $cgfxShader, int $metallic, int $normalOcclusion)
+//converts cgfx vehicle shaders to approximate maya shaders
+//optional metalic specular conversion - this makes viewport textures very lowres though due to layering.
+//optional normal map occlusion, again makes viewport textures lowres due to layering
+//returns name of new shader
+{
+
+	print ("\nBEGINNING work on " + $cgfxShader);
+
+	//confirmDialog -message ("Converting " + $cgfxShader);
+
+	$rootPath = `boltGetRootPath`;
+
+	string $technique = `getAttr ($cgfxShader+".t")`;
+	//store the technique of the cgfx shader
+
+	if (!(`objExists "envSphere0"`))
+	{
+		string $env0 = `shadingNode -asTexture envSphere -name "envSphere0"`;
+		string $env1 = `shadingNode -asTexture envSphere -name "envSphere1"`;
+		string $env2 = `shadingNode -asTexture envSphere -name "envSphere2"`;
+		//create env nodes if they don't already exist
+
+		if (!(`objExists "envFile0"`))
+		{
+			string $envFile0 = `shadingNode -asTexture file -name "envFile0"`;
+			string $envFile1 = `shadingNode -asTexture file -name "envFile1"`;
+			string $envFile2 = `shadingNode -asTexture file -name "envFile2"`;
+
+			setAttr -type "string" ("envFile0.fileTextureName") ($rootPath + "/art/vehicles/GENERIC_TEXTURES/MAYA_SHADERS/envsphere_2a.jpg");
+			setAttr -type "string" ("envFile1.fileTextureName") ($rootPath + "/art/vehicles/GENERIC_TEXTURES/MAYA_SHADERS/envsphere_2b.jpg");
+			setAttr -type "string" ("envFile2.fileTextureName") ($rootPath + "/art/vehicles/GENERIC_TEXTURES/MAYA_SHADERS/envsphere_2c.jpg");
+		}
+
+		connectAttr -force "envFile0.outColor" ($env0+".image");
+		connectAttr -force "envFile1.outColor" ($env1+".image");
+		connectAttr -force "envFile2.outColor" ($env2+".image");
+	}
+
+
+	string $mayaShader = `shadingNode -asShader blinn -name ("maya_" + $cgfxShader)`;
+	//create the new shader
+
+	float $baseColour[] = `getAttr ($cgfxShader + ".baseColour")`;
+	setAttr ($mayaShader + ".color") -type double3 $baseColour[0] $baseColour[1] $baseColour[2];
+	//copy base colour to new shader
+
+	float $pos1 = `getAttr ($cgfxShader + ".paintSmoothness")`;
+	setAttr ($mayaShader + ".specularColor")   -type double3 1 1 1;
+	setAttr ($mayaShader + ".eccentricity")    `boltMapLinearRange 0.9 0.64 $pos1 0.1 0.4`;
+	setAttr ($mayaShader + ".specularRollOff") `boltMapLinearRange 0.9 0.64 $pos1 5.0 0.68`;
+	setAttr ($mayaShader + ".reflectivity") (`getAttr ($cgfxShader + ".baseColourAlpha")`/4);
+	//calculate and set specular and reflection values
+
+	if ($pos1 >= 0.9)
+	{
+		connectAttr -force "envSphere0.outColor" ($mayaShader+".reflectedColor");
+	}
+	else if ($pos1 >= 0.8)
+	{
+	connectAttr -force "envSphere1.outColor" ($mayaShader+".reflectedColor");
+	}
+	else
+	{
+	connectAttr -force "envSphere2.outColor" ($mayaShader+".reflectedColor");
+	}
+	//connect the correct env map
+
+
+	if (($technique=="NormalMappedGlass")||($technique=="Glass"))
+	{
+		float $pos1 = `getAttr ($cgfxShader + ".glassOpacity")`;
+		float $pos2 = `boltMapLinearRange 0 1 $pos1 1 0`;
+		setAttr ($mayaShader + ".transparency") -type double3 $pos2 $pos2 $pos2;
+	}
+	//assign transparency for glass shaders
+
+	string $decalMap[] = `listConnections ($cgfxShader+".decalMap")`;
+	string $decalMapFileName;
+
+	if (($decalMap[0] != "")&&($technique!="NormalMappedGlass")&&(($technique!="SolidNormalMapped")&&$technique!="Glass"))
+	//don't set decal map for empty or glass shaders, or solid normal mapped.
+	{
+		$decalMapFileName = `getAttr ($decalMap[0]+".fileTextureName")`;
+		//done here to prevent errors above if $decalmap is empty
+
+		if ((`gmatch $decalMapFileName "*white_zeroalpha.dds"` == 0)&&(`gmatch $decalMapFileName "*white.dds"` == 0))
+		//don't bother with white zero alpha or white dds
+		{
+			connectAttr -force ($decalMap[0]+".outColor") ($mayaShader+".color");
+		}
+	}
+	//copy decal map to maya shader
+
+	string $normalMap[] = `listConnections ($cgfxShader+".normalMap")`;
+	print ("\n" + $normalMap[0]);
+	string $normalMapFileName;
+
+	if (($normalMap[0] != "")&&($technique!="Glass")&&($technique!="Flat"))
+	{
+		$normalMapFileName = `getAttr ($normalMap[0]+".fileTextureName")`;
+		print ("\n" + $normalMapFileName);
+
+		string $normalMapFileName = `getAttr ($normalMap[0]+".fileTextureName")`;
+		if (`gmatch $normalMapFileName "*blank_normal.dds"` == 0)
+		//don't bother with blank_normal.dds
+		{
+			string $bump = `shadingNode -asUtility bump2d`;
+			setAttr ($bump + ".bumpInterp") 1;
+			connectAttr -f ($normalMap[0]+".outAlpha") ($bump+".bumpValue");
+			connectAttr -f ($bump+".outNormal") ($mayaShader+".normalCamera");
+
+			if ($normalOcclusion)
+			{
+				if (($decalMap[0] != "")&&($technique!="NormalMappedGlass")&&($technique!="Glass"))
+				{
+					$decalMapFileName = `getAttr ($decalMap[0]+".fileTextureName")`;
+
+					if ((`gmatch $decalMapFileName "*white_zeroalpha.dds"` == 0)&&(`gmatch $decalMapFileName "*white.dds"` == 0)&&
+						(`gmatch $normalMapFileName "*white_zeroalpha.dds"` == 0)&&(`gmatch $normalMapFileName "*white.dds"` == 0))
+					//don't bother with white zero alpha or white dds - causes maya to die
+					{
+						print ("\n Linking to " + $decalMap[0] + " (" + $decalMapFileName + ") from " + $cgfxShader);
+						print ("\n Linking to " + $normalMap[0] + " (" + $normalMapFileName + ") from " + $cgfxShader);
+
+						string $multiplyNode =  `shadingNode -asUtility multiplyDivide`;
+						connectAttr -force ($normalMap[0]+".outAlpha")    ($multiplyNode+".input2X");
+						connectAttr -force ($normalMap[0]+".outAlpha")    ($multiplyNode+".input2Y");
+						connectAttr -force ($normalMap[0]+".outAlpha")    ($multiplyNode+".input2Z");
+						connectAttr -force ($decalMap[0]+".outColor")     ($multiplyNode+".input1");
+						connectAttr -force ($multiplyNode+".output")      ($mayaShader+".color");
+					}
+				}
+			}
+			//add normal occlusion for textured shaders if enabled
+
+		}
+	}
+	//link normal map to maya shader
+
+	if (($technique=="NormalMapped")||($technique=="NormalMappedDS"))
+	{
+		if ((`gmatch $decalMapFileName "*white_zeroalpha.dds"` == 0)&&(`gmatch $decalMapFileName "*white.dds"` == 0))
+		//make sure these are not applied to the transparency channel.
+		{
+			if (`getAttr ($decalMap[0]+".fileHasAlpha")` == 1)
+			//only add transparancy if the decal map has alpha
+			{
+				string $reverse = `shadingNode -asUtility reverse`;
+				connectAttr -force ($decalMap[0]+".outAlpha") ($reverse+".inputX");
+				connectAttr -force ($reverse+".outputX") ($mayaShader+".transparencyR");
+				connectAttr -force ($reverse+".outputX") ($mayaShader+".transparencyG");
+				connectAttr -force ($reverse+".outputX") ($mayaShader+".transparencyB");
+				connectAttr -force ($decalMap[0]+".outAlpha") ($mayaShader + ".specularColorR");
+				connectAttr -force ($decalMap[0]+".outAlpha") ($mayaShader + ".specularColorG");
+				connectAttr -force ($decalMap[0]+".outAlpha") ($mayaShader + ".specularColorB");
+			}
+		}
+	}
+	//link alpha to maya shader
+
+
+
+	if ($metallic)
+	{
+		string $fxFile = `evocgfxShader -q -fx $cgfxShader`;
+		if (`gmatch $fxFile "*metallic*"`)
+		//setup the metallic specular
+		{
+			string $surfaceShader = `shadingNode -asShader surfaceShader -name ("maya_met_" + $cgfxShader)`;
+			//create final output surface shader
+
+			string $metallicSpecular = `shadingNode -asShader blinn`;
+			setAttr ($metallicSpecular + ".color") -type double3 0 0 0;
+ 			setAttr ($metallicSpecular + ".reflectivity") 0;
+ 			setAttr ($metallicSpecular + ".specularRollOff") 0.35;
+ 			setAttr ($metallicSpecular + ".eccentricity") 0.41;
+ 			float $specularColour[] = `getAttr ($cgfxShader + ".specularColour0")`;
+			setAttr ($metallicSpecular+".specularColor") -type double3 $specularColour[0] $specularColour[1] $specularColour[2];
+			//set up the metalic specular shader
+
+			string $multiplyNode =  `shadingNode -asUtility multiplyDivide`;
+			string $reverseNode =   `shadingNode -asUtility reverse`;
+			string $addNode =       `shadingNode -asUtility plusMinusAverage`;
+			//setup utility nodes
+
+			string $metallicMask[] = `listConnections ($cgfxShader+".metallicMask")`;
+			string $metallicMaskFileName = "";
+
+			if ($metallicMask[0] != "")
+				$metallicMaskFileName = `getAttr ($metallicMask[0]+".fileTextureName")`;
+			//get metallic mask
+
+			if ((`gmatch $metallicMaskFileName "*white_zeroalpha.dds"` == 0)&&(`gmatch $metallicMaskFileName "*white.dds"` == 0))
+			//make sure these are not applied to the metalic mask.
+			{
+				connectAttr -force ($metallicMask[0]+".outColor")     ($reverseNode+".input");
+			}
+			connectAttr -force ($reverseNode+".output")           ($multiplyNode+".input1");
+			connectAttr -force ($metallicSpecular+".outColor")    ($multiplyNode+".input2");
+			connectAttr -force ($multiplyNode+".output")          ($addNode+".input3D[0]");
+			connectAttr -force ($mayaShader+".outColor")          ($addNode+".input3D[1]");
+			connectAttr -force ($addNode+".output3D")             ($surfaceShader+".outColor");
+			//make connections
+
+			$mayaShader = $surfaceShader;
+			//make sure it is the surface shader that now gets applied to the model.
+		}
+	}
+
+	print ("\nCOMPLETED " + $mayaShader);
+
+	return $mayaShader;
+
+}
+
+
+global proc boltCreateColourSet(string $name, string $channelToCopy)
+//copys a colour channel from current colour set into a new colour set
+{
+	string $shapes[] = `ls -type "mesh"`;
+
+	undoInfo -state off;
+	//turn off otherwise maya runs out of memory.
+
+	for ($shape in $shapes)
+	{
+		print ("\n" + $shape);
+
+		if (`boltColourSetExists "colorSet1" $shape`)
+		{
+			polyColorSet -currentColorSet -colorSet "colorSet1" $shape;
+
+			string $vfs[] = `ls -flatten ($shape + ".vtxFace[*][*]")`;
+
+			float $colours[] = `polyColorPerVertex -q $channelToCopy $vfs`;
+			// get list of colours from the main set
+
+			polyColorSet -create -colorSet $name $shape;
+			polyColorSet -currentColorSet -colorSet $name $shape;
+
+			for ($i = 0; $i<size($vfs) ; $i++)
+			{
+				polyColorPerVertex -r $colours[$i] -g $colours[$i] -b $colours[$i] -a 1 $vfs[$i];
+			}
+			//apply colours to all channels in the new set
+		}
+	}
+
+	undoInfo -state on;
+}
+
+global proc boltCopyFromColourSet(string $sourceSet, string $sourceChannel, string $destSet, string $destChannel)
+//copys a colour channel from a colour set into a different colour set + channels
+//works on all shapes in scene
+{
+	string $shapes[] = `ls -type "mesh"`;
+
+	undoInfo -state off;
+	//turn off otherwise maya runs out of memory.
+
+	for ($shape in $shapes)
+	{
+		print ("\n" + $shape);
+
+		string $colourSets[] = `polyColorSet -q -allColorSets $shape`;
+
+		if ( (`sFindItem $colourSets $sourceSet` != -1) && (`sFindItem $colourSets $destSet` != -1) )
+		{
+			polyColorSet -currentColorSet -colorSet $sourceSet $shape;
+
+			string $vfs[] = `ls -flatten ($shape + ".vtxFace[*][*]")`;
+
+			float $colours[] = `polyColorPerVertex -q $sourceChannel $vfs`;
+			// get list of colours from the source set
+
+			polyColorSet -currentColorSet -colorSet $destSet $shape;
+
+			for ($i = 0; $i<size($vfs) ; $i++)
+			{
+				polyColorPerVertex $destChannel $colours[$i] $vfs[$i];
+			}
+			//apply colours to destination channels in the destination set
+
+			print " - colour sets copied";
+		}
+		else
+		{
+			print " - required colour sets not found for this shape";
+		}
+	}
+
+	undoInfo -state on;
+}
+
+
+
+
+
+
+
+
+
+
+global proc boltDeleteOcclusionSet()
+//copys occlusion back into main vertex alpha, deletes occlusion_sets
+{
+	boltCopyFromColourSet "occlusion_set" "-r" "colorSet1" "-a";
+
+	string $shapes[] = `ls -type "mesh"`;
+	for ($shape in $shapes)
+	{
+		string $colourSets[] = `polyColorSet -q -allColorSets $shape`;
+
+		if (`sFindItem $colourSets "occlusion_set"` != -1)
+		{
+			polyColorSet -delete -colorSet "occlusion_set" $shape;
+		}
+	}
+}
+
+
+
+global proc boltCopyFromColourSet2(string $shapes[], string $sourceSet, string $sourceChannel, string $destSet, string $destChannels[])
+//copys a colour channel from a colour set into a different colour set + channels
+//$shapes[] = list of shape nodes to work on
+//$sourceSet = name of the colourset to copy from
+//$sourceChannel = source colour channel "-r" "-g" "-b" or "-a"
+//$destSet = name of the colourset to copy to
+//$destChannels[] = list of channels to copy to in format "ColorR" "ColorG" "ColorB" or "Alpha"
+// dest set must already exist
+{
+	undoInfo -state off;
+	//turn off otherwise maya slows down and runs out of memory.
+
+	for ($shape in $shapes)
+	{
+		print ("\n" + $shape);
+
+		polyColorSet -currentColorSet -colorSet $sourceSet $shape;
+		//ensure we are working with the source colour set
+
+		delete -ch $shape; //delete history
+
+		string $vfs[] = `ls -flatten ($shape + ".vtxFace[*][*]")`;
+		//get list of vfs on shape
+
+		float $colours[] = `polyColorPerVertex -q $sourceChannel $vfs`;
+		// store the required colours from the source channel
+
+		polyColorSet -currentColorSet -colorSet $destSet $shape;
+		//switch to working with the destination colour set
+
+		polyNormal -normalMode 0 -userNormalMode 0 -ch 1 ($shape+".f[0]");
+		polyNormal -normalMode 0 -userNormalMode 0 -ch 1 ($shape+".f[0]");
+		// Create a tweak to keep the polyColorPerVertexNode (Flip a normal will do)
+       	string $oldHistory[] = `listHistory $shape`;
+	    polyColorPerVertex -rel -rgb 0 0 0 $shape;
+		string $newHistory[] = `listHistory $shape`;
+		string $fastColNode[] = stringArrayRemoveExact($oldHistory, $newHistory);
+	    // History fudge to find the polyColorPerVertex Node
+
+
+		for ($v=0; $v<size($vfs); $v++)
+		{
+			string $buffer[];
+			tokenize $vfs[$v] "[]" $buffer;
+			int $vertNumber = $buffer[1];
+			int $faceNumber = $buffer[2];
+			//get the vertex and face numbers
+
+			for ($dest in $destChannels)
+			{
+				setAttr ($fastColNode[0]+ ".vertexColor[" +$vertNumber+ "].vertexFaceColor[" +$faceNumber+ "].vertexFace" + $dest) $colours[$v];
+			}
+		}
+		//apply colours to all destination channels
+
+		delete -ch $shape;
+		//delete history
+	}
+
+	undoInfo -state on;
+	//reinstate undo
+}
+
+
+global proc float[] boltGetUVAspectRatio(string $poly, int $tx, int $ty)
+//returns the uv aspect ratio of the given polygon
+//and optionally the texel density given texture x and y resolution
+//(ignored if tx or ty = 0)
+//returns {$aspect, $texelDensity) (average of u and v density in pixels/m)
+{
+	float $uvAxis[] = `boltGetUVAxisInWorldspace $poly`;
+
+	if (size($uvAxis) == 0)
+	{
+		return {};
+	}
+	//error detected (zero determinant)
+
+	vector $u = << $uvAxis[0] , $uvAxis[1] , $uvAxis[2] >>;
+	vector $v = << $uvAxis[3] , $uvAxis[4] , $uvAxis[5] >>;
+
+	float $magU = `mag $u`;
+	float $magV = `mag $v`;
+
+	if (`equivalentTol $magV 0 0.00000001`)
+	{
+		return {};
+	}
+	//error detected (divide by zero)
+
+	if (`equivalentTol $magU 0 0.00000001`)
+	{
+		return {};
+	}
+	//error detected (divide by zero)
+
+	float $aspect = ($magU / $magV);
+
+	$uDensity =  ($tx / $magU);
+	$vDensity =  ($ty / $magV);
+	$avgDensity = ($uDensity + $vDensity) * 0.5;
+
+	return {$aspect, $avgDensity};
+
+}
+
+
+
+global proc float[] boltGetUVAxisInWorldspace(string $poly)
+//calculates and returns a matrix containing the texture's U and V axis in worldspace
+//(ux, uy, uz, vx, vy, vz)
+//can be used to calculate texel aspect ratio and detect shear
+//see http://www.devmaster.net/forums/showthread.php?t=11739
+{
+	//print ("\n" + $poly);
+
+	string $vfs[] = `boltGetVertexOrder $poly`;
+
+	//print $vfs;
+
+	string $uv1[] = `polyListComponentConversion -fromVertexFace -toUV $vfs[0]`;
+	string $uv2[] = `polyListComponentConversion -fromVertexFace -toUV $vfs[1]`;
+	string $uv3[] = `polyListComponentConversion -fromVertexFace -toUV $vfs[2]`;
+	//currently only looks at 1st triangle in the poly
+
+	if (($uv1[0]=="")||($uv2[0]=="")||($uv3[0]==""))
+	{
+		return {};
+	}
+	//catches error if no UVs found
+
+	float $t1[] = `polyEditUV -q $uv1[0]`;
+	float $t2[] = `polyEditUV -q $uv2[0]`;
+	float $t3[] = `polyEditUV -q $uv3[0]`; //get co-ords of uv
+
+	float $m_texture2x2[] = { ($t2[0] - $t1[0]) , ($t3[0] - $t1[0]),
+				              ($t2[1] - $t1[1]) , ($t3[1] - $t1[1]) };
+
+	float $m_iTexture2x2[] = `boltInvert2x2Matrix $m_texture2x2`;
+
+	if (size($m_iTexture2x2) == 0)
+	{
+		return {};
+	}
+	//catches error if zero determinant
+
+	vector $v1 = `pointPosition -w $uv1[0]`;
+	vector $v2 = `pointPosition -w $uv2[0]`;
+	vector $v3 = `pointPosition -w $uv3[0]`;
+
+	float $m_vertex3x2[] = {($v2.x - $v1.x) , ($v3.x - $v1.x),
+							($v2.y - $v1.y) , ($v3.y - $v1.y),
+							($v2.z - $v1.z) , ($v3.z - $v1.z) };
+
+	float $answer[] =
+		{
+		(($m_vertex3x2[0] * $m_iTexture2x2[0]) + ($m_vertex3x2[1] * $m_iTexture2x2[2])),
+		(($m_vertex3x2[2] * $m_iTexture2x2[0]) + ($m_vertex3x2[3] * $m_iTexture2x2[2])),
+		(($m_vertex3x2[4] * $m_iTexture2x2[0]) + ($m_vertex3x2[5] * $m_iTexture2x2[2])),
+		(($m_vertex3x2[0] * $m_iTexture2x2[1]) + ($m_vertex3x2[1] * $m_iTexture2x2[3])),
+		(($m_vertex3x2[2] * $m_iTexture2x2[1]) + ($m_vertex3x2[3] * $m_iTexture2x2[3])),
+		(($m_vertex3x2[4] * $m_iTexture2x2[1]) + ($m_vertex3x2[5] * $m_iTexture2x2[3]))
+		};
+	//{ux, uy, uz, vx, vy, vz}
+
+	return $answer;
+
+}
+
+
+global proc float[] boltInvert2x2Matrix(float $m_input[])
+//returns the inverse of a 2x2 float array matrix
+{
+	float $m_inverse[];
+
+	float $determinant = ($m_input[0] * $m_input[3]) - ($m_input[2] * $m_input[1]);
+
+	if (`equivalentTol $determinant 0 0.00000001`)
+	{
+		return {};
+	}
+	//avoid divide by zero error
+
+	$m_inverse[3] = $m_input[0];
+	$m_inverse[0] = $m_input[3];
+	//flip corners of matrix
+
+	$m_inverse[1] = -1 * $m_input[1];
+	$m_inverse[2] = -1 * $m_input[2];
+	//make other corners -ve
+
+	$m_inverse[0] = (1/$determinant) * $m_inverse[0];
+	$m_inverse[1] = (1/$determinant) * $m_inverse[1];
+	$m_inverse[2] = (1/$determinant) * $m_inverse[2];
+	$m_inverse[3] = (1/$determinant) * $m_inverse[3];
+	//multiply by inverse determinant
+
+	return $m_inverse;
+};
+
+
+
+
+
+
+
+
+
+
+
+global proc string[] boltListShadedPolygons(string $objs[], string $shader)
+// returns polys in specified objects with the specified shader
+{
+	$objs = `ls -long $objs`;
+	
+	if ($shader == "") return {};
+	
+	string $sgs[] = `getSGFromMaterial $shader`;
+	//work out its shading group
+
+	string $faceList[] = {};
+
+	for ($sg in $sgs)
+	{
+		string $newFaces[] = `sets -q $sg`;
+		$faceList = `stringArrayCatenate $newFaces $faceList`;
+
+		//print "\nSG: "; print $sg;
+		//print "\nNewfaces: "; print $newFaces;
+	}
+	//get a list of all faces from all sgs.
+
+	string $newFaceList[] = {};
+	for ($face in $faceList)
+	{
+		if (`endsWith $face "]"`)
+		{
+			$newFaceList[size($newFaceList)] = $face;
+		}
+		else
+		{
+			string $shapeAsFaces[] = `ls ($face + ".f[*]")`;
+			$newFaceList = `stringArrayCatenate $shapeAsFaces $newFaceList`;
+		}
+	}
+	//converts all shapes in the list into face ranges
+
+	$faceList = `ls -long $newFaceList`;
+	//convert to long names
+
+	//print "\nLong names all converted to faces: "; print $faceList;
+
+	string $shapes[] = {};
+	for ($obj in $objs)
+	{
+		string $shape[] = `boltShaderToolsGetShapes $obj`;
+		$shapes = `stringArrayCatenate $shapes $shape`;
+	}
+	//get a list of all shapes for selected objects
+
+	$objs = `stringArrayCatenate $shapes $objs`;
+	//combine shapes and object lists
+	//(faces returned by SGs can be named after either transforms or shapes)
+
+	//print "\nNames of objs/shapes we're looking for: "; print $objs;
+
+	string $filteredFaceList[] = {};
+
+	for ($face in $faceList)
+	//check though all faces
+	{
+		string $faceToCheck = `match "^[^\.]*" $face`	;
+		//get the shape/transform name of the face
+
+		if (`sFindItem $objs $faceToCheck` != -1)
+		//check whether this shape/transform is selected
+		{
+			sAppend $filteredFaceList $face;
+			//if it is then add to the list to return
+		}
+	}
+
+	return `ls -fl $filteredFaceList`;
+}
+
+
+
+
+
+
+
+global proc vector boltGetFaceNormal( string $poly )
+//returns a normalised vector face normal for a given polygon
+//adapted from http://xyz2.net/mel/mel.005.htm
+{
+	vector $normal;
+	float $x; float $y; float $z;
+	string $tokens[];
+
+	string $pin = `polyInfo -fn $poly`;
+  	int $numTokens = `tokenize $pin " " $tokens`;
+
+  	// Make sure we're looking at polyInfo data:
+  	if ( ( $numTokens > 3 ) && ( $tokens[0] == "FACE_NORMAL" ) )
+  	{
+    	// Maya performs data-type conversion here.
+    	$x = ($tokens[$numTokens-3]);
+    	$y = ($tokens[$numTokens-2]);
+    	$z = ($tokens[$numTokens-1]);
+
+    	$normal = << $x, $y, $z >>;
+
+    	// Normalize it.
+    	$normal = `unit $normal`;
+ 	}
+  	return $normal;
+}
+
+
+
+
+global proc string[] boltGetCGFXShaders()
+//returns a list of cgfx shaders in the scene - works even if nodes are "unknown"
+//and evoCGFX plugin is not available
+
+{
+	string $shaderList[] = {};
+	catchQuiet($shaderList = `ls -type "evocgfxShader"`);
+
+	if (size($shaderList) == 0)
+	{
+		string $unknowns[] = `ls -type "unknown"`;
+
+		for ($unknown in $unknowns)
+		{
+			if (`attributeExists "previewDirLight_dirFromLightWS" $unknown`)
+			{
+				$shaderList[size($shaderList)] = $unknown;
+			}
+		}
+	}
+
+	$shaderList = `stringArrayRemove {"lambert1","shaderGlow1","particleCloud1"} $shaderList`;
+
+	$shaderList = sort($shaderList);
+
+	return $shaderList;
+}
+
+
+
+global proc string[] getSGFromMaterial( string $material )
+// Description: Returns the Shading Group set whose '.surfaceShader'
+//  attribute is being fed by the specified Material.
+//
+//  Returns an array for all Shading Groups using the Material.
+{
+  string $SG[];
+	
+	//print "\n"; print $material;
+	
+	if ($material == "") return {};
+	
+  // First, assert that $material is a Material.
+  // (Returns a string array, unfortunately, so requires variable.)
+  string $class[] = getClassification( `nodeType $material` );
+
+  if ($class[0] == "shader/surface/utility" || $class[0] == "shader/surface" || $class[0] == "shader/surface/utility:swatch/hwTestRenderSwatchGen" || $class[0] == "")
+  {
+    string $outColor = ".outColor";
+    if (!`attributeExists "outColor" $material`) $outColor = ".oc";
+
+
+    // Assert that there is a connection from the Material's .outColor
+    if ( `connectionInfo -is ( $material + $outColor )` )
+    {
+      // There may be more than one connection...
+      string $dests[] = `connectionInfo -dfs ( $material + $outColor )`;
+      for ( $dest in $dests )
+      {
+        // Iterate through connections and identify ShadingGroup sets.
+        if ( "shadingEngine" == `nodeType $dest` )
+        {
+          $SG[`size $SG`] = rootNode( $dest );
+          //break;
+        }
+      }
+    }
+  }
+  
+	if ((size($SG) == 0) &&	($material == "lambert1")) $SG[0] = "initialShadingGroup";
+
+  return $SG;
+}
+
+
+global proc string[] boltShaderToolsGetShapes( string $xform )
+//returns list of long name shape nodes from a transform
+{
+   string $shapes[];
+
+   $shapes[0] = $xform;
+
+   if ( "transform" == `nodeType $xform` )
+   // If given node is not a transform, assume it is a shape
+   // and pass it through
+   {
+      $shapes = `listRelatives -shapes -f $xform`;
+   }
+
+   return $shapes;
+}
+
+global proc string[] boltShaderToolsGetShapesShort( string $xform )
+//returns list of short name shape nodes from a transform
+{
+   string $shapes[];
+
+   $shapes[0] = $xform;
+
+   if ( "transform" == `nodeType $xform` )
+   // If given node is not a transform, assume it is a shape
+   // and pass it through
+   {
+      $shapes = `listRelatives -shapes $xform`;
+   }
+
+   return $shapes;
+}
+
+
+
+
+global proc string getFacetSG( string $facet )
+// Input (string) - facet component to query (e.g. "pSphere1.f[0]")
+// Result (string) - Shading Group shading facet (e.g. "lambert2SG")
+{
+  	string $facetSG = "";
+
+
+  	string $shadingGroups[] = `ls -type shadingEngine`;
+	// Get array of all Shading Groups
+
+  	for ( $shadingGroup in $shadingGroups )
+  	{
+    	// If this facet is a member of the shading set for this
+    	// Shading Group, tag this as the facet's shader
+    	if ( `sets -isMember $shadingGroup $facet` )
+    	{
+      		$facetSG = $shadingGroup;
+      		break;
+    	}
+  	}
+  	return $facetSG;
+}
+
+
+global proc string boltGetFacetSG( string $facet )
+//quicker version of getFacetSG
+{
+		string $facetSets[] = `listSets -type 1 -object $facet`;
+		$facetSets = stringArrayRemoveDuplicates($facetSets);
+		$facetSets = `ls -type shadingEngine $facetSets`;
+		//filter to just shading groups
+
+		if (size($facetSets)==0)
+		{
+			warning ("No SG found for " + $facet);
+			return "";
+		}
+		if (size($facetSets)>1)
+		{
+			warning ("More than 1 SG found for " + $facet);
+			return "";
+		}
+
+		return $facetSets[0];
+}
+
+
+
+
+global proc string getMaterialFromSG( string $SG )
+//returns the material of a given shading group.
+{
+  	string $material = "";
+  	if ( "shadingEngine" == `nodeType $SG` && `connectionInfo -id ( $SG + ".surfaceShader" )` )
+  	{
+    	$material = rootNode( `connectionInfo -sfd ( $SG + ".surfaceShader" )` );
+  	}
+  	return $material;
+}
+
+
+
+
+
+
+global proc boltReApplyAllShaders()
+//modiifed version of reApplyAllShaders from evoDupeShaders.mel
+//ignores referenced shaders
+
+{
+	$allATGShaders = `ls -et ATGMaterial`;
+
+	string $nonReferenced[] = {};
+	for ($shader in $allATGShaders)
+	{
+		if (`reference -isNodeReferenced $shader` == 0)
+		{
+			$nonReferenced[size($nonReferenced)] = $shader;
+		}
+	}
+	$allATGShaders = $nonReferenced;
+
+	print "\n"; print $allATGShaders;
+	// Replace Multiple Shading Groups with a single one for each Shader. (Requirement of ATG's Exporters)
+	for ($i=0; $i<`size $allATGShaders`; $i++)
+	{
+		string $SGs[] = `listConnections -t shadingEngine $allATGShaders[$i]`;
+		if (`size $SGs` > 1)
+		{
+			print "\n Multiple SGs per shader:\n"; print $SGs;
+		}
+		select -r $SGs;
+		string $newSG[] = `ls -sl`;
+
+		if (`size $newSG` > 0)
+		{
+			// Break the old Shading Engine Connections
+			delete $SGs;
+			// New SG with connections
+			select -cl;
+			string $SGnode = `sets -r 1 -n ($allATGShaders[$i]+"SG")`;// $newSG`;
+			sets -fe $SGnode $newSG;
+			sets -fe $SGnode $newSG; //maya needs to hear this twice, because it is shit.
+			connectAttr -f ($allATGShaders[$i]+".outColor") ($SGnode+".surfaceShader");
+		}
+	}
+}
+
+
+
+
+
+
+global proc float boltDistanceBetweenVectors(vector $v1,  vector $v2)
+//usefull for quickly calculating the distance between 2 points
+{
+	vector $distVector = $v1 - $v2;
+	return mag($distVector);
+}
+
+
+
+
+global proc int boltGetLodNumber (string $obj)
+{
+	int $lod = 0;
+	if (`gmatch $obj "*_LOD1"`) $lod = 1;
+	if (`gmatch $obj "*_LOD2"`) $lod = 2;
+	if (`gmatch $obj "*_LOD3"`) $lod = 3;
+	if (`gmatch $obj "*_LOD4"`) $lod = 4;
+	if (`gmatch $obj "*_LOD5"`) $lod = 5;
+	if (`gmatch $obj "*_LOD6"`) $lod = 6;
+	if (`gmatch $obj "*_SHADOW"`) $lod = 7;
+	return $lod;
+}
+
+
+global proc boltApplyLodShadersButton()
+{
+	//check for lod shader, help if not found
+	string $lodShader = "lod_shader";                                       
+    if (objExists($lodShader) == 0) 
+    {
+    	error "lod_shader not found in scene. Please import from material library, copy the template lod swatch textures from GENERIC_TEXTURES/TEMPLATES/ to the vehicles texture directory, and assign them to lod_shader.";
+	}
+	
+	$sel = `ls -sl -transforms`;	
+	for ($obj in $sel) boltApplyLodShadersGUI($obj);
+}
+
+
+global proc boltApplyLodShadersGUI(string $object)
+{
+	//get list of shaders on object
+	string $shaders[] = boltGetMaterialsOnObj($object);
+	
+	//find type of part
+	int $lodNumber = boltGetLodNumber($object);
+	int $interior = 0;
+	if (sFindItem(boltWhatIsPart($object), "_INTERIOR") != -1) $interior = 1;
+	
+	//exceptions
+	$ex_lod0 = {"*"};
+	$ex_lod1_ext = {"disc_*","carbon_*","tyre_*","metal_anodised_*","grill*","mirror_rearview*"};
+	$ex_lod1_int = {"disc_*","carbon_*","tyre_*"};
+	$ex_lod2_ext = {"disc_*","carbon_*","tyre_*","grill*"};
+	
+	// give summary of shaders to convert, with tick boxes, force option
+	
+	$windowName = "DrawcallOptimisationWindow";
+	if (`window -exists $windowName`)
+	{ 
+		deleteUI $windowName;
+	}
+	//delete the window if it already exists
+	
+	window -height 307 -width 208 -title "Convert to LOD Shader Swatches" -toolbox 1 $windowName;
+	//create window
+		frameLayout -mw 10 -mh 10 -bv 0 -lv 0;
+			columnLayout;
+							
+				text -label ($object + ": Select shaders to convert:");
+				separator -h 10 -st "none";
+					
+				for ($shader in $shaders)
+				{
+					int $ticked = 1;					
+					int $enable = 1;
+					string $xmlpath =  boltGetShaderPreset($shader);	
+					string $xmlstring[] = {};
+					if ($xmlpath != "") $xmlstring = boltLoadTextFile ($xmlpath); //avoids a warning
+					string $test = "";
+					$test = boltGetStringFromXML("bolt_ucoord=", $xmlstring);
+					if ($test == "")
+					{
+						$enable = 0;
+						$ticked = 0;
+					}
+					
+					//work out wether to tick this shader by default
+					if ($lodNumber == 0) $ticked = 0;
+					if (($lodNumber == 1) && ($interior == 0))
+					{
+						for ($item in $ex_lod1_ext) if (`gmatch $shader $item`) $ticked = 0;
+					}
+					if (($lodNumber == 1) && ($interior == 1))
+					{
+						for ($item in $ex_lod1_int) if (`gmatch $shader $item`) $ticked = 0;
+					}
+					if (($lodNumber == 2) && ($interior == 0))
+					{
+						for ($item in $ex_lod2_ext) if (`gmatch $shader $item`) $ticked = 0;
+					}
+	
+					
+					checkBox -value $ticked -label $shader -enable $enable -ann "Untick to prevent this shader being lodded" ($shader+"_checkbox");	
+				}	
+				
+				separator -h 10 -st "none";
+				
+				global string $gbolt_shaders[];  $gbolt_shaders = $shaders;
+				global string $gbolt_object;     $gbolt_object = $object;
+				global string $gbolt_windowName; $gbolt_windowName = $windowName;
+				button -w 300 -label "Convert shaders" -command "eval(\"boltApplyLodShadersFromGUI($gbolt_shaders, $gbolt_object, $gbolt_windowName)\")";	
+				
+				separator -h 10 -st "none";
+				if ($lodNumber == 0)
+				{
+					text -label "WARNING!! - LOD0 Object";
+					text -label "should not have lod shaders applied";
+				}
+				else
+				{
+					text -label "Shaders unticked by default are not recommended for";
+					text -label "optimisation at this lod level";
+					separator -h 10 -st "none";
+					text -label "Ghosted shaders cannot be automatically optimised. Consider";
+					text -label "adding them to the lod shader texture sheet (eg logos), deleting";
+					text -label "the polys (if not visible at lod distance), or replacing them";
+					text -label "with a simpler, lod-able shader.";
+				}
+					
+			setParent ..;
+		setParent ..;
+		
+	//display the window				
+	showWindow $windowName;
+	window -e -height 600 -width 350 $windowName;    
+	
+	//<!-- bolt_ucoord="2"  // U-coord of lod shader swatch -->
+	//<!-- bolt_vcoord="14" // V-coord of lod shader swatch -->
+	//<!-- bolt_uratio="1"  // Has a standard UV ratio of 25 -->
+	//<!-- bolt_colour="0"  // Has a user definable colour, which needs to be set in the lod shader textures -->
+	//<!-- bolt_mirror="0"  // Has mirrorable UVs -->
+}
+
+
+global proc boltApplyLodShadersFromGUI(string $shaders[], string $object, string $windowName)
+{
+	string $shadersToConvert[] = {};
+	for ($shader in $shaders)
+	{
+		if (`checkBox -q -value ($shader+"_checkbox")` == 1) $shadersToConvert[size($shadersToConvert)] = $shader;	
+	}
+	
+	deleteUI $windowName;
+	
+	boltApplyLodShaders($shadersToConvert, $object);
+}
+
+global proc boltApplyLodShaders(string $shaders[], string $object)
+{
+	string $lodShader = "lod_shader"; 
+	string $sel[] = `ls -sl`; 
+	$msg = ("\n" + $object + " :");
+
+	//for each shader, read data from xml - swatch co-ords, lod number
+	for ($shader in $shaders)
+	{	
+		string $xmlpath =  boltGetShaderPreset($shader);	
+		string $xmlstring[] = boltLoadTextFile ($xmlpath);
+		string $presetName = boltGetStringFromXML("name=", $xmlstring);
+		
+		string $test = "";
+		$test = boltGetStringFromXML("bolt_ucoord=", $xmlstring);
+		if ($test != "")
+		{
+			//convert swatch 
+			float $tU = boltGetStringFromXML("bolt_ucoord=", $xmlstring);
+			float $tV = boltGetStringFromXML("bolt_vcoord", $xmlstring);
+						
+			//assign shader, move uvs
+			$sU = ($tU*0.0625) - 0.03125;                                                              
+			$sV = ($tV*0.0625) - 0.03125;                                                              
+			boltDoSelShader $shader {$object};                                                               
+			hyperShade -assign $lodShader;                                                             
+			polySplitTextureUV;                                                                        
+			polyEditUV -pu $sU -pv $sV -su 0.0000001 -sv 0.0000001;                                    
+			polyPerformAction "polyMergeUV -d 0.01" v 0;                                               
+      			$msg +=  ("\n  Remapped " + $shader + " to lod_shader swatch " + $tU + "," + $tV);  
+			
+			//warn about any swatches that may need colour adjustments
+			int $col = boltGetStringFromXML("bolt_colour=", $xmlstring);
+			if ($col == 1)
+			{
+				$msg +=  ("\n" + $shader + " has a user defined colour. This will need to be manually painted into the swatch texture, onto swatch: " + $tU + "," + $tV); 
+			}				
+		}       
+		else    
+		{
+			//warn if shader has no swatch data
+			if ($xmlpath == "")
+			{
+				$msg +=  ("\n  Shader " + $shader + " is not a preset. Cannot convert to LOD shader.");
+			}
+			else
+			{	
+				$msg +=  ("\n  Preset " + $presetName + " has no drawcall optimisation data. Cannot convert to LOD shader.");
+    		}
+    	}
+	}
+	select -cl;	select $sel;
+	print $msg;
+	
+}
+
+
+
+// ============================================================================================
+//	By: Christian Lavoie
+//	Allow users to select faces that do not have a shader attached.
+//	
+//	If nothing is selected, the script will run on all faces in the scene.
+//	
+//	Dependancies: None.
+// ============================================================================================
+global proc scee_selectUnshadedFaces()
+{
+//== Get list of selected elements (restrict list to faces and meshes only)
+string $selection[] = `filterExpand -sm 34 -sm 12 -ex 1 -fp 1 (ls("-sl","-fl","-l"))`;
+
+//== Print a quick "nothing relevant selected" warning message if necessary and then switch the test to include all faces in the scene
+if (size($selection)==0)
+	{
+	print "== Nothing relevant selected (script is testing all faces in the scene!) ==\t";
+	$selection = `ls -type "mesh" -fl -l`;
+	}
+
+//== convert source meshes/faces down to a list of faces
+string $facesToTest[] = ls("-fl","-l",(polyListComponentConversion("-tf",$selection)));
+
+//== pre-loop array definitions
+string $connectedSG[];		// an array to hold the list of Shading Groups connected to the face
+string $unshadedFaces[];	// an array to hold the list of unshaded faces
+
+//== Loop through the elements in the selection to test the normal values
+for ($face in $facesToTest)
+	{
+	clear $connectedSG;	// clear the array, just to be safe (I have had problems with that in the past)
+	$connectedSG = `listSets -t 1 -ets -o $face`;	// get list of connected shading groups
+	if ($connectedSG[0] == "") $unshadedFaces[size($unshadedFaces)] = $face;	// if the first slot in the array is empty, then face is unshaded
+	else
+		{
+		if ((`connectionInfo -sfd ($connectedSG[0]+".surfaceShader")`) == "") $unshadedFaces[size($unshadedFaces)] = $face; // if the face is connected to a SG, but SG doesn't have a shader assigned, then the face is unshaded
+		}
+	}
+
+if ($unshadedFaces[0] == "") print "No unshaded faces found!";
+else select -r $unshadedFaces;	// end script by selecting the unshaded faces found.
+}

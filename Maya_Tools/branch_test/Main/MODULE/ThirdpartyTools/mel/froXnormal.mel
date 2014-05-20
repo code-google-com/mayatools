@@ -1,0 +1,3536 @@
+/*
+//	Froyok Xnormal exporter (froXno.mel)
+//	http://www.froyok.fr - Froyok@yahoo.fr
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ####                  ##  ##                
+ ##                     ##  ##                
+ ##     ##  ##   ####    ## #   #####    #### 
+ ##     ## ###  ##  ##    ##    ##  ##  ##  ##
+######  ###     ##  ##    ##    ##  ##  ##  ##
+ ##     ##      ##  ##   # ##   ##  ##  ##  ##
+ ##     ##      ##  ##  ##  ##  ##  ##  ##  ##
+ ##     ##      ##  ##  ##  ##  ##  ##  ##  ##
+ ##     ##       ####   ##  ##  ##  ##   #### 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////														
+//version 0.7.1
+-updated the Cage slider : now a field with a +/- buttons (more precise and scalable)
+-updated the SBM export, now totally silent (without the OK dialog after the export)
+-fixed the export of the cage when using the SBM format
+
+//version 0.7
+-added a button to open the export folder
+-added possibility to bake non-square textures.
+-added "check nGons" button to check manually n-gons on a selected mesh.
+-added a check before calling xNormal to see if LP/HP mesh have been exported
+-updated the export path button, removed a conflic with the "froTools" script.
+-updated the checkbox "Convert HP smth" to be false by default
+-fixed an error about the WindowPref command when you load the script
+-fixed the missing settings for the Curvature map (UI, preset and xNormal xml)
+-fixed an error with the export path of the low poly mesh in the SBM format.
+-fixed the crash when setting the xNormal path.
+
+//version 0.6.1
+-added Smoothing group and Tangent/Binormals options for the FBX export.
+-fixed FBX Triangulate problem when using an older plugin verison (FBX 2011 and before)
+
+//version 0.6
+-cage support added (custom and maya envelope)
+-fixed a bug with the clear button (now working when nothing is selected);
+-added preset support
+
+//version 0.5
+-curvature and prt map added
+-n-gon filter added when exporting meshes
+-fixed some misspellings
+-added a new Tab : settings for the different maps
+-fixed errors with the creation and the writing of the xml file
+-fixed error when fbx plugin is not loaded (export automaticaly in obj)
+-changed the export button to 2 button (one side HP mesh, other side LP/Blocker)
+-new export maps added (height map, PRTpn, Curvature, Base texture)
+-new options to force the writing of the xml file
+-added an option to automatically convert HP from smooth preview to geometry at export
+
+//version 0.4
+-Xml file automatically generated in the export folder (when not already existing)
+-n-gons detector on the low-poly before export
+-fbx update : support update 2013 of the fbx plugin
+
+//version 0.3
+-Fix for the changes in the FBX command
+-Fix for the blocker exporter, now really working
+
+//Toolset 0.2
+-Initial version
+-Support XML generation + xNormal export
+*/
+
+//To run htis script, use :
+//source froXno.mel; froXno;
+
+global proc froXno()
+{
+	// if Window exists already delete it, 
+	//so you can't call multiple windows
+    if (`window -exists Winfrox`) 
+	{
+		deleteUI Winfrox;
+		
+		if(`windowPref -exists Winfrox`)
+			windowPref -remove Winfrox;
+	}
+	
+	//window settigns
+	int		$floating						= 0;		// 0=docked		1=floating
+	string	$defaultDockArea				= "left";	// "top", "left", "bottom", "right";
+	global string $title;
+		$title	= "froXnormal 0.7.1";
+	string $dock	= "dockfrox";
+	int $winw = 202 + 16;
+	
+	
+	//Clean dock control
+	float $mayaVersion = `getApplicationVersionAsFloat`;
+	float $mayaVersionRequired = 2011;
+	
+    if( $mayaVersion >= $mayaVersionRequired )
+	{
+		if( `dockControl -exists $dock` )
+			deleteUI -control $dock;
+	}
+	
+	//make the base window
+	window -t $title -minimizeButton 1 -maximizeButton 0 Winfrox;
+	
+	string $form = `formLayout -parent Winfrox`;
+	
+	string $tabs = `tabLayout -innerMarginWidth 5 -innerMarginHeight 5`;
+	formLayout -edit
+		-attachForm $tabs "top"    0
+		 -attachForm $tabs "left"   0
+		 -attachForm $tabs "bottom" 0
+		 -attachForm $tabs "right"  0
+		 $form;
+		 
+	//tab setup
+		//TAB POLY
+		string $child1 = `scrollLayout -w ($winw + 26) -h 300 scroll1`;
+			image 
+				-image "froyok/frox_xn.png"
+				-width $winw
+				-height 58; 
+		
+			frameLayout -label "Presets" -collapsable 1 -borderStyle "out" -bgc 0.35 0.35 0.2 frame_preset;
+				gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 2);
+					button -l "Save" -c "froxSavePreset" -bgc 0.5 0.5 0.5;
+					button -l "Load" -c "froxLoadPreset" -bgc 0.5 0.5 0.5;
+				setParent ..;
+				
+				separator -h 4 -w 200 -style "out";
+			setParent ..;
+			
+			
+			frameLayout -label "Export" -collapsable 1 -borderStyle "out" -bgc 0.4 0.1 0.4;
+			
+				separator -h 4 -w 200 -style "in";
+				
+				gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw / 1);
+				
+					gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 1.5);	
+						textField -w 218 -fi "" -ann "Export path" exportpath_field; 
+						
+						gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw / 3);	
+							button 
+								-label "Export path" 
+								-w 48 -h 22 
+								-bgc 0.45 0.25 0.25
+								-ann ""
+								-command "froxSetExportFolder";
+						setParent ..;
+					setParent ..;
+					
+					gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 2);	
+						button 
+							-l "Check nGons" 
+							-bgc 0.57 0.41 0.47 
+							-c "froxCheckNgons";
+						
+						button
+							-l "Open Export folder"
+							-bgc 0.55 0.43 0.4
+							-c "froxOpenExportFolder";
+						
+					setParent..;
+					
+					
+					gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 1.5);		
+							textField -w 218 -fi "" -ann "High Poly mesh" HP_field; 
+							gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw / 3);	
+								button 
+									-label "< Get HP" 
+									-w 48 -h 22 
+									-bgc 0.35 0.35 0.35
+									-ann ""
+									-command "froxGetMesh HP"
+									button_gethp;
+							setParent ..;
+					setParent ..;
+					
+					gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 1.5);					
+							textField -w 218 -fi "" -ann "Low Poly mesh" LP_field; 
+							gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw / 3);	
+								button 
+									-label "< Get LP"
+									-w 48 -h 22 
+									-bgc 0.35 0.35 0.35
+									-ann ""
+									-command "froxGetMesh LP";
+							setParent ..;
+					setParent ..;
+					
+					gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 1.5);					
+							textField -w 218 -fi "" -ann "Cage mesh" cage_field; 
+							gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw / 3);	
+								button 
+									-label "< Cage" 
+									-w 48 -h 22 
+									-bgc 0.35 0.35 0.35
+									-ann ""
+									-command "froxGetMesh cage";
+							setParent ..;
+					setParent ..;
+					
+					
+					gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 1.5);					
+							textField -w 218 -fi "" -ann "Blocker mesh" blocker_field; 
+							gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw / 3);	
+								button 
+									-label "< Blocker" 
+									-w 48 -h 22 
+									-bgc 0.35 0.35 0.35
+									-ann ""
+									-command "froxGetMesh block";
+							setParent ..;
+					setParent ..;
+				
+					gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 1.5);
+						gridLayout -numberOfColumns 3 -cellHeight 22 -cellWidth ($winw / 3);
+							button 
+								-label "Export LP" 
+								-w 48 -h 22 
+								-bgc 0.71 0.4 0.4
+								-ann ""
+								-command "froxExportMesh lp";
+								
+							button 
+								-label "Export HP" 
+								-w 48 -h 22 
+								-bgc 0.71 0.4 0.4
+								-ann ""
+								-command "froxExportMesh hp";
+						setParent ..;
+						
+						gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw / 3);	
+						button
+							-l "Clear"
+							-bgc 0.2 0.2 0.2
+							-c "froxGetMesh clear";
+						setParent ..;
+					setParent ..;
+					
+					
+					gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 2);		
+							button -l "Create Cage" -bgc 0.35 0.25 0.25 -c "froxCreateEnvelope";
+							
+							gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 4);
+							floatField
+								-v 1 -min 0.001 -max 100 -pre 4
+								-cc "froxCageInflate"
+								-ann "This field control the distance offset of the cage" 
+								slider_cage;
+								
+							gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 8);
+								button
+									-bgc 0.35 0.25 0.35
+									-c "froxCageStep 1"
+									-l "+";
+									
+								button
+									-bgc 0.35 0.25 0.35
+									-c "froxCageStep 0"
+									-l "-";
+							setParent ..;
+								
+							setParent ..;	
+							
+					setParent ..;
+					
+				
+				setParent ..;
+				gridLayout -numberOfColumns 1 -cellHeight 18 -cellWidth ($winw / 1);
+				
+					gridLayout -numberOfColumns 2 -cellHeight 18 -cellWidth ($winw / 2);
+					
+						gridLayout -numberOfColumns 2 -cellHeight 18 -cellWidth ($winw / 3.5);							
+							$exportlist4 = `optionMenu 
+							-label "" 
+							-w ($winw / 1.2) -h 24
+							-ann ""
+							-cc "" 
+							exportlist4_menu`;
+							menuItem -p $exportlist4 -l "OBJ" format1;
+							menuItem -p $exportlist4 -l "FBX" format2;
+							menuItem -p $exportlist4 -l "SBM" format3;
+							
+							gridLayout -numberOfColumns 2 -cellHeight 18 -cellWidth ($winw / 5.5);
+								text -l " > LP" -align "left";
+							setParent ..;
+						setParent ..;
+						
+						gridLayout -numberOfColumns 2 -cellHeight 18 -cellWidth ($winw / 3.5);
+							$exportlist5 = `optionMenu 
+							-label "" 
+							-w ($winw / 1.2) -h 24
+							-ann ""
+							-cc "" 
+							exportlist5_menu`;
+							menuItem -p $exportlist5 -l "OBJ" format4;
+							menuItem -p $exportlist5 -l "FBX" format5;
+							menuItem -p $exportlist5 -l "SBM" format6;
+							
+							gridLayout -numberOfColumns 2 -cellHeight 18 -cellWidth ($winw / 5.5);
+								text -l " > HP" -align "left";
+							setParent ..;
+						setParent ..;
+					setParent ..;
+
+					
+					gridLayout -numberOfColumns 2 -cellHeight 18 -cellWidth ($winw / 2);							
+							text -l "HP normals : " -align "right";
+							$listnormalhp = `optionMenu 
+								-label "" 
+								-w ($winw / 1.2) -h 24
+								-ann ""
+								-cc "" 
+								listnormalhp`;
+							menuItem -p $listnormalhp -l "Use exported" nrm_hp2;
+							menuItem -p $listnormalhp -l "Averaged" nrm_hp1;
+							menuItem -p $listnormalhp -l "Harden" nrm_hp3;
+							optionMenu -e -sl 1 listnormalhp;
+					setParent ..;
+							
+							
+					gridLayout -numberOfColumns 2 -cellHeight 18 -cellWidth ($winw / 2);
+							text -l "LP normals : " -align "right";
+							$listnormallp = `optionMenu 
+								-label "" 
+								-w ($winw / 1.2) -h 24
+								-ann ""
+								-cc "" 
+								listnormallp`;
+							menuItem -p $listnormallp -l "Use exported" nrm_lp2;
+							menuItem -p $listnormallp -l "Averaged" nrm_lp1;
+							menuItem -p $listnormallp -l "Harden" nrm_lp3;
+							optionMenu -e -sl 1 listnormallp;
+					setParent ..;
+							
+					gridLayout -numberOfColumns 2 -cellHeight 18 -cellWidth ($winw / 2);
+							text -l "FBX version : " -align "right";
+							
+							$exportlist8 = `optionMenu 
+							-label "" 
+							-w ($winw / 1.2) -h 24
+							-ann ""
+							-cc "" 
+							exportlist8_menu`;
+							menuItem -p $exportlist8 -l "2013" form1;
+							menuItem -p $exportlist8 -l "2012" form2;
+							menuItem -p $exportlist8 -l "2011" form3;
+							menuItem -p $exportlist8 -l "2010" form4;
+							menuItem -p $exportlist8 -l "2009" form5;
+							optionMenu -e -sl 3 exportlist8_menu;
+					setParent ..;
+					gridLayout -numberOfColumns 2 -cellHeight 18 -cellWidth ($winw / 2);
+						checkBox -l "Smoothing Grp" -v 1 	frox_checkFBXsmoothgrp;
+						checkBox -l "Tang/Binormals" -v 1 	frox_checkFBXbinormal;
+					setParent ..;
+				setParent ..;
+				
+				separator -h 4 -w 200 -style "out";
+				
+				setParent ..;
+				
+			frameLayout -label "Settings" -collapsable 1 -borderStyle "out" -bgc 0.1 0.2 0.4;
+				gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw / 1);
+
+						
+					button 
+						-label "Bake texture(s)" 
+						-w 48 -h 22 
+						-bgc 0.4 0.4 0.7
+						-ann "Launch xNormal baking..."
+						-command "froxGenerate";
+					
+
+					
+					gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 1.5);
+						textField -w 218 -fi "" -ann "Export path" xnorpath_field; 
+						
+						gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw / 3);	
+							button 
+								-label "xNorm path" 
+								-w 48 -h 22 
+								-bgc 0.25 0.25 0.35
+								-ann ""
+								-command "froxSetXFolder";
+						setParent ..;
+					setParent ..;
+				setParent ..;
+
+				
+				gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 2);
+					checkBox -l "Use blocker" -v 1 check_blocker;
+					checkBox -l "Use Cage" -v 0 check_cage;
+					checkBox -l "HP out of scene" -v 0 -changeCommand "froxDisableUIhighpoly" check_HPout;
+					checkBox -l "Convert HP smth" -v 0 check_smooth;
+					text -l "";
+					checkBox -l "Always new xml" -v 0 check_forcexml;
+				setParent ..;
+				
+				
+				gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 2);
+					text -l "Texture size : " -align "right";
+					gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 4);
+						$exportlist1 = `optionMenu 
+							-label "" 
+							-w ($winw / 1.2) -h 24
+							-ann ""
+							-cc "" 
+							exportlist_menu`;
+							menuItem -p $exportlist1 -l "16" txt_16;
+							menuItem -p $exportlist1 -l "32" txt_32;
+							menuItem -p $exportlist1 -l "64" txt_64;
+							menuItem -p $exportlist1 -l "128" txt_128;
+							menuItem -p $exportlist1 -l "256" txt_256;
+							menuItem -p $exportlist1 -l "512" txt_512;
+							menuItem -p $exportlist1 -l "1024" txt_1024;
+							menuItem -p $exportlist1 -l "2048" txt_2048;
+							menuItem -p $exportlist1 -l "4096" txt_4096;
+							menuItem -p $exportlist1 -l "8192" txt_8192;
+							optionMenu -e -sl 6 exportlist_menu;
+							
+						$exportlist1_2 = `optionMenu 
+							-label "" 
+							-w ($winw / 1.2) -h 24
+							-ann ""
+							-cc "" 
+							exportlist_2_menu`;
+							menuItem -p $exportlist1_2 -l "16" txt2_16;
+							menuItem -p $exportlist1_2 -l "32" txt2_32;
+							menuItem -p $exportlist1_2 -l "64" txt2_64;
+							menuItem -p $exportlist1_2 -l "128" txt2_128;
+							menuItem -p $exportlist1_2 -l "256" txt2_256;
+							menuItem -p $exportlist1_2 -l "512" txt2_512;
+							menuItem -p $exportlist1_2 -l "1024" txt2_1024;
+							menuItem -p $exportlist1_2 -l "2048" txt2_2048;
+							menuItem -p $exportlist1_2 -l "4096" txt2_4096;
+							menuItem -p $exportlist1_2 -l "8192" txt2_8192;
+							optionMenu -e -sl 6 exportlist_2_menu;
+					setParent..;
+					text -l "Texture padding : " -align "right";
+					$exportlist2 = `optionMenu 
+						-label "" 
+						-w ($winw / 1.2) -h 24
+						-ann ""
+						-cc "" 
+						exportlist2_menu`;
+						menuItem -p $exportlist2 -l "2" txtp_2;
+						menuItem -p $exportlist2 -l "4" txtp_4;
+						menuItem -p $exportlist2 -l "8" txtp_8;
+						menuItem -p $exportlist2 -l "16" txtp_16;
+						menuItem -p $exportlist2 -l "32" txtp_32;
+						menuItem -p $exportlist2 -l "64" txtp_64;
+						menuItem -p $exportlist2 -l "128" txtp_128;
+						optionMenu -e -sl 4 exportlist2_menu;
+						
+					text -l "Anti-aliasing : " -align "right";
+					$listaa = `optionMenu 
+						-label "" 
+						-w ($winw / 1.2) -h 24
+						-ann ""
+						-cc "" 
+						aa_menu`;
+						menuItem -p $listaa -l "1" aa1;
+						menuItem -p $listaa -l "2" aa2;
+						menuItem -p $listaa -l "4" aa3;
+						
+					text -l "Texture format : " -align "right";
+					$exportlist3 = `optionMenu 
+						-label "" 
+						-w ($winw / 1.2) -h 24
+						-ann ""
+						-cc "" 
+						exportlist3_menu`;
+						menuItem -p $exportlist3 -l "TGA" txtf_tga;
+						menuItem -p $exportlist3 -l "BMP" txtf_bmp;
+						menuItem -p $exportlist3 -l "PNG" txtf_png;
+						menuItem -p $exportlist3 -l "HDR" txtf_hdr;
+						menuItem -p $exportlist3 -l "TIFF" txtf_tiff;
+						menuItem -p $exportlist3 -l "DDS" txtf_dds;
+						
+					text -l "Mesh Scale : " -align "right";
+					floatField -v 1 -pre 3 scale_field;
+					
+					text -l "Ray LP Frontal : " -align "right";
+					floatField -v 0.5 -pre 3 ray_front;
+					
+					text -l "Ray LP Near : " -align "right";
+					floatField -v 0.5 -pre 3 ray_near;
+				setParent ..;
+
+				//correcting framelayout width size
+				gridLayout -numberOfColumns 1 -cellHeight 1 -cellWidth ($winw );
+					separator -h 4 -w 200 -style "out";
+				setParent ..;
+			setParent ..;
+
+			////////////////////////////////			
+			frameLayout -label "Textures to Generate" -collapsable 1 -borderStyle "out" -bgc 0.1 0.4 0.4;
+				
+				gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 2);
+					checkBox -l "Ambient occlusion" -v 0 check_txt_ao;
+					checkBox -l "Normal Map" -v 1 check_txt_normal;
+					
+					checkBox -l "Height map" -v 0 check_txt_height;
+					
+					checkBox -l "Cavity map" -v 0 check_txt_cavity;
+					checkBox -l "Vertex colors" -v 0 -cc "froxDisableUItexture" check_txt_vtxcolor;
+					
+					checkBox -l "Curvature map" -v 0 check_txt_curvature;
+					checkBox -l "PRTpn maps" -v 0 check_txt_prt;
+					
+					checkBox -l "Bake base txt" -v 0 -cc "froxDisableUItextureBase" check_txt_base;
+				setParent ..;
+				
+				//correcting framelayout width size
+				gridLayout -numberOfColumns 1 -cellHeight 1 -cellWidth ($winw );
+					separator -h 4 -w 200 -style "out";
+				setParent ..;
+			setParent ..;
+		
+		
+			/////////////////////////
+			frameLayout -label "INFO" -collapsable 0 -borderStyle "out" ;
+				gridLayout -numberOfColumns 1 -cellHeight 24 -cellWidth ($winw);
+					gridLayout -numberOfColumns 1 -cellHeight 20 -cellWidth ($winw / 1);
+						button
+							-l "Add shelf button"
+							-c "froxCreateShelfButton"
+							-bgc 0.35 0.35 0.3;
+					setParent..;
+					
+					gridLayout -numberOfColumns 1 -cellHeight 24 -cellWidth ($winw / 1);
+						button 
+							-command "froxShowAbout"
+							-label "www.froyok.fr"
+							-bgc 0.55 0.65 0.45;
+					setParent..;
+				setParent..;
+				
+			//correcting framelayout width size
+			gridLayout -numberOfColumns 1 -cellHeight 1 -cellWidth ($winw );
+				separator -h 4 -w 200 -style "out";
+			setParent ..;
+			setParent ..; //framelayout
+		setParent ..; //scrool
+		
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////														
+	
+		//TAB 2
+		string $child2 = `scrollLayout -w ($winw + 26) scroll2`;
+		
+			image 
+				-image "froyok/frox_xn.png"
+				-width $winw
+				-height 58; 
+		
+		gridLayout -numberOfColumns 1 -cellHeight 24 -cellWidth ($winw);
+			button 
+				-label "Bake texture(s)" 
+				-w 48 -h 22 
+				-bgc 0.5 0.5 0.7
+				-ann "Launch xNormal baking..."
+				-command "froxGenerate";
+		setParent ..;
+		
+		gridLayout -numberOfColumns 1 -cellHeight 4 -cellWidth ($winw);
+			text -l "";
+		setParent ..;
+		
+		gridLayout -numberOfColumns 1 -cellHeight 4 -cellWidth ($winw );
+			separator -h 8 -style "out" -bgc 0.5 0.15 0.25;
+		setParent ..;
+		
+		////////////////////////////////////////////////////////////////////////////////////
+		frameLayout -label "Ambient Occlusion" -collapsable 1 -borderStyle "out" -bgc 0.25 0.25 0.25 frame_ao;
+			gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 2);
+				text -l "Rays : " -align "right";
+				intField -v 128 -min 8 -max 8192 opt_ao_rays;
+				
+				text -l "Distribution : " -align "right";
+				$list_ao = `optionMenu 
+					-label "" 
+					-w ($winw / 1.2) -h 24
+					-ann ""
+					-cc ""
+					list_ao`;
+				menuItem -p $list_ao -l "Uniform" listao_1;
+				menuItem -p $list_ao -l "Cosine" listao_2;
+				menuItem -p $list_ao -l "CosineSq" listao_3;
+				
+				text -l "Bias : " -align "right";
+				floatField -v 0.000010 -pre 6 -min 0 -max 1 opt_ao_bias;
+				
+				text -l "Spread angle : " -align "right";
+				floatField -v 179.5 -pre 2 -min 0.5 -max 179.5 opt_ao_angle;
+				
+				checkBox -l "Limit ray distance" -v 0 check_ao_raydist;
+				checkBox -l "Jitter" -v 0 check_ao_jitter;
+				checkBox -l "Ignore backface" -v 0 check_ao_backf;
+				checkBox -l "Alow 100% occlu" -v 0 check_ao_alow100;
+			setParent ..;
+			
+			gridLayout -numberOfColumns 3 -cellHeight 22 -cellWidth ($winw / 3);
+				text -l ""; text -l "Attenuation" -align "center"; text -l "";
+				
+				floatField -v 1 -pre 5 -min 1 -max 1000 opt_ao_att1;
+				floatField -v 0 -pre 5 -min 0 -max 1000 opt_ao_att2;
+				floatField -v 0 -pre 5 -min 0 -max 1000 opt_ao_att3;
+			setParent ..;
+			
+			gridLayout -numberOfColumns 3 -cellHeight 22 -cellWidth ($winw / 3);
+				text -l ""; text -l "Colors" -align "center"; text -l "";
+				
+				button -c "froxSetColor ao_oc" -l "Occluded" -bgc 0 0 0 opt_ao_color1;
+				button -c "froxSetColor ao_unoc" -l "Unoccluded" -bgc 1 1 1 opt_ao_color2;
+				button -c "froxSetColor ao_bg" -l "Background" -bgc 1 1 1 opt_ao_color3;
+			setParent ..;
+			
+			gridLayout -numberOfColumns 1 -cellHeight 4 -cellWidth ($winw );
+				separator -h 8 -style "out" -bgc 0.5 0.15 0.25;
+			setParent ..;
+		setParent..;
+		
+	////////////////////////////////////////////////////////////////////////////////////
+	frameLayout -label "Normal map" -collapsable 1 -borderStyle "out" -bgc 0.35 0.35 0.35 frame_nm;
+		gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 2);
+			//text -l "";
+			checkBox -l "Tangent Space" -v 1 check_nm_space;
+			
+			button -c "froxSetColor nm" -l "Background color" -bgc 0.5 0.5 1 opt_nm_bgcolor;
+		setParent ..;
+		
+		text -l "Normal coordinates" -align "center";
+		gridLayout -numberOfColumns 3 -cellHeight 22 -cellWidth ($winw / 3);
+			$listax1 = `optionMenu 
+				-label "" 
+				-w ($winw / 1.2) -h 24
+				-ann ""
+				-cc "" 
+				-bgc 0.5 0.15 0.15
+				ax1_menu`;
+				menuItem -p $listax1 -l "X+" xformat1;
+				menuItem -p $listax1 -l "X-" xformat2;
+				menuItem -p $listax1 -l "Y+" xformat3;
+				menuItem -p $listax1 -l "Y-" xformat4;
+				menuItem -p $listax1 -l "Z+" xformat5;
+				menuItem -p $listax1 -l "Z-" xformat6;
+				optionMenu -e -sl 1 ax1_menu;
+				
+			$listax2 = `optionMenu 
+				-label "" 
+				-w ($winw / 1.2) -h 24
+				-ann ""
+				-cc ""
+				-bgc 0.15 0.5 0.15				
+				ax2_menu`;
+				menuItem -p $listax2 -l "X+" yformat1;
+				menuItem -p $listax2 -l "X-" yformat2;
+				menuItem -p $listax2 -l "Y+" yformat3;
+				menuItem -p $listax2 -l "Y-" yformat4;
+				menuItem -p $listax2 -l "Z+" yformat5;
+				menuItem -p $listax2 -l "Z-" yformat6;
+				optionMenu -e -sl 3 ax2_menu;
+				
+			$listax3 = `optionMenu 
+				-label "" 
+				-w ($winw / 1.2) -h 24
+				-ann ""
+				-cc "" 
+				-bgc 0.15 0.15 0.5
+				ax3_menu`;
+				menuItem -p $listax3 -l "X+" zformat1;
+				menuItem -p $listax3 -l "X-" zformat2;
+				menuItem -p $listax3 -l "Y+" zformat3;
+				menuItem -p $listax3 -l "Y-" zformat4;
+				menuItem -p $listax3 -l "Z+" zformat5;
+				menuItem -p $listax3 -l "Z-" zformat6;
+				optionMenu -e -sl 5 ax3_menu;
+				
+		setParent ..;
+		
+		gridLayout -numberOfColumns 1 -cellHeight 4 -cellWidth ($winw );
+			separator -h 8 -style "out" -bgc 0.5 0.15 0.25;
+		setParent ..;
+	setParent ..;
+	
+	
+	////////////////////////////////////////////////////////////////////////////////////
+	frameLayout -label "Height map" -collapsable 1 -borderStyle "out" -bgc 0.25 0.25 0.25 frame_height;
+		gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw);
+			button -c "froxSetColor hei" -l "Background color" -bgc 0 0 0 opt_height_bgcolor;
+		setParent ..;
+		
+		gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw);
+			text -l "[The Raw type need an HDR file format.]";
+		setParent ..;
+		gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 2);
+			text -l "Normalize type : " -align "center";
+			$hei_menu = `optionMenu 
+				-label "" 
+				-w ($winw / 1.2) -h 24
+				-ann ""
+				-cc "" 
+				-bgc 0.25 0.25 0.25
+				hei_menu`;
+			menuItem -p $hei_menu -l "Manual" heightopt1;
+			menuItem -p $hei_menu -l "Interactive" heightopt2;
+			menuItem -p $hei_menu -l "Raw" heightopt3;
+			optionMenu -e -sl 2 hei_menu;
+		setParent ..;
+		
+		gridLayout -numberOfColumns 3 -cellHeight 22 -cellWidth ($winw / 3);
+			text -l "Manual : " -align "right";
+			
+			floatField -v -10 -pre 6 -min -10000000 -max 10000000 opt_height_min;
+			floatField -v 10 -pre 6 -min -10000000 -max 10000000 opt_height_max;
+		setParent ..;
+		
+		gridLayout -numberOfColumns 1 -cellHeight 4 -cellWidth ($winw );
+			separator -h 8 -style "out" -bgc 0.5 0.15 0.25;
+		setParent ..;
+	setParent ..;
+	
+	////////////////////////////////////////////////////////////////////////////////////
+	frameLayout -label "Cavity map" -collapsable 1 -borderStyle "out" -bgc 0.35 0.35 0.35 frame_cav;
+		gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 2);
+			text -l "Rays : " -align "right";
+			intField -v 128 -min 8 -max 8192 opt_cav_rays;
+			
+			text -l "Radius : " -align "right";
+			floatField -v 0.5 -min 0 -max 9999 -pre 6 opt_cav_radius;
+			
+			text -l "Contrast : " -align "right";
+			floatField -v 1.25 -min 0.001 -max 8 -pre 3 opt_cav_contrast;
+			
+			text -l "Steps : " -align "right";
+			intField -v 4 -min 4 -max 128 opt_cav_steps;
+				
+			text -l "";
+			checkBox -l "Jitter" -v 0 check_cav_jitter;
+			
+			text -l "";
+			button
+				-bgc 1 1 1
+				-c "froxSetColor cav"
+				-l "Background color"
+				opt_cav_bgcolor;
+		setParent ..;
+		
+		gridLayout -numberOfColumns 1 -cellHeight 4 -cellWidth ($winw );
+			separator -h 8 -style "out" -bgc 0.5 0.15 0.25;
+		setParent ..;
+	setParent ..;
+		
+	////////////////////////////////////////////////////////////////////////////////////
+	frameLayout -label "High Poly vertex colors" -collapsable 1 -borderStyle "out" -bgc 0.25 0.25 0.25 frame_vtx;
+		gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw);
+			button
+				-l "Background color"
+				-c "froxSetColor vtx"
+				-bgc 0 0 0
+				opt_hpvtx_bgcolor;
+		setParent ..;
+		
+		gridLayout -numberOfColumns 1 -cellHeight 4 -cellWidth ($winw );
+			separator -h 8 -style "out" -bgc 0.5 0.15 0.25;
+		setParent ..;
+	setParent ..;
+	
+	////////////////////////////////////////////////////////////////////////////////////
+	frameLayout -label "Curvature map" -collapsable 1 -borderStyle "out" -bgc 0.35 0.35 0.35 frame_cuv;
+		gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 2);
+			text -l "Rays : " -align "right";
+			intField -v 128 -min 8 -max 8192 opt_cuv_rays;
+			
+			text -l "Spread angle : " -align "right";
+			floatField -v 162 -min 0.5 -max 179.5 -pre 6 opt_cuv_angle;
+			
+			text -l "Bias : " -align "right";
+			floatField -v 0.0001 -min 0 -max 1 -pre 10 opt_cuv_bias;
+			
+			text -l "Search distance : " -align "right";
+			floatField -v 1 -min 0 -max 10000000 -pre 8 opt_cuv_dist;
+		
+			text -l "";
+			checkBox -l "Jitter" -v 0 check_cuv_jitter;
+			
+			text -l "";
+			checkBox -l "Smoothing" -v 1 check_cuv_smooth;
+			
+			text -l "Algorithm : " -align "right";
+			$algo_curv = `optionMenu 
+				-label "" 
+				-w ($winw / 1.2) -h 24
+				-ann ""
+				-cc "" 
+				algo_curv`;
+				menuItem -p $algo_curv -l "Average" algo_curv_1;
+				menuItem -p $algo_curv -l "Gaussian" algo_curv_2;
+				optionMenu -e -sl 1 algo_curv;
+				
+			text -l "Distribution : " -align "right";
+			$distri_curv = `optionMenu 
+				-label "" 
+				-w ($winw / 1.2) -h 24
+				-ann ""
+				-cc "" 
+				distri_curv`;
+				menuItem -p $distri_curv -l "Uniform" distri_curv_1;
+				menuItem -p $distri_curv -l "Cosine" distri_curv_2;
+				menuItem -p $distri_curv -l "CosineSq" distri_curv_3;
+				optionMenu -e -sl 2 distri_curv;
+				
+			text -l "Tone mapping : " -align "right";
+			$tone_curv = `optionMenu 
+				-label "" 
+				-w ($winw / 1.2) -h 24
+				-ann ""
+				-cc "" 
+				tone_curv`;
+				menuItem -p $tone_curv -l "Monochrome" tone_curv_1;
+				menuItem -p $tone_curv -l "Two colors" tone_curv_2;
+				menuItem -p $tone_curv -l "Three colors" tone_curv_3;
+				optionMenu -e -sl 3 tone_curv;
+				
+		setParent ..;				
+
+		button
+			-bgc 0 0 0
+			-c "froxSetColor curv"
+			-l "Background color"
+			opt_cuv_bgcolor;
+				
+		gridLayout -numberOfColumns 1 -cellHeight 4 -cellWidth ($winw );
+			separator -h 8 -style "out" -bgc 0.5 0.15 0.25;
+		setParent ..;
+	setParent ..;
+	
+	
+	////////////////////////////////////////////////////////////////////////////////////
+	frameLayout -label "PRTpn maps" -collapsable 1 -borderStyle "out" -bgc 0.25 0.25 0.25 frame_prt;
+		gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 2);
+			text -l "Rays : " -align "right";
+			intField -v 128 -min 8 -max 8192 opt_prt_rays;
+			
+			text -l "Spread angle : " -align "right";
+			floatField -v 179.5 -min 0.5 -max 179.5 -pre 6 opt_prt_angle;
+			
+			text -l "Bias : " -align "right";
+			floatField -v 0.08 -min 0 -max 1 -pre 6 opt_prt_bias;
+		
+			text -l "Treshold : " -align "right";
+			floatField -v 0.005 -min 0 -max 1 -pre 6 opt_prt_treshold;
+		
+			checkBox -l "Limit ray dist" -v 0 check_prt_limitray;
+			checkBox -l "Color normalize" -v 1 check_prt_normalize;
+			text -l "";
+			checkBox -l "Jitter" -v 0 check_prt_jitter;
+			
+			
+			text -l "";
+			button
+				-bgc 0 0 0
+				-c "froxSetColor prt"
+				-l "Background color"
+				opt_prt_bgcolor;
+		setParent ..;
+				
+		gridLayout -numberOfColumns 1 -cellHeight 4 -cellWidth ($winw );
+			separator -h 8 -style "out" -bgc 0.5 0.15 0.25;
+		setParent ..;
+	setParent ..;
+	
+	
+	////////////////////////////////////////////////////////////////////////////////////
+	frameLayout -label "Base texture" -collapsable 1 -borderStyle "out" -bgc 0.35 0.35 0.35 frame_base;
+		gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw);
+			button -c "froxSetColor base_d" -l "Background color" -bgc 0 0 0 opt_base_dbgcolor;
+		setParent ..;
+		
+		checkBox -l "Draw ID instead of color" -v 0 check_base_id;
+		checkBox -l "Txt is a tangent-space normal map" -v 0 check_base_nm;
+		
+		gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw);
+			gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 1.5);					
+				textField -w 218 -fi "" -ann "Texture path" base_dif_field; 
+				gridLayout -numberOfColumns 1 -cellHeight 22 -cellWidth ($winw / 3);	
+					button
+						-label "< Set txt"
+						-w 48 -h 22 
+						-bgc 0.35 0.35 0.35
+						-ann "Set texture to bake"
+						-command "froxSetTexture";
+				setParent ..;
+			setParent ..;
+		setParent ..;
+		
+		
+		gridLayout -numberOfColumns 1 -cellHeight 4 -cellWidth ($winw );
+			separator -h 8 -style "out" -bgc 0.5 0.15 0.25;
+		setParent ..;
+	setParent ..; //frame
+	setParent ..; //scroll
+	
+	string $child3 = `scrollLayout -w ($winw + 26) -h 300 scroll3`;
+		frameLayout -label "xNormal log" -collapsable 1 -borderStyle "out" -bgc 0.35 0.35 0.35 frame_log;
+			gridLayout -numberOfColumns 2 -cellHeight 22 -cellWidth ($winw / 2);		
+				button
+					-bgc 0.2 0.2 0.35
+					-l "Refresh";
+				button
+					-bgc 0.25 0.25 0.25
+					-l "Expand";
+			setParent..;
+		setParent ..;
+	setParent ..;
+
+	tabLayout -edit
+		-tabLabel $child1 ("Export      ") 
+		-tabLabel $child2 ("Settings    ")
+		-tabLabel $child3 ("Logs        ")
+		$tabs;
+	
+    if( $mayaVersion >= $mayaVersionRequired )
+	{
+		//show the window with dock control
+		dockControl
+			-area			$defaultDockArea
+			-floating		$floating
+			-content		Winfrox
+			-allowedArea	"left"
+			-allowedArea	"right"
+			-label			$title
+			$dock;
+	}
+	else
+	{
+		//show the window with the old system
+		showWindow Winfrox;
+		window -e -height 600 Winfrox;
+	}
+	
+	//Init
+	froxGetFolders();
+	
+	//collapse some framelayout by default :
+	frameLayout -e -collapse 1 frame_nm;
+	frameLayout -e -collapse 1 frame_height;
+	frameLayout -e -collapse 1 frame_cav;
+	frameLayout -e -collapse 1 frame_vtx;
+	frameLayout -e -collapse 1 frame_cuv;
+	frameLayout -e -collapse 1 frame_prt;
+	frameLayout -e -collapse 1 frame_base;
+	frameLayout -e -collapse 1 frame_preset;
+	
+	print ($title + " is ready.\n");
+}
+
+global proc froxCreateShelfButton()
+{	
+	global string $gShelfTopLevel;
+	global string $title;
+	string $currentShelf = `tabLayout -q -st $gShelfTopLevel`;
+	setParent ($gShelfTopLevel + "|" + $currentShelf);
+	
+	shelfButton
+		-label $title
+		-annotation "Launch Froyok Xnormal Toolset"
+		-image1 "froyok/froXno.png" 
+		-command "source froXno.mel; froXno;"; //no need to make a new button, automatically update
+}
+
+global proc froxShowAbout()
+{
+	system("shell start http://www.froyok.fr/");
+}
+
+global proc froxOpenExportFolder()
+{
+	string $path = `textField -q -fi exportpath_field`;
+	if($path != "")
+	{
+		$path = toNativePath($path); //slash to double slash
+		system("explorer \"" + $path + "\"");
+	}
+}
+
+
+global proc froxCheckNgons()
+{
+	string $sel[] = `ls -sl`;
+	
+	if(size($sel) != 0)
+	{
+		//select mesh (with convertion to avoid components)
+		select -r $sel[0]; //select only 1
+		selectMode -object; //convert to object
+		$sel = `ls -sl`; //erase and reselect only our 1rst object
+		select -r $sel[0];
+		
+		//select n-gons
+		polySelectConstraint -mode 3 -type 0x0008 -size 3; 
+		polySelectConstraint -disable; 
+		selectMode -component;
+		
+		string $selng[] = `filterExpand -fullPath 1 -expand 1 -sm 34`;
+
+		if(size($selng) > 0)
+		{	
+			hilite -r $sel[0];
+			selectType -smp 0 -sme 0 -smf 1 -smu 0 -pv 0 -pe 0 -pf 1 -puv 0;
+			
+			print (size($selng) + " n-gons found on \"" + $sel[0] + "\"");
+		}
+		else
+		{
+			selectMode -object;
+			select -r $sel[0];
+			print "No n-gons found.";
+		}
+	}
+	else	
+		error "Nothing selected...";
+}
+
+
+global proc froxGetMesh(string $type)
+{
+	string $sel[] = `ls -sl`;
+	
+	if(size($sel) != 0)
+	{
+		if($type == "LP")
+		{
+			textField -e -fi $sel[0] LP_field;
+		}
+		else if($type == "HP")
+		{
+			textField -e -fi $sel[0] HP_field;
+		}
+		else if($type == "block")
+		{
+			textField -e -fi $sel[0] blocker_field;
+		}
+		else if($type == "cage")
+		{
+			textField -e -fi $sel[0] cage_field;
+		}
+		else
+		{
+			textField -e -fi "" LP_field;
+			textField -e -fi "" HP_field;
+			textField -e -fi "" blocker_field;
+			textField -e -fi "" cage_field;
+		}
+	}
+	else
+	{
+		textField -e -fi "" LP_field;
+		textField -e -fi "" HP_field;
+		textField -e -fi "" blocker_field;
+		textField -e -fi "" cage_field;
+	}
+}
+
+global proc froxSetTexture()
+{
+	string $basicFilter = "Texture file [tga, bmp, png, tiff, dds] (*.tga *.bmp *.png *.tiff *.dds)";
+	string $prepath = `textField -q -fi exportpath_field`;
+	string $path[] = `fileDialog2 -fm 1 -cap "Select a texture file" -startingDirectory $prepath -fileFilter $basicFilter`;
+	
+	if($path[0] != "") //update only if valid 
+		textField -e -fi $path[0] base_dif_field; //update path
+}
+
+global proc froxGenerate()
+{
+	//check xml file
+	if(`textField -q -fi exportpath_field` != "")
+	{
+		//test if xml the file exist
+		string $temp =  `textField -q -fi exportpath_field` + "export.xml";
+		
+		if(!`filetest -s $temp`) //doesn't exists
+		{
+			//generate it
+			print "No xml file, generating it...";
+			froxGenerateXml();
+
+			//test again if the file is correclty generated
+			if(!`filetest -s $temp`)
+			{
+				warning "Can't generate the xml file, baking cancelled.";
+				return;
+			}
+		}
+		else if(`checkBox -q -v check_forcexml`) //exists but we rewrite it
+		{
+			//remove it
+			sysFile -del $temp;
+			
+			//generate it
+			print "No xml file, generating it...";
+			froxGenerateXml();
+
+			//test again if the file is correclty generated
+			if(!`filetest -s $temp`)
+			{
+				warning "Can't generate the xml file, baking cancelled.";
+				return;
+			}
+		}
+	}
+	else
+	{
+		warning "Can't generate : Export path is empty.";
+		return;
+	}
+	
+	//check if xNormal path is correct
+	string $xn = `textField -q -fi xnorpath_field`;
+	if($xn == "" || !`filetest -r $xn`)
+	{
+		warning "The xNormal path is incorrect, can't find the executable";
+		return;
+	}
+	
+	
+	//check for nGons
+	select -cl;
+	if(`textField -q -fi LP_field` != "")
+	{
+		//select mesh
+		select `textField -q -fi LP_field`;
+		
+		//select n-gons
+		polySelectConstraint -mode 3 -type 0x0008 -size 3; 
+		polySelectConstraint -disable; 
+		selectMode -component;
+		
+		string $sel[] = `filterExpand -fullPath 1 -expand 1 -sm 34`;
+
+		if(size($sel) > 0)
+		{			
+			hilite -r `textField -q -fi LP_field`;
+			selectType -smp 0 -sme 0 -smf 1 -smu 0 -pv 0 -pe 0 -pf 1 -puv 0;
+			
+			error "The low-poly mesh has n-gons (more than 4 edges), xNormal support only tri and quads.";
+		}
+	}	
+	selectMode -object;
+	
+	//check if something can be generated
+	
+	//if no box are selected, cancel
+	if(`checkBox -q -v check_txt_ao` == 0
+	&& `checkBox -q -v check_txt_normal` == 0
+	&& `checkBox -q -v check_txt_cavity` == 0
+	&& `checkBox -q -v check_txt_vtxcolor` == 0
+	&& `checkBox -q -v check_txt_curvature` == 0
+	&& `checkBox -q -v check_txt_prt` == 0
+	&& `checkBox -q -v check_txt_height` == 0
+	&& `checkBox -q -v check_txt_base` == 0)
+	{
+		warning "No txt type selected, nothing to generate.";
+		return;
+	}
+	
+		//objects
+	string $sel[] = `ls -sl`;
+	if(`textField -q -fi LP_field` == "" && size($sel) == 0)
+	{
+		warning "Nothing selected/loaded, nothing to generate.";
+		return;
+	}
+	
+	//chekc if mesh files have been exported
+	froxCheckMesh();
+	
+	//set the loading popup
+	int $bar = 0;
+	progressWindow
+		-title "xNormal XML"
+		-progress $bar
+		-status "Writing file : 0%"
+		-isInterruptable false;
+	
+	
+	//xNormal XML generation
+	if(`textField -q -fi exportpath_field` != "")
+	{
+		//define xml location
+		string $xml = (`textField -q -fi exportpath_field` + "export.xml");
+		
+	$bar += 1;
+	progressWindow -e -pr $bar -st ("Xml path");
+		
+		//get UI values
+		float $txt_size1 = `optionMenu -q -v exportlist_menu`;
+		float $txt_size2 = `optionMenu -q -v exportlist_2_menu`;
+		float $txt_padding = `optionMenu -q -v exportlist2_menu`;
+		float $ray1 = `floatField -q -v ray_front`;
+		float $ray2 = `floatField -q -v ray_near`;
+		float $msh_scale = `floatField -q -v scale_field`;
+		
+		int $aa = `optionMenu -q -v aa_menu`;
+		
+		//texture file format
+		string $txt_file = (`textField -q -fi exportpath_field` + `textField -q -fi LP_field`);
+		
+		string $format = `optionMenu -q -v exportlist3_menu`;
+		
+		if($format == "TGA")
+			$format = ".tga";
+		else if($format == "BMP")
+			$format = ".bmp";
+		else if($format == "PNG")
+			$format = ".png";
+		else if($format == "HDR")
+			$format = ".hdr";
+		else if($format == "TIFF")
+			$format = ".tif";
+		else if($format == "DDS")
+			$format = ".dds";
+			
+		$txt_file = $txt_file + $format;
+		
+	$bar += 5;
+	progressWindow -e -pr $bar -st ("Format");
+		
+		//LP file
+		string $file_lp = "";
+		string $cage = "";
+		
+		if(`optionMenu -q -v exportlist4_menu` == "FBX")
+		{
+			$file_lp = (`textField -q -fi exportpath_field` + `textField -q -fi LP_field` + ".fbx");
+			
+			if(`checkBox -q -v check_cage`)
+				$cage = (`textField -q -fi exportpath_field` + `textField -q -fi cage_field` + ".fbx");
+		}
+		else if(`optionMenu -q -v exportlist4_menu` == "SBM")
+		{
+			$file_lp = (`textField -q -fi exportpath_field` + `textField -q -fi LP_field` + ".sbm");
+			
+			if(`checkBox -q -v check_cage`)
+				$cage = (`textField -q -fi exportpath_field` + `textField -q -fi cage_field` + ".sbm");
+		}
+		else
+		{
+			$file_lp = (`textField -q -fi exportpath_field` + `textField -q -fi LP_field` + ".obj");
+			
+			if(`checkBox -q -v check_cage`)
+				$cage = (`textField -q -fi exportpath_field` + `textField -q -fi cage_field` + ".obj");
+		}
+		
+		
+		//HP File
+		string $file_hp = "";
+		
+		if(`checkBox -q -v check_HPout`)
+		{
+			$file_hp = startString($file_lp, size($file_lp) - 6);
+			$file_hp = $file_hp + "hp";
+		}
+		else
+			$file_hp = (`textField -q -fi exportpath_field` + `textField -q -fi HP_field`);
+
+		if(`optionMenu -q -v exportlist5_menu` == "FBX")
+			$file_hp = $file_hp + ".fbx";
+		else if(`optionMenu -q -v exportlist5_menu` == "SBM")
+			$file_hp = $file_hp + ".sbm";
+		else
+			$file_hp = $file_hp + ".obj";
+		
+
+		//Blocker
+		string $blocker = "";
+		if(`textField -q -fi blocker_field` != "" && `checkBox -q -v check_blocker`)
+			$blocker = (`textField -q -fi exportpath_field` + `textField -q -fi blocker_field` + ".obj");
+		
+	$bar += 14;
+	progressWindow -e -pr $bar -st ("HP & LP");
+
+		//WRITE TO XML
+		//--------------------------------------------
+		//setup texture size/padding/format value + Rays
+		
+		froxXMLfloat($xml, 8, "Width", $txt_size1);
+		froxXMLfloat($xml, 8, "Height", $txt_size2);
+		froxXMLfloat($xml, 8, "EdgePadding", $txt_padding);
+		froxXMLfloat($xml, 6, "MaxRayDistanceFront", $ray1);
+		froxXMLfloat($xml, 6, "MaxRayDistanceBack", $ray2);
+		froxXMLfloat($xml, 3, "Scale", $msh_scale);
+		froxXMLfloat($xml, 6, "Scale", $msh_scale);
+		froxXMLfloat($xml, 8, "AA", $aa);
+		
+		
+		//normals LP
+		if(`optionMenu -q -v listnormallp` == "Use exported")
+			froxXMLstring($xml, 6, "AverageNormals", "UseExportedNormals");
+		else if(`optionMenu -q -v listnormallp` == "Harden")
+			froxXMLstring($xml, 6, "AverageNormals", "HardenNormals");
+		else
+			froxXMLstring($xml, 6, "AverageNormals", "AverageNormals");
+		
+		//normals HP
+		if(`optionMenu -q -v listnormalhp` == "Use exported")
+			froxXMLstring($xml, 3, "AverageNormals", "UseExportedNormals");
+		else if(`optionMenu -q -v listnormalhp` == "Harden")
+			froxXMLstring($xml, 3, "AverageNormals", "HardenNormals");
+		else
+			froxXMLstring($xml, 3, "AverageNormals", "AverageNormals");
+	
+	
+	$bar += 5;
+	progressWindow -e -pr $bar -st ("Txt info");
+		
+		
+		froxXMLstring($xml, 8, "File", $txt_file);
+		froxXMLstring($xml, 3, "File", $file_hp);
+		froxXMLstring($xml, 6, "File", $file_lp);
+		
+		if(`checkBox -q -v check_cage`)
+			froxXMLstring($xml, 6, "UseCage", "true");
+		else
+			froxXMLstring($xml, 6, "UseCage", "false");
+		froxXMLstring($xml, 6, "CageFile", $cage);//cage path
+		
+		froxXMLstring($xml, 6, "BlockersFile", $blocker);
+		
+	$bar += 5;
+	progressWindow -e -pr $bar -st ("File info");
+		
+		//textures to bake
+		if(`checkBox -q -v check_txt_vtxcolor`)
+		{
+			froxXMLstring($xml, 3, "IgnorePerVertexColor", "false");
+			froxXMLstring($xml, 8, "BakeHighpolyVCols", "true");
+			
+			froxXMLstring($xml, 8, "BakeHighpolyBaseTex", "false");
+			
+			//colors bg
+				float $colf[3] = `button -q -bgc opt_hpvtx_bgcolor`;
+				float $col[3];
+				$col[0] = floor ( ($colf[0] * 255) + 0.5 ); //convert from 0/1 to  0/255
+				$col[1] = floor ( ($colf[1] * 255) + 0.5 );
+				$col[2] = floor ( ($colf[2] * 255) + 0.5 );
+				
+				//clamp by security
+				$col[0] = clamp ( 0, 255, $col[0]);
+				$col[1] = clamp ( 0, 255, $col[1]);
+				$col[2] = clamp ( 0, 255, $col[2]);
+				
+				froxXMLfloat($xml, 18, "R", $col[0]);
+				froxXMLfloat($xml, 18, "G", $col[1]);
+				froxXMLfloat($xml, 18, "B", $col[2]);
+				
+			$bar = 50;	progressWindow -e -pr $bar -st ("Vtx colors");
+			
+			//-----------------------------------------------------------
+			froxXMLstring($xml, 8, "GenAO", "false");
+				$bar = 50;	progressWindow -e -pr $bar -st ("AO");
+				
+			froxXMLstring($xml, 8, "GenNormals", "false");
+				$bar = 60;	progressWindow -e -pr $bar -st ("Normal");
+				
+			froxXMLstring($xml, 8, "GenCavity", "false");
+				$bar = 70;	progressWindow -e -pr $bar -st ("Cavity");
+			
+			froxXMLstring($xml, 8, "GenCurv", "false");
+				$bar = 80;	progressWindow -e -pr $bar -st ("Curvature");
+			
+			froxXMLstring($xml, 8, "GenPRT", "false");
+				$bar = 90;	progressWindow -e -pr $bar -st ("PRT");
+			
+			froxXMLstring($xml, 8, "GenHeights", "false");
+				$bar = 100;	progressWindow -e -pr $bar -st ("Done");
+		}
+		else if(`checkBox -q -v check_txt_base`)
+		{
+			$bar = 50;	progressWindow -e -pr $bar -st ("Disabling");
+			
+			froxXMLstring($xml, 3, "IgnorePerVertexColor", "true");
+			froxXMLstring($xml, 8, "BakeHighpolyVCols", "false");
+			froxXMLstring($xml, 8, "GenAO", "false");
+			froxXMLstring($xml, 8, "GenNormals", "false");
+			froxXMLstring($xml, 8, "GenCavity", "false");
+			froxXMLstring($xml, 8, "GenCurv", "false");
+			froxXMLstring($xml, 8, "GenPRT", "false");
+			froxXMLstring($xml, 8, "GenHeights", "false");
+			
+			$bar = 65;	progressWindow -e -pr $bar -st ("Maps disabled");
+
+			froxXMLstring($xml, 8, "BakeHighpolyBaseTex", "true");
+			
+			////////////////////////
+			if(`checkBox -q -v check_base_nm`)
+				froxXMLstring($xml, 3, "BaseTexIsTSNM", "true");
+			else
+				froxXMLstring($xml, 3, "BaseTexIsTSNM", "false");
+				
+			if(`checkBox -q -v check_base_id`)	
+				froxXMLstring($xml, 8, "BakeHighpolyBaseTextureDrawObjectIDIfNoTexture", "true");
+			else
+				froxXMLstring($xml, 8, "BakeHighpolyBaseTextureDrawObjectIDIfNoTexture", "false");
+			///////////////////////
+			
+			$bar = 80;	progressWindow -e -pr $bar -st ("Base txt");
+		
+			froxXMLstring($xml, 3, "BaseTex", `textField -q -fi base_dif_field`);
+			
+			$bar = 90;	progressWindow -e -pr $bar -st ("Base txt");
+			
+			//colors bg
+				float $colf[3] = `button -q -bgc opt_base_dbgcolor`;
+				float $col[3];
+				$col[0] = floor ( ($colf[0] * 255) + 0.5 ); //convert from 0/1 to  0/255
+				$col[1] = floor ( ($colf[1] * 255) + 0.5 );
+				$col[2] = floor ( ($colf[2] * 255) + 0.5 );
+				
+				//clamp by security
+				$col[0] = clamp ( 0, 255, $col[0]);
+				$col[1] = clamp ( 0, 255, $col[1]);
+				$col[2] = clamp ( 0, 255, $col[2]);
+				
+				froxXMLfloat($xml, 10, "R", $col[0]);
+				froxXMLfloat($xml, 10, "G", $col[1]);
+				froxXMLfloat($xml, 10, "B", $col[2]);
+				
+				froxXMLfloat($xml, 11, "R", $col[0]);
+				froxXMLfloat($xml, 11, "G", $col[1]);
+				froxXMLfloat($xml, 11, "B", $col[2]);
+				
+			$bar = 100;	progressWindow -e -pr $bar -st ("Done");
+		}
+		else
+		{
+			//Disbale vertex colors
+			froxXMLstring($xml, 3, "IgnorePerVertexColor", "true");
+			froxXMLstring($xml, 8, "BakeHighpolyVCols", "false");
+			froxXMLstring($xml, 8, "BakeHighpolyBaseTex", "false");
+			
+			//-----------------------------------------------------------			
+			if(`checkBox -q -v check_txt_ao`)
+			{
+				froxXMLstring($xml, 8, "GenAO", "true");
+				
+				//main settings
+				froxXMLfloat($xml, 8, "AORaysPerSample", `intField -q -v opt_ao_rays`);
+				froxXMLstring($xml, 8, "AODistribution", `optionMenu -q -v list_ao`);
+				froxXMLfloat($xml, 8, "AOBias", `floatField -q -v opt_ao_bias`);
+				froxXMLfloat($xml, 8, "AOConeAngle", `floatField -q -v opt_ao_angle`);
+				
+				if(`checkBox -q -v check_ao_alow100`)
+					froxXMLstring($xml, 8, "AOAllowPureOccluded", "true");
+				else
+					froxXMLstring($xml, 8, "AOAllowPureOccluded", "false");
+				
+				if(`checkBox -q -v check_ao_raydist`)
+					froxXMLstring($xml, 8, "AOLimitRayDistance", "true");
+				else
+					froxXMLstring($xml, 8, "AOLimitRayDistance", "false");
+				
+				froxXMLfloat($xml, 8, "AOAttenConstant", `floatField -q -v opt_ao_att1`);
+				froxXMLfloat($xml, 8, "AOAttenLinear", `floatField -q -v opt_ao_att2`);
+				froxXMLfloat($xml, 8, "AOAttenCuadratic", `floatField -q -v opt_ao_att3`);
+				
+				if(`checkBox -q -v check_ao_jitter`)
+					froxXMLstring($xml, 8, "AOJitter", "true");
+				else
+					froxXMLstring($xml, 8, "AOJitter", "false");
+					
+				if(`checkBox -q -v check_ao_backf`)
+					froxXMLstring($xml, 8, "AOIgnoreBackfaceHits", "true");
+				else
+					froxXMLstring($xml, 8, "AOIgnoreBackfaceHits", "false");
+				
+				//colors 1 : Occluded
+				float $colf[3] = `button -q -bgc opt_ao_color1`;
+				float $col[3];
+				$col[0] = floor ( ($colf[0] * 255) + 0.5 ); //convert from 0/1 to  0/255
+				$col[1] = floor ( ($colf[1] * 255) + 0.5 );
+				$col[2] = floor ( ($colf[2] * 255) + 0.5 );
+				
+				//clamp by security
+				$col[0] = clamp ( 0, 255, $col[0]);
+				$col[1] = clamp ( 0, 255, $col[1]);
+				$col[2] = clamp ( 0, 255, $col[2]);
+				
+				froxXMLfloat($xml, 13, "R", $col[0]);
+				froxXMLfloat($xml, 13, "G", $col[1]);
+				froxXMLfloat($xml, 13, "B", $col[2]);
+				
+				//color 2 Unoccluded
+				$colf = `button -q -bgc opt_ao_color2`;
+				$col[0] = floor ( ($colf[0] * 255) + 0.5 ); //convert from 0/1 to  0/255
+				$col[1] = floor ( ($colf[1] * 255) + 0.5 );
+				$col[2] = floor ( ($colf[2] * 255) + 0.5 );
+				
+				//clamp by security
+				$col[0] = clamp ( 0, 255, $col[0]);
+				$col[1] = clamp ( 0, 255, $col[1]);
+				$col[2] = clamp ( 0, 255, $col[2]);
+				
+				froxXMLfloat($xml, 14, "R", $col[0]);
+				froxXMLfloat($xml, 14, "G", $col[1]);
+				froxXMLfloat($xml, 14, "B", $col[2]);
+				
+				//color 3 : Background
+				$colf = `button -q -bgc opt_ao_color2`;
+				$col[0] = floor ( ($colf[0] * 255) + 0.5 ); //convert from 0/1 to  0/255
+				$col[1] = floor ( ($colf[1] * 255) + 0.5 );
+				$col[2] = floor ( ($colf[2] * 255) + 0.5 );
+				
+				//clamp by security
+				$col[0] = clamp ( 0, 255, $col[0]);
+				$col[1] = clamp ( 0, 255, $col[1]);
+				$col[2] = clamp ( 0, 255, $col[2]);
+				
+				froxXMLfloat($xml, 15, "R", $col[0]);
+				froxXMLfloat($xml, 15, "G", $col[1]);
+				froxXMLfloat($xml, 15, "B", $col[2]);
+			}
+			else
+				froxXMLstring($xml, 8, "GenAO", "false");
+				
+		$bar = 50;
+		progressWindow -e -pr $bar -st ("AO");
+			
+			
+			//-----------------------------------------------------------
+			if(`checkBox -q -v check_txt_normal`)
+			{
+				froxXMLstring($xml, 8, "GenNormals", "true");
+				
+				//axis
+				froxXMLstring($xml, 8, "SwizzleX", `optionMenu -q -v ax1_menu`);
+				froxXMLstring($xml, 8, "SwizzleY", `optionMenu -q -v ax2_menu`);
+				froxXMLstring($xml, 8, "SwizzleZ", `optionMenu -q -v ax3_menu`);
+				
+				//space
+				if(`checkBox -q -v check_nm_space`)
+					froxXMLstring($xml, 8, "TangentSpace", "true");
+				else
+					froxXMLstring($xml, 8, "TangentSpace", "false");
+				
+				//bg color
+				float $colf[3] = `button -q -bgc opt_nm_bgcolor`;
+				float $col[3];
+				$col[0] = floor ( ($colf[0] * 255) + 0.5 ); //convert from 0/1 to  0/255
+				$col[1] = floor ( ($colf[1] * 255) + 0.5 );
+				$col[2] = floor ( ($colf[2] * 255) + 0.5 );
+				
+				//clamp by security
+				$col[0] = clamp ( 0, 255, $col[0]);
+				$col[1] = clamp ( 0, 255, $col[1]);
+				$col[2] = clamp ( 0, 255, $col[2]);
+				
+				froxXMLfloat($xml, 9, "R", $col[0]);
+				froxXMLfloat($xml, 9, "G", $col[1]);
+				froxXMLfloat($xml, 9, "B", $col[2]);
+			}
+			else
+				froxXMLstring($xml, 8, "GenNormals", "false");
+				
+		$bar = 60;
+		progressWindow -e -pr $bar -st ("Normal");	
+			
+			//-----------------------------------------------------------				
+			if(`checkBox -q -v check_txt_height`)
+			{
+				froxXMLstring($xml, 8, "GenHeights", "true");
+
+				froxXMLstring($xml, 8, "HeightTonemap", `optionMenu -q -v hei_menu`);
+					
+				froxXMLfloat($xml, 8, "HeightMinVal", `floatField -q -v opt_height_min`);
+				froxXMLfloat($xml, 8, "HeightMaxVal", `floatField -q -v opt_height_max`);
+
+				//bg color
+				float $colf[3] = `button -q -bgc opt_height_bgcolor`;
+				float $col[3];
+				$col[0] = floor ( ($colf[0] * 255) + 0.5 ); //convert from 0/1 to  0/255
+				$col[1] = floor ( ($colf[1] * 255) + 0.5 );
+				$col[2] = floor ( ($colf[2] * 255) + 0.5 );
+				
+				//clamp by security
+				$col[0] = clamp ( 0, 255, $col[0]);
+				$col[1] = clamp ( 0, 255, $col[1]);
+				$col[2] = clamp ( 0, 255, $col[2]);
+				
+				froxXMLfloat($xml, 12, "R", $col[0]);
+				froxXMLfloat($xml, 12, "G", $col[1]);
+				froxXMLfloat($xml, 12, "B", $col[2]);
+			}
+			else
+				froxXMLstring($xml, 8, "GenHeights", "false");
+				
+		$bar = 70;
+		progressWindow -e -pr $bar -st ("Height");	
+			
+			//-----------------------------------------------------------
+			if(`checkBox -q -v check_txt_cavity`)
+			{
+				froxXMLstring($xml, 8, "GenCavity", "true");
+				
+				froxXMLfloat($xml, 8, "CavityRaysPerSample", `intField -q -v opt_cav_rays`);
+				froxXMLfloat($xml, 8, "CavitySearchRadius", `floatField -q -v opt_cav_radius`);
+				froxXMLfloat($xml, 8, "CavityContrast", `floatField -q -v opt_cav_contrast`);
+				froxXMLfloat($xml, 8, "CavitySteps", `intField -q -v opt_cav_steps`);
+				
+				if(`checkBox -q -v check_cav_jitter`)
+					froxXMLstring($xml, 8, "CavityJitter", "true");
+				else
+					froxXMLstring($xml, 8, "CavityJitter", "false");
+					
+				//colors bg
+				float $colf[3] = `button -q -bgc opt_cav_bgcolor`;
+				float $col[3];
+				$col[0] = floor ( ($colf[0] * 255) + 0.5 ); //convert from 0/1 to  0/255
+				$col[1] = floor ( ($colf[1] * 255) + 0.5 );
+				$col[2] = floor ( ($colf[2] * 255) + 0.5 );
+				
+				//clamp by security
+				$col[0] = clamp ( 0, 255, $col[0]);
+				$col[1] = clamp ( 0, 255, $col[1]);
+				$col[2] = clamp ( 0, 255, $col[2]);
+				
+				froxXMLfloat($xml, 17, "R", $col[0]);
+				froxXMLfloat($xml, 17, "G", $col[1]);
+				froxXMLfloat($xml, 17, "B", $col[2]);
+			}
+			else
+				froxXMLstring($xml, 8, "GenCavity", "false");
+			
+		$bar = 80;
+		progressWindow -e -pr $bar -st ("Cavity");	
+			
+			//-----------------------------------------------------------
+			if(`checkBox -q -v check_txt_curvature`)
+			{
+				froxXMLstring($xml, 8, "GenCurv", "true");
+				
+				//rays/distance
+				froxXMLfloat($xml, 8, "CurvRaysPerSample", `intField -q -v opt_cuv_rays`);
+				froxXMLfloat($xml, 8, "CurvConeAngle", `floatField -q -v opt_cuv_angle`);
+				froxXMLfloat($xml, 8, "CurvBias", `floatField -q -v opt_cuv_bias`);
+				froxXMLfloat($xml, 8, "CurvSearchDistance", `floatField -q -v opt_cuv_dist`);
+				
+				//checkbox
+				if(`checkBox -q -v check_cuv_jitter`)
+					froxXMLstring($xml, 8, "CurvJitter", "true");
+				else
+					froxXMLstring($xml, 8, "CurvJitter", "false");
+					
+				if(`checkBox -q -v check_cuv_smooth`)
+					froxXMLstring($xml, 8, "CurvSmoothing", "true");
+				else
+					froxXMLstring($xml, 8, "CurvSmoothing", "false");
+					
+				//Algorythm/Distribution/Tone mapping
+				froxXMLstring($xml, 8, "CurvAlgorithm", `optionMenu -q -v algo_curv`);
+				froxXMLstring($xml, 8, "CurvDistribution", `optionMenu -q -v distri_curv`);
+				
+				if(`optionMenu -q -v tone_curv` == "Three colors")
+					froxXMLstring($xml, 8, "CurvTonemap", "3Col");
+				else if(`optionMenu -q -v tone_curv` == "Two colors")
+					froxXMLstring($xml, 8, "CurvTonemap", "2Col");
+				else
+					froxXMLstring($xml, 8, "CurvTonemap", "Monocrome");
+					
+				//colors bg
+				float $colf[3] = `button -q -bgc opt_cuv_bgcolor`;
+				float $col[3];
+				$col[0] = floor ( ($colf[0] * 255) + 0.5 ); //convert from 0/1 to  0/255
+				$col[1] = floor ( ($colf[1] * 255) + 0.5 );
+				$col[2] = floor ( ($colf[2] * 255) + 0.5 );
+				
+				//clamp by security
+				$col[0] = clamp ( 0, 255, $col[0]);
+				$col[1] = clamp ( 0, 255, $col[1]);
+				$col[2] = clamp ( 0, 255, $col[2]);
+				
+				froxXMLfloat($xml, 19, "R", $col[0]);
+				froxXMLfloat($xml, 19, "G", $col[1]);
+				froxXMLfloat($xml, 19, "B", $col[2]);
+			}
+			else
+				froxXMLstring($xml, 8, "GenCurv", "false");
+			
+		$bar = 90;
+		progressWindow -e -pr $bar -st ("Curvature");	
+			
+			//-----------------------------------------------------------	
+			if(`checkBox -q -v check_txt_prt`)
+			{
+				froxXMLstring($xml, 8, "GenPRT", "true");
+				
+				froxXMLfloat($xml, 8, "PRTRaysPerSample", `intField -q -v opt_prt_rays`);
+				froxXMLfloat($xml, 8, "PRTBias", `floatField -q -v opt_prt_bias`);
+				froxXMLfloat($xml, 8, "PRTConeAngle", `floatField -q -v opt_prt_angle`);
+				froxXMLfloat($xml, 8, "PRTThreshold", `floatField -q -v opt_prt_treshold`);
+				
+				
+				if(`checkBox -q -v check_prt_jitter`)
+					froxXMLstring($xml, 8, "PRTJitter", "true");
+				else
+					froxXMLstring($xml, 8, "PRTJitter", "false");
+				
+					
+				if(`checkBox -q -v check_prt_limitray`)
+					froxXMLstring($xml, 8, "PRTLimitRayDistance", "true");
+				else
+					froxXMLstring($xml, 8, "PRTLimitRayDistance", "false");
+					
+				if(`checkBox -q -v check_prt_normalize`)
+					froxXMLstring($xml, 8, "PRTNormalize", "true");
+				else
+					froxXMLstring($xml, 8, "PRTNormalize", "false");
+					
+				//colors bg
+				float $colf[3] = `button -q -bgc opt_prt_bgcolor`;
+				float $col[3];
+				$col[0] = floor ( ($colf[0] * 255) + 0.5 ); //convert from 0/1 to  0/255
+				$col[1] = floor ( ($colf[1] * 255) + 0.5 );
+				$col[2] = floor ( ($colf[2] * 255) + 0.5 );
+				
+				//clamp by security
+				$col[0] = clamp ( 0, 255, $col[0]);
+				$col[1] = clamp ( 0, 255, $col[1]);
+				$col[2] = clamp ( 0, 255, $col[2]);
+				
+				froxXMLfloat($xml, 16, "R", $col[0]);
+				froxXMLfloat($xml, 16, "G", $col[1]);
+				froxXMLfloat($xml, 16, "B", $col[2]);
+			}
+			else
+				froxXMLstring($xml, 8, "GenPRT", "false");
+				
+		$bar = 100;
+		progressWindow -e -pr $bar -st ("PRT");	
+			
+		}
+
+	}
+	
+	progressWindow -endProgress;
+	
+	//xNormal call
+	if(`textField -q -fi LP_field` != "" && `textField -q -fi xnorpath_field` != "")
+	{
+		//define xml location
+		string $xml = (`textField -q -fi exportpath_field` + "export.xml");
+
+		system("start \"" + `textField -q -fi xnorpath_field` + "\" \"" + $xml + "\"");
+	}
+	else
+		warning "No LP ready, bake cancelled.";
+}
+
+global proc froxXMLfloat(string $xml, int $line, string $parameter, float $value)
+{
+	//setup file
+	$fileId=`fopen $xml "r"`;
+	string $temp;
+	string $nextLine = `fgetline $fileId`;
+	
+	int $counter = 1; //start line 1
+	int $mcounter = 1;
+	int $bcounter = 1;
+	int $matcher = 1;
+	int $matched = 0;
+	int $startMatch = 0;
+	
+	//position of the parameter in the line
+	int $pos;
+	int $valpos;
+	int $valendpos;
+	
+	string $file[];
+	string $savedline;
+	float $oldvalue;
+
+	
+	//parse file
+	while ( size( $nextLine ) > 0 ) 
+	{
+		$file[$counter] = $nextLine;
+		
+		if($counter == $line) //find line
+		{
+			$savedline = $nextLine;
+			
+			while($matcher == 1) //find parameter
+			{
+				//isolate last letter
+				string $w = startString($nextLine, $mcounter);
+				$w = endString($w, 1);
+				
+				string $b = startString($parameter, $bcounter);
+				$b = endString($b, 1);
+				
+				//start matching ? 
+				if($w == $b)
+				{
+					$startMatch = 1;
+					$matched++;
+					$bcounter++;
+				}
+				else //if not matching, update the position
+				{
+					
+					if($startMatch) //we started to match but didn't found -> reset
+					{
+						$startMatch = 0;
+						$matched = 0;
+						$bcounter = 1;
+					}
+					
+					$pos = $mcounter;
+				}
+				
+				string $i = "";
+				//pre-match, we check if after the paramter we have the correct "equal" symbol
+				if($matched != 0)
+				{
+					string $x = endString($nextLine, size($nextLine) - $pos );
+					int $pos2 = $pos + size($parameter);
+					$i = startString($x, size($parameter) + 1);
+					$i = endString($i, 1 );
+					
+					//print ($i + "\n");
+				}
+				
+				//MATCH !
+				if($matched == size($parameter) && $i == "=")
+				{
+					string $m = endString($nextLine, size($nextLine) - $pos );
+					//$m = endString($m, size($m) - size($parameter) );
+					
+					$valpos = $pos + size($parameter) + 1; //+ 1 for the equal char "="
+					$m = endString($nextLine, size($nextLine) - $valpos );
+					
+					//New matcher ! find the second "
+					//We know that $valpos = the first "
+					//and $valpos + 1 = the value
+					//so $valpos + 2 can be = to the value or "
+					int $matched2 = 0;
+					$bcounter = 2; //start at the value not the first "
+
+					while($matched2 == 0)
+					{
+						$w = startString($m, $bcounter);
+						$w = endString($w, 1);
+
+						//match found !
+						if($w == "\"")
+						{
+							//print "The Value is :";
+							
+							$valendpos = $valpos + $bcounter;
+							
+							//$m = startString($nextLine, $valendpos - 1 );
+							//$m = endString($m,  $valendpos - ($valpos + 2) );
+							
+							//print ($m + "\n");
+							
+							//$oldvalue = $m; //convert string value to float and save it outside
+							
+							$matched2 = 1;
+						}
+						
+						
+						if($bcounter > size($m) - 1 )
+							$matched2 = 1;
+						
+						$bcounter++;
+					}
+					
+					$matcher = 0;
+				}
+				
+				if($mcounter > size($nextLine))
+				{
+					print "XML : No match, check the paramater that you try to find...";
+					$matcher = 0;
+				}
+				
+				$mcounter++;
+			}
+		}
+		
+		$nextLine = `fgetline $fileId`;
+		$counter++;
+	}
+	
+	fclose $fileId;
+	
+	int $maxcount = $counter;
+	
+	//edit new value
+	string $w = startString($savedline, $valpos + 1);
+	string $m = endString($savedline, size($savedline) - ($valendpos - 1));
+	string $newline = ($w + $value + $m);
+	
+	
+	//rewrite the file
+	$fileId = `fopen $xml "w+"`;
+	$counter = 0;
+	
+	while($counter < $maxcount)
+	{		
+		if($counter == $line) //find line
+		{
+			fprint $fileId $newline;
+		}
+		else
+		{
+			fprint $fileId $file[$counter];
+		}
+			
+		$counter++;
+	}
+	
+	//close file
+	fflush $fileId;
+	fclose $fileId;
+	
+}
+
+
+
+global proc froxXMLstring(string $xml, int $line, string $parameter, string $value)
+{
+	//setup file
+	$fileId=`fopen $xml "r"`;
+	string $temp;
+	string $nextLine = `fgetline $fileId`;
+	
+	int $counter = 1; //start line 1
+	int $mcounter = 1;
+	int $bcounter = 1;
+	int $matcher = 1;
+	int $matched = 0;
+	int $startMatch = 0;
+	
+	//position of the parameter in the line
+	int $pos;
+	int $valpos;
+	int $valendpos;
+	
+	string $file[];
+	string $savedline;
+	string $oldvalue;
+
+	
+	//parse file
+	while ( size( $nextLine ) > 0 ) 
+	{
+		$file[$counter] = $nextLine;
+		
+		if($counter == $line) //find line
+		{
+			$savedline = $nextLine;
+			
+			while($matcher == 1) //find parameter
+			{
+				//isolate last letter
+				string $w = startString($nextLine, $mcounter);
+				$w = endString($w, 1);
+				
+				string $b = startString($parameter, $bcounter);
+				$b = endString($b, 1);
+				
+				//start matching ? 
+				if($w == $b)
+				{
+					$startMatch = 1;
+					$matched++;
+					$bcounter++;
+				}
+				else //if not matching, update the position
+				{
+					
+					if($startMatch) //we started to match but didn't found -> reset
+					{
+						$startMatch = 0;
+						$matched = 0;
+						$bcounter = 1;
+					}
+					
+					$pos = $mcounter;
+				}
+				
+				string $i = "";
+				//pre-match, we check if after the paramter we have the correct "equal" symbol
+				if($matched != 0)
+				{
+					string $x = endString($nextLine, size($nextLine) - $pos );
+					int $pos2 = $pos + size($parameter);
+					$i = startString($x, size($parameter) + 1);
+					$i = endString($i, 1 );
+					
+					//print ($i + "\n");
+				}
+				
+				//MATCH !
+				if($matched == size($parameter) && $i == "=")
+				{
+					string $m = endString($nextLine, size($nextLine) - $pos );
+					//$m = endString($m, size($m) - size($parameter) );
+					
+					$valpos = $pos + size($parameter) + 1; //+ 1 for the equal char "="
+					$m = endString($nextLine, size($nextLine) - $valpos );
+					
+					//New matcher ! find the second "
+					//We know that $valpos = the first "
+					//and $valpos + 1 = the value
+					//so $valpos + 2 can be = to the value or "
+					int $matched2 = 0;
+					$bcounter = 2; //start at the value not the first "
+
+					while($matched2 == 0)
+					{
+						$w = startString($m, $bcounter);
+						$w = endString($w, 1);
+
+						//match found !
+						if($w == "\"")
+						{
+							//print "The Value is :";
+							
+							$valendpos = $valpos + $bcounter;
+							
+							//$m = startString($nextLine, $valendpos - 1 );
+							//$m = endString($m,  $valendpos - ($valpos + 2) );
+							
+							//$oldvalue = $m; //convert string value to float and save it outside
+							
+							$matched2 = 1;
+						}
+						
+						
+						if($bcounter > size($m) - 1 )
+							$matched2 = 1;
+						
+						$bcounter++;
+					}
+					
+					$matcher = 0;
+				}
+				
+				if($mcounter > size($nextLine))
+				{
+					print "XML : No match, check the paramater that you try to find...";
+					$matcher = 0;
+				}
+				
+				$mcounter++;
+			}
+		}
+		
+		$nextLine = `fgetline $fileId`;
+		$counter++;
+	}
+	
+	fclose $fileId;
+	
+	int $maxcount = $counter;
+	
+	//edit new value
+	string $w = startString($savedline, $valpos + 1);
+	string $m = endString($savedline, size($savedline) - ($valendpos - 1));
+	string $newline = ($w + $value + $m);
+	
+	
+	//rewrite the file
+	$fileId = `fopen $xml "w+"`;
+	$counter = 0;
+	
+	while($counter < $maxcount)
+	{
+		if($counter == $line) //find line
+		{
+			fprint $fileId $newline;
+		}
+		else
+			fprint $fileId $file[$counter];
+			
+		$counter++;
+	}
+	
+	//close file
+	fflush $fileId;
+	fclose $fileId;
+}
+
+
+//set the folder and set Maya to remember it
+global proc froxSetXFolder()
+{
+	string $path[] = `fileDialog2 -fm 1 -dialogStyle 2 -cap "Select xNormal.exe"`;
+	if($path[0] != "") //update only if valid, otherwise keep blank/current path
+	{
+		string $filename = $path[0];    
+		textField -e -fi $filename xnorpath_field; //update path
+		
+		optionVar -stringValue "froXnormalPath" $filename;
+	}
+}
+
+//set the folder and set Maya to remember it
+global proc froxSetExportFolder()
+{	
+	string $path[] = `fileDialog2 -fm 3 -cap "Select Export Folder"`;
+	if($path[0] != "") //update only if valid, otherwise keep blank/current path
+	{
+		string $filename = $path[0] + "/";    
+		textField -e -fi $filename exportpath_field; //update path
+		
+		optionVar -stringValue "froxExportPath" $filename;
+	}
+}
+
+//get the various path saved in maya
+global proc froxGetFolders()
+{
+	//xNormal
+	if( `optionVar -exists "froXnormalPath"`) //update only if the optionVar exists
+	{
+		string $filename = `optionVar -q "froXnormalPath"`;
+		textField -e -fi $filename xnorpath_field; //update path
+	}
+	
+	//Export path
+	if( `optionVar -exists "froxExportPath"`) //update only if the optionVar exists
+	{
+		string $filename = `optionVar -q "froxExportPath"`;
+		textField -e -fi $filename exportpath_field; //update path
+	}
+}
+
+global proc froxDisableUIhighpoly()
+{
+	int $s = `checkBox -q -v check_HPout`;
+	
+	if($s)
+	{
+		textField -e -en 0 -fi "-----------------------------------" HP_field;
+		button -e -en 0 -l "" -bgc 0.3 0.3 0.3 button_gethp;
+	}
+	else
+	{
+		textField -e -en 1 -fi "" HP_field;
+		button -e -en 1 -l "< Get HP" -bgc 0.35 0.35 0.35 button_gethp;
+	}
+}
+
+global proc froxDisableUItexture()
+{
+	int $s = `checkBox -q -v check_txt_vtxcolor`;
+	
+	if($s)
+	{
+		checkBox -e -en 0 check_txt_ao;
+		checkBox -e -en 0 check_txt_normal;
+		checkBox -e -en 0 check_txt_cavity;
+		checkBox -e -en 0 check_txt_prt;
+		checkBox -e -en 0 check_txt_curvature;
+		checkBox -e -en 0 check_txt_height;
+		checkBox -e -en 0 check_txt_base;
+	}
+	else
+	{
+		checkBox -e -en 1 check_txt_ao;
+		checkBox -e -en 1 check_txt_normal;
+		checkBox -e -en 1 check_txt_cavity;
+		checkBox -e -en 1 check_txt_prt;
+		checkBox -e -en 1 check_txt_curvature;
+		checkBox -e -en 1 check_txt_height;
+		checkBox -e -en 1 check_txt_base;
+	}
+}
+
+global proc froxDisableUItextureBase()
+{
+	int $s = `checkBox -q -v check_txt_base`;
+	
+	if($s)
+	{
+		checkBox -e -en 0 check_txt_ao;
+		checkBox -e -en 0 check_txt_normal;
+		checkBox -e -en 0 check_txt_cavity;
+		checkBox -e -en 0 check_txt_prt;
+		checkBox -e -en 0 check_txt_curvature;
+		checkBox -e -en 0 check_txt_height;
+		checkBox -e -en 0 check_txt_vtxcolor;
+	}
+	else
+	{
+		checkBox -e -en 1 check_txt_ao;
+		checkBox -e -en 1 check_txt_normal;
+		checkBox -e -en 1 check_txt_cavity;
+		checkBox -e -en 1 check_txt_prt;
+		checkBox -e -en 1 check_txt_curvature;
+		checkBox -e -en 1 check_txt_height;
+		checkBox -e -en 1 check_txt_vtxcolor;
+	}
+}
+
+
+global proc froxDisableUItxtfull()
+{
+	int $s = `checkBox -q -v check_txt_vtxcolor`;
+	int $d = `checkBox -q -v check_txt_base`;
+	
+	if($s)
+	{
+		checkBox -e -en 0 check_txt_ao;
+		checkBox -e -en 0 check_txt_normal;
+		checkBox -e -en 0 check_txt_cavity;
+		checkBox -e -en 0 check_txt_prt;
+		checkBox -e -en 0 check_txt_curvature;
+		checkBox -e -en 0 check_txt_height;
+		checkBox -e -en 0 check_txt_base;
+	}
+	else if($d)
+	{
+		checkBox -e -en 0 check_txt_ao;
+		checkBox -e -en 0 check_txt_normal;
+		checkBox -e -en 0 check_txt_cavity;
+		checkBox -e -en 0 check_txt_prt;
+		checkBox -e -en 0 check_txt_curvature;
+		checkBox -e -en 0 check_txt_height;
+		checkBox -e -en 0 check_txt_vtxcolor;
+	}
+	else
+	{
+		checkBox -e -en 1 check_txt_ao;
+		checkBox -e -en 1 check_txt_normal;
+		checkBox -e -en 1 check_txt_cavity;
+		checkBox -e -en 1 check_txt_prt;
+		checkBox -e -en 1 check_txt_curvature;
+		checkBox -e -en 1 check_txt_height;
+		checkBox -e -en 1 check_txt_base;
+	}
+}
+
+
+global proc froxGenerateXml()
+{
+	string $content[] = {
+		"<Settings>",
+		"  <HighPolyModel DefaultMeshScale=\"1.000000\">",
+		"	<Mesh Visible=\"true\" Scale=\"1\" IgnorePerVertexColor=\"true\" AverageNormals=\"UseExportedNormals\" BaseTexIsTSNM=\"false\" File=\"\" BaseTex=\"\" />",
+		"  </HighPolyModel>",
+		"  <LowPolyModel DefaultMeshScale=\"1.000000\">",
+		"	<Mesh Visible=\"true\" File=\"\" AverageNormals=\"UseExportedNormals\" MaxRayDistanceFront=\"16\" MaxRayDistanceBack=\"16\" UseCage=\"0\" NormapMapType=\"Tangent-space\" UsePerVertexColors=\"true\" UseFresnel=\"false\" FresnelRefractiveIndex=\"1.330000\" ReflectHDRMult=\"1.000000\" VectorDisplacementTS=\"false\" VDMSwizzleX=\"X+\" VDMSwizzleY=\"Y+\" VDMSwizzleZ=\"Z+\" BatchProtect=\"false\" CastShadows=\"true\" ReceiveShadows=\"true\" BackfaceCull=\"true\" NMSwizzleX=\"X+\" NMSwizzleY=\"Y+\" NMSwizzleZ=\"Z+\" HighpolyNormalsOverrideTangentSpace=\"true\" TransparencyMode=\"None\" AlphaTestValue=\"127\" Matte=\"false\" Scale=\"1.0\" MatchUVs=\"false\" UOffset=\"false\" VOffset=\"false\" BlockersFile=\"\" CageFile=\"\" />",
+		"  </LowPolyModel>",
+		"",
+		"	<NMBackgroundColor R=\"127\" G=\"127\" B=\"255\"/>",
+		"	<BakeHighpolyBaseTextureNoTexCol R=\"255\" G=\"0\" B=\"0\"/>",
+		"	<BakeHighpolyBaseTextureBackgroundColor R=\"0\" G=\"0\" B=\"0\"/>",
+		"	<HMBackgroundColor R=\"0\" G=\"0\" B=\"0\"/>",
+		"	<AOOccludedColor R=\"0\" G=\"0\" B=\"0\"/>",
+		"	<AOUnoccludedColor R=\"255\" G=\"255\" B=\"255\"/>",
+		"	<AOBackgroundColor R=\"255\" G=\"255\" B=\"255\"/>",
+		"	<PRTBackgroundColor R=\"0\" G=\"0\" B=\"0\"/>",
+		"	<CavityBackgroundColor R=\"255\" G=\"255\" B=\"255\"/>",
+		"	<BakeHighpolyVColsBackgroundCol R=\"0\" G=\"0\" B=\"0\"/>",
+		"	<CurvBackgroundColor R=\"0\" G=\"0\" B=\"0\"/>",
+		"  </GenerateMaps>",
+		"  <Detail Scale=\"0.500000\" Method=\"4Samples\"/>",
+		"  <Viewer3D ShowGrid=\"true\" ShowWireframe=\"true\" ShowTangents=\"true\" ShowNormals=\"false\" ShowBlockers=\"false\" >",
+		"	<BackgroundColor R=\"0\" G=\"0\" B=\"0\"/>",
+		"	<GridColor R=\"180\" G=\"180\" B=\"220\"/>",
+		"	<CageColor R=\"76\" G=\"76\" B=\"76\"/>",
+		"  </Viewer3D>",
+		"</Settings>"
+		};
+		
+	//////////////////////////////////////////////////////////////////////
+	//create line 8 which contain all the maps info
+	$content[7] = "  <GenerateMaps ";
+	
+	//Normal maps (first because we also add the filename adn texture size)
+	$content[7] = $content[7] + " GenNormals=\"true\" Width=\"1024\" Height=\"1024\" EdgePadding=\"16\" BucketSize=\"32\" TangentSpace=\"true\" ClosestIfFails=\"true\" DiscardRayBackFacesHits=\"true\" File=\"\" SwizzleX=\"X+\" SwizzleY=\"Y+\" SwizzleZ=\"Z+\" AA=\"1\" ";
+	
+	//Ambient Occlusion
+	$content[7] = $content[7] + " GenAO=\"false\" AORaysPerSample=\"128\" AODistribution=\"Uniform\" AOConeAngle=\"179.500000\" AOBias=\"0.000010\" AOAllowPureOccluded=\"false\" AOLimitRayDistance=\"false\" AOAttenConstant=\"1.000000\" AOAttenLinear=\"0.000000\" AOAttenCuadratic=\"0.000000\" AOJitter=\"false\" AOIgnoreBackfaceHits=\"false\" ";
+	
+	//Heightmap
+	$content[7] = $content[7] + " GenHeights=\"false\" HeightTonemap=\"Interactive\" HeightMinVal=\"-10.000000\" HeightMaxVal=\"10.000000\" ";
+	
+	//HightPoly Vertex Colors
+	$content[7] = $content[7] + " BakeHighpolyVCols=\"false\" ";
+
+	//Curvature map
+	$content[7] = $content[7] + " GenCurv=\"false\" CurvRaysPerSample=\"128\" CurvBias=\"0.000100\" CurvConeAngle=\"162.000000\" CurvJitter=\"false\" CurvSearchDistance=\"1.000000\" CurvTonemap=\"3Col\" CurvDistribution=\"Cosine\" CurvAlgorithm=\"Average\" CurvSmoothing=\"true\" ";
+	
+	//bent
+	$content[7] = $content[7] + " GenBent=\"false\" BentRaysPerSample=\"128\" BentConeAngle=\"178.000000\" BentBias=\"0.000010\" BentTangentSpace=\"false\" BentLimitRayDistance=\"true\" BentJitter=\"false\" BentDistribution=\"Cosine\" BentSwizzleX=\"X+\" BentSwizzleY=\"Y+\" BentSwizzleZ=\"Z+\" ";
+	
+	//PRTMap
+	$content[7] = $content[7] + " GenPRT=\"false\" PRTJitter=\"false\" PRTNormalize=\"true\" PRTRaysPerSample=\"128\" PRTConeAngle=\"179.500000\" PRTBias=\"0.080000\" PRTLimitRayDistance=\"false\" PRTThreshold=\"0.005000\" ";
+	
+	//Thickness
+	$content[7] = $content[7] + " GenThickness=\"false\" ";
+	
+	//Cavity map
+	$content[7] = $content[7] + " GenCavity=\"false\" CavityRaysPerSample=\"128\" CavityJitter=\"false\" CavitySearchRadius=\"0.500000\" CavityContrast=\"1.250000\" CavitySteps=\"4\" ";
+	
+	//Wireframe
+	$content[7] = $content[7] + " GenWireRays=\"false\" ";
+	
+	//Directions
+	$content[7] = $content[7] + " GenDirections=\"false\" ";
+	
+	//Base texture
+	$content[7] = $content[7] + " BakeHighpolyBaseTex=\"false\" BakeHighpolyBaseTextureDrawObjectIDIfNoTexture=\"false\" ";
+	
+	//other, disabled
+	$content[7] = $content[7] + " GenRadiosityNormals=\"false\" RadiosityNormalsRaysPerSample=\"128\" RadiosityNormalsDistribution=\"Uniform\" RadiosityNormalsConeAngle=\"178.000000\" RadiosityNormalsBias=\"0.001000\" ";
+	
+	//closing
+	$content[7] = $content[7] + " >";
+	//////////////////////////////////////////////////////////////////////
+
+	
+	string $fpath = `textField -q -fi exportpath_field` + "export.xml";
+	
+	//open file, not in append, we rewrite it
+	$fileid = `fopen $fpath "w"`;
+	
+	//write the content
+	for($line in $content)
+	fprint $fileid ($line+"\n") ;
+	
+	fclose $fileid;
+}
+
+
+global proc froxSetupFBX()
+{
+	//setup FBX options;
+		//mesh settings
+		float $fbxv = `pluginInfo -q -version fbxmaya`;
+		
+		FBXExportSmoothingGroups -v `checkBox -q -v frox_checkFBXsmoothgrp`;
+		FBXExportTangents -v `checkBox -q -v frox_checkFBXbinormal`;
+		
+		FBXExportHardEdges -v 0; //split normals
+		FBXExportQuickSelectSetAsCache -v 0;
+		
+		FBXProperty Export|IncludeGrp|Geometry|AnimationOnly -v 0; //animation only
+		FBXExportSmoothMesh -v 0;
+		
+		if($fbxv >= 2012)
+			FBXExportTriangulate -v 0;
+		
+		//animation settings disabled
+		FBXExportBakeComplexAnimation -v 0;
+		FBXExportConstraints -v 0;
+		
+		
+		if($fbxv >= 2013)
+			FBXExportSkeletonDefinitions -v 0;
+		else
+			FBXExportCharacter -v 0;
+		
+		//others settings (cameras, lights, and so on)
+		FBXExportCameras -v 0;
+		FBXExportLights -v 0;
+		
+	//setup FBX version
+		if(`optionMenu -q -v exportlist8_menu` == "2009")
+			FBXExportFileVersion FBX200900;
+		else if(`optionMenu -q -v exportlist8_menu` == "2010")
+			FBXExportFileVersion FBX201000;
+		else if(`optionMenu -q -v exportlist8_menu` == "2011")
+			FBXExportFileVersion FBX201100;
+		else if(`optionMenu -q -v exportlist8_menu` == "2012")
+			FBXExportFileVersion FBX201200;
+		else if(`optionMenu -q -v exportlist8_menu` == "2013")
+			FBXExportFileVersion FBX201300;
+}
+
+
+global proc froxCheckMesh()
+{
+	string $mesh;
+	string $objFolder;
+		
+	if(`textField -q -fi exportpath_field` != "")
+	{
+		$objFolder = `textField -q -fi exportpath_field`;
+
+		//check LP mesh
+		if(`textField -q -fi LP_field` != "")
+		{	
+			$mesh = `textField -q -fi LP_field`;
+			
+			if(`optionMenu -q -v exportlist4_menu` == "FBX")
+			{
+				$mesh = ($objFolder + $mesh + ".fbx");
+			}
+			else if(`optionMenu -q -v exportlist4_menu` == "SBM")
+			{
+				$mesh = ($objFolder + $mesh + ".SBM");
+			}
+			else
+			{
+				$mesh = ($objFolder + $mesh + ".obj");
+			}
+			
+			if(!`filetest -e $mesh`)
+			{
+				froxPopup("EXPORT ERROR : \nLOW poly mesh has not been exported.");
+				error "EXPORT ERROR : Low poly mesh has not been exported.";
+			}
+		}
+		
+		//------------------------------------------------
+		
+		//check HP mesh
+		
+		if(`checkBox -q -v check_HPout`)
+		{
+			$mesh = startString($mesh, size($mesh) - 6);
+			$mesh = $mesh + "hp";
+			
+			if(`optionMenu -q -v exportlist5_menu` == "FBX")
+				$mesh = $mesh + ".fbx";
+			else if(`optionMenu -q -v exportlist5_menu` == "SBM")
+				$mesh = $mesh + ".sbm";
+			else
+				$mesh = $mesh + ".obj";
+				
+			if(!`filetest -e $mesh`)
+			{
+				froxPopup("EXPORT ERROR : \nHIGH poly mesh doesn't exist in the export folder.");
+				error "EXPORT ERROR : High poly mesh doesn't exist in the export folder.";
+			}
+		}
+		else
+		{
+			$mesh = ""; //reset
+			
+			if(`textField -q -fi HP_field` != "")
+			{
+				$mesh = `textField -q -fi HP_field`;
+				
+				if(`optionMenu -q -v exportlist5_menu` == "FBX")
+				{
+					$mesh = ($objFolder + $mesh + ".fbx");
+				}
+				else if(`optionMenu -q -v exportlist5_menu` == "SBM")
+				{
+					$mesh = ($objFolder + $mesh + ".SBM");
+				}
+				else
+				{
+					$mesh = ($objFolder + $mesh + ".obj");
+				}
+				
+				if(!`filetest -e $mesh`)
+				{
+					froxPopup("EXPORT ERROR : \nHIGH poly mesh has not been exported.");
+					error "EXPORT ERROR : High poly mesh has not been exported.";
+				}
+			}
+		}
+	}
+}
+
+
+global proc froxPopup(string $text)
+{
+	// if Window exists already delete it, so you cant call multiple windows
+	if (`window -exists froXpopup`) 
+	{
+		deleteUI froXpopup;
+		if(`windowPref -exists froXpopup`)
+			windowPref -remove froXpopup;
+	}
+
+	int $winw = 250;
+	int $winh = 200;
+	
+	//make the base window
+	window 
+		-t "froXnormal - ERROR" 
+		-widthHeight $winw $winh
+		-minimizeButton false
+		-maximizeButton false
+		-sizeable false
+		froXpopup;
+		
+	//content of the window
+	columnLayout frox_popup_main;
+		gridLayout -numberOfColumns 1 -cellHeight 35 -cellWidth ($winw);
+			text -l $text -font "plainLabelFont" -wordWrap true;
+		setParent ..;
+		
+		gridLayout -numberOfColumns 3 -cellHeight 26 -cellWidth ($winw / 3);
+			text -l "";
+			button
+				-l "OK"
+				-c "deleteUI froXpopup;"
+				-bgc 0.5 0.25 0.25;
+			text -l "";
+		setParent ..;
+		
+	setParent ..;
+	
+	//show the window
+	showWindow froXpopup;
+}
+
+
+global proc froxExportMesh(string $input)
+{
+	string $sel[] = `ls -sl`;
+	select -cl;
+	int $fbx = 1;
+	
+	//FBX available ?
+	if( `pluginInfo -q -loaded "fbxmaya"` ) 
+		froxSetupFBX();
+	else
+	{
+		$fbx = 0;
+		warning "The FBX plugin is not loaded, impossible to setup FBX options.";
+	}
+	
+	//obj export available ?
+	if( !`pluginInfo -q -loaded "objExport"` ) 
+	{
+		error "The OBJ exporter plugin is not loaded, impossible export.";
+	}
+	
+	
+	//individually...
+	string $mesh;
+	string $objFolder = `textField -q -fi exportpath_field`;
+	
+	if($input == "lp")
+	{
+		//check for nGons
+		select -cl;
+		if(`textField -q -fi LP_field` != "")
+		{
+			//select mesh
+			select `textField -q -fi LP_field`;
+			
+			//select n-gons
+			polySelectConstraint -mode 3 -type 0x0008 -size 3; 
+			polySelectConstraint -disable; 
+			selectMode -component;
+			
+			string $sel[] = `filterExpand -fullPath 1 -expand 1 -sm 34`;
+
+			if(size($sel) > 0)
+			{			
+				hilite -r `textField -q -fi LP_field`;
+				selectType -smp 0 -sme 0 -smf 1 -smu 0 -pv 0 -pe 0 -pf 1 -puv 0;
+				
+				error "The low-poly mesh has n-gons (more than 4 edges), xNormal support only tri and quads.";
+			}
+		}
+		selectMode -object;
+		
+		//export
+		if(`textField -q -fi exportpath_field` != "")
+		{	
+			//Export blocker ?
+			if(`checkBox -q -v check_blocker` && `textField -q -fi blocker_field` != "")
+			{
+				$mesh = ($objFolder + `textField -q -fi blocker_field` + ".obj");
+				
+				select -r `textField -q -fi blocker_field`;
+				
+				file -op "groups=0;ptgroups=0;materials=0;smoothing=0;normals=1" 
+					-f //force
+					-chn 1 //channels
+					-sh 0 //shaders
+					-exp 0 //expressions
+					-con 0 //constraint
+					-ch 0 //construction history
+					-typ "OBJexport" 
+					-pr //preserve reference
+					-es //export selected
+					$mesh;
+					
+				print ("\nBlocker exported : " + $mesh);
+				select -cl;
+			}
+			
+			//export Cage ?
+			if(`checkBox -q -v check_cage` && `textField -q -fi cage_field` != "")
+			{
+				print("Cage export");
+				
+				select -r `textField -q -fi cage_field`;
+			
+				if(`optionMenu -q -v exportlist4_menu` == "FBX" && $fbx)
+				{
+					$mesh = ($objFolder + `textField -q -fi cage_field` + ".fbx");
+					FBXExport -f $mesh -s; 
+				}
+				else if(`optionMenu -q -v exportlist4_menu` == "SBM")
+				{
+					$mesh = ($objFolder + `textField -q -fi cage_field` + ".SBM");
+					
+					file -force -options "-ExportNormals true -SmoothNormals false -ExportUVs true -ExportTB true -ExportVCols false -unattended" 
+					-force 
+					-typ "xNormalSBMTranslator" //xNormal format
+					-pr //preserve ref
+					-es //selected
+					$mesh;
+				}
+				else
+				{
+					$mesh = ($objFolder + `textField -q -fi cage_field` + ".obj");
+			
+					file -op "groups=0;ptgroups=0;materials=0;smoothing=0;normals=1" 
+						-f //force
+						-chn 1 //channels
+						-sh 0 //shaders
+						-exp 0 //expressions
+						-con 0 //constraint
+						-ch 0 //construction history
+						-typ "OBJexport" 
+						-pr //preserve reference
+						-es //export selected
+						$mesh;
+				}
+					
+					
+				print ("\nCage exported : " + $mesh);
+				select -cl;
+			}
+			
+			//reset $mesh
+			select -cl;
+			$mesh = "";
+
+			//Export LP mesh
+			if(`textField -q -fi LP_field` != "")
+				$mesh = `textField -q -fi LP_field`;
+			else
+			{
+				if(size($sel) != 0)
+					$mesh = $sel[0];
+			}
+			
+			if($mesh != "")
+			{			
+				if(`textField -q -fi LP_field` != "")
+					select -r `textField -q -fi LP_field`;
+				else
+					select -r $sel[0];				
+				
+				if(`optionMenu -q -v exportlist4_menu` == "FBX" && $fbx)
+				{
+					$mesh = ($objFolder + $mesh + ".fbx");
+					FBXExport -f $mesh -s; 
+				}
+				else if(`optionMenu -q -v exportlist4_menu` == "SBM")
+				{
+					$mesh = ($objFolder + $mesh + ".SBM");
+					
+					file -force -options "-ExportNormals true -SmoothNormals false -ExportUVs true -ExportTB true -ExportVCols true -unattended" 
+					-force 
+					-typ "xNormalSBMTranslator" //xNormal format
+					-pr //preserve ref
+					-es //selected
+					$mesh;
+				}
+				else
+				{
+					$mesh = ($objFolder + $mesh + ".obj");
+			
+					file -op "groups=0;ptgroups=0;materials=0;smoothing=0;normals=1" 
+						-f //force
+						-chn 1 //channels
+						-sh 0 //shaders
+						-exp 0 //expressions
+						-con 0 //constraint
+						-ch 0 //construction history
+						-typ "OBJexport" 
+						-pr //preserve reference
+						-es //export selected
+						$mesh;
+				}
+					
+				print( "\nExported : " + $mesh + "\n");
+			}
+		}
+	}
+	else if($input == "hp")
+	{
+		//reset $mesh
+		select -cl;
+		$mesh = "";
+	
+		if(`textField -q -fi exportpath_field` != "")
+		{							
+			//HP export ?
+			if(!`checkBox -q -v check_HPout`)
+			{
+				if(`textField -q -fi HP_field` == "")
+				{
+					warning "HP mesh needed to export";
+					return;
+				}
+				else
+				{
+					$mesh = `textField -q -fi HP_field`;
+					string $meshprev = $mesh;
+					int $prev = 1;
+					
+					$mesh = ($objFolder + $mesh); //+ ".obj");
+					select -r `textField -q -fi HP_field`;
+					
+					if(`checkBox -q -v check_smooth`)
+					{					
+						int $prevtemp[] = `displaySmoothness -q -polygonObject $meshprev`;
+						if($prevtemp[0] == 1)
+							$prev = 0;
+						
+						//dispaly the smooth rpeview
+						displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+					
+						//convert it
+						CreatePolyFromPreview;
+					}
+					
+					if(`optionMenu -q -v exportlist5_menu` == "FBX" && $fbx)
+					{
+						$mesh = $mesh + ".fbx";
+					
+						FBXExport -f $mesh -s; 
+					}
+					else if(`optionMenu -q -v exportlist5_menu` == "SBM")
+					{
+						$mesh = $mesh + ".SBM";
+						
+						file -options "-ExportNormals true -SmoothNormals false -ExportUVs true -ExportTB true -ExportVCols true " 
+						-force 
+						-typ "xNormalSBMTranslator" //xNormal format
+						-pr //preserve ref
+						-es //selected
+						$mesh;
+					}
+					else
+					{
+						$mesh = $mesh + ".obj";
+				
+						file -op "groups=0;ptgroups=0;materials=0;smoothing=0;normals=1" 
+							-f //force
+							-chn 1 //channels
+							-sh 0 //shaders
+							-exp 0 //expressions
+							-con 0 //constraint
+							-ch 0 //construction history
+							-typ "OBJexport" 
+							-pr //preserve reference
+							-es //export selected
+							$mesh;
+					}
+					
+					if(`checkBox -q -v check_smooth`)
+					{
+						Undo;
+						
+						//redisplay the smooth mesh if it was enabled
+						if($prev)
+							displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+					}
+						
+					print( "Exported : " + $mesh + "\n");
+				}
+			}
+		}
+	}
+	
+	if(size($sel) != 0)
+	{
+		select -cl;
+		select -r $sel;
+	}
+}
+
+
+global proc froxSetColor(string $input)
+{
+	float $wireColor[];
+	
+	//query the color
+	switch($input)
+	{
+		case "ao_oc":
+			$wireColor = `button -q -bgc opt_ao_color1`;
+			break;
+			
+		case "ao_unoc":
+			$wireColor = `button -q -bgc opt_ao_color2`;
+			break;
+			
+		case "ao_bg":
+			$wireColor = `button -q -bgc opt_ao_color3`;
+			break;
+			
+		case "nm":
+			$wireColor = `button -q -bgc opt_nm_bgcolor`;
+			break;
+			
+		case "hei":
+			$wireColor = `button -q -bgc opt_height_bgcolor`;
+			break;
+			
+		case "cav":
+			$wireColor = `button -q -bgc opt_cav_bgcolor`;
+			break;
+			
+		case "hpvtx":
+			$wireColor = `button -q -bgc opt_vtx_bgcolor`;
+			break;
+			
+		case "curv":
+			$wireColor = `button -q -bgc opt_cuv_bgcolor`;
+			break;
+			
+		case "prt":
+			$wireColor = `button -q -bgc opt_prt_bgcolor`;
+			break;
+			
+		case "base_d":
+			$wireColor = `button -q -bgc opt_base_dbgcolor`;
+			break;
+			
+		case "base_s":
+			$wireColor = `button -q -bgc opt_base_sbgcolor`;
+			break;
+			
+		case "base_n":
+			$wireColor = `button -q -bgc opt_base_nbgcolor`;
+			break;
+	}
+	
+	//query the new color
+	colorEditor;
+	if (`colorEditor -query -result`) {
+		float $values[];
+		$values = `colorEditor -query -rgb`;
+		print ("RGB = " + $values[0] + " " + $values[1] + " " + $values[2] + "\n");
+
+		//update
+		$wirecolor[0] = $values[0];
+		$wirecolor[1] = $values[1];
+		$wirecolor[2] = $values[2];
+		
+		//update the correct button
+		switch($input)
+		{
+			case "ao_oc":
+				button -e -bgc $wirecolor[0] $wirecolor[1] $wirecolor[2] opt_ao_color1;
+				break;
+				
+			case "ao_unoc":
+				button -e -bgc $wirecolor[0] $wirecolor[1] $wirecolor[2] opt_ao_color2;
+				break;
+				
+			case "ao_bg":
+				button -e -bgc $wirecolor[0] $wirecolor[1] $wirecolor[2] opt_ao_color3;
+				break;
+				
+			case "nm":
+				button -e -bgc $wirecolor[0] $wirecolor[1] $wirecolor[2] opt_nm_bgcolor;
+				break;
+				
+			case "hei":
+				button -e -bgc $wirecolor[0] $wirecolor[1] $wirecolor[2] opt_height_bgcolor;
+				break;
+				
+			case "cav":
+				button -e -bgc $wirecolor[0] $wirecolor[1] $wirecolor[2] opt_cav_bgcolor;
+				break;
+				
+			case "vtx":
+				button -e -bgc $wirecolor[0] $wirecolor[1] $wirecolor[2] opt_hpvtx_bgcolor;
+				break;
+				
+			case "curv":
+				button -e -bgc $wirecolor[0] $wirecolor[1] $wirecolor[2] opt_cuv_bgcolor;
+				break;
+				
+			case "prt":
+				button -e -bgc $wirecolor[0] $wirecolor[1] $wirecolor[2] opt_prt_bgcolor;
+				break;
+				
+			case "base_d":
+				button -e -bgc $wirecolor[0] $wirecolor[1] $wirecolor[2] opt_base_dbgcolor;
+				break;
+				
+			case "base_s":
+				button -e -bgc $wirecolor[0] $wirecolor[1] $wirecolor[2] opt_base_sbgcolor;
+				break;
+				
+			case "base_n":
+				button -e -bgc $wirecolor[0] $wirecolor[1] $wirecolor[2] opt_base_nbgcolor;
+				break;
+		}
+	} 
+	else 
+	{
+		print ("color editor was dismissed\n");
+	}
+}
+
+
+global proc froxCreateEnvelope()
+{	
+	string $sel[] = `ls -sl -o`; 
+	if(size($sel) == 1)
+	{	
+		// Create a new Envelope
+		string $name = $sel[0] + "_Envelope";
+		string $Envelopes[] = `duplicate -name $name $sel[0]`;
+		string $Envelope = $Envelopes[0];
+		
+		// Create the Envelope shader if it doesn't exist already
+		string $EnvelopeShader = "surfaceSamplingEnvelopeShader";
+		string $EnvelopeShadingGroup = $EnvelopeShader + "SG";
+		if( size( `ls $EnvelopeShadingGroup` ) == 0 )
+		{
+			string $shader = `shadingNode -asShader lambert -name $EnvelopeShader`;
+			setAttr ($shader + ".color") 1.0 0.5 0.5;
+			setAttr ($shader + ".transparency") 0.25 0.25 0.25;
+			string $group = `sets -renderable true -noSurfaceShader true -empty -name ($EnvelopeShader + "SG")`;
+			connectAttr -f ($shader + ".outColor") ($group + ".surfaceShader");
+		}
+		
+		// Throw the Envelope shader on the new Envelope
+		sets -e -forceElement $EnvelopeShadingGroup $Envelope;
+		
+		// Now throw a face extrude on the Envelope 
+		float $offset = `floatField -q -v slider_cage`;
+		string $modifier[] = `polyMoveFacet -ch 1 -localTranslateZ $offset $Envelope`;
+		
+		// Make sure our offset is in local space (setting this at create time doesn't always do the trick)
+		polyMoveFacet -e -worldSpace off $modifier[0];
+
+		select -r $Envelope;
+		froxGetMesh("cage");
+	}
+}
+
+global proc froxCageInflate()
+{
+	if(`textField -q -fi cage_field` != "")
+	{
+		string $mesh = `textField -q -fi cage_field`;
+		
+		select -r $mesh;
+		
+		//list connections
+		string $FF[] = `listRelatives $mesh`;
+		string $GG[] = `listConnections $FF[0]`;
+		
+		//find node
+		string $nbtes;
+		for( $i in $GG )
+		{
+			
+			if ( `nodeType $i` == "polyMoveFace" ) 
+			{
+				//No object matches name: mesh_lp_EnvelopeShape.polyMoveFace1.localTranslateZ
+				//setAttr ($FF[0] + "." + $i + ".localTranslateZ") (`floatSlider -q -v slider_cage`);
+				setAttr ($i + ".localTranslateZ") (`floatField -q -v slider_cage`);
+			}
+		}
+	}
+}
+
+global proc froxCageStep(int $input)
+{
+	if($input)
+		floatField -e -v (`floatField -q -v slider_cage` + 0.1) slider_cage;
+	else
+		floatField -e -v (`floatField -q -v slider_cage` - 0.1) slider_cage;
+		
+	froxCageInflate();
+}
+
+
+global proc froxSavePreset()
+{
+	//unselect everything by security
+	select -cl;
+	
+	//prompt a window to ask the preset savename
+	string $text;
+	string $result = `promptDialog
+		-title "Preset name"
+		-message "Enter preset name : "
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+
+	if ($result == "OK") 
+	{
+		$text = `promptDialog -query -text`;
+		if($text == "")
+			$text = "1";
+	}
+	else
+		return;
+	
+	
+	//create a new node to write into
+	string $gp = `group -empty -name ("frox_" + $text)`;
+	float $col[3] = { 0 , 0 , 0 }; //color var
+	
+	//start the progress bar and the writing of the attributes
+	int $bar = 0;
+	progressWindow
+		-title "Saving preset..."
+		-progress $bar
+		-status "Initialize..."
+		-isInterruptable false;
+		
+	
+	$bar = 0;
+	progressWindow -e -pr $bar -st ("Initialize...");
+	
+	
+	//Objects (text fields)
+	addAttr -ln "ExportHp" -dt "string" -r 1 -s 1;
+	setAttr -type "string" ($gp + ".ExportHp") (`textField -q -fi HP_field`);
+	
+	addAttr -ln "ExportLp" -dt "string" -r 1 -s 1;
+	setAttr -type "string" ($gp + ".ExportLp") (`textField -q -fi LP_field`);
+	
+	addAttr -ln "ExportCage" -dt "string" -r 1 -s 1;
+	setAttr -type "string" ($gp + ".ExportCage") (`textField -q -fi cage_field`);
+	
+	addAttr -ln "ExportBlocker" -dt "string" -r 1 -s 1;
+	setAttr -type "string" ($gp + ".ExportBlocker") (`textField -q -fi blocker_field`);
+	
+	$bar = 5;
+	progressWindow -e -pr $bar -st ("Mesh");
+	
+	//Objects settings
+	addAttr -ln "ExportCageInflate" -at "float" -dv 1 -min 0.1 -max 10 -r 1 -s 1;
+	setAttr ($gp + ".ExportCageInflate") (`floatField -q -v slider_cage`);
+	
+	addAttr -ln "ExportFormatLP" -at "float" -dv 1 -min 1 -max 3 -r 1 -s 1;
+	setAttr ($gp + ".ExportFormatLP") (`optionMenu -q -sl exportlist4_menu`);
+	
+	addAttr -ln "ExportFormatHP" -at "float" -dv 1 -min 1 -max 3 -r 1 -s 1;
+	setAttr ($gp + ".ExportFormatHP") (`optionMenu -q -sl exportlist5_menu`);
+	
+	addAttr -ln "ExportNormalsLP" -at "float" -dv 1 -min 1 -max 3 -r 1 -s 1;
+	setAttr ($gp + ".ExportNormalsLP") (`optionMenu -q -sl listnormallp`);
+	
+	addAttr -ln "ExportNormalsHP" -at "float" -dv 1 -min 1 -max 3 -r 1 -s 1;
+	setAttr ($gp + ".ExportNormalsHP") (`optionMenu -q -sl listnormalhp`);
+	
+	addAttr -ln "FBXVersion" -at "float" -dv 3 -min 1 -max 5 -r 1 -s 1;
+	setAttr ($gp + ".FBXVersion") (`optionMenu -q -sl exportlist8_menu`);
+	
+	$bar = 10;
+	progressWindow -e -pr $bar -st ("Export settings");
+	
+	//Baking settings base
+	addAttr -ln "checkBlocker" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkBlocker") (`checkBox -q -v check_blocker`);
+	
+	addAttr -ln "checkCage" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkCage") (`checkBox -q -v check_cage`);
+	
+	addAttr -ln "checkHpOut" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkHpOut") (`checkBox -q -v check_HPout`);
+	
+	addAttr -ln "checkConvertHp" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkConvertHp") (`checkBox -q -v check_smooth`);
+	
+	addAttr -ln "checkForceXml" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkForceXml") (`checkBox -q -v check_forcexml`);
+
+	////
+	
+	addAttr -ln "txtSizeW" -at "float" -dv 6 -min 1 -max 10 -r 1 -s 1;
+	setAttr ($gp + ".txtSizeW") (`optionMenu -q -sl exportlist_menu`);
+	
+	addAttr -ln "txtSizeH" -at "float" -dv 6 -min 1 -max 10 -r 1 -s 1;
+	setAttr ($gp + ".txtSizeH") (`optionMenu -q -sl exportlist_2_menu`);
+	
+	addAttr -ln "txtPadding" -at "float" -dv 4 -min 1 -max 7 -r 1 -s 1;
+	setAttr ($gp + ".txtPadding") (`optionMenu -q -sl exportlist2_menu`);
+	
+	addAttr -ln "txtAA" -at "float" -dv 1 -min 1 -max 3 -r 1 -s 1;
+	setAttr ($gp + ".txtAA") (`optionMenu -q -sl aa_menu`);
+	
+	addAttr -ln "txtFormat" -at "float" -dv 1 -min 1 -max 6 -r 1 -s 1;
+	setAttr ($gp + ".txtFormat") (`optionMenu -q -sl exportlist3_menu`);
+	
+	addAttr -ln "meshScale" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".meshScale") (`floatField -q -v scale_field`);
+	
+	addAttr -ln "meshRayFrontal" -at "float" -dv 0.5 -r 1 -s 1;
+	setAttr ($gp + ".meshRayFrontal") (`floatField -q -v ray_front`);
+	
+	addAttr -ln "meshRayNear" -at "float" -dv 0.5 -r 1 -s 1;
+	setAttr ($gp + ".meshRayNear") (`floatField -q -v ray_near`);
+	
+	////
+	
+	addAttr -ln "checkTxtAO" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkTxtAO") (`checkBox -q -v check_txt_ao`);
+
+	addAttr -ln "checkTxtNormal" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkTxtNormal") (`checkBox -q -v check_txt_normal`);
+	
+	addAttr -ln "checkTxtHeight" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkTxtHeight") (`checkBox -q -v check_txt_height`);
+
+	addAttr -ln "checkTxtCavity" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkTxtCavity") (`checkBox -q -v check_txt_cavity`);
+
+	addAttr -ln "checkTxtVertex" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkTxtVertex") (`checkBox -q -v check_txt_vtxcolor`);
+
+	addAttr -ln "checkTxtCurvature" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkTxtCurvature") (`checkBox -q -v check_txt_curvature`);
+
+	addAttr -ln "checkTxtPrt" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkTxtPrt") (`checkBox -q -v check_txt_prt`);
+
+	addAttr -ln "checkTxtBase" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkTxtBase") (`checkBox -q -v check_txt_base`);
+
+	$bar = 25;
+	progressWindow -e -pr $bar -st ("Mesh");
+	
+	
+	//Maps settings
+	
+	////AO
+	addAttr -ln "settingAORays" -at "float" -dv 0 -r 1 -s 1;
+	setAttr ($gp + ".settingAORays") (`intField -q -v opt_ao_rays`);
+	
+	addAttr -ln "settingAODistribution" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingAODistribution") (`optionMenu -q -sl list_ao`);
+	
+	addAttr -ln "settingAOBias" -at "float" -dv 0 -r 1 -s 1;
+	setAttr ($gp + ".settingAOBias") (`floatField -q -v opt_ao_bias`);
+	
+	addAttr -ln "settingAOAngle" -at "float" -dv 0 -r 1 -s 1;
+	setAttr ($gp + ".settingAOAngle") (`floatField -q -v opt_ao_angle`);
+	
+		//checkbox
+	addAttr -ln "checkAOdistance" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkAOdistance") (`checkBox -q -v check_ao_raydist`);
+
+	addAttr -ln "checkAOJitter" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkAOJitter") (`checkBox -q -v check_ao_jitter`);
+
+	addAttr -ln "checkAOBackface" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkAOBackface") (`checkBox -q -v check_ao_backf`);
+
+	addAttr -ln "checkAO100Occlusion" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkAO100Occlusion") (`checkBox -q -v check_ao_alow100`);
+	
+		//attenuation
+	addAttr -ln "settingAOAttenuation1" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingAOAttenuation1") (`floatField -q -v opt_ao_att1`);
+
+	addAttr -ln "settingAOAttenuation2" -at "float" -dv 0 -r 1 -s 1;
+	setAttr ($gp + ".settingAOAttenuation2") (`floatField -q -v opt_ao_att2`);
+	
+	addAttr -ln "settingAOAttenuation3" -at "float" -dv 0 -r 1 -s 1;
+	setAttr ($gp + ".settingAOAttenuation3") (`floatField -q -v opt_ao_att3`);
+
+		//colors
+	addAttr -ln "settingAOcolor1" -usedAsColor -at "float3";
+		addAttr -ln "settingAOcolor1R" -parent "settingAOcolor1" -at "float";
+		addAttr -ln "settingAOcolor1G" -parent "settingAOcolor1" -at "float";
+		addAttr -ln "settingAOcolor1B" -parent "settingAOcolor1" -at "float";
+	$col = `button -q -bgc opt_ao_color1`;
+	setAttr ($gp + ".settingAOcolor1") -type "double3" $col[0] $col[1] $col[2];
+
+	addAttr -ln "settingAOcolor2" -usedAsColor -at "float3";
+		addAttr -ln "settingAOcolor2R" -parent "settingAOcolor2" -at "float";
+		addAttr -ln "settingAOcolor2G" -parent "settingAOcolor2" -at "float";
+		addAttr -ln "settingAOcolor2B" -parent "settingAOcolor2" -at "float";
+	$col = `button -q -bgc opt_ao_color2`;
+	setAttr ($gp + ".settingAOcolor2") -type "double3" $col[0] $col[1] $col[2];
+
+	addAttr -ln "settingAOcolor3" -usedAsColor -at "float3";
+		addAttr -ln "settingAOcolor3R" -parent "settingAOcolor3" -at "float";
+		addAttr -ln "settingAOcolor3G" -parent "settingAOcolor3" -at "float";
+		addAttr -ln "settingAOcolor3B" -parent "settingAOcolor3" -at "float";
+	$col = `button -q -bgc opt_ao_color3`;
+	setAttr ($gp + ".settingAOcolor3") -type "double3" $col[0] $col[1] $col[2];
+	
+	
+	//-------------------------------------------------------------------------
+	////Normal map
+	addAttr -ln "checkNmTangent" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkNmTangent") (`checkBox -q -v check_nm_space`);
+	
+	addAttr -ln "settingNMcolor" -usedAsColor -at "float3";
+		addAttr -ln "settingNMcolorR" -parent "settingNMcolor" -at "float";
+		addAttr -ln "settingNMcolorG" -parent "settingNMcolor" -at "float";
+		addAttr -ln "settingNMcolorB" -parent "settingNMcolor" -at "float";
+	$col = `button -q -bgc opt_nm_bgcolor`;
+	setAttr ($gp + ".settingNMcolor") -type "double3" $col[0] $col[1] $col[2];
+	
+	addAttr -ln "settingNMx" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingNMx") (`optionMenu -q -sl ax1_menu`);
+	
+	addAttr -ln "settingNMy" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingNMy") (`optionMenu -q -sl ax2_menu`);
+	
+	addAttr -ln "settingNMz" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingNMz") (`optionMenu -q -sl ax3_menu`);
+	
+	
+	//-------------------------------------------------------------------------
+	////Height map
+	addAttr -ln "settingHGcolor" -usedAsColor -at "float3";
+		addAttr -ln "settingHGcolorR" -parent "settingHGcolor" -at "float";
+		addAttr -ln "settingHGcolorG" -parent "settingHGcolor" -at "float";
+		addAttr -ln "settingHGcolorB" -parent "settingHGcolor" -at "float";
+	$col = `button -q -bgc opt_height_bgcolor`;
+	setAttr ($gp + ".settingHGcolor") -type "double3" $col[0] $col[1] $col[2];
+	
+	addAttr -ln "settingHGnormalize" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingHGnormalize") (`optionMenu -q -sl hei_menu`);
+	
+	addAttr -ln "settingHGmin" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingHGmin") (`floatField -q -v opt_height_min`);
+	
+	addAttr -ln "settingHGmax" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingHGmax") (`floatField -q -v opt_height_max`);
+	
+	
+	//-------------------------------------------------------------------------
+	////Cavity map
+	addAttr -ln "settingCavRays" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingCavRays") (`intField -q -v opt_cav_rays`);
+	
+	addAttr -ln "settingCavRadius" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingCavRadius") (`floatField -q -v opt_cav_radius`);
+	
+	addAttr -ln "settingCavContrast" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingCavContrast") (`floatField -q -v opt_cav_contrast`);
+	
+	addAttr -ln "settingCavSteps" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingCavSteps") (`intField -q -v opt_cav_steps`);
+	
+	addAttr -ln "settingCavColor" -usedAsColor -at "float3";
+		addAttr -ln "settingCavColorR" -parent "settingCavColor" -at "float";
+		addAttr -ln "settingCavColorG" -parent "settingCavColor" -at "float";
+		addAttr -ln "settingCavColorB" -parent "settingCavColor" -at "float";
+	$col = `button -q -bgc opt_cav_bgcolor`;
+	setAttr ($gp + ".settingCavColor") -type "double3" $col[0] $col[1] $col[2];
+	
+	
+	//-------------------------------------------------------------------------
+	////HP Vertex colors map
+	addAttr -ln "settingHPColor" -usedAsColor -at "float3";
+		addAttr -ln "settingHPColorR" -parent "settingHPColor" -at "float";
+		addAttr -ln "settingHPColorG" -parent "settingHPColor" -at "float";
+		addAttr -ln "settingHPColorB" -parent "settingHPColor" -at "float";
+	$col = `button -q -bgc opt_hpvtx_bgcolor`;
+	setAttr ($gp + ".settingHPColor") -type "double3" $col[0] $col[1] $col[2];
+	
+	
+	//-------------------------------------------------------------------------
+	////Curvature map
+	addAttr -ln "settingCurvRays" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingCurvRays") (`intField -q -v opt_cuv_rays`);
+	
+	addAttr -ln "settingCurvAngle" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingCurvAngle") (`floatField -q -v opt_cuv_angle`);
+	
+	addAttr -ln "settingCurvBias" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingCurvBias") (`floatField -q -v opt_cuv_bias`);
+
+	addAttr -ln "checkCurvJitter" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkCurvJitter") (`checkBox -q -v check_cuv_jitter`);
+	
+	addAttr -ln "settingCurvAlgorithm" -at "float" -dv 1 -min 1 -max 2 -r 1 -s 1;
+	setAttr ($gp + ".settingCurvAlgorithm") (`optionMenu -q -sl algo_curv`);
+	
+	addAttr -ln "settingCurvDistribution" -at "float" -dv 1 -min 1 -max 3 -r 1 -s 1;
+	setAttr ($gp + ".settingCurvDistribution") (`optionMenu -q -sl distri_curv`);
+	
+	addAttr -ln "settingCurvTonemap" -at "float" -dv 1 -min 1 -max 3 -r 1 -s 1;
+	setAttr ($gp + ".settingCurvTonemap") (`optionMenu -q -sl tone_curv`);
+	
+	addAttr -ln "settingCurvColor" -usedAsColor -at "float3";
+		addAttr -ln "settingCurvColorR" -parent "settingCurvColor" -at "float";
+		addAttr -ln "settingCurvColorG" -parent "settingCurvColor" -at "float";
+		addAttr -ln "settingCurvColorB" -parent "settingCurvColor" -at "float";
+	$col = `button -q -bgc opt_cuv_bgcolor`;
+	setAttr ($gp + ".settingCurvColor") -type "double3" $col[0] $col[1] $col[2];
+	
+
+	//-------------------------------------------------------------------------
+	////PRT map
+	addAttr -ln "settingPRTRays" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingPRTRays") (`intField -q -v opt_prt_rays`);
+	
+	addAttr -ln "settingPRTAngle" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingPRTAngle") (`floatField -q -v opt_prt_angle`);
+	
+	addAttr -ln "settingPRTBias" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingPRTBias") (`floatField -q -v opt_prt_bias`);
+	
+	addAttr -ln "settingPRTTreshold" -at "float" -dv 1 -r 1 -s 1;
+	setAttr ($gp + ".settingPRTTreshold") (`floatField -q -v opt_prt_treshold`);	
+	
+	
+	addAttr -ln "checkPRTLimitray" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkPRTLimitray") (`checkBox -q -v check_prt_limitray`);
+	
+	addAttr -ln "checkPRTNormalize" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkPRTNormalize") (`checkBox -q -v check_prt_normalize`);
+	
+	addAttr -ln "checkPRTJitter" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkPRTJitter") (`checkBox -q -v check_prt_jitter`);
+	
+	
+	addAttr -ln "settingPRTColor" -usedAsColor -at "float3";
+		addAttr -ln "settingPRTColorR" -parent "settingPRTColor" -at "float";
+		addAttr -ln "settingPRTColorG" -parent "settingPRTColor" -at "float";
+		addAttr -ln "settingPRTColorB" -parent "settingPRTColor" -at "float";
+	$col = `button -q -bgc opt_prt_bgcolor`;
+	setAttr ($gp + ".settingPRTColor") -type "double3" $col[0] $col[1] $col[2];
+	
+	
+	//-------------------------------------------------------------------------
+	////Base texture
+	addAttr -ln "checkBaseID" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkBaseID") (`checkBox -q -v check_base_id`);
+	
+	addAttr -ln "checkBaseNormalmap" -at bool -r 1 -s 1;
+	setAttr ($gp + ".checkBaseNormalmap") (`checkBox -q -v check_base_nm`);
+	
+	addAttr -ln "settingBasePath" -dt "string";
+	setAttr -type "string" ($gp + ".settingBasePath") (`textField -q -fi base_dif_field`);
+	
+	addAttr -ln "settingBaseColor" -usedAsColor -at "float3";
+		addAttr -ln "settingBaseColorR" -parent "settingBaseColor" -at "float";
+		addAttr -ln "settingBaseColorG" -parent "settingBaseColor" -at "float";
+		addAttr -ln "settingBaseColorB" -parent "settingBaseColor" -at "float";
+	$col = `button -q -bgc opt_base_dbgcolor`;
+	setAttr ($gp + ".settingBaseColor") -type "double3" $col[0] $col[1] $col[2];
+	
+	
+	//end progress bar
+	progressWindow -endProgress;
+}
+
+global proc froxLoadPreset()
+{
+	string $sel[] = `ls -sl`;
+	
+	if(size($sel) == 1)
+	{
+		//test first parameter before loading the rest.
+		string $temp = $sel[0] + ".ExportHp";
+		if(!`objExists $temp`)
+			return;
+			
+		float $co[3] = { 0, 0, 0};
+			
+		//Objects
+		textField -e -fi (`getAttr ($sel[0] + ".ExportHp")`) HP_field;
+		textField -e -fi (`getAttr ($sel[0] + ".ExportLp")`) LP_field;
+		textField -e -fi (`getAttr ($sel[0] + ".ExportCage")`) cage_field;
+		textField -e -fi (`getAttr ($sel[0] + ".ExportBlocker")`) blocker_field;
+		
+		//Object settings
+		floatField -e -v (`getAttr ($sel[0] + ".ExportCageInflate")`) slider_cage;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".ExportFormatLP")`) exportlist4_menu;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".ExportFormatHP")`) exportlist5_menu;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".ExportNormalsLP")`) listnormallp;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".ExportNormalsHP")`) listnormalhp;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".FBXVersion")`) exportlist8_menu;
+		
+		//Baking settings base
+		checkBox -e -v (`getAttr ($sel[0] + ".checkBlocker")`) check_blocker;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkCage")`) check_cage;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkHpOut")`) check_HPout;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkConvertHp")`) check_smooth;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkForceXml")`) check_forcexml;
+		
+		////
+		
+		optionMenu -e -sl (`getAttr ($sel[0] + ".txtSizeW")`) exportlist_menu;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".txtSizeH")`) exportlist_2_menu;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".txtPadding")`) exportlist2_menu;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".txtAA")`) aa_menu;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".txtFormat")`) exportlist3_menu;
+		
+		floatField -e -v (`getAttr ($sel[0] + ".meshScale")`) scale_field;
+		floatField -e -v (`getAttr ($sel[0] + ".meshRayFrontal")`) ray_front;
+		floatField -e -v (`getAttr ($sel[0] + ".meshRayNear")`) ray_near;
+		
+		////
+		
+		checkBox -e -v (`getAttr ($sel[0] + ".checkTxtAO")`) check_txt_ao;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkTxtNormal")`) check_txt_normal;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkTxtHeight")`) check_txt_height;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkTxtCavity")`) check_txt_cavity;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkTxtVertex")`) check_txt_vtxcolor;
+			
+		checkBox -e -v (`getAttr ($sel[0] + ".checkTxtCurvature")`) check_txt_curvature;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkTxtPrt")`) check_txt_prt;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkTxtBase")`) check_txt_base;
+			
+			froxDisableUItxtfull();	
+			
+		////AO Map settings
+		intField -e -v (`getAttr ($sel[0] + ".settingAORays")`) opt_ao_rays;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".settingAODistribution")`) list_ao;
+		floatField -e -v (`getAttr ($sel[0] + ".settingAOBias")`) opt_ao_bias;
+		floatField -e -v (`getAttr ($sel[0] + ".settingAOAngle")`) opt_ao_angle;
+		
+		checkBox -e -v (`getAttr ($sel[0] + ".checkAOdistance")`) check_ao_raydist;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkAOJitter")`) check_ao_jitter;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkAOBackface")`) check_ao_backf;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkAO100Occlusion")`) check_ao_alow100;
+		
+		floatField -e -v (`getAttr ($sel[0] + ".settingAOAttenuation1")`) opt_ao_att1;
+		floatField -e -v (`getAttr ($sel[0] + ".settingAOAttenuation2")`) opt_ao_att2;
+		floatField -e -v (`getAttr ($sel[0] + ".settingAOAttenuation3")`) opt_ao_att3;
+		
+		$col = `getAttr ($sel[0] + ".settingAOcolor1")`;
+		button -e -bgc $col[0] $col[1] $col[2] opt_ao_color1;
+		
+		$col = `getAttr ($sel[0] + ".settingAOcolor2")`;
+		button -e -bgc $col[0] $col[1] $col[2] opt_ao_color2;
+		
+		$col = `getAttr ($sel[0] + ".settingAOcolor3")`;
+		button -e -bgc $col[0] $col[1] $col[2] opt_ao_color3;
+		
+		
+		////Normal map settings
+		checkBox -e -v (`getAttr ($sel[0] + ".checkNmTangent")`) check_nm_space;
+		
+		$col = `getAttr ($sel[0] + ".settingNMcolor")`;
+		button -e -bgc $col[0] $col[1] $col[2] opt_nm_bgcolor;
+		
+		optionMenu -e -sl (`getAttr ($sel[0] + ".settingNMx")`) ax1_menu;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".settingNMy")`) ax2_menu;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".settingNMz")`) ax3_menu;
+		
+		
+		////Height map settings
+		$col = `getAttr ($sel[0] + ".settingHGcolor")`;
+		button -e -bgc $col[0] $col[1] $col[2] opt_height_bgcolor;
+		
+		optionMenu -e -sl (`getAttr ($sel[0] + ".settingHGnormalize")`) hei_menu;
+		floatField -e -v (`getAttr ($sel[0] + ".settingHGmin")`) opt_height_min;
+		floatField -e -v (`getAttr ($sel[0] + ".settingHGmax")`) opt_height_max;
+		
+		
+		////Cavity map
+		intField -e -v (`getAttr ($sel[0] + ".settingCavRays")`) opt_cav_rays;
+		floatField -e -v (`getAttr ($sel[0] + ".settingCavRadius")`) opt_cav_radius;
+		floatField -e -v (`getAttr ($sel[0] + ".settingCavContrast")`) opt_cav_contrast;
+		intField -e -v (`getAttr ($sel[0] + ".settingCavSteps")`) opt_cav_steps;
+		
+		$col = `getAttr ($sel[0] + ".settingCavColor")`;
+		button -e -bgc $col[0] $col[1] $col[2] opt_cav_bgcolor;
+
+
+		////HP vertex color map
+		$col = `getAttr ($sel[0] + ".settingHPColor")`;
+		button -e -bgc $col[0] $col[1] $col[2] opt_hpvtx_bgcolor;
+		
+		
+		////Curvature map
+		intField -e -v (`getAttr ($sel[0] + ".settingCurvRays")`) opt_cuv_rays;
+		floatField -e -v (`getAttr ($sel[0] + ".settingCurvAngle")`) opt_cuv_angle;
+		floatField -e -v (`getAttr ($sel[0] + ".settingCurvBias")`) opt_cuv_bias;
+		
+		optionMenu -e -sl (`getAttr ($sel[0] + ".settingCurvAlgorithm")`) algo_curv;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".settingCurvDistribution")`) distri_curv;
+		optionMenu -e -sl (`getAttr ($sel[0] + ".settingCurvTonemap")`) tone_curv;
+		
+		checkBox -e -v (`getAttr ($sel[0] + ".checkCurvJitter")`) check_cuv_jitter;
+		
+		$col = `getAttr ($sel[0] + ".settingCurvColor")`;
+		button -e -bgc $col[0] $col[1] $col[2] opt_cuv_bgcolor;
+		
+		
+		////PRTpn maps
+		intField -e -v (`getAttr ($sel[0] + ".settingPRTRays")`) opt_prt_rays;
+		floatField -e -v (`getAttr ($sel[0] + ".settingPRTAngle")`) opt_prt_angle;
+		floatField -e -v (`getAttr ($sel[0] + ".settingPRTBias")`) opt_prt_bias;
+		floatField -e -v (`getAttr ($sel[0] + ".settingPRTTreshold")`) opt_prt_treshold;
+		
+		checkBox -e -v (`getAttr ($sel[0] + ".checkPRTLimitray")`) check_prt_limitray;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkPRTLimitray")`) check_prt_limitray;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkPRTNormalize")`) check_prt_normalize;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkPRTJitter")`) check_prt_jitter;
+	
+		$col = `getAttr ($sel[0] + ".settingPRTColor")`;
+		button -e -bgc $col[0] $col[1] $col[2] opt_prt_bgcolor;
+		
+		
+		////Base bake texture
+		checkBox -e -v (`getAttr ($sel[0] + ".checkBaseID")`) check_base_id;
+		checkBox -e -v (`getAttr ($sel[0] + ".checkBaseNormalmap")`) check_base_nm;
+		
+		textField -e -fi (`getAttr ($sel[0] + ".settingBasePath")`) base_dif_field;
+		
+		$col = `getAttr ($sel[0] + ".settingBaseColor")`;
+		button -e -bgc $col[0] $col[1] $col[2] opt_base_dbgcolor;
+	}
+}
+
+froXno();
+
+
