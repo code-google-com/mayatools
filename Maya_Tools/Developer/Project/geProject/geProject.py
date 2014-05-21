@@ -1,4 +1,5 @@
 import inspect,os
+import maya.cmds as cmds
 'load project'
 try:
     reload(ProjectUI)
@@ -10,5 +11,8 @@ ProjectName = os.path.splitext(os.path.split(inspect.getfile(inspect.currentfram
 ProjectXML = dirfile + '/XMLfiles/' + ProjectName + '.xml'
 
 def main():
+    #if cmds.window(MainForm, e = True):
+    #    print 'delete Window'
+    #    cmds.deleteUI(MainForm, window = True)
     MainForm = ProjectUI.ProjectUI(ProjectXML)
     MainForm.show()
