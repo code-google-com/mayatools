@@ -38,7 +38,6 @@ def getShaderFromSelectedFace(face):
         shader = cmds.connectionInfo(sg + '.surfaceShader', sfd = True).split('.')[0]
         return shader
         
-    
 def setShaderToSelectedFaces(shader):
     # get shadingGroup from shader
     selIns = cmds.ls(sl = True)
@@ -91,12 +90,8 @@ def selectFaceByShaderPerMesh(mesh, shader, condition = False):
         else:
             cmds.select(mesh, r = True)
         
-def selectFaceByShaderAllMesh(mesh, shader):
+def selectFaceByShaderAllMesh(shader):
     # get shading group from shader
-    try:
-        shape = cmds.listRelatives(mesh, shapes = True)[0]
-    except ValueError:
-        return
     shadingGroups = py.listConnections(shader, type = 'shadingEngine')
     #print shadingGroups
     faceList = py.sets(shadingGroups, q = True)
@@ -145,6 +140,8 @@ class ShaderTools(form_class,base_class):
         #self.chkAlpha.clicked.connect(self.updateSliderColorSet)
         
         self.btnAssignMat.clicked.connect(self.assignMaterialToSelected)
+        self.btnGetShader.clicked.connect(self.getFacesUsingShader)
+        self.btnSelectShader.clicked.connect(self.editShader)
         
         self.sldRed.valueChanged.connect(functools.partial(self.changeColorSet, 'r'))
         self.sldRed.sliderReleased.connect(self.fixColorSet)
@@ -213,25 +210,30 @@ class ShaderTools(form_class,base_class):
         self.updateShaderScene()
         
     def updateShaderName(self):
+        print 'Okie'
         obj = cmds.ls(sl = True,fl = True)
-        if len(obj) == 1:
-            if '.f[' in obj[0]:
-                shader = getShaderFromSelectedFace(obj[0])
-                print shader
-                id = self.cbbShadersScene.model().stringList().index(shader)
-                if index == -1:
-                    print 'No found'
-                    self.cbbShadersScene.setCurrrentIndex(0)
-                else:
-                    print 'Found'
-                    self.cbbShadersScene.setCurrrentIndex(id)
-                    
-    
+        try:
+            shader = getShaderFromSelectedFace(obj[0])
+            id = list(self.cbbShadersScene.model().stringList()).index(shader)
+            self.cbbShadersScene.setCurrentIndex(id)
+        except:
+            pass
+        
     def getFacesUsingShader(self):
-        if len(cmds.ls(sl = True)):
-            for mesh in cmds.ls(sl = True):
-                pass
-
+        cmds.select(cl = True)
+        selObjs = cmds.ls(sl = True)
+        shader = str(self.cbbShadersScene.currentText())
+        if len(selObjs):
+            try:
+            for mesh in selObjs:
+                selectFaceByShaderPerMesh(mesh, shader, True)
+        else:
+            selectFaceByShaderAllMesh(shader)
+            
+    def editShader(self):
+        shader = str(self.cbbShadersScene.currentText())
+        cmds.select(shader)
+        
 #     def updateSliderColorSet(self):
 #         if self.chkRed.isChecked():
 #             self.sldRed.setEnabled(True)
@@ -414,8 +416,10 @@ class ShaderTools(form_class,base_class):
     
     def updateShaderScene(self):
         self.cbbShadersScene.clear()
-        shaderList = cmds.ls(mat = True)
-        self.cbbShadersScene.addItems(sorted(shaderList))
+        shaderList = sorted(cmds.ls(mat = True))
+        model = QtGui.QStringListModel()
+        model.setStringList(shaderList)
+        self.cbbShadersScene.setModel(model)
         
     def assignMaterialToSelected(self):
         shader = str(self.cbbShadersScene.currentText())
