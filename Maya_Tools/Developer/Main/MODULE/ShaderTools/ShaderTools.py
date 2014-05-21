@@ -217,16 +217,15 @@ class ShaderTools(form_class,base_class):
         if len(obj) == 1:
             if '.f[' in obj[0]:
                 shader = getShaderFromSelectedFace(obj[0])
-                index = self.cbbShadersScene.model().stringList().indexOf(shader)
-                print index
+                print shader
+                id = self.cbbShadersScene.model().stringList().index(shader)
                 if index == -1:
                     print 'No found'
                     self.cbbShadersScene.setCurrrentIndex(0)
                 else:
                     print 'Found'
-                    self.cbbShadersScene.setCurrrentIndex(index)
+                    self.cbbShadersScene.setCurrrentIndex(id)
 
-                
 #     def updateSliderColorSet(self):
 #         if self.chkRed.isChecked():
 #             self.sldRed.setEnabled(True)
@@ -247,7 +246,6 @@ class ShaderTools(form_class,base_class):
 #             self.sldAlpha.setEnabled(True)
 #         else:
 #             self.sldAlpha.setEnabled(False)
-        
         
     def removeDebugShader(self):
         if cmds.objExists('restoreTechniqueNode'):
