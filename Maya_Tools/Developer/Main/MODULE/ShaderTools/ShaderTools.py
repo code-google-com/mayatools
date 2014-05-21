@@ -225,8 +225,10 @@ class ShaderTools(form_class,base_class):
         shader = str(self.cbbShadersScene.currentText())
         if len(selObjs):
             try:
-            for mesh in selObjs:
-                selectFaceByShaderPerMesh(mesh, shader, True)
+                for mesh in selObjs:
+                    selectFaceByShaderPerMesh(mesh, shader, True)
+            except:
+                pass
         else:
             selectFaceByShaderAllMesh(shader)
             
