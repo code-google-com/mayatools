@@ -225,6 +225,12 @@ class ShaderTools(form_class,base_class):
                 else:
                     print 'Found'
                     self.cbbShadersScene.setCurrrentIndex(id)
+                    
+    
+    def getFacesUsingShader(self):
+        if len(cmds.ls(sl = True)):
+            for mesh in cmds.ls(sl = True):
+                pass
 
 #     def updateSliderColorSet(self):
 #         if self.chkRed.isChecked():
