@@ -217,10 +217,13 @@ class ShaderTools(form_class,base_class):
         if len(obj) == 1:
             if '.f[' in obj[0]:
                 shader = getShaderFromSelectedFace(obj[0])
-                print shader
-                self.edtMaterials.setText(shader)
+                index = self.cbbShadersScene.model().stringList().indexOf(shader)
+                if index == -1:
+                    self.cbbShadersScene.setCurrrentIndex(0)
+                else:
+                    self.cbbShadersScene.setCurrrentIndex(index)
 
-        
+                
 #     def updateSliderColorSet(self):
 #         if self.chkRed.isChecked():
 #             self.sldRed.setEnabled(True)
@@ -405,7 +408,7 @@ class ShaderTools(form_class,base_class):
     def updateShaderScene(self):
         self.cbbShadersScene.clear()
         shaderList = cmds.ls(mat = True)
-        self.cbbShadersScene.addItems(shaderList)
+        self.cbbShadersScene.addItems(sorted(shaderList))
         
     def assignMaterialToSelected(self):
         shader = str(self.cbbShadersScene.currentText())
