@@ -75,18 +75,18 @@ def selectFaceByShaderPerMesh(mesh, shader, condition = False):
         cmds.select(selectedFaces)
         if len(cmds.ls(sl = True, fl = True)) == cmds.polyEvaluate(mesh, f = True):# in case selected faces is equal to the number of  faces
             if condition:
-                cmds.select(mesh, a = True)
+                cmds.select(mesh, add = True)
             else:
                 cmds.select(mesh, r = True)
         else:
             if condition:
-                cmds.select(selectedFaces, a = True)
+                cmds.select(selectedFaces, add = True)
             else:
                 cmds.select(selectedFaces, r = True)
     else: # object has only one material
         #print 'select: ' + mesh
         if condition:
-            cmds.select(mesh, a = True)
+            cmds.select(mesh, add = True)
         else:
             cmds.select(mesh, r = True)
         
@@ -198,6 +198,8 @@ class ShaderTools(form_class,base_class):
         #----------
         self.combobox.currentIndexChanged.connect(self.updateChecker)
         self.slider.valueChanged.connect(self.updateTilingChecker)
+        self.chkAuto.clicked.connect(self.changeStatus)
+        self.btnGet.clicked.connect(self.updateShaderName)
         
         #self.updateSliderColorSet()
         
@@ -208,8 +210,22 @@ class ShaderTools(form_class,base_class):
         self.updateShaderOnScene = cmds.scriptJob(e = ['SceneOpened',self.updateShaderScene], protected = True)
         
         self.updateShaderScene()
+        self.btnGet.setVisible(False)
+        
+    def changeStatus(self):
+        if not self.chkAuto.isChecked():
+            self.btnGet.setVisible(True)
+        else:
+            self.btnGet.setVisible(False)
+            self.updateShaderName()
+            
+    def 
         
     def updateShaderName(self):
+        if not self.chkAuto.isChecked():
+            self.btnGet.setVisible(True)
+            return 
+        #self.btnGet.setVisible(True)
         print 'Okie'
         obj = cmds.ls(sl = True,fl = True)
         try:
@@ -220,15 +236,12 @@ class ShaderTools(form_class,base_class):
             pass
         
     def getFacesUsingShader(self):
-        cmds.select(cl = True)
-        selObjs = cmds.ls(sl = True)
+        selObjs = cmds.ls(sl = True, fl = True) # select mode = faces
         shader = str(self.cbbShadersScene.currentText())
         if len(selObjs):
-            try:
-                for mesh in selObjs:
-                    selectFaceByShaderPerMesh(mesh, shader, True)
-            except:
-                pass
+            for mesh in selObjs:
+                node = mesh.split('.')[0] 
+                selectFaceByShaderPerMesh(node, shader, True)
         else:
             selectFaceByShaderAllMesh(shader)
             
