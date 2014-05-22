@@ -199,7 +199,7 @@ class ShaderTools(form_class,base_class):
         self.combobox.currentIndexChanged.connect(self.updateChecker)
         self.slider.valueChanged.connect(self.updateTilingChecker)
         self.chkAuto.clicked.connect(self.changeStatus)
-        self.btnGet.clicked.connect(self.updateShaderName)
+        self.btnGet.clicked.connect(self.updateShaderName_v2)
         
         #self.updateSliderColorSet()
         
@@ -219,7 +219,14 @@ class ShaderTools(form_class,base_class):
             self.btnGet.setVisible(False)
             self.updateShaderName()
             
-    def 
+    def updateShaderName_v2(self):
+        obj = cmds.ls(sl = True,fl = True)
+        try:
+            shader = getShaderFromSelectedFace(obj[0])
+            id = list(self.cbbShadersScene.model().stringList()).index(shader)
+            self.cbbShadersScene.setCurrentIndex(id)
+        except:
+            pass
         
     def updateShaderName(self):
         if not self.chkAuto.isChecked():
@@ -469,6 +476,11 @@ class ShaderTools(form_class,base_class):
             cmds.polyColorPerVertex(b = value)
         if channel == 'a':
             cmds.polyColorPerVertex(a = value)
+            
+    def makeAOTools(self):
+        attachFileSource = fileDirCommmon + '/mel/geNFS14_MakeAOTools_UI2.mel'
+        mel.eval('source \"{f}\";'.format(f = attachFileSource))
+        #mel.eval('$s=`ls -sl`; boltNorms.EdgeToVF(0); boltNorms.LockSelectedVFs(0); select $s')
   
 def main(xmlnput):
     form = ShaderTools(xmlnput)
