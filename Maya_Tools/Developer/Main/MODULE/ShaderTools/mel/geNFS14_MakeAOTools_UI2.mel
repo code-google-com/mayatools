@@ -1,0 +1,746 @@
+proc int isALODGrp(string $objStr){
+	if ($objStr == "|export|lod0" || $objStr == "export|lod1" || $objStr == "|export|lod2" || $objStr == "|export|lod3" || $objStr == "|export|lod4" ||$objStr == "|export|lod5"){
+		return 1;
+	}
+	return 0 ;
+}
+proc geDupAMeshForAOTask(string $meshStr){
+	string $strTok[] ;
+	string $slMesh = $meshStr;
+	int $numTok = `tokenize $slMesh "|" $strTok` ;
+	if ($numTok < 2){
+		print("GE_Error: ilegal mesh " + $slMesh + "\n");
+		return ;
+	}
+	string $LOD_Grp = "|" + $strTok[0] + "|" + $strTok[1];
+	
+	if (!isALODGrp($LOD_Grp)){
+		print("GE_Warning: this function only work on Mesh under lod0|lod1|lod2|lod3|lod4|lod5\n");
+		return ;
+	}
+	string $meshName = $strTok[$numTok-1];
+	string $dupSubfix = "_geDup2MkLOD" ;
+	string $lodAOPath = $LOD_Grp + $dupSubfix;
+	int $cnt;
+	
+	if (!`objExists $lodAOPath`){
+		group -em -p $strTok[0] -n ($strTok[1]+ $dupSubfix);
+	}
+	if (!`objExists $lodAOPath`){
+		group -em -n $lodAOPath ;
+	}
+	// build and create full Path
+	// $cnt start at 2 because we have "export" group before "lodx" group
+	for ($cnt = 2 ; $cnt < $numTok-1 ; $cnt++){
+		if (!`objExists ($lodAOPath + "|" + $strTok[$cnt])`){
+			group -em -p $lodAOPath -n $strTok[$cnt] ;
+		}
+		$lodAOPath += "|" + $strTok[$cnt] ;
+	}
+	string $newDupMeshName = $meshName + $dupSubfix ;
+	if (`objExists ($lodAOPath + "|" + $newDupMeshName)`){
+		print("GE_Warning: " + $newDupMeshName + " already exists\n");
+		return;
+	}
+	string $realDupName[] = `duplicate -name $newDupMeshName $slMesh`;
+	string $lockAttr[] = `listAttr -l $realDupName[0]` ;
+	for ($anAttr in $lockAttr){
+		setAttr -lock 0 ($realDupName[0] + "." + $anAttr);
+	}
+	parent $realDupName[0] $lodAOPath;
+	rename $realDupName[0] $newDupMeshName;
+}
+proc geCopyVtxColor2SampleIndentMesh(string $src, string $dst){
+	int $numVtx[] = `polyEvaluate -v $src`;
+	//delete All ColorSet
+	string $tmmArr[]= `polyColorSet -q -acs $dst` ;
+	for ($aS in $tmmArr){
+		//if ($aS != "colorSet1"){
+			polyColorSet -d -cs $aS $dst;
+		//}
+	}
+	polyColorSet -create -us -pi 0 -cs "colorSet1" $dst;
+	int $cnt ;
+	//for ($cnt = 0 ; $cnt < $numVtx[0] ; $cnt++){
+	//		float $value[] = `polyColorPerVertex -q -rgb ($src + ".vtx[" + $cnt + "]")`;
+			//print("polyColorPerVertex -rgb " + $value[0] + " " + $value[1] + " " + $value[2] + " " + $dst + ".vtx[" + $cnt + "]\n");
+	//		catch(`polyColorPerVertex -rgb $value[0] $value[1] $value[2] ($dst + ".vtx[" + $cnt + "]")`);
+	//}
+	for ($cnt = 0 ; $cnt < $numVtx[0] ; $cnt++){
+		string $vtfStr[] = `polyListComponentConversion -tvf ($src + ".vtx[" + $cnt + "]")` ;
+		string $vtfFlatten[] = `ls -l -fl $vtfStr` ;
+		for ($vtf in $vtfFlatten){
+			float $value[] = `polyColorPerVertex -q -rgb $vtf`;
+			string $dstStr = `substituteAllString $vtf $src $dst` ;
+			//print("polyColorPerVertex -rgb " + " " + $value[0] + " " + $value[1] + " " + $value[2] + " " + $dstStr + "\n");
+			catch(`polyColorPerVertex -rgb $value[0] $value[1] $value[2] $dstStr`);
+		}
+	}
+}
+global proc geCopyVertexColorFromSelDupMesh2Org(){
+	string $slMesh[] = `ls -l -sl` ;
+	for ($aMesh in $slMesh){
+		// make sure the trans has a Shape node
+		string $shapeNode[] = `listRelatives -c -type mesh $aMesh`;
+		if (!size($shapeNode)){
+			continue ;
+		}
+		string $srcMesh = `substituteAllString $aMesh "_geDup2MkLOD" ""`;
+		if (!`objExists $srcMesh`){
+			print("GE_Warning:  Cannot find the original mesh --> " + $srcMesh + "\n");
+			continue;
+		}
+		geCopyVtxColor2SampleIndentMesh($aMesh, $srcMesh);
+	}
+}
+global proc geCopyVertexColorFromDup2OrgLOD(){
+	string $slLODs[] = `ls -l -sl` ;
+	if (size($slLODs) != 1){
+		print("GE_Error: please select 1 _geDup2MkLOD group in the Outliner\n");
+		return ;
+	}
+	for ($aMesh in `listRelatives -c -ad -f -type mesh $slLODs[0]`){
+		string $transNode[] = `listRelatives -p -f $aMesh` ;
+		string $srcMesh = `substituteAllString $transNode[0] "_geDup2MkLOD" ""`;
+		if (!`objExists $srcMesh`){
+			print("GE_Warning:  Cannot find the original mesh --> " + $srcMesh + "\n");
+			continue;
+		}
+		geCopyVtxColor2SampleIndentMesh($transNode[0], $srcMesh);
+	}
+}
+global proc geDupSelectedMeshAOTask(){
+	string $slMesh[] = `ls -l -sl` ;
+	for ($aMesh in $slMesh){
+		geDupAMeshForAOTask($aMesh);
+	}
+}
+global proc geDupALODForAOTask(){
+	string $slLODs[] = `ls -l -sl` ;
+	if (size($slLODs) != 1 || !isALODGrp($slLODs[0])){
+		print("GE_Error: please select 1 (only 1) LOD group in the Outliner\n");
+		return ;
+	}
+	string $parts[] = `listRelatives -c -ad -f -type mesh $slLODs[0]`;
+	for ($aMesh in $parts){
+		string $transNode[] = `listRelatives -p -f $aMesh` ;
+		geDupAMeshForAOTask($transNode[0]);
+	}
+}
+global proc geCopyVtxColorFromSource2Tartget(){
+	string $sel[] = `ls -sl -l -fl`; select -cl;
+	string $closestVert, $vertSel[], $sourceSel[];
+	
+	if (size($sel) > 1)
+	{
+		for ($i=0;$i<(size($sel) - 1);$i++)
+		{
+			$vertSel[$i] = $sel[$i];
+		}
+		
+		select $sel[size($sel)-1];
+		ConvertSelectionToVertices;
+		$sourceSel = `ls -sl -fl -l`;
+	}else{
+		print("GE_Error: Please select A Set of Vertex need to copy the Color then Select the Source Object\n");
+		return;
+	}
+	
+	for ($i=0;$i<size($vertSel);$i++)
+	{
+		float $shortestDistance = 1000000;
+		
+		//select $vertSel[$i];
+		float $vPos[] = `xform -q -ws -t $vertSel[$i]`;
+					
+		for ($j=0;$j<size($sourceSel);$j++)
+		{
+			float $testVert[] = `xform -q -ws -t $sourceSel[$j]`;
+			float $testLength = ((($testVert[0] - $vPos[0])*($testVert[0] - $vPos[0])) + (($testVert[1] - $vPos[1])*($testVert[1] - $vPos[1])) + (($testVert[2] - $vPos[2])*($testVert[2] - $vPos[2])));
+			
+			if ($testLength < $shortestDistance)
+			{
+				$closestVert = $sourceSel[$j];
+				$shortestDistance = $testLength;
+			}
+			
+		}
+		float $vColor[] = `polyColorPerVertex -q -rgb $closestVert`;
+		//print("polyColorPerVertex -rgb " + $vColor[0] + " " + $vColor[1] + " " + $vColor[2] + " " +  $vertSel[$i] + "\n");
+		polyColorPerVertex -rgb $vColor[0] $vColor[1] $vColor[2] $vertSel[$i];
+		
+	}
+	select -cl;
+}
+
+global proc geImportPlane ()
+{
+/*
+    global string $eauk_Blueprint_ROOT;
+    
+    string $folderPath[];
+    $numTokens = `tokenize $eauk_Blueprint_ROOT "\/" $folderPath`;
+    string $tyreBlenShapeDir = $folderPath[0] + "/" + $folderPath[1] + "/" + $folderPath[2] + "/Vehicles/Unused/MentalRay_AO_Baking/";
+    
+    // Create Referrence
+    file -i ($tyreBlenShapeDir + "Car_AO_Plane.mb") ;
+*/	
+	file -i ("d:/nfs14prod/Data/Raw/Vehicles/Tools/Maya/Scene/Car_AO_Plane.mb") ;
+}
+
+global proc geBakeAOToVertices ()
+{
+	if (`objExists geNFS13_BakeAO_VertexBakeSet`)
+	{
+		convertLightmapSetup  -camera persp -sh  -vm -bakeSetOverride geNFS13_BakeAO_VertexBakeSet -showcpv;
+	}
+	else
+	{
+		confirmDialog -t "Bake AO to Vertices" -m ("'geNFS13_BakeAO_VertexBakeSet' DOES NOT EXIST. Cannot Bake automatically.\nPlease use 'Batch Bake (mental ray)' instead!") -defaultButton "YES" ;
+	}
+}
+
+global proc string ge_forceCleanUpByCombine( string $clnList[] )
+{
+    // This procedure was copied from EA script.
+	int $listSize = size($clnList);
+	global string $combineResult = "fault";
+	if ($listSize > 0)
+	{
+		string $parent[] = `listRelatives -fullPath -parent $clnList[0]`;
+		global string $combineResult;
+		string $firstName = `match "[^|]*$" $clnList[0]`;
+		
+		string $proxyCube[] = `polyCube -ch off -o on -w 1 -h 1 -d 1 -cuv 4`;
+		
+		string $group = `group -n "vutGroup#" $clnList $proxyCube`;
+		
+		//string $combined[] = `polyUnite -ch off $group`;
+		string $combined[] = `evalEcho("polyUnite -ch off \""+$group+"\"")`;
+		
+		string $faceToVertex[] = `polyInfo -faceToVertex`;
+		int $sizeFaces = size($faceToVertex);
+		
+		int $start = $sizeFaces - 6;
+		int $end = $sizeFaces - 1;
+		
+		string $deletePart = $combined[0] + ".f[" + $start + ":" + $end + "]";
+		delete $deletePart;
+		
+		$combineResult = `rename $combined[0] $firstName`;
+		delete -ch $combineResult;
+		if($parent[0] != "")
+		{		
+			parent $combineResult $parent[0];
+		}
+	}
+	else
+	{
+		error "Nothing to combine.";
+	}
+
+	return $combineResult;
+}
+
+global proc geDoSpecialFCC ()
+{
+    string $slObjects[] = `ls -sl` ;
+    for ($anO in $slObjects){
+        string $meshName[] = `listRelatives -f -type mesh -c $anO` ;
+        string $transTmp[] ;
+        if (size($meshName) == 1){
+            $transTmp[0] = $anO ;
+            ge_forceCleanUpByCombine($transTmp) ;
+        }else{
+            print("Something is wrong with " + $anO + "\n");
+        }
+    }
+}
+
+global proc geSetupMrRenderSettings ()
+{
+    setAttr -type "string" defaultRenderGlobals.currentRenderer mentalRay;
+    setAttr "mentalrayGlobals.mayaDerivatives" 1;
+    setAttr "defaultRenderGlobals.enableDefaultLight" 0;
+    optionMenuGrp -e -select 11 miRenderQualityMenu;
+    miRenderQualityMenuChanged;
+    setAttr miDefaultOptions.filter 4;
+    setAttr "miDefaultOptions.finalGather" 1;
+    setAttr "miDefaultOptions.finalGatherRays" 1000;
+}
+
+proc geTransAttr_TransferColorSet(string $src, string $dst)
+{
+    //select -r $src ;
+    //select -tgl $dst;
+	//transferAttributes -transferPositions 0 -transferNormals 0 -transferUVs 0 -transferColors 1 -sourceColorSet "colorSet1" -targetColorSet "colorSet1" -sampleSpace 5 -searchMethod 3-flipUVs 0 -colorBorders 1 ;
+	//select -r $dst;
+	//DeleteHistory ;
+	
+	transferAttributes -transferPositions 0 -transferNormals 0 -transferUVs 0 -transferColors 1 -sourceColorSet "colorSet1" -targetColorSet "colorSet1" -sampleSpace 5 -searchMethod 3-flipUVs 0 -colorBorders 1 $src $dst ;
+	DeleteHistory $dst;
+}
+
+global proc geTransferColorSetFromDup2OrgLOD ()
+{
+    string $slLODs[] = `ls -l -sl` ;
+	if (size($slLODs) != 1){
+		print("GE_Error: please select 1 _geDup2MkLOD group in the Outliner\n");
+		return ;
+	}
+	for ($aMesh in `listRelatives -c -ad -f -type mesh $slLODs[0]`){
+		string $transNode[] = `listRelatives -p -f $aMesh` ;
+		string $srcMesh = `substituteAllString $transNode[0] "_geDup2MkLOD" ""`;
+		if (!`objExists $srcMesh`){
+			print("GE_Warning:  Cannot find the original mesh --> " + $srcMesh + "\n");
+			continue;
+		}
+		geTransAttr_TransferColorSet ($transNode[0], $srcMesh);
+	}
+}
+
+global proc geTransferColorSetFromSelDupMesh2Org ()
+{
+    string $slMesh[] = `ls -l -sl` ;
+	for ($aMesh in $slMesh){
+		// make sure the trans has a Shape node
+		string $shapeNode[] = `listRelatives -c -type mesh $aMesh`;
+		if (!size($shapeNode)){
+			continue ;
+		}
+		string $srcMesh = `substituteAllString $aMesh "_geDup2MkLOD" ""`;
+		if (!`objExists $srcMesh`){
+			print("GE_Warning:  Cannot find the original mesh --> " + $srcMesh + "\n");
+			continue;
+		}
+		geTransAttr_TransferColorSet ($aMesh, $srcMesh);
+	}
+}
+
+
+global proc geAddRGB ()
+{
+    float $rgbValue;
+	$rgbValue = `textField -q -text InGreyRGBValue`;
+	 if ( ($rgbValue > 1) || ($rgbValue < 0) )
+    {
+        print ("Input Value must be in range [0, 1]") ;
+    }
+    else
+	    polyColorPerVertex -r $rgbValue -g $rgbValue -b $rgbValue -a 1 -cla true -rel -cdo;
+}
+
+global proc geSubtractRGB ()
+{
+    float $rgbValue;
+	$rgbValue = `textField -q -text InGreyRGBValue`;
+    if ( ($rgbValue > 1) || ($rgbValue < 0) )
+    {
+        print ("Input Value must be in range [0, 1]") ;
+    }
+    else	
+	    polyColorPerVertex -r (-$rgbValue) -g (-$rgbValue) -b (-$rgbValue) -a 1 -cla true -rel -cdo;
+}
+
+global proc geReplaceRGB ()
+{
+    float $rgbValue;
+	$rgbValue = `textField -q -text InGreyRGBValue`;
+	
+	 if ( ($rgbValue > 1) || ($rgbValue < 0) )
+    {
+        print ("Input Value must be in range [0, 1]") ;
+    }
+    else
+        polyColorPerVertex -r $rgbValue -g $rgbValue -b $rgbValue -a 1 -cdo;
+}
+
+global proc geDoGreenPlus ()
+{
+    float $inputValue;
+	$inputValue = `textField -q -text InGreyRGBValue`;
+	
+	 if ( ($inputValue > 1) || ($inputValue < 0) )
+    {
+        print ("Input Value must be in range [0, 1]") ;
+    }
+    else
+        polyColorPerVertex -g $inputValue -cla true -rel -cdo;
+}
+global proc geDoGreenMinus ()
+{
+    float $inputValue;
+	$inputValue = `textField -q -text InGreyRGBValue`;
+	
+	 if ( ($inputValue > 1) || ($inputValue < 0) )
+    {
+        print ("Input Value must be in range [0, 1]") ;
+    }
+    else
+        polyColorPerVertex -g (-$inputValue) -cla true -rel -cdo;
+}
+global proc geDoGreenEqual ()
+{
+    float $inputValue;
+	$inputValue = `textField -q -text InGreyRGBValue`;
+	
+	if ( ($inputValue > 1) || ($inputValue < 0) )
+    {
+        print ("Input Value must be in range [0, 1]") ;
+    }
+    else
+        polyColorPerVertex -g $inputValue -cdo;
+}
+global proc geDoAlphaEqual ()
+{
+    float $inputValue;
+	$inputValue = `textField -q -text InGreyRGBValue`;
+	
+	 if ( ($inputValue > 1) || ($inputValue < 0) )
+    {
+        print ("Input Value must be in range [0, 1]") ;
+    }
+    else
+        polyColorPerVertex -a $inputValue -cdo;
+}
+
+
+global proc geSetGreenChannelEqualToRed ()
+{
+    string $vertSel[] = `ls -sl -l -fl`; select -cl;
+	
+	if (size($vertSel) > 0)
+	{
+		for ($i=0;$i<size($vertSel);$i++)
+		{
+		    float $redVal[] = `polyColorPerVertex -q -r $vertSel[$i]`;
+			polyColorPerVertex -g $redVal[0] -cdo $vertSel[$i];
+		}
+	}
+	select -r $vertSel;
+}
+global proc geSetRedChannelEqualToBlue ()
+{
+    string $vertSel[] = `ls -sl -l -fl`; select -cl;
+	
+	if (size($vertSel) > 0)
+	{
+		for ($i=0;$i<size($vertSel);$i++)
+		{
+		    float $blueVal[] = `polyColorPerVertex -q -b $vertSel[$i]`;
+			polyColorPerVertex -r $blueVal[0] -cdo $vertSel[$i];
+		}
+	}
+	select -r $vertSel;
+}
+
+global proc geSelectGreenVerts ()
+{
+    string $allV[] = `polyListComponentConversion -tv`;
+    $allV = `ls -l -fl $allV`;
+    //print $allV;
+    string $greenVerts[];
+	
+	if (size($allV) > 0)
+	{
+		for ($i=0;$i<size($allV);$i++)
+		{
+		    float $rgbVal[] = `polyColorPerVertex -q -rgb $allV[$i]`;
+			if ($rgbVal[0] != $rgbVal[1])
+			    $greenVerts[size($greenVerts)] = $allV[$i];
+		}
+	}
+	select -r $greenVerts;
+}
+
+global proc geSetVertexBlueToOne ()
+{
+    $allVtf = `ls -sl -l -fl`;
+    polyColorPerVertex -b 1.0 -cdo $allVtf;
+}
+
+global proc geSetVertexBlueToZeroPointTwo ()
+{
+    $allVtf = `ls -sl -l -fl`;
+    polyColorPerVertex -b 0.2 -cdo $allVtf;
+}
+
+global proc geSetVertexBlueToInput ()
+{
+    float $inputValue;
+	$inputValue = `textField -q -text InGreyRGBValue`;
+	
+	if ( ($inputValue > 1) || ($inputValue < 0) )
+    {
+        print ("Input Value must be in range [0, 1].\n") ;
+    }
+    else {
+        $allVtf = `ls -sl -l -fl`;
+        polyColorPerVertex -b $inputValue -cdo $allVtf;
+    }  
+}
+
+global proc geAverageVertexRGB() {
+    string $vertSel[] = `ls -sl -l -fl`; select -cl;
+	
+	float $averageRed = 0.0;
+	//float $averageGreen = 0.0;
+	//float $averageBlue = 0.0;
+	if (size($vertSel) > 0)
+	{
+	    float $redVals[] = `polyColorPerVertex -q -r $vertSel`;
+	    //float $greenVals[] = `polyColorPerVertex -q -g $vertSel`;
+	    //float $blueVals[] = `polyColorPerVertex -q -b $vertSel`;
+	    for ($i=0; $i<size($vertSel); $i++) {
+	        $averageRed += $redVals[$i];
+	        //$averageGreen += $greenVals[$i];
+	        //$averageBlue += $blueVals[$i];
+	    }
+	    $averageRed /= size($redVals);
+	    
+		polyColorPerVertex -r $averageRed -g $averageRed -b $averageRed -cdo $vertSel;
+	}
+	select -r $vertSel;
+}
+
+
+
+// select Meshes not satisfy the rule: has 1 colorSet and set name colorSet1
+proc string[] geListMesh(string $exceptionMesh[]){
+	string $meshes[] = `ls -l -type mesh` ;
+	string $retMesh[];
+	for($aM in $meshes){
+		for ($anI in $exceptionMesh){
+			if (size(`match ("|" + $anI) $aM`)){
+				$retMesh[size($retMesh)] = $aM;
+				break;
+			}
+		}
+	}
+	return $retMesh;
+}
+
+global proc geSelectMeshesHaveWrongColorSet(){
+	string $meshesHaveWrongColorSet[] ;
+
+	string $allMesh[] = `listRelatives -f -ad -type mesh "export"` ;
+	for ($aM in $allMesh){
+		string $allColorSets[]= `polyColorSet -q -acs $aM` ;
+		//print $tmmArr ;
+		if (size($allColorSets) == 1 && $allColorSets[0] == "colorSet1"){
+			continue;
+		}else{
+			$meshesHaveWrongColorSet[size($meshesHaveWrongColorSet)] = $aM ;
+		}
+	}
+	select `listRelatives -f -p $meshesHaveWrongColorSet`;
+}
+
+global proc geClampVertexColorToOne()
+{
+    print "Clamping AO Values for all meshes on 'export' group ...\n";
+    
+	string $allM[] = `listRelatives -f -ad -type mesh "export"`;
+	for ($aM in $allM){
+		string $transN[] = `listRelatives -p -f $aM`;
+		if (size($transN) != 1){
+			continue ;
+		}
+		string $colSets[] = `polyColorSet -q -acs $transN[0]`;
+		for ($aS in $colSets){
+			if ($aS == "colorSet1"){
+				polyColorSet -ccs -cs $aS $transN[0];
+				string $allVtf[] = `polyListComponentConversion -tvf $transN[0]`;
+				$allVtf = `ls -l -fl $allVtf`;
+				for ($aVtf in $allVtf){
+					float $colRGB[] = `polyColorPerVertex -q -rgb $aVtf`;
+					if ($colRGB[0] > 1.0){
+						polyColorPerVertex -r 1.0 $aVtf ;
+					}
+					if ($colRGB[1] > 1.0){
+						polyColorPerVertex -g 1.0 $aVtf ;
+					}
+					if ($colRGB[2] > 1.0){
+						polyColorPerVertex -b 1.0 $aVtf ;
+					}
+					
+					float $colAlpha[] = `polyColorPerVertex -q -a $aVtf`;
+					if ($colAlpha[0] > 1.0){
+						polyColorPerVertex -a 1.0 $aVtf ;
+					}
+				}
+			}
+		}
+	}
+}
+
+global proc geSetVertexAlphaToOne() {
+    print "Set Vertex_Alpha to 1 for all meshes on 'export' group ...\n";
+    
+	string $allM[] = `listRelatives -f -ad -type mesh "export"`;
+	for ($aM in $allM){
+		string $transN[] = `listRelatives -p -f $aM`;
+		if (size($transN) != 1){
+			continue ;
+		}
+		string $colSets[] = `polyColorSet -q -acs $transN[0]`;
+		for ($aS in $colSets){
+			if ($aS == "colorSet1"){
+				polyColorSet -ccs -cs $aS $transN[0];
+				string $allVtf[] = `polyListComponentConversion -tvf $transN[0]`;
+				$allVtf = `ls -l -fl $allVtf`;
+				for ($aVtf in $allVtf){
+					polyColorPerVertex -a 1.0 $aVtf ;
+				}
+			}
+		}
+	}
+}
+
+global proc geSetVertexBlueToZero() {
+    print "Set Vertex_Blue to Zero for selected meshes ...\n";
+    
+    source "geNFS14_MiniHypershade_GUI";    
+    nfs14_miniHyp_ConvertSelectedFacesToObjects();
+    
+    
+	string $allM[] = `ls -sl`;
+	for ($aM in $allM){
+		string $colSets[] = `polyColorSet -q -acs $aM`;
+		for ($aS in $colSets){
+			if ($aS == "colorSet1"){
+				polyColorSet -ccs -cs $aS $aM;
+				string $allVtf[] = `polyListComponentConversion -tvf $aM`;
+				$allVtf = `ls -l -fl $allVtf`;
+					polyColorPerVertex -b 0.0 $allVtf;
+			}
+		}
+	}
+}
+
+proc int geStringArrayContains(string $item, string $array[]){
+	for ($anI in $array){
+		if (size(`match $anI $item`)){
+			return 1;
+		}
+	}
+	return 0;
+}
+proc doFixVertexAlpha(string $aMesh, string $exptionShader[]){
+	int $numFaces[] = `polyEvaluate -f $aMesh` ;
+	string $transNode[] = `listRelatives -f -p $aMesh`;
+	int $cnt;
+	int $numF = 0 ;
+	string $errorFace[] ;
+	for ($cnt = 0 ; $cnt < $numFaces[0];$cnt++){
+		string $faceName = $transNode[0] + ".f[" + $cnt + "]" ;
+		if (!size(`ls $faceName`)){ // somehow the TransMesh has no face
+			break;
+		}
+		string $shadingEngine[] = `listSets -type 1 -object $faceName`;
+		if (size($shadingEngine) == 0){ // has no ShadingEngine
+			polyColorPerVertex -a 1 -cdo $faceName;
+		}else{
+			string $shaders[] = `listConnections -s 1 -d 0 ($shadingEngine[0] + ".surfaceShader")` ;
+			if (size($shaders) == 0 || !geStringArrayContains($shaders[0], $exptionShader)){
+				polyColorPerVertex -a 1 -cdo $faceName;
+			}
+		}
+	}
+}
+proc int getSetCurrentColorSet(string $meshName, string $currColorSet){
+	string $allColorSets[]= `polyColorSet -q -acs $meshName`;
+	if (size($allColorSets) == 1 && $allColorSets[0] == $currColorSet){
+			return 1;
+		}
+	return 0;
+}
+
+global proc geCorrectVertexAlphaToOne(){
+    print "Correct Vertex Alpha for non-glass meshes on LOD0-LOD4 ...\n";
+    
+	string $eaLODs[] = {"LOD0", "LOD1", "LOD2", "LOD3", "LOD4"};
+	string $meshes[] = geListMesh($eaLODs) ;
+	string $transShader[] = {"Glass_Material"};
+	string $currColorSet = "colorSet1";
+	for ($aMesh in $meshes){
+		//print ($aMesh + "\n");
+		if (!getSetCurrentColorSet($aMesh, $currColorSet)){
+			print("GE_Warning: " + $aMesh + " has no the right ColorSet\n");
+			continue;
+		}
+		doFixVertexAlpha($aMesh, $transShader) ;
+	}
+	
+	print "Correct Vertex Alpha: DONE\n";
+}
+
+global proc geVehicleVertColorControl(int $displayMode){
+	// get list of all modeling panels
+	string $panelList[] = `getPanel -type modelPanel`;
+	// get list of selected meshes and lights
+	string $selected[] = `ls -long -sl -type "transform"`;
+	string $selectedShapes[] = `listRelatives -fullPath -type shape $selected`;
+	select -r $selectedShapes;
+	string $meshes[] = `ls -long -sl -type "mesh"`;
+	string $lights[] = `ls -long -sl -type "light"`;
+	//works exclusivly - either disp color on all meshes or none		
+	if (`size $meshes` ==  0){
+		$meshes = `ls -type mesh`;
+		print ("All Meshes : ");
+	} else {
+		print ("Selected Meshes : ");
+		//first disable vert color display for all meshes
+		//for some strange reason the attr has to be touched directly in order for HQ mode to refresh correctly	
+		for ($mesh in `ls -type mesh`){setAttr ($mesh+".displayColors") 0;}
+	}
+	//select polys to change
+	switch ($displayMode){
+		case 0:	//Reset all to default
+				//
+				//Turn off Vertex Color display and reset panels to default
+				select -r $meshes;
+				polyOptions -cs 0 -colorMaterialChannel "ambientDiffuse" -materialBlend "overwrite" -activeObjects;
+				//Check shading, textures and lighting for each modeling panel
+				for ($currentPanel in $panelList){
+					modelEditor -edit -displayAppearance "smoothShaded" -displayTextures 1 -rendererName "base_OpenGL_Renderer" -displayLights "default" $currentPanel;
+				}					
+				break;				
+		case 1:	//Vert Color Only
+				//
+				//Set view mode to Emission and blend to Overwrite
+				//Set panels to view no lights with textures turned off
+				select -r $meshes;
+				polyOptions -cs 1 -colorMaterialChannel "emission" -materialBlend "overwrite" -activeObjects;
+				//Check shading, textures and lighting for each modeling panel
+				for ($currentPanel in $panelList){  
+					modelEditor -edit -displayAppearance "smoothShaded" -displayTextures off -rendererName "base_OpenGL_Renderer" -displayLights "none" $currentPanel;
+				}
+				break;
+	}
+	//reselect original selection
+	select -r $selected;
+}
+
+global proc geDisplayVertexColorOnly ()
+{
+    geVehicleVertColorControl 1 ;
+}
+
+global proc geDisplayMaterial ()
+{
+    geVehicleVertColorControl 0 ;
+}
+
+global proc geNFS14_MakeAOTools_UI(){
+	global string $GENFS14_UI_PATHs;
+	
+	if (`window -ex "geMakeAOToolsWin"`)
+        deleteUI "geMakeAOToolsWin" ;
+	
+	string $geMakeAOToolsWin = `loadUI -uiFile ($GENFS14_UI_PATHs + "/geNFS14_MakeAOTools.ui")` ;
+	windowPref -enableAll false;
+	showWindow $geMakeAOToolsWin ;
+	window -e -tlc 100 100 -wh 370 720 $geMakeAOToolsWin ;
+	windowPref -enableAll true;
+}

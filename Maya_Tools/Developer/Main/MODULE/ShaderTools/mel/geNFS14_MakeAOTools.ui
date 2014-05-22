@@ -1,0 +1,837 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>geMakeAOToolsWin</class>
+ <widget class="QMainWindow" name="geMakeAOToolsWin">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>365</width>
+    <height>752</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Make AO Tools</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QScrollArea" name="scrollArea">
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents_2">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>345</width>
+         <height>732</height>
+        </rect>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="QFrame" name="frame">
+          <property name="minimumSize">
+           <size>
+            <width>311</width>
+            <height>700</height>
+           </size>
+          </property>
+          <property name="sizeIncrement">
+           <size>
+            <width>200</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <widget class="QPushButton" name="btCopyVertexColorFromDup2OrgLOD_TransAttr">
+           <property name="geometry">
+            <rect>
+             <x>20</x>
+             <y>240</y>
+             <width>111</width>
+             <height>41</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>1B. Transfer ColorSet
+For LOD Group</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geTransferColorSetFromDup2OrgLOD</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;For Whole LOD: Transfer Vertex Color Set back to Original Mesh. Using Transfer Attributes. DELETE HISTORY when Finish!&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btAddRGB">
+           <property name="geometry">
+            <rect>
+             <x>27</x>
+             <y>420</y>
+             <width>81</width>
+             <height>25</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Add RGB</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geAddRGB</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Add RGB value to VtxColor&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btDoSpecialFCC">
+           <property name="geometry">
+            <rect>
+             <x>20</x>
+             <y>116</y>
+             <width>251</width>
+             <height>35</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>&gt;&gt;&gt;&gt; SPECIAL FCC on Selected Meshes&lt;&lt;&lt;&lt;</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geDoSpecialFCC</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Special FCC&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btImportPlane">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>71</y>
+             <width>131</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>&gt;&gt; Merge Plane &lt;&lt;</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geImportPlane</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Import Plane&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btResetVertexColor">
+           <property name="geometry">
+            <rect>
+             <x>162</x>
+             <y>20</y>
+             <width>131</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Reset</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geDisplayMaterial</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Reset vertex color display settings for all viewsl&quot;</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label_6">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>0</y>
+             <width>231</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Toggle Vertex Display (From EA script):</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btDupALODForAOTask">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>154</y>
+             <width>131</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>DUP a LOD</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geDupALODForAOTask</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Duplicate a LOD For Baking AO&quot;</string>
+           </property>
+          </widget>
+          <widget class="Line" name="line_6">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>587</y>
+             <width>311</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btReplaceRGB">
+           <property name="geometry">
+            <rect>
+             <x>217</x>
+             <y>420</y>
+             <width>81</width>
+             <height>25</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Replace RGB</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geReplaceRGB</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Replace RGB value to VtxColor&quot;</string>
+           </property>
+          </widget>
+          <widget class="Line" name="line_5">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>53</y>
+             <width>311</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btMrRenderSettings">
+           <property name="geometry">
+            <rect>
+             <x>150</x>
+             <y>71</y>
+             <width>141</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Setup 'MR Render Settings'</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geSetupMrRenderSettings</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Setup Mr Render Settings&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btSelectGreenVerts">
+           <property name="geometry">
+            <rect>
+             <x>26</x>
+             <y>477</y>
+             <width>111</width>
+             <height>25</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Select 'Green' Verts</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geSelectGreenVerts</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Select Vertices that Green is different from Red&quot;</string>
+           </property>
+          </widget>
+          <widget class="QGroupBox" name="groupBox">
+           <property name="geometry">
+            <rect>
+             <x>7</x>
+             <y>303</y>
+             <width>301</width>
+             <height>51</height>
+            </rect>
+           </property>
+           <property name="title">
+            <string>Copy VtxColor from Source</string>
+           </property>
+           <widget class="QLabel" name="label_19">
+            <property name="geometry">
+             <rect>
+              <x>7</x>
+              <y>20</y>
+              <width>191</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>select TARGET then SOURCE, then</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="btCopyVtxColorFromSource2Tartget_12">
+            <property name="geometry">
+             <rect>
+              <x>200</x>
+              <y>11</y>
+              <width>91</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Copy Vtx Clolor</string>
+            </property>
+            <property name="-command" stdset="0">
+             <string>geCopyVtxColorFromSource2Tartget</string>
+            </property>
+            <property name="-ann" stdset="0">
+             <string>&quot;Select a Set of Vetext then select the Source Object&quot;</string>
+            </property>
+           </widget>
+          </widget>
+          <widget class="QPushButton" name="btBakeAO">
+           <property name="geometry">
+            <rect>
+             <x>160</x>
+             <y>195</y>
+             <width>131</width>
+             <height>41</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>&gt;&gt;&gt;&gt; BAKE AO &lt;&lt;&lt;&lt;</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geBakeAOToVertices</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Bake AO info to vertices&quot;</string>
+           </property>
+          </widget>
+          <widget class="Line" name="line_2">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>102</y>
+             <width>311</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+          <widget class="Line" name="line_3">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>283</y>
+             <width>311</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btShowVertexColor">
+           <property name="geometry">
+            <rect>
+             <x>22</x>
+             <y>20</y>
+             <width>131</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Vertex Color Only</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geDisplayVertexColorOnly</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Display vertex color (emission) with no textures and no lighting for all views&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btDoGreenSubtract">
+           <property name="geometry">
+            <rect>
+             <x>193</x>
+             <y>476</y>
+             <width>51</width>
+             <height>25</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Green -</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geDoGreenMinus</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Current Green - (Input Value)&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btDupSelectedMeshAOTask">
+           <property name="geometry">
+            <rect>
+             <x>160</x>
+             <y>154</y>
+             <width>131</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>DUP Meshes</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geDupSelectedMeshAOTask</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Duplicate Selected Mesh For Baking AO&quot;</string>
+           </property>
+          </widget>
+          <widget class="Line" name="line_4">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>354</y>
+             <width>311</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btSetGreenToZero">
+           <property name="geometry">
+            <rect>
+             <x>27</x>
+             <y>446</y>
+             <width>81</width>
+             <height>25</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Set Green = 0</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geSetGreenChannelToZero</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Set Green Channel To Zero&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btSetGreenToRed">
+           <property name="geometry">
+            <rect>
+             <x>117</x>
+             <y>445</y>
+             <width>91</width>
+             <height>25</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Restore G = R</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geSetGreenChannelEqualToRed</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Set Green Channel equal to Red Channel&quot;</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label_21">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="geometry">
+            <rect>
+             <x>80</x>
+             <y>372</y>
+             <width>71</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Input Value:</string>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="InGreyRGBValue">
+           <property name="geometry">
+            <rect>
+             <x>158</x>
+             <y>374</y>
+             <width>61</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>0.1</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Grey RGB Value&quot;</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label_22">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>402</y>
+             <width>141</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>- VextexColor Tweaking:</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btDoGreenEqual">
+           <property name="geometry">
+            <rect>
+             <x>246</x>
+             <y>476</y>
+             <width>51</width>
+             <height>25</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Green =</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geDoGreenEqual</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Current Green = (Input Value)&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btSelectMeshesMoreThan2VertexColorSet">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>640</y>
+             <width>281</width>
+             <height>35</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Select 'Wrong-ColorSet' Meshes</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geSelectMeshesHaveWrongColorSet</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Select meshes that have 'no colorSet' OR 'more than 1 colorSet' OR 'diferrent from colorSet1'.\nApply for all 'export' meshes.&quot;</string>
+           </property>
+          </widget>
+          <widget class="Line" name="line">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>184</y>
+             <width>311</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btClampVertexColorToOne">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>601</y>
+             <width>170</width>
+             <height>35</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Clamp AO values &gt; 1 (rgba)</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geClampVertexColorToOne</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Clamp vertexColor_RGBA value to 1 if they are greater.\nApply to all 'export' meshes.&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btFixVertexAlphaToOne">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="geometry">
+            <rect>
+             <x>185</x>
+             <y>600</y>
+             <width>111</width>
+             <height>35</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Verts_Alpha = 1</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geSetVertexAlphaToOne</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Set Verts'Alpha To One.\nApply for all 'export' meshes.&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btSubtractRGB">
+           <property name="geometry">
+            <rect>
+             <x>117</x>
+             <y>420</y>
+             <width>91</width>
+             <height>25</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Subtract RGB</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geSubtractRGB</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Subtract RGB value to VtxColor&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btCopyVertexColorFromSelDupMesh2Org_TransAttr">
+           <property name="geometry">
+            <rect>
+             <x>170</x>
+             <y>240</y>
+             <width>111</width>
+             <height>41</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>2B. Transfer ColorSet
+For Selected Mesh</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geTransferColorSetFromSelDupMesh2Org</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;For Mesh: Transfer Vertex Color Set From Selection to Org. Using Transfer Attributes. DELETE HISTORY when Finish!&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btDoGreenPlus">
+           <property name="geometry">
+            <rect>
+             <x>140</x>
+             <y>476</y>
+             <width>51</width>
+             <height>25</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Green +</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geDoGreenPlus</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Current Green +(Input Value)&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btSetRedToBlue">
+           <property name="geometry">
+            <rect>
+             <x>217</x>
+             <y>446</y>
+             <width>81</width>
+             <height>25</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Restore R = B</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geSetRedChannelEqualToBlue</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Set Red Channel equal to Blue Channel&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btSelectGreenVerts_2">
+           <property name="geometry">
+            <rect>
+             <x>60</x>
+             <y>554</y>
+             <width>191</width>
+             <height>35</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Select Objs --&gt; Verts_Blue = 0</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geSetVertexBlueToZero</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Set Verts'Blue To Zero.\nApply for all 'selected' meshes.&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btSelectGreenVerts_3">
+           <property name="geometry">
+            <rect>
+             <x>192</x>
+             <y>506</y>
+             <width>51</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Blue = 1</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geSetVertexBlueToOne</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Set verts' blue = 1&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btSelectMeshesMoreThan2VertexColorSet_2">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>505</y>
+             <width>120</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>AVERAGE Verttex color</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geAverageVertexRGB</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;AVERAGE Vertices Color (rgb).&quot;</string>
+           </property>
+          </widget>
+          <widget class="Line" name="line_7">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>540</y>
+             <width>311</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btSelectGreenVerts_4">
+           <property name="geometry">
+            <rect>
+             <x>130</x>
+             <y>506</y>
+             <width>61</width>
+             <height>30</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Blue = 0.2</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geSetVertexBlueToZeroPointTwo</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Set verts' blue = 0.2&quot;</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="btSelectGreenVerts_5">
+           <property name="geometry">
+            <rect>
+             <x>243</x>
+             <y>506</y>
+             <width>51</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Blue =</string>
+           </property>
+           <property name="-command" stdset="0">
+            <string>geSetVertexBlueToInput</string>
+           </property>
+           <property name="-ann" stdset="0">
+            <string>&quot;Current Blue = (Input Value)&quot;</string>
+           </property>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

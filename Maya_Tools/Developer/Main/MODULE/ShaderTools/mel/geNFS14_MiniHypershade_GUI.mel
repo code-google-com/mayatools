@@ -1,0 +1,932 @@
+global proc geNFS14_MiniHypershade_GUI () {	
+	if (`window -exists miniHyp_window`) { deleteUI -window miniHyp_window; }
+	
+	nfs14_miniHyp_StoreSelectedObjects();
+	global string $storedObjects[];
+	
+	window -title "Mini Hypershade" -widthHeight 600 400 -s 0 miniHyp_window;
+	columnLayout -adjustableColumn true;
+		text -label "\nYour selection is currently using the following materials:" -align "left";
+		textScrollList -numberOfRows 23 -allowMultiSelection true -sc "nfs14_miniHyp_StoreSelectedObjects; select -r `textScrollList -q -si MC_List`;" MC_List;
+		
+		
+		text -label "" -align "left";
+		text -label "Filter materials..." -align "left";
+		setParent..;
+		
+		rowLayout -numberOfColumns 4 -cw4 147 147 147 147;
+	
+		button -al "center" -w 147 -label "   Scene 'Blinn' Only" -command("nfs14_miniHyp_FilterBlinnOnSceneMaterials");
+		button -al "center" -w 147 -label "   Scene 'CGFX' Only" -command("nfs14_miniHyp_FilterCGFXOnSceneMaterials");
+		button -al "center" -w 147 -label "   Scene All Mats" -command("nfs14_miniHyp_FilterNoneOnSceneMaterials");
+		button -al "center" -w 147 -label "   'Blinn' on Selection" -command("nfs14_miniHyp_FilterBlinnOnSelMeshes");
+		
+		setParent..;
+		
+		rowLayout -numberOfColumns 2 -cw2 297 297;
+	
+		//button -al "center" -w 297 -label "Scene 'Blinn' Only + '*_DeleteLater' at the top (drawcall)" -command("nfs14_miniHyp_FilterBlinnWithDeleteLaterMateralsFirst");
+		button -al "center" -w 297 -label "Sort Materials By Suffix (_DeleteLater/_High/_Medium/_Low)" -command("nfs14_miniHyp_FilterMCListBySuffix");
+		button -al "center" -w 297 -label "Scene Empty Blinns (no faces assigned)" -command("nfs14_miniHyp_FilterBlinnWithNoFacesAssigned");
+		
+		setParent..;
+		
+		text -label "" -align "left";
+		text -label "Your 'Blinn' Selection..." -align "left";
+		
+		rowLayout -numberOfColumns 2 -cw2 297 297;
+	
+		button -al "center" -w 297 -label "Assign 'Blinn' to selected faces" -command("nfs14_miniHyp_AssignBlinnToSelected");
+		button -al "center" -w 297 -label "Seleted 'Blinn' --> 'CGFX'" -command("nfs14_miniHyp_SelectCGFXFromBlinn");
+		
+		setParent..;
+		
+		rowLayout -numberOfColumns 2 -cw2 297 297;
+		
+		setParent..;
+		/*
+		rowLayout -numberOfColumns 2 -cw2 297 297;
+	
+		button -al "center" -w 297 -label "Break-connections + Reconnect to selected 'Blinn'" -command("print ('WIP...');") -enable false;
+		button -al "center" -w 297 -label "Auto Break-connections + Reconnect to ALL 'Blinn'" -command("print ('WIP...');") -enable false;
+		
+		setParent..;
+		*/
+		
+		text -label "" -align "left";
+		text -label "Your Selected Meshes... (No Selectionn meams 'all export meshes')" -align "left";
+		
+		rowLayout -numberOfColumns 2 -cw2 297 297;
+	
+		button -al "center" -w 297 -label "Detect 'Wrong Material'" -command("geNFS14_DetectWrongMaterial");
+		button -al "center" -w 297 -label "Select Faces with selected 'Blinn'" -command("nfs14_miniHyp_SelectFacesByMaterial");
+		setParent..;
+		
+		rowLayout -numberOfColumns 2 -cw2 297 297;
+	
+		button -al "center" -w 297 -label "Hide objects using the selected 'Blinn'" -command("nfs14_miniHyp_HideObjectsBySelectedBlinn;");
+		button -al "center" -w 297 -label "Select objects using the selected Blinn" -command("nfs14_miniHyp_SelectObjectsBySelectedBlinn;");		
+		setParent..;
+		
+		rowLayout -numberOfColumns 2 -cw2 297 297;
+	
+		button -al "center" -w 297 -label "Hide objects using the selected 'Blinn' (Ignore Selection)" -command("select -cl; nfs14_miniHyp_HideObjectsBySelectedBlinn;");
+		button -al "center" -w 297 -label "Select objects using the selected 'Blinn' (Ignore Selection)" -command("select -cl; nfs14_miniHyp_SelectObjectsBySelectedBlinn;");		
+		setParent..;
+		
+		rowLayout -numberOfColumns 2 -cw2 297 297;
+	
+		button -al "center" -w 297 -label "Select 'Paint' objects" -command("nfs14_miniHyp_SelectObjectsByPaintCgfxs;");
+		button -al "center" -w 297 -label "Select 'Exterior' objects" -command("nfs14_miniHyp_SelectObjectsByExteriorCgfxs;");		
+		setParent..;
+		
+		text -label "" -align "left";
+		text -label "More Tools ..." -align "left";
+		
+		rowLayout -numberOfColumns 3 -cw3 198 198 198;
+	
+		button -al "center" -w 198 -label "Store selected objects" -command("nfs14_miniHyp_StoreSelectedObjects");
+		button -al "center" -w 198 -label "Re-select stored objects" -command("select $storedObjects;");
+		button -al "center" -w 198 -label "Faces --> Objects" -command("nfs14_miniHyp_ConvertSelectedFacesToObjects;");		
+		setParent..;
+		
+		rowLayout -numberOfColumns 2 -cw2 297 297;
+	
+		button -al "center" -w 297 -label "Hypershade-Select faces" -command("nfs14_miniHyp_HyperShadeSelectFaces;");
+		button -al "center" -w 297 -label "Hypershade-Select objects" -command("nfs14_miniHyp_HyperShadeSelectObjects;");		
+		setParent..;
+		
+		
+		text -label "" -align "left";
+		text -label "Your 'CGFX' Selection..." -align "left";
+		
+		rowLayout -numberOfColumns 4 -cw4 147 147 147 147;
+	
+		button -al "center" -w 147 -label "--> Tangent 'map1'" -command("nfs14_miniHyp_ChangeVertexData\(\"map1\"\)");
+		button -al "center" -w 147 -label "--> Tangent 'map2'" -command("nfs14_miniHyp_ChangeVertexData\(\"map2\"\)");
+		button -al "center" -w 147 -label "--> Tangent 'map3'" -command("nfs14_miniHyp_ChangeVertexData\(\"map3\"\)");
+		button -al "center" -w 147 -label "--> Tangent Default" -command("nfs14_miniHyp_ChangeDefaultVertexData()");
+		
+		setParent..;
+		
+		setParent..;
+		
+		
+	
+	string $selMeshes[] = `ls -sl`;
+	if (`size $selMeshes`)
+	    nfs14_miniHyp_FilterBlinnOnSelMeshes();
+	else
+	    nfs14_miniHyp_FilterBlinnOnSceneMaterials();
+	
+	showWindow miniHyp_window;
+	window -edit -wh 600 552 miniHyp_window;
+}
+
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+global proc nfs14_miniHyp_StoreSelectedObjects()
+{
+	global string $storedObjects[];
+	$storedObjects = `ls -sl`;
+}
+
+proc string[] nfs14_miniHyp_FilterHypershadeMaterials(string $aFilter)
+{
+    select -cl  ;
+    
+    hyperShade -smn "";
+	string $neww[] = `ls -sl -mat`;
+	if (size($neww) == 0) $neww = `ls -mat`;
+	
+	if ($aFilter != "") {
+	    string $filterMats[];
+	    for ($mat in $neww) {
+	        if (`nodeType $mat` == $aFilter) {
+	            $filterMats[`size $filterMats`] = $mat;
+	        }	             
+	    }
+	    $filterMats = `sort $filterMats`;
+	    return ($filterMats);
+	}
+	else {
+	    $neww = `sort $neww`;
+	    return ($neww);
+	}
+}
+
+global proc nfs14_miniHyp_FilterBlinnOnSceneMaterials() {
+    global string $storedObjects[];
+    nfs14_miniHyp_StoreSelectedObjects();
+    
+    $mats = nfs14_miniHyp_FilterHypershadeMaterials("blinn");
+    
+    textScrollList -edit -removeAll MC_List;
+    for ($i = 0; $i < size($mats); $i++)
+        textScrollList -edit -append $mats[$i] MC_List;
+        
+    select $storedObjects;
+}
+
+global proc nfs14_miniHyp_FilterCGFXOnSceneMaterials() {
+    global string $storedObjects[];
+    nfs14_miniHyp_StoreSelectedObjects();
+    
+    $mats = nfs14_miniHyp_FilterHypershadeMaterials("cgfxShader");
+    
+    textScrollList -edit -removeAll MC_List; 
+    for ($i = 0; $i < size($mats); $i++) 
+        textScrollList -edit -append $mats[$i] MC_List;
+        
+    select $storedObjects;
+}
+
+global proc nfs14_miniHyp_FilterNoneOnSceneMaterials() {
+    global string $storedObjects[];
+    nfs14_miniHyp_StoreSelectedObjects();
+    
+    $mats = nfs14_miniHyp_FilterHypershadeMaterials(""); 
+    
+    textScrollList -edit -removeAll MC_List; 
+    for ($i = 0; $i < size($mats); $i++) 
+        textScrollList -edit -append $mats[$i] MC_List;
+        
+    select $storedObjects;
+}
+
+
+global proc nfs14_miniHyp_FilterBlinnOnSelMeshes() {
+    string $selMeshes[] = `ls -sl -o -l`;
+
+    if (`size $selMeshes`) {
+        string $mats[] = {};
+        for ($aMesh in $selMeshes) {
+            string $usedMats[] = {};
+            if (`nodeType $aMesh` == "transform")
+                $usedMats = geNFS14_GetMaterialsOnObj ($aMesh);
+            else if (`nodeType $aMesh` == "mesh")
+                $usedMats = geNFS14_GetMaterialsOnShape ($aMesh);
+            $mats = `stringArrayCatenate $mats $usedMats`;
+        }
+        $mats = `stringArrayRemoveDuplicates $mats`;
+        $mats = `sort $mats`;
+
+        textScrollList -edit -removeAll MC_List; 
+        for ($i = 0; $i < size($mats); $i++) 
+            textScrollList -edit -append $mats[$i] MC_List;
+    }
+    else
+        textScrollList -edit -removeAll MC_List;
+}
+
+global proc nfs14_miniHyp_FilterBlinnWithDeleteLaterMateralsFirst() {
+    global string $storedObjects[];
+    nfs14_miniHyp_StoreSelectedObjects();
+    
+    $mats = nfs14_miniHyp_FilterHypershadeMaterials("blinn");
+    string $deleteLaterMats[], $nonDeleteLaterMats[];
+    for ($aMat in $mats) {
+        if (`gmatch $aMat "*_DeleteLater"`)
+            $deleteLaterMats[size($deleteLaterMats)] = $aMat;
+        else
+            $nonDeleteLaterMats[size($nonDeleteLaterMats)] = $aMat;
+    }
+    $mats = `stringArrayCatenate $deleteLaterMats $nonDeleteLaterMats`;
+    
+    textScrollList -edit -removeAll MC_List;
+    for ($i = 0; $i < size($mats); $i++)
+        textScrollList -edit -append $mats[$i] MC_List;
+        
+    select $storedObjects;
+}
+
+global proc nfs14_miniHyp_FilterMCListBySuffix() {
+    global string $storedObjects[];
+    nfs14_miniHyp_StoreSelectedObjects();
+    
+    string $deleteLaterMats[], $highMats[], $mediumMats[], $lowMats[], $theRestMats[];
+    string $matsOnList[] = `textScrollList -q -allItems MC_List`;
+    for ($aMat in $matsOnList) {
+        if (`gmatch $aMat "*_DeleteLater"`)
+            $deleteLaterMats[size($deleteLaterMats)] = $aMat;
+        else if (`gmatch $aMat "*_High"`)
+            $highMats[size($highMats)] = $aMat;
+        else if (`gmatch $aMat "*_Medium"`)
+            $mediumMats[size($mediumMats)] = $aMat;
+        else if (`gmatch $aMat "*_Low"`)
+            $lowMats[size($lowMats)] = $aMat;
+        else 
+            $theRestMats[size($theRestMats)] = $aMat;
+    }
+    
+    clear $matsOnList;
+    $matsOnList = `stringArrayCatenate $matsOnList $deleteLaterMats`;
+    $matsOnList = `stringArrayCatenate $matsOnList $highMats`;
+    $matsOnList = `stringArrayCatenate $matsOnList $mediumMats`;
+    $matsOnList = `stringArrayCatenate $matsOnList $lowMats`;
+    $matsOnList = `stringArrayCatenate $matsOnList $theRestMats`;
+    
+    textScrollList -edit -removeAll MC_List;
+    for ($i = 0; $i < size($matsOnList); $i++)
+        textScrollList -edit -append $matsOnList[$i] MC_List;
+    
+    select $storedObjects;
+}
+
+global proc nfs14_miniHyp_FilterBlinnWithNoFacesAssigned() {
+    global string $storedObjects[];
+    nfs14_miniHyp_StoreSelectedObjects();
+    
+    $mats = nfs14_miniHyp_FilterHypershadeMaterials("blinn");
+    string $emptyMats[];
+    for ($aMat in $mats) {
+        string $SGs[] = `listConnections -d on -s off ($aMat +  ".outColor")`;
+        string $sgItems[] = {};
+        if (size($SGs))
+            $sgItems = `sets -q $SGs[0]`;
+            
+        if (!size($sgItems))
+            $emptyMats[size($emptyMats)] = $aMat;
+    }
+    
+    textScrollList -edit -removeAll MC_List;
+    for ($i = 0; $i < size($emptyMats); $i++)
+        textScrollList -edit -append $emptyMats[$i] MC_List;
+        
+    select $storedObjects;
+}
+
+global proc nfs14_miniHyp_AssignBlinnToSelected () {
+    string $mat[] = `textScrollList -q -si MC_List`;
+    if ((`size $mat`) && ($mat[0] != "") && (`nodeType $mat[0]` == "blinn")) {
+        string $sg[] = `listConnections -d on -s off ($mat[0] +  ".outColor")`;
+        if (`size $sg`)
+            hyperShade -assign $sg[0];
+    }
+}
+
+global proc nfs14_miniHyp_SelectCGFXFromBlinn () {
+    string $mat[] = `textScrollList -q -si MC_List`;
+    if ((`size $mat`) && ($mat[0] != "") && (`nodeType $mat[0]` == "blinn")) {
+        geNFS14_Shader2CGFX ({$mat[0]});
+    }
+}
+
+
+/////////////////////////////////////////////////////////////////////
+
+
+proc string rootNode( string $object )
+// Description: Strips the dot-suffix of the specified string.
+{
+  string $buffer[];
+  tokenize $object "." $buffer;
+  return $buffer[0];
+}
+
+//procs below from http://www.ewertb.com
+
+proc string[] getSGsFromShape( string $shape )
+// Description: Returns an array of the Shading Groups (shadingEngine
+//  nodes) responsible for shading the specified shape node.
+{
+  	string $shadingEngines[];
+
+ 	if ( `objExists $shape` )
+  	{
+    	string $dest[] = `listConnections -destination true -source false -plugs false -type "shadingEngine" $shape`;
+
+    	// listConnections can return duplicates within its list.
+    	// The select below is a quick trick to avoid dupes in the
+    	// returned array.
+    	if ( size( $dest ) )
+    	{
+      		string $select[] = `ls -sl`;
+      		select -r -ne $dest;
+      		$shadingEngines = `ls -sl`;
+      		select -r $select;
+    	}
+  	}
+	return $shadingEngines;
+}
+
+proc string getMaterialFromSG( string $SG )
+//returns the material of a given shading group.
+{
+  	string $material = "";
+  	if ( "shadingEngine" == `nodeType $SG` && `connectionInfo -id ( $SG + ".surfaceShader" )` )
+  	{
+    	$material = rootNode( `connectionInfo -sfd ( $SG + ".surfaceShader" )` );
+  	}
+  	return $material;
+}
+
+proc string[] getSGFromMaterial( string $material )
+// Description: Returns the Shading Group set whose '.surfaceShader'
+//  attribute is being fed by the specified Material.
+//
+//  Returns an array for all Shading Groups using the Material.
+{
+  string $SG[];
+	
+	//print "\n"; print $material;
+	
+	if ($material == "") return {};
+	
+    string $outColor = ".outColor";
+    if (!`attributeExists "outColor" $material`) $outColor = ".oc";
+
+
+    // Assert that there is a connection from the Material's .outColor
+    if ( `connectionInfo -is ( $material + $outColor )` )
+    {
+      // There may be more than one connection...
+      string $dests[] = `connectionInfo -dfs ( $material + $outColor )`;
+      for ( $dest in $dests )
+      {
+        // Iterate through connections and identify ShadingGroup sets.
+        if ( "shadingEngine" == `nodeType $dest` )
+        {
+          $SG[`size $SG`] = rootNode( $dest );
+          //break;
+        }
+      }
+    }
+  
+	if ((size($SG) == 0) &&	($material == "lambert1")) $SG[0] = "initialShadingGroup";
+
+  return $SG;
+}
+
+proc string[] getShapesFromTransformNode( string $xform )
+//returns list of long name shape nodes from a transform
+{
+   string $shapes[];
+
+   $shapes[0] = $xform;
+
+   if ( "transform" == `nodeType $xform` )
+   // If given node is not a transform, assume it is a shape
+   // and pass it through
+   {
+      $shapes = `listRelatives -shapes -f $xform`;
+   }
+
+   return $shapes;
+}
+
+proc int sFindItem (string $array[], string $value)
+{
+	int $i;
+	if (`size($array)` > 0) {
+		for ($i = 0; $i <= `size($array)`; $i++)
+		{
+			if ($array[$i] == $value) {
+				return $i;
+			}
+		}
+	}
+	return -1;
+}
+
+proc int sAppend (string $array[], string $value)
+{
+	$array[`size($array)`] = $value;
+	if ($array[(`size($array)` - 1)] == $value) {
+		return 1;
+	} 
+	return 0;
+}
+
+global proc geNFS14_RemoveRedundantSGLinks()
+//removes redundant SG links
+
+{
+	
+	print "\nRemoving redundant SG links...";
+	
+	string $objects[] =`ls -transforms`;
+	string $obj;
+
+	for ($obj in $objects)
+	//process all selected objects
+	{
+		string $shape[] = `getShapesFromTransformNode $obj`;
+		string $sgs[]= `getSGsFromShape $shape[0]`;
+		//get list of sgs for current object
+
+		string $sg;
+
+		string $shortShapeName = `match "[^|]*$" $shape[0]`;
+
+
+		for ($sg in $sgs)
+		{
+			string $sgItems[] = `sets -q $sg`;
+
+			int $i;
+			for ($i = 0; $i < `size($sgItems)`; $i++)
+			{
+				$sgItems[$i] = `rootNode $sgItems[$i]`;
+			}
+			//strip all .* suffixes of everything in the list
+
+			if ((`sFindItem $sgItems $shortShapeName` == -1) && (`sFindItem $sgItems $obj` == -1))
+			//check items in sg for shape or object name
+			{
+
+				string $plugs[] = `listConnections -destination true -source false -plugs on -type "shadingEngine" $shape[0]`;
+                for($p in $plugs)
+				{
+					if(startsWith($p, $sg))
+					{
+						string $src[] = `listConnections -plugs on $p`;
+						if(size($src) > 0)
+						{
+							disconnectAttr $src[0] $p;
+						}
+					}
+				}
+
+				string $plugs[] = `listConnections -destination false -source true -plugs on -type "shadingEngine" $shape[0]`;
+				for($p in $plugs)
+				{
+					if(startsWith($p, $sg))
+					{
+						string $dest[] = `listConnections -plugs on $p`;
+						if(size($dest) > 0)
+						{
+							disconnectAttr $p $dest[0];
+						}
+					}
+				}
+
+				print ("DELETED unused connections from " + $sg + " to " + $shape[0] + "!\n");
+
+
+				//if none found remove sg links to object
+			}
+		}
+	}
+}
+
+global proc string[] geNFS14_GetMaterialsOnShape(string $shape)
+//returns a list of materials used by a given mesh shape (shape node)
+{
+	string $sgs[] = `getSGsFromShape $shape`;
+	string $materials[] = {};
+	for ($sg in $sgs)
+	{
+		$materials[size($materials)] = `getMaterialFromSG $sg`;
+	}
+	return $materials;
+}
+
+global proc string[] geNFS14_GetMaterialsOnObj(string $obj)
+//returns a list of materials used by a given object (transform node)
+{
+	string $shapes[] = `listRelatives -type "mesh" -f $obj`;
+	string $sgs[] = `getSGsFromShape $shapes[0]`;
+	string $materials[] = {};
+	for ($sg in $sgs)
+	{
+		$materials[size($materials)] = `getMaterialFromSG $sg`;
+	}
+	return $materials;
+}
+
+global proc geNFS14_SelectPolysByMaterialOnObjects(string $material, string $objects[])
+// selects polys in specified objects with the specified shader
+{
+	if ($material == "") return;
+	//quit if no material specced.
+
+	string $sgs[] = `getSGFromMaterial $material`;
+	//work out its shading group
+
+	string $sg;
+	string $faceList[] = {};
+
+	for ($sg in $sgs)
+	{
+		string $newFaces[] = `sets -q $sg`;
+		$faceList = `stringArrayCatenate $newFaces $faceList`;
+	}
+	//get a list of all faces from all sgs.
+
+
+	//if (`size($objects)` == 0)
+	//{
+	//	$objects = `ls -hilite`;
+	//}
+	//get a list of selected or highlighted objects
+
+	if (`size($objects)` == 0)
+	{
+		select $faceList;
+	}
+	//if no objects selected, select all faces with the shader
+
+	else
+	{
+		string $shapes[] = {};
+		for ($object in $objects)
+		{
+			string $shape[] = `getShapesFromTransformNode $object`;
+			$shapes = `stringArrayCatenate $shapes $shape`;
+		}
+		//get a list of all shapes for selected objects
+
+		$objects = `stringArrayCatenate $shapes $objects`;
+		$objects = `ls $objects`; //convert to short names 
+		//combine shapes and object lists
+		//(faces returned by SGs can be named after either transforms or shapes)
+
+		string $face;
+		string $filteredFaceList[] = {};
+
+		for ($face in $faceList)
+		//check though all faces
+		{
+			string $faceToCheck = `match "^[^\.]*" $face`	;
+			//get the shape/transform name of the face
+
+			if (`sFindItem $objects $faceToCheck` != -1)
+			//check whether this shape/transform is selected
+			{
+				sAppend $filteredFaceList $face;
+				//if it is then add to the list to select
+			}
+
+		select $filteredFaceList;
+		}
+	}
+}
+
+proc string getCgfxFile(string $material) {
+    string $cgfxFile = "";
+    if (`nodeType $material` == "blinn") {
+        string $cgfx[] = `listConnections ($material + ".hardwareShader")`;
+		if ((size($cgfx)) && (`nodeType $cgfx[0]` == "cgfxShader")) {
+		    $cgfxFile = `getAttr ($cgfx[0] + ".shader")`;
+		    string $tmpArr[];
+	        int $numTok = `tokenize $cgfxFile "/" $tmpArr`;
+	        $cgfxFile = $tmpArr[$numTok - 1];
+		}
+			
+    }
+    return $cgfxFile;
+}
+
+global proc string geNFS14_GetCgfxFileFromMaterial(string $material)
+{
+	return ( getCgfxFile($material) );
+}
+
+proc doCheckAssignedShader(string $aMesh, string $chkMode){
+	string $transNode[] = `listRelatives -f -p $aMesh`;
+	int $numFaces[] = `polyEvaluate -f $transNode[0]` ;
+	int $cnt;
+	int $numF = 0 ;
+	string $errorFace[] ;
+	for ($cnt = 0 ; $cnt < $numFaces[0];$cnt++){
+		string $faceName = $transNode[0] + ".f[" + $cnt + "]" ;
+		string $shadingEngine[] = `listSets -type 1 -object $faceName`;
+		if (size($shadingEngine) == 0){ // has no ShadingEngine
+			$errorFace[$numF++] = $faceName ;
+		}else{
+			string $shaders[] = `listConnections -s 1 -d 0 ($shadingEngine[0] + ".surfaceShader")` ;
+			//if (size($shaders) == 0 || `nodeType $shaders[0]` != "blinn"){
+			if ( (size($shaders) == 0) || (getCgfxFile($shaders[0]) == "")){
+				$errorFace[$numF++] = $faceName ;
+			}
+		}
+	}
+	if ($numF == 0){
+		setAttr ($transNode[0] + ".visibility") 0 ;
+	}else{
+		if ($chkMode == "FACE_MODE"){
+			//print(size($numFaces) + " -> " + $transNode[0] + "\n");
+				select $errorFace ;
+		}
+	}
+}
+
+global proc geNFS14_DetectWrongMaterial() {
+    //string $exportPath = "|export|";
+    //string $allSelectedMesh[] = `listRelatives -f -c -ad -type "mesh" $exportPath`;
+    CG_killTextureEditor();
+    
+	string $slObjs[] = `ls -sl` ;
+	string $allSelectedMesh[] = `listRelatives -f -c -type "mesh" $slObjs` ;
+	//print ($allSelectedMesh);
+	if (size($allSelectedMesh) == 1){
+		doCheckAssignedShader($allSelectedMesh[0],"FACE_MODE") ;
+	}else if (size($allSelectedMesh) > 1){
+		for ($aMesh in $allSelectedMesh){
+			doCheckAssignedShader($aMesh,"OBJ_MODE") ;
+		}
+	}
+}
+
+
+/////////////////////////////////////////////////////////////////////
+global proc nfs14_miniHyp_SelectFacesByMaterial_Old() {
+    CG_killTextureEditor();
+    
+    string $selection[] = `ls -sl -l`;
+    if (size($selection) == 0){
+        string $exportMeshes[] = `listRelatives -f -ad -type mesh "|export"`;
+        $k = 0;
+        for ($aMesh in $exportMeshes) {
+            string $transNode[] = `listRelatives -f -p $aMesh`;
+            $selection[$k++] = $transNode[0];
+        }
+    }
+      
+    string $selMats[] = `textScrollList -q -si MC_List`;
+    if (`size $selMats`) {
+        string $result[] = {};
+        for ($mat in $selMats) {
+            geNFS14_SelectPolysByMaterialOnObjects ($mat, $selection);
+            string $curSelection[] = `ls -sl`;
+            $result = `stringArrayCatenate $result $curSelection`;
+        }
+        select $result;
+    }
+}
+
+global proc nfs14_miniHyp_SelectFacesByMaterial() {
+    CG_killTextureEditor();
+    
+    string $selObjects[] = `ls -sl -l`;
+    if (size($selObjects) == 0){
+        string $exportMeshes[] = `listRelatives -f -ad -type mesh "|export"`;
+        $k = 0;
+        for ($aMesh in $exportMeshes) {
+            string $transNode[] = `listRelatives -f -p $aMesh`;
+            $selObjects[$k++] = $transNode[0];
+        }
+    }
+      
+    string $selMats[] = `textScrollList -q -si MC_List`;
+    select $selMats;
+    if (`size $selMats`) {
+        string $result[] = {};
+        $k = 0;
+        hyperShade -objects "";
+        string $curSelection[] = `ls -sl -fl -l`;
+        for ($item in $curSelection) {        
+            if ((sFindItem($selObjects, rootNode($item))) != -1) {
+                $result[$k++] = $item;
+            }
+        }
+        select $result;
+    }
+}
+
+global proc nfs14_miniHyp_ConvertSelectedFacesToObjects()
+{
+	string $selFaces[] = `ls -sl -l`;
+	string $objects[];
+	
+	int $k=0;
+	string $buffer[];
+	for ($i=0;$i<size($selFaces);$i++)
+	{
+		tokenize $selFaces[$i] "." $buffer;
+		$objects[$k] = $buffer[0];
+		$k++;
+	}
+
+	select $objects;
+}
+
+global proc nfs14_miniHyp_HideObjectsBySelectedBlinn() {
+    nfs14_miniHyp_SelectFacesByMaterial();
+    nfs14_miniHyp_ConvertSelectedFacesToObjects();
+    string $selObjs[] = `ls -sl -l`;
+    for ($obj in $selObjs)
+        setAttr ($obj + ".visibility") 0;
+}
+
+global proc nfs14_miniHyp_SelectObjectsBySelectedBlinn() {
+    nfs14_miniHyp_SelectFacesByMaterial();
+    nfs14_miniHyp_ConvertSelectedFacesToObjects();
+}
+
+global proc nfs14_miniHyp_HyperShadeSelectFaces() {
+    string $selMats[] = `textScrollList -q -si MC_List`;
+    select $selMats;
+    hyperShade -objects "";
+}
+
+global proc nfs14_miniHyp_HyperShadeSelectObjects() {
+    string $selMats[] = `textScrollList -q -si MC_List`;
+    select $selMats;
+    hyperShade -objects "";
+    nfs14_miniHyp_ConvertSelectedFacesToObjects();
+}
+
+global proc nfs14_miniHyp_SelectObjectsByCgfxFiles(string $cgfxFiles[]) {
+    CG_killTextureEditor();
+    
+    string $selObjects[] = `ls -sl -l`;
+
+    if (size($selObjects) == 0){
+        string $exportMeshes[] = `listRelatives -f -ad -type mesh "|export"`;
+        $k = 0;
+        for ($aMesh in $exportMeshes) {
+            string $transNode[] = `listRelatives -f -p $aMesh`;
+            $selObjects[$k++] = $transNode[0];
+        }
+    }
+    //print $selObjects;
+    // get blinns
+    string $cgfxBlinns[] = {};
+    $sceneBlinns = nfs14_miniHyp_FilterHypershadeMaterials("blinn");
+    for ($aBlinn in $sceneBlinns) {
+        string $cgfx = tolower(getCgfxFile($aBlinn));
+        if (sFindItem($cgfxFiles, $cgfx) != -1)
+            $cgfxBlinns[size($cgfxBlinns)] = $aBlinn;
+    }
+
+    // select faces      
+    select $cgfxBlinns;
+    if (`size $cgfxBlinns`) {
+        string $result[] = {};
+        $k = 0;
+        hyperShade -objects "";
+        string $curSelection[] = `ls -sl -fl -l`;
+        for ($item in $curSelection) {        
+            if ((sFindItem($selObjects, rootNode($item))) != -1) {
+                $result[$k++] = $item;
+            }
+        }
+        select $result;
+    }
+    
+    // convert to objects
+    nfs14_miniHyp_ConvertSelectedFacesToObjects();
+}
+
+global proc nfs14_miniHyp_SelectObjectsByPaintCgfxs() {
+    string $cgfxFiles[] = {"carnfs14_cs_carpaint.cgfx", "carnfs14_cs_carpaint_normalmap.cgfx"};
+    nfs14_miniHyp_SelectObjectsByCgfxFiles($cgfxFiles);
+}
+
+global proc nfs14_miniHyp_SelectObjectsByExteriorCgfxs() {
+    string $cgfxFiles[] = {"carnfs14_cs_carpaint.cgfx", "carnfs14_cs_carpaint_normalmap.cgfx", "carnfs14_cs_chassis.cgfx", 
+                        "carnfs14_cs_licenseplate.cgfx", "carnfs14_cs_brakedisc.cgfx", "carnfs14_cs_caliper.cgfx",
+                        "carnfs14_cs_tire.cgfx", "carnfs14_cs_carbon.cgfx", "carnfs14_cs_badges.cgfx",
+                        "carnfs14_cs_rim.cgfx", "carnfs14_cs_grille.cgfx"};
+    nfs14_miniHyp_SelectObjectsByCgfxFiles($cgfxFiles);
+}
+
+
+global proc nfs14_miniHyp_ChangeVertexData(string $whichUVSet) {
+    string $selCgfxs[] = `ls -sl -l`;
+    for ($cgfx in $selCgfxs) {
+        if (`nodeType $cgfx` == "cgfxShader") {
+            string $binormal = "binormal:" + $whichUVSet;
+            string $tangent = "tangent:" + $whichUVSet;        
+            setAttr ($cgfx + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  $binormal $tangent;
+        }
+    }
+}
+
+global proc nfs14_miniHyp_ChangeDefaultVertexData() {
+	string $selCgfxs[] = `ls -sl -l`;
+    for ($dcCgfxNode in $selCgfxs) {
+        if (`nodeType $dcCgfxNode` == "cgfxShader") {
+            string $cgfxPath = `getAttr ($dcCgfxNode+".shader")`;
+            string $buffer[];
+            int $numTok = `tokenize $cgfxPath "/" $buffer`;
+			string $lowerName = `tolower $buffer[$numTok-1]`;
+			
+			switch ($lowerName) {
+				case "carnfs14_cs_chassis.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map2" "tangent:map2";
+					break;
+					
+				case "carnfs14_cs_licenseplate.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map2" "tangent:map2";
+					break;
+					
+				case "carnfs14_cs_driver.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map1" "tangent:map1";
+					break;
+					
+				case "carnfs14_cs_brakedisc.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map1" "tangent:map1";
+					break;
+					
+				case "carnfs14_cs_caliper.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map1" "tangent:map1";
+					break;
+					
+				case "carnfs14_cs_tire.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map1" "tangent:map1";
+					break;
+					
+				case "carnfs14_cs_carbon.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map2" "tangent:map2";
+					break;
+					
+					
+				case "carnfs14_cs_badges.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map2" "tangent:map2";
+					break;
+					
+				case "carnfs14_cs_rim.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map2" "tangent:map2";
+					break;
+				
+				case "carnfs14_cs_grille.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map2" "tangent:map2";
+					break;
+					
+				case "carnfs14_cs_internal.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map1" "tangent:map1";
+					break;
+					
+				case "carnfs14_cs_internaltiled.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map1" "tangent:map1";
+					break;
+					
+				case "carnfs14_cs_carpaint.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map1" "tangent:map1";
+					break;
+					
+				case "carnfs14_cs_carpaint_normalmap.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map3" "tangent:map3";
+					break;
+				
+				case "carnfs14_cs_lightrefracted.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map1" "tangent:map1";
+					break;
+					
+				case "carnfs14_cs_light.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map1" "tangent:map1";
+					break;
+					
+				case "carnfs14_cs_coplights.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map1" "tangent:map1";
+					break;
+					
+				case "carnfs14_cs_copprops.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map2" "tangent:map2";
+					break;
+				
+				case "carnfs14_cs_general_opaque.cgfx":
+				case "carnfs14_cs_general_glass.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map1" "tangent:map1";
+					break;
+					
+				case "carnfs14_cs_general_glasscolor.cgfx":
+					setAttr ($dcCgfxNode + ".vertexAttributeSource") -type stringArray 9 "uv:map1" "uv:map2" "uv:map3" "uv:map4" "color:colorSet1" "position" "normal"  "binormal:map1" "tangent:map1";
+					break;
+			}
+        }
+    }
+}
