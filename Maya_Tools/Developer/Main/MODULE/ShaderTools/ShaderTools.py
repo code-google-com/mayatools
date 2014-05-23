@@ -4,6 +4,7 @@ from PyQt4 import QtGui, QtCore, uic
 import maya.mel as mel
 import os, sys, inspect
 import pymel.core as py
+import pymel.core.datatypes as dt
 import functools, imp
 
 import Source.IconResource_rc
@@ -191,7 +192,7 @@ class ShaderTools(form_class,base_class):
         self.slider.valueChanged.connect(self.updateTilingChecker)
         self.chkAuto.clicked.connect(self.changeStatus)
         self.btnGet.clicked.connect(self.updateShaderName_v2)
-        self.btnMakeAO.clicked.connect(self.makeAOTools)
+        self.btnSetGroundPlane.clicked.connect(self.createShadowPlane)
     
         
         #self.updateSliderColorSet()
@@ -468,6 +469,20 @@ class ShaderTools(form_class,base_class):
             cmds.polyColorPerVertex(b = value)
         if channel == 'a':
             cmds.polyColorPerVertex(a = value)
+            
+    def createShadowPlane(self):
+        if len(py.ls(sl = True)) == 0:
+             QtGui.QMessageBox.information(self,'No mesh selected','Ban chua chon mesh. Hay chon mot mesh de bat dau.',QtGui.QMessageBox.Ok)
+             return
+        if cmds.objExists('ground_shadow'):
+            cmds.delete('ground_shadow')
+        else:
+            bbox = py.xform(py.ls(sl = True)[0], q = True, bb = True)
+            width = bbox[3] - bbox[0]
+            length = bbox[5] - bbox[2]  
+            plane = py.polyPlane(n= 'ground_shadow', w = width * 1.5, h = length * 1.5, sy = 1, sx = 1)[0]
+            pos = dt.Vector((bbox[3] + bbox[0])/2, 0, (bbox[5] + bbox[2])/2)
+            plane.translate.set(pos)
             
     def makeAOTools(self):
         attachFileSource = fileDirCommmon + '/mel/geNFS14_MakeAOTools_UI2.mel'
