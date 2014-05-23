@@ -26,7 +26,7 @@ class textureView(QtGui.QGraphicsView, form_class,base_class):
         self.pixmap.load(fileName)
         #pixmap = pixmap.scaled(72,72, QtCore.Qt.IgnoreAspectRatio)
         scene.addItem(QtGui.QGraphicsPixmapItem(self.pixmap))
-        self.graphicsView.fitInView(scene.itemsBoundingRect(), QtCore.Qt.KeepAspectRatio)
+        self.graphicsView.fitInView(scene.itemsBoundingRect(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
         self.graphicsView.show()
         
 def main():
