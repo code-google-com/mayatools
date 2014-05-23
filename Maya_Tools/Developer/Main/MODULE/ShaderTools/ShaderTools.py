@@ -70,26 +70,17 @@ def selectFaceByShaderPerMesh(mesh, shader, condition = False):
         shapefromFace = f.split('.')[0]
         if shapefromFace == shape:
             selectedFaces.append(f)
-    #print selectedFaces
-    if shape not in selectedFaces:
-        cmds.select(selectedFaces)
-        if len(cmds.ls(sl = True, fl = True)) == cmds.polyEvaluate(mesh, f = True):# in case selected faces is equal to the number of  faces
-            if condition:
-                cmds.select(mesh, add = True)
-            else:
-                cmds.select(mesh, r = True)
-        else:
-            if condition:
-                cmds.select(selectedFaces, add = True)
-            else:
-                cmds.select(selectedFaces, r = True)
-    else: # object has only one material
-        #print 'select: ' + mesh
+    if len(shadingGroups) == 1:# in case selected faces is equal to the number of  faces
         if condition:
             cmds.select(mesh, add = True)
         else:
             cmds.select(mesh, r = True)
-        
+    else:
+        if condition:
+            cmds.select(selectedFaces, add = True)
+        else:
+            cmds.select(selectedFaces, r = True)
+
 def selectFaceByShaderAllMesh(shader):
     # get shading group from shader
     shadingGroups = py.listConnections(shader, type = 'shadingEngine')
@@ -143,17 +134,17 @@ class ShaderTools(form_class,base_class):
         self.btnGetShader.clicked.connect(self.getFacesUsingShader)
         self.btnSelectShader.clicked.connect(self.editShader)
         
-        self.sldRed.valueChanged.connect(functools.partial(self.changeColorSet, 'r'))
-        self.sldRed.sliderReleased.connect(self.fixColorSet)
-        
-        self.sldGreen.valueChanged.connect(functools.partial(self.changeColorSet, 'g'))
-        self.sldGreen.sliderReleased.connect(self.fixColorSet)
-        
-        self.sldBlue.valueChanged.connect(functools.partial(self.changeColorSet, 'b'))
-        self.sldBlue.sliderReleased.connect(self.fixColorSet)
-        
-        self.sldAlpha.valueChanged.connect(functools.partial(self.changeColorSet, 'a'))
-        self.sldAlpha.sliderReleased.connect(self.fixColorSet)
+#         self.sldRed.valueChanged.connect(functools.partial(self.changeColorSet, 'r'))
+#         self.sldRed.sliderReleased.connect(self.fixColorSet)
+#         
+#         self.sldGreen.valueChanged.connect(functools.partial(self.changeColorSet, 'g'))
+#         self.sldGreen.sliderReleased.connect(self.fixColorSet)
+#         
+#         self.sldBlue.valueChanged.connect(functools.partial(self.changeColorSet, 'b'))
+#         self.sldBlue.sliderReleased.connect(self.fixColorSet)
+#         
+#         self.sldAlpha.valueChanged.connect(functools.partial(self.changeColorSet, 'a'))
+#         self.sldAlpha.sliderReleased.connect(self.fixColorSet)
         
         self.btnGetRed.clicked.connect(functools.partial(self.getVertexColor, 'r'))
         self.btnSetRed.clicked.connect(functools.partial(self.setVertexColor, 'r'))
@@ -232,8 +223,6 @@ class ShaderTools(form_class,base_class):
         if not self.chkAuto.isChecked():
             self.btnGet.setVisible(True)
             return 
-        #self.btnGet.setVisible(True)
-        print 'Okie'
         obj = cmds.ls(sl = True,fl = True)
         try:
             shader = getShaderFromSelectedFace(obj[0])
@@ -243,6 +232,7 @@ class ShaderTools(form_class,base_class):
             pass
         
     def getFacesUsingShader(self):
+        
         selObjs = cmds.ls(sl = True, fl = True) # select mode = faces
         shader = str(self.cbbShadersScene.currentText())
         if len(selObjs):

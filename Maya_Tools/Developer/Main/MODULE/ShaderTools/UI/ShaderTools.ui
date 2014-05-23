@@ -298,6 +298,12 @@
        <layout class="QHBoxLayout" name="horizontalLayout_6">
         <item>
          <widget class="QLabel" name="label_3">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
           </property>
@@ -310,32 +316,32 @@
          </widget>
         </item>
         <item>
-         <widget class="QSlider" name="sldRed">
-          <property name="enabled">
-           <bool>false</bool>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
           <property name="minimum">
-           <number>0</number>
+           <double>-1.000000000000000</double>
           </property>
           <property name="maximum">
-           <number>10</number>
+           <double>1.000000000000000</double>
           </property>
           <property name="singleStep">
-           <number>1</number>
+           <double>0.010000000000000</double>
           </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="invertedAppearance">
-           <bool>true</bool>
-          </property>
-          <property name="tickPosition">
-           <enum>QSlider::NoTicks</enum>
+          <property name="value">
+           <double>0.010000000000000</double>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="pushButton">
+          <property name="toolTip">
+           <string>Thêm</string>
+          </property>
           <property name="text">
            <string>Add</string>
           </property>
@@ -380,6 +386,12 @@
        <layout class="QHBoxLayout" name="horizontalLayout_9">
         <item>
          <widget class="QLabel" name="label_4">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
           </property>
@@ -392,18 +404,24 @@
          </widget>
         </item>
         <item>
-         <widget class="QSlider" name="sldGreen">
-          <property name="enabled">
-           <bool>false</bool>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
           <property name="minimum">
-           <number>-100</number>
+           <double>-1.000000000000000</double>
           </property>
           <property name="maximum">
-           <number>100</number>
+           <double>1.000000000000000</double>
           </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.010000000000000</double>
           </property>
          </widget>
         </item>
@@ -453,6 +471,12 @@
        <layout class="QHBoxLayout" name="horizontalLayout_10">
         <item>
          <widget class="QLabel" name="label_5">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
           </property>
@@ -465,18 +489,24 @@
          </widget>
         </item>
         <item>
-         <widget class="QSlider" name="sldBlue">
-          <property name="enabled">
-           <bool>false</bool>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
           <property name="minimum">
-           <number>-100</number>
+           <double>-1.000000000000000</double>
           </property>
           <property name="maximum">
-           <number>100</number>
+           <double>1.000000000000000</double>
           </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.010000000000000</double>
           </property>
          </widget>
         </item>
@@ -526,6 +556,12 @@
        <layout class="QHBoxLayout" name="horizontalLayout_11">
         <item>
          <widget class="QLabel" name="label_6">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
           </property>
@@ -538,27 +574,24 @@
          </widget>
         </item>
         <item>
-         <widget class="QSlider" name="sldAlpha">
-          <property name="enabled">
-           <bool>false</bool>
+         <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
           <property name="minimum">
-           <number>-100</number>
+           <double>-1.000000000000000</double>
           </property>
           <property name="maximum">
-           <number>100</number>
+           <double>1.000000000000000</double>
           </property>
-          <property name="tracking">
-           <bool>false</bool>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
           </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="tickPosition">
-           <enum>QSlider::NoTicks</enum>
-          </property>
-          <property name="tickInterval">
-           <number>1</number>
+          <property name="value">
+           <double>0.010000000000000</double>
           </property>
          </widget>
         </item>
