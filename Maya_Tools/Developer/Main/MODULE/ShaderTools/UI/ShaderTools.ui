@@ -637,6 +637,13 @@
         </item>
        </layout>
       </item>
+      <item>
+       <widget class="QPushButton" name="btnMakeAO">
+        <property name="text">
+         <string>Make AO Tools</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>

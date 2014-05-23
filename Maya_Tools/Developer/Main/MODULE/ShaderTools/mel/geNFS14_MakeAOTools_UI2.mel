@@ -600,7 +600,7 @@ global proc geSetVertexAlphaToOne() {
 global proc geSetVertexBlueToZero() {
     print "Set Vertex_Blue to Zero for selected meshes ...\n";
     
-    source "geNFS14_MiniHypershade_GUI";    
+    //source "geNFS14_MiniHypershade_GUI";    
     nfs14_miniHyp_ConvertSelectedFacesToObjects();
     
     
@@ -732,13 +732,14 @@ global proc geDisplayMaterial ()
     geVehicleVertColorControl 0 ;
 }
 
-global proc geNFS14_MakeAOTools_UI(){
+global proc geNFS14_MakeAOTools_UI(string $path){
 	global string $GENFS14_UI_PATHs;
 	
 	if (`window -ex "geMakeAOToolsWin"`)
         deleteUI "geMakeAOToolsWin" ;
 	
-	string $geMakeAOToolsWin = `loadUI -uiFile ($GENFS14_UI_PATHs + "/geNFS14_MakeAOTools.ui")` ;
+	//string $geMakeAOToolsWin = `loadUI -uiFile ($GENFS14_UI_PATHs + "/geNFS14_MakeAOTools.ui")` ;
+	string $geMakeAOToolsWin = `loadUI -uiFile ($path)` ;
 	windowPref -enableAll false;
 	showWindow $geMakeAOToolsWin ;
 	window -e -tlc 100 100 -wh 370 720 $geMakeAOToolsWin ;

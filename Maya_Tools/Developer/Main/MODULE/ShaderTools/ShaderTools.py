@@ -191,6 +191,8 @@ class ShaderTools(form_class,base_class):
         self.slider.valueChanged.connect(self.updateTilingChecker)
         self.chkAuto.clicked.connect(self.changeStatus)
         self.btnGet.clicked.connect(self.updateShaderName_v2)
+        self.btnMakeAO.clicked.connect(self.makeAOTools)
+    
         
         #self.updateSliderColorSet()
         
@@ -469,7 +471,9 @@ class ShaderTools(form_class,base_class):
             
     def makeAOTools(self):
         attachFileSource = fileDirCommmon + '/mel/geNFS14_MakeAOTools_UI2.mel'
+        ui_path = fileDirCommmon + '/UI/geNFS14_MakeAOTools.ui'
         mel.eval('source \"{f}\";'.format(f = attachFileSource))
+        mel.eval('geNFS14_MakeAOTools_UI(\"{path}\")'.format(path = ui_path))
         #mel.eval('$s=`ls -sl`; boltNorms.EdgeToVF(0); boltNorms.LockSelectedVFs(0); select $s')
   
 def main(xmlnput):
