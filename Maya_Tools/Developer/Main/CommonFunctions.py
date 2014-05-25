@@ -1,10 +1,52 @@
 import maya.cmds as cmds
 import pymel.core as py
+from pymel import versions
 from PyQt4 import QtGui
 import maya.OpenMayaUI as OpenMayaUI
 from xml.dom.minidom import *
 import sys, os, shutil, re, imp
 
+def getMayaVersion():
+    return versions.current()
+
+try:
+    from PySide import QtGui, QtCore
+    import pysideuic
+except:
+    from PyQt import QtCore, QtGui, uic
+
+def loadUIPySide(uiFile):
+    from PySide import QtGui, QtCore
+    import pysideuic
+    parsed = xml.parse(uiFile)
+    widget_class = parsed.find('widget').get('class')
+    form_class = parsed.find('class').text
+    with open(uiFile, 'r') as f:
+            o = StringIO()
+            frame = {}
+            
+            pysideuic.compileUi(f, o, indent=0)
+            pyc = compile(o.getvalue(), '<string>', 'exec')
+            exec pyc in frame
+            
+            #Fetch the base_class and form class based on their type in the xml from designer
+            form_class = frame['Ui_%s'%form_class]
+            base_class = eval('QtGui.%s'%widget_class)
+    return form_class, base_class
+
+def loadUIPyQt(uiFile):
+    try:
+        form_class, base_class = uic.loadUiType(uiFile)
+        return form_class, base_class
+    except IOError:
+        print (dirUI + ' not found')
+    
+def loadUI(uiFile):
+    try:
+        loadUIPySide(uiFile)
+    except:
+        loadUIPyQt(uiFile)
+    
 def gcd(a, b):
     while b:
         a,b = b, a % b
