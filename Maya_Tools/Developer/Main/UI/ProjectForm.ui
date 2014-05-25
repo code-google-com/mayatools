@@ -113,19 +113,7 @@
     <addaction name="actionInstall_Plugins"/>
     <addaction name="actionAbout"/>
    </widget>
-   <widget class="QMenu" name="menuPerforce">
-    <property name="title">
-     <string>Source Control</string>
-    </property>
-    <addaction name="actionAdd"/>
-    <addaction name="actionCheck_in"/>
-    <addaction name="actionCheck_out"/>
-    <addaction name="actionRevert"/>
-    <addaction name="actionDelete"/>
-    <addaction name="actionSettings"/>
-   </widget>
    <addaction name="menuAssets"/>
-   <addaction name="menuPerforce"/>
    <addaction name="menuConfig"/>
    <addaction name="menuChecking_Tools"/>
    <addaction name="menuHelp"/>
@@ -280,7 +268,7 @@
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
-    <string>Add</string>
+    <string>Add file to Source Control</string>
    </property>
   </action>
   <action name="actionRevert">
@@ -298,7 +286,7 @@
      <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
    </property>
    <property name="text">
-    <string>Delete Local file</string>
+    <string>Delete file</string>
    </property>
   </action>
   <action name="actionAsset_Browser">
@@ -318,6 +306,26 @@
    </property>
    <property name="text">
     <string>Update tools</string>
+   </property>
+  </action>
+  <action name="actionShow_History">
+   <property name="text">
+    <string>Show History</string>
+   </property>
+  </action>
+  <action name="actionGet_the_latest_version">
+   <property name="text">
+    <string>Get the latest version</string>
+   </property>
+  </action>
+  <action name="actionGet_version">
+   <property name="text">
+    <string>Get version</string>
+   </property>
+  </action>
+  <action name="actionConnect_to_Source_Control">
+   <property name="text">
+    <string>Connect to Source Control</string>
    </property>
   </action>
  </widget>

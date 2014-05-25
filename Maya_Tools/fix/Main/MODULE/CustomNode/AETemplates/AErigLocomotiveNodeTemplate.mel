@@ -1,4 +1,0 @@
-global proc AErigLocomotiveNodeTemplate(string $nodeName)
-{
-
-}

@@ -188,13 +188,16 @@ class ShaderTools(form_class,base_class):
         self.btnCheckerView.addAction(self.actionSlide)
         
         #----------
+        
         self.combobox.currentIndexChanged.connect(self.updateChecker)
         self.slider.valueChanged.connect(self.updateTilingChecker)
         self.chkAuto.clicked.connect(self.changeStatus)
         self.btnGet.clicked.connect(self.updateShaderName_v2)
         self.btnSetGroundPlane.clicked.connect(self.createShadowPlane)
-    
         
+        self.btnBakeToVertex.clicked.connect(self.bakeAOToVertex)
+        self.btnBakeToTexture.clicked.connect(self.bakeAOToTexture)
+    
         #self.updateSliderColorSet()
         
         attachFileSource = fileDirCommmon + '/mel/fixVertexColor.mel'
@@ -484,12 +487,62 @@ class ShaderTools(form_class,base_class):
             pos = dt.Vector((bbox[3] + bbox[0])/2, 0, (bbox[5] + bbox[2])/2)
             plane.translate.set(pos)
             
-    def makeAOTools(self):
-        attachFileSource = fileDirCommmon + '/mel/geNFS14_MakeAOTools_UI2.mel'
-        ui_path = fileDirCommmon + '/UI/geNFS14_MakeAOTools.ui'
-        mel.eval('source \"{f}\";'.format(f = attachFileSource))
-        mel.eval('geNFS14_MakeAOTools_UI(\"{path}\")'.format(path = ui_path))
-        #mel.eval('$s=`ls -sl`; boltNorms.EdgeToVF(0); boltNorms.LockSelectedVFs(0); select $s')
+    def tweakingSurfaceShader(self):
+        cmds.undoInfo(openChunk = True)
+        self.removeDebugShader()
+        surfaceNode = cmds.shadingNode('surfaceShader', n = 'TEMP_DEBUG_SHADER', asShader = 1)# create surfaceShader node
+        ambientNode = cmds.shadingNode('mib_amb_occlusion', n = 'TEMP_DEBUG_TEXTURE', asTexture = 1)# create ambient texture node
+        cmds.setAttr(ambientNode + '.samples', 1024) # setup quality for AO
+        cmds.connectAttr(ambientNode + '.outValue',surfaceNode + '.outColor')# connect mib_ambient_occ to surfaceShader
+        shadingGroupAO = cmds.sets(renderable = True, noSurfaceShader = True, empty = True, n = 'shadingGroupAO')
+        try:
+            cmds.connectAttr(surfaceNode + '.outColor', 'shadingGroupAO.surfaceShader')
+        except:
+            print 'connection is ready'
+        cmds.assignDebugShader()
+        cmds.undoInfo(closeChunk = True)
+        
+    def createVertexBakeSet(self):
+        if (cmds.objExists('vertexBakeSetAO')):
+            cmds.delete('vertexBakeSetAO')
+        cmds.createNode('vertexBakeSet', n = 'vertexBakeSetAO')
+        cmds.setAttr('vertexBakeSetAO.colorMode',3) # set color mode to bake Light and Colo
+        cmds.setAttr('vertexBakeSetAO.occlusionRays', 1024)
+        #cmds.setAttr('vertexBakeSetAO.occlusionFalloff', 0.8)
+        cmds.addAttr('vertexBakeSetAO', ln = 'filterSize', min = -1)
+        cmds.setAttr('vertexBakeSetAO.filterSize', 0.001)
+        cmds.addAttr('vertexBakeSetAO', ln = 'filterNormalTolerance', min = 0, max = 180)
+        cmds.setAttr('vertexBakeSetAO.filterNormalTolerance', 0.001)
+        
+    def createTextureBakeSet(self):
+        if (cmds.objExists('textureBakeSetAO')):
+            cmds.delete('textureBakeSetAO')
+        cmds.createNode('textureBakeSet', n = 'textureBakeSetAO')
+        cmds.setAttr('textureBakeSetAO' + '.colorMode',0) # set color mode to bake Light and Color
+        cmds.addAttr('textureBakeSetAO', ln = 'filterSize', min = -1)
+        cmds.setAttr('textureBakeSetAO.filterSize', 0.001)
+        cmds.addAttr('textureBakeSetAO', ln = 'filterNormalTolerance', min = 0, max = 180)
+        cmds.setAttr('textureBakeSetAO.filterNormalTolerance', 0.001)
+
+    def bakeAO(self, param = 'Vertex'):
+        if param == 'Vertex':
+            node = cmds.ls(sl = True, l = True)[0]
+            self.createVertexBakeSet()
+            cmds.select(node)
+            cmds.convertLightmapSetup(camera = 'persp', sh = True, bo = 'vertexBakeSetAO', vm = True)
+            cmds.delete('vertexBakeSetAO')
+        if param == 'Texture':
+            self.tweakingSurfaceShader()
+            self.createTextureBakeSet()
+            cmds.convertLightmapSetup('shadingGroupAO', cmds.ls(sl = True)[0], camera = 'persp', sh = True, bo = 'textureBakeSetAO')
+            cmds.delete('textureBakeSetAO')
+            self.removeDebugShader()
+        
+    def bakeAOToVertex(self):
+        self.bakeAO('Vertex')
+        
+    def bakeAOToTexture(self):
+        self.bakeAO('Texture')
   
 def main(xmlnput):
     form = ShaderTools(xmlnput)
