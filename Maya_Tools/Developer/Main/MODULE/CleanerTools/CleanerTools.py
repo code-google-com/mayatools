@@ -1,7 +1,7 @@
 import CommonFunctions as cf
 mayaVersion = cf.getMayaVersion()
 
-if 
+
 
 import maya.cmds as cmds
 from PyQt4 import QtGui, QtCore, uic
