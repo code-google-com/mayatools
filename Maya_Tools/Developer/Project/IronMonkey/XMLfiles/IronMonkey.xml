@@ -42,7 +42,6 @@
 			<module name="LODTools" params="IronMonkeyLODTools" />
 			<module name="UVTools" />
 			<module name="PolyTools" />
-			<module name="CrydevTools" />
 			<module name="ShaderTools" params="CustomShaderTools" />
 			<module name="ThirdpartyTools" />
 		</Module>

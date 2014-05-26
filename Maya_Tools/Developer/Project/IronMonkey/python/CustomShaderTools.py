@@ -84,8 +84,11 @@ class CustomShaderTools(form_class,base_class):
                 cmds.connectAttr(texture + '.outColor',debugShader + '.color', f = True)
                 glassMat = cmds.ls('*glass_window_*', materials = True)
                 for s in glassMat:
-                    fileNode = cmds.listConnections(s, s= True, t= 'file')[0]
-                    cmds.setAttr(fileNode + '.fileTextureName', glassTexture, type = 'string')
+                    try:
+                        fileNode = cmds.listConnections(s, s= True, t= 'file')[0]
+                        cmds.setAttr(fileNode + '.fileTextureName', glassTexture, type = 'string')
+                    except:
+                        pass
                 for m in mesh:
                     try:
                         print m
