@@ -1,7 +1,6 @@
 import maya.cmds as cmds
 import pymel.core as py
 from pymel import versions
-from PyQt4 import QtGui
 import maya.OpenMayaUI as OpenMayaUI
 from xml.dom.minidom import *
 import sys, os, shutil, re, imp
@@ -13,7 +12,7 @@ try:
     from PySide import QtGui, QtCore
     import pysideuic
 except:
-    from PyQt import QtCore, QtGui, uic
+    from PyQt4 import QtCore, QtGui, uic
 
 def loadUIPySide(uiFile):
     from PySide import QtGui, QtCore

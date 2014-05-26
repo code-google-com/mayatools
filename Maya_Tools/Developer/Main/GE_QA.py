@@ -31,12 +31,8 @@ reload(dW)
 import Source.IconResource_rc
 reload(Source.IconResource_rc)
 
-import getShaderATG
-reload(getShaderATG)
-
 import CommonFunctions
 reload(CommonFunctions)
-
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/GE_QA_v3.ui'
