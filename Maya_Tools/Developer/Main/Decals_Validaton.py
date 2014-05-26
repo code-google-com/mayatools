@@ -1,15 +1,15 @@
-import maya.cmds as cmds
-import maya.mel as mel
-import maya.OpenMayaUI as OpenMayaUI
-import os, sys, re, inspect , imp, shutil
-import math
-from pymel.core import *
-from PySide import QtGui, QtCore
-import pysideuic
-import xml.etree.ElementTree as xml
-from cStringIO import StringIO
-import shiboken
-import functools
+# import maya.cmds as cmds
+# import maya.mel as mel
+# import maya.OpenMayaUI as OpenMayaUI
+# import os, sys, re, inspect , imp, shutil
+# import math
+# from pymel.core import *
+# from PySide import QtGui, QtCore
+# import pysideuic
+# import xml.etree.ElementTree as xml
+# from cStringIO import StringIO
+# import shiboken
+# import functools
 
 # -- Custom variables. Please alter these vars
 
