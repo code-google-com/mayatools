@@ -71,7 +71,7 @@ def selectFaceByShaderPerMesh(mesh, shader, condition = False):
         shapefromFace = f.split('.')[0]
         if shapefromFace == shape:
             selectedFaces.append(f)
-    if len(shadingGroups) == 1:# in case selected faces is equal to the number of  faces
+    if len(selectedFaces) == cmds.polyEvaluate(mesh, f = True):# in case selected faces is equal to the number of  faces
         if condition:
             cmds.select(mesh, add = True)
         else:

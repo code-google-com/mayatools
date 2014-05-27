@@ -9,7 +9,6 @@ from cStringIO import StringIO
 def getMayaVersion():
     return versions.current()
 
-
 def importQtPlugin():
     try:
         from PySide import QtGui, QtCore
@@ -17,6 +16,12 @@ def importQtPlugin():
     except:
         from PyQt4 import QtCore, QtGui, uic
         import sip
+
+def importMayaModule():
+    import maya.cmds as cmds
+    import maya.mel as mel
+    import pymel.core as py
+    import pymel.core.datatypes as dt
     
 def wrapinstance(ptr, base=None):
     if ptr is None:
