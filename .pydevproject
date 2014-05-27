@@ -5,4 +5,7 @@
 <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
 <path>/${PROJECT_DIR_NAME}/src</path>
 </pydev_pathproperty>
+<pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
+<path>E:\Program Files\Autodesk\Maya2014\devkit\other\pymel\extras\completion\py</path>
+</pydev_pathproperty>
 </pydev_project>
