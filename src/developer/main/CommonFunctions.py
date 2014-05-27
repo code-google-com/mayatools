@@ -13,6 +13,7 @@ def importQtPlugin():
     try:
         from PySide import QtGui, QtCore
         import pysideuic, shiboken
+        from cStringIO import StringIO
     except:
         from PyQt4 import QtCore, QtGui, uic
         import sip
@@ -55,6 +56,7 @@ def getMayaWindowPyQt():
     return sip.wrapinstance(long(ptr), QtCore.QObject)
     
 def getMayaWindow():
+    importQtPlugin()
     try:
         getMayaWindowPySide()
     except:
@@ -88,6 +90,7 @@ def loadUIPyQt(uiFile):
     return form_class, base_class
     
 def loadUI(uiFile):
+    importQtPlugin()
     try:
         loadUIPySide(uiFile)
     except:
