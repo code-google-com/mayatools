@@ -22,29 +22,9 @@ except:
     import dockWidget
 
 try:
-    reload(GE_QA)
-except: 
-    import GE_QA
-
-try:
-    reload(AssetForm)
-except:
-    import AssetForm
-    
-try:
-    reload(UploadForm)
-except:
-    import UploadForm 
-    
-try:
-    reload(LibTextureUi)
-except:
-    import LibTextureUi 
-    
-try:
     reload(projectBase)
 except:
-    import ProjectBase
+    import projectBase
          
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/ProjectForm.ui'
@@ -55,26 +35,14 @@ class ProjectUI(form_class,base_class):
         super(base_class,self).__init__(parent)
         self.setupUi(self)
         self.setObjectName('ProjectUIWindow')
-        self.Proj = ProjectBaseClass(XMLProject)
+        self.Proj = projectBase(XMLProject)
         self.setWindowTitle(self.Proj.ProjectName)
-        self.assetGroupModel = QtGui.QStringListModel()
-        self.assetListModel = QtGui.QStringListModel()
-        #cmds.scriptJob(killAll = True, f = True)
         self.xmlFile = XMLProject
-        self.currentAsset = ''
         self.loadProjectData()
-        #print self.Proj.projectData 
         
         #-------------- FUNCTION UI
         self.actionQA.triggered.connect(self.QAChecking)
         self.actionAsset_Tracking.triggered.connect(self.openAssetTracking)
-        
-    def combineString(self, strList, remove = 1):
-        out = ''
-        for i in range(len(strList)):
-            if i != (len(strList) - 1):
-                out += strList[i] + '_'
-        return out    
         
     def loadProjectData(self):
         for index in range(len(self.Proj.moduleList[0])):
@@ -85,11 +53,11 @@ class ProjectUI(form_class,base_class):
             except: 
                 print 'Error to loading module:' + self.Proj.moduleList[0][index]
         #add dock widget
-        self.AssetForm = AssetForm.AssetForm(self.xmlFile)
-        self.currentAsset = self.AssetForm.currentAsset
-        self.dockWidget = dockWidget.DockWidget('Asset from')
-        self.dockWidget.setWidget(self.AssetForm)
-        self.verticalLayout.addWidget(self.dockWidget)
+        #self.AssetForm = AssetForm.AssetForm(self.xmlFile)
+        #self.currentAsset = self.AssetForm.currentAsset
+        #self.dockWidget = dockWidget.DockWidget('Asset from')
+        #self.dockWidget.setWidget(self.AssetForm)
+        #self.verticalLayout.addWidget(self.dockWidget)
              
     def QAChecking(self):
         self.QAform = GE_QA.GE_QA(self.Proj.projectData, [])

@@ -2,94 +2,43 @@
 <Project name="Sony">
 	<Managers>
 		<Tech>
-			<user>trungtran</user>
-			<user>quynguyen</user>
+			<user name = "trungtran" email = "trungtq@glassegg.com"</user>
+			<user name = "quynguyen" email = "ndquy@glassegg.com"</user>
 		</Tech>
 		<ArtDirector>
-			<user>tungvo</user>
-			<user>huongnguyen</user>
-			<user>phuongnguyen</user>
-			<user>minhle</user>
+			<user name = "tungvo" email = ""</user>
+			<user name = "huongnguyen"</user>
+			<user name = "phuongnguyen"</user>
+			<user name = "minhle"</user>
 		</ArtDirector>
 		<Producer>
-			<user>thudang</user>
-			<user>phucdo</user>
+			<user name = "thudang" email = "thudang@glassegg.com"</user>
+			<user name = "phucdo" email = "phucdo@glassegg.com"</user>
 		</Producer>
 	</Managers>
 	<Directories>
-		<ServerPath>//glassegg.com/projects/Scenes/Sony_Vehicles_2012/art/</ServerPath>
-		<ServerPathtmp>D:/art/vehicles/</ServerPathtmp>
-		<LocalPath>M:/art/vehicles/</LocalPath>
-		<ProjectLocalPath>source/maya_wip/</ProjectLocalPath>
-		<DocumentsPath>//glassegg.com/projects/Documents_Feedbacks\Sony_Vehicles_2012</DocumentsPath>
-		<FeedbacksPath>//glassegg.com/projects/Documents_Feedbacks/Sony_Vehicles_2012/Feedbacks/</FeedbacksPath>
-		<ReferencesImagePath>//glassegg.com/Images_References\Lives\Sony_Vehicles_2012/</ReferencesImagePath>
-		<LibraryPath>M:\art\vehicles\GENERIC_TEXTURES\</LibraryPath>
-		<PluginsPath>testing</PluginsPath>
+		<ServerPath path = "//glassegg.com/projects/Scenes/Sony_Vehicles_2012/art/"</ServerPath>
+		<LocalPath path = "M:/art/vehicles/"</LocalPath>
+		<DocumentsPath path = "//glassegg.com/projects/Documents_Feedbacks/Sony_Vehicles_2012/"</DocumentsPath>
+		<FeedbacksPath path = "//glassegg.com/projects/Documents_Feedbacks/Sony_Vehicles_2012/Feedbacks/"</FeedbacksPath>
+		<ReferencesImagePath path = "//glassegg.com/Images_References\Lives\Sony_Vehicles_2012/"</ReferencesImagePath>
 	</Directories>
-	<Structures_Asset group="False">
-		<folder name="maya" filename="_latest_wip" filetype="mb" />
-		<folder name="source">
-			<folder name="maya_wip" filename="_all_vlast" filetype="mb">
-				<folder name="Exterior_LOD0" type="LOD">
-					<folder name="models" type="stage" filename="_Exterior_LOD0_model_v00"
-						filetype="mb" />
-					<folder name="textures" type="stage" filename="_Exterior_LOD0_textures_v00"
-						filetype="mb" />
-				</folder>
-				<folder name="Interior_LOD0" type="LOD">
-					<folder name="models" type="stage" filename="_Interior_LOD0_model_v00"
-						filetype="mb" />
-					<folder name="textures" type="stage" filename="_Interior_LOD0_textures_v00"
-						filetype="mb" />
-				</folder>
-				<folder name="Wheel_LODs" type="LOD" filename="_Wheel_LODs_v00"
-					filetype="mb">
-					<folder name="models" type="stage" filename="_Interior_LOD0_model_v00"
-						filetype="mb" />
-					<folder name="textures" type="stage" filename="_Interior_LOD0_textures_v00"
-						filetype="mb" />
-				</folder>
-				<folder name="LOD1" type="LOD" filename="_LOD1_v00" filetype="mb">
-					<folder name="textures" type="stage" filename="_Interior_LOD0_textures_v00"
-						filetype="mb" />
-				</folder>
-				<folder name="LODs" type="LOD" filename="_LODs_v00" filetype="mb">
-					<folder name="textures" type="stage" filename="_Interior_LOD0_textures_v00"
-						filetype="mb" />
-				</folder>
-			</folder>
-			<folder name="textures_wip" filetype="psd" />
-		</folder>
-		<folder name="textures" filetype="tif" />
-		<folder name="export" type="max, fbx" />
-	</Structures_Asset>
 	<ProjectData>
-		<Template file="Sony_template_file.mb" />
-		<TechInfo file="Sony_TechInfo.ini" />
-		<WorkingStage file="Sony_WorkingStage.xml" />
-		<AssetList file="Sony_AssetList.xml" />
-		<NamingConvention file="Sony_NamingConvention.xml" />
+		<AssetList file="AssetList.xml" />
 		<Module>
 			<module name="NamingConvention" />
-			<module name="CleanerTools" params="CustomCheck" />
+			<module name="CleanerTools"/>
 			<module name="Pivots" />
-			<module name="LODTools" params="SonyLODTools" />
-			<unloadmodule name="TransferTools" />
+			<module name="LODTools"/>
 			<module name="UVTools" />
-			<module name="PolyTools" />
+			<module name="PolyTools">
+				<submodule name = "setupscene"/>
+				<submodule name = "mirrortools"/>
+				<submodule name = "modelingtools"/>
+				<submodule name = "normaltools"/> 
+			</module>
 			<module name="ShaderTools" />
 			<module name="ThirdpartyTools" />
 		</Module>
-		<CheckList>
-			<uncheck name="PolyCount" />
-			<check name="FreezeTransforms" />
-			<check name="DeleteHistory" />
-			<check name="NGon" />
-			<check name="Lamina" />
-			<check name="UVFlipped" />
-			<check name="UVSetCount" />
-			<uncheck name="ShortestEdges" />
-		</CheckList>
 	</ProjectData>
 </Project>
