@@ -21,7 +21,7 @@ class mainForm(dockWidget.DockWidget):
         self.loadChildForm()
         
     def loadChildForm(self):
-        childForms = [module for module in os.listdir(filedircommon) if 'Form' in module and os.path.splitext(module)[1] == '.py']
+        childForms = [module for module in os.listdir(filedircommon) if 'Form' in module and module.end == '.py']
         for c in childForms:
             instance = CommonFunctions.loadModule(c)
             self.vLayout.addWidget(instance.main())
