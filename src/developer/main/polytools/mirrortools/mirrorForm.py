@@ -7,7 +7,7 @@ Created on May 27, 2014
 
 '''
 from developer.main import CommonFunctions
-import os, inspect
+import os, inspect, functools
 import fn.mirrorFunction as mFn
 
 #-- import dependencies
@@ -35,6 +35,16 @@ class mirrorForm(form_class,base_class):
     '''
     def __init__(self, parent = CommonFunctions.getMayaWindow()):
         super(base_class,self).__init__(parent)
+        self.btnAxisX.clicked.connect(functools.partial(self.mirror,'x', 'By axis'))
+        self.btnAxisY.clicked.connect(functools.partial(self.mirror,'y', 'By axis'))
+        self.btnAxisZ.clicked.connect(functools.partial(self.mirror,'z', 'By axis'))
+                                                                                                               
+        self.btnPivotX.clicked.connect(functools.partial(self.mirror,'x', 'By pivot'))
+        self.btnPivotY.clicked.connect(functools.partial(self.mirror,'y', 'By pivot'))
+        self.btnPivotZ.clicked.connect(functools.partial(self.mirror,'z', 'By pivot'))  
+        
+        self.btnMirrorU.clicked.connect(self.updateTextMirrorTool)
+        self.btnMirrorV.clicked.connect(self.updateTextMirrorTool)
         
     def mirror(self, axis, method):
         isKeepHistory = True
@@ -50,3 +60,17 @@ class mirrorForm(form_class,base_class):
         elif self.rdbInstance.isChecked():
             isClone = 'Instance'
         mFn.mirrorTool(axis, isKeepHistory, isClone, method)
+        
+    def updateTextMirrorTool(self):
+        if self.btnMirrorU.isChecked():
+            self.btnMirrorU.setText('Mirror U')
+        else:
+            self.btnMirrorU.setText('X')
+        if self.btnMirrorV.isChecked():
+            self.btnMirrorV.setText('Mirror V')
+        else:
+            self.btnMirrorV.setText('Z')
+            
+def main():
+    form = mirrorForm()
+    return form

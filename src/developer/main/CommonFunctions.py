@@ -63,9 +63,6 @@ def getMayaWindow():
         getMayaWindowPyQt()
 
 def loadUIPySide(uiFile):
-    if not os.path.isdir(uiFile):
-        print 'Khong tim thay duong dan file.'
-        return
     parsed = xml.parse(uiFile)
     widget_class = parsed.find('widget').get('class')
     form_class = parsed.find('class').text
@@ -83,9 +80,6 @@ def loadUIPySide(uiFile):
     return form_class, base_class
 
 def loadUIPyQt(uiFile):
-    if not os.path.isdir(uiFile):
-        print 'Khong tim thay file.'
-        return
     form_class, base_class = uic.loadUiType(uiFile)
     return form_class, base_class
     

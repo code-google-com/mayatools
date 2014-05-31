@@ -8,13 +8,12 @@ Created on May 26, 2014
 
 #import developer.main.dockWidget as dw
 from developer.main import CommonFunctions
-from developer.main import dockWidget
 import inspect, os
 
 CommonFunctions.importQtPlugin()
 filedircommon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 
-class mainForm(dockWidget.DockWidget):
+class mainForm(QtGui.QWidget):
     def __init__(self, parent = None):
         super(mainForm).__init__(parent)
         self.vLayout  = QtGui.QVBoxLayout()
@@ -26,9 +25,7 @@ class mainForm(dockWidget.DockWidget):
             instance = CommonFunctions.loadModule(c)
             self.vLayout.addWidget(instance.main())
             
-def __load__():
+def __main__():
     form = mainForm()
     return form
-        
-
         
