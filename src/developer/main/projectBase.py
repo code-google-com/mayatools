@@ -21,7 +21,7 @@ class projectBase():
         self.DocumentsPath = ""
         self.ReferencesImagePath = ""
         self.FeedbacksPath = ""
-        self.AssetList = self.projectData + '/AssetList.xml'
+        self.AssetList = ''
         self.moduleList = list()
         self.readXMLFile(XMLRootFile)
                        
@@ -41,19 +41,13 @@ class projectBase():
         self.ReferencesImagePath = dirRoot.getElementsByTagName("ReferencesImagePath")[0].getAttribute("path")
                 
         # get module
-        names = list()
-        params = list()
         moduleNode = ProjectNode.getElementsByTagName('Module')[0]
         for module in moduleNode.getElementsByTagName('module'):
-            nameModule = module.getAttribute('name')
-            if module.getAttribute('params'):
-                paramsModule = self.ProjectName + '.' + module.getAttribute('params')
-            else:
-                paramsModule= ''
-            names.append(nameModule)
-            params.append(paramsModule)
+            names = list()
+            names.append(module.getAttribute('name'))
+            for subModule in module.getElementsByTagName('submodule'):
+                names.append(subModule.getAttribute('name'))
         self.moduleList.append(names)
-        self.moduleList.append(params)    
             
         # get managers    
         ManagerDepts = ProjectNode.getElementsByTagName("Managers")[0]

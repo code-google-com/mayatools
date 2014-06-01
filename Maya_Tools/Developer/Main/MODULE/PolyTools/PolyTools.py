@@ -443,20 +443,7 @@ class PolyTools(form_class,base_class):
         mel.eval('source \"{f}\";'.format(f = attachFileSource))
         mel.eval('boltNorms.MirrorGUI(0.0005)')
                     
-    def mirror(self, axis, method):
-        isKeepHistory = True
-        isClone = ''
-        if self.rdbKeepHistory.isChecked():
-            isKeepHistory = True
-        else: 
-            isKeepHistory = False
-        if self.rdbNoClone.isChecked():
-            isClone = 'No Clone'
-        elif self.rdbClone.isChecked():
-            isClone = 'Clone'
-        elif self.rdbInstance.isChecked():
-            isClone = 'Instance'
-        mirrorTool(axis, isKeepHistory, isClone, method)
+
         
     def transferNormalWithoutDetachMesh(self):
         selObjs = cmds.ls(sl = True)
