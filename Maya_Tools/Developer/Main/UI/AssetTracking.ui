@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideNone</enum>
@@ -313,7 +313,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../Source/IconResource.qrc">
+             <iconset>
               <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
             </property>
             <property name="flat">
@@ -330,7 +330,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../Source/IconResource.qrc">
+             <iconset>
               <normaloff>:/Project/Check.png</normaloff>:/Project/Check.png</iconset>
             </property>
             <property name="flat">
@@ -347,7 +347,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../Source/IconResource.qrc">
+             <iconset>
               <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
             </property>
             <property name="flat">
@@ -364,7 +364,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../Source/IconResource.qrc">
+             <iconset>
               <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
             </property>
             <property name="flat">
@@ -564,7 +564,7 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="../Source/IconResource.qrc">
+              <iconset>
                <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
              </property>
              <property name="flat">
@@ -581,7 +581,7 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="../Source/IconResource.qrc">
+              <iconset>
                <normaloff>:/Project/Check.png</normaloff>:/Project/Check.png</iconset>
              </property>
              <property name="flat">
@@ -598,7 +598,7 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="../Source/IconResource.qrc">
+              <iconset>
                <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
              </property>
              <property name="flat">
@@ -615,7 +615,7 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="../Source/IconResource.qrc">
+              <iconset>
                <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
              </property>
              <property name="flat">
@@ -656,7 +656,7 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="../Source/IconResource.qrc">
+              <iconset>
                <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
              </property>
              <property name="flat">
@@ -670,7 +670,7 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="../Source/IconResource.qrc">
+              <iconset>
                <normaloff>:/Project/Check.png</normaloff>:/Project/Check.png</iconset>
              </property>
              <property name="flat">
@@ -687,7 +687,7 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="../Source/IconResource.qrc">
+              <iconset>
                <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
              </property>
              <property name="flat">

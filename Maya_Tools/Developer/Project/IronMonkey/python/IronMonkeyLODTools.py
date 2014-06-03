@@ -470,6 +470,10 @@ class CustomLODTools(form_class,base_class):
                 self._nohide.append('pulled_type_d_layer')
             cmds.setAttr('bumper_front|standard_type_a.visibility', 0)
             cmds.setAttr('bumper_rear|standard_type_a.visibility', 0)
+            try:
+                cmds.setAttr('side_skirts|standard_type_a.visibility', 0)
+            except:
+                pass
                 
         if self.btnSmall.isChecked():
             print 'pulled'
@@ -502,55 +506,7 @@ class CustomLODTools(form_class,base_class):
         self.showSpoilers()
         self.showExhausted()
         
-    def SwapLODSony(self):
-        if self._projectName == 'IronMonkey':
-            mel.eval('showHidden -all;')        
-        self._nohide = ['base_car_layer', 'spoilers']
-        
-        if self.rdbSourceLOD0.isChecked():
-            LODa = mappingLODs(self._projectName,'_LOD0_')
-        elif self.rdbSourceLOD1.isChecked():
-            LODa = mappingLODs(self._projectName,'_LOD1_')
-        elif self.rdbSourceLOD2.isChecked():
-            LODa = mappingLODs(self._projectName,'_LOD2_')
-        elif self.rdbSourceLOD3.isChecked():
-            LODa = mappingLODs(self._projectName,'_LOD3_')
-        elif self.rdbSourceLOD4.isChecked():
-            LODa = mappingLODs(self._projectName,'_LOD4_')
-        elif self.rdbSourceLOD5.isChecked():
-            LODa = mappingLODs(self._projectName,'_LOD5_')
-        elif self.rdbSourceLOD6.isChecked():
-            LODa = mappingLODs(self._projectName,'_LOD6_')
-        elif self.rdbSourceSHADOW.isChecked():
-            LODa = mappingLODs(self._projectName,'_SHADOW_')
-            
-        if self.rdbTargetLOD0.isChecked():
-            LODb = mappingLODs(self._projectName,'_LOD0_')
-        elif self.rdbTargetLOD1.isChecked():
-            LODb = mappingLODs(self._projectName,'_LOD1_')
-        elif self.rdbTargetLOD2.isChecked():
-            LODb = mappingLODs(self._projectName,'_LOD2_')
-        elif self.rdbTargetLOD3.isChecked():
-            LODb = mappingLODs(self._projectName,'_LOD3_')
-        elif self.rdbTargetLOD4.isChecked():
-            LODb = mappingLODs(self._projectName,'_LOD4_')
-        elif self.rdbTargetLOD5.isChecked():
-            LODb = mappingLODs(self._projectName,'_LOD5_')
-        elif self.rdbTargetLOD6.isChecked():
-            LODb = mappingLODs(self._projectName,'_LOD6_')
-        elif self.rdbTargetSHADOW.isChecked():
-            LODb = mappingLODs(self._projectName,'_SHADOW_')
-        # ------------------------------------------------
-        
-        displayLayerNotWork = [layer for layer in cmds.ls(type = 'displayLayer') if layer not in [LODa, LODb]]
-        for l in displayLayerNotWork:
-            try:
-                cmds.setAttr(l + '.visibility', 0)
-            except:
-                pass
-        flag = cmds.getAttr(LODa + '.visibility')
-        cmds.setAttr(LODa + '.visibility', not flag)
-        cmds.setAttr(LODb + '.visibility', flag)
+   
 
     
     def setPosition(self):

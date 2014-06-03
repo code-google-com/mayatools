@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>967</width>
-    <height>713</height>
+    <width>1105</width>
+    <height>791</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -670,31 +670,11 @@ background-image: url(:/images/strip.png);</string>
         <item>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
-           <widget class="QListView" name="listView">
-            <property name="contextMenuPolicy">
-             <enum>Qt::CustomContextMenu</enum>
-            </property>
+           <widget class="QGraphicsView" name="graphicsView">
             <property name="styleSheet">
              <string notr="true">background-color: qlineargradient(spread:pad, x1:0.523, y1:0.119, x2:0.523, y2:0.87, stop:0 rgba(66, 96, 122, 255), stop:1 rgba(3, 65, 99, 255));
-color: rgb(255, 255, 255);</string>
-            </property>
-            <property name="textElideMode">
-             <enum>Qt::ElideMiddle</enum>
-            </property>
-            <property name="resizeMode">
-             <enum>QListView::Adjust</enum>
-            </property>
-            <property name="viewMode">
-             <enum>QListView::IconMode</enum>
-            </property>
-            <property name="modelColumn">
-             <number>0</number>
-            </property>
-            <property name="uniformItemSizes">
-             <bool>true</bool>
-            </property>
-            <property name="wordWrap">
-             <bool>true</bool>
+color: rgb(255, 255, 255);
+background-image: url(:/images/strip.png);</string>
             </property>
            </widget>
           </item>
@@ -711,10 +691,16 @@ color: rgb(255, 255, 255);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>967</width>
-     <height>21</height>
+     <width>1105</width>
+     <height>26</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+   </widget>
+   <addaction name="menuSettings"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionMerge">
@@ -777,22 +763,5 @@ color: rgb(255, 255, 255);</string>
   </action>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>treeViewPath</sender>
-   <signal>doubleClicked(QModelIndex)</signal>
-   <receiver>listView</receiver>
-   <slot>setRootIndex(QModelIndex)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>107</x>
-     <y>230</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>319</x>
-     <y>244</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>
