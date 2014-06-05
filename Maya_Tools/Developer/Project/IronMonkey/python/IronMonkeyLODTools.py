@@ -406,15 +406,30 @@ class CustomLODTools(form_class,base_class):
             if self.chkBumper_front.isChecked():
                 if 'type_a_layer' not in self._nohide:
                     self._nohide.append('type_a_layer')
-                type_a.append('bumper_front|standard_type_a')
+                if self.btnStandard.isChecked():
+                    type_a.append('bumper_front|standard_type_a')
+                if self.btnPulled.isChecked():
+                    type_a.append('bumper_front|pulled_type_a')
+                if self.btnLarge.isChecked():
+                    type_a.append('bumper_front|large_type_a')
             if self.chkBumper_rear.isChecked():
                 if 'type_a_layer' not in self._nohide:
                     self._nohide.append('type_a_layer')
-                type_a.append('bumper_rear|standard_type_a')
+                if self.btnStandard.isChecked():
+                    type_a.append('bumper_rear|standard_type_a')
+                if self.btnPulled.isChecked():
+                    type_a.append('bumper_rear|pulled_type_a')
+                if self.btnLarge.isChecked():
+                    type_a.append('bumper_rear|large_type_a')
             if self.chkSide_skirt.isChecked():
                 if 'type_a_layer' not in self._nohide:
                     self._nohide.append('type_a_layer')
-                type_a.append('side_skirts|standard_type_a')
+                if self.btnStandard.isChecked():
+                    type_a.append('side_skirts|standard_type_a')
+                if self.btnPulled.isChecked():
+                    type_a.append('side_skirts|pulled_type_a')
+                if self.btnLarge.isChecked():
+                    type_a.append('side_skirts|large_type_a')
             if self.chkHood.isChecked():
                 if 'type_a_layer' not in self._nohide:
                     self._nohide.append('type_a_layer')

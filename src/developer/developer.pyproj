@@ -1,0 +1,186 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <SchemaVersion>2.0</SchemaVersion>
+        <ProjectGuid>{40cec5cf-543b-44ba-b53a-b9e470764e39}</ProjectGuid>
+        <ProjectHome />
+        <StartupFile />
+        <SearchPath />
+        <WorkingDirectory>.</WorkingDirectory>
+        <OutputPath>.</OutputPath>
+        <InterpreterId>{9a7a9026-48c1-4688-9d5d-e5699d47d074}</InterpreterId>
+        <InterpreterVersion>3.3</InterpreterVersion>
+        <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+        <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+    <ItemGroup>
+        <Compile Include="__init__.py" />
+        <Compile Include="main\CommonFunctions.py" />
+        <Compile Include="main\dockWidget.py" />
+        <Compile Include="main\projectBase.py" />
+        <Compile Include="main\projectUI.py" />
+        <Compile Include="main\__init__.py" />
+        <Compile Include="projects\__init__.py" />
+        <Compile Include="main\3rdtools\__init__.py" />
+        <Compile Include="main\assetbrowser\assetbrowserFn.py" />
+        <Compile Include="main\assetbrowser\assetbrowserUI.py" />
+        <Compile Include="main\assetbrowser\__init__.py" />
+        <Compile Include="main\assettracking\assettrackingFn.py" />
+        <Compile Include="main\assettracking\assettrackingUI.py" />
+        <Compile Include="main\assettracking\__init__.py" />
+        <Compile Include="main\cleanertools\cleanertoolsUI.py" />
+        <Compile Include="main\cleanertools\__init__.py" />
+        <Compile Include="main\namingtools\namingtools.py" />
+        <Compile Include="main\namingtools\__init__.py" />
+        <Compile Include="main\pivottoolbox\__init__.py" />
+        <Compile Include="main\polytools\polytools.py" />
+        <Compile Include="main\polytools\__init__.py" />
+        <Compile Include="main\QAtools\__init__.py" />
+        <Compile Include="main\shadertools\__init__.py" />
+        <Compile Include="main\source\IconResource_rc.py" />
+        <Compile Include="main\source\__init__.py" />
+        <Compile Include="main\uvtools\__init__.py" />
+        <Compile Include="main\cleanertools\Cleaning Scene Tools\cleanKeyFrame.py" />
+        <Compile Include="main\cleanertools\Cleaning Scene Tools\CleanUpDeadShapes.py" />
+        <Compile Include="main\cleanertools\Cleaning Scene Tools\CleanUpInstanceNodes.py" />
+        <Compile Include="main\cleanertools\Cleaning Scene Tools\CleanUpScene.py" />
+        <Compile Include="main\cleanertools\Cleaning Scene Tools\CorrectNodeName.py" />
+        <Compile Include="main\cleanertools\Cleaning Scene Tools\DeleteHistory.py" />
+        <Compile Include="main\cleanertools\Cleaning Shaders and Textures\CleanPerFaceAssigment.py" />
+        <Compile Include="main\cleanertools\Cleaning Shaders and Textures\CleanupShader.py" />
+        <Compile Include="main\cleanertools\Fix issues per mesh\FCC.py" />
+        <Compile Include="main\cleanertools\Fix issues per mesh\selectDuplicateFace.py" />
+        <Compile Include="main\cleanertools\Technical Setup\addLocatorToPos.py" />
+        <Compile Include="main\polytools\mirrortools\mirrorForm.py" />
+        <Compile Include="main\polytools\mirrortools\__init__.py" />
+        <Compile Include="main\polytools\mirrortools\__main__.py" />
+        <Compile Include="main\polytools\modeltools\__init__.py" />
+        <Compile Include="main\polytools\modeltools\__main__.py" />
+        <Compile Include="main\polytools\normaltools\normaltoolsFn.py" />
+        <Compile Include="main\polytools\normaltools\normaltoolsUI.py" />
+        <Compile Include="main\polytools\normaltools\__init__.py" />
+        <Compile Include="main\polytools\setupscene\__init__.py" />
+        <Compile Include="main\polytools\mirrortools\fn\mirrorFunction.py" />
+        <Compile Include="main\polytools\mirrortools\fn\__init__.py" />
+        <Compile Include="main\polytools\modeltools\fn\modeltoolsFn.py" />
+        <Compile Include="main\polytools\modeltools\fn\__init__.py" />
+        <Content Include="main\source\icons\1.png" />
+        <Content Include="main\source\icons\About.png" />
+        <Content Include="main\source\icons\Actions-page-zoom-icon.png" />
+        <Content Include="main\source\icons\Add.png" />
+        <Content Include="main\source\icons\AO.png" />
+        <Content Include="main\source\icons\arrow-down.png" />
+        <Content Include="main\source\icons\arrow-right.png" />
+        <Content Include="main\source\icons\arrow_10.png" />
+        <Content Include="main\source\icons\arrow_12.png" />
+        <Content Include="main\source\icons\arrow_2.png" />
+        <Content Include="main\source\icons\arrow_4.png" />
+        <Content Include="main\source\icons\arrow_6.png" />
+        <Content Include="main\source\icons\arrow_8.png" />
+        <Content Include="main\source\icons\arrow_9.png" />
+        <Content Include="main\source\icons\arrow_U.png" />
+        <Content Include="main\source\icons\BackgourndImage_01.png" />
+        <Content Include="main\source\icons\background.png" />
+        <Content Include="main\source\icons\Check.png" />
+        <Content Include="main\source\icons\checker.png" />
+        <Content Include="main\source\icons\cryControlPanel.png" />
+        <Content Include="main\source\icons\Custom_checker.png" />
+        <Content Include="main\source\icons\Delete.png" />
+        <Content Include="main\source\icons\diffuse.png" />
+        <Content Include="main\source\icons\DiffuseAO.png" />
+        <Content Include="main\source\icons\Document-icon.png" />
+        <Content Include="main\source\icons\Documents.png" />
+        <Content Include="main\source\icons\Edit.png" />
+        <Content Include="main\source\icons\Exchange.png" />
+        <Content Include="main\source\icons\Export.png" />
+        <Content Include="main\source\icons\feedback-icon.png" />
+        <Content Include="main\source\icons\hide.png" />
+        <Content Include="main\source\icons\HTML_icon.png" />
+        <Content Include="main\source\icons\Import.png" />
+        <Content Include="main\source\icons\Library_icon.png" />
+        <Content Include="main\source\icons\New.png" />
+        <Content Include="main\source\icons\normal.png" />
+        <Content Include="main\source\icons\normal_large.png" />
+        <Content Include="main\source\icons\normal_off.png" />
+        <Content Include="main\source\icons\normal_on.png" />
+        <Content Include="main\source\icons\normal_small.png" />
+        <Content Include="main\source\icons\Open.png" />
+        <Content Include="main\source\icons\pdf_icon.png" />
+        <Content Include="main\source\icons\Reference.png" />
+        <Content Include="main\source\icons\reference_images.png" />
+        <Content Include="main\source\icons\Refresh.png" />
+        <Content Include="main\source\icons\Save.png" />
+        <Content Include="main\source\icons\Save_increment.png" />
+        <Content Include="main\source\icons\shader_damage.png" />
+        <Content Include="main\source\icons\tải xuống.png" />
+        <Content Include="main\source\icons\Uninstall.png" />
+        <Content Include="main\source\icons\X.png" />
+        <Content Include="main\source\icons\XMax.png" />
+        <Content Include="main\source\icons\XMid.png" />
+        <Content Include="main\source\icons\XMin.png" />
+        <Content Include="main\source\icons\Y.png" />
+        <Content Include="main\source\icons\YMax.png" />
+        <Content Include="main\source\icons\YMid.png" />
+        <Content Include="main\source\icons\YMin.png" />
+        <Content Include="main\source\icons\Y_up.png" />
+        <Content Include="main\source\icons\Z.png" />
+        <Content Include="main\source\icons\ZMax.png" />
+        <Content Include="main\source\icons\ZMid.png" />
+        <Content Include="main\source\icons\ZMin.png" />
+        <Content Include="main\source\icons\zoom_in.png" />
+        <Content Include="main\source\icons\zoom_out.png" />
+        <Content Include="main\source\icons\Z_up.png" />
+        <Content Include="main\source\icons\reference_icon.jpg" />
+        <Content Include="main\source\icons\cgfx_swatch.bmp" />
+        <Content Include="main\source\icons\cryAnim.bmp" />
+        <Content Include="main\source\icons\cryCheck.bmp" />
+        <Content Include="main\source\icons\cryExport.bmp" />
+        <Content Include="main\source\icons\cryFBX.bmp" />
+        <Content Include="main\source\icons\cryLoad.bmp" />
+        <Content Include="main\source\icons\cryMaterial.bmp" />
+        <Content Include="main\source\icons\cryPivot.bmp" />
+        <Content Include="main\source\icons\cryTools.bmp" />
+        <Content Include="main\source\icons\cryUdp.bmp" />
+        <Content Include="main\source\icons\cryUnload.bmp" />
+        <Content Include="main\source\icons\cryValidate.bmp" />
+        <Content Include="main\source\icons\mayadefault_swatch.bmp" />
+        <Content Include="main\source\icons\maya_swatch.bmp" />
+        <Content Include="main\source\icons\settings.bmp" />
+        <Compile Include="projects\Sony\Sony.py" />
+        <Compile Include="projects\Sony\__init__.py" />
+    </ItemGroup>
+    <ItemGroup>
+        <Folder Include="main" />
+        <Folder Include="main\3rdtools" />
+        <Folder Include="main\assetbrowser" />
+        <Folder Include="main\assettracking" />
+        <Folder Include="main\cleanertools" />
+        <Folder Include="main\cleanertools\Cleaning Scene Tools" />
+        <Folder Include="main\cleanertools\Cleaning Shaders and Textures" />
+        <Folder Include="main\cleanertools\Fix issues per mesh" />
+        <Folder Include="main\cleanertools\Technical Setup" />
+        <Folder Include="main\namingtools" />
+        <Folder Include="main\pivottoolbox" />
+        <Folder Include="main\polytools" />
+        <Folder Include="main\polytools\mirrortools" />
+        <Folder Include="main\polytools\mirrortools\fn" />
+        <Folder Include="main\polytools\modeltools" />
+        <Folder Include="main\polytools\modeltools\fn" />
+        <Folder Include="main\polytools\normaltools" />
+        <Folder Include="main\polytools\setupscene" />
+        <Folder Include="main\QAtools" />
+        <Folder Include="main\shadertools" />
+        <Folder Include="main\source" />
+        <Folder Include="main\source\icons" />
+        <Folder Include="main\uvtools" />
+        <Folder Include="projects" />
+        <Folder Include="projects\Sony" />
+    </ItemGroup>
+    <ItemGroup>
+        <InterpreterReference Include="{9a7a9026-48c1-4688-9d5d-e5699d47d074}\3.3" />
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+</Project>
