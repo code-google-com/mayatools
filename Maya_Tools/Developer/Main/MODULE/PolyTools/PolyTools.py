@@ -483,6 +483,21 @@ class PolyTools(form_class,base_class):
             self.btnMirrorV.setText('Mirror V')
         else:
             self.btnMirrorV.setText('Z')
+            
+    def mirror(self, axis, method):
+        isKeepHistory = True
+        isClone = ''
+        if self.rdbKeepHistory.isChecked():
+            isKeepHistory = True
+        else: 
+            isKeepHistory = False
+        if self.rdbNoClone.isChecked():
+            isClone = 'No Clone'
+        elif self.rdbClone.isChecked():
+            isClone = 'Clone'
+        elif self.rdbInstance.isChecked():
+            isClone = 'Instance'
+        mFn.mirrorTool(axis, isKeepHistory, isClone, method)
     
                   
 def main(xmlnput):
