@@ -12,5 +12,3 @@ ProjectXML = dirfile + '/XMLfiles/' + ProjectName + '.xml'
 def main():
     MainForm = ProjectUI.ProjectUI(ProjectXML)
     MainForm.show()
-
-
