@@ -16,7 +16,7 @@ class polytoolsForm(QtGui.QWidget):
         self.vSpacer = QtGui.QSpacer()
         self.setLayout(QtGui.QVBoxLayout)
         
-    def loadSubPacks(subs)
+    def loadSubPacks(subs):
         for p in subs:
             module = __import__(p + '.__main__')
             form = module.__load__()
