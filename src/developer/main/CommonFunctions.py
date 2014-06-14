@@ -63,6 +63,7 @@ def getMayaWindow():
         getMayaWindowPyQt()
 
 def loadUIPySide(uiFile):
+    
     parsed = xml.parse(uiFile)
     widget_class = parsed.find('widget').get('class')
     form_class = parsed.find('class').text
