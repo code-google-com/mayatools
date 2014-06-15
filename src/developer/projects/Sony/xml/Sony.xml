@@ -2,26 +2,26 @@
 <Project name="Sony">
 	<Managers>
 		<Tech>
-			<user name = "trungtran" email = "trungtq@glassegg.com"</user>
-			<user name = "quynguyen" email = "ndquy@glassegg.com"</user>
+			<user name = "trungtran" email = "trungtq@glassegg.com"/>
+			<user name = "quynguyen" email = "ndquy@glassegg.com"/>
 		</Tech>
 		<ArtDirector>
-			<user name = "tungvo" email = ""</user>
-			<user name = "huongnguyen"</user>
-			<user name = "phuongnguyen"</user>
-			<user name = "minhle"</user>
+			<user name = "tungvo" email = ""/>
+			<user name = "huongnguyen"/>
+			<user name = "phuongnguyen"/>
+			<user name = "minhle"/>
 		</ArtDirector>
 		<Producer>
-			<user name = "thudang" email = "thudang@glassegg.com"</user>
-			<user name = "phucdo" email = "phucdo@glassegg.com"</user>
+			<user name = "thudang" email = "thudang@glassegg.com"/>
+			<user name = "phucdo" email = "phucdo@glassegg.com"/>
 		</Producer>
 	</Managers>
 	<Directories>
-		<ServerPath path = "//glassegg.com/projects/Scenes/Sony_Vehicles_2012/art/"</ServerPath>
-		<LocalPath path = "M:/art/vehicles/"</LocalPath>
-		<DocumentsPath path = "//glassegg.com/projects/Documents_Feedbacks/Sony_Vehicles_2012/"</DocumentsPath>
-		<FeedbacksPath path = "//glassegg.com/projects/Documents_Feedbacks/Sony_Vehicles_2012/Feedbacks/"</FeedbacksPath>
-		<ReferencesImagePath path = "//glassegg.com/Images_References\Lives\Sony_Vehicles_2012/"</ReferencesImagePath>
+		<ServerPath path = "//glassegg.com/projects/Scenes/Sony_Vehicles_2012/art/"/>
+		<LocalPath path = "M:/art/vehicles/"/>
+		<DocumentsPath path = "//glassegg.com/projects/Documents_Feedbacks/Sony_Vehicles_2012/"/>
+		<FeedbacksPath path = "//glassegg.com/projects/Documents_Feedbacks/Sony_Vehicles_2012/Feedbacks/"/>
+		<ReferencesImagePath path = "//glassegg.com/Images_References\Lives\Sony_Vehicles_2012/"/>
 	</Directories>
 	<ProjectData>
 		<AssetList file="AssetList.xml" />

@@ -7,16 +7,15 @@ Created on May 27, 2014
 
 '''
 import inspect,os
-
 try:
-    reload(ProjectUI)
+    reload(ui)
 except:
-    import ProjectUI
+    from developer.main.projectUI import projectUI as ui
     
 dirfile = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 ProjectName = os.path.splitext(os.path.split(inspect.getfile(inspect.currentframe()))[1])[0]
-ProjectXML = dirfile + '/XMLfiles/' + ProjectName + '.xml'
-
+ProjectXML = dirfile + '/xml/' + ProjectName + '.xml'
+    
 def main():
-    MainForm = ProjectUI.ProjectUI(ProjectXML)
+    MainForm = ui.projectUI(ProjectXML)
     MainForm.show()
