@@ -11,9 +11,6 @@ try:
 except:
     from developer.main.common import CommonFunctions 
     
-CommonFunctions.importQtPlugin()
-CommonFunctions.importMayaModule()
-
 import os, sys, re, inspect , imp, shutil
 
 from xml.dom.minidom import *
@@ -33,12 +30,13 @@ dirUI= fileDirCommmon +'/UI/ProjectForm_test.ui'
 
 try:
     form_class, base_class = CommonFunctions.loadUIPySide(dirUI)
+    print 'PySide'
 except:
     form_class, base_class = CommonFunctions.loadUIPyQt(dirUI)
+    print 'PyQt'
 
 class projectUI(form_class,base_class):
     def __init__(self, XMLProject, parent = CommonFunctions.getMayaWindow()):
         super(projectUI, self).__init__(parent)
         self.setupUi(self)
         self.setObjectName('ProjectUIWindow')
-        #self.setWindowTitle(self.Proj.ProjectName)

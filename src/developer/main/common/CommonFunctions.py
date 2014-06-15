@@ -18,12 +18,6 @@ def importQtPlugin():
         from PyQt4 import QtCore, QtGui, uic
         import sip
 
-def importMayaModule():
-    import maya.cmds as cmds
-    import maya.mel as mel
-    import pymel.core as py
-    import pymel.core.datatypes as dt
-    
 def wrapinstance(ptr, base=None):
     if ptr is None:
         return None
@@ -46,25 +40,19 @@ def wrapinstance(ptr, base=None):
         return sip.wrapinstance(long(ptr), base)
     else:
         return None
-    
-def getMayaWindowPySide():
-     # import all dependencies
-    from PySide import QtGui, QtCore
-    import pysideuic, shiboken
-    from developer.main.source.IconResource_rc import *
-    #-----------------------------------------
-    ptr = omUI.MQtUtil.mainWindow()
-    return wrapinstance(long(ptr), QtGui.QWidget)
-    
-def getMayaWindowPyQt():
-    ptr = omUI.MQtUtil.mainWindow()
-    return sip.wrapinstance(long(ptr), QtCore.QObject)
 
 def getMayaWindow():
     try:
-        return getMayaWindowPySide()
+        # import all dependencies
+        from PySide import QtGui, QtCore
+        import pysideuic, shiboken
+        from developer.main.source.IconResource_rc import *
+        #-----------------------------------------
+        ptr = omUI.MQtUtil.mainWindow()
+        return wrapinstance(long(ptr), QtGui.QWidget)
     except:
-        return getMayaWindowPyQt()
+        ptr = omUI.MQtUtil.mainWindow()
+        return sip.wrapinstance(long(ptr), QtCore.QObject)
     
 def loadUIPySide(uiFile):
     # import all dependencies
@@ -88,7 +76,10 @@ def loadUIPySide(uiFile):
     return form_class, base_class
 
 def loadUIPyQt(uiFile):
-    importQtPlugin()
+    # import all dependencies
+    from PyQt4 import QtCore, QtGui, uic
+    import sip
+    # -------------------------------------------
     form_class, base_class = uic.loadUiType(uiFile)
     return form_class, base_class
 
