@@ -6,14 +6,12 @@ Created on May 27, 2014
 @description: ''
 
 '''
-try:
-    reload(CommonFunctions)
-except:
-    from developer.main.common import CommonFunctions 
-    
+   
 from developer.main.source.icons import IconResource_rc
 import os, sys, re, inspect , imp, shutil
+
 from xml.dom.minidom import *
+import developer
 
 try:
     reload(dockWidget)
@@ -24,7 +22,12 @@ try:
     reload(projectBase)
 except:
     from developer.main.common import projectBase
-         
+    
+try:
+    reload(CommonFunctions)
+except:
+    from developer.main.common import CommonFunctions
+
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/ProjectForm.ui'
 
