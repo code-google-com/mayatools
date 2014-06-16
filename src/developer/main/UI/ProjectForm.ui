@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>491</width>
+    <width>428</width>
     <height>948</height>
    </rect>
   </property>
@@ -80,7 +80,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>491</width>
+     <width>428</width>
      <height>26</height>
     </rect>
    </property>
@@ -330,7 +330,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../Source/IconResource.qrc"/>
+  <include location="../source/icons/IconResource.qrc"/>
  </resources>
  <connections/>
 </ui>

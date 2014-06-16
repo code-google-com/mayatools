@@ -5,6 +5,7 @@ import maya.cmds as cmds
 import maya.mel as mel
 import pymel.core as py
 
+
 def execute():
     print '--------------- Convert Instance mesh to object-------------------'
     shapeNodes = cmds.ls(type = 'mesh')

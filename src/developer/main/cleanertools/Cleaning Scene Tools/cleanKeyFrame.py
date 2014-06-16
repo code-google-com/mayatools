@@ -3,6 +3,8 @@ name = 'cleanKeyFrame'
 
 import maya.cmds as cmds
 import maya.mel as mel
+
+
 def execute():
     print '--------------- REMOVE KEYFRAME-------------------------'
     transformNodes = cmds.ls(type = 'transform')

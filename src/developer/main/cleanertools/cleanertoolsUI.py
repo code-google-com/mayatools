@@ -1,10 +1,13 @@
+import functools
+import os, sys, inspect
+
 import developer.main.CommonFunctions as cf
+import maya.cmds as cmds
+
+
 mayaVersion = cf.getMayaVersion()
 cf.importQtPlugin()
 
-import maya.cmds as cmds
-import os, sys, inspect
-import functools
 
 try:
     reload(dockWidget)

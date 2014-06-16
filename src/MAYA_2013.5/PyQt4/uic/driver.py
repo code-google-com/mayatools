@@ -25,8 +25,8 @@
 #############################################################################
 
 
-import sys
 import logging
+import sys
 
 from PyQt4.uic import compileUi, loadUi
 

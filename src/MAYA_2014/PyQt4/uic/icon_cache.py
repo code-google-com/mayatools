@@ -25,8 +25,9 @@
 #############################################################################
 
 
-import sys
 import os.path
+import sys
+
 
 if sys.hexversion >= 0x03000000:
     from PyQt4.uic.port_v3.as_string import as_string

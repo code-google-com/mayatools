@@ -1,11 +1,11 @@
 import sys
 
-from PyQt4.uic.properties import Properties
-from PyQt4.uic.uiparser import UIParser
 from PyQt4.uic.Compiler import qtproxies
 from PyQt4.uic.Compiler.indenter import createCodeIndenter, getIndenter, \
         write_code
 from PyQt4.uic.Compiler.qobjectcreator import CompilerCreatorPolicy
+from PyQt4.uic.properties import Properties
+from PyQt4.uic.uiparser import UIParser
 
 
 class UICompiler(UIParser):

@@ -1,5 +1,5 @@
-import sys
 import optparse
+import sys
 
 from PyQt4 import QtCore
 from PyQt4.uic.driver import Driver

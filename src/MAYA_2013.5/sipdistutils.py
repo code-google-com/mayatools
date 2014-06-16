@@ -19,9 +19,10 @@
 
 import distutils.command.build_ext
 from distutils.dep_util import newer, newer_group
+from hashlib import sha1
 import os
 import sys
-from hashlib import sha1
+
 
 build_ext_base = distutils.command.build_ext.build_ext
 

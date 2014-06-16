@@ -1,8 +1,9 @@
-import sys
 import re
+import sys
 
 from PyQt4.uic.Compiler.indenter import write_code
 from PyQt4.uic.Compiler.misc import Literal, moduleMember
+
 
 if sys.hexversion >= 0x03000000:
     from PyQt4.uic.port_v3.proxy_base import ProxyBase

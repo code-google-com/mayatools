@@ -7,9 +7,11 @@ Created on May 26, 2014
 '''
 
 #import developer.main.dockWidget as dw
+import inspect, os
+
 from developer.main import CommonFunctions
 from developer.main import dockWidget
-import inspect, os
+
 
 CommonFunctions.importQtPlugin()
 filedircommon = os.path.split(inspect.getfile(inspect.currentframe()))[0]

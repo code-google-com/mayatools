@@ -1,12 +1,14 @@
 import logging
 
+from PyQt4.uic.Compiler.indenter import write_code
+from PyQt4.uic.Compiler.qtproxies import QtGui, Literal, strict_getattr
+
+
 try:
     set()
 except NameError:
     from sets import Set as set
 
-from PyQt4.uic.Compiler.indenter import write_code
-from PyQt4.uic.Compiler.qtproxies import QtGui, Literal, strict_getattr
 
 
 logger = logging.getLogger(__name__)

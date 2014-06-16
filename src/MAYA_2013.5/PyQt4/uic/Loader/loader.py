@@ -41,8 +41,8 @@
 import os.path
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.uic.uiparser import UIParser
 from PyQt4.uic.Loader.qobjectcreator import LoaderCreatorPolicy
+from PyQt4.uic.uiparser import UIParser
 
 
 class DynamicUILoader(UIParser):

@@ -38,10 +38,15 @@
 #############################################################################
 
 
-import sys
 import logging
 import os.path
 import re
+import sys
+
+from PyQt4.uic.exceptions import NoSuchWidgetError
+from PyQt4.uic.objcreator import QObjectCreator
+from PyQt4.uic.properties import Properties
+
 
 try:
     from xml.etree.ElementTree import parse, SubElement
@@ -55,9 +60,6 @@ except ImportError:
             from PyQt4.elementtree.ElementTree import parse, SubElement
         
 
-from PyQt4.uic.exceptions import NoSuchWidgetError
-from PyQt4.uic.objcreator import QObjectCreator
-from PyQt4.uic.properties import Properties
 
 
 logger = logging.getLogger(__name__)

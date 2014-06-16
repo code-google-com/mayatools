@@ -40,12 +40,14 @@
 
 import sys
 
+from PyQt4 import QtGui
+
+
 try:
     set()
 except NameError:
     from sets import Set as set
 
-from PyQt4 import QtGui
 
 
 class _QtGuiWrapper(object):

@@ -45,6 +45,7 @@ import sys
 from PyQt4.uic.exceptions import UnsupportedPropertyError
 from PyQt4.uic.icon_cache import IconCache
 
+
 if sys.hexversion >= 0x03000000:
     from PyQt4.uic.port_v3.ascii_upper import ascii_upper
 else:

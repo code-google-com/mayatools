@@ -1,6 +1,7 @@
 __all__ = ("compileUi", "loadUiType", "loadUi")
 
 from PyQt4.uic.Compiler import indenter, compiler
+from PyQt4.uic.objcreator import widgetPluginPath
 
 
 _header = """# -*- coding: utf-8 -*-
@@ -178,4 +179,3 @@ def loadUi(uifile, baseinstance=None):
 
 
 # The list of directories that are searched for widget plugins.
-from PyQt4.uic.objcreator import widgetPluginPath

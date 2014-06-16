@@ -8,7 +8,7 @@ except:
 try:
     reload(IconResource_rc)
 except:
-    from developer.main.source import IconResource_rc
+    from developer.main.source.icons import IconResource_rc
                   
 def hasFeature(dockwidget, feature):
     return dockwidget.features() & feature == feature

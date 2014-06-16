@@ -189,6 +189,10 @@
    </property>
   </action>
   <action name="actionQA">
+   <property name="icon">
+    <iconset>
+     <normaloff>../source/icons/1.png</normaloff>../source/icons/1.png</iconset>
+   </property>
    <property name="text">
     <string>QA</string>
    </property>

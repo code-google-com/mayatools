@@ -1,22 +1,18 @@
-import maya.cmds as cmds
-import pymel.core as py
-from pymel import versions
-import maya.OpenMayaUI as omUI
-from xml.dom.minidom import *
-import sys, os, shutil, re, imp
 from cStringIO import StringIO
+import sys, os, shutil, re, imp
+from xml.dom.minidom import *
+
+import maya.OpenMayaUI as omUI
+import maya.cmds as cmds
+from pymel import versions
+import pymel.core as py
 import xml.etree.ElementTree as xml
+
+from PyQt4 import QtCore, QtGui, uic
+import sip
 
 def getMayaVersion():
     return versions.current()
-
-def importQtPlugin():
-    try:
-        from PySide import QtGui, QtCore
-        import pysideuic, shiboken
-    except:
-        from PyQt4 import QtCore, QtGui, uic
-        import sip
 
 def wrapinstance(ptr, base=None):
     if ptr is None:
@@ -42,24 +38,10 @@ def wrapinstance(ptr, base=None):
         return None
 
 def getMayaWindow():
-    try:
-        # import all dependencies
-        from PySide import QtGui, QtCore
-        import pysideuic, shiboken
-        from developer.main.source.IconResource_rc import *
-        #-----------------------------------------
-        ptr = omUI.MQtUtil.mainWindow()
-        return wrapinstance(long(ptr), QtGui.QWidget)
-    except:
-        ptr = omUI.MQtUtil.mainWindow()
-        return sip.wrapinstance(long(ptr), QtCore.QObject)
-    
+    ptr = omUI.MQtUtil.mainWindow()
+    return wrapinstance(long(ptr))
+
 def loadUIPySide(uiFile):
-    # import all dependencies
-    from PySide import QtGui, QtCore
-    import pysideuic, shiboken
-    from developer.main.source.IconResource_rc import *
-    #-----------------------------------------
     parsed = xml.parse(uiFile)
     widget_class = parsed.find('widget').get('class')
     form_class = parsed.find('class').text
@@ -69,19 +51,20 @@ def loadUIPySide(uiFile):
             pysideuic.compileUi(f, o, indent=0)
             pyc = compile(o.getvalue(), '<string>', 'exec')
             exec pyc in frame
-            
             #Fetch the base_class and form class based on their type in the xml from designer
             form_class = frame['Ui_%s'%form_class]
             base_class = eval('QtGui.%s'%widget_class)
     return form_class, base_class
 
 def loadUIPyQt(uiFile):
-    # import all dependencies
-    from PyQt4 import QtCore, QtGui, uic
-    import sip
-    # -------------------------------------------
     form_class, base_class = uic.loadUiType(uiFile)
     return form_class, base_class
+
+def loadUI(uiFile):
+    try:
+        return loadUIPyQt(uiFile)
+    except:
+        return loadUIPySide(uiFile)
 
 def gcd(a, b):
     while b:

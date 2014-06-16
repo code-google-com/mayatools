@@ -1,7 +1,8 @@
-import sys
 import os.path
+import sys
 
 from PyQt4.uic.exceptions import NoSuchWidgetError, WidgetPluginError
+
 
 if sys.hexversion >= 0x03000000:
     from PyQt4.uic.port_v3.load_plugin import load_plugin

@@ -17,11 +17,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 
-import sys
 import os
+import re
 import stat
 import string
-import re
+import sys
 
 
 # These are installation specific values created when SIP was configured.
