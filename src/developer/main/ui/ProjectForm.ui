@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>413</width>
+    <width>384</width>
     <height>948</height>
    </rect>
   </property>
@@ -80,7 +80,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>413</width>
+     <width>384</width>
      <height>26</height>
     </rect>
    </property>
@@ -208,8 +208,8 @@
   </action>
   <action name="actionUpdatedProject">
    <property name="icon">
-    <iconset>
-     <normaloff>:/Project/new_Document.png</normaloff>:/Project/new_Document.png</iconset>
+    <iconset resource="../source/icons/IconResource.qrc">
+     <normaloff>:/Project/Import.png</normaloff>:/Project/Import.png</iconset>
    </property>
    <property name="text">
     <string>Updated Tools</string>
