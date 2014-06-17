@@ -10,12 +10,11 @@ import inspect,os
 try:
     reload(ui)
 except:
-    from developer.main.projectUI import *
+    from developer.main import projectUI as ui
     
 dirfile = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 ProjectName = os.path.splitext(os.path.split(inspect.getfile(inspect.currentframe()))[1])[0]
 ProjectXML = dirfile + '/xml/' + ProjectName + '.xml'
 
-
-form = projectUI(ProjectXML)
+form = ui.projectUI(ProjectXML)
 form.show()
