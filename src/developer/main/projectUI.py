@@ -6,12 +6,10 @@ Created on May 27, 2014
 @description: ''
 
 '''
-   
-from developer.main.source.icons import IconResource_rc
 import os, sys, re, inspect , imp, shutil
 
 from xml.dom.minidom import *
-import developer
+import source.IconResource_rc
 
 try:
     reload(dockWidget)
@@ -29,12 +27,13 @@ except:
     from developer.main.common import CommonFunctions
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
-dirUI= fileDirCommmon +'/UI/ProjectForm.ui'
+dirUI= fileDirCommmon +'/ui/ProjectForm_test.ui'
+print dirUI
 
-form_class, base_class = CommonFunctions.loadUI(dirUI)
+form_class, base_class = CommonFunctions.loadUIPyQt(dirUI)
 
 class projectUI(form_class,base_class):
     def __init__(self, XMLProject, parent = CommonFunctions.getMayaWindow()):
-        super(projectUI, self).__init__(parent)
+        super(base_class, self).__init__(parent)
         self.setupUi(self)
         self.setObjectName('ProjectUIWindow')

@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>491</width>
+    <width>413</width>
     <height>948</height>
    </rect>
   </property>
@@ -80,7 +80,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>491</width>
+     <width>413</width>
      <height>26</height>
     </rect>
    </property>
@@ -121,14 +121,18 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionImport_Module">
    <property name="icon">
-    <iconset>
-     <normaloff>../source/icons/arrow_6.png</normaloff>../source/icons/arrow_6.png</iconset>
+    <iconset resource="../source/icons/IconResource.qrc">
+     <normaloff>:/Project/arrow_6.png</normaloff>:/Project/arrow_6.png</iconset>
    </property>
    <property name="text">
     <string>Import Module</string>
    </property>
   </action>
   <action name="actionRemove_Module">
+   <property name="icon">
+    <iconset resource="../source/icons/IconResource.qrc">
+     <normaloff>:/Project/arrow_12.png</normaloff>:/Project/arrow_12.png</iconset>
+   </property>
    <property name="text">
     <string>Remove Module</string>
    </property>
@@ -144,7 +148,7 @@
   </action>
   <action name="actionRemove_Items">
    <property name="icon">
-    <iconset>
+    <iconset resource="../source/icons/IconResource.qrc">
      <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
    </property>
    <property name="text">
@@ -162,7 +166,7 @@
   </action>
   <action name="actionEdit">
    <property name="icon">
-    <iconset>
+    <iconset resource="../source/icons/IconResource.qrc">
      <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
    </property>
    <property name="text">
@@ -171,7 +175,7 @@
   </action>
   <action name="actionChange">
    <property name="icon">
-    <iconset>
+    <iconset resource="../source/icons/IconResource.qrc">
      <normaloff>:/Project/Refresh.png</normaloff>:/Project/Refresh.png</iconset>
    </property>
    <property name="text">
@@ -190,8 +194,8 @@
   </action>
   <action name="actionQA">
    <property name="icon">
-    <iconset>
-     <normaloff>../source/icons/1.png</normaloff>../source/icons/1.png</iconset>
+    <iconset resource="../source/icons/IconResource.qrc">
+     <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
    </property>
    <property name="text">
     <string>QA</string>
@@ -203,6 +207,10 @@
    </property>
   </action>
   <action name="actionUpdatedProject">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/Project/new_Document.png</normaloff>:/Project/new_Document.png</iconset>
+   </property>
    <property name="text">
     <string>Updated Tools</string>
    </property>
@@ -223,6 +231,10 @@
    </property>
   </action>
   <action name="actionAbout">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/Project/About.png</normaloff>:/Project/About.png</iconset>
+   </property>
    <property name="text">
     <string>About</string>
    </property>
@@ -234,7 +246,7 @@
   </action>
   <action name="actionCheck_in">
    <property name="icon">
-    <iconset>
+    <iconset resource="../source/icons/IconResource.qrc">
      <normaloff>:/Project/Check.png</normaloff>:/Project/Check.png</iconset>
    </property>
    <property name="text">
@@ -243,7 +255,7 @@
   </action>
   <action name="actionCheck_out">
    <property name="icon">
-    <iconset>
+    <iconset resource="../source/icons/IconResource.qrc">
      <normaloff>:/Project/Uninstall.png</normaloff>:/Project/Uninstall.png</iconset>
    </property>
    <property name="text">
@@ -261,7 +273,7 @@
   </action>
   <action name="actionRevert">
    <property name="icon">
-    <iconset>
+    <iconset resource="../source/icons/IconResource.qrc">
      <normaloff>:/Project/Refresh.png</normaloff>:/Project/Refresh.png</iconset>
    </property>
    <property name="text">
@@ -270,7 +282,7 @@
   </action>
   <action name="actionDelete">
    <property name="icon">
-    <iconset>
+    <iconset resource="../source/icons/IconResource.qrc">
      <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
    </property>
    <property name="text">
@@ -289,7 +301,7 @@
   </action>
   <action name="actionUpdate_tools">
    <property name="icon">
-    <iconset>
+    <iconset resource="../source/icons/IconResource.qrc">
      <normaloff>:/Project/Import.png</normaloff>:/Project/Import.png</iconset>
    </property>
    <property name="text">
@@ -317,6 +329,8 @@
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../source/icons/IconResource.qrc"/>
+ </resources>
  <connections/>
 </ui>
