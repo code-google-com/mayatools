@@ -19,6 +19,11 @@ presetNameforLeft = ['_L_','L_','left','LEFT','_FL_','_BL_','_RL_']
 presetNameforRight = ['_R_','R_','right','RIGHT','_FR_','_BR_','_RR_']
 
 def mirrorTool(axis, isKeepHistory, isClone, method):
+        '''
+        Executing mirror functions called in mirrorForm. Contains some features allow us can mirror a mesh base on pivot or axis.
+        One convenient feature can be auto liped uvs  to the other side. 
+         
+        '''
         selObjs = cmds.ls(sl = True)
         for obj in selObjs:
             if axis == 'x':

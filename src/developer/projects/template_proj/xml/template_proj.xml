@@ -26,19 +26,19 @@
 	<ProjectData>
 		<AssetList file="AssetList.xml" />
 		<Module>
-			<module name="NamingConvention" />
-			<module name="CleanerTools"/>
-			<module name="Pivots" />
-			<module name="LODTools"/>
-			<module name="UVTools" />
-			<module name="PolyTools">
-				<submodule name = "setupscene"/>
-				<submodule name = "mirrortools"/>
-				<submodule name = "modelingtools"/>
-				<submodule name = "normaltools"/> 
-			</module>
-			<module name="ShaderTools" />
-			<module name="ThirdpartyTools" />
+			<package name="NamingConvention" />
+			<package name="CleanerTools"/>
+			<package name="Pivots" />
+			<package name="LODTools"/>
+			<package name="UVTools" />
+			<package name="PolyTools">
+				<module name = "setupscene" unit = "centimeter" backfacecull = "True" />
+				<module name = "mirrortools"/>
+				<module name = "modelingtools"/>
+				<module name = "normaltools"/> 
+			</package>
+			<package name="ShaderTools" />
+			<package name="ThirdpartyTools" />
 		</Module>
 	</ProjectData>
 </Project>

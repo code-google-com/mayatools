@@ -6,14 +6,10 @@ Created on May 27, 2014
 @description: ''
 
 '''
-from developer.main import CommonFunctions
-import os, inspect, functools
-import fn.mirrorFunction as mFn
+from developer.main.common import commonFunctions
+from developer.main.polytools.mirrortools.fn import mirrorFunction as mFn
 
-#-- import dependencies
-CommonFunctions.importQtPlugin()
-CommonFunctions.importMayaModule()
-#-- 
+import os, inspect, functools
 
 #-- get ui path:
 filedircommon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
@@ -23,7 +19,7 @@ uiFile = filedircommon + '/ui/' + fileNamePrefix.replace('Form','UI')
 
 #-- load ui 
 if os.path.isfile(uiFile):
-    form_class, base_class = CommonFunctions.loadUI(uiFile)
+    form_class, base_class = CommonFunctions.loadPyQtUI(uiFile)
 else:
     print 'not found ui file:' + uiFile
     return
@@ -35,6 +31,7 @@ class mirrorForm(form_class,base_class):
     '''
     def __init__(self, parent = CommonFunctions.getMayaWindow()):
         super(base_class,self).__init__(parent)
+        self.setupUi(self)
         self.btnAxisX.clicked.connect(functools.partial(mFn.mirror, 'x', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By axis'))
         self.btnAxisY.clicked.connect(functools.partial(mFn.mirror, 'y', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By axis'))
         self.btnAxisZ.clicked.connect(functools.partial(mFn.mirror, 'z', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By axis'))

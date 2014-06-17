@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>384</width>
+    <width>383</width>
     <height>948</height>
    </rect>
   </property>
@@ -80,18 +80,10 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>384</width>
+     <width>383</width>
      <height>26</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuConfig">
-    <property name="title">
-     <string>Modules</string>
-    </property>
-    <addaction name="actionImport_Module"/>
-    <addaction name="actionRemove_Module"/>
-    <addaction name="separator"/>
-   </widget>
    <widget class="QMenu" name="menuAssets">
     <property name="title">
      <string>Assets</string>
@@ -107,39 +99,66 @@
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
+     <string>Preferences</string>
+    </property>
+    <widget class="QMenu" name="menuIntegrate_with_Source_Control">
+     <property name="geometry">
+      <rect>
+       <x>915</x>
+       <y>193</y>
+       <width>248</width>
+       <height>222</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Integrate with Source Control</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>:/Project/Exchange.png</normaloff>:/Project/Exchange.png</iconset>
+     </property>
+     <widget class="QMenu" name="menuConnect_to_Source_Control">
+      <property name="title">
+       <string>Connect to Source Control</string>
+      </property>
+      <addaction name="actionPerforce"/>
+      <addaction name="actionSVN"/>
+     </widget>
+     <widget class="QMenu" name="menuCheck_out">
+      <property name="title">
+       <string>Check out</string>
+      </property>
+      <addaction name="actionAdd_to_Existing_Changelist"/>
+      <addaction name="actionAdd_to_new_changelist"/>
+     </widget>
+     <addaction name="actionGet_latest_version"/>
+     <addaction name="actionGet_revision"/>
+     <addaction name="menuCheck_out"/>
+     <addaction name="actionSubmit"/>
+     <addaction name="actionRevert_2"/>
+     <addaction name="actionShow_History"/>
+     <addaction name="menuConnect_to_Source_Control"/>
+    </widget>
+    <addaction name="menuIntegrate_with_Source_Control"/>
+    <addaction name="actionSettings_2"/>
+    <addaction name="actionUpdatedProject"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp_2">
+    <property name="title">
      <string>Help</string>
     </property>
-    <addaction name="actionUpdatedProject"/>
-    <addaction name="actionInstall_Plugins"/>
-    <addaction name="actionAbout"/>
+    <addaction name="actionAbout_2"/>
+    <addaction name="actionGuildlines"/>
    </widget>
    <addaction name="menuAssets"/>
-   <addaction name="menuConfig"/>
    <addaction name="menuChecking_Tools"/>
    <addaction name="menuHelp"/>
+   <addaction name="menuHelp_2"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionImport_Module">
-   <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
-     <normaloff>:/Project/arrow_6.png</normaloff>:/Project/arrow_6.png</iconset>
-   </property>
-   <property name="text">
-    <string>Import Module</string>
-   </property>
-  </action>
-  <action name="actionRemove_Module">
-   <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
-     <normaloff>:/Project/arrow_12.png</normaloff>:/Project/arrow_12.png</iconset>
-   </property>
-   <property name="text">
-    <string>Remove Module</string>
-   </property>
-  </action>
   <action name="actionImport_Asset">
    <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
@@ -148,7 +167,7 @@
   </action>
   <action name="actionRemove_Items">
    <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
    </property>
    <property name="text">
@@ -157,7 +176,7 @@
   </action>
   <action name="actionCreate_Workflow">
    <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
@@ -166,7 +185,7 @@
   </action>
   <action name="actionEdit">
    <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
    </property>
    <property name="text">
@@ -175,7 +194,7 @@
   </action>
   <action name="actionChange">
    <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Refresh.png</normaloff>:/Project/Refresh.png</iconset>
    </property>
    <property name="text">
@@ -194,7 +213,7 @@
   </action>
   <action name="actionQA">
    <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
    </property>
    <property name="text">
@@ -207,68 +226,50 @@
    </property>
   </action>
   <action name="actionUpdatedProject">
-   <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
-     <normaloff>:/Project/Import.png</normaloff>:/Project/Import.png</iconset>
+   <property name="checkable">
+    <bool>true</bool>
    </property>
-   <property name="text">
-    <string>Updated Tools</string>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-    </font>
-   </property>
-  </action>
-  <action name="actionInstall_Plugins">
    <property name="icon">
     <iconset>
-     <normaloff>:/root/1.png</normaloff>:/root/1.png</iconset>
-   </property>
-   <property name="text">
-    <string>Install Plugins</string>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-    </font>
-   </property>
-  </action>
-  <action name="actionAbout">
-   <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
-     <normaloff>:/Project/About.png</normaloff>:/Project/About.png</iconset>
-   </property>
-   <property name="text">
-    <string>About</string>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-    </font>
-   </property>
-  </action>
-  <action name="actionCheck_in">
-   <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
      <normaloff>:/Project/Check.png</normaloff>:/Project/Check.png</iconset>
    </property>
    <property name="text">
-    <string>Check in</string>
+    <string>Install Update</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Segoe UI</family>
+     <pointsize>9</pointsize>
+    </font>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+U</string>
    </property>
   </action>
-  <action name="actionCheck_out">
+  <action name="actionSettings_2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
-     <normaloff>:/Project/Uninstall.png</normaloff>:/Project/Uninstall.png</iconset>
+    <iconset>
+     <normaloff>:/Project/cryControlPanel.png</normaloff>:/Project/cryControlPanel.png</iconset>
    </property>
    <property name="text">
-    <string>Submit</string>
+    <string>Settings...</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Segoe UI</family>
+     <pointsize>9</pointsize>
+    </font>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
    </property>
   </action>
   <action name="actionAdd">
    <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
@@ -277,7 +278,7 @@
   </action>
   <action name="actionRevert">
    <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Refresh.png</normaloff>:/Project/Refresh.png</iconset>
    </property>
    <property name="text">
@@ -286,7 +287,7 @@
   </action>
   <action name="actionDelete">
    <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
    </property>
    <property name="text">
@@ -305,36 +306,88 @@
   </action>
   <action name="actionUpdate_tools">
    <property name="icon">
-    <iconset resource="../source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Import.png</normaloff>:/Project/Import.png</iconset>
    </property>
    <property name="text">
     <string>Update tools</string>
    </property>
   </action>
+  <action name="actionAbouts">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/Project/About.png</normaloff>:/Project/About.png</iconset>
+   </property>
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="actionAbout_2">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/Project/About.png</normaloff>:/Project/About.png</iconset>
+   </property>
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="actionGuildlines">
+   <property name="text">
+    <string>Guildlines</string>
+   </property>
+  </action>
+  <action name="actionPerforce">
+   <property name="text">
+    <string>Perforce</string>
+   </property>
+  </action>
+  <action name="actionSVN">
+   <property name="text">
+    <string>SVN</string>
+   </property>
+  </action>
+  <action name="actionGet_latest_version">
+   <property name="text">
+    <string>Get latest version</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+G</string>
+   </property>
+  </action>
+  <action name="actionSubmit">
+   <property name="text">
+    <string>Submit...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionRevert_2">
+   <property name="text">
+    <string>Revert</string>
+   </property>
+  </action>
+  <action name="actionAdd_to_Existing_Changelist">
+   <property name="text">
+    <string>Add to Existing changelist</string>
+   </property>
+  </action>
+  <action name="actionAdd_to_new_changelist">
+   <property name="text">
+    <string>Add to new changelist</string>
+   </property>
+  </action>
   <action name="actionShow_History">
    <property name="text">
-    <string>Show History</string>
+    <string>Show History...</string>
    </property>
   </action>
-  <action name="actionGet_the_latest_version">
+  <action name="actionGet_revision">
    <property name="text">
-    <string>Get the latest version</string>
-   </property>
-  </action>
-  <action name="actionGet_version">
-   <property name="text">
-    <string>Get version</string>
-   </property>
-  </action>
-  <action name="actionConnect_to_Source_Control">
-   <property name="text">
-    <string>Connect to Source Control</string>
+    <string>Get revision...</string>
    </property>
   </action>
  </widget>
- <resources>
-  <include location="../source/icons/IconResource.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

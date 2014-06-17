@@ -13,26 +13,35 @@ from xml.dom.minidom import *
 try:
     reload(dockWidget)
 except:
-    from developer.main.common import dockWidget 
+    from developer.main.common import dockWidget as dw 
 
 try:
     reload(projectBase)
 except:
-    from developer.main.common import projectBase
+    from developer.main.common import projectBase as proj
     
 try:
     reload(CommonFunctions)
 except:
-    from developer.main.common import CommonFunctions
+    from developer.main.common import commonFunctions as cf
+    
+
+#-- get ui dir 
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/ui/ProjectForm.ui'
-print dirUI
 
-form_class, base_class = CommonFunctions.loadUIPyQt(dirUI)
+#-- generate form_class and base_class to load Ui
+
+form_class, base_class = cf.loadUIPyQt(dirUI)
 
 class projectUI(form_class,base_class):
-    def __init__(self, XMLProject, parent = CommonFunctions.getMayaWindow()):
+    def __init__(self, XMLProject, parent = cf.getMayaWindow()):
         super(base_class, self).__init__(parent)
         self.setupUi(self)
         self.setObjectName('ProjectUIWindow')
+        self.proj = proj.projectBase(XMLProject)
+        
+        # Set up Ui controller:
+        
+        self.action
