@@ -2,16 +2,15 @@
 Created on May 26, 2014
 
 @author: trungtran
+@decription:
+    projectBase is quite simple class that read XMl data to generate all of infos
+
 '''
 
 import xml.dom.minidom
 
-
 class projectBase():
-    '''
-    project base class: to create a very base class that contains some features
-    
-    '''
+   
     def __init__(self,XMLRootFile):
         self.ProjectName = ""
         self.managers = list()
