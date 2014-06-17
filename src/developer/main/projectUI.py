@@ -9,7 +9,6 @@ Created on May 27, 2014
 import os, sys, re, inspect , imp, shutil
 
 from xml.dom.minidom import *
-import source.IconResource_rc
 
 try:
     reload(dockWidget)
@@ -27,7 +26,7 @@ except:
     from developer.main.common import CommonFunctions
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
-dirUI= fileDirCommmon +'/ui/ProjectForm_test.ui'
+dirUI= fileDirCommmon +'/ui/ProjectForm.ui'
 print dirUI
 
 form_class, base_class = CommonFunctions.loadUIPyQt(dirUI)
