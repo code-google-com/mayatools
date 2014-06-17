@@ -221,6 +221,10 @@
    </property>
   </action>
   <action name="actionInstall_Plugins">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/root/1.png</normaloff>:/root/1.png</iconset>
+   </property>
    <property name="text">
     <string>Install Plugins</string>
    </property>
