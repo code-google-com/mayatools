@@ -9,7 +9,7 @@ try:
 except:
     from developer.main.common import commonFunctions as cf
 
-dirUI = 
+dirUI = ''
 
 form_class, base_class = cf.loadUIPyQt(uiFile)
 
