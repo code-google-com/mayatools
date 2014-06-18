@@ -13,7 +13,6 @@
     <file>shader_damage.png</file>
     <file>normal.png</file>
     <file>X.png</file>
-    <file>AO.png</file>
     <file>checker.png</file>
     <file>diffuse.png</file>
     <file>Y.png</file>
@@ -28,25 +27,13 @@
     <file>ZMax.png</file>
     <file>ZMid.png</file>
     <file>ZMin.png</file>
-    <file>cryAnim.bmp</file>
-    <file>cryCheck.bmp</file>
     <file>cryControlPanel.png</file>
-    <file>cryExport.bmp</file>
-    <file>cryFBX.bmp</file>
-    <file>cryLoad.bmp</file>
-    <file>cryMaterial.bmp</file>
-    <file>cryPivot.bmp</file>
-    <file>cryTools.bmp</file>
-    <file>cryUdp.bmp</file>
-    <file>cryUnload.bmp</file>
-    <file>cryValidate.bmp</file>
     <file>normal_small.png</file>
     <file>normal_large.png</file>
     <file>normal_off.png</file>
     <file>background.png</file>
     <file>Y_up.png</file>
     <file>Z_up.png</file>
-    <file>About.png</file>
     <file>Exchange.png</file>
     <file>Export.png</file>
     <file>Open.png</file>
@@ -73,7 +60,6 @@
     <file>Refresh.png</file>
     <file>HTML_icon.png</file>
     <file>pdf_icon.png</file>
-    <file>Add.png</file>
     <file>Delete.png</file>
     <file>Import.png</file>
     <file>Uninstall.png</file>

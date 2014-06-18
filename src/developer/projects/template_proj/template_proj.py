@@ -8,6 +8,7 @@ Created on May 27, 2014
 '''
 import inspect,os
 import pymel.core as py
+
 try:
     reload(ui)
 except:
@@ -19,6 +20,5 @@ ProjectXML = dirfile + '/xml/' + ProjectName + '.xml'
 
 if py.window('ProjectUIWindow', q = True, ex= True):
     py.deleteUI('ProjectUIWindow')    
-
 form = ui.projectUI(ProjectXML)
 form.show()

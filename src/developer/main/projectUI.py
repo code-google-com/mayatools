@@ -24,11 +24,11 @@ try:
     reload(CommonFunctions)
 except:
     from developer.main.common import commonFunctions as cf
-    
 
 #-- get ui dir 
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
+
 dirUI= fileDirCommmon +'/ui/ProjectForm.ui'
 
 #-- generate form_class and base_class to load Ui
@@ -41,7 +41,3 @@ class projectUI(form_class,base_class):
         self.setupUi(self)
         self.setObjectName('ProjectUIWindow')
         self.proj = proj.projectBase(XMLProject)
-        
-        # Set up Ui controller:
-        
-        self.action
