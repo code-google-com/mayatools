@@ -884,4 +884,4 @@ class Ui_MainWindow(object):
         self.actionCapture_thumbnail.setText(_translate("MainWindow", "Capture thumbnail...", None))
         self.actionImport_selected_asset.setText(_translate("MainWindow", "Import selected asset", None))
 
-import IconResource_rc
+import developer.main.source.IconResource_rc

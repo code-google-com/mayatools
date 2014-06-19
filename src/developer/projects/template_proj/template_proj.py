@@ -10,15 +10,17 @@ import inspect,os
 import pymel.core as py
 
 try:
-    reload(ui)
+    reload(projectUI)
 except:
-    from developer.main import projectUI as ui
+    from developer.main import projectUI 
     
 dirfile = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 ProjectName = os.path.splitext(os.path.split(inspect.getfile(inspect.currentframe()))[1])[0]
 ProjectXML = dirfile + '/xml/' + ProjectName + '.xml'
 
-if py.window('ProjectUIWindow', q = True, ex= True):
-    py.deleteUI('ProjectUIWindow')    
-form = ui.projectUI(ProjectXML)
-form.show()
+
+def main():
+    if py.window('ProjectUIWindow', q = True, ex= True):
+        py.deleteUI('ProjectUIWindow')    
+    form = projectUI.projectUI(ProjectXML)
+    form.show()

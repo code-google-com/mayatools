@@ -2,25 +2,22 @@
 Created on Jun 18, 2014
 
 @author: trungtran
+@desciption: asset content form
 '''
+from PyQt4 import QtGui, QtCore
 
 try:
     reload(cf)
 except:
     from developer.main.common import commonFunctions as cf
 
-dirUI = ''
+from developer.main.assetContent.ui import AssetContent
+from developer.main.common import commonFunctions as cf
 
-form_class, base_class = cf.loadUIPyQt(uiFile)
-
-class assetContentForm(object):
-    '''
-    classdocs
-    '''
-
-
-    def __init__(self, params):
-        '''
-        Constructor
-        '''
+class assetContentForm(QtGui.QMainWindow, AssetContent.Ui_MainWindow):
+    def __init__(self, parent = cf.getMayaWindow()):
+        super(QtGui.QMainWindow, self).__init__(parent)
+        self.setupUi(self)
+        self.setObjectName('assetContentForm')
+        
         

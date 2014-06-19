@@ -88,14 +88,7 @@
     <property name="title">
      <string>Assets</string>
     </property>
-    <addaction name="actionAsset_Tracking"/>
-    <addaction name="actionAsset_Browser"/>
-   </widget>
-   <widget class="QMenu" name="menuChecking_Tools">
-    <property name="title">
-     <string>Checking Tools</string>
-    </property>
-    <addaction name="actionQA"/>
+    <addaction name="actionAsset"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -106,7 +99,7 @@
       <rect>
        <x>915</x>
        <y>193</y>
-       <width>248</width>
+       <width>251</width>
        <height>222</height>
       </rect>
      </property>
@@ -151,7 +144,6 @@
     <addaction name="actionGuildlines"/>
    </widget>
    <addaction name="menuAssets"/>
-   <addaction name="menuChecking_Tools"/>
    <addaction name="menuHelp"/>
    <addaction name="menuHelp_2"/>
   </widget>
@@ -220,9 +212,9 @@
     <string>QA</string>
    </property>
   </action>
-  <action name="actionAsset_Tracking">
+  <action name="actionAsset">
    <property name="text">
-    <string>Asset Tracking</string>
+    <string>Open Asset Content</string>
    </property>
   </action>
   <action name="actionUpdatedProject">

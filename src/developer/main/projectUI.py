@@ -7,7 +7,7 @@ Created on May 27, 2014
 
 '''
 import os, sys, re, inspect , imp, shutil
-
+import pymel.core as py
 from xml.dom.minidom import *
 
 try:
@@ -24,6 +24,11 @@ try:
     reload(CommonFunctions)
 except:
     from developer.main.common import commonFunctions as cf
+    
+try:
+    reload(__main__)
+except:
+    from developer.main.assetContent import __main__  
 
 #-- get ui dir 
 
@@ -41,3 +46,15 @@ class projectUI(form_class,base_class):
         self.setupUi(self)
         self.setObjectName('ProjectUIWindow')
         self.proj = proj.projectBase(XMLProject)
+        
+        # -- set ui controller
+        
+        self.actionAsset.triggered.connect(self.openAssetBrowser)
+        
+    def openAssetBrowser(self):
+        if py.window('assetContentForm', q = True, ex= True):
+            py.deleteUI('assetContentForm')
+        form = __main__.assetContentForm()
+        form.show()  
+             
+            
