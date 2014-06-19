@@ -10,9 +10,11 @@ try:
     reload(cf)
 except:
     from developer.main.common import commonFunctions as cf
-
-from developer.main.assetContent.ui import AssetContent
-from developer.main.common import commonFunctions as cf
+    
+try:
+    reload(AssetContent)
+except:
+    from developer.main.assetContent.ui import AssetContent
 
 class assetContentForm(QtGui.QMainWindow, AssetContent.Ui_MainWindow):
     def __init__(self, parent = cf.getMayaWindow()):
