@@ -1,58 +1,70 @@
 import maya.cmds as cmds
-from PyQt4 import QtGui, QtCore, uic
+
 import os, sys, inspect, decimal
 import maya.mel as mel
 import pymel.core as py
 import pymel.core.datatypes as dt
-import functools
-fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
-dirUI= fileDirCommmon +'/UI/Pivots.ui'
-form_class, base_class = uic.loadUiType(dirUI)
 
-def setPivotLocation():
-        vertexes = cmds.polyListComponentConversion(tv = True)
-        cmds.select(vertexes)
-        vertex = cmds.ls(sl=True,fl=True) 
-        pivPos = [0,0,0]
-        count = len(vertex)
-        for i in vertex:
+def setPivotToPos(pos):
+    pass
+
+def setPivotToMidSelection():
+    
+    '''
+    Set pivot to center of set selected vertexes. Auto convert to vertexes if edge or face was chosen.
+    '''
+    
+    vertexes = cmds.polyListComponentConversion(tv = True)
+    cmds.select(vertexes)
+    vertex = cmds.ls(sl=True,fl=True) 
+    pivPos = [0,0,0]
+    count = len(vertex)
+    for i in vertex:
             iPos = cmds.pointPosition(i)
             pivPos[0] =  pivPos[0] + iPos[0]
             pivPos[1] =  pivPos[1] + iPos[1]
             pivPos[2] =  pivPos[2] + iPos[2]
-        pivPos = [pivPos[0]/count,pivPos[1]/count,pivPos[2]/count]
+    pivPos = [pivPos[0]/count,pivPos[1]/count,pivPos[2]/count]
         # get obj's component
-        mainObj = cmds.ls(hilite=True)
-        cmds.select(mainObj)
-        cmds.xform(rp = pivPos, ws= True)
-
-class Pivots(form_class,base_class):
-    def __init__(self, inputFile):
-        super(base_class,self).__init__()
-        self.setupUi(self)
-        self.__name__ = 'Pivots'
-        self.scriptjobPivot = cmds.scriptJob(e = ['SelectionChanged',self.clearAll] , protected = True)
-        self.btnPivottoCenterElement.clicked.connect(setPivotLocation)
-        self.rdbXmin.clicked.connect(self.updatePivotPosition)
-        self.rdbXmid.clicked.connect(self.updatePivotPosition)
-        self.rdbXmax.clicked.connect(self.updatePivotPosition)
-        self.rdbYmin.clicked.connect(self.updatePivotPosition)
-        self.rdbYmid.clicked.connect(self.updatePivotPosition)
-        self.rdbYmax.clicked.connect(self.updatePivotPosition)
-        self.rdbZmin.clicked.connect(self.updatePivotPosition)
-        self.rdbZmid.clicked.connect(self.updatePivotPosition)
-        self.rdbZmax.clicked.connect(self.updatePivotPosition)
-        self.rdbX.clicked.connect(functools.partial(self.pivotOnAxis,'x'))
-        self.rdbY.clicked.connect(functools.partial(self.pivotOnAxis,'y'))
-        self.rdbZ.clicked.connect(functools.partial(self.pivotOnAxis,'z'))
-        self.chkStatus.clicked.connect(self.checkStatus)
-        self.edtX.textChanged.connect(self.updateLineEdit)
-        self.btnPivottoCenterElement.clicked.connect(setPivotLocation)
-        self.btnCenterPivot.clicked.connect(self.qtCenterPivotForSelectedMeshes)
-        self.btnPivottoOrigin.clicked.connect(self.qtPivotToOriginForSelectedMeshes)
-        self.btnPivottoanotherObj.clicked.connect(self.qtPivotToAnotherObject)
+    mainObj = cmds.ls(hilite=True)
+    cmds.select(mainObj)
+    cmds.xform(rp = pivPos, ws= True)
         
-    def clearAll(self):
+def setPivotToCenter():
+    '''
+    Set pivot to Center of selected mesh
+    '''
+    selObj = cmds.ls(sl=True)
+    for obj in selObj:
+        cmds.select(obj)
+        cmds.xform(cp=True)
+        
+def setPivotToOrigin():
+    '''
+    Set pivot to origin
+    '''
+    selObj = cmds.ls(sl=True)
+    for obj in selObj:
+        cmds.move(0,0,0,obj+'.scalePivot',obj+'.rotatePivot',a=True)
+        
+def setPivotToObject():
+    selObj = cmds.ls(sl=True)
+    target = cmds.xform(selObj[1],q=True,sp=True,ws=True)
+    cmds.xform(selObj[0],piv=target, ws=True)
+    
+def setPivotOnEdge():
+    pass
+
+def setPivotOnFace():
+    pass
+    
+def setPivotRotation():
+    pass
+
+def zeroPivotOffset():
+    pass
+
+def clearAll(self):
         try:
             selObj = cmds.ls(sl=True,transforms = True)[0]
             bb = cmds.xform(q=True,bb = True)
@@ -70,7 +82,7 @@ class Pivots(form_class,base_class):
         except RuntimeError:
             pass
         
-    def pivots_to_pos(self,obj, Xpos, Ypos, Zpos):
+def pivots_to_pos(Xpos, Ypos, Zpos):
         cmds.xform(cp=True)
         #selObjs = cmds.ls(sl=True)
         bbox = cmds.xform(obj, q=True,bb=True)
@@ -107,37 +119,9 @@ class Pivots(form_class,base_class):
         
         cmds.xform(obj, piv = vector,ws=True, a=True)
     
-    def updatePivotPosition(self):
-        if self.rdbXmin.isChecked():
-            Xpos = 'Xmin'
-        elif self.rdbXmid.isChecked():
-            Xpos = 'Xmid'
-        elif self.rdbXmax.isChecked():
-            Xpos = 'Xmax'
-        else:
-            Xpos = ''
-            
-        if self.rdbYmin.isChecked():
-            Ypos = 'Ymin'
-        elif self.rdbYmid.isChecked():
-            Ypos = 'Ymid'
-        elif self.rdbYmax.isChecked():
-            Ypos = 'Ymax'
-        else:
-            Ypos = ''
-            
-        if self.rdbZmin.isChecked():
-            Zpos = 'Zmin'
-        elif self.rdbZmid.isChecked():
-            Zpos = 'Zmid'
-        elif self.rdbZmax.isChecked():
-            Zpos = 'Zmax'
-        else:
-            Zpos = ''
-        selObjs = cmds.ls(sl=True)    
-        self.pivots_to_pos(selObjs[0], Xpos,Ypos,Zpos)
+
         
-    def alignPivottoFace(self, mesh, face):
+def alignPivottoFace(self, mesh, face):
         if len(face) > 0:
             return False
         elif len(face) == 0:
@@ -155,24 +139,13 @@ class Pivots(form_class,base_class):
             z0 = normal.dot([0,0,1])*180/dt.pi
             
         cmds.xfom(mesh, roo = 'yzx', rp = [x0, y0,z0], ws = True)
-   
-    def qtCenterPivotForSelectedMeshes(self):
-            selObj = cmds.ls(sl=True)
-            for obj in selObj:
-                cmds.select(obj)
-                cmds.xform(cp=True)
+
             
-    def qtPivotToOriginForSelectedMeshes(self):
-            selObj = cmds.ls(sl=True)
-            for obj in selObj:
-                cmds.move(0,0,0,obj+'.scalePivot',obj+'.rotatePivot',a=True)
+
                 
-    def qtPivotToAnotherObject(self):
-        selObj = cmds.ls(sl=True)
-        target = cmds.xform(selObj[1],q=True,sp=True,ws=True)
-        cmds.xform(selObj[0],piv=target, ws=True)
+
         
-    def pivotOnAxis(self, axis):
+def pivotOnAxis(self, axis):
         selObj = cmds.ls(sl=True)[0]
         oldPivot = cmds.xform(q=True,sp=True,ws=True)
         if axis == 'x':
@@ -182,7 +155,7 @@ class Pivots(form_class,base_class):
         if axis == 'z':
             cmds.xform(piv=[oldPivot[0],oldPivot[1],0],ws=True)
     
-    def checkStatus(self):
+def checkStatus(self):
         if self.chkStatus.isChecked():
             self.edtY.setText(self.edtX.text())
             self.edtZ.setText(self.edtX.text())
@@ -205,8 +178,7 @@ class Pivots(form_class,base_class):
         mesh = py.ls(sl = True)[0]
         currentScale = mesh.scaleX.get()
         
-    def setPivotOnEdge(self):
-        pass
+    
         
 def main(xmlFile):
     form = Pivots(xmlFile)
