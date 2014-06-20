@@ -14,7 +14,7 @@ from developer.main.common import commonFunctions as cf
 from developer.main.common import dockWidget as dW
 
 
-CommonFunctions.importQtPlugin()
+
 filedircommon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 
 class mainForm(dockWidget.DockWidget):
@@ -28,10 +28,6 @@ class mainForm(dockWidget.DockWidget):
         for c in childForms:
             instance = CommonFunctions.loadModule(c)
             self.vLayout.addWidget(instance.main())
-            
-def __load__():
-    form = mainForm()
-    return form
-        
+
 
         

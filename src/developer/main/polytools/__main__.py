@@ -20,9 +20,5 @@ class polytoolsForm(QtGui.QWidget):
         
     def loadSubPacks(subs):
         for p in subs:
-            module = __import__(p + '.__main__')
-            form = module.__load__()
-    
-        #-- get __main__ function from subpackages
-         
+            pass
         
