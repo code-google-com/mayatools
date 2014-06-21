@@ -5,17 +5,13 @@ Created on May 26, 2014
 @description: This is the entry for package. Please do not touch to the file
 
 '''
-
+__name__ = 'Poly Tools'
 
 #import developer.main.dockWidget as dw
 import inspect, os
 
 from developer.main.common import commonFunctions as cf
 from developer.main.common import dockWidget as dW
-
-
-
-filedircommon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 
 class mainForm(dockWidget.DockWidget):
     def __init__(self, parent = None):

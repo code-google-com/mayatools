@@ -1,18 +1,17 @@
+__name__ = 'Clean Up Tools'
+
 import functools
 import os, sys, inspect
-
-import developer.main.CommonFunctions as cf
+import developer.main.common.commonFunctions as cf
 import maya.cmds as cmds
-
+from PyQt4 import QtGui, QtCore 
 
 mayaVersion = cf.getMayaVersion()
-cf.importQtPlugin()
-
 
 try:
-    reload(dockWidget)
+    reload(dW)
 except:
-    import dockWidget
+    from developer.main.common import dockWidget as dW
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 dirUI= fileDirCommmon +'/UI/CleanerTools.ui'
@@ -46,7 +45,7 @@ class cleanerWidget(QtGui.QWidget):
         self.checkedContent.emit(str(self.chkbox.isChecked()) + '_' + self.name)
         print self.name
         
-class cleanerSetWidget(dockWidget.DockWidget):
+class cleanerSetWidget(dW.DockWidget):
     def __init__(self, folderName):
         super(dockWidget.DockWidget, self).__init__(os.path.split(folderName)[-1])
         self.titleBar = dockWidget.DockWidgetTitleBar(self)

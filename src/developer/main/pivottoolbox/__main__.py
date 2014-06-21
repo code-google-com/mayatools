@@ -5,14 +5,14 @@ Created on May 26, 2014
 @description: This is the entry for package. Please do not touch to the file
 
 '''
-__name__ = 'Poly tools'
+__name__ = 'Pivot tools'
 
-from developer.main import CommonFunctions
+from PyQt4 import QtGui, QtCore
 
-CommonFunctions.importQtPlugin()
+from developer.main.common import commonFunctions as cf
 
 class polytoolsForm(QtGui.QWidget):
-    def __init__(self, parent = None, subpackages):
+    def __init__(self, subpackages, parent = None):
         super(polytoolsForm, self)._init__(parent)
         self.vLayout = QtGui.QVBoxLayout()
         self.vSpacer = QtGui.QSpacer()

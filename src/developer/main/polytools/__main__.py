@@ -12,7 +12,7 @@ from PyQt4 import QtGui, QtCore, uic
 from developer.main.common import commonFunctions
 
 class baseForm(QtGui.QWidget):
-    def __init__(self, parent = None, subpackages):
+    def __init__(self, subpackages, parent = None):
         super(polytoolsForm, self)._init__(parent)
         self.vLayout = QtGui.QVBoxLayout()
         self.vSpacer = QtGui.QSpacer()

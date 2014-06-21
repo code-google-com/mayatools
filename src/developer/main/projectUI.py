@@ -47,7 +47,7 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         self.setObjectName('ProjectUIWindow')
         self.proj = projb.projectBase(XMLProject)
         #print len(self.proj.moduleList)
-        
+        self.loadUI()
         # -- set ui controller
         
         self.actionAsset.triggered.connect(self.openAssetBrowser)
@@ -59,13 +59,13 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         form.show()  
         
     def loadUI(self):
-        for index in range(len(self.Proj.moduleList)):
-            try:
-                #instanceModule = loadModule(self.Proj.moduleList[0][index])
-                #form = instanceModule.main(self.Proj.moduleList[1][index])
-                self.tabWidget.insertTab(index,form,form.__name__)
-            except: 
-                print 'Error to loading module:' + self.Proj.moduleList[0][index]
+        for index in range(len(self.proj.moduleList)):
+            ##-- load pkg
+            #try:
+                pkg = __import__('developer.main.' + self.proj.moduleList[index][0] + '.__main__', globals=None, locals=None, fromlist=())
+                self.tabWidget.insertTab(index,None,pkg.__name__)
+            #except: 
+            #    print 'Error to loading module:' + self.proj.moduleList[0][index]
         
              
             

@@ -1,8 +1,10 @@
 '''
-Created on May 27, 2014
+Created on Jun 21, 2014
 
-@author: trungtran
+@author: Trung
 '''
+
+__name__ = 'UV tools'
 
 class MyClass(object):
     '''
@@ -10,7 +12,7 @@ class MyClass(object):
     '''
 
 
-    def __init__(selfparams):
+    def __init__(self, params):
         '''
         Constructor
         '''

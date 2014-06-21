@@ -47,7 +47,7 @@ class projectBase():
             names.append(pkg.getAttribute('name'))
             print pkg.getAttribute('name')
             for mod in pkg.getElementsByTagName('module'):
-                print mod.getAttribute('name')
+                print '\t|_' + mod.getAttribute('name')
                 names.append(mod.getAttribute('name'))
             self.moduleList.append(names)
             
