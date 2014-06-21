@@ -4,7 +4,7 @@ Created on Jun 21, 2014
 @author: Trung
 '''
 
-__pkgname__  = 'UV tools'
+pkgname = 'UV tools'
 
 class MyClass(object):
     '''

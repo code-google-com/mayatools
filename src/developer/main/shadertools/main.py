@@ -4,7 +4,7 @@ Created on Jun 21, 2014
 @author: Trung
 '''
 
-__pkgname__ = 'Shader Tools'
+pkgname = 'Shader Tools'
 
 class MyClass(object):
     '''

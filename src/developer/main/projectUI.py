@@ -10,6 +10,7 @@ import os, sys, re, inspect , imp, shutil
 import pymel.core as py
 from xml.dom.minidom import *
 from PyQt4 import QtGui, QtCore, uic
+import developer.main
 
 try:
     reload(dw)
@@ -29,7 +30,7 @@ except:
 try:
     reload(main)
 except:
-from developer.main.assetContent import main
+    from developer.main.assetContent import main
 
 #-- get ui dir 
 
@@ -61,11 +62,11 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
     def loadUI(self):
         for index in range(len(self.proj.moduleList)):
             ##-- load pkg
-            #try:
-                print self.proj.moduleList[index][0] 
-                pkg = __import__('developer.main.' + self.proj.moduleList[index][0] + '.main', globals=None, locals=None, fromlist=())
+            #try: 
+                print self.proj.moduleList[index][0]
+                pkgName = 'developer.main.' + self.proj.moduleList[index][0] + '.main'
+                pkg = cf.loadNestedModule(pkgName)
                 self.tabWidget.insertTab(index, QtGui.QWidget(), pkg.pkgname)
-                
             #except: 
             #    print 'Error to loading module:' + self.proj.moduleList[0][index]
         

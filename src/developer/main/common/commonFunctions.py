@@ -11,6 +11,13 @@ import xml.etree.ElementTree as xml
 from PyQt4 import QtCore, QtGui, uic
 import sip
 
+def loadNestedModule(name):
+    mod = __import__(name)
+    components = name.split('.')
+    for comp in components[1:]:
+        mod = getattr(mod, comp)
+    return mod 
+
 def getMayaVersion():
     return versions.current()
 
