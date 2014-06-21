@@ -5,7 +5,7 @@ Created on May 26, 2014
 @description: This is the entry for package. Please do not touch to the file
 
 '''
-__displayName__ = 'MIRROR_TOOLBOX'
+
 
 #import developer.main.dockWidget as dw
 import inspect, os

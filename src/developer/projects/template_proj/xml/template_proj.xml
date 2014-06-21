@@ -7,9 +7,9 @@
 		</Tech>
 		<ArtDirector>
 			<user name = "tungvo" email = ""/>
-			<user name = "huongnguyen"/>
-			<user name = "phuongnguyen"/>
-			<user name = "minhle"/>
+			<user name = "huongnguyen" email = ""/>
+			<user name = "phuongnguyen" email =""/>
+			<user name = "minhle" email = ""/>
 		</ArtDirector>
 		<Producer>
 			<user name = "thudang" email = "thudang@glassegg.com"/>
@@ -26,19 +26,18 @@
 	<ProjectData>
 		<AssetList file="AssetList.xml" />
 		<Module>
-			<package name="NamingConvention" />
-			<package name="CleanerTools"/>
-			<package name="Pivots" />
-			<package name="LODTools"/>
-			<package name="UVTools" />
-			<package name="PolyTools">
-				<module name = "setupscene" unit = "centimeter" backfacecull = "True" />
-				<module name = "mirrortools"/>
-				<module name = "modelingtools"/>
-				<module name = "normaltools"/> 
+			<package name="namingtools" display = "Naming Convention"/>
+			<package name="cleanertools" display = "Cleanup Toolbox"/>
+			<package name="pivottoolbox" display = "Pivot Toolbox"/>
+			<package name="uvtools" display = "UV Toolbox"/>
+			<package name="polytools" display = "Poly Toolbox">
+				<module name = "setupscene" display = "SET UP SCENE"/>
+				<module name = "mirrortools" display = "MIRROR TOOLBOX"/>
+				<module name = "modelingtools" display = "MODELING TOOLBOX"/>
+				<module name = "normaltools" display = "NORMAL TOOLBOX"/> 
 			</package>
-			<package name="ShaderTools" />
-			<package name="ThirdpartyTools" />
+			<package name="shaderTools" />
+			<package name="3rdtools" />
 		</Module>
 	</ProjectData>
 </Project>
