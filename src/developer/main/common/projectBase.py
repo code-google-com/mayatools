@@ -32,7 +32,7 @@ class projectBase():
         self.ProjectName = ProjectNode.getAttribute('name')
         #-- done get project's name
         
-        #-- get project's path
+        #-- get project's paths
         dirRoot = ProjectNode.getElementsByTagName("Directories")[0]
         self.ServerPath = dirRoot.getElementsByTagName("ServerPath")[0].getAttribute("path")
         self.LocalPath = dirRoot.getElementsByTagName("LocalPath")[0].getAttribute("path")
@@ -41,12 +41,15 @@ class projectBase():
         self.ReferencesImagePath = dirRoot.getElementsByTagName("ReferencesImagePath")[0].getAttribute("path")
                 
         # get module
-        moduleNode = ProjectNode.getElementsByTagName('Module')[0]
-        for module in moduleNode.getElementsByTagName('module'):
+        pkgNodes = ProjectNode.getElementsByTagName('package')
+        for pkg in pkgNodes:
             names = list()
-            names.append(module.getAttribute('name'))
-            for subModule in module.getElementsByTagName('submodule'):
-                names.append(subModule.getAttribute('name'))
+            names.append(pkg.getAttribute('name'))
+            print pkg.getAttribute('name')
+            for mod in pkg.getElementsByTagName('module'):
+                print mod.getAttribute('name')
+                names.append(mod.getAttribute('name'))
+                
         self.moduleList.append(names)
             
         # get managers    

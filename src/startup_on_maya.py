@@ -12,5 +12,5 @@ def loadProject(projName):
     finally:
         if file: file.close() 
 
-proj = loadProject('geProject')
+proj = loadProject('template_proj')
 proj.main()

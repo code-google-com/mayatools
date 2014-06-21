@@ -12,17 +12,17 @@ from xml.dom.minidom import *
 from PyQt4 import QtGui, QtCore, uic
 
 try:
-    reload(dockWidget)
+    reload(dw)
 except:
     from developer.main.common import dockWidget as dw 
 
 try:
-    reload(projectBase)
+    reload(projb)
 except:
-    from developer.main.common import projectBase as proj
+    from developer.main.common import projectBase as projb
     
 try:
-    reload(commonFunctions)
+    reload(cf)
 except:
     from developer.main.common import commonFunctions as cf
     
@@ -45,7 +45,8 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         super(QtGui.QMainWindow, self).__init__(parent)
         self.setupUi(self)
         self.setObjectName('ProjectUIWindow')
-        self.proj = proj.projectBase(XMLProject)
+        self.proj = projb.projectBase(XMLProject)
+        print self.proj.moduleList
         
         # -- set ui controller
         
@@ -56,5 +57,6 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
             py.deleteUI('assetContentForm')
         form = __main__.assetContentForm()
         form.show()  
+        
              
             
