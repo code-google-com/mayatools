@@ -1,5 +1,7 @@
 import inspect, os
+
 import maya.mel as mel
+
 
 description = 'FCO on scene.'
 name = 'FCO'

@@ -9,6 +9,7 @@ Created on May 27, 2014
 import os, sys, re, inspect , imp, shutil
 import pymel.core as py
 from xml.dom.minidom import *
+from PyQt4 import QtGui, QtCore, uic
 
 try:
     reload(dockWidget)
@@ -21,7 +22,7 @@ except:
     from developer.main.common import projectBase as proj
     
 try:
-    reload(CommonFunctions)
+    reload(commonFunctions)
 except:
     from developer.main.common import commonFunctions as cf
     
@@ -32,18 +33,16 @@ except:
 
 #-- get ui dir 
 
-
-fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
-
-dirUI= fileDirCommmon +'/ui/ProjectForm.ui'
-
+try:
+    reload(ProjectForm)
+except:
+    from developer.main.ui import ProjectForm
+    
 #-- generate form_class and base_class to load Ui
 
-form_class, base_class = cf.loadUIPyQt(dirUI)
-
-class projectUI(form_class,base_class):
+class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
     def __init__(self, XMLProject, parent = cf.getMayaWindow()):
-        super(base_class, self).__init__(parent)
+        super(QtGui.QMainWindow, self).__init__(parent)
         self.setupUi(self)
         self.setObjectName('ProjectUIWindow')
         self.proj = proj.projectBase(XMLProject)

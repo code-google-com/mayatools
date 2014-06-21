@@ -5,6 +5,7 @@ import maya.cmds as cmds
 import pymel.core as py
 import pymel.core.datatypes as dt
 
+
 def execute(self):
         vertexes = cmds.polyListComponentConversion(tv = True)
         cmds.select(vertexes)

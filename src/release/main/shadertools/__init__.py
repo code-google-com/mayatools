@@ -1,8 +1,10 @@
+from random import *
+
+import boltUvRatio
 import maya.cmds as cmds
 import maya.mel as mel
 import pymel.core as py
-from random import *
-import boltUvRatio
+
 
 shadersValidatedList ={'chrome_1':'DaS', 'diffuse_black_plastic':'D', 'diffuse_holes':'D', 'diffuse_light':'N', 'diffusebumped_tire':'DM','lightglass_1':'DTaSI','paint_white':'DaS','transparent_grill':'D','windowglass_1':'DTaSI','windowglass_black':'DTaSI'}
 

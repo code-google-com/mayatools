@@ -1,0 +1,43 @@
+<?xml version="1.0" ?>
+<Project name="template_proj">
+	<Managers>
+		<Tech>
+			<user name = "trungtran" email = "trungtq@glassegg.com"/>
+			<user name = "quynguyen" email = "ndquy@glassegg.com"/>
+		</Tech>
+		<ArtDirector>
+			<user name = "tungvo" email = ""/>
+			<user name = "huongnguyen" email = ""/>
+			<user name = "phuongnguyen" email =""/>
+			<user name = "minhle" email = ""/>
+		</ArtDirector>
+		<Producer>
+			<user name = "thudang" email = "thudang@glassegg.com"/>
+			<user name = "phucdo" email = "phucdo@glassegg.com"/>
+		</Producer>
+	</Managers>
+	<Directories>
+		<ServerPath path = "//glassegg.com/projects/Scenes/Sony_Vehicles_2012/art/"/>
+		<LocalPath path = "M:/art/vehicles/"/>
+		<DocumentsPath path = "//glassegg.com/projects/Documents_Feedbacks/Sony_Vehicles_2012/"/>
+		<FeedbacksPath path = "//glassegg.com/projects/Documents_Feedbacks/Sony_Vehicles_2012/Feedbacks/"/>
+		<ReferencesImagePath path = "//glassegg.com/Images_References\Lives\Sony_Vehicles_2012/"/>
+	</Directories>
+	<ProjectData>
+		<AssetList file="AssetList.xml" />
+		<Module>
+			<package name="namingtools" display = "Naming Convention"/>
+			<package name="cleanertools" display = "Cleanup Toolbox"/>
+			<package name="pivottoolbox" display = "Pivot Toolbox"/>
+			<package name="uvtools" display = "UV Toolbox"/>
+			<package name="polytools" display = "Poly Toolbox">
+				<module name = "setupscene" display = "SET UP SCENE"/>
+				<module name = "mirrortools" display = "MIRROR TOOLBOX"/>
+				<module name = "modelingtools" display = "MODELING TOOLBOX"/>
+				<module name = "normaltools" display = "NORMAL TOOLBOX"/> 
+			</package>
+			<package name="shaderTools" />
+			<package name="3rdtools" />
+		</Module>
+	</ProjectData>
+</Project>

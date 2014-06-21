@@ -5,6 +5,7 @@ tooltip = 'Correct node name:\n\t Correct shape node.\n\t Correct shadingGroup n
 import maya.cmds as cmds
 import pymel.core as py
 
+
 def execute():
     print '--------------- RENAME SHAPENODE-------------------------'
     meshes = cmds.ls(type= 'mesh')

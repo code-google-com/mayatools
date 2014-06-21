@@ -6,64 +6,56 @@ Created on May 27, 2014
 @description: ''
 
 '''
-
-import developer.main.CommonFunctions as cf
-cf.importQtPlugin()
-cf.importMayaModule()
-
-
 import os, sys, re, inspect , imp, shutil
-
+import pymel.core as py
 from xml.dom.minidom import *
 
 try:
     reload(dockWidget)
 except:
-    import dockWidget
+    from main.common import dockWidget as dw 
 
 try:
     reload(projectBase)
 except:
-    import projectBase
-         
-fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
-dirUI= fileDirCommmon +'/UI/ProjectForm.ui'
-form_class, base_class = cf.loadUI(dirUI)
+    from main.common import projectBase as proj
+    
+try:
+    reload(CommonFunctions)
+except:
+    from main.common import commonFunctions as cf
+    
+try:
+    reload(__main__)
+except:
+    from main.assetContent import __main__  
 
-class ProjectUI(form_class,base_class):
+#-- get ui dir 
+
+
+fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
+
+dirUI= fileDirCommmon +'/ui/ProjectForm.ui'
+
+#-- generate form_class and base_class to load Ui
+
+form_class, base_class = cf.loadUIPyQt(dirUI)
+
+class projectUI(form_class,base_class):
     def __init__(self, XMLProject, parent = cf.getMayaWindow()):
-        super(base_class,self).__init__(parent)
+        super(base_class, self).__init__(parent)
         self.setupUi(self)
         self.setObjectName('ProjectUIWindow')
-        self.Proj = projectBase(XMLProject)
-        self.setWindowTitle(self.Proj.ProjectName)
-        self.xmlFile = XMLProject
-        self.loadProjectData()
+        self.proj = proj.projectBase(XMLProject)
         
-        #-------------- FUNCTION UI
-        self.actionQA.triggered.connect(self.QAChecking)
-        self.actionAsset_Tracking.triggered.connect(self.openAssetTracking)
+        # -- set ui controller
         
-    def loadProjectData(self):
-        for index in range(len(self.Proj.moduleList[0])):
-            try:
-                instanceModule = loadModule(self.Proj.moduleList[0][index])
-                form = instanceModule.main(self.Proj.moduleList[1][index])
-                self.tabWidget.insertTab(index,form,form.__name__)
-            except: 
-                print 'Error to loading module:' + self.Proj.moduleList[0][index]
-        #add dock widget
-        #self.AssetForm = AssetForm.AssetForm(self.xmlFile)
-        #self.currentAsset = self.AssetForm.currentAsset
-        #self.dockWidget = dockWidget.DockWidget('Asset from')
-        #self.dockWidget.setWidget(self.AssetForm)
-        #self.verticalLayout.addWidget(self.dockWidget)
+        self.actionAsset.triggered.connect(self.openAssetBrowser)
+        
+    def openAssetBrowser(self):
+        if py.window('assetContentForm', q = True, ex= True):
+            py.deleteUI('assetContentForm')
+        form = __main__.assetContentForm()
+        form.show()  
              
-    def QAChecking(self):
-        self.QAform = GE_QA.GE_QA(self.Proj.projectData, [])
-        self.QAform.show()
-        
-    def openAssetTracking(self):
-        self.AssetTrackingform = AssetTracking.AssetTracking(self.xmlFile)
-        self.AssetTrackingform.show()
-
+            
