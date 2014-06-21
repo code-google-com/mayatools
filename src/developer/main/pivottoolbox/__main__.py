@@ -7,11 +7,11 @@ Created on May 26, 2014
 '''
 __name__ = 'Poly tools'
 
-from PyQt4 import QtGui, QtCore, uic
+from developer.main import CommonFunctions
 
-from developer.main.common import commonFunctions
+CommonFunctions.importQtPlugin()
 
-class baseForm(QtGui.QWidget):
+class polytoolsForm(QtGui.QWidget):
     def __init__(self, parent = None, subpackages):
         super(polytoolsForm, self)._init__(parent)
         self.vLayout = QtGui.QVBoxLayout()

@@ -49,8 +49,7 @@ class projectBase():
             for mod in pkg.getElementsByTagName('module'):
                 print mod.getAttribute('name')
                 names.append(mod.getAttribute('name'))
-                
-        self.moduleList.append(names)
+            self.moduleList.append(names)
             
         # get managers    
         ManagerDepts = ProjectNode.getElementsByTagName("Managers")[0]

@@ -46,7 +46,7 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         self.setupUi(self)
         self.setObjectName('ProjectUIWindow')
         self.proj = projb.projectBase(XMLProject)
-        print self.proj.moduleList
+        #print len(self.proj.moduleList)
         
         # -- set ui controller
         
@@ -57,6 +57,15 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
             py.deleteUI('assetContentForm')
         form = __main__.assetContentForm()
         form.show()  
+        
+    def loadUI(self):
+        for index in range(len(self.Proj.moduleList)):
+            try:
+                #instanceModule = loadModule(self.Proj.moduleList[0][index])
+                #form = instanceModule.main(self.Proj.moduleList[1][index])
+                self.tabWidget.insertTab(index,form,form.__name__)
+            except: 
+                print 'Error to loading module:' + self.Proj.moduleList[0][index]
         
              
             

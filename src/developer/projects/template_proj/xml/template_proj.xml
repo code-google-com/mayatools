@@ -26,15 +26,15 @@
 	<ProjectData>
 		<AssetList file="AssetList.xml" />
 		<Module>
-			<package name="namingtools" display = "Naming Convention"/>
-			<package name="cleanertools" display = "Cleanup Toolbox"/>
-			<package name="pivottoolbox" display = "Pivot Toolbox"/>
-			<package name="uvtools" display = "UV Toolbox"/>
-			<package name="polytools" display = "Poly Toolbox">
-				<module name = "setupscene" display = "SET UP SCENE"/>
-				<module name = "mirrortools" display = "MIRROR TOOLBOX"/>
-				<module name = "modelingtools" display = "MODELING TOOLBOX"/>
-				<module name = "normaltools" display = "NORMAL TOOLBOX"/> 
+			<package name="namingtools"/>
+			<package name="cleanertools"/>
+			<package name="pivottoolbox"/>
+			<package name="uvtools"/>
+			<package name="polytools">
+				<module name = "setupscene"/>
+				<module name = "mirrortools"/>
+				<module name = "modelingtools"/>
+				<module name = "normaltools"/> 
 			</package>
 			<package name="shaderTools" />
 			<package name="3rdtools" />
