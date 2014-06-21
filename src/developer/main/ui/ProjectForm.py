@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\ui\ProjectForm.ui'
 #
-# Created: Sat Jun 21 08:01:26 2014
+# Created: Sat Jun 21 16:58:24 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -54,7 +54,8 @@ class Ui_ProjectMainForm(object):
         self.tabWidget.setAutoFillBackground(True)
         self.tabWidget.setStyleSheet(_fromUtf8(""))
         self.tabWidget.setLocale(QtCore.QLocale(QtCore.QLocale.Vietnamese, QtCore.QLocale.VietNam))
-        self.tabWidget.setTabPosition(QtGui.QTabWidget.West)
+        self.tabWidget.setTabPosition(QtGui.QTabWidget.East)
+        self.tabWidget.setTabShape(QtGui.QTabWidget.Triangular)
         self.tabWidget.setMovable(True)
         self.tabWidget.setObjectName(_fromUtf8("tabWidget"))
         self.verticalLayout_3.addWidget(self.tabWidget)

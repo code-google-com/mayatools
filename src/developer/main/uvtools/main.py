@@ -3,8 +3,7 @@ Created on Jun 21, 2014
 
 @author: Trung
 '''
-
-pkgname = 'UV TOOLS'
+pkgname = 'UNWRAP TOOLS'
 
 class MyClass(object):
     '''

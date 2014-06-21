@@ -66,7 +66,10 @@
        <locale language="Vietnamese" country="VietNam"/>
       </property>
       <property name="tabPosition">
-       <enum>QTabWidget::West</enum>
+       <enum>QTabWidget::East</enum>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Triangular</enum>
       </property>
       <property name="movable">
        <bool>true</bool>
