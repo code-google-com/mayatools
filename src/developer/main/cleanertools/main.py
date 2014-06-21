@@ -5,7 +5,7 @@ Created on Jun 18, 2014
 @desciption: asset content form
 '''
 
-pkgname  = 'Clean Up Tools'
+pkgname  = 'CLEAN UP TOOLS'
 
 import functools
 import os, sys, inspect

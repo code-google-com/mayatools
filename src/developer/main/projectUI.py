@@ -63,10 +63,11 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         for index in range(len(self.proj.moduleList)):
             ##-- load pkg
             #try: 
-                print self.proj.moduleList[index][0]
+                
                 pkgName = 'developer.main.' + self.proj.moduleList[index][0] + '.main'
                 pkg = cf.loadNestedModule(pkgName)
                 self.tabWidget.insertTab(index, QtGui.QWidget(), pkg.pkgname)
+                print self.proj.moduleList[index][0]
             #except: 
             #    print 'Error to loading module:' + self.proj.moduleList[0][index]
         

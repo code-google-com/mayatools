@@ -5,7 +5,7 @@ Created on May 26, 2014
 @description: This is the entry for package. Please do not touch to the file
 
 '''
-pkgname  = 'Pivot tools'
+pkgname  = 'PIVOT TOOLS'
 
 from PyQt4 import QtGui, QtCore
 

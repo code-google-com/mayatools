@@ -5,7 +5,7 @@ Created on Jun 21, 2014
 
 '''
 
-pkgname  = '3rd Tools'
+pkgname  = 'THIRD PARTY TOOLS'
 
 class MyClass(object):
     '''

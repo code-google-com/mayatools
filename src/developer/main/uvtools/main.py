@@ -4,7 +4,7 @@ Created on Jun 21, 2014
 @author: Trung
 '''
 
-pkgname = 'UV tools'
+pkgname = 'UV TOOLS'
 
 class MyClass(object):
     '''

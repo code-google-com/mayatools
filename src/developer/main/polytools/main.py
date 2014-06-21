@@ -5,7 +5,7 @@ Created on May 26, 2014
 @description: This is the entry for package. Please do not touch to the file
 
 '''
-__pkgname__  = 'Poly tools'
+pkgname  = 'POLY TOOLS'
 
 from PyQt4 import QtGui, QtCore, uic
 
