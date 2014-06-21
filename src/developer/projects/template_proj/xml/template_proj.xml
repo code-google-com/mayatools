@@ -36,7 +36,7 @@
 				<module name = "modelingtools"/>
 				<module name = "normaltools"/> 
 			</package>
-			<package name="shaderTools" />
+			<package name="shadertools" />
 			<package name="3rdtools" />
 		</Module>
 	</ProjectData>

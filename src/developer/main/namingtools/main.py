@@ -6,7 +6,7 @@ Created on May 27, 2014
 
 '''
 
-__name__ = 'Naming Tools'
+pkgname  = 'Naming Tools'
 
 class MyClass(object):
     '''

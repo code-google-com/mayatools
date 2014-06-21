@@ -2,10 +2,9 @@
 Created on Jun 21, 2014
 
 @author: Trung
-
 '''
 
-__name__ = '3rd Tools'
+__pkgname__  = 'UV tools'
 
 class MyClass(object):
     '''

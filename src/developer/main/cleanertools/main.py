@@ -1,4 +1,11 @@
-__name__ = 'Clean Up Tools'
+'''
+Created on Jun 18, 2014
+
+@author: trungtran
+@desciption: asset content form
+'''
+
+pkgname  = 'Clean Up Tools'
 
 import functools
 import os, sys, inspect

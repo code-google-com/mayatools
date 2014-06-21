@@ -27,9 +27,9 @@ except:
     from developer.main.common import commonFunctions as cf
     
 try:
-    reload(__main__)
+    reload(main)
 except:
-    from developer.main.assetContent import __main__  
+from developer.main.assetContent import main
 
 #-- get ui dir 
 
@@ -55,15 +55,17 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
     def openAssetBrowser(self):
         if py.window('assetContentForm', q = True, ex= True):
             py.deleteUI('assetContentForm')
-        form = __main__.assetContentForm()
+        form = main.assetContentForm()
         form.show()  
         
     def loadUI(self):
         for index in range(len(self.proj.moduleList)):
             ##-- load pkg
             #try:
-                pkg = __import__('developer.main.' + self.proj.moduleList[index][0] + '.__main__', globals=None, locals=None, fromlist=())
-                self.tabWidget.insertTab(index,None,pkg.__name__)
+                print self.proj.moduleList[index][0] 
+                pkg = __import__('developer.main.' + self.proj.moduleList[index][0] + '.main', globals=None, locals=None, fromlist=())
+                self.tabWidget.insertTab(index, QtGui.QWidget(), pkg.pkgname)
+                
             #except: 
             #    print 'Error to loading module:' + self.proj.moduleList[0][index]
         
