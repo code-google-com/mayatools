@@ -135,9 +135,17 @@
      <addaction name="actionShow_History"/>
      <addaction name="menuConnect_to_Source_Control"/>
     </widget>
+    <widget class="QMenu" name="menuDocking">
+     <property name="title">
+      <string>Docking</string>
+     </property>
+     <addaction name="actionLeft"/>
+     <addaction name="actionRight"/>
+    </widget>
     <addaction name="menuIntegrate_with_Source_Control"/>
     <addaction name="actionSettings_2"/>
     <addaction name="actionUpdatedProject"/>
+    <addaction name="menuDocking"/>
    </widget>
    <widget class="QMenu" name="menuHelp_2">
     <property name="title">
@@ -380,6 +388,16 @@
   <action name="actionGet_revision">
    <property name="text">
     <string>Get revision...</string>
+   </property>
+  </action>
+  <action name="actionLeft">
+   <property name="text">
+    <string>Left</string>
+   </property>
+  </action>
+  <action name="actionRight">
+   <property name="text">
+    <string>Right</string>
    </property>
   </action>
  </widget>

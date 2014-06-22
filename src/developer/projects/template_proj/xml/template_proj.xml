@@ -29,6 +29,7 @@
 			<package name="namingtools"/>
 			<package name="cleanertools"/>
 			<package name="pivottoolbox"/>
+			<package name="animatetools" />
 			<package name="uvtools"/>
 			<package name="polytools">
 				<module name = "setupscene"/>

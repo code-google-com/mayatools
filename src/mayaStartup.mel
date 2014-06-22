@@ -1,0 +1,11 @@
+global proc mayaStartup()
+{
+    global string $gMainWindow;    
+    string $menuName = "Foxforest";
+    if (`menu -ex $menuName`)
+    {
+        deleteUI -m $menuName ;
+    }; 
+
+    menu -l "Foxforest" -p $gMainWindow $menuName;
+}

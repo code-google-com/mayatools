@@ -52,7 +52,7 @@
            <enum>QTabWidget::Rounded</enum>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>3</number>
           </property>
           <property name="documentMode">
            <bool>true</bool>
@@ -864,7 +864,7 @@ background-image: url(:/images/strip.png);</string>
                  <string>Filter Asset</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../source/icons/IconResource.qrc">
+                 <iconset resource="../../source/icons/IconResource.qrc">
                   <normaloff>:/Project/arrow-down.png</normaloff>:/Project/arrow-down.png</iconset>
                 </property>
                 <property name="flat">
@@ -1100,7 +1100,7 @@ background-image: url(:/images/strip.png);</string>
                    <string/>
                   </property>
                   <property name="icon">
-                   <iconset resource="../source/icons/IconResource.qrc">
+                   <iconset resource="../../source/icons/IconResource.qrc">
                     <normaloff>:/Project/Check.png</normaloff>:/Project/Check.png</iconset>
                   </property>
                   <property name="flat">
@@ -1117,7 +1117,7 @@ background-image: url(:/images/strip.png);</string>
                    <string/>
                   </property>
                   <property name="icon">
-                   <iconset resource="../source/icons/IconResource.qrc">
+                   <iconset resource="../../source/icons/IconResource.qrc">
                     <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
                   </property>
                   <property name="flat">
@@ -1134,7 +1134,7 @@ background-image: url(:/images/strip.png);</string>
                    <string/>
                   </property>
                   <property name="icon">
-                   <iconset resource="../source/icons/IconResource.qrc">
+                   <iconset resource="../../source/icons/IconResource.qrc">
                     <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
                   </property>
                   <property name="flat">
@@ -1494,7 +1494,7 @@ background-image: url(:/images/strip.png);</string>
                   <string/>
                  </property>
                  <property name="icon">
-                  <iconset resource="../source/icons/IconResource.qrc">
+                  <iconset resource="../../source/icons/IconResource.qrc">
                    <normaloff>:/Project/Check.png</normaloff>:/Project/Check.png</iconset>
                  </property>
                  <property name="flat">
@@ -1511,7 +1511,7 @@ background-image: url(:/images/strip.png);</string>
                   <string/>
                  </property>
                  <property name="icon">
-                  <iconset resource="../source/icons/IconResource.qrc">
+                  <iconset resource="../../source/icons/IconResource.qrc">
                    <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
                  </property>
                  <property name="flat">
@@ -1528,7 +1528,7 @@ background-image: url(:/images/strip.png);</string>
                   <string/>
                  </property>
                  <property name="icon">
-                  <iconset resource="../source/icons/IconResource.qrc">
+                  <iconset resource="../../source/icons/IconResource.qrc">
                    <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
                  </property>
                  <property name="flat">
@@ -1589,7 +1589,7 @@ background-image: url(:/images/strip.png);</string>
                   <string/>
                  </property>
                  <property name="icon">
-                  <iconset resource="../source/icons/IconResource.qrc">
+                  <iconset resource="../../source/icons/IconResource.qrc">
                    <normaloff>:/Project/Check.png</normaloff>:/Project/Check.png</iconset>
                  </property>
                  <property name="flat">
@@ -1606,7 +1606,7 @@ background-image: url(:/images/strip.png);</string>
                   <string/>
                  </property>
                  <property name="icon">
-                  <iconset resource="../source/icons/IconResource.qrc">
+                  <iconset resource="../../source/icons/IconResource.qrc">
                    <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
                  </property>
                  <property name="flat">
@@ -1651,6 +1651,7 @@ background-image: url(:/images/strip.png);</string>
      <addaction name="actionSVN"/>
     </widget>
     <addaction name="menuConnect_with_Source_Control"/>
+    <addaction name="actionChange_Color_theme"/>
    </widget>
    <widget class="QMenu" name="menuHelps">
     <property name="title">
@@ -1663,6 +1664,7 @@ background-image: url(:/images/strip.png);</string>
      <string>Projects</string>
     </property>
     <addaction name="actionOpen"/>
+    <addaction name="actionSign_out"/>
    </widget>
    <widget class="QMenu" name="menuViews">
     <property name="title">
@@ -1703,7 +1705,7 @@ background-image: url(:/images/strip.png);</string>
   </action>
   <action name="actionOpen">
    <property name="text">
-    <string>Load</string>
+    <string>Sign in</string>
    </property>
   </action>
   <action name="actionAbout">
@@ -1731,9 +1733,19 @@ background-image: url(:/images/strip.png);</string>
     <string>Import selected asset</string>
    </property>
   </action>
+  <action name="actionChange_Color_theme">
+   <property name="text">
+    <string>Change Color Theme</string>
+   </property>
+  </action>
+  <action name="actionSign_out">
+   <property name="text">
+    <string>Sign out</string>
+   </property>
+  </action>
  </widget>
  <resources>
-  <include location="../source/icons/IconResource.qrc"/>
+  <include location="../../source/icons/IconResource.qrc"/>
  </resources>
  <connections/>
 </ui>
