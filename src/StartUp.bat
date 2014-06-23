@@ -27,6 +27,6 @@ SET MAYA_SCRIPT_PATH=%COMMONPATH%;%MAYA_SCRIPT_PATH%
 set MAYA_LAUNCHER=%PROGRAMFILES%\AUTODESK\maya%MAYAVERSION%
 
 REM use call to enter debug mode and see errors out put from cmd
-call %COMMONPATH%"Maya "%MAYAVERSION%"-internalTools.lnk"
+REM call %COMMONPATH%"Maya "%MAYAVERSION%"-internalTools.lnk"
 
 start %COMMONPATH%"Maya "%MAYAVERSION%"-internalTools.lnk"
