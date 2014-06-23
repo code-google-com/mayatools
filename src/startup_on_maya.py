@@ -11,7 +11,6 @@ def loadProject(projName):
         sys.path.append(os.environ.get('PROJECT_DIR') + projName)
     file, pathname, description = imp.find_module(projName)
     try:
-        print pathname
         return imp.load_module(projName, file, pathname, description)
     except:
         print 'cannot load project'
