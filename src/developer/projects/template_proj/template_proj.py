@@ -18,8 +18,7 @@ dirfile = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 ProjectName = os.path.splitext(os.path.split(inspect.getfile(inspect.currentframe()))[1])[0]
 ProjectXML = dirfile + '/xml/' + ProjectName + '.xml'
 
-def main():
-    if py.window('ProjectUIWindow', q = True, ex= True):
-        py.deleteUI('ProjectUIWindow')    
-    form = projectUI.projectUI(ProjectXML)
-    form.show()
+if py.window('ProjectUIWindow', q = True, ex= True):
+    py.deleteUI('ProjectUIWindow')    
+form = projectUI.projectUI(ProjectXML)
+form.show()
