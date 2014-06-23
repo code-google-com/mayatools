@@ -1,37 +1,9 @@
 @echo off
-
-CHOICE /N /C CDEFGHIJKLMNOPQRSTUVWXYZ /M "Enter drive letter of MAYA Installation: "
-
-IF %ERRORLEVEL%==1 set DRIVE=C
-IF %ERRORLEVEL%==2 set DRIVE=D
-IF %ERRORLEVEL%==3 set DRIVE=E
-IF %ERRORLEVEL%==4 set DRIVE=F
-IF %ERRORLEVEL%==5 set DRIVE=G
-IF %ERRORLEVEL%==6 set DRIVE=H
-IF %ERRORLEVEL%==7 set DRIVE=I
-IF %ERRORLEVEL%==8 set DRIVE=J
-IF %ERRORLEVEL%==9 set DRIVE=K
-IF %ERRORLEVEL%==10 set DRIVE=L
-IF %ERRORLEVEL%==11 set DRIVE=M
-IF %ERRORLEVEL%==12 set DRIVE=N
-IF %ERRORLEVEL%==13 set DRIVE=O
-IF %ERRORLEVEL%==14 set DRIVE=P
-IF %ERRORLEVEL%==15 set DRIVE=Q
-IF %ERRORLEVEL%==16 set DRIVE=R
-IF %ERRORLEVEL%==17 set DRIVE=S
-IF %ERRORLEVEL%==18 set DRIVE=T
-IF %ERRORLEVEL%==19 set DRIVE=U
-IF %ERRORLEVEL%==20 set DRIVE=V
-IF %ERRORLEVEL%==21 set DRIVE=W
-IF %ERRORLEVEL%==22 set DRIVE=X
-IF %ERRORLEVEL%==23 set DRIVE=Y
-IF %ERRORLEVEL%==24 set DRIVE=Z
-
 ECHO 1: press 1 if you would like to run with Maya 2011
 ECHO 2: press 2 if you would like to run with Maya 2012
 ECHO 3: press 3 if you would like to run with Maya 2013
 ECHO 4: press 4 if you would like to run with Maya 2014
-ECHO 4: press 5 if you would like to run with Maya 2015
+ECHO 5: press 5 if you would like to run with Maya 2015
 
 
 CHOICE /N /C 12345 /M "Enter Maya version:"
@@ -52,7 +24,9 @@ REM ### Set Python path
 SET PYTHONPATH=%COMMONPATH%MAYA_%MAYAVERSION%\;%COMMONPATH%;%PYTHONPATH%
 SET MAYA_SCRIPT_PATH=%COMMONPATH%;%MAYA_SCRIPT_PATH%
 
-set MAYA_LAUNCHER=%DRIVE%:\PROGRAM FILES\AUTODESK\maya%MAYAVERSION%
-call %COMMONPATH%"Maya "%MAYAVERSION%"-internalTools.lnk"
-exit
+set MAYA_LAUNCHER=%PROGRAMFILES%\AUTODESK\maya%MAYAVERSION%
 
+REM use call to enter debug mode and see errors out put from cmd
+call %COMMONPATH%"Maya "%MAYAVERSION%"-internalTools.lnk"
+
+start %COMMONPATH%"Maya "%MAYAVERSION%"-internalTools.lnk"
