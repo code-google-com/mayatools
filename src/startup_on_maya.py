@@ -15,10 +15,12 @@
 # proj = loadProject('template_proj')
 # proj.main()
 
-import maya.cmds as cmds
-import maya.mel as mel
+# import maya.cmds as cmds
+# import maya.mel as mel
+# 
+# mainWindow = mel.eval('global string $gMainWindow; $temp = $gMainWindow')
+# if cmds.menu('Foxforest', q= True, exists = True):
+#     cmds.deleteUI('Foxforest', menu = True)
+# menu = cmds.menu('Foxforest', parent = mainWindow, tearOff = True)
 
-mainWindow = mel.eval('global string $gMainWindow; $temp = $gMainWindow')
-if cmds.menu('Foxforest', q= True, exists = True):
-    cmds.deleteUI('Foxforest', menu = True)
-menu = cmds.menu('Foxforest', parent = mainWindow, tearOff = True)
+print 'hello world'
