@@ -243,24 +243,18 @@ class DockMainWidgetWrapper(QWidget):
             self.setMinimumHeight(0)
             self.setMaximumHeight(2048)
 
-
     def sizeHint(self):
         if self.widget:
             return self.widget.sizeHint()
         else:
             return QWidget.sizeHint(self)
 
-
-
 class DockWidget(QDockWidget):
-
-
     def __init__(self, *args):
         QDockWidget.__init__(self, *args)
         self.titleBar = DockWidgetTitleBar(self)
         self.setTitleBarWidget(self.titleBar)
         self.mainWidget = None
-
 
     def setWidget(self, widget):
         self.mainWidget = DockMainWidgetWrapper(self)
