@@ -26,19 +26,19 @@
 	<ProjectData>
 		<AssetList file="AssetList.xml" />
 		<Module>
-			<package name="namingtools"/>
-			<package name="cleanertools"/>
-			<package name="pivottoolbox"/>
-			<package name="animatetools" />
-			<package name="uvtools"/>
+			<upackage name="namingtools"/>
+			<upackage name="cleanertools"/>
+			<upackage name="pivottoolbox"/>
+			<upackage name="animatetools" />
+			<upackage name="uvtools"/>
 			<package name="polytools">
-				<module name = "setupscene"/>
+				<umodule name = "setupscene"/>
 				<module name = "mirrortools"/>
-				<module name = "modelingtools"/>
-				<module name = "normaltools"/> 
+				<umodule name = "modelingtools"/>
+				<umodule name = "normaltools"/> 
 			</package>
-			<package name="shadertools" />
-			<package name="3rdtools" />
+			<upackage name="shadertools" />
+			<upackage name="3rdtools" />
 		</Module>
 	</ProjectData>
 </Project>

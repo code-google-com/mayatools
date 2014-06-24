@@ -13,15 +13,14 @@ from developer.main.common import dockWidget as dW
 
 class mainForm(dW.DockWidget):
     def __init__(self, parent = None):
-        super(mainForm).__init__(parent)
+        super(mainForm, self).__init__(modName)
+        # create some item to store widget
         self.vLayout  = QtGui.QVBoxLayout()
-        self.loadChildForm()
+        self.widget = QtGui.QWidget()
+        self.widget.setLayout(self.vLayout)
+        # add widget
+        self.setWidget(self.widget)
         
-    def loadWidget(self):
-        widget = [module for module in os.listdir(filedircommon) if 'Form' in module and module.end == '.py']
-        for c in childForms:
-            instance = cf.loadModule(c)
-            self.vLayout.addWidget(instance.main())
 
 
         

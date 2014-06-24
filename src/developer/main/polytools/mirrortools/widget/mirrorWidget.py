@@ -26,3 +26,6 @@ class mirrorWidget(QtGui.QMainWindow, mirrorUI.Ui_Form):
         self.btnPivotX.clicked.connect(functools.partial(mFn.mirror, 'x', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By pivot'))
         self.btnPivotY.clicked.connect(functools.partial(mFn.mirror, 'y', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By pivot'))
         self.btnPivotZ.clicked.connect(functools.partial(mFn.mirror, 'z', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By pivot'))  
+
+
+print 'Executing module ....'
