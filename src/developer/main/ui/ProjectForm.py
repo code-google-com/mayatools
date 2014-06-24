@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\ui\ProjectForm.ui'
 #
-# Created: Sun Jun 22 07:01:02 2014
+# Created: Mon Jun 23 23:05:04 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -46,9 +46,6 @@ class Ui_ProjectMainForm(object):
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.centralwidget)
         self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
-        self.verticalLayout = QtGui.QVBoxLayout()
-        self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
-        self.verticalLayout_3.addLayout(self.verticalLayout)
         self.tabWidget = QtGui.QTabWidget(self.centralwidget)
         self.tabWidget.setAcceptDrops(True)
         self.tabWidget.setAutoFillBackground(True)

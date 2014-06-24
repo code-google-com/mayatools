@@ -49,9 +49,6 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout"/>
-    </item>
-    <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="acceptDrops">
        <bool>true</bool>

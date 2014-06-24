@@ -24,8 +24,6 @@ REM ### Set Python path
 SET PYTHONPATH=%COMMONPATH%MAYA_%MAYAVERSION%\;%COMMONPATH%;%PYTHONPATH%
 SET MAYA_SCRIPT_PATH=%COMMONPATH%;%MAYA_SCRIPT_PATH%
 
-set MAYA_LAUNCHER=%PROGRAMFILES%\AUTODESK\maya%MAYAVERSION%
-
 REM use call to enter debug mode and see errors out put from cmd
 REM call %COMMONPATH%"Maya "%MAYAVERSION%"-internalTools.lnk"
 
