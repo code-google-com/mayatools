@@ -7,27 +7,20 @@ Created on May 26, 2014
 '''
 
 #import developer.main.dockWidget as dw
+
 import inspect, os
+from developer.main.common import commonFunctions as cf
+from developer.main.common import dockWidget as dW
 
-from developer.main import CommonFunctions
-
-
-CommonFunctions.importQtPlugin()
-filedircommon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
-
-class mainForm(QtGui.QWidget):
+class mainForm(dW.DockWidget):
     def __init__(self, parent = None):
         super(mainForm).__init__(parent)
         self.vLayout  = QtGui.QVBoxLayout()
         self.loadChildForm()
         
-    def loadChildForm(self):
-        childForms = [module for module in os.listdir(filedircommon) if 'Form' in module and os.path.splitext(module)[1] == '.py']
+    def loadWidget(self):
+        widget = [module for module in os.listdir(filedircommon) if 'Form' in module and module.end == '.py']
         for c in childForms:
-            instance = CommonFunctions.loadModule(c)
+            instance = cf.loadModule(c)
             self.vLayout.addWidget(instance.main())
-            
-def __main__():
-    form = mainForm()
-    return form
         

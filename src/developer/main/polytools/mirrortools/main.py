@@ -11,7 +11,7 @@ import inspect, os
 from developer.main.common import commonFunctions as cf
 from developer.main.common import dockWidget as dW
 
-class mainForm(dockWidget.DockWidget):
+class mainForm(dW.DockWidget):
     def __init__(self, parent = None):
         super(mainForm).__init__(parent)
         self.vLayout  = QtGui.QVBoxLayout()
