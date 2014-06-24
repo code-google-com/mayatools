@@ -8,10 +8,9 @@ Created on May 26, 2014
 pkgname  = 'POLY TOOLS'
 
 from PyQt4 import QtGui, QtCore, uic
-
 from developer.main.common import commonFunctions
 
-class baseForm(QtGui.QWidget):
+class mainForm(QtGui.QWidget):
     def __init__(self, subpackages, parent = None):
         super(polytoolsForm, self)._init__(parent)
         self.vLayout = QtGui.QVBoxLayout()

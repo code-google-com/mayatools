@@ -108,7 +108,4 @@ class ClearTools(form_class,base_class):
             instanceModule = loadModule(fileDirCommmon + '/python/', module)
             instanceModule.execute()
 
-def main(xmlFile):
-    form = ClearTools(xmlFile)
-    return form   
 

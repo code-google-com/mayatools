@@ -7,7 +7,9 @@ Created on Jun 21, 2014
 
 pkgname  = 'THIRD PARTY TOOLS'
 
-class MyClass(object):
+from PyQt4 import QtGui, QtCore
+
+class mainForm():
     '''
     classdocs
     '''

@@ -39,7 +39,3 @@ class mirrorForm(form_class,base_class):
         self.btnPivotX.clicked.connect(functools.partial(mFn.mirror, 'x', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By pivot'))
         self.btnPivotY.clicked.connect(functools.partial(mFn.mirror, 'y', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By pivot'))
         self.btnPivotZ.clicked.connect(functools.partial(mFn.mirror, 'z', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By pivot'))  
-                    
-def main():
-    form = mirrorForm()
-    return form
