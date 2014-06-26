@@ -7,8 +7,7 @@ Created on May 26, 2014
 '''
 pkgname  = 'POLY TOOLS'
 
-from PyQt4 import QtGui, QtCore, uic
-from developer.main.common import commonFunctions as cf
+from PyQt4 import QtGui
 import pkgutil, os
 
 class mainWidget(QtGui.QWidget):
@@ -17,11 +16,8 @@ class mainWidget(QtGui.QWidget):
         super(QtGui.QWidget, self).__init__(parent)
         self.vLayout = QtGui.QVBoxLayout()
         self.vSpacer = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        self.vLayout.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
+        #self.vLayout.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
         self.setLayout(self.vLayout)
-
-        #self.vLayout.setSizeConstraint(QtGui.QLayout.SetMaxSize)
-        
         ## load widget
         for pkg_loader, pkg_name, is_pkg in pkgutil.walk_packages(os.path.split(__file__)):
             if is_pkg and pkg_name in subpackages:
@@ -30,7 +26,6 @@ class mainWidget(QtGui.QWidget):
                     if mod_name == 'main':
                         mod = mod_loader.find_module(mod_name).load_module(mod_name)
                         self.vLayout.addWidget(mod.subWidget())
-                    
         self.vLayout.addItem(self.vSpacer)
         
         print 'finishing Polytools loading ..................... '

@@ -19,7 +19,7 @@ import os, inspect, functools
 
 print '    Mirror Widget: Executing module ....'
 
-class QtWidget(QtGui.QMainWindow, mirrorUI.Ui_Form):
+class QtWidget(QtGui.QMainWindow, mirrorUI.Ui_MainWindow):
     '''
     Description: doing some mirror function.
     '''

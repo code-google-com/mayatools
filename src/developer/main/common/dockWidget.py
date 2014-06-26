@@ -251,8 +251,8 @@ class DockMainWidgetWrapper(QWidget):
             return QWidget.sizeHint(self)
 
 class DockWidget(QDockWidget):
-    def __init__(self, parent = cf.getMayaWindow(), *args):
-        QDockWidget.__init__(self, parent, *args)
+    def __init__(self, *args):
+        QDockWidget.__init__(self, *args)
         self.titleBar = DockWidgetTitleBar(self)
         self.setTitleBarWidget(self.titleBar)
         self.mainWidget = None

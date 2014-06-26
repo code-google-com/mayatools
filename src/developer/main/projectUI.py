@@ -6,11 +6,10 @@ Created on May 27, 2014
 @description: ''
 
 '''
-import os, sys, re, inspect , imp, shutil
+
 import pymel.core as py
 from xml.dom.minidom import *
-from PyQt4 import QtGui, QtCore, uic
-import developer.main
+from PyQt4 import QtGui, QtCore
 
 try:
     reload(dw)

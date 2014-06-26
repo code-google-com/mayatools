@@ -8,7 +8,7 @@ Created on May 26, 2014
 modName = 'MIRROR TOOLS'
 
 import inspect, os, pkgutil
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 try:
     reload(cf)
 except:
@@ -26,8 +26,10 @@ class subWidget(dW.DockWidget):
         self.setTitleBarWidget(self.titleBar)
         # create some item to store widget
         self.vLayout = QtGui.QVBoxLayout()
-        self.vLayout.setSizeConstraint(QtGui.QLayout.SetMinAndMaxSize)
-        self.vLayout.expandingDirections()
+        margins = QtCore.QMargins(0,0,0,0)
+        self.vLayout.setSpacing(0)
+        self.vLayout.setContentsMargins(margins) 
+        self.vSpacer = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.widget = QtGui.QWidget()
         self.widget.setLayout(self.vLayout)
         self.setWidget(self.widget)
@@ -39,7 +41,7 @@ class subWidget(dW.DockWidget):
                     if mod_name != '__init__':
                         mod = mod_loader.find_module(mod_name).load_module(mod_name)
                         self.vLayout.addWidget(mod.QtWidget())
-                        
+        self.vLayout.addItem(self.vSpacer)
         #--
         
         
