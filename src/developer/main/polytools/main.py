@@ -9,15 +9,17 @@ pkgname  = 'POLY TOOLS'
 
 from PyQt4 import QtGui, QtCore, uic
 from developer.main.common import commonFunctions
+import pkgutil
 
-class mainForm(QtGui.QWidget):
+class mainWidget(QtGui.QWidget):
     def __init__(self, subpackages, parent = None):
-        super(polytoolsForm, self)._init__(parent)
+        super(mainWidget, self).__init__(parent)
         self.vLayout = QtGui.QVBoxLayout()
-        self.vSpacer = QtGui.QSpacer()
+        self.vSpacer = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.setLayout(QtGui.QVBoxLayout)
         
-    def loadSubPacks(subs):
-        for p in subs:
-            pass
-        
+        ## load widget
+        for loader, module_name, is_pkg in pkgutil.walk_packages(__path__):
+            if is_pkg and module_name in subpackages:
+                module = loader.find_module(module_name).load_module(module_name)
+                self.vLayout.addWidget(module.main.mainWidget())

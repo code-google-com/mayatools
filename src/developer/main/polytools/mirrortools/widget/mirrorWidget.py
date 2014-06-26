@@ -12,7 +12,7 @@ from developer.main.polytools.mirrortools.fn import mirrorFunction as mFn
 from developer.main.polytools.mirrortools.ui import mirrorUI
 import os, inspect, functools
 
-class mirrorWidget(QtGui.QMainWindow, mirrorUI.Ui_Form):
+class widget(QtGui.QMainWindow, mirrorUI.Ui_Form):
     '''
     Description: doing some mirror function.
     '''

@@ -3,10 +3,10 @@ import pkgutil
 __all__ = []
 
 print 'executing ....'
+print __path__
 
-for loader, modul e_name, is_pkg in pkgutil.walk_packages(__path__):
-    if not is_pkg and 'Widget' in module_name:
-        print module_name
-        #__all__.append(module_name)
-        #module = loader.find_module(module_name).load_module(module_name)
-        #exec('%s = module' % module_name)
+for loader, pkg_name, is_pkg in pkgutil.walk_packages(__path__):
+    if is_pkg and 'widget' in pkg_name:
+        __all__.append(module_name)
+        module = loader.find_module(pkg_name).load_module(pkg_name)
+        exec('%s = module' % pkg_name)

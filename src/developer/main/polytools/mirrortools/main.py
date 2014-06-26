@@ -11,7 +11,9 @@ import inspect, os
 from developer.main.common import commonFunctions as cf
 from developer.main.common import dockWidget as dW
 
-class mainForm(dW.DockWidget):
+from widget import *
+
+class mainWidget(dW.DockWidget):
     def __init__(self, parent = None):
         super(mainForm, self).__init__(modName)
         # create some item to store widget
@@ -19,6 +21,11 @@ class mainForm(dW.DockWidget):
         self.widget = QtGui.QWidget()
         self.widget.setLayout(self.vLayout)
         # add widget
+        for loader, module_name, is_pkg in pkgutil.walk_packages(widget.__path__):
+            if not is_pkg:
+                module = loader.find_module(module_name).load_module(module_name)
+                self.vLayout.addWidget(module.widget())
+        #--
         self.setWidget(self.widget)
         
 

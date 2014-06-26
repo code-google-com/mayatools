@@ -9,10 +9,8 @@ Created on May 27, 2014
 import inspect,os
 import pymel.core as py
 
-try:
-    reload(projectUI)
-except:
-    from developer.main import projectUI 
+from developer.main import projectUI
+reload(projectUI) 
     
 dirfile = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 ProjectName = os.path.splitext(os.path.split(inspect.getfile(inspect.currentframe()))[1])[0]
