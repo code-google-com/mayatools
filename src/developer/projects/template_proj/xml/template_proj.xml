@@ -33,7 +33,9 @@
 			<upackage name="uvtools"/>
 			<package name="polytools">
 				<umodule name = "setupscene"/>
-				<module name = "mirrortools"/>
+				<module name = "mirrortools">
+					<submodule name = "mirrorWidget"  parameter=""/>
+				</module>			
 				<umodule name = "modelingtools"/>
 				<umodule name = "normaltools"/> 
 			</package>
