@@ -16,7 +16,7 @@ class mainWidget(QtGui.QWidget):
         print 'loading Polytools module .........................'
         super(QtGui.QWidget, self).__init__(parent)
         self.vLayout = QtGui.QVBoxLayout()
-        self.vSpacer = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.vSpacer = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.vLayout.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
         self.setLayout(self.vLayout)
 
@@ -31,6 +31,6 @@ class mainWidget(QtGui.QWidget):
                         mod = mod_loader.find_module(name).load_module(name)
                         self.vLayout.addWidget(mod.subWidget())
                     
-        #self.vLayout.addWidget(self.vSpacer)
+        self.vLayout.addItem(self.vSpacer)
         
         print 'finishing Polytools loading ..................... '

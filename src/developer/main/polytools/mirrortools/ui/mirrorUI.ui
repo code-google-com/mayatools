@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>308</width>
+    <width>662</width>
     <height>224</height>
    </rect>
   </property>
@@ -25,6 +25,12 @@
    </property>
    <item>
     <widget class="QGroupBox" name="groupBox_2">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="font">
       <font>
        <weight>75</weight>
@@ -51,7 +57,7 @@
        <number>4</number>
       </property>
       <property name="sizeConstraint">
-       <enum>QLayout::SetMinAndMaxSize</enum>
+       <enum>QLayout::SetMinimumSize</enum>
       </property>
       <property name="leftMargin">
        <number>1</number>

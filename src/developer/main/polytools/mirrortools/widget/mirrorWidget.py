@@ -23,7 +23,7 @@ class QtWidget(QtGui.QMainWindow, mirrorUI.Ui_Form):
     '''
     Description: doing some mirror function.
     '''
-    def __init__(self, parent = cf.getMayaWindow()):
+    def __init__(self, parent = None):
         super(QtGui.QMainWindow, self).__init__(parent)
         self.setupUi(self)
         self.setObjectName('mirrorToolBox')
