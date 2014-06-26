@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>329</width>
+    <width>308</width>
     <height>224</height>
    </rect>
   </property>
@@ -14,6 +14,15 @@
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>3</number>
+   </property>
+   <property name="sizeConstraint">
+    <enum>QLayout::SetMinimumSize</enum>
+   </property>
+   <property name="margin">
+    <number>5</number>
+   </property>
    <item>
     <widget class="QGroupBox" name="groupBox_2">
      <property name="font">
@@ -23,7 +32,7 @@
       </font>
      </property>
      <property name="title">
-      <string>MIRROR TOOLBOX</string>
+      <string>Mirror ToolBox</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -38,14 +47,29 @@
       <bool>false</bool>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_4">
+      <property name="spacing">
+       <number>4</number>
+      </property>
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMinAndMaxSize</enum>
+      </property>
       <property name="leftMargin">
+       <number>1</number>
+      </property>
+      <property name="topMargin">
        <number>5</number>
       </property>
       <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
        <number>5</number>
       </property>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_8">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetMinimumSize</enum>
+        </property>
         <item>
          <widget class="QRadioButton" name="rdbNoClone">
           <property name="font">
@@ -95,6 +119,9 @@
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_17">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetMinimumSize</enum>
+        </property>
         <item>
          <widget class="QRadioButton" name="rdbKeepHistory">
           <property name="font">
@@ -131,6 +158,9 @@
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_9">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetMinimumSize</enum>
+        </property>
         <item>
          <widget class="QPushButton" name="btnMirrorU">
           <property name="sizePolicy">
@@ -187,6 +217,9 @@ color: rgb(255, 255, 255);</string>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_10">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetMinimumSize</enum>
+        </property>
         <item>
          <widget class="QPushButton" name="pushButton_7">
           <property name="sizePolicy">
@@ -243,6 +276,9 @@ color: rgb(255, 255, 255);</string>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_11">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetMinimumSize</enum>
+        </property>
         <item>
          <widget class="QPushButton" name="btnMirrorV">
           <property name="sizePolicy">

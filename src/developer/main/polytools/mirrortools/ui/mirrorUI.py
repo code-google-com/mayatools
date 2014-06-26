@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\polytools\mirrortools\ui\mirrorUI.ui'
+# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\polytools\mirrortools\ui\mirrorUI.ui'
 #
-# Created: Tue Jun 24 12:43:16 2014
+# Created: Thu Jun 26 17:28:58 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,19 +26,29 @@ except AttributeError:
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName(_fromUtf8("Form"))
-        Form.resize(329, 224)
+        Form.resize(308, 224)
         self.verticalLayout = QtGui.QVBoxLayout(Form)
+        self.verticalLayout.setSpacing(3)
+        self.verticalLayout.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
+        self.verticalLayout.setMargin(5)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.groupBox_2 = QtGui.QGroupBox(Form)
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
         self.groupBox_2.setFont(font)
+        self.groupBox_2.setAlignment(QtCore.Qt.AlignCenter)
+        self.groupBox_2.setFlat(False)
+        self.groupBox_2.setCheckable(False)
+        self.groupBox_2.setChecked(False)
         self.groupBox_2.setObjectName(_fromUtf8("groupBox_2"))
         self.verticalLayout_4 = QtGui.QVBoxLayout(self.groupBox_2)
-        self.verticalLayout_4.setContentsMargins(5, -1, 5, -1)
+        self.verticalLayout_4.setSpacing(4)
+        self.verticalLayout_4.setSizeConstraint(QtGui.QLayout.SetMinAndMaxSize)
+        self.verticalLayout_4.setContentsMargins(1, 5, 0, 5)
         self.verticalLayout_4.setObjectName(_fromUtf8("verticalLayout_4"))
         self.horizontalLayout_8 = QtGui.QHBoxLayout()
+        self.horizontalLayout_8.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
         self.horizontalLayout_8.setObjectName(_fromUtf8("horizontalLayout_8"))
         self.rdbNoClone = QtGui.QRadioButton(self.groupBox_2)
         font = QtGui.QFont()
@@ -65,6 +75,7 @@ class Ui_Form(object):
         self.horizontalLayout_8.addWidget(self.rdbInstance)
         self.verticalLayout_4.addLayout(self.horizontalLayout_8)
         self.horizontalLayout_17 = QtGui.QHBoxLayout()
+        self.horizontalLayout_17.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
         self.horizontalLayout_17.setObjectName(_fromUtf8("horizontalLayout_17"))
         self.rdbKeepHistory = QtGui.QRadioButton(self.groupBox_2)
         font = QtGui.QFont()
@@ -83,6 +94,7 @@ class Ui_Form(object):
         self.horizontalLayout_17.addWidget(self.rdbParentOnly)
         self.verticalLayout_4.addLayout(self.horizontalLayout_17)
         self.horizontalLayout_9 = QtGui.QHBoxLayout()
+        self.horizontalLayout_9.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
         self.horizontalLayout_9.setObjectName(_fromUtf8("horizontalLayout_9"))
         self.btnMirrorU = QtGui.QPushButton(self.groupBox_2)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
@@ -113,6 +125,7 @@ class Ui_Form(object):
         self.horizontalLayout_9.addWidget(self.btnPivotX)
         self.verticalLayout_4.addLayout(self.horizontalLayout_9)
         self.horizontalLayout_10 = QtGui.QHBoxLayout()
+        self.horizontalLayout_10.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
         self.horizontalLayout_10.setObjectName(_fromUtf8("horizontalLayout_10"))
         self.pushButton_7 = QtGui.QPushButton(self.groupBox_2)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
@@ -143,6 +156,7 @@ class Ui_Form(object):
         self.horizontalLayout_10.addWidget(self.btnPivotY)
         self.verticalLayout_4.addLayout(self.horizontalLayout_10)
         self.horizontalLayout_11 = QtGui.QHBoxLayout()
+        self.horizontalLayout_11.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
         self.horizontalLayout_11.setObjectName(_fromUtf8("horizontalLayout_11"))
         self.btnMirrorV = QtGui.QPushButton(self.groupBox_2)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
@@ -179,7 +193,7 @@ class Ui_Form(object):
 
     def retranslateUi(self, Form):
         Form.setWindowTitle(_translate("Form", "Form", None))
-        self.groupBox_2.setTitle(_translate("Form", "Mirror Toolbox", None))
+        self.groupBox_2.setTitle(_translate("Form", "Mirror ToolBox", None))
         self.rdbNoClone.setText(_translate("Form", "No Copy", None))
         self.rdbClone.setText(_translate("Form", "Clone", None))
         self.rdbInstance.setText(_translate("Form", "Instance", None))

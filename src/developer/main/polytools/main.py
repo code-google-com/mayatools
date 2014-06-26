@@ -8,17 +8,19 @@ Created on May 26, 2014
 pkgname  = 'POLY TOOLS'
 
 from PyQt4 import QtGui, QtCore, uic
-from developer.main.common import commonFunctions
+from developer.main.common import commonFunctions as cf
 import pkgutil, os
 
 class mainWidget(QtGui.QWidget):
     def __init__(self, subpackages, parent = None):
         print 'loading Polytools module .........................'
-        super(mainWidget, self).__init__(parent)
+        super(QtGui.QWidget, self).__init__(parent)
         self.vLayout = QtGui.QVBoxLayout()
         self.vSpacer = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.setLayout(QtGui.QVBoxLayout())
+        self.vLayout.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
+        self.setLayout(self.vLayout)
 
+        #self.vLayout.setSizeConstraint(QtGui.QLayout.SetMaxSize)
         
         ## load widget
         for loader, module_name, is_pkg in pkgutil.walk_packages(os.path.split(__file__)):
@@ -27,6 +29,8 @@ class mainWidget(QtGui.QWidget):
                 for mod_loader, name, is_mod in pkgutil.iter_modules(pkg.__path__):
                     if name == 'main':
                         mod = mod_loader.find_module(name).load_module(name)
-                        self.vLayout.addWidget(mod.mainWidget())
+                        self.vLayout.addWidget(mod.subWidget())
+                    
+        #self.vLayout.addWidget(self.vSpacer)
         
         print 'finishing Polytools loading ..................... '

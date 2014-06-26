@@ -8,15 +8,29 @@ Created on May 26, 2014
 modName = 'MIRROR TOOLS'
 
 import inspect, os, pkgutil
-from PyQt4 import QtGui
-from developer.main.common import commonFunctions as cf
-from developer.main.common import dockWidget as dW
+from PyQt4 import QtGui, QtCore
+try:
+    reload(cf)
+except:
+    from developer.main.common import commonFunctions as cf
+    
+try:
+    reload(dW)
+except:
+    from developer.main.common import dockWidget as dW
 
-class mainWidget(dW.DockWidget):
-    def __init__(self, parent = None):
-        super(mainWidget, self).__init__(modName)
+class subWidget(dW.DockWidget):
+    def __init__(self):
+        super(dW.DockWidget, self).__init__(modName)
+        self.titleBar = dW.DockWidgetTitleBar(self)
+        self.setTitleBarWidget(self.titleBar)
+        
+        margins = QtCore.QMargins(1,1,1,1)
         # create some item to store widget
-        self.vLayout  = QtGui.QVBoxLayout()
+        self.vLayout = QtGui.QVBoxLayout()
+        self.vLayout.setSpacing(1)
+        self.vLayout.setContentsMargins(margins) 
+        
         self.widget = QtGui.QWidget()
         self.widget.setLayout(self.vLayout)
         self.setWidget(self.widget)
@@ -27,7 +41,7 @@ class mainWidget(dW.DockWidget):
                 for mod_loader, mod_name, is_mod in pkgutil.iter_modules(pkg.__path__):
                     if mod_name != '__init__':
                         mod = mod_loader.find_module(mod_name).load_module(mod_name)
-                        self.vLayout.addWidget(mod.widget())
+                        self.vLayout.addWidget(mod.QtWidget())
         #--
         
         

@@ -2,6 +2,11 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 try:
+    reload(cf)
+except:
+    from developer.main.common import commonFunctions as cf
+
+try:
     reload(IconResource_rc)
 except:
     from developer.main.source import IconResource_rc
@@ -246,8 +251,8 @@ class DockMainWidgetWrapper(QWidget):
             return QWidget.sizeHint(self)
 
 class DockWidget(QDockWidget):
-    def __init__(self, *args):
-        QDockWidget.__init__(self, *args)
+    def __init__(self, parent = cf.getMayaWindow(), *args):
+        QDockWidget.__init__(self, parent, *args)
         self.titleBar = DockWidgetTitleBar(self)
         self.setTitleBarWidget(self.titleBar)
         self.mainWidget = None
