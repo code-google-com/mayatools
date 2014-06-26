@@ -27,6 +27,7 @@ class subWidget(dW.DockWidget):
         # create some item to store widget
         self.vLayout = QtGui.QVBoxLayout()
         self.vLayout.setSizeConstraint(QtGui.QLayout.SetMinAndMaxSize)
+        self.vLayout.expandingDirections()
         self.widget = QtGui.QWidget()
         self.widget.setLayout(self.vLayout)
         self.setWidget(self.widget)
@@ -38,6 +39,7 @@ class subWidget(dW.DockWidget):
                     if mod_name != '__init__':
                         mod = mod_loader.find_module(mod_name).load_module(mod_name)
                         self.vLayout.addWidget(mod.QtWidget())
+                        
         #--
         
         

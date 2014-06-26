@@ -24,10 +24,10 @@ class mainWidget(QtGui.QWidget):
         
         ## load widget
         for pkg_loader, pkg_name, is_pkg in pkgutil.walk_packages(os.path.split(__file__)):
-            if is_pkg and module_name in subpackages:
+            if is_pkg and pkg_name in subpackages:
                 pkg = pkg_loader.find_module(pkg_name).load_module(pkg_name)
                 for mod_loader, mod_name, is_mod in pkgutil.iter_modules(pkg.__path__):
-                    if name == 'main':
+                    if mod_name == 'main':
                         mod = mod_loader.find_module(mod_name).load_module(mod_name)
                         self.vLayout.addWidget(mod.subWidget())
                     
