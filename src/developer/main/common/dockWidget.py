@@ -1,9 +1,5 @@
-try:
-    from PySide.QtCore import *
-    from PySide.QtGui import *
-except:          
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
 try:
     reload(IconResource_rc)
