@@ -23,12 +23,12 @@ class mainWidget(QtGui.QWidget):
         #self.vLayout.setSizeConstraint(QtGui.QLayout.SetMaxSize)
         
         ## load widget
-        for loader, module_name, is_pkg in pkgutil.walk_packages(os.path.split(__file__)):
+        for pkg_loader, pkg_name, is_pkg in pkgutil.walk_packages(os.path.split(__file__)):
             if is_pkg and module_name in subpackages:
-                pkg = loader.find_module(module_name).load_module(module_name)
-                for mod_loader, name, is_mod in pkgutil.iter_modules(pkg.__path__):
+                pkg = pkg_loader.find_module(pkg_name).load_module(pkg_name)
+                for mod_loader, mod_name, is_mod in pkgutil.iter_modules(pkg.__path__):
                     if name == 'main':
-                        mod = mod_loader.find_module(name).load_module(name)
+                        mod = mod_loader.find_module(mod_name).load_module(mod_name)
                         self.vLayout.addWidget(mod.subWidget())
                     
         self.vLayout.addItem(self.vSpacer)
