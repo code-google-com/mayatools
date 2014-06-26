@@ -24,6 +24,7 @@ class mainWidget(dW.DockWidget):
         for loader, module_name, is_pkg in pkgutil.walk_packages(widget.__path__):
             if not is_pkg:
                 module = loader.find_module(module_name).load_module(module_name)
+                print module.__name__
                 self.vLayout.addWidget(module.widget())
         #--
         self.setWidget(self.widget)
