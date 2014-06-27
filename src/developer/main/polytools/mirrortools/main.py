@@ -29,7 +29,7 @@ class subWidget(dW.DockWidget):
         margins = QtCore.QMargins(0,0,0,0)
         self.vLayout.setSpacing(0)
         self.vLayout.setContentsMargins(margins) 
-        self.vSpacer = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.vSpacer = QtGui.QSpacerItem(1, 1, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.widget = QtGui.QWidget()
         self.widget.setLayout(self.vLayout)
         self.setWidget(self.widget)

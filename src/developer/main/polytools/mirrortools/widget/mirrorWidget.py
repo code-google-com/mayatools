@@ -11,15 +11,15 @@ from PyQt4 import QtGui, QtCore
 from developer.main.polytools.mirrortools.fn import mirrorFunction as mFn
 
 try:
-    reload(mirrorUI)
+    reload(ui)
 except:
-    from developer.main.polytools.mirrortools.ui import mirrorUI
+    from developer.main.polytools.mirrortools.ui import mirrorUI as ui
     
 import os, inspect, functools
 
 print '    Mirror Widget: Executing module ....'
 
-class QtWidget(QtGui.QMainWindow, mirrorUI.Ui_MainWindow):
+class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
     '''
     Description: doing some mirror function.
     '''
