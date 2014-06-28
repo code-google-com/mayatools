@@ -36,8 +36,8 @@
 				<module name = "mirrortools">
 					<submodule name = "mirrorWidget"  parameter=""/>
 				</module>			
-				<umodule name = "modelingtools"/>
-				<umodule name = "normaltools"/> 
+				<module name = "modeltools"/>
+				<module name = "normaltools"/> 
 			</package>
 			<upackage name="shadertools" />
 			<upackage name="3rdtools" />
