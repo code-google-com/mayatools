@@ -13,7 +13,7 @@ from developer.main.polytools.mirrortools.fn import mirrorFunction as mFn
 try:
     reload(ui)
 except:
-    from developer.main.polytools.mirrortools.ui import mirrorUI as ui
+    from developer.main.polytools.mirrortools.widget.ui import mirrorUI as ui
     
 import os, inspect, functools
 
