@@ -36,7 +36,7 @@ class subWidget(dW.DockWidget):
             if is_pkg and pkg_name == 'widget':
                 pkg = pkg_loader.find_module(pkg_name).load_module(pkg_name)
                 for mod_loader, mod_name, is_mod in pkgutil.iter_modules(pkg.__path__):
-                    if mod_name != '__init__':
+                    if not is_mod and mod_name != '__init__':
                         mod = mod_loader.find_module(mod_name).load_module(mod_name)
                         self.vLayout.addWidget(mod.QtWidget())
         
