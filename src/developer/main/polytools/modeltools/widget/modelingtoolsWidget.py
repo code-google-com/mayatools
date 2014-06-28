@@ -9,7 +9,7 @@ from developer.main.polytools.modeltools.fn import modeltoolsFn as mFn
 try:
     reload(ui)
 except:
-    from developer.main.polytools.modeltools.ui import modeltoolsUI as ui
+    from developer.main.polytools.modeltools.widget.ui import modeltoolsUI as ui
 
 from PyQt4 import QtGui
 
