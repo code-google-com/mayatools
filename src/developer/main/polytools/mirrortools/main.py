@@ -26,10 +26,8 @@ class subWidget(dW.DockWidget):
         self.setTitleBarWidget(self.titleBar)
         # create some item to store widget
         self.vLayout = QtGui.QVBoxLayout()
-        margins = QtCore.QMargins(0,0,0,0)
+        self.vLayout.setContentsMargins(0, 0, 0, 0)
         self.vLayout.setSpacing(0)
-        self.vLayout.setContentsMargins(margins) 
-        self.vSpacer = QtGui.QSpacerItem(1, 1, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.widget = QtGui.QWidget()
         self.widget.setLayout(self.vLayout)
         self.setWidget(self.widget)
@@ -41,7 +39,7 @@ class subWidget(dW.DockWidget):
                     if mod_name != '__init__':
                         mod = mod_loader.find_module(mod_name).load_module(mod_name)
                         self.vLayout.addWidget(mod.QtWidget())
-        self.vLayout.addItem(self.vSpacer)
+        #self.vLayout.addItem(self.vSpacer)
         #--
         
         

@@ -219,7 +219,7 @@ class DockMainWidgetWrapper(QWidget):
         QWidget.__init__(self, dockwidget)
         self.widget = None
         self.widget_height = 0
-        self.hlayout = QHBoxLayout(self)
+        self.hlayout = QVBoxLayout(self)
         self.setLayout(self.hlayout)
 
         

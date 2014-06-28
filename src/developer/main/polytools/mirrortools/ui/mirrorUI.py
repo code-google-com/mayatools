@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\polytools\mirrortools\ui\mirrorUI.ui'
 #
-# Created: Sat Jun 28 07:50:50 2014
+# Created: Sat Jun 28 10:42:50 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -27,13 +27,22 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.setWindowModality(QtCore.Qt.ApplicationModal)
-        MainWindow.resize(327, 210)
+        MainWindow.resize(631, 202)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
+        MainWindow.setSizePolicy(sizePolicy)
         self.centralwidget = QtGui.QWidget(MainWindow)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.centralwidget.sizePolicy().hasHeightForWidth())
+        self.centralwidget.setSizePolicy(sizePolicy)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout = QtGui.QVBoxLayout(self.centralwidget)
+        self.verticalLayout.setContentsMargins(3, -1, 3, -1)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
-        self.vlayout = QtGui.QVBoxLayout()
-        self.vlayout.setObjectName(_fromUtf8("vlayout"))
         self.groupBox_2 = QtGui.QGroupBox(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
@@ -51,6 +60,7 @@ class Ui_MainWindow(object):
         self.groupBox_2.setObjectName(_fromUtf8("groupBox_2"))
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.groupBox_2)
         self.verticalLayout_3.setSpacing(7)
+        self.verticalLayout_3.setSizeConstraint(QtGui.QLayout.SetDefaultConstraint)
         self.verticalLayout_3.setMargin(0)
         self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
         self.horizontalLayout_11 = QtGui.QHBoxLayout()
@@ -191,8 +201,7 @@ class Ui_MainWindow(object):
         self.btnPivotZ.setObjectName(_fromUtf8("btnPivotZ"))
         self.horizontalLayout_2.addWidget(self.btnPivotZ)
         self.verticalLayout_3.addLayout(self.horizontalLayout_2)
-        self.vlayout.addWidget(self.groupBox_2)
-        self.verticalLayout.addLayout(self.vlayout)
+        self.verticalLayout.addWidget(self.groupBox_2)
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
