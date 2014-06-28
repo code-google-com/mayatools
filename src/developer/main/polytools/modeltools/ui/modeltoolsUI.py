@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\polytools\modeltools\ui\modeltoolsUI.ui'
 #
-# Created: Fri Jun 27 18:32:42 2014
+# Created: Sat Jun 28 07:50:55 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,12 +26,13 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(445, 240)
+        MainWindow.resize(327, 226)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout = QtGui.QVBoxLayout(self.centralwidget)
-        self.verticalLayout.setMargin(3)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
+        self.vlayout = QtGui.QVBoxLayout()
+        self.vlayout.setObjectName(_fromUtf8("vlayout"))
         self.groupBox_3 = QtGui.QGroupBox(self.centralwidget)
         self.groupBox_3.setEnabled(True)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Minimum)
@@ -46,7 +47,7 @@ class Ui_MainWindow(object):
         self.groupBox_3.setAlignment(QtCore.Qt.AlignCenter)
         self.groupBox_3.setObjectName(_fromUtf8("groupBox_3"))
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.groupBox_3)
-        self.verticalLayout_2.setMargin(3)
+        self.verticalLayout_2.setMargin(0)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
@@ -155,7 +156,8 @@ class Ui_MainWindow(object):
         self.spnTolerance.setObjectName(_fromUtf8("spnTolerance"))
         self.horizontalLayout_15.addWidget(self.spnTolerance)
         self.verticalLayout_2.addLayout(self.horizontalLayout_15)
-        self.verticalLayout.addWidget(self.groupBox_3)
+        self.vlayout.addWidget(self.groupBox_3)
+        self.verticalLayout.addLayout(self.vlayout)
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)

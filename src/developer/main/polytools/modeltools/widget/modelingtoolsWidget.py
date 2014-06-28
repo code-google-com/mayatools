@@ -19,3 +19,4 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
         super(QtGui.QMainWindow, self).__init__(parent = None)
         self.setupUi(self)
         self.setObjectName('modelingToolbox')
+        

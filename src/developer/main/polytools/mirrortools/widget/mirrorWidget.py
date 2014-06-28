@@ -27,7 +27,6 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
         super(QtGui.QMainWindow, self).__init__(parent)
         self.setupUi(self)
         self.setObjectName('mirrorToolBox')
-        
         self.btnAxisX.clicked.connect(functools.partial(mFn.mirrorTool, 'x', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By axis'))
         self.btnAxisY.clicked.connect(functools.partial(mFn.mirrorTool, 'y', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By axis'))
         self.btnAxisZ.clicked.connect(functools.partial(mFn.mirrorTool, 'z', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By axis'))
