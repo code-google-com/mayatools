@@ -11,7 +11,7 @@ except:
 try:
     reload(ui)
 except:
-    from developer.main.polytools.normaltools.ui import normalUI as ui
+    from developer.main.polytools.normaltools.widget.ui import normalUI as ui
 
 from PyQt4 import QtGui
 
