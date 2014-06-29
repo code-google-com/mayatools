@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\ui\AssetContent.ui'
 #
-# Created: Thu Jun 19 06:26:23 2014
+# Created: Sun Jun 29 06:16:56 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -803,11 +803,17 @@ class Ui_MainWindow(object):
         self.actionCapture_thumbnail.setObjectName(_fromUtf8("actionCapture_thumbnail"))
         self.actionImport_selected_asset = QtGui.QAction(MainWindow)
         self.actionImport_selected_asset.setObjectName(_fromUtf8("actionImport_selected_asset"))
+        self.actionChange_Color_theme = QtGui.QAction(MainWindow)
+        self.actionChange_Color_theme.setObjectName(_fromUtf8("actionChange_Color_theme"))
+        self.actionSign_out = QtGui.QAction(MainWindow)
+        self.actionSign_out.setObjectName(_fromUtf8("actionSign_out"))
         self.menuConnect_with_Source_Control.addAction(self.actionPerforce)
         self.menuConnect_with_Source_Control.addAction(self.actionSVN)
         self.menuPreferences.addAction(self.menuConnect_with_Source_Control.menuAction())
+        self.menuPreferences.addAction(self.actionChange_Color_theme)
         self.menuHelps.addAction(self.actionAbout)
         self.menuProjects.addAction(self.actionOpen)
+        self.menuProjects.addAction(self.actionSign_out)
         self.menuSend_to.addAction(self.actionMax)
         self.menuEdit.addAction(self.actionOpen_selected_asset)
         self.menuEdit.addAction(self.menuSend_to.menuAction())
@@ -821,7 +827,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
-        self.tabWidget_2.setCurrentIndex(0)
+        self.tabWidget_2.setCurrentIndex(3)
         self.tabWidget_3.setCurrentIndex(2)
         self.tabWidget_4.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -877,11 +883,13 @@ class Ui_MainWindow(object):
         self.menuSend_to.setTitle(_translate("MainWindow", "Export selected asset", None))
         self.actionPerforce.setText(_translate("MainWindow", "Perforce", None))
         self.actionSVN.setText(_translate("MainWindow", "SVN", None))
-        self.actionOpen.setText(_translate("MainWindow", "Load", None))
+        self.actionOpen.setText(_translate("MainWindow", "Sign in", None))
         self.actionAbout.setText(_translate("MainWindow", "About", None))
         self.actionOpen_selected_asset.setText(_translate("MainWindow", "Open selected asset", None))
         self.actionMax.setText(_translate("MainWindow", "Max", None))
         self.actionCapture_thumbnail.setText(_translate("MainWindow", "Capture thumbnail...", None))
         self.actionImport_selected_asset.setText(_translate("MainWindow", "Import selected asset", None))
+        self.actionChange_Color_theme.setText(_translate("MainWindow", "Change Color Theme", None))
+        self.actionSign_out.setText(_translate("MainWindow", "Sign out", None))
 
 import developer.main.source.IconResource_rc

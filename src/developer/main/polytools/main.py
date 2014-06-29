@@ -12,7 +12,6 @@ import pkgutil, os
 
 class mainWidget(QtGui.QScrollArea):
     def __init__(self, subpackages, parent = None):
-        print 'loading Polytools module .........................'
         super(QtGui.QScrollArea, self).__init__(parent)
         self.vsubLayout = QtGui.QVBoxLayout()
         self.vmainLayout = QtGui.QVBoxLayout()
@@ -36,5 +35,3 @@ class mainWidget(QtGui.QScrollArea):
                         widgetLayout.addWidget(mod.subWidget())
         self.vsubLayout.addItem(self.vSpacer)
         self.setWidget(self.widget)
-        
-        print 'finishing Polytools loading ..................... '

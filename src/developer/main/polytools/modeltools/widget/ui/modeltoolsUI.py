@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\polytools\modeltools\ui\modeltoolsUI.ui'
+# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\polytools\modeltools\widget\ui\modeltoolsUI.ui'
 #
-# Created: Sat Jun 28 10:43:01 2014
+# Created: Sun Jun 29 06:16:56 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -52,7 +52,7 @@ class Ui_MainWindow(object):
         self.groupBox_3.setObjectName(_fromUtf8("groupBox_3"))
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.groupBox_3)
         self.verticalLayout_2.setSpacing(7)
-        self.verticalLayout_2.setMargin(0)
+        self.verticalLayout_2.setContentsMargins(3, 11, 3, 11)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
@@ -143,6 +143,7 @@ class Ui_MainWindow(object):
         font.setBold(False)
         font.setWeight(50)
         self.btnSnapVertexTool.setFont(font)
+        self.btnSnapVertexTool.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.btnSnapVertexTool.setObjectName(_fromUtf8("btnSnapVertexTool"))
         self.horizontalLayout_15.addWidget(self.btnSnapVertexTool)
         self.spnTolerance = QtGui.QDoubleSpinBox(self.groupBox_3)

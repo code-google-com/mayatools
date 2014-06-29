@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\polytools\mirrortools\ui\mirrorUI.ui'
+# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\polytools\mirrortools\widget\ui\mirrorUI.ui'
 #
-# Created: Sat Jun 28 10:42:50 2014
+# Created: Sun Jun 29 06:16:56 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!

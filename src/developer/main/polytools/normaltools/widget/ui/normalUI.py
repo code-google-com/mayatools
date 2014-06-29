@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\polytools\normaltools\ui\normalUI.ui'
+# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\polytools\normaltools\widget\ui\normalUI.ui'
 #
-# Created: Sat Jun 28 10:56:28 2014
+# Created: Sun Jun 29 06:16:56 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
