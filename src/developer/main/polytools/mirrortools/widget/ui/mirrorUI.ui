@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>631</width>
-    <height>202</height>
+    <height>224</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -72,8 +72,17 @@
        <property name="sizeConstraint">
         <enum>QLayout::SetDefaultConstraint</enum>
        </property>
-       <property name="margin">
-        <number>0</number>
+       <property name="leftMargin">
+        <number>3</number>
+       </property>
+       <property name="topMargin">
+        <number>11</number>
+       </property>
+       <property name="rightMargin">
+        <number>3</number>
+       </property>
+       <property name="bottomMargin">
+        <number>11</number>
        </property>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_11">

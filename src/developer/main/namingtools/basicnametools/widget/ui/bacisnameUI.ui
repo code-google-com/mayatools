@@ -15,6 +15,12 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
+    <property name="leftMargin">
+     <number>3</number>
+    </property>
+    <property name="rightMargin">
+     <number>3</number>
+    </property>
     <item>
      <widget class="QGroupBox" name="groupBox">
       <property name="title">
@@ -24,6 +30,12 @@
        <set>Qt::AlignCenter</set>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
+       <property name="leftMargin">
+        <number>3</number>
+       </property>
+       <property name="rightMargin">
+        <number>3</number>
+       </property>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
@@ -243,25 +255,9 @@ font:  bold 11px
         </layout>
        </item>
       </layout>
-      <zorder>layoutWidget_4</zorder>
-      <zorder>verticalSpacer</zorder>
-      <zorder>layoutWidget</zorder>
-      <zorder>layoutWidget_6</zorder>
-      <zorder>layoutWidget_5</zorder>
-      <zorder>layoutWidget_3</zorder>
-      <zorder>layoutWidget_2</zorder>
-      <zorder>layoutWidget</zorder>
-      <zorder>layoutWidget_4</zorder>
-      <zorder>layoutWidget_3</zorder>
-      <zorder>ldtFind</zorder>
-      <zorder>layoutWidget_6</zorder>
-      <zorder>layoutWidget_5</zorder>
-      <zorder>layoutWidget_2</zorder>
      </widget>
     </item>
    </layout>
-   <zorder>groupBox</zorder>
-   <zorder>ldtFind</zorder>
   </widget>
  </widget>
  <resources/>

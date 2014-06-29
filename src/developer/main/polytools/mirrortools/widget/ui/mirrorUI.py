@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\polytools\mirrortools\widget\ui\mirrorUI.ui'
 #
-# Created: Sun Jun 29 06:16:56 2014
+# Created: Sun Jun 29 10:27:28 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -27,7 +27,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.setWindowModality(QtCore.Qt.ApplicationModal)
-        MainWindow.resize(631, 202)
+        MainWindow.resize(631, 224)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -61,7 +61,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.groupBox_2)
         self.verticalLayout_3.setSpacing(7)
         self.verticalLayout_3.setSizeConstraint(QtGui.QLayout.SetDefaultConstraint)
-        self.verticalLayout_3.setMargin(0)
+        self.verticalLayout_3.setContentsMargins(3, 11, 3, 11)
         self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
         self.horizontalLayout_11 = QtGui.QHBoxLayout()
         self.horizontalLayout_11.setSizeConstraint(QtGui.QLayout.SetMinimumSize)

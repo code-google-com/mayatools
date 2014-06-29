@@ -26,7 +26,11 @@
 	<ProjectData>
 		<AssetList file="AssetList.xml" />
 		<Module>
-			<upackage name="namingtools"/>
+			<package name="namingtools">
+				<module name = "basicnametools">
+					
+				</module>				
+			</package>		
 			<upackage name="cleanertools"/>
 			<upackage name="pivottoolbox"/>
 			<upackage name="animatetools" />

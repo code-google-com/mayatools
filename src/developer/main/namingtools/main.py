@@ -21,7 +21,7 @@ class mainWidget(QtGui.QScrollArea):
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.widget = QtGui.QWidget()
         self.widget.setLayout(self.vsubLayout)
-        self.vSpacer = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.vSpacer = QtGui.QSpacerItem(40, 2000, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Preferred)
 
         ## load widget
         for pkg_loader, pkg_name, is_pkg in pkgutil.walk_packages(os.path.split(__file__)):
