@@ -1,10 +1,11 @@
 '''
-Created on Jun 21, 2014
+Created on May 26, 2014
 
-@author: Trung
+@author: trungtran
+@description: This is the entry for package. Please do not touch to the file
+
 '''
-
-pkgname = 'SHADER TOOLS'
+modName = 'Debug Shaders'
 
 import inspect, os, pkgutil
 from PyQt4 import QtGui, QtCore
@@ -40,3 +41,10 @@ class subWidget(dW.DockWidget):
                         self.vLayout.addWidget(mod.QtWidget())
         #self.vLayout.addItem(self.vSpacer)
         #--
+        
+        
+
+
+        
+        
+        
