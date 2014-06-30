@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>555</width>
-    <height>230</height>
+    <width>585</width>
+    <height>251</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,6 +15,12 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_10">
+    <property name="leftMargin">
+     <number>3</number>
+    </property>
+    <property name="rightMargin">
+     <number>3</number>
+    </property>
     <item>
      <widget class="QGroupBox" name="groupBox_2">
       <property name="title">
@@ -24,6 +30,12 @@
        <set>Qt::AlignCenter</set>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
+       <property name="leftMargin">
+        <number>3</number>
+       </property>
+       <property name="rightMargin">
+        <number>3</number>
+       </property>
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
@@ -134,6 +146,9 @@
            </item>
            <item>
             <layout class="QVBoxLayout" name="verticalLayout_5">
+             <property name="spacing">
+              <number>12</number>
+             </property>
              <item>
               <widget class="QDoubleSpinBox" name="doubleSpinBox">
                <property name="sizePolicy">
@@ -446,6 +461,62 @@
                </property>
                <property name="text">
                 <string>Set</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_11">
+             <item>
+              <widget class="QPushButton" name="pushButton_5">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Heal</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_6">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Heal</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_7">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Heal</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_8">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Heal</string>
                </property>
               </widget>
              </item>

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\setupdisplay\setupscene\ui\setupscene.ui'
+# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\polytools\setupscene\widget\ui\setupsceneUI.ui'
 #
-# Created: Sun Jun 29 10:27:29 2014
+# Created: Tue Jul 01 01:08:17 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!

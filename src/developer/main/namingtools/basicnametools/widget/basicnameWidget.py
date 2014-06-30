@@ -11,7 +11,7 @@ except:
 try:
     reload(ui)
 except:
-    from developer.main.namingtools.basicnametools.widget.ui import bacisnameUI as ui
+    from developer.main.namingtools.basicnametools.widget.ui import basicnameUI as ui
 
 from PyQt4 import QtGui
 

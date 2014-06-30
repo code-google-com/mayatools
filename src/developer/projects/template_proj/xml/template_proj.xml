@@ -43,7 +43,12 @@
 				<module name = "modeltools"/>
 				<module name = "normaltools"/> 
 			</package>
-			<upackage name="shadertools" />
+			<package name="shadertools">
+				<module name = "debugshaders"/>
+				<module name = "editshaders"/>
+				<module name = "editvertexcolors"/>	
+				<module name = "bakingao"/>	
+			</package>
 			<upackage name="3rdtools" />
 		</Module>
 	</ProjectData>
