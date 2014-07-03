@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\ui\ProjectForm.ui'
 #
-# Created: Tue Jul 01 01:08:18 2014
+# Created: Thu Jul 03 09:24:23 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -78,6 +78,8 @@ class Ui_ProjectMainForm(object):
         self.menuDocking.setObjectName(_fromUtf8("menuDocking"))
         self.menuHelp_2 = QtGui.QMenu(self.menubar)
         self.menuHelp_2.setObjectName(_fromUtf8("menuHelp_2"))
+        self.menuProjects = QtGui.QMenu(self.menubar)
+        self.menuProjects.setObjectName(_fromUtf8("menuProjects"))
         ProjectMainForm.setMenuBar(self.menubar)
         self.statusbar = QtGui.QStatusBar(ProjectMainForm)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
@@ -184,6 +186,10 @@ class Ui_ProjectMainForm(object):
         self.actionLeft.setObjectName(_fromUtf8("actionLeft"))
         self.actionRight = QtGui.QAction(ProjectMainForm)
         self.actionRight.setObjectName(_fromUtf8("actionRight"))
+        self.actionNew_Project = QtGui.QAction(ProjectMainForm)
+        self.actionNew_Project.setObjectName(_fromUtf8("actionNew_Project"))
+        self.actionEdit_Project = QtGui.QAction(ProjectMainForm)
+        self.actionEdit_Project.setObjectName(_fromUtf8("actionEdit_Project"))
         self.menuAssets.addAction(self.actionAsset)
         self.menuConnect_to_Source_Control.addAction(self.actionPerforce)
         self.menuConnect_to_Source_Control.addAction(self.actionSVN)
@@ -204,6 +210,9 @@ class Ui_ProjectMainForm(object):
         self.menuHelp.addAction(self.menuDocking.menuAction())
         self.menuHelp_2.addAction(self.actionAbout_2)
         self.menuHelp_2.addAction(self.actionGuildlines)
+        self.menuProjects.addAction(self.actionNew_Project)
+        self.menuProjects.addAction(self.actionEdit_Project)
+        self.menubar.addAction(self.menuProjects.menuAction())
         self.menubar.addAction(self.menuAssets.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
         self.menubar.addAction(self.menuHelp_2.menuAction())
@@ -219,6 +228,7 @@ class Ui_ProjectMainForm(object):
         self.menuCheck_out.setTitle(_translate("ProjectMainForm", "Check out", None))
         self.menuDocking.setTitle(_translate("ProjectMainForm", "Docking", None))
         self.menuHelp_2.setTitle(_translate("ProjectMainForm", "Help", None))
+        self.menuProjects.setTitle(_translate("ProjectMainForm", "Projects", None))
         self.actionImport_Asset.setText(_translate("ProjectMainForm", "Add Items", None))
         self.actionRemove_Items.setText(_translate("ProjectMainForm", "Remove Items", None))
         self.actionCreate_Workflow.setText(_translate("ProjectMainForm", "New", None))
@@ -254,4 +264,6 @@ class Ui_ProjectMainForm(object):
         self.actionGet_revision.setText(_translate("ProjectMainForm", "Get revision...", None))
         self.actionLeft.setText(_translate("ProjectMainForm", "Left", None))
         self.actionRight.setText(_translate("ProjectMainForm", "Right", None))
+        self.actionNew_Project.setText(_translate("ProjectMainForm", "New Project", None))
+        self.actionEdit_Project.setText(_translate("ProjectMainForm", "Edit Project", None))
 

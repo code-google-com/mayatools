@@ -151,6 +151,14 @@
     <addaction name="actionAbout_2"/>
     <addaction name="actionGuildlines"/>
    </widget>
+   <widget class="QMenu" name="menuProjects">
+    <property name="title">
+     <string>Projects</string>
+    </property>
+    <addaction name="actionNew_Project"/>
+    <addaction name="actionEdit_Project"/>
+   </widget>
+   <addaction name="menuProjects"/>
    <addaction name="menuAssets"/>
    <addaction name="menuHelp"/>
    <addaction name="menuHelp_2"/>
@@ -395,6 +403,16 @@
   <action name="actionRight">
    <property name="text">
     <string>Right</string>
+   </property>
+  </action>
+  <action name="actionNew_Project">
+   <property name="text">
+    <string>New Project</string>
+   </property>
+  </action>
+  <action name="actionEdit_Project">
+   <property name="text">
+    <string>Edit Project</string>
    </property>
   </action>
  </widget>
