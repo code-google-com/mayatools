@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\shadertools\debugshaders\widget\ui\debugshaderUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\shadertools\debugshaders\widget\ui\debugshaderUI.ui'
 #
-# Created: Thu Jul 03 09:24:22 2014
+
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,10 +26,11 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(321, 123)
+        MainWindow.resize(487, 123)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.centralwidget)
+        self.verticalLayout_2.setContentsMargins(3, -1, 3, -1)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.groupBox = QtGui.QGroupBox(self.centralwidget)
         self.groupBox.setAlignment(QtCore.Qt.AlignCenter)

@@ -9,8 +9,8 @@ Created on May 27, 2014
 import inspect,os
 import pymel.core as py
 
-from developer.main import projectUI
-reload(projectUI) 
+from developer.main import mainEntry
+reload(mainEntry) 
     
 dirfile = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 ProjectName = os.path.splitext(os.path.split(inspect.getfile(inspect.currentframe()))[1])[0]
@@ -18,5 +18,5 @@ ProjectXML = dirfile + '/xml/' + ProjectName + '.xml'
 
 if py.window('ProjectUIWindow', q = True, ex= True):
     py.deleteUI('ProjectUIWindow')    
-form = projectUI.projectUI(ProjectXML)
+form = mainEntry.projectUI(ProjectXML)
 form.show()
