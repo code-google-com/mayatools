@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+<Project name="Natural_Motion">
+	<Managers>
+		<Tech>
+			<user>quynguyen</user>
+			<user>trungtran</user>
+		</Tech>
+		<ArtDirector>
+			<user>huongnguyen</user>
+			<user>chauminh</user>
+		</ArtDirector>
+		<Producer>
+			<user>phucdo</user>
+		</Producer>
+	</Managers>
+	<Directories>
+		<ServerPath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/3DScene/</ServerPath>
+		<LocalPath>D:/2013_GlassEgg_Vehicles2014/3DScene/</LocalPath>
+		<ProjectLocalPath>maya</ProjectLocalPath>
+		<DocumentsPath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/Documents/</DocumentsPath>
+		<FeedbacksPath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/Feedbacks/</FeedbacksPath>
+		<ReferencesImagePath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/Documents/</ReferencesImagePath>
+	</Directories>
+	<Structures_Asset group="True">
+	</Structures_Asset>
+	<ProjectData>
+		<Template file="Sony_template_file.mb" />
+		<AssetList file="geProject_AssetList.xml" />
+		<Module>
+			<module name="PolyTools" />
+			<module name="ShaderTools" params="" />
+			<module name="Pivots" />
+			<module name="UVTools" />
+			<module name="CleanerTools" params="yes" />
+		</Module>
+
+	</ProjectData>
+</Project>
