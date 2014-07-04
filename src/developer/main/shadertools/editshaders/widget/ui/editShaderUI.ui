@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>409</width>
-    <height>165</height>
+    <width>333</width>
+    <height>172</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,14 +15,18 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
-    <property name="leftMargin">
-     <number>3</number>
+    <property name="spacing">
+     <number>1</number>
     </property>
-    <property name="rightMargin">
+    <property name="margin">
      <number>3</number>
     </property>
     <item>
      <widget class="QGroupBox" name="groupBox">
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(67, 109, 177);
+border-style: outset;</string>
+      </property>
       <property name="title">
        <string>Manipulate Shader:</string>
       </property>
@@ -30,10 +34,10 @@
        <set>Qt::AlignCenter</set>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
-       <property name="leftMargin">
+       <property name="spacing">
         <number>3</number>
        </property>
-       <property name="rightMargin">
+       <property name="margin">
         <number>3</number>
        </property>
        <item>
@@ -59,6 +63,19 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(170, 85, 127);
+border-style: outset;</string>
+           </property>
+           <property name="minimumContentsLength">
+            <number>3</number>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>50</width>
+             <height>50</height>
+            </size>
+           </property>
           </widget>
          </item>
          <item>
@@ -69,8 +86,22 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(170, 85, 127);
+border-style: outset;</string>
+           </property>
            <property name="text">
-            <string>A</string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../../../../source/icons/IconResource.qrc">
+             <normaloff>:/Project/white, without circle/rew.png</normaloff>:/Project/white, without circle/rew.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>50</width>
+             <height>50</height>
+            </size>
            </property>
            <property name="checkable">
             <bool>true</bool>
@@ -84,13 +115,49 @@
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <property name="spacing">
+          <number>3</number>
+         </property>
          <item>
           <widget class="QPushButton" name="btnGet">
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Chọn Shader được dùng bởi face được chọn.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 170, 0);
+border-style: outset;</string>
+           </property>
+           <property name="inputMethodHints">
+            <set>Qt::ImhNone</set>
+           </property>
            <property name="text">
-            <string>Get</string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../../../../source/icons/IconResource.qrc">
+             <normaloff>:/Project/white, without circle/add.png</normaloff>:/Project/white, without circle/add.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>50</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+           <property name="default">
+            <bool>false</bool>
+           </property>
+           <property name="color" stdset="0">
+            <color>
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
            </property>
           </widget>
          </item>
@@ -105,8 +172,29 @@
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Gán material cho faces được chọn. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 85, 0);
+border-style: outset;</string>
+           </property>
            <property name="text">
-            <string>Set </string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../../../../source/icons/IconResource.qrc">
+             <normaloff>:/Project/white, without circle/heart.png</normaloff>:/Project/white, without circle/heart.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>50</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="color" stdset="0">
+            <color>
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
            </property>
           </widget>
          </item>
@@ -121,8 +209,29 @@
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Chọn Face sử dụng Material trên mesh được chọn.&lt;/p&gt;&lt;p&gt;Nếu không có mesh được chọn, thì chọn trên toàn scene.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(85, 170, 0);
+border-style: outset;</string>
+           </property>
            <property name="text">
-            <string>Select faces</string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../../../../source/icons/IconResource.qrc">
+             <normaloff>:/Project/white, without circle/mail.png</normaloff>:/Project/white, without circle/mail.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>50</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="color" stdset="0">
+            <color>
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
            </property>
           </widget>
          </item>
@@ -137,8 +246,29 @@
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tùy chỉnh shader được chọn.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 0, 0);
+border-style: outset;</string>
+           </property>
            <property name="text">
-            <string>Select Shader</string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../../../../source/icons/IconResource.qrc">
+             <normaloff>:/Project/white, without circle/next.png</normaloff>:/Project/white, without circle/next.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>50</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="color" stdset="0">
+            <color>
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
            </property>
           </widget>
          </item>
@@ -146,8 +276,29 @@
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_2">
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(85, 170, 255);
+border-style: outset;</string>
+         </property>
          <property name="text">
-          <string>Open Validate Shader</string>
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="../../../../source/icons/IconResource.qrc">
+           <normaloff>:/Project/white, without circle/share.png</normaloff>:/Project/white, without circle/share.png</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>50</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="color" stdset="0">
+          <color>
+           <red>0</red>
+           <green>0</green>
+           <blue>0</blue>
+          </color>
          </property>
         </widget>
        </item>
@@ -157,6 +308,8 @@
    </layout>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../../../source/icons/IconResource.qrc"/>
+ </resources>
  <connections/>
 </ui>

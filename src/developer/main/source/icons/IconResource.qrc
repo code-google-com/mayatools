@@ -1,5 +1,37 @@
 <RCC>
   <qresource prefix="Project">
+    <file>white, without circle/add.png</file>
+    <file>white, without circle/back.png</file>
+    <file>white, without circle/camera.png</file>
+    <file>white, without circle/cancel.png</file>
+    <file>white, without circle/check.png</file>
+    <file>white, without circle/delete.png</file>
+    <file>white, without circle/download.png</file>
+    <file>white, without circle/edit.png</file>
+    <file>white, without circle/favs.addto.png</file>
+    <file>white, without circle/favs.png</file>
+    <file>white, without circle/ff.png</file>
+    <file>white, without circle/flag.png</file>
+    <file>white, without circle/folder.png</file>
+    <file>white, without circle/heart.png</file>
+    <file>white, without circle/i.png</file>
+    <file>white, without circle/mail.png</file>
+    <file>white, without circle/minus.png</file>
+    <file>white, without circle/next.png</file>
+    <file>white, without circle/overflowdots.png</file>
+    <file>white, without circle/parent.png</file>
+    <file>white, without circle/pause.png</file>
+    <file>white, without circle/phone.png</file>
+    <file>white, without circle/play.png</file>
+    <file>white, without circle/questionmark.png</file>
+    <file>white, without circle/refresh.png</file>
+    <file>white, without circle/rew.png</file>
+    <file>white, without circle/save.png</file>
+    <file>white, without circle/search.png</file>
+    <file>white, without circle/settings.png</file>
+    <file>white, without circle/share.png</file>
+    <file>white, without circle/upload.png</file>
+    <file>white, without circle/video.png</file>
     <file>arrow-down.png</file>
     <file>arrow-right.png</file>
     <file>hide.png</file>
