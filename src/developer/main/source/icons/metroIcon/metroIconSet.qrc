@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="Icons">
+    <file>centerobject.png</file>
     <file>unchamfered.png</file>
     <file>loop.png</file>
     <file>ring.png</file>
