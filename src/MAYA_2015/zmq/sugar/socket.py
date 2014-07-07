@@ -57,7 +57,12 @@ class Socket(SocketBase, AttributeSetter):
         s = ctx.socket(zmq.ROUTER)
     
     """
+    _shadow = False
     
+    def __del__(self):
+        if not self._shadow:
+            self.close()
+
     #-------------------------------------------------------------------------
     # Socket creation
     #-------------------------------------------------------------------------
@@ -335,8 +340,8 @@ class Socket(SocketBase, AttributeSetter):
         s : unicode string (unicode on py2, str on py3)
             The Python unicode string that arrives as encoded bytes.
         """
-        msg = self.recv(flags=flags, copy=False)
-        return codecs.decode(msg.bytes, encoding)
+        b = self.recv(flags=flags)
+        return b.decode(encoding)
     
     recv_unicode = recv_string
     
@@ -376,7 +381,7 @@ class Socket(SocketBase, AttributeSetter):
     def send_json(self, obj, flags=0, **kwargs):
         """send a Python object as a message using json to serialize
         
-        Keyword arguments are passed on to json.loads
+        Keyword arguments are passed on to json.dumps
         
         Parameters
         ----------

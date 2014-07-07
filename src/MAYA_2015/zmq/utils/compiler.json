@@ -1,14 +1,15 @@
 {
+  "extra_link_args": [], 
+  "define_macros": [], 
+  "runtime_library_dirs": [], 
   "libraries": [
     "libzmq"
   ], 
-  "runtime_library_dirs": [], 
   "library_dirs": [
-    "build\\temp.win-amd64-2.7\\Release\\buildutils"
+    "..\\zeromq-4.0.4\\lib"
   ], 
-  "define_macros": [], 
   "include_dirs": [
-    "bundled\\zeromq\\include", 
+    "..\\zeromq-4.0.4\\include", 
     "zmq\\utils", 
     "zmq\\backend\\cython", 
     "zmq\\devices"

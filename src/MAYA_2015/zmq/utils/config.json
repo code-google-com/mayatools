@@ -1,9 +1,12 @@
 {
   "have_sys_un_h": false, 
-  "zmq_prefix": "", 
-  "no_libzmq_extension": false, 
-  "libzmq_extension": true, 
+  "zmq_prefix": "..\\zeromq-4.0.4", 
+  "no_libzmq_extension": true, 
+  "libzmq_extension": false, 
   "bdist_egg": {}, 
   "skip_check_zmq": false, 
-  "build_ext": {}
+  "build_ext": {
+    "library_dirs": "..\\zeromq-4.0.4\\lib\\x64", 
+    "include_dirs": "..\\zeromq-4.0.4\\include"
+  }
 }

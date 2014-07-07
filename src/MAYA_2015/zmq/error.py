@@ -126,5 +126,53 @@ def _check_rc(rc, errno=None):
         else:
             raise ZMQError(errno)
 
+_zmq_version_info = None
+_zmq_version = None
 
-__all__ = ['ZMQBaseError', 'ZMQBindError', 'ZMQError', 'NotDone', 'ContextTerminated', 'Again']
+class ZMQVersionError(NotImplementedError):
+    """Raised when a feature is not provided by the linked version of libzmq.
+    
+    .. versionadded:: 14.2
+    """
+    min_version = None
+    def __init__(self, min_version, msg='Feature'):
+        global _zmq_version
+        if _zmq_version is None:
+            from zmq import zmq_version
+            _zmq_version = zmq_version()
+        self.msg = msg
+        self.min_version = min_version
+        self.version = _zmq_version
+    
+    def __repr__(self):
+        return "ZMQVersionError('%s')" % str(self)
+    
+    def __str__(self):
+        return "%s requires libzmq >= %s, have %s" % (self.msg, self.min_version, self.version)
+
+
+def _check_version(min_version_info, msg='Feature'):
+    """Check for libzmq
+    
+    raises ZMQVersionError if current zmq version is not at least min_version
+    
+    min_version_info is a tuple of integers, and will be compared against zmq.zmq_version_info().
+    """
+    global _zmq_version_info
+    if _zmq_version_info is None:
+        from zmq import zmq_version_info
+        _zmq_version_info = zmq_version_info()
+    if _zmq_version_info < min_version_info:
+        min_version = '.'.join(str(v) for v in min_version_info)
+        raise ZMQVersionError(min_version, msg)
+
+
+__all__ = [
+    'ZMQBaseError',
+    'ZMQBindError',
+    'ZMQError',
+    'NotDone',
+    'ContextTerminated',
+    'Again',
+    'ZMQVersionError',
+]
