@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+<Project name="WARGAMING_WoT">
+	<Managers>
+		<Tech>
+			<user>quynguyen</user>
+			<user>trungtran</user>
+		</Tech>
+		<ArtDirector>
+			<user>tungvo</user>
+		</ArtDirector>
+		<Producer>
+			<user>thudang</user>
+		</Producer>
+	</Managers>
+	<Directories>
+		<ServerPath>//glassegg.com/projects/Scenes/WARGAMING_WoT/</ServerPath>
+		<LocalPath>D:/Projects/</LocalPath>
+		<ProjectLocalPath>""</ProjectLocalPath>
+		<DocumentsPath>//glassegg.com/projects/Documents_Feedbacks\WARGAMING_WoT</DocumentsPath>
+		<FeedbacksPath>//glassegg.com/projects/Documents_Feedbacks/WARGAMING_WoT/Feedbacks/</FeedbacksPath>
+		<ReferencesImagePath>//glassegg.com/projects/Documents_Feedbacks/WARGAMING_WoT/Documents/</ReferencesImagePath>
+	</Directories>
+	<Structures_Asset group="True">
+		<folder name = "Final">
+			<folder name = "HPM"/>
+			<folder name = "PSDs"/>
+		</folder>
+		<folder name = "WIP">
+			<folder name = "HPM_Max"/>
+			<folder name = "HPM_Maya"/>
+			<folder name = "HPM_Zbrush"/>
+			<folder name = "Max"/>
+			<folder name = "Maya"/>
+			<folder name = "Misc"/>
+		</folder>
+	</Structures_Asset>
+	<ProjectData>
+		<Module>
+			<module name="NamingConvention" params='' />
+			<module name="PolyTools" />
+			<module name="ShaderTools" params="" />
+			<module name="Pivots" />
+			<module name="UVTools" />
+			<module name="CleanerTools" params="yes" />
+			<unmodule name="CrydevTools" />
+			<module name="ThirdpartyTools" params="" />
+		</Module>
+	</ProjectData>
+</Project>
