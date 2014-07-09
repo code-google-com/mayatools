@@ -15,7 +15,7 @@
 	<Directories>
 		<ServerPath>//glassegg.com/projects/Scenes/WARGAMING_WoT/</ServerPath>
 		<LocalPath>D:/Projects/</LocalPath>
-		<ProjectLocalPath>""</ProjectLocalPath>
+		<ProjectLocalPath> </ProjectLocalPath>
 		<DocumentsPath>//glassegg.com/projects/Documents_Feedbacks\WARGAMING_WoT</DocumentsPath>
 		<FeedbacksPath>//glassegg.com/projects/Documents_Feedbacks/WARGAMING_WoT/Feedbacks/</FeedbacksPath>
 		<ReferencesImagePath>//glassegg.com/projects/Documents_Feedbacks/WARGAMING_WoT/Documents/</ReferencesImagePath>
@@ -35,6 +35,7 @@
 		</folder>
 	</Structures_Asset>
 	<ProjectData>
+		<Template file="Sony_template_file.mb"/>
 		<Module>
 			<module name="NamingConvention" params='' />
 			<module name="PolyTools" />

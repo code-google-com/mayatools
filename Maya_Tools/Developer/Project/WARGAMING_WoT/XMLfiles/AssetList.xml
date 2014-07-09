@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <AssetList>
 	<group name="Batch">
-		<asset name="" start_date="" due_date="" stage="" image="" />
+		<asset name="temp" start_date="" due_date="" stage="" image="" />
 	</group>
 </AssetList>

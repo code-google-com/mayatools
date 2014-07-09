@@ -50,49 +50,32 @@
 
 	<material name="badging_alpha" shortname="badging_alpha" id="badging" />
 	<material name="brake_caliper_opaque" shortname="caliper" id="brakecaliper" />
-	<material name="carbon_opaque" shortname="carbon" uvset="2_scratch"
-		id="carbon" />
+	<material name="carbon_opaque" shortname="carbon" uvset="2_scratch" id="carbon" />
 	<material name="brake_rotor_opaque" shortname="rotor" id="brakerotor" />
 	<material name="car_seam_multi" shortname="seam" id="seam" />
 	<material name="chassis_opaque" shortname="chassis" id="chassis" />
 	<material name="chrome_opaque" shortname="chrome" id="chrome" />
 	<material name="exhaust_opaque" shortname="exhaust" id="standard" />
-	<material name="glass_headlight_tint_alpha_shatter_cull_nozwrite_layer65"
-		shortname="glass_head" id="glassheadlight" />
-	<material name="glass_taillight_tint_alpha_shatter_cull_nozwrite_layer65"
-		shortname="glass_tail" id="glasstailight" />
-	<material name="glass_window_tint_alpha_shatter_cull_nozwrite_layer65"
-		shortname="glass_alpha" id="glasswindow" />
-	<material name="glass_window_black_opaque_twosided_shatter"
-		shortname="glass_black" id="glassopaque" />
-	<material name="headlight_type_a_opaque" shortname="headlight_cluster"
-		id="standard" />
-	<material name="headlight_type_a_alphaadd" shortname="headlight_alpha"
-		id="standard" />
-	<material name="headlight_type_a_alphaadd_nozwrite_twosided_layer70"
-		shortname="headlight_additive" id="standard" />
-	<material name="grill_alpha_layer92_nozwrite" shortname="grill"
-		id="grill" />
+	<material name="glass_headlight_tint_alpha_shatter_cull_nozwrite_layer65" shortname="glass_head" id="glassheadlight" />
+	<material name="glass_taillight_tint_alpha_shatter_cull_nozwrite_layer65" shortname="glass_tail" id="glasstailight" />
+	<material name="glass_window_tint_alpha_shatter_cull_nozwrite_layer65" shortname="glass_alpha" id="glasswindow" />
+	<material name="glass_window_black_opaque_twosided_shatter" shortname="glass_black" id="glassopaque" />
+	<material name="headlight_type_a_opaque" shortname="headlight_cluster" id="standard" />
+	<material name="headlight_type_a_alphaadd" shortname="headlight_alpha" id="standard" />
+	<material name="headlight_type_a_alphaadd_nozwrite_twosided_layer70" shortname="headlight_additive" id="standard" />
+	<material name="grill_alpha_layer92_nozwrite" shortname="grill" id="grill" />
 	<material name="interior_opaque" shortname="interior" id="interior" />
 	<material name="misc_opaque" shortname="misc" id="standard" />
 	<material name="numberplate_alpha" shortname="numberplate" id="numberplate" />
-	<material name="paint_shader_opaque" shortname="paint" uvset="2_scratch"
-		id="paint" />
-	<material name="paint_shader_nodecal_opaque" shortname="paintnod"
-		uvset="2_scratch" id="paintnodecal" />
+	<material name="paint_shader_opaque" shortname="paint" uvset="2_scratch" id="paint" />
+	<material name="paint_shader_nodecal_opaque" shortname="paintnod" uvset="2_scratch" id="paintnodecal" />
 	<material name="plastic_dull_opaque" shortname="plastic" id="plasticdull" />
-	<material name="brake_lights_type_a_alphaadd_nozwrite_twosided_layer70"
-		shortname="brake_lights" id="standard" />
-	<material name="taillight_type_a_opaque" shortname="taillights"
-		id="standard" />
-	<material name="taillight_additive_type_a_opaque" shortname="additive"
-		id="standard" />
-	<material name="wheel_rim_tint_blur_alpha" shortname="rim_tint_blur"
-		id="standard" />
+	<material name="brake_lights_type_a_alphaadd_nozwrite_twosided_layer70" shortname="brake_lights" id="standard" />
+	<material name="taillight_type_a_opaque" shortname="taillights" id="taillight" />
+	<material name="taillight_additive_type_a_opaque" shortname="additive" id="standard" />
+	<material name="wheel_rim_tint_blur_alpha" shortname="rim_tint_blur" id="standard" />
 	<material name="wheel_tire_opaque" shortname="tire_opaque" id="tire" />
 	<material name="wheel_rim_tint" shortname="rim_tint" id="wheel" />
-	<material name="wheel_rim_tint_blurop" shortname="rim_tint_blurop"
-		id="wheel" />
-	<material name="wheel_notint_rim_alpha" shortname="notint_rim_alpha"
-		id="wheelnotint" />
+	<material name="wheel_rim_tint_blurop" shortname="rim_tint_blurop" id="wheel" />
+	<material name="wheel_notint_rim_alpha" shortname="notint_rim_alpha" id="wheelnotint" />
 </NamingHierrachy>

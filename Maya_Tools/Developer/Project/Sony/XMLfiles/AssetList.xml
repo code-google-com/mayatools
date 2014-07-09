@@ -55,4 +55,13 @@
 		<asset name="ferrari_laferrari" start_date="" due_date="" stage="" image="" />
 		<asset name="chevrolet_corvette_c7_z06" start_date="" due_date="" stage="" image="" />
 	</group>
+	<group name="Batch_27">
+		<asset name="citroen_survolt" start_date="" due_date="" stage="" image="" />
+		<asset name="rimac_concept_one" start_date="" due_date="" stage="" image="" />
+		<asset name="peugeot_ex1_concept" start_date="" due_date="" stage="" image="" />
+		<asset name="jaguar_f-type_r_coupe" start_date="" due_date="" stage="" image="" />
+	</group>
+	<group name="Batch_28">
+		<asset name="jaguar_xkrs_coupe" start_date="" due_date="" stage="" image="" />
+	</group>
 </AssetList>

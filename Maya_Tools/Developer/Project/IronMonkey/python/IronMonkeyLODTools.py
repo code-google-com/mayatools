@@ -362,6 +362,8 @@ class CustomLODTools(form_class,base_class):
             self.SwapLODSony()
         
     def SwapLODIronMonkey(self):
+ 
+            #if layer not in self._nohide]
         if self._projectName == 'IronMonkey':
             mel.eval('showHidden -all;')        
         self._nohide = ['base_car_layer', 'spoilers','exhausts']
@@ -409,27 +411,36 @@ class CustomLODTools(form_class,base_class):
                 if self.btnStandard.isChecked():
                     type_a.append('bumper_front|standard_type_a')
                 if self.btnPulled.isChecked():
-                    type_a.append('bumper_front|pulled_type_a')
+                    if cmds.objExists('bumper_front|pulled_type_a'):
+                        type_a.append('bumper_front|pulled_type_a')
                 if self.btnLarge.isChecked():
-                    type_a.append('bumper_front|large_type_a')
+                    if cmds.objExists('bumper_front|large_type_a'):
+                        type_a.append('bumper_front|large_type_a')
+
             if self.chkBumper_rear.isChecked():
                 if 'type_a_layer' not in self._nohide:
                     self._nohide.append('type_a_layer')
                 if self.btnStandard.isChecked():
                     type_a.append('bumper_rear|standard_type_a')
                 if self.btnPulled.isChecked():
-                    type_a.append('bumper_rear|pulled_type_a')
+                    if cmds.objExists('bumper_rear|pulled_type_a'):
+                        type_a.append('bumper_rear|pulled_type_a')
                 if self.btnLarge.isChecked():
-                    type_a.append('bumper_rear|large_type_a')
+                    if cmds.objExists('bumper_rear|large_type_a'):
+                        type_a.append('bumper_rear|large_type_a')
+
             if self.chkSide_skirt.isChecked():
                 if 'type_a_layer' not in self._nohide:
                     self._nohide.append('type_a_layer')
                 if self.btnStandard.isChecked():
                     type_a.append('side_skirts|standard_type_a')
                 if self.btnPulled.isChecked():
-                    type_a.append('side_skirts|pulled_type_a')
+                    if cmds.objExists('side_skirts|pulled_type_a'):
+                        type_a.append('side_skirts|pulled_type_a')
                 if self.btnLarge.isChecked():
-                    type_a.append('side_skirts|large_type_a')
+                    if cmds.objExists('side_skirts|large_type_a'):
+                        type_a.append('side_skirts|large_type_a')
+
             if self.chkHood.isChecked():
                 if 'type_a_layer' not in self._nohide:
                     self._nohide.append('type_a_layer')
@@ -476,19 +487,40 @@ class CustomLODTools(form_class,base_class):
             cmds.setAttr('wheel_arch|standard.visibility', 0)
             self._nohide.append('pulled_wheel_arch_layer') 
             if self.btnLOD0.isChecked():
-                self._nohide.append('pulled_type_a_layer')
+                if cmds.objExists('pulled_type_a_layer'):
+                    self._nohide.append('pulled_type_a_layer')
+                    try:
+                        cmds.setAttr('bumper_front|standard_type_a.visibility', 0)
+                        cmds.setAttr('bumper_rear|standard_type_a.visibility', 0)
+                        cmds.setAttr('side_skirts|standard_type_a.visibility', 0)
+                    except:
+                        pass
             if self.btnLOD1.isChecked():
-                self._nohide.append('pulled_type_b_layer')
+                if cmds.objExists('pulled_type_b_layer'):
+                    self._nohide.append('pulled_type_b_layer')
+                    try:
+                        cmds.setAttr('bumper_front|standard_type_b.visibility', 0)
+                        cmds.setAttr('bumper_rear|standard_type_b.visibility', 0)
+                        cmds.setAttr('side_skirts|standard_type_b.visibility', 0)
+                    except:
+                        pass
             if self.btnLOD2.isChecked():
-                self._nohide.append('pulled_type_c_layer')
+                if cmds.objExists('pulled_type_c_layer'):
+                    self._nohide.append('pulled_type_c_layer')
+                    try:
+                        cmds.setAttr('bumper_front|standard_type_c.visibility', 0)
+                        cmds.setAttr('bumper_rear|standard_type_c.visibility', 0)
+                        cmds.setAttr('side_skirts|standard_type_c.visibility', 0)
+                    except:
+                        pass
             if self.btnLOD3.isChecked():
                 self._nohide.append('pulled_type_d_layer')
-            cmds.setAttr('bumper_front|standard_type_a.visibility', 0)
-            cmds.setAttr('bumper_rear|standard_type_a.visibility', 0)
-            try:
-                cmds.setAttr('side_skirts|standard_type_a.visibility', 0)
-            except:
-                pass
+                try:
+                    cmds.setAttr('bumper_front|standard_type_d.visibility', 0)
+                    cmds.setAttr('bumper_rear|standard_type_d.visibility', 0)
+                    cmds.setAttr('side_skirts|standard_type_d.visibility', 0)
+                except:
+                    pass
                 
         if self.btnSmall.isChecked():
             print 'pulled'

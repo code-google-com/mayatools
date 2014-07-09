@@ -79,6 +79,7 @@
 			<module name="UVTools" />
 			<module name="PolyTools" />
 			<module name="ShaderTools" />
+			<module name="CommonTab" />
 			<module name="ThirdpartyTools" />
 		</Module>
 		<CheckList>
