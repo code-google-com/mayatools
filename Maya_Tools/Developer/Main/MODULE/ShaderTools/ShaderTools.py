@@ -119,6 +119,7 @@ class ShaderTools(form_class,base_class):
         self.setupUi(self)
         self.__name__ = 'Shader&Color Toolbox'
         self._textures = [texture for texture in os.listdir(fileDirCommmon + '/textures/') if texture.endswith('tif') ]
+        self._cgfx = [cg for cg in os.listdir(fileDirCommmon + '/shaders/') if cg.endswith('cgfx') ]
         self._shaders = fileDirCommmon + '/shaders/'
         self.statusScene = 1
         
@@ -160,6 +161,9 @@ class ShaderTools(form_class,base_class):
         self.btnSetAlpha.clicked.connect(functools.partial(self.setVertexColor, 'a'))
         
         self.btnCheckerView.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        self.btnReflectionView.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        
+        
         if inputFile != '':
             project = inputFile.split('.')[0]
             customFn = inputFile.split('.')[1]
@@ -187,9 +191,19 @@ class ShaderTools(form_class,base_class):
         self.actionSlide.setDefaultWidget(self.slider)
         self.btnCheckerView.addAction(self.actionSlide)
         
+        # add Combobox to change Reflection View
+        self.comboboxReflect = QtGui.QComboBox(self)
+        for c in self._cgfx:
+            self.comboboxReflect.addItem(os.path.splitext(os.path.split(c)[1])[0])
+        self.comboboxReflect.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
+        self.actionSwitchReflect = QtGui.QWidgetAction(self.comboboxReflect)
+        self.actionSwitchReflect.setDefaultWidget(self.comboboxReflect)
+        self.btnReflectionView.addAction(self.actionSwitchReflect)
+        
         #----------
         
         self.combobox.currentIndexChanged.connect(self.updateChecker)
+        self.comboboxReflect.currentIndexChanged.connect(self.updateReflection)
         self.slider.valueChanged.connect(self.updateTilingChecker)
         self.chkAuto.clicked.connect(self.changeStatus)
         self.btnGet.clicked.connect(self.updateShaderName_v2)
@@ -408,6 +422,15 @@ class ShaderTools(form_class,base_class):
         if cmds.objExists('TEMP_DEBUG_TEXTURE'):
             node = py.ls('TEMP_DEBUG_TEXTURE')[0]
             cmds.setAttr('TEMP_DEBUG_TEXTURE.fileTextureName', fileDirCommmon + '/textures/' + texture + '.tif', type = 'string')
+            
+    def updateReflection(self):
+        texture = self.comboboxReflect.currentText() 
+        if cmds.objExists('TEMP_DEBUG_TEXTURE'):
+            node = py.ls('TEMP_DEBUG_TEXTURE')[0]
+            node.setAttr('fileTextureName',fileDirCommmon + '/shaders/OldFactory.dds', type = 'string')
+            cmds.cgfxShader('TEMP_DEBUG_SHADER', fx = self._shaders + str(texture) + '.cgfx', e = True)
+            cmds.connectAttr('TEMP_DEBUG_TEXTURE.outColor', 'TEMP_DEBUG_SHADER.envCubeMapSampler')
+            cmds.setAttr('TEMP_DEBUG_SHADER.technique', "Debug_SurfaceReflection", type = 'string')
             
     def changeColorSet(self, channel = None):
         #colorSet = str(self.cbbColorSet.currentText())

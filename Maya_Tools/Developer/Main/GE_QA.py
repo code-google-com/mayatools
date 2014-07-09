@@ -28,8 +28,8 @@ reload(cf)
 import dockWidget as dW
 reload(dW)
 
-import Source.IconResource_rc
-reload(Source.IconResource_rc)
+#import Source.IconResource_rc
+#reload(Source.IconResource_rc)
 
 import CommonFunctions
 reload(CommonFunctions)

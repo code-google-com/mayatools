@@ -1,0 +1,1151 @@
+// customize from  lcUberShader.cgfx
+///////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+ 
+ 
+#define PAINT_LIVERY 0
+#define MAX_LIGHTS 2
+ 
+ 
+////////////////////////////////////////
+//     User Tweakables                //
+////////////////////////////////////////
+//effect Checker Sampler
+texture effectCheckerlMap
+< 
+  string ResourceType = "2D";
+  string UIName       = "Effect Checker Map";
+>;
+ 
+sampler2D effectCheckerlMapSampler = sampler_state
+{
+  Texture       = <effectCheckerlMap>;
+  MinFilter     = LinearMipMapLinear;
+  MagFilter     = Linear;
+  WrapS         = Wrap;
+  WrapT         = Wrap;
+  MaxAnisotropy = 4; //some people may need to comment this out
+  LODBias       = -0.5;
+};
+ 
+////////////////////////////////////////////////////////////////////////////////////
+//bool spacerBasicMaps<string UIName   = "******************************************";> = false;
+////////////////////// VERT AO///////////////////////
+//bool spacerVertAO<string UIName      = "***** + (VERTEX COLOR) *****";> = false;
+////////////////////////////////////////////////////////////////////////////////////
+bool useVertAO
+< 
+  string UIName = "Use AO/Reflection info in vertex color?";
+> = true;
+ 
+float aoDiffuseBlend
+< 
+    float UIMin = 0.0;
+    float UIMax = 1.0;
+    float UIStep = 0.1;
+    string UIName = "Weight of AO on Diffuse";
+> = 1.0;
+ 
+ 
+////////////////////////////////////////////////////////////////////////////////////
+/////////// DIFFUSE MAP////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+//bool spacerDiffuse<string UIName   = "***** + (DIFFUSE MAP) *****";> = false;
+////////////////////////////////////////////////////////////////////////////////////
+//Diffuse Textures
+bool useDiffuseMap
+< 
+  string UIName   = "Use A Diffuse Texture?";
+> = false;
+ 
+texture diffuseMap
+< 
+  string ResourceType = "2D";
+  string UIName       = "Diffuse Map";
+>;
+ 
+sampler2D diffuseMapSampler = sampler_state
+{
+  Texture       = <diffuseMap>;
+  MinFilter     = LinearMipMapLinear;
+  MagFilter     = Linear;
+  WrapS         = Wrap;
+  WrapT         = Wrap;
+  MaxAnisotropy = 4;  //some people may need to comment this out
+  LODBias       = -0.5;
+};
+ 
+//Diffuse
+float3 diffuseColor
+< 
+  string UIName   = "Diffuse Color";
+  string Type     = "Color";
+    float UIMin = 0.0;
+    float UIMax = 1.0;
+    float UIStep = 0.01;
+> = {0.5, 0.5, 0.5};
+ 
+//bool useHalfLambert
+//<
+// string UIName   = "Use Half Lambert Diffuse?";
+//> = false;
+ 
+ 
+////////////////////////////////////////////////////////////////////////////////////
+/////////// SPCULAR INTENSITY_SMOOTH_OTHER MAP///////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+//bool spacerSpec<string UIName   = "***** + (SPECULAR MAP) *****";> = false;
+////////////////////////////////////////////////////////////////////////////////////
+float specularPower
+< 
+  float UIMin     = 1.0;
+  float UIMax     = 256.0;
+  float UIStep    = 0.1;
+  string UIName   = "Specular Power";
+> = 30.0;
+bool useSpecColorMap
+< 
+  string UIName = "Use A SpecColor Texture?";
+> = false;
+texture specColorMap
+< 
+  string ResourceType = "2D";
+  string UIName       = "Specular Color Map";
+>;
+sampler2D specColorMapSampler = sampler_state
+{
+  Texture       = <specColorMap>;
+  MinFilter     = LinearMipMapLinear;
+  MagFilter     = Linear;
+  WrapS         = Wrap;
+  WrapT         = Wrap;
+  LODBias       = -0.5;
+};
+float3 specularColor
+< 
+  string UIName   = "Specular Color";
+  string Type     = "Color";
+> = {0.5, 0.5, 0.5};
+ 
+float specFresnelExp
+< 
+  float UIMin = 0.0;
+  float UIMax = 5.0;
+  float UIStep = 0.1;
+  string UIName = "Specular Fresnel Exponent";
+> = 0.0;
+ 
+float specFresnelScale
+< 
+  float UIMin = 1.0;
+  float UIMax = 15.0;
+  float UIStep = 0.1;
+  string UIName = "Specular Fresnel Multiplier";
+> = 1.0;
+ 
+////////////////////////////////////////////////////////////////////////////////////
+/////////// SPCULAR INTENSITY_SMOOTH_OTHER MAP///////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+//bool spacergso<string UIName   = "***** + (SPECINTEND-SMOOTH-OTHER MAP) *****";> = false;
+////////////////////////////////////////////////////////////////////////////////////
+bool usegsoMap
+< 
+  string UIName = "Does it use a GrazingReflectance, Shininess, Other texture?";
+> = false;
+texture gsoMap
+< 
+  string ResourceType = "2D";
+  string UIName       = "gso Map";
+>;
+sampler2D gsoMapSampler = sampler_state
+{
+  Texture       = <gsoMap>;
+  MinFilter     = LinearMipMapLinear;
+  MagFilter     = Linear;
+  WrapS         = Wrap;
+  WrapT         = Wrap;
+  LODBias       = -0.5;
+};
+ 
+////////////////////////////////////////////////////////////////////////////////////
+/////////// NORMAL MAP////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+//bool spacerN<string UIName   = "***** + (NORMAL MAP) *****";> = false;
+////////////////////////////////////////////////////////////////////////////////////
+//Normal Map Textures
+bool useNormalMap
+< 
+  string UIName   = "Use A Normal Map?";
+> = false;
+ 
+//Normalmap Sampler
+texture normalMap
+< 
+  string ResourceType = "2D";
+  string UIName       = "Normal Map";
+>;
+ 
+sampler2D normalMapSampler = sampler_state
+{
+  Texture       = <normalMap>;
+  MinFilter     = LinearMipMapLinear;
+  MagFilter     = Linear;
+  WrapS         = Wrap;
+  WrapT         = Wrap;
+  MaxAnisotropy = 4; //some people may need to comment this out
+  LODBias       = -0.5;
+};
+ 
+float normalIntensity
+< 
+  float UIMin     = 0.0;
+  float UIMax     = 3.0;
+  float UIStep    = 0.1;
+  string UIName   = "Normal Map Intensity";
+> = 1.0;
+ 
+bool flipGreen
+< 
+  string UIName   = "Invert Normal Map Green Channel?";
+> = false;
+ 
+bool noSpecNormal
+< 
+  string UIName   = "Exclude Specular from Normal Map";
+> = false;
+ 
+ 
+////////////////////////////////////////////////////////////////////////////////////
+/////////// EMISSIVE MAP//////////////////////////////////////////////////////////      
+////////////////////////////////////////////////////////////////////////////////////
+//bool spacerGlow<string UIName   = "***** + (EMISSIVE MAP) *****";> = false;
+////////////////////////////////////////////////////////////////////////////////////
+//Glow Map
+//bool useGlowTexture
+//<
+// string UIName = "Use A EMISSIVE Texture?";
+//> = false;
+//
+//texture emissiveMap
+//<
+// string ResourceType = "2D";
+// string UIName       = "Emissive Map";
+//>;
+ 
+//sampler2D emissiveMapSampler = sampler_state
+//{
+//  Texture   = <emissiveMap>;
+//  MinFilter = LinearMipMapLinear;
+//  MagFilter = Linear;
+//  WrapS     = Wrap;
+//  WrapT     = Wrap;
+//};
+ 
+//float glowIntensity
+//<
+//  float UIMin     = 0.0;
+//  float UIMax     = 10.0;
+//  float UIStep    = 0.1;
+//  string UIName   = "Emissive Map Intensity";
+//> = 1.0;
+ 
+ 
+////////////////////////////////////////////////////////////////////////////////////
+/////////// CUBE MAP for REFLECTION///////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+//bool spacerCube<string UIName   = "***** + (ENV CUBE MAP) *****";> = false;
+////////////////////////////////////////////////////////////////////////////////////
+//Cubemap for Reflections and Ambient Shading
+ 
+bool useReflCube
+< 
+  string UIName = "Use Cubemap for Reflection?";
+> = true;
+ 
+texture envCubeMap
+< 
+  string UIName = "Reflection Env Map";
+  string ResourceType = "Cube";
+>;
+ 
+samplerCUBE envCubeMapSampler = sampler_state
+{
+  Texture   = <envCubeMap>;
+  MinFilter = LinearMipMapLinear;
+  MagFilter = Linear;
+  WrapR     = ClampToEdge;
+  WrapS     = ClampToEdge;
+  WrapT     = ClampToEdge;
+};
+ 
+float reflCubeScale
+< 
+  float UIMin     = 0.0;
+  float UIMax     = 20.0;
+  float UIStep    = 0.1;
+  string UIName   = "Reflection Cubemap Intensity";
+> = 1;
+ 
+float reflFresnelExp
+< 
+  float UIMin = 0.0;
+  float UIMax = 5;
+  float UIStep = 0.1;
+  string UIName = "Reflection Fresnel Exponent";
+> = 1.0;
+ 
+float reflCubeGain
+< 
+  float UIMin     = 0.1;
+  float UIMax     = 0.9;
+  float UIStep    = 0.1;
+  string UIName   = "Reflection Cubemap Contrast";
+> = 0.5;
+ 
+////////////////////////////////////////
+//     Include Need Headers             //
+////////////////////////////////////////
+#include "./nmgCSR2_Header_PredefinedValues.fxh"
+#include "./nmgCSR2_Header_GlobalParams.fxh"
+#include "./nmgCSR2_Header_Lights.fxh"
+ 
+////////////////////////////////////////
+//     Auto Maxtricies                //
+////////////////////////////////////////
+ 
+float4x4 WorldViewProjection   : WorldViewProjection   ;
+float4x4 WorldInverseTranspose : WorldInverseTranspose ;
+float4x4 ViewInverse           : ViewInverse           ;
+float4x4 World                 : World                 ;
+ 
+////////////////////////////////////////
+//     Structs                        //
+////////////////////////////////////////
+ 
+// input from application
+struct app2vert {
+  float2 UV_Map1 : TEXCOORD0;
+  float2 UV_Map2 : TEXCOORD1;
+  float2 UV_Map3 : TEXCOORD2;
+  float2 UV_Map4 : TEXCOORD3;
+  float4 VertColor: COLOR0;
+ 
+  float4 Position : POSITION;
+  float4 Normal   : NORMAL;
+  float4 Binormal : BINORMAL;
+  float4 Tangent  : TANGENT;
+};
+ 
+// output to fragment program
+struct vert2pixel {
+  float4 hpos          : POSITION;
+  float2 UV            : TEXCOORD0;
+  float2 UV2            : TEXCOORD1;
+  float2 UV3            : TEXCOORD2;
+  float2 UV4            : TEXCOORD3;
+  float3 worldNormal   : TEXCOORD4;
+  float3 worldBinormal : TEXCOORD5;
+  float3 worldTangent  : TEXCOORD6;
+  float3 eyeVec        : TEXCOORD7;
+  float3 vertColor     : COLOR0;
+  float3 WSPos         : COLOR1;
+ 
+};
+ 
+////////////////////////////////////////
+//     VERTEX SHADER                  //
+////////////////////////////////////////
+vert2pixel VS(app2vert IN, uniform bool backface)
+{
+  vert2pixel OUT;
+ 
+  OUT.vertColor = IN.VertColor.rgb;
+ 
+  OUT.hpos = mul(WorldViewProjection, IN.Position);
+ 
+  OUT.UV = IN.UV_Map1.xy;
+  OUT.UV2 = IN.UV_Map2.xy;
+  OUT.UV3 = IN.UV_Map3.xy;
+  OUT.UV4 = IN.UV_Map4.xy;
+ 
+  OUT.worldNormal   = (backface) ? -1*mul(WorldInverseTranspose, IN.Normal).xyz : mul(WorldInverseTranspose, IN.Normal).xyz;
+  OUT.worldTangent  = mul(WorldInverseTranspose, IN.Tangent).xyz;
+  OUT.worldBinormal = mul(WorldInverseTranspose, IN.Binormal).xyz;
+ 
+  OUT.WSPos = mul(World, IN.Position).xyz;
+  OUT.eyeVec.xyz = float3(ViewInverse[0].w,ViewInverse[1].w,ViewInverse[2].w) - OUT.WSPos.xyz;
+ 
+  return OUT;
+}
+ 
+////////////////////////////////////////
+//     Fragment Program Functions     //
+////////////////////////////////////////
+ 
+float3 ungamma22 (float3 input)
+{
+  return (linear) ? pow(input,2.2) : input;
+}
+ 
+float3 gamma22 (float3 input)
+{
+  return (linear) ? pow(input,1/2.2) : input;
+}
+ 
+float bias (float val, float b) //Rudy Cortes - The Renderman Shading Language Guide
+{
+  return (b>0) ? pow(abs(val),log(b) / log(0.5)) : 0;
+}
+ 
+float bias2 (float t, float a) //Rudy Cortes - The Renderman Shading Language Guide - for use with fresnelSchlick
+{
+    return pow(t,-(log(a)/log(2.0)));
+}
+ 
+float gain (float val, float g) //Rudy Cortes - The Renderman Shading Language Guide
+{
+  return 0.5 * ((val<0.5) ? bias(2.0*val, 1.0-g) : (2.0 - bias(2.0-2.0*val, 1.0-g)));
+}
+ 
+float3 filmicTonemap(float3 input) //John Hable's filmic tonemap function with fixed values
+{
+  float A = 0.22;
+  float B = 0.3;
+  float C = 0.1;
+  float D = 0.2;
+  float E = 0.01;
+  float F = 0.3;
+  float linearWhite = 11.2;
+  float3 Fcolor = ((input*(A*input+C*B)+D*E)/(input*(A*input+B)+D*F)) - E/F;
+  float  Fwhite = ((linearWhite*(A*linearWhite+C*B)+D*E)/(linearWhite*(A*linearWhite+B)+D*F)) - E/F;
+  return Fcolor/Fwhite;
+}
+ 
+float attenuation (float3 L, float scale)
+{
+    float d = length(L);
+    return (1/d)*scale;
+}
+ 
+float fresnel (float3 N, float3 V, float fresnelExp) //this is the most basic approximation of the fresnel function
+{
+    return max(0.f,pow(abs(1.0-dot(N,V)),fresnelExp));
+}
+ 
+float3 lambert (float3 L, float3 N)
+{
+  return float3( max(0.f,dot(N,L)) );
+}
+ 
+float3 halfLambert (float3 L, float3 N) //Valve's Wrapped Diffuse Function
+{
+    return max(0.f,pow(dot(N,L)*0.5+0.5, 2));
+}
+ 
+float3 blinn (float3 L, float3 V, float3 N, float roughness)
+{
+  float3 H = normalize(L + V);
+  float NdH = max(0.f,dot(N,H));
+  return smoothstep(-0.1,0.1,dot(N,L)) * pow(NdH, roughness);
+}
+ 
+float specPowerFromgso (float specIntensity)
+{
+  float newSpecPower = (10.0 * pow( abs(specIntensity-2), 2));
+  if (newSpecPower<1) newSpecPower = 1;
+  return newSpecPower;
+}
+ 
+bool isChromeTexture(float diff, float specIntensity, float smoothness)
+{
+                bool isChrome = false;
+                if ((diff>0.0391) && (diff<0.0393) && (specIntensity>0.9410) && (specIntensity<0.9412) && (smoothness>0.7842) && (smoothness<0.7844))
+                                isChrome = true;
+                return isChrome;
+}
+ 
+int isChromeOrAlloyTexture(float diffuse, float specIntensity, float smoothness)
+{
+                int result = 0;
+               
+                float maxChromeDiff = 15.0 / 255.0;
+                float minAlloySpec = 200.0 / 255.0;
+                float minChromeSmooth = 195.0 / 255.0;
+               
+                if (diffuse < maxChromeDiff) {
+                                if (specIntensity > minAlloySpec) {
+                                                if (smoothness > minChromeSmooth)
+                                                                result = 1; //Chrome
+                                                else
+                                                                result = 2; // Alloy
+                                }
+                }
+               
+                return result;
+}
+ 
+//////////////////////////////////////////////////
+//     Compartmentalized Shading Components     //
+//////////////////////////////////////////////////
+ 
+////////////////////////////////////////
+// Tangent Space Normal Mapping
+float3 normalsTangent (float4 normalTexture,
+                       float3 Nn,
+                       float3 Bn,
+                       float3 Tn,
+                       float3 V)
+{
+  if(flipGreen)normalTexture.g = 1.0 - normalTexture.g;
+ 
+//  if(backFaceLighting == true) Nn = faceforward(Nn,-V,Nn);
+//  if(useNormalMap)
+  {
+    normalTexture.rgb = normalTexture.rgb * 2.0 - 1.0;
+    normalTexture.xy *= normalIntensity;
+    if (normalIntensity > 0) Nn = normalize((normalTexture.x*Tn)+(normalTexture.y*Bn)+(normalTexture.z*Nn));
+  }
+ 
+  return Nn;
+}
+ 
+ 
+////////////////////////////////////////
+// CubeMap Reflection
+float3 reflectionCube (float3 N,
+                       float3 V)
+{
+  float3 REnv = 0;
+  float3 R = reflect(-V,N); //reflection vector
+ 
+  float Fr = fresnel(N,V,reflFresnelExp);
+  if(useReflCube) REnv = ungamma22(texCUBE(envCubeMapSampler, R).rgb);
+ 
+  //apply a contrast function to increase or decrease contrast - most useful as an increase
+  REnv.r = gain(REnv.r,reflCubeGain);
+  REnv.g = gain(REnv.g,reflCubeGain);
+  REnv.b = gain(REnv.b,reflCubeGain);
+ 
+  return REnv*reflCubeScale*Fr;
+}
+ 
+////////////////////////////////////////
+// Glow Texture / Incandescence
+//float3 glow (float3 glowTexture)
+//{
+//  float3 Glow = 0;
+//  if(useGlowTexture) Glow = glowTexture*glowIntensity;
+//  return Glow;
+//}
+ 
+////////////////////////////////////////
+// Alpha Texture
+float alpha (float4 diffuseTexture)
+{
+  float A = diffuseTexture.a;
+ 
+  return A;
+}
+ 
+////////////////////////////////////////
+//     Pixel Shaders                  //
+////////////////////////////////////////
+ 
+//////////////////////////////////////////////////////////////////////////////////////////////
+//     Full Shading
+//////////////////////////////////////////////////////////////////////////////////////////////
+ 
+float4 PS_Full (vert2pixel IN, uniform bool showLightMap) : COLOR
+{
+  // ----------START Basic Settings----------//
+  float2 UV, UV2, UV3, UV4;
+  UV = IN.UV;
+  UV2 = IN.UV2;
+  UV3 = IN.UV3;
+  UV4 = IN.UV4;
+ 
+  // pre-defined UV aliases
+  float2 genericUV, effectUV, crumpleUV, emissiveUV, liveryUV;
+ genericUV = UV2;
+  effectUV = UV;
+  crumpleUV = UV;
+  emissiveUV = UV;
+  liveryUV = UV;
+ 
+  // Lights array
+  float3 lights [MAX_LIGHTS][3]= { { (-light1Dir.xyz),       light1Color, 0.0 },
+                                   { (-light2Dir.xyz),       light2Color, 0.0 }
+				};
+                                  /* { (-light3Dir.xyz),       light3Color, 0.0 },
+                                   { (light4Pos.xyz - IN.WSPos), light4Color, light4atten },
+                                  { (light5Pos.xyz - IN.WSPos), light5Color, light5atten },
+                                   { (light6Pos.xyz - IN.WSPos), light6Color, light6atten }
+                                 };*/
+  // Surface info
+  float3 V   = normalize(IN.eyeVec);
+  float3 Nw  = normalize(IN.worldNormal);
+  float3 Bw  = normalize(IN.worldBinormal);
+  float3 Tw  = normalize(IN.worldTangent); 
+ 
+  // Base Texture Components
+  float4 Nt   = tex2D(normalMapSampler, genericUV); // Normal
+  if (!useNormalMap) Nt = float4(0.5,0.5,1,1);
+  float4 Dt   = tex2D(diffuseMapSampler, genericUV); // Diffuse
+  Dt.rgb = ungamma22(Dt.rgb);
+  float4 gsot   = tex2D(gsoMapSampler, genericUV); // gso
+  gsot.rgb = ungamma22(gsot.rgb);
+  //float4 Gt   = tex2D(emissiveMapSampler, genericUV); // Emissisive
+  //Gt.rgb = ungamma22(Gt.rgb);
+  float4 SCt   = tex2D(specColorMapSampler, genericUV); // SpecularColor
+  SCt.rgb = ungamma22(SCt.rgb);
+ 
+  // base Colors
+  ambientColor  = ungamma22(ambientColor);
+  diffuseColor  = ungamma22(diffuseColor);
+  specularColor = ungamma22(specularColor);
+ 
+  // Vert AO
+  float3 AO = (useVertAO) ? IN.vertColor : float3(1.0,1.0,1.0);
+  // ----------END Basic Settings----------//
+   
+  //if (showLightMap) {
+  //  Gt = tex2D(emissiveMapSampler, emissiveUV); // Emissisive on map4
+  //  Gt.rgb = ungamma22(Gt.rgb);
+  //}
+ 
+  // Recompute Normal
+  float3 N = Nw;
+  if (useNormalMap)
+                N = normalsTangent(Nt, Nw, Bw, Tw, V);
+ 
+  // Fresnel Specular
+  float FrSpec = fresnel(N,V,specFresnelExp)*specFresnelScale; 
+  
+  // Update newSpecPower / newSmoothness / newDiffColor
+  float newSpecPower = specularPower;
+  if (usegsoMap) newSpecPower = specPowerFromgso(gsot.r);
+  float newSmoothness = 1.0;
+  if (usegsoMap) newSmoothness *= gsot.g;
+  float3 newDiffColor = diffuseColor.rgb;
+  if (useDiffuseMap)
+    newDiffColor = Dt.rgb;
+ 
+  // Tweeak Maya's Diffuse Color of Chrome and Alloy
+  int ChromeOrAlloy = isChromeOrAlloyTexture(newDiffColor.r, gsot.r, gsot.g);
+  if (ChromeOrAlloy == 1)
+                newDiffColor = float3(mayaChromeDiffuseLookup, mayaChromeDiffuseLookup, mayaChromeDiffuseLookup);
+  else if (ChromeOrAlloy == 2)
+                newDiffColor = float3(mayaAlloyDiffuseLookup, mayaAlloyDiffuseLookup, mayaAlloyDiffuseLookup);
+ 
+  // Light Loop
+  // Diffuse and Specular
+  float3 Ci = 0;  //Incident Color
+  for ( int i = 0; i < MAX_LIGHTS; i++  ) //Illuminance loop
+  {
+    float3 L = normalize(lights[i][0]);
+    float3 Lc = ungamma22(lights[i][1]); //light color is an interface color swatch and needs to be gamma corrected
+    if(i>2) Lc*=attenuation(lights[i][0], lights[i][2]);//La;
+ 
+    float3 Diffuse  = lambert(L, N);
+    //if (useHalfLambert) Diffuse = halfLambert(L, N);
+ 
+    //new Normal and Normalmap variables allow seperating normalmaps on specular vs diffuse and other effects
+    float3 specN = N;
+    if (noSpecNormal){
+      specN = Nw;
+    }
+                float3 Specular = blinn(L, V, specN, newSpecPower);
+               
+                Specular *= Lc* FrSpec * specularColor;
+               
+    Diffuse *= Lc;
+    Diffuse *= newDiffColor;   
+ 
+    Ci += (Diffuse+Specular)*saturate(lerp(1.0,AO.x,aoDiffuseBlend));
+  }
+ 
+  // Cubemap Reflection Component
+  float3 reflectionColor = reflectionCube(N, V);
+  if (useVertAO) reflectionColor *= AO.g;
+  if (ChromeOrAlloy == 1)
+                reflectionColor *= mayaChomeEnvMultLookup;
+  else if (ChromeOrAlloy == 2)
+                reflectionColor *= mayaAlloyEnvMultLookup;
+  Ci += reflectionColor * newSmoothness;
+ 
+ 
+  //Ambient Component
+  Ci += ambientColor*newDiffColor;
+ 
+  //Glow Component
+  //if (showLightMap) Ci += glow(Gt.rgb);
+ 
+  // Alpha Component
+  float Oi = gsot.b;
+ 
+//TF: don’t care about tone mapping
+  //Ci = lerp(gamma22(Ci*pow(2,exposure)),gamma22(filmicTonemap(Ci*pow(2,exposure))),globalTonemap);
+ 
+  return float4(Ci,Oi);  //Incident Color and Incident Opacity
+}
+////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////
+float4 PS_Effects (vert2pixel IN) : COLOR
+{
+  // ----------START Basic Settings----------//
+  float2 UV, UV2, UV3, UV4;
+  UV = IN.UV;
+  UV2 = IN.UV2;
+  UV3 = IN.UV3;
+  UV4 = IN.UV4;
+ 
+  // pre-defined UV aliases
+  float2 genericUV, effectUV, crumpleUV, emissiveUV, liveryUV;
+  genericUV = UV2;
+  effectUV = UV;
+  crumpleUV = UV;
+  emissiveUV = UV;
+  liveryUV = UV;
+ 
+  // Lights Arrays
+  float3 lights [MAX_LIGHTS][3]= { { (-light1Dir.xyz),       light1Color, 0.0 },
+                                   { (-light2Dir.xyz),       light2Color, 0.0 }
+				};
+                                  /* { (-light3Dir.xyz),       light3Color, 0.0 },
+                                   { (light4Pos.xyz - IN.WSPos), light4Color, light4atten },
+                                  { (light5Pos.xyz - IN.WSPos), light5Color, light5atten },
+                                   { (light6Pos.xyz - IN.WSPos), light6Color, light6atten }
+                                 };*/
+
+  // Surfacce Info
+  float3 V   = normalize(IN.eyeVec);
+  float3 Nw  = normalize(IN.worldNormal);
+  float3 Bw  = normalize(IN.worldBinormal);
+  float3 Tw  = normalize(IN.worldTangent); 
+ 
+  // Base Texture Components
+  float4 Nt   = tex2D(normalMapSampler, genericUV); // Normal
+  if (!useNormalMap) Nt = float4(0.5,0.5,1,1);
+  float4 Dt   = tex2D(diffuseMapSampler, genericUV); // Diffuse
+  Dt.rgb = ungamma22(Dt.rgb);
+  float4 gsot   = tex2D(gsoMapSampler, genericUV); // gso
+  gsot.rgb = ungamma22(gsot.rgb);
+  float4 Gt   = tex2D(emissiveMapSampler, genericUV); // Emissisive
+  Gt.rgb = ungamma22(Gt.rgb);
+  float4 SCt   = tex2D(specColorMapSampler, genericUV); // SpecularColor
+  SCt.rgb = ungamma22(SCt.rgb);
+ 
+  // base Color
+  ambientColor  = ungamma22(ambientColor);
+  diffuseColor  = ungamma22(diffuseColor);
+  specularColor = ungamma22(specularColor);
+ 
+  // Vertex AO
+  float3 AO = (useVertAO) ? IN.vertColor : float3(1.0,1.0,1.0);
+  // ----------END Bassic Settings----------//
+ 
+  // recompute Normal Component
+  float3 N = Nw;
+  if (useNormalMap)
+                Nt   = lerp (Nt, float4(effectNt.r,effectNt.g,effectNt.b, 1), maskValue);
+  else
+                Nt   = lerp (float4(0.5,0.5,1, 1), float4(effectNt.r,effectNt.g,effectNt.b, 1), maskValue);
+ N = normalsTangent(Nt, Nw, Bw, Tw, V);
+ 
+  // Fresnel Specular
+  float FrSpec = fresnel(N,V,specFresnelExp)*specFresnelScale;  
+ 
+  // Update newSpecPower / newSmoothness / newDiffColor
+  float newSpecPower = specularPower;
+  newSpecPower *= lerp(1, (255.0/specularPower)*effectgsot.r, maskValue); // a temporary formular to compute new specular power
+  float newSmoothness = 1.0;
+  if (usegsoMap) newSmoothness *= gsot.g;
+  float3 newDiffColor = diffuseColor.rgb;
+  if (useDiffuseMap)
+    newDiffColor = Dt.rgb;
+ 
+  // Tweeak Maya's Diffuse Color of Chrome and Alloy
+  int ChromeOrAlloy = isChromeOrAlloyTexture(newDiffColor.r, gsot.r, gsot.g);
+  if (ChromeOrAlloy == 1)
+                newDiffColor = float3(mayaChromeDiffuseLookup, mayaChromeDiffuseLookup, mayaChromeDiffuseLookup);
+  else if (ChromeOrAlloy == 2)
+                newDiffColor = float3(mayaAlloyDiffuseLookup, mayaAlloyDiffuseLookup, mayaAlloyDiffuseLookup);
+ 
+  // Light Loop
+  // Diffuse and Specular
+  float3 Ci = 0;  //Incident Color
+  for ( int i = 0; i < MAX_LIGHTS; i++  ) //Illuminance loop
+  {
+    float3 L = normalize(lights[i][0]);
+    float3 Lc = ungamma22(lights[i][1]); //light color is an interface color swatch and needs to be gamma corrected
+    if(i>2) Lc*=attenuation(lights[i][0], lights[i][2]);//La;
+ 
+    float3 Diffuse  = lambert(L, N);
+    if (useHalfLambert) Diffuse = halfLambert(L, N);
+ 
+    //new Normal and Normalmap variables allow seperating normalmaps on specular vs diffuse and other effects
+    float3 specN = N;
+    if (noSpecNormal){
+      specN = Nw;
+    }         
+    float3 Specular = blinn(L, V, specN, newSpecPower);
+               
+                Specular *= Lc* FrSpec * lerp(specularColor, effectSpecColor, maskValue);
+ 
+    Diffuse *= Lc;
+    Diffuse *= lerp (newDiffColor, effectDt.rgb, maskValue);   
+ 
+    Ci += (Diffuse+Specular)*saturate(lerp(1.0,AO.x,aoDiffuseBlend));
+  }
+ 
+  // Cubemap Reflection Component
+  float3 reflectionColor = reflectionCube(N, V);
+  if (useVertAO) reflectionColor *= AO.g;
+  if (ChromeOrAlloy == 1)
+                reflectionColor *= mayaChomeEnvMultLookup;
+  else if (ChromeOrAlloy == 2)
+                reflectionColor *= mayaAlloyEnvMultLookup;
+  Ci += (lerp ( reflectionColor, (reflectionColor * (0.1+effectgsot.g/0.5)), maskValue))  * newSmoothness; // temporary formular
+ 
+  //Glow Component
+  //Ci += glow(Gt.rgb);
+ 
+  // Alpha Component
+  float Oi = gsot.b;
+ 
+  Ci = lerp(gamma22(Ci*pow(2,exposure)),gamma22(filmicTonemap(Ci*pow(2,exposure))),globalTonemap);
+ 
+  return float4(Ci,Oi);  //Incident Color and Incident Opacity
+}
+ 
+ 
+////////////////////////////////////////
+//     Techniques                     //
+////////////////////////////////////////
+technique Default
+{
+  pass Front
+  {
+    CullFaceEnable=true;
+    CullMode = Back;
+                AlphaTestEnable = true;           //alpha test flag
+    AlphaFunc = float2(Greater, clipPoint);  //alpha test flag
+               
+    VertexProgram   = compile vp40 VS(false);
+    FragmentProgram = compile fp40 PS_Full(false);
+  }
+}
+ 
+ 
+//////////////////////////////////////////////////////////////////////////////////////////////
+//     Debug Technique
+//////////////////////////////////////////////////////////////////////////////////////////////
+ 
+//////////////////////////////////////////////////////////////////////////////////////////////
+//     Debug_SurfaceReflection
+//////////////////////////////////////////////////////////////////////////////////////////////
+float4 PS_DebugSurfaceReflection (vert2pixel IN) : COLOR
+{
+  // ----------START Basic Settings----------//
+  float2 UV, UV2, UV3, UV4;
+  UV = IN.UV;
+  UV2 = IN.UV2;
+  UV3 = IN.UV3;
+  UV4 = IN.UV4;
+ 
+  // Lights array
+  float3 lights [MAX_LIGHTS][3]= { { (-light1Dir.xyz),       light1Color, 0.0 },
+                                   { (-light2Dir.xyz),       light2Color, 0.0 }
+				};
+                                  /* { (-light3Dir.xyz),       light3Color, 0.0 },
+                                   { (light4Pos.xyz - IN.WSPos), light4Color, light4atten },
+                                  { (light5Pos.xyz - IN.WSPos), light5Color, light5atten },
+                                   { (light6Pos.xyz - IN.WSPos), light6Color, light6atten }
+                                 };*/
+  // Surface info
+  float3 V   = normalize(IN.eyeVec);
+  float3 Nw  = normalize(IN.worldNormal);
+  float3 Bw  = normalize(IN.worldBinormal);
+  float3 Tw  = normalize(IN.worldTangent); 
+ 
+ 
+  // base Colors
+  ambientColor  = ungamma22(ambientColor);
+  diffuseColor  = ungamma22(float3(0.03, 0.03, 0.483));
+  specularColor = ungamma22(float3(0.438, 0.533, 1.0));
+ 
+  // Vert AO
+  float3 AO = (useVertAO) ? IN.vertColor : float3(1.0,1.0,1.0);
+  // ----------END Basic Settings----------//
+   
+  
+  // recompute Normal Component
+  float3 N = Nw;
+ 
+  // Fresnel Specular
+  specFresnelExp = 0;
+  specFresnelScale = 1.355;
+  float FrSpec = fresnel(N,V,specFresnelExp)*specFresnelScale; 
+  
+  //specularPower
+  specularPower = 30;
+ 
+  // Light Loop
+  // Diffuse and Specular
+  float3 Ci = 0;  //Incident Color
+  for ( int i = 0; i < MAX_LIGHTS; i++  ) //Illuminance loop
+  {
+    float3 L = normalize(lights[i][0]);
+    float3 Lc = ungamma22(lights[i][1]); //light color is an interface color swatch and needs to be gamma corrected
+    if(i>2) Lc*=attenuation(lights[i][0], lights[i][2]);//La;
+ 
+    float3 Diffuse  = lambert(L, N);
+    //if (useHalfLambert) Diffuse = halfLambert(L, N);
+ 
+    //new Normal and Normalmap variables allow seperating normalmaps on specular vs diffuse and other effects
+    float3 specN = N;
+    if (noSpecNormal){
+      specN = Nw;
+    }
+                float3 Specular = blinn(L, V, specN, specularPower);
+               
+                Specular *= Lc* FrSpec * specularColor;
+               
+    Diffuse *= Lc;
+    Diffuse *= diffuseColor;   
+ 
+    Ci += (Diffuse+Specular)*saturate(lerp(1.0,AO.x,aoDiffuseBlend));
+  }
+ 
+  // Cubemap Reflection Component
+  reflCubeScale = 1.523;
+  reflFresnelExp = 0.533;
+  reflCubeGain = 0.522;
+ 
+  float3 REnv = 0;
+  float3 R = reflect(-V,N); //reflection vector
+  float Fr = fresnel(N,V,reflFresnelExp);
+  if(useReflCube) REnv = ungamma22(texCUBE(envCubeMapSampler, R).rgb);
+  //apply a contrast function to increase or decrease contrast - most useful as an increase
+  REnv.r = gain(REnv.r,reflCubeGain);
+  REnv.g = gain(REnv.g,reflCubeGain);
+  REnv.b = gain(REnv.b,reflCubeGain);
+ 
+  float3 reflectionColor = REnv*reflCubeScale*Fr; 
+  if (useVertAO) reflectionColor *= AO.g;
+  Ci += reflectionColor;
+ 
+  //Ambient Component
+  Ci += ambientColor*diffuseColor;
+ 
+  Ci = lerp(gamma22(Ci*pow(2,exposure)),gamma22(filmicTonemap(Ci*pow(2,exposure))),globalTonemap);
+ 
+  return float4(Ci,1);  //Incident Color and Incident Opacity
+}
+technique Debug_SurfaceReflection
+{
+  pass P0
+  {
+    CullFaceEnable=true;
+    CullMode = Back;
+    VertexProgram   = compile vp40 VS(false);
+    FragmentProgram = compile fp40 PS_DebugSurfaceReflection();
+  }
+}
+ 
+ 
+//////////////////////////////////////////////////////////////////////////////////////////////
+//     Debug_Tangent
+//////////////////////////////////////////////////////////////////////////////////////////////
+float4 PS_DebugTangent (vert2pixel IN) : COLOR
+{
+                float3 Tw  = normalize(IN.worldTangent);
+                Tw = 0.5 * Tw + 0.5;
+               
+                return float4(Tw, 1);
+}
+technique Debug_Tangent
+{
+  pass P0
+  {
+    CullFaceEnable=true;
+    CullMode = Back;
+    VertexProgram   = compile vp40 VS(false);
+    FragmentProgram = compile fp40 PS_DebugTangent();
+  }
+}
+ 
+//////////////////////////////////////////////////////////////////////////////////////////////
+//     Debug_VertexTextureAndNormal
+//////////////////////////////////////////////////////////////////////////////////////////////
+float4 PS_VertexTextureAndNormal (vert2pixel IN) : COLOR
+{
+  // ----------START Basic Settings----------//
+  float2 UV;
+  UV = IN.UV2;
+ 
+  float3 V   = normalize(IN.eyeVec);
+  float3 Nw  = normalize(IN.worldNormal);
+  float3 Bw  = normalize(IN.worldBinormal);
+  float3 Tw  = normalize(IN.worldTangent); 
+ 
+  // Base Texture Components
+  float4 Nt   = tex2D(normalMapSampler, UV); // Normal
+  if (!useNormalMap) Nt = float4(0.5,0.5,1,1);
+ 
+  // Recompute Normal
+  float3 N = Nw;
+  if (useNormalMap)
+                N = normalsTangent(Nt, Nw, Bw, Tw, V);
+ 
+  N = 0.5 * N + 0.5;
+                                                                                 
+  return float4(N, 1);
+}
+technique Debug_VertexTextureAndNormal
+{
+  pass P0
+  {
+    CullFaceEnable=true;
+    CullMode = Back;
+    VertexProgram   = compile vp40 VS(false);
+    FragmentProgram = compile fp40 PS_VertexTextureAndNormal();
+  }
+}
+ 
+//////////////////////////////////////////////////////////////////////////////////////////////
+//     Debug_VertexNormal
+//////////////////////////////////////////////////////////////////////////////////////////////
+float4 PS_VertexNormal (vert2pixel IN) : COLOR
+{
+                float3 Nw  = normalize(IN.worldNormal);
+                Nw = 0.5 * Nw + 0.5;
+               
+                return float4(Nw, 1);
+}
+technique Debug_VertexNormal
+{
+  pass P0
+  {
+    CullFaceEnable=true;
+    CullMode = Back;
+    VertexProgram   = compile vp40 VS(false);
+    FragmentProgram = compile fp40 PS_VertexNormal();
+  }
+}
+ 
+//////////////////////////////////////////////////////////////////////////////////////////////
+//     Debug_Binormal
+//////////////////////////////////////////////////////////////////////////////////////////////
+float4 PS_DebugBinormal (vert2pixel IN) : COLOR
+{
+                float3 Bw  = normalize(IN.worldBinormal);
+                Bw = 0.5 * Bw + 0.5;
+               
+                return float4(Bw, 1);
+}
+technique Debug_Binormal
+{
+  pass P0
+  {
+    CullFaceEnable=true;
+    CullMode = Back;
+    VertexProgram   = compile vp40 VS(false);
+    FragmentProgram = compile fp40 PS_DebugBinormal();
+  }
+}
+ 
+//////////////////////////////////////////////////////////////////////////////////////////////
+//     Debug_VertColor
+//////////////////////////////////////////////////////////////////////////////////////////////
+#include "./nmgCSR2_Header_VertexColorDebug.fxh"
+ 
+//////////////////////////////////////////////////////////////////////////////////////////////
+//     Debug_gso
+//////////////////////////////////////////////////////////////////////////////////////////////
+float4 PS_Debuggso (vert2pixel IN, uniform int whatChannel) : COLOR
+{
+  // ----------START Basic Settings----------//
+  float2 UV;
+  UV = IN.UV2;
+ 
+  float4 gsot   = tex2D(gsoMapSampler, UV); // gso
+  gsot.rgb = ungamma22(gsot.rgb);
+ 
+  float3 Ci = DEBUG_ERROR_COLOR;
+  if (usegsoMap) {
+                  if (whatChannel == 0) // Red
+                                Ci = float3 (gsot.r, gsot.r,gsot.r);
+                  else if (whatChannel == 1) // Green
+                                Ci = float3 (gsot.g, gsot.g, gsot.g);
+                  else if (whatChannel == 2) // Blue
+                                Ci = float3 (gsot.b, gsot.b, gsot.b);
+                  else if (whatChannel == -1) // All
+                                Ci = float3 (gsot.r, gsot.g, gsot.b);
+  }           
+               
+  return float4(Ci,1);
+}
+technique Debug_GrazingReflectance_Red
+{
+  pass Front
+  {
+    CullFaceEnable=true;
+    CullMode = Back;
+    VertexProgram   = compile vp40 VS(false);
+    FragmentProgram = compile fp40 PS_Debuggso(0);
+  }
+}
+technique Debug_Shininess_Green
+{
+  pass Front
+  {
+    CullFaceEnable=true;
+    CullMode = Back;
+    VertexProgram   = compile vp40 VS(false);
+    FragmentProgram = compile fp40 PS_Debuggso(1);
+  }
+}
+technique Debug_Other_Blue
+{
+  pass Front
+  {
+    CullFaceEnable=true;
+    CullMode = Back;
+    VertexProgram   = compile vp40 VS(false);
+    FragmentProgram = compile fp40 PS_Debuggso(2);
+  }
+}
+ 
+//////////////////////////////////////////////////////////////////////////////////////////////
+//     Debug_Albedo
+//////////////////////////////////////////////////////////////////////////////////////////////
+float4 PS_DebugAbedo (vert2pixel IN) : COLOR
+{
+  // ----------START Basic Settings----------//
+  float2 UV;
+  UV = IN.UV2;
+ 
+  float4 Dt   = tex2D(diffuseMapSampler, UV); // Diffuse
+  Dt.rgb = ungamma22(Dt.rgb);
+ 
+  if (! useDiffuseMap) {
+    Dt.rgb = diffuseColor;
+                Dt.a = 1;
+  }
+   
+  return Dt;
+}
+technique Debug_Albedo
+{
+  pass Front
+  {
+    CullFaceEnable=true;
+    CullMode = Back;
+               
+    VertexProgram   = compile vp40 VS(false);
+    FragmentProgram = compile fp40 PS_DebugAbedo();
+  }
+}
+ 

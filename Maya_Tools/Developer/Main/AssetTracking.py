@@ -19,10 +19,10 @@ import CommonFunctions as cf
 status = ['Pending_WIP', 'WIP', 'to Art', 'to Tech', 'to Client', 'to Artist']
 piority = {'#ff0000':'Highest', '#':'High', '#00ff00':'Normal', '#':'Low', '#0000ff':'Lowest'}
 # get username to load data 
-try:
-    reload(Source.IconResource_rc)
-except:
-    import Source.IconResource_rc
+#try:
+#    reload(Source.IconResource_rc)
+#except:
+#    import Source.IconResource_rc
 
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 dirUI= fileDirCommmon +'/UI/AssetTracking.ui'

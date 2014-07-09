@@ -155,7 +155,10 @@ class AssetForm(form_class,base_class):
                 else:
                     localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/'
             else:
-                localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)    
+                if self.Proj.ProjectLocalPath == ' ':
+                    localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/'
+                else:
+                    localPath = self.Proj.LocalPath + str(group) + '/' + str(item) + '/' + self.Proj.ProjectLocalPath + '/' + str(type) + '/' + str(lod)    
         os.startfile(localPath)
         
     def createLocal(self):

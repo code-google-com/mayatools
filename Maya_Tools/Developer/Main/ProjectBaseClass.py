@@ -141,8 +141,11 @@ class ProjectBaseClass():
         print self.placeFileAndName
         
         # get template
-        templateNode =  ProjectNode.getElementsByTagName('Template')[0]
-        self.templateFile = 'template' + '/' + templateNode.getAttribute('file')
+        try:
+            templateNode =  ProjectNode.getElementsByTagName('Template')[0]
+            self.templateFile = 'template' + '/' + templateNode.getAttribute('file')
+        except:
+            pass
         
          # get group
         if StructureNode.getAttribute('group') == 'True':
@@ -168,8 +171,6 @@ class ProjectBaseClass():
         for node in lodNodes:
             pass
             
-        
-        
         # get LOD
         
         for node in lodNodes:
