@@ -34,26 +34,31 @@ class ProjectBaseClass():
         self.PluginsPath = ''
         self.projectData = os.path.split(XMLRootFile)[0]
         self.AssetList = self.projectData + '/AssetList.xml'
+        # them vao cho du an Sony_LP1
+        self.NameTypeList = self.projectData + '/Sony_LP1.xml'
+        ############END########
         self.NamingConvetion = ""
         self.LOD = list()
         self.stages = list()
         self.managers = list()
         self.structureFolders = list()
+        
         self.placeFileAndName = list()
         self.moduleList = list()
         self.checkList = list()
         self.workingStage = list()
         self.templateStructure = ''
-        #------------ Project properties -------------------------------
-        self.group = False
-        self.depedencies = False
-        self.inverse = False
-        # --------------------------------------------------------------
-        self.structure = ''
+        ###########################
+        self.L1=list()
+        self.L2=list()
+        ###############################
         
+        self.group = False
+        self.structureProperties = False
         self.readXMLFile(XMLRootFile)
    
     def getFolderFromNode(self, node):
+                       
         for child in node.childNodes:
             try:
                 parent = child.parentNode.getAttribute('name')
@@ -109,6 +114,7 @@ class ProjectBaseClass():
             if name == "AlternativePath":
                 self.AlternativePath = d.childNodes[0].data
                 
+                
         ProjectData = ProjectNode.getElementsByTagName("ProjectData")[0]
                 
         # get module
@@ -125,6 +131,11 @@ class ProjectBaseClass():
             params.append(paramsModule)
         self.moduleList.append(names)
         self.moduleList.append(params)    
+        # get checklist
+#         checkListNode = ProjectNode.getElementsByTagName('CheckList')[0]
+#         for check in checkListNode.getElementsByTagName('check'):
+#             nameCheck = check.getAttribute('name')
+#             self.checkList.append(nameCheck)
             
         # get managers    
         ManagerDepts = ProjectNode.getElementsByTagName("Managers")[0]
@@ -137,42 +148,13 @@ class ProjectBaseClass():
                 self.managers.append(list(set(userlist)))
                 
         StructureNode = xmldoc.getElementsByTagName('Structures_Asset')[0]
-        self.getFolderFromNode(StructureNode)
+        self.getFolderFromNode(StructureNode)        
         print self.placeFileAndName
         
         # get template
-        try:
-            templateNode =  ProjectNode.getElementsByTagName('Template')[0]
-            self.templateFile = 'template' + '/' + templateNode.getAttribute('file')
-        except:
-            pass
         
-         # get group
-        if StructureNode.getAttribute('group') == 'True':
-            self.group = True
-        else:
-            self.group = False
-            
-        # get dependencies
-        if StructureNode.getAttribute('dependencies') == 'True':
-            self.depedencies = True
-        else:
-            self.dependencies = False
-        
-        # get inverse
-        if StructureNode.getAttribute('inverse') == 'True':
-            self.inverse = True
-        else:
-            self.inverse = False
-        
-        # get structure
-        lodNodes = [node for node in ProjectNode.getElementsByTagName("folder") if node.getAttribute('type') == 'LOD']
-        structure = list()
-        for node in lodNodes:
-            pass
-            
         # get LOD
-        
+        lodNodes = ProjectNode.getElementsByTagName("folder")
         for node in lodNodes:
             if node.getAttribute("type") == "LOD":
                 self.LOD.append(node.getAttribute("name"))
@@ -180,15 +162,44 @@ class ProjectBaseClass():
         self.LOD = sorted(list(set(self.LOD)))
                 
         # get stage
+        
         stages = ProjectNode.getElementsByTagName("folder")
         for node in stages:
             if node.getAttribute("type") == "stage":
                 self.stages.append(node.getAttribute("name"))
         self.stages = sorted(list(set(self.stages)))
         
-       
+        #####################################################
+        # Lay cap thu muc TYPE
+        L1 = ProjectNode.getElementsByTagName("folder")
+        for node in L1:
+            if node.getAttribute("type") == "L1":
+                self.L1.append(node.getAttribute("name"))
+        self.L1 = sorted(list(set(self.L1)))
+        # lay name ART
+        L2 = ProjectNode.getElementsByTagName("folder")
+        for node in L2:
+            if node.getAttribute("type") == "L2":
+                self.L2.append(node.getAttribute("name"))
+        self.L2 = sorted(list(set(self.L2)))
         
-        
+        ########################################################
+        # get group
+        if StructureNode.getAttribute('group') == 'True':
+            self.group = True
+        else:
+            self.group = False
+            
+        # get feedback
+        if StructureNode.getAttribute('feedback') == 'True':
+            self.structureProperties = True
+        else:
+            self.structureProperties = False
+        try:
+            templateNode =  ProjectNode.getElementsByTagName('Template')[0]
+            self.templateFile = 'template' + '/' + templateNode.getAttribute('file')
+        except:
+            pass
         
         # get project data 
         
