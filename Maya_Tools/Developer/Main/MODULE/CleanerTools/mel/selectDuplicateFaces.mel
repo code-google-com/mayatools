@@ -1,0 +1,74 @@
+global proc int returnDuplicateFaces(int $mode)
+{
+	if (`window -exists polyTexturePlacementPanel1Window`)
+		deleteUI -window polyTexturePlacementPanel1Window;
+	string $selection[] = `ls -l -sl`;
+	string $selectionTokens[]; clear $selectionTokens;
+	int $numTokens = `tokenize $selection[0] "." $selectionTokens`;
+	if ($numTokens == 1)
+	{
+		if (`size $selection` != 1)
+			error "Select one object at a time, or multiple faces!";
+	}
+	if (`size $selection` > 1)
+	{
+		if (!`gmatch $selectionTokens[1] "f*"`)
+			error "Select only faces when scanning multiple selected items!";
+	}
+	string $invalidFaces[]; clear $invalidFaces;
+	int $faceCounter = 0;
+	int $hasDupes = 0;
+	float $threshold = 0.001;
+	string $allMeshFaces[] = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tf $selection`;
+	string $facesFlatSource[] = `filterExpand -ex 1 -sm 34 $allMeshFaces`;
+	string $facesFlatTarget[] = `filterExpand -ex 1 -sm 34 $allMeshFaces`;
+	int $totalFaces = `size $facesFlatSource`;
+	int $counterAmount = 0;
+	int $breakCounter = 0;
+	progressWindow -title "Scanning for Duplicate Faces..." -progress $counterAmount -max $totalFaces -status ("Scanning Face: 0 of " +  $totalFaces) -isInterruptable true;
+	while (true) 
+	{
+		if ( `progressWindow -query -isCancelled` ) 
+			break;
+		if ( `progressWindow -query -progress` >= $totalFaces ) 
+			break;
+		for ($b = 0; $b < `size $facesFlatSource`; $b++)
+		{
+			if ( `progressWindow -query -isCancelled` ) 
+				break;
+			if ( `progressWindow -query -progress` >= $totalFaces ) 
+				break;
+			$counterAmount += 1;
+			progressWindow -edit -progress $counterAmount -status ("Scanning Face: " + $counterAmount + " of " + $totalFaces);
+			float $faceCenterSource[] = `getCenterFace $facesFlatSource[$b]`;
+			string $faceCenterSourceString = ($faceCenterSource[0] + " " + $faceCenterSource[1] + " " + $faceCenterSource[2]);
+			for ($c = 0; $c < `size $facesFlatTarget`; $c++)
+			{
+				if ($facesFlatSource[$b] != $facesFlatTarget[$c])
+				{
+					float $faceCenterTarget[] = `getCenterFace $facesFlatTarget[$c]`;
+					string $faceCenterTargetString = ($faceCenterTarget[0] + " " + $faceCenterTarget[1] + " " + $faceCenterTarget[2]);
+					float $distanceOfCenter = `getDistanceBetween 0 $faceCenterSourceString $faceCenterTargetString`;
+					if ($distanceOfCenter < $threshold)
+					{
+						if ($mode == 0)
+						{
+							$hasDupes = 1;
+							return $hasDupes;
+						}
+						$invalidFaces[$faceCounter] = $facesFlatSource[$b];
+						$faceCounter++;
+						//acesFlatTarget = `stringArrayRemove {$facesFlatSource[$b]} $facesFlatTarget`;
+					}
+				}
+			}
+			$facesFlatTarget = `stringArrayRemove {$facesFlatSource[$b]} $facesFlatTarget`;
+		}
+	}
+	progressWindow -endProgress;
+	$invalidFaces = `stringArrayRemoveDuplicates $invalidFaces`;
+	select -r $invalidFaces;
+	return $hasDupes;
+}
+
+returnDuplicateFaces(1);

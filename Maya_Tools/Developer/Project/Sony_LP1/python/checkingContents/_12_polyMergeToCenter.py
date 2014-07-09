@@ -8,7 +8,3 @@ import os, inspect
 
 def execute():
     mel.eval('polyMergeToCenter')
-    
-    
-    
-    

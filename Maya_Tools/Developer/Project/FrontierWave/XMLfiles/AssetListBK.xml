@@ -1,0 +1,70 @@
+<?xml version="1.0" ?>
+<AssetList>
+	<group name = "Package_1">
+		<asset name = "10051" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10052" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10121" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10161" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MC001" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MC004" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MC005" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MC007" start_date = "" due_date = "" stage = ""  image = ""/>
+	</group>
+	<group name = "Package_2">
+		<asset name = "10011" start_date = "" due_date = "" stage = "" image = ""/>
+		<asset name = "10012" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10013" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10052" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10051" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "11313" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "11772" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10121" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10161" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MC001" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MC004" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MC005" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "MC007" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10071" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10072" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10073" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10081" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10082" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10083" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10361" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10362" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "11342" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10142" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10401" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10402" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10403" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10431" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10433" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10851" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10852" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10853" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10031" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10032" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10033" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10891" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10892" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10893" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10921" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10922" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10923" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10991" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10992" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10221" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10223" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10451" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10452" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10453" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10281" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10282" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10283" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10581" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10342" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10343" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "10362" start_date = "" due_date = "" stage = ""  image = ""/>
+	</group>
+			
+</AssetList>

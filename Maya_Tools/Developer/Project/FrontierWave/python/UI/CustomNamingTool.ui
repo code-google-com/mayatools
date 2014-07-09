@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>369</width>
-    <height>217</height>
+    <height>277</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -70,7 +70,7 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
-          <widget class="QLineEdit" name="txtStart1_2"/>
+          <widget class="QLineEdit" name="txtStart2"/>
          </item>
          <item>
           <widget class="QLabel" name="label_8">
@@ -80,14 +80,14 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="txtEnd1_2"/>
+          <widget class="QLineEdit" name="txtEnd2"/>
          </item>
         </layout>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
-          <widget class="QLineEdit" name="txtStart1_3"/>
+          <widget class="QLineEdit" name="txtStart3"/>
          </item>
          <item>
           <widget class="QLabel" name="label_9">
@@ -97,14 +97,14 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="txtEnd1_3"/>
+          <widget class="QLineEdit" name="txtEnd3"/>
          </item>
         </layout>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item>
-          <widget class="QLineEdit" name="txtStart1_4"/>
+          <widget class="QLineEdit" name="txtStart4"/>
          </item>
          <item>
           <widget class="QLabel" name="label_10">
@@ -114,7 +114,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="txtEnd1_4"/>
+          <widget class="QLineEdit" name="txtEnd4"/>
          </item>
         </layout>
        </item>
@@ -124,6 +124,13 @@
    </item>
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_3">
+     <item>
+      <widget class="QPushButton" name="btnLoadKey">
+       <property name="text">
+        <string>Load Keyframe</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QPushButton" name="btnUpdateFile">
        <property name="toolTip">
@@ -136,6 +143,13 @@
      </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_6">
+       <item>
+        <widget class="QPushButton" name="btnCopyToClient">
+         <property name="text">
+          <string>Copy To Client</string>
+         </property>
+        </widget>
+       </item>
        <item>
         <widget class="QPushButton" name="btnPreview">
          <property name="toolTip">

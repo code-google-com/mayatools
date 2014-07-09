@@ -1,5 +1,5 @@
 
-description = 'Check Material type is wrong.'
+description = 'Material type & Texture name wrong.'
 name = 'Checknamematerialwrong.'
 import os, sys, inspect, re, shutil
 from PyQt4 import QtGui, QtCore, uic
@@ -16,17 +16,19 @@ def execute():
     print '--------------- CHECK MATERIAL NAME WRONG-------------------------'
     fileName = os.path.splitext(cmds.file(q= True, sn = True))[0]
     MayaFile = fileName.split('/')[-1]
-    
+    groupNameSplit = MayaFile.split('_',2)
+    groupName= groupNameSplit[1] 
+    print groupName
      
     # check Ten texture:
-    '''
+    
     textures = py.ls(tex = True)
     for t in textures:
         nameTexture = t.getAttr('fileTextureName').split('/')[-1]
-    if nameTexture != 'char_'+MayaFile +'_texture.psd':
-        QtGui.QMessageBox.critical(None,'Ten Texture: ','Ten Texture bi sai:' +str(nameTexture)+'\n'+'Ten dung la : '+str('char_'+MayaFile +'_texture.psd') ,QtGui.QMessageBox.Ok)
+    if nameTexture != MayaFile +'_col.dds'and nameTexture != MayaFile +'_norm.dds' and nameTexture != MayaFile +'_spec.dds' and nameTexture != MayaFile +'_occ.dds':
+        QtGui.QMessageBox.critical(None,'Ten Texture: ','Ten Texture bi sai:' +str(nameTexture) ,QtGui.QMessageBox.Ok)
         pass
-    ''' 
+     
     # check name Material:
     mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
     shaders = [s for s in cmds.ls(materials = True) if s not in ['particleCloud1', 'lambert1']]
@@ -43,15 +45,14 @@ def execute():
         pass
     
     # CHECKED TEN MARTERIA
-    '''
+    
     shaderName =''
     for s in shaders:
-        if s == 'char_' + MayaFile +'_texture':
+        if s == MayaFile +'_mat':
             shaderName = s
         else:
             shaderName = s
-    if shaderName != 'char_' + MayaFile +'_texture':
-        QtGui.QMessageBox.critical(None,'Ten Materials ','Ten Material sai: '+str(shaderName) +'\n'+'Vui long sua lai ten Materials: '+str('char_' + MayaFile +'_texture'),QtGui.QMessageBox.Ok)
+    if shaderName != MayaFile +'_mat':
+        QtGui.QMessageBox.critical(None,'Ten Materials ','Ten Material sai: '+str(shaderName),QtGui.QMessageBox.Ok)
         pass
-    '''
-    
+        

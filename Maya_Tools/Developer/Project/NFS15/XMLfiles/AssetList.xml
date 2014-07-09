@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<AssetList>
+	<group name = "Batch_18">
+		<asset name = "audi_rs6_avant" start_date = "" due_date = "" stage = "" image = ""/>
+	</group>
+	<group name = "Batch_19">
+		<asset name = "bmw_dc2" start_date = "" due_date = "" stage = "" image = ""/>
+		<asset name = "bmw_m5_facelift" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = "chevrolet_corvette_c7_stingray" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name="renault_dezir_concept"/>
+	</group>
+	<group name = "Batch_20">
+		<asset name = "chevrolet_camaro_zl1" start_date = "" due_date = "" stage = "" image = ""/>
+		<asset name = "chevrolet_corvette_z06" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name="koenigsegg_one_1"/>
+		<asset name="ktm_xbow_r"/>
+	</group>	
+	<group name="Batch_21">
+		<asset name = "mercedes_sls_amg_e-cell" start_date = "" due_date = "" stage = "" image = ""/>
+		<asset name = "dodge_charger_srt8" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name="dodge_srt_viper_gts"/>
+		<asset name="mazzanti_evantra"/>
+	</group>
+	<group name="Batch_22">
+		<asset name = "dodge_challenger_srt8_392" start_date = "" due_date = "" stage = "" image = ""/>
+		<asset name = "icona_vulcano" start_date = "" due_date = "" stage = ""  image = ""/>
+		<asset name = ""/>
+		<asset name = ""/>
+	</group>
+</AssetList>

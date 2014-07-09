@@ -16,6 +16,7 @@ def execute():
     textures = py.ls(tex = True)
     car_name= cmds.file(q= True, sn = True).split('/')[-1].split('.')[0]
     f_dir = textures_dir + car_name
+    print f_dir
     if os.path.isdir(f_dir):
         for t in textures:
             try:

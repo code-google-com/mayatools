@@ -10,5 +10,8 @@ ProjectName = os.path.splitext(os.path.split(inspect.getfile(inspect.currentfram
 ProjectXML = dirfile + '/XMLfiles/' + ProjectName + '.xml'
 
 def main():
+    #print "Ten du An DAINAMCO:"
+    #print ProjectName
+    #print "##########"
     MainForm = ProjectUI.ProjectUI(ProjectXML)
     MainForm.show()

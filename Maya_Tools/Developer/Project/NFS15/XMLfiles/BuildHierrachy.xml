@@ -1,0 +1,563 @@
+<?xml version="1.0" ?>
+<car>
+	<hierarchy name = 'hierarchy'>
+		<Group name = 'Base' >
+			<Part>DoorL</Part>
+			<Part>DoorL_Glass</Part>
+			<Part>DoorR_Glass</Part>
+			<Part>DoorL_GlassWreck</Part>
+			<Part>DoorR_GlassWreck</Part>
+			<Part>DoorR</Part>
+			<Part>SteeringWheel</Part>
+			<Part>Chassis</Part>		
+		</Group>
+		<Group name = 'FrontFender_SetNA_Narrow' >
+			<Part>FenderF</Part>
+			<Part>Chassis</Part>
+		</Group>
+		<Group name = 'RearFender_SetNA_Narrow' >
+			<Part>FenderR</Part>
+			<Part>Chassis</Part>
+		</Group>
+		<Group name = 'FrontFender_SetWB_Wide' >
+			<Part>FenderF</Part>
+			<Part>Chassis</Part>
+		</Group>
+		<Group name = 'RearFender_SetWB_Wide' >
+			<Part>FenderR</Part>
+			<Part>Chassis</Part>
+		</Group>
+		<Group name = 'FrontBumper_SetNA_Narrow' >
+			<Part>BumperF</Part>
+			<Part>Chassis</Part>
+		</Group>
+		<Group name = 'FrontBumper_SetWB_Wide' >
+			<Part>BumperF</Part>
+			<Part>Chassis</Part>
+		</Group>
+		<Group name = 'FrontBumper_SetWC_Wide' >
+			<Part>BumperF</Part>
+			<Part>Chassis</Part>
+		</Group>
+		<Group name = 'FrontBumper_SetNB_Narrow' >
+			<Part>BumperF</Part>
+			<Part>Chassis</Part>
+		</Group>
+		<Group name = 'FrontBumper_SetNC_Narrow' >
+			<Part>BumperF</Part>
+			<Part>Chassis</Part>
+		</Group>
+		<Group name = 'RearBumper_SetNA_Narrow' >
+			<Part>BumperR</Part>
+		</Group>
+		<Group name = 'RearBumper_SetWC_Wide' >
+			<Part>BumperR</Part>
+		</Group>
+		<Group name = 'RearBumper_SetWB_Wide' >
+			<Part>BumperR</Part>
+		</Group>
+		<Group name = 'Skirt_SetNA_Narrow' >
+			<Part>Skirt</Part>
+			<Part>Chassis</Part>
+		</Group>
+		<Group name = 'Skirt_SetWB_Wide' >
+			<Part>Skirt</Part>
+			<Part>Chassis</Part>
+		</Group>
+		<Group name = 'Skirt_SetWC_Wide' >
+			<Part>Skirt</Part>
+			<Part>Chassis</Part>
+		</Group>
+		<Group name = 'Skirt_SetNB_Narrow' >
+			<Part>Skirt</Part>
+			<Part>Chassis</Part>
+		</Group>
+		<Group name = 'Mirror_SetNA_Both' >
+			<Part>MirrorL</Part>
+			<Part>MirrorBaseL</Part>
+			<Part>MirrorR</Part>
+			<Part>MirrorBaseR</Part>
+		</Group>
+		<Group name = 'Mirror_SetWB_Both' >
+			<Part>MirrorL</Part>
+			<Part>MirrorBaseL</Part>
+			<Part>MirrorR</Part>
+			<Part>MirrorBaseR</Part>
+		</Group>
+		<Group name = 'Exhaust_SetNA_Both' >
+			<Part>Exhaust</Part>
+		</Group>
+		<Group name = 'Exhaust_SetWB_Both' >
+			<Part>Exhaust</Part>
+		</Group>
+		<Group name = 'Exhaust_SetWC_Both' >
+			<Part>Exhaust</Part>
+		</Group>
+		<Group name = 'Spoiler_SetWB_Both' >
+			<Part>Spoiler</Part>
+		</Group>
+		<Group name = 'Spoiler_Works_Both' >
+			<Part>Spoiler</Part>
+		</Group>
+		<Group name = 'Spoiler_SetNB_Both' >
+			<Part>Spoiler</Part>
+		</Group>
+		<Group name = 'Spoiler_SetNC_Both' >
+			<Part>Spoiler</Part>
+		</Group>
+		<Group name = 'Spoiler_SetGB_Both' >
+			<Part>Spoiler</Part>
+		</Group>
+		<Group name = 'Spoiler_SetGC_Both' >
+			<Part>Spoiler</Part>
+		</Group>
+		<Group name = 'Boot_SetNA_Both' >
+			<Part>BootLid</Part>
+			<Part>BootLid_GlassWreck</Part>
+			<Part>BootLid_Glass</Part>
+		</Group>
+		<Group name = 'Boot_SetWB_Both' >
+			<Part>BootLid</Part>
+			<Part>BootLid_GlassWreck</Part>
+			<Part>BootLid_Glass</Part>
+		</Group>
+		<Group name = 'Hood_SetNA_Both' >
+			<Part>Hood</Part>
+		</Group>
+		<Group name = 'Hood_SetNB_Both' >
+			<Part>Hood</Part>
+		</Group>
+		<Group name = 'FrontWheel_SetWC_Wide' >
+			<Part>WheelFR</Part>
+			<Part>TireFR</Part>
+			<Part>BrakeDiscFR</Part>
+			<Part>CaliperFR</Part>
+			<Part>WheelFL</Part>
+			<Part>TireFL</Part>
+			<Part>BrakeDiscFL</Part>
+			<Part>CaliperFL</Part>
+		</Group>
+		<Group name = 'RearWheel_SetWB_Wide' >
+			<Part>WheelRR</Part>
+			<Part>TireRR</Part>
+			<Part>BrakeDiscRR</Part>
+			<Part>CaliperRR</Part>
+			<Part>WheelRL</Part>
+			<Part>TireRL</Part>
+			<Part>BrakeDiscRL</Part>
+			<Part>CaliperRL</Part>
+		</Group>
+		<Group name = 'FrontWheel_SetNA_Narrow' >
+			<Part>TireFL</Part>
+			<Part>BrakeDiscFLDisc</Part>
+			<Part>CaliperFL</Part>
+			<Part>WheelFL</Part>
+			<Part>TireFR</Part>
+			<Part>BrakeDiscFR</Part>
+			<Part>CaliperFR</Part>
+			<Part>WheelFR</Part>
+		</Group>
+		<Group name = 'RearWheel_SetNA_Narrow' >
+			<Part>TireRL</Part>
+			<Part>BrakeDiscRL</Part>
+			<Part>CaliperRL</Part>
+			<Part>WheelRL</Part>
+			<Part>WheelRR</Part>
+			<Part>TireRR</Part>
+			<Part>BrakeDiscRR</Part>
+			<Part>CaliperRR</Part>
+		</Group>
+		
+	</hierarchy>
+	<hierarchy name = 'export'>
+		<lod name ='lod0'>\
+			<Part name ='BootLid'>
+				<mesh>Italy_boot3</mesh>
+				<mesh>uvOffset_t1_r0_t2</mesh>
+				<mesh>Chassis_</mesh>
+				<mesh>CH1_</mesh>						
+			</Part>
+			<Part name ='BootLid_MeshSlats_SetWB'>
+				<mesh>uvOffset_t1_r0_t0</mesh>						
+			</Part>
+			<Part name ='BootLid_Glass'>
+				<mesh>uvOffset_t0_r0_b2</mesh>						
+			</Part>		
+			<Part name ='BootLid_GlassWreck'>
+				<mesh>uvOffset_t0_r0_b2</mesh>						
+			</Part>
+			<Part name ='BootLid_MeshSlats_SetNA'>
+				<mesh>Chassis</mesh>						
+			</Part>
+			<Part name ='Chassis'>
+									
+			</Part>
+			<Part name ='Body'>
+				<mesh>uvOffset_t1_r0_t3</mesh>						
+				<mesh>uvOffset_t0_r0_t0</mesh>
+				<mesh>uvOffset_t0_r0_t1</mesh>
+				<mesh>Tailight_glasscolor</mesh>
+				<mesh>Taillight</mesh>
+				<mesh>Italy_grill</mesh>
+			</Part>
+			<Part name ='Engine'>
+				
+			</Part>
+			<Part name ='HeadLightL'>
+				<mesh>uvOffset_t1_HeadLightL_GlassColor</mesh>
+				<mesh>HeadLightL_Glass</mesh>
+				<mesh>HeadLightL_Cluster</mesh>
+			</Part>
+			<Part name ='HeadLightR'>
+				<mesh>HeadLightR_Cluster</mesh>
+				<mesh>HeadLightR_Glass</mesh>
+				<mesh>uvOffset_t1_HeadLightR_GlassColor</mesh>
+				<mesh>HeadLightL_Cluster</mesh>
+			</Part>
+			<Part name ='Interior'>
+			
+			</Part>
+			<Part name ='TailLightL'>
+				<mesh>TailLightL_Glass</mesh>
+				<mesh>TailLightL_Cluster</mesh>
+			</Part>
+			<Part name ='TailLightR'>
+				<mesh>TailLightR_Glass</mesh>
+				<mesh>TailLightR_Cluster</mesh>
+			</Part>
+			<Part name ='Glass'>
+				
+			</Part>
+			<Part name ='WiperF'>
+				<mesh>WiperL</mesh>
+				<mesh>WiperR</mesh>
+			</Part>
+			<Part name ='DoorL'>
+				
+			</Part>
+			<Part name ='DoorR'>
+				
+			</Part>
+			<Part name ='DoorL_Glass'>
+				
+			</Part>
+			<Part name ='DoorL_GlassWreck'>
+				
+			</Part>
+			<Part name ='DoorR_Glass'>
+				
+			</Part>
+			<Part name ='DoorR_GlassWreck'>
+				
+			</Part>
+			<Part name ='SteeringWheel'>
+				
+			</Part>
+			<Part name ='Exhaust_SetNA'>
+				
+			</Part>
+			<Part name ='Exhaust_SetWB'>
+				
+			</Part>
+			<Part name ='Exhaust_SetWC'>
+				
+			</Part>
+			<Part name ='BumperF_SetWB'>
+				
+			</Part>
+			<Part name ='BumperF_Chassis_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='BumperF_SetNA'>
+				
+			</Part>
+			<Part name ='BumperF_Splitter_SetNA'>
+				
+			</Part>
+			<Part name ='BumperF_Chassis_SetNA'>
+				
+			</Part>
+			<Part name ='BumperF_Splitter_SetNB'>
+				
+			</Part>
+			<Part name ='BumperF_Chassis_SetNB_SetNC'>
+				
+			</Part>
+			<Part name ='BumperF_Splitter_SetNC'>
+				
+			</Part>
+			<Part name ='BumperF_SetWC'>
+				
+			</Part>
+			<Part name ='BumperF_Splitter_SetWC'>
+				
+			</Part>
+			<Part name ='FenderFL_Chassis_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='FenderFR_Chassis_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='FenderFL_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='FenderFR_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='FenderFL_Chassis_SetNA'>
+				
+			</Part>
+			<Part name ='FenderFR_Chassis_SetNA'>
+				
+			</Part>
+			<Part name ='FenderFL_SetNA'>
+				
+			</Part>
+			<Part name ='FenderFR_SetNA'>
+				
+			</Part>
+			<Part name ='BrakeDiscFL_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='CaliperFL_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='TireFL_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='WheelFL_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='BrakeDiscFR_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='CaliperFR_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='TireFR_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='WheelFR_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='Hood_SetNA'>
+				
+			</Part>
+			<Part name ='Hood_SetNB'>
+				
+			</Part>
+			<Part name ='MirrorBaseL_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='MirrorBaseR_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='MirrorL_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='MirrorR_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='MirrorBaseL_SetNA'>
+				
+			</Part>
+			<Part name ='MirrorBaseR_SetNA'>
+				
+			</Part>
+			<Part name ='MirrorL_SetNA'>
+				
+			</Part>
+			<Part name ='MirrorR_SetNA'>
+				
+			</Part>
+			<Part name ='BumperR_SetNA'>
+				
+			</Part>
+			<Part name ='BumperR_DetailSwap_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='BumperR_Canard_SetWB'>
+				<mesh>CanardL_SetWB</mesh>
+				<mesh>CanardR_SetWB</mesh>
+			</Part>
+			<Part name ='BumperR_Diffuser_SetWB'>
+				
+			</Part>
+			<Part name ='BumperR_LicensePlateR'>
+				
+			</Part>
+			<Part name ='BumperR_DetailSwap_SetNA'>
+				
+			</Part>
+			<Part name ='BumperR_Diffuser_SetNA'>
+				
+			</Part>
+			<Part name ='BumperR_Diffuser_SetWC'>
+				
+			</Part>
+			<Part name ='BumperR_DetailAttach_SetWC'>
+				
+			</Part>
+			<Part name ='FenderRL_Chassis_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='FenderRR_Chassis_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='FenderRL_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='FenderRR_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='FenderRL_Chassis_SetNA'>
+				
+			</Part>
+			<Part name ='FenderRR_Chassis_SetNA'>
+				
+			</Part>
+			<Part name ='FenderRL_SetNA'>
+				
+			</Part>
+			<Part name ='FenderRR_SetNA'>
+				
+			</Part>
+			<Part name ='BrakeDiscRL_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='CaliperRL_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='TireRL_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='WheelRL_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='WheelRR_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='BrakeDiscRR_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='CaliperRR_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='TireRR_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='SkirtL_Chassis_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='SkirtR_Chassis_SetWB_SetWC'>
+				
+			</Part>
+			<Part name ='SkirtL_SetWB'>
+				
+			</Part>
+			<Part name ='SkirtR_SetWB'>
+				
+			</Part>
+			<Part name ='SkirtL_Chassis_SetNA'>
+				
+			</Part>
+			<Part name ='SkirtR_Chassis_SetNA'>
+				
+			</Part>
+			<Part name ='SkirtL_SetNA'>
+				
+			</Part>
+			<Part name ='SkirtR_SetNA'>
+				
+			</Part>
+			<Part name ='SkirtL_Chassis_SetNB_SetNC'>
+				
+			</Part>
+			<Part name ='SkirtR_Chassis_SetNB_SetNC'>
+				
+			</Part>
+			<Part name ='SkirtL_SetNB_SetNC'>
+				
+			</Part>
+			<Part name ='SkirtR_SetNB_SetNC'>
+				
+			</Part>
+			<Part name ='SkirtR_SetWC'>
+				
+			</Part>
+			<Part name ='SkirtL_SetWC'>
+				
+			</Part>
+			<Part name ='Spoiler_SetWB'>
+				
+			</Part>
+			<Part name ='Spoiler_SetGB'>
+				
+			</Part>
+			<Part name ='Spoiler_SetGC'>
+				
+			</Part>
+			<Part name ='Spoiler_SetNB'>
+				
+			</Part>
+			<Part name ='Spoiler_SetNC'>
+				
+			</Part>
+			<Part name ='Spoiler_SetWC'>
+				
+			</Part>
+			<Part name ='TireFL_SetNA'>
+				
+			</Part>
+			<Part name ='BrakeDiscFL_SetNA'>
+				
+			</Part>
+			<Part name ='CaliperFL_SetNA'>
+				
+			</Part>
+			<Part name ='WheelFL_SetNA'>
+				
+			</Part>
+			<Part name ='TireFR_SetNA'>
+				
+			</Part>
+			<Part name ='BrakeDiscFR_SetNA'>
+				
+			</Part>
+			<Part name ='CaliperFR_SetNA'>
+				
+			</Part>
+			<Part name ='WheelFR_SetNA'>
+				
+			</Part>
+			<Part name ='TireRL_SetNA'>
+				
+			</Part>
+			<Part name ='BrakeDiscRL_SetNA'>
+				
+			</Part>
+			<Part name ='CaliperRL_SetNA'>
+				
+			</Part>
+			<Part name ='WheelRL_SetNA'>
+				
+			</Part>
+			<Part name ='WheelRR_SetNA'>
+				
+			</Part>
+			<Part name ='TireRR_SetNA'>
+				
+			</Part>
+			<Part name ='BrakeDiscRR_SetNA'>
+				
+			</Part>
+			<Part name ='CaliperRR_SetNA'>
+				
+			</Part>
+			
+	 	</lod>
+	 	<lod name = 'lod1'>
+	 	
+	 	</lod>
+	</hierarchy>
+</car>

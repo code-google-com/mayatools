@@ -117,7 +117,7 @@ class ShaderTools(form_class,base_class):
     def __init__(self, inputFile):
         super(base_class,self).__init__()
         self.setupUi(self)
-        self.__name__ = 'Shader&Color Toolbox'
+        self.__name__ = 'Shader Color Toolbox'
         self._textures = [texture for texture in os.listdir(fileDirCommmon + '/textures/') if texture.endswith('tif') ]
         self._cgfx = [cg for cg in os.listdir(fileDirCommmon + '/shaders/') if cg.endswith('cgfx') ]
         self._shaders = fileDirCommmon + '/shaders/'

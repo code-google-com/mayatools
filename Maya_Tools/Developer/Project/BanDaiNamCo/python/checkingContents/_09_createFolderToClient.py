@@ -143,7 +143,7 @@ def execute():
     carName_Folder = carPath + '/' + 'maya/' +'/'+'car'
     wheelName_Folder = carPath +'/' + 'maya/'+'/wheel'
     # COPY THU MUC TEN XE:
-    if os.path.dirname(carName_Folder):
+    if os.path.dirname(str(carName_Folder)):
         names = os.listdir(carName_Folder)
         for name in names:
             print name
@@ -209,5 +209,5 @@ def execute():
     to_ad = loadXML(xmlDir,'Producer','Mail')
     print 'SEND MAIL DI'
     print to_ad
-    sendMail = sendMailHTML(from_ad,to_ad,dstdir)
+    #sendMail = sendMailHTML(from_ad,to_ad,dstdir)
     

@@ -1,0 +1,14 @@
+string $selObjs[] = `ls -sl`;
+if(size($selObjs)) {
+    polyUVSet -currentUVSet -uvSet "map1" $selObjs[0];
+    
+    string $buff[];
+    int $numTok = `tokenize $selObjs[0] "." $buff`;
+    
+    string $rootObj = $selObjs[0];
+    if ($numTok > 1)
+       $rootObj = $buff[0];
+       
+    polyMergeUV -d 0.01 -ch 1 ($rootObj + ".map[*]");
+}
+    
