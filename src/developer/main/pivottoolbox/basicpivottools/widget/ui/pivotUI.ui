@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>545</width>
-    <height>262</height>
+    <width>565</width>
+    <height>313</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,29 +17,25 @@
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
      <widget class="QGroupBox" name="groupBox">
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(67, 109, 177);
-</string>
-      </property>
       <property name="title">
-       <string>GroupBox</string>
+       <string>Pivot Adjustment</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
-       <property name="spacing">
+       <property name="leftMargin">
         <number>3</number>
        </property>
-       <property name="margin">
+       <property name="rightMargin">
         <number>3</number>
        </property>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
-         <property name="spacing">
-          <number>3</number>
-         </property>
          <item>
           <widget class="QPushButton" name="btnPivottoCenterElement">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -53,32 +49,8 @@
            <property name="toolTip">
             <string>Center to element</string>
            </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(255, 85, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
            <property name="text">
-            <string/>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
+            <string>Pivot to Center</string>
            </property>
           </widget>
          </item>
@@ -98,43 +70,15 @@ QPushButton:pressed
            <property name="toolTip">
             <string>Center object</string>
            </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-background-color: rgb(85, 170, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
            <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../../source/icons/metroIcon/metroIconSet.qrc">
-             <normaloff>:/Icons/centerobject.png</normaloff>:/Icons/centerobject.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
+            <string>Pivot to Center Obj</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="btnPivottoOrigin">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -148,32 +92,8 @@ QPushButton:pressed
            <property name="toolTip">
             <string>Pivot to origin</string>
            </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(255, 170, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
            <property name="text">
-            <string/>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
+            <string>Pivot to Origin</string>
            </property>
           </widget>
          </item>
@@ -194,32 +114,21 @@ QPushButton:pressed
            <property name="toolTip">
             <string>Pivot to object</string>
            </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(255, 255, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
+           <property name="text">
+            <string>Pivot to  Obj</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
            <property name="text">
-            <string/>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
+            <string>Rotate Pivot</string>
            </property>
           </widget>
          </item>
@@ -227,32 +136,14 @@ QPushButton:pressed
        </item>
        <item>
         <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0">
-         <property name="horizontalSpacing">
-          <number>0</number>
-         </property>
-         <property name="verticalSpacing">
-          <number>3</number>
-         </property>
-         <item row="2" column="0">
-          <widget class="QPushButton" name="rdbY">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="font">
-            <font>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
+         <item row="2" column="2">
+          <widget class="QPushButton" name="rdbYmid">
            <property name="text">
             <string/>
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>:/Project/Y.png</normaloff>:/Project/Y.png</iconset>
+             <normaloff>:/Project/YMid.png</normaloff>:/Project/YMid.png</iconset>
            </property>
            <property name="iconSize">
             <size>
@@ -261,10 +152,7 @@ QPushButton:pressed
             </size>
            </property>
            <property name="checkable">
-            <bool>false</bool>
-           </property>
-           <property name="autoExclusive">
-            <bool>false</bool>
+            <bool>true</bool>
            </property>
            <property name="flat">
             <bool>true</bool>
@@ -309,6 +197,208 @@ QPushButton:pressed
            </property>
           </widget>
          </item>
+         <item row="3" column="2">
+          <widget class="QPushButton" name="rdbZmid">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>:/Project/ZMid.png</normaloff>:/Project/ZMid.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QPushButton" name="rdbY">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>:/Project/Y.png</normaloff>:/Project/Y.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>false</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>false</bool>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="rdbXmid">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>:/Project/XMid.png</normaloff>:/Project/XMid.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="shortcut">
+            <string>4, 8</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QPushButton" name="rdbZmin">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>:/Project/ZMin.png</normaloff>:/Project/ZMin.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QPushButton" name="rdbXmax">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>:/Project/XMax.png</normaloff>:/Project/XMax.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QPushButton" name="rdbYmin">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>:/Project/YMin.png</normaloff>:/Project/YMin.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="3">
+          <widget class="QPushButton" name="rdbYmax">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>:/Project/YMax.png</normaloff>:/Project/YMax.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="3">
+          <widget class="QPushButton" name="rdbZmax">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>:/Project/ZMax.png</normaloff>:/Project/ZMax.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
          <item row="3" column="0">
           <widget class="QPushButton" name="rdbZ">
            <property name="sizePolicy">
@@ -347,411 +437,8 @@ QPushButton:pressed
            </property>
           </widget>
          </item>
-         <item row="3" column="2">
-          <widget class="QPushButton" name="rdbZmid">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(0, 0, 232);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>:/Project/ZMid.png</normaloff>:/Project/ZMid.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>40</width>
-             <height>40</height>
-            </size>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="flat">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QPushButton" name="rdbYmin">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(0, 232, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>:/Project/YMin.png</normaloff>:/Project/YMin.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="flat">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="3">
-          <widget class="QPushButton" name="rdbZmax">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(0, 0, 232);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>:/Project/ZMax.png</normaloff>:/Project/ZMax.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>40</width>
-             <height>40</height>
-            </size>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="flat">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="3">
-          <widget class="QPushButton" name="rdbXmax">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(232, 0, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>:/Project/XMax.png</normaloff>:/Project/XMax.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="flat">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="2">
-          <widget class="QPushButton" name="rdbYmid">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(0, 232, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>:/Project/YMid.png</normaloff>:/Project/YMid.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="flat">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QPushButton" name="rdbXmid">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(232, 0, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>:/Project/XMid.png</normaloff>:/Project/XMid.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
-           </property>
-           <property name="shortcut">
-            <string>4, 8</string>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="flat">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="3">
-          <widget class="QPushButton" name="rdbYmax">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(0, 232, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>:/Project/YMax.png</normaloff>:/Project/YMax.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="flat">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QPushButton" name="rdbZmin">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(0, 0, 232);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>:/Project/ZMin.png</normaloff>:/Project/ZMin.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="flat">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
          <item row="0" column="1">
           <widget class="QPushButton" name="rdbXmin">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(232, 0, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
            <property name="text">
             <string/>
            </property>
@@ -761,8 +448,8 @@ QPushButton:pressed
            </property>
            <property name="iconSize">
             <size>
-             <width>50</width>
-             <height>50</height>
+             <width>40</width>
+             <height>40</height>
             </size>
            </property>
            <property name="checkable">
@@ -781,8 +468,6 @@ QPushButton:pressed
    </layout>
   </widget>
  </widget>
- <resources>
-  <include location="../../../../source/icons/metroIcon/metroIconSet.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
