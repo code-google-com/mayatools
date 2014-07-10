@@ -1,12 +1,6 @@
-'''
-Created on Jun 21, 2014
-
-@author: Trung
-'''
-
 pkgname = 'SHADER TOOLS'
 
-from developer.main.common.mainWidget import QtMainWidget
+from developer.main.common.QtMainWidget import QtMainWidget
 
 class mainWidget(QtMainWidget):
     def __init__(self, subpackages):
