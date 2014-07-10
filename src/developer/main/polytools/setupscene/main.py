@@ -1,10 +1,3 @@
-'''
-Created on May 26, 2014
-
-@author: trungtran
-@description: This is the entry for package. Please do not touch to the file
-
-'''
 modName = 'SETUP SCENE'
 
 from developer.main.common.QtSubWidget import QtSubWidget
