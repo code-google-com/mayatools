@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>438</width>
+    <width>416</width>
     <height>948</height>
    </rect>
   </property>
@@ -80,7 +80,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>438</width>
+     <width>416</width>
      <height>26</height>
     </rect>
    </property>
@@ -139,7 +139,7 @@
   </action>
   <action name="actionImport_Asset">
    <property name="icon">
-    <iconset resource="../../../../src/developer/main/source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
@@ -157,7 +157,7 @@
   </action>
   <action name="actionCreate_Workflow">
    <property name="icon">
-    <iconset resource="../../../../src/developer/main/source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
@@ -232,7 +232,7 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset resource="../../../../src/developer/main/source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/About.png</normaloff>:/Project/About.png</iconset>
    </property>
    <property name="text">
@@ -264,7 +264,7 @@
   </action>
   <action name="actionAdd">
    <property name="icon">
-    <iconset resource="../../../../src/developer/main/source/icons/IconResource.qrc">
+    <iconset>
      <normaloff>:/Project/Add.png</normaloff>:/Project/Add.png</iconset>
    </property>
    <property name="text">
