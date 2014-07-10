@@ -15,12 +15,12 @@ except:
 try:
     reload(dW)
 except:
-    from developer.main.common import dockWidget as dW
+    from developer.main.common.dockWidget import *
 
-class QtSubWidget(dW.DockWidget):
+class QtSubWidget(DockWidget):
     def __init__(self, modName, modDir):
-        super(dW.DockWidget, self).__init__(modName)
-        self.titleBar = dW.DockWidgetTitleBar(self)
+        super(DockWidget, self).__init__(modName)
+        self.titleBar = DockWidgetTitleBar(self)
         self.setTitleBarWidget(self.titleBar)
         # create some item to store widget
         self.vLayout = QtGui.QVBoxLayout()
