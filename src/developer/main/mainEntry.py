@@ -36,7 +36,9 @@ except:
 try:
     reload(ProjectForm)
 except:
-    from developer.main.ui import ProjectForm
+    from developer.main.source.ui import ProjectForm
+    
+from developer.main.common.QtMainWidget import *
     
 #-- generate form_class and base_class to load Ui
 
@@ -50,8 +52,10 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         #print len(self.proj.moduleList)
         self.loadUI()
         # -- set ui controller
-        
         self.actionAsset.triggered.connect(self.openAssetBrowser)
+        
+    def getModule(self):
+        pass
         
     def openAssetBrowser(self):
         if py.window('assetContentForm', q = True, ex= True):
@@ -60,15 +64,21 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         form.show()  
         
     def loadUI(self):
-        for index in range(len(self.proj.moduleList)):
-            ##-- load pkg
-            #try: 
-                pkgName = 'developer.main.' + self.proj.moduleList[index][0] + '.main'
-                pkg = cf.loadNestedModule(pkgName)
-                self.proj.moduleList[index][1:]
-                self.tabWidget.insertTab(index, pkg.mainWidget(self.proj.moduleList[index][1:]), pkg.pkgname)
-            #except: 
-             #   print 'Error to loading module:' + self.proj.moduleList[index][0]
+        packages = self.proj.moduleLoader.getElementsByTagName('tab')
+        for index in range(len(packages)):
+            scrollWidget = QtMainWidget()
+            pkgName = packages[index].getAttribute('name')
+            modules = packages[index].getElementsByTagName('module')
+            for mod in modules:
+                submods = list()
+                for widget in mod.getElementsByTagName('submodule'):
+                    submods.append(widget.getAttribute('name'))
+                instMod = cf.loadNestedModule('developer.main.' + mod.getAttribute('name') + '.main')
+                dockWidget = instMod.subWidget(submods)
+                scrollWidget.loadWidgetCustomize(dockWidget)
+            scrollWidget.addSpacer()
+            self.tabWidget.insertTab(index, scrollWidget, pkgName)
+
         
              
             

@@ -1,18 +1,7 @@
-'''
-Created on Jun 21, 2014
+modName = 'UV TOOLS'
+from developer.main.common.QtSubWidget import QtSubWidget
 
-@author: Trung
-'''
-pkgname = 'UNWRAP TOOLS'
-
-class MyClass(object):
-    '''
-    classdocs
-    '''
-
-
-    def __init__(self, params):
-        '''
-        Constructor
-        '''
+class subWidget(QtSubWidget):
+    def __init__(self, modList):
+        QtSubWidget.__init__(self, modName, __file__, modList)
         

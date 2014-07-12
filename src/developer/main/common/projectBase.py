@@ -22,7 +22,7 @@ class projectBase():
         self.ReferencesImagePath = ""
         self.FeedbacksPath = ""
         self.AssetList = ''
-        self.moduleList = list()
+        self.moduleLoader = 'temp'
         self.readXMLFile(XMLRootFile)
                        
     def readXMLFile (self,XMLRootFile):
@@ -41,16 +41,8 @@ class projectBase():
         self.ReferencesImagePath = dirRoot.getElementsByTagName("ReferencesImagePath")[0].getAttribute("path")
                 
         # get module
-        pkgNodes = ProjectNode.getElementsByTagName('package')
-        for pkg in pkgNodes:
-            names = list()
-            names.append(pkg.getAttribute('name'))
-            print pkg.getAttribute('name')
-            for mod in pkg.getElementsByTagName('module'):
-                #print '\t|_' + mod.getAttribute('name')
-                names.append(mod.getAttribute('name'))
-            self.moduleList.append(names)
-            
+        self.moduleLoader = ProjectNode.getElementsByTagName('Module')[0]
+        
         # get managers    
         ManagerDepts = ProjectNode.getElementsByTagName("Managers")[0]
         for dept in ManagerDepts.childNodes:

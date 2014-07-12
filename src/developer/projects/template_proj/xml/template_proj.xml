@@ -26,30 +26,30 @@
 	<ProjectData>
 		<AssetList file="AssetList.xml" />
 		<Module>
-			<package name="namingtools">
-				<module name = "basicnametools">
-					
-				</module>				
-			</package>		
-			<upackage name="cleanertools"/>
-			<upackage name="pivottoolbox"/>
-			<upackage name="animatetools" />
-			<upackage name="uvtools"/>
-			<package name="polytools">
+			<tab name="NAMING TOOLS">
+				<module name = "nametools">
+					<submodule name = "basicnameWidget"  parameter=""/>	
+				</module>
+			</tab>		
+			<tab name="CLEAN UP TOOLS"/>
+			<tab name="PIVOT TOOLS"/>
+			<tab name="ANIMATE TOOLS" />
+			<tab name="UV TOOLS"/>
+			<tab name="POLY TOOLS">
 				<umodule name = "setupscene"/>
 				<module name = "mirrortools">
 					<submodule name = "mirrorWidget"  parameter=""/>
 				</module>			
 				<module name = "modeltools"/>
 				<module name = "normaltools"/> 
-			</package>
-			<package name="shadertools">
+			</tab>
+			<tab name="SHADER TOOLS">
 				<module name = "debugshaders"/>
 				<module name = "editshaders"/>
 				<module name = "editvertexcolors"/>	
 				<module name = "bakingao"/>	
-			</package>
-			<upackage name="3rdtools" />
+			</tab>
+			<tab name="THIRD PARTY TOOLS" />
 		</Module>
 	</ProjectData>
 </Project>

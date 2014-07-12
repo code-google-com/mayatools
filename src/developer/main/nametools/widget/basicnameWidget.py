@@ -6,12 +6,12 @@ Created on Jun 27, 2014
 try:
     reload(mFn)
 except:
-    from developer.main.namingtools.basicnametools.fn import *
+    from developer.main.nametools.fn import *
 
 try:
     reload(ui)
 except:
-    from developer.main.namingtools.basicnametools.widget.ui import basicnameUI as ui
+    from developer.main.nametools.widget.ui import basicnameUI as ui
 
 from PyQt4 import QtGui
 
