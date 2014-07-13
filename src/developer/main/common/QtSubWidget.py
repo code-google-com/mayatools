@@ -18,7 +18,7 @@ except:
     from developer.main.common.dockWidget import *
 
 class QtSubWidget(DockWidget):
-    def __init__(self, modName, modDir, modList):
+    def __init__(self, modName, modDir, modList = None):
         super(DockWidget, self).__init__(modName)
         self.titleBar = DockWidgetTitleBar(self)
         self.setTitleBarWidget(self.titleBar)
@@ -34,6 +34,10 @@ class QtSubWidget(DockWidget):
             if is_pkg and pkg_name == 'widget':
                 pkg = pkg_loader.find_module(pkg_name).load_module(pkg_name)
                 for mod_loader, mod_name, is_mod in pkgutil.iter_modules(pkg.__path__):
+                    if modList == None:
+                        if not is_mod and mod_name != '__init__':
+                            mod = mod_loader.find_module(mod_name).load_module(mod_name)
+                            self.vLayout.addWidget(mod.QtWidget())
                     if not is_mod and mod_name in modList:
                         mod = mod_loader.find_module(mod_name).load_module(mod_name)
                         self.vLayout.addWidget(mod.QtWidget())
