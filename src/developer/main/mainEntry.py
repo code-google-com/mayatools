@@ -70,6 +70,7 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
                 for widget in mod.getElementsByTagName('submodule'):
                     submods.append(widget.getAttribute('name'))
                 instMod = cf.loadNestedModule('developer.main.' + mod.getAttribute('name') + '.main')
+                print mod.getAttribute('name')
                 dockWidget = instMod.subWidget(submods)
                 scrollWidget.loadWidgetCustomize(dockWidget)
             scrollWidget.addSpacer()
