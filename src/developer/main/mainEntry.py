@@ -49,14 +49,10 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         self.setObjectName('ProjectUIWindow')
         self.proj = projb.projectBase(XMLProject)
         self.setWindowTitle(self.proj.ProjectName)
-        #print len(self.proj.moduleList)
         self.loadUI()
         # -- set ui controller
         self.actionAsset.triggered.connect(self.openAssetBrowser)
-        
-    def getModule(self):
-        pass
-        
+
     def openAssetBrowser(self):
         if py.window('assetContentForm', q = True, ex= True):
             py.deleteUI('assetContentForm')
