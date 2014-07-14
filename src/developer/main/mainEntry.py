@@ -61,13 +61,13 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
     def openAssetBrowser(self):
         if py.window('assetContentForm', q = True, ex= True):
             py.deleteUI('assetContentForm')
-        form = asc.main.assetContentForm()
+        form = asc.assetContentForm()
         form.show()
         
     def openProjectCreator(self):
         if py.window('projectCreatorForm', q = True, ex= True):
             py.deleteUI('projectCreatorForm')
-        form = pjc.main.projectCreatorForm()
+        form = pjc.projectCreatorForm()
         form.show()    
         
     def loadUI(self):
