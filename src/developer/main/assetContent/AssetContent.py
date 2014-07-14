@@ -1,1 +1,0 @@
-try:\n\treload(ui)\nexcept:\n\tfrom developer.main.\n\nfrom PyQt4 import QtGui\n\nclass QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):\n\tdef __init__(self):\n\tsuper(QtGui.QMainWindow, self).__init__(parent = None)\nself.setupUi(self)

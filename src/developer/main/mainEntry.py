@@ -27,10 +27,14 @@ except:
     from developer.main.common import commonFunctions as cf
     
 try:
-    reload(main)
+    reload(asc)
 except:
-    from developer.main.assetContent import main
-
+    from developer.main.assetContent import main as asc
+    
+try:
+    reload(pjc)
+except:
+    from developer.main.projectcreator import main as pjc
 #-- get ui dir 
 
 try:
@@ -52,12 +56,19 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         self.loadUI()
         # -- set ui controller
         self.actionAsset.triggered.connect(self.openAssetBrowser)
+        self.actionNew_Project.triggered.connect(self.openProjectCreator)
 
     def openAssetBrowser(self):
         if py.window('assetContentForm', q = True, ex= True):
             py.deleteUI('assetContentForm')
-        form = main.assetContentForm()
-        form.show()  
+        form = asc.main.assetContentForm()
+        form.show()
+        
+    def openProjectCreator(self):
+        if py.window('projectCreatorForm', q = True, ex= True):
+            py.deleteUI('projectCreatorForm')
+        form = pjc.main.projectCreatorForm()
+        form.show()    
         
     def loadUI(self):
         packages = self.proj.moduleLoader.getElementsByTagName('tab')

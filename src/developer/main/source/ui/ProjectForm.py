@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\source\ui\ProjectForm.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\source\ui\ProjectForm.ui'
 #
-# Created: Sun Jul 13 21:43:16 2014
+# Created: Mon Jul 14 20:02:57 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -65,7 +65,7 @@ class Ui_ProjectMainForm(object):
         self.menuHelp = QtGui.QMenu(self.menubar)
         self.menuHelp.setObjectName(_fromUtf8("menuHelp"))
         self.menuIntegrate_with_Source_Control = QtGui.QMenu(self.menuHelp)
-        self.menuIntegrate_with_Source_Control.setGeometry(QtCore.QRect(915, 193, 251, 222))
+        self.menuIntegrate_with_Source_Control.setGeometry(QtCore.QRect(915, 193, 248, 222))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/Project/Exchange.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.menuIntegrate_with_Source_Control.setIcon(icon)
@@ -190,6 +190,8 @@ class Ui_ProjectMainForm(object):
         self.actionNew_Project.setObjectName(_fromUtf8("actionNew_Project"))
         self.actionEdit_Project = QtGui.QAction(ProjectMainForm)
         self.actionEdit_Project.setObjectName(_fromUtf8("actionEdit_Project"))
+        self.actionProject = QtGui.QAction(ProjectMainForm)
+        self.actionProject.setObjectName(_fromUtf8("actionProject"))
         self.menuAssets.addAction(self.actionAsset)
         self.menuConnect_to_Source_Control.addAction(self.actionPerforce)
         self.menuConnect_to_Source_Control.addAction(self.actionSVN)
@@ -266,4 +268,5 @@ class Ui_ProjectMainForm(object):
         self.actionRight.setText(_translate("ProjectMainForm", "Right", None))
         self.actionNew_Project.setText(_translate("ProjectMainForm", "New Project", None))
         self.actionEdit_Project.setText(_translate("ProjectMainForm", "Edit Project", None))
+        self.actionProject.setText(_translate("ProjectMainForm", "Project", None))
 
