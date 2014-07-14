@@ -1,7 +1,7 @@
 try:
 	reload(ui)
 except:
-	from developer.main.shadertools.debugshaders.widget.ui import debugshaderUI as ui
+	from developer.main.debugshaders.widget.ui import debugshaderUI as ui
 
 from PyQt4 import QtGui
 

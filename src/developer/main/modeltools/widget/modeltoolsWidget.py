@@ -4,12 +4,12 @@ Created on Jun 27, 2014
 @author: Trung
 '''
 
-from developer.main.polytools.modeltools.fn import modeltoolsFn as mFn
+from developer.main.modeltools.fn import modeltoolsFn as mFn
 
 try:
     reload(ui)
 except:
-    from developer.main.polytools.modeltools.widget.ui import modeltoolsUI as ui
+    from developer.main.modeltools.widget.ui import modeltoolsUI as ui
 
 from PyQt4 import QtGui
 

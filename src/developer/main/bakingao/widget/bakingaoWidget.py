@@ -1,7 +1,7 @@
 try:
 	reload(ui)
 except:
-	from developer.main.shadertools.bakingao.widget.ui import bakingaoUI as ui
+	from developer.main.bakingao.widget.ui import bakingaoUI as ui
 
 from PyQt4 import QtGui
 

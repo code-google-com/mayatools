@@ -8,12 +8,12 @@ Created on May 27, 2014
 '''
 from developer.main.common import commonFunctions as cf
 from PyQt4 import QtGui, QtCore
-from developer.main.polytools.mirrortools.fn import mirrorFunction as mFn
+from developer.main.mirrortools.fn import mirrorFunction as mFn
 
 try:
     reload(ui)
 except:
-    from developer.main.polytools.mirrortools.widget.ui import mirrorUI as ui
+    from developer.main.mirrortools.widget.ui import mirrorUI as ui
     
 import os, inspect, functools
 

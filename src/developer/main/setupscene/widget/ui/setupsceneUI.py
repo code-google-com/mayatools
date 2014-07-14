@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\polytools\setupscene\widget\ui\setupsceneUI.ui'
+# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\setupscene\widget\ui\setupsceneUI.ui'
 #
-# Created: Thu Jul 03 09:24:22 2014
+# Created: Mon Jul 14 03:26:11 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -23,21 +23,25 @@ except AttributeError:
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig)
 
-class Ui_Form(object):
-    def setupUi(self, Form):
-        Form.setObjectName(_fromUtf8("Form"))
-        Form.resize(330, 123)
-        self.verticalLayout = QtGui.QVBoxLayout(Form)
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName(_fromUtf8("MainWindow"))
+        MainWindow.resize(445, 123)
+        self.centralwidget = QtGui.QWidget(MainWindow)
+        self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
+        self.verticalLayout = QtGui.QVBoxLayout(self.centralwidget)
+        self.verticalLayout.setContentsMargins(3, -1, 3, -1)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
-        self.groupBox_5 = QtGui.QGroupBox(Form)
+        self.groupBox_5 = QtGui.QGroupBox(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.groupBox_5.sizePolicy().hasHeightForWidth())
         self.groupBox_5.setSizePolicy(sizePolicy)
+        self.groupBox_5.setAlignment(QtCore.Qt.AlignCenter)
         self.groupBox_5.setObjectName(_fromUtf8("groupBox_5"))
         self.horizontalLayout_6 = QtGui.QHBoxLayout(self.groupBox_5)
-        self.horizontalLayout_6.setContentsMargins(5, -1, 5, -1)
+        self.horizontalLayout_6.setContentsMargins(3, -1, 3, -1)
         self.horizontalLayout_6.setObjectName(_fromUtf8("horizontalLayout_6"))
         self.horizontalLayout_7 = QtGui.QHBoxLayout()
         self.horizontalLayout_7.setSpacing(0)
@@ -76,12 +80,13 @@ class Ui_Form(object):
         spacerItem = QtGui.QSpacerItem(143, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_6.addItem(spacerItem)
         self.verticalLayout.addWidget(self.groupBox_5)
+        MainWindow.setCentralWidget(self.centralwidget)
 
-        self.retranslateUi(Form)
-        QtCore.QMetaObject.connectSlotsByName(Form)
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-    def retranslateUi(self, Form):
-        Form.setWindowTitle(_translate("Form", "Form", None))
-        self.groupBox_5.setTitle(_translate("Form", "Set up Display Scene:", None))
-        self.btnSetupAxis.setToolTip(_translate("Form", "change Axis", None))
+    def retranslateUi(self, MainWindow):
+        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
+        self.groupBox_5.setTitle(_translate("MainWindow", "Set up Display Scene:", None))
+        self.btnSetupAxis.setToolTip(_translate("MainWindow", "change Axis", None))
 

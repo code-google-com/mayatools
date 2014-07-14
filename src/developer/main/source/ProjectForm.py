@@ -1,7 +1,7 @@
 try:
 	reload(ui)
 except:
-	from developer.main.setupscene.widget.ui import setupsceneUI as ui
+	from developer.main.source.widget.ui import ProjectForm as ui
 
 from PyQt4 import QtGui
 

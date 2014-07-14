@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\ui\ProjectForm.ui'
+# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\source\ui\ProjectForm.ui'
 #
-# Created: Thu Jul 03 09:24:23 2014
+# Created: Sun Jul 13 21:43:16 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!

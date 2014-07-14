@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\ui\AssetContent.ui'
 #
-# Created: Thu Jul 03 09:24:19 2014
+# Created: Sun Jul 13 22:26:35 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -33,7 +33,7 @@ class Ui_MainWindow(object):
         self.verticalLayout = QtGui.QVBoxLayout(self.centralwidget)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.tabWidget = QtGui.QTabWidget(self.centralwidget)
-        self.tabWidget.setTabPosition(QtGui.QTabWidget.West)
+        self.tabWidget.setTabPosition(QtGui.QTabWidget.North)
         self.tabWidget.setElideMode(QtCore.Qt.ElideLeft)
         self.tabWidget.setDocumentMode(True)
         self.tabWidget.setMovable(True)
@@ -826,7 +826,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelps.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         self.tabWidget_2.setCurrentIndex(3)
         self.tabWidget_3.setCurrentIndex(2)
         self.tabWidget_4.setCurrentIndex(0)

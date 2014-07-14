@@ -1,7 +1,7 @@
 try:
 	reload(ui)
 except:
-	from developer.main.shadertools.editvertexcolors.widget.ui import editVertexColorsUI as ui
+	from developer.main.editvertexcolors.widget.ui import editVertexColorsUI as ui
 
 from PyQt4 import QtGui
 
