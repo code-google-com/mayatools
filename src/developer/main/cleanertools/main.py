@@ -4,7 +4,6 @@ class subWidget(QtGui.QWidget):
     def __init__(self, inputFile):
         super(base_class,self).__init__()
         self.setupUi(self)
-        self.__name__ = 'Tech Tools'
         self._contentCleanUp = list()
         self._customCheck = inputFile
         self.btnCheckAll.clicked.connect(self.executeAll)
