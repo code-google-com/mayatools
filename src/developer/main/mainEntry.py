@@ -1,12 +1,3 @@
-'''
-Created on May 27, 2014
-
-@author: trungtran
-@email: trungswat@gmail.com
-@description: ''
-
-'''
-
 import pymel.core as py
 from xml.dom.minidom import *
 from PyQt4 import QtGui, QtCore
@@ -58,12 +49,18 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         self.actionAsset.triggered.connect(self.openAssetBrowser)
         self.actionNew_Project.triggered.connect(self.openProjectCreator)
 
+
+    ## show asset content form
+    
     def openAssetBrowser(self):
         if py.window('assetContentForm', q = True, ex= True):
             py.deleteUI('assetContentForm')
         form = asc.assetContentForm()
         form.show()
         
+        
+    ## show project creator form  
+      
     def openProjectCreator(self):
         if py.window('projectCreatorForm', q = True, ex= True):
             py.deleteUI('projectCreatorForm')
@@ -71,22 +68,17 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         form.show()    
         
     def loadUI(self):
-        packages = self.proj.moduleLoader.getElementsByTagName('tab')
+        packages = self.proj.moduleLoader.getElementsByTagName('tab') # create tab in mainform base on name
         for index in range(len(packages)):
             scrollWidget = QtMainWidget()
-            pkgName = packages[index].getAttribute('name')
-            modules = packages[index].getElementsByTagName('module')
+            pkgName = packages[index].getAttribute('name')   
+            modules = packages[index].getElementsByTagName('module') # get package name --> assign this to a QtMainWidget inherited from DockWidget 
             for mod in modules:
                 submods = list()
-                for widget in mod.getElementsByTagName('submodule'):
+                for widget in mod.getElementsByTagName('submodule'): # get all widgets in package
                     submods.append(widget.getAttribute('name'))
                 instMod = cf.loadNestedModule('developer.main.' + mod.getAttribute('name') + '.main')
-                print mod.getAttribute('name')
                 dockWidget = instMod.subWidget(submods)
                 scrollWidget.loadWidgetCustomize(dockWidget)
             scrollWidget.addSpacer()
             self.tabWidget.insertTab(index, scrollWidget, pkgName)
-
-        
-             
-            
