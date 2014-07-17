@@ -1,4 +1,6 @@
-class ClearTools(form_class,base_class):
+import clearnersetitems as csi # cleanersetitems
+
+class subWidget(QtGui.QWidget):
     def __init__(self, inputFile):
         super(base_class,self).__init__()
         self.setupUi(self)
@@ -19,7 +21,7 @@ class ClearTools(form_class,base_class):
         except:
              pass
         for f in contentToCleanUpCommon + contentToCleanUpProject:
-            self.contents.addWidget(cleanerSetWidget(f))
+            self.contents.addWidget(csi.cleanerSetWidget(f))
             
     def updateContent(self, strResult):
         if bool(strResult.split('_')[0]):
