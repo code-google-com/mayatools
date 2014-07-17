@@ -1,7 +1,7 @@
 try:
 	reload(ui)
 except:
-	from developer.main.editshaders.widget.ui import editShaderUI as ui
+	from developer.main.pivottools.widget.ui import pivotUI as ui
 
 from PyQt4 import QtGui
 

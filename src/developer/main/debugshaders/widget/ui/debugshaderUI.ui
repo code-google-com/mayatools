@@ -15,25 +15,19 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
-    <property name="leftMargin">
-     <number>3</number>
-    </property>
-    <property name="rightMargin">
+    <property name="margin">
      <number>3</number>
     </property>
     <item>
      <widget class="QGroupBox" name="groupBox">
       <property name="title">
-       <string>Debug Shaders</string>
+       <string/>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
-       <property name="leftMargin">
-        <number>3</number>
-       </property>
-       <property name="rightMargin">
+       <property name="margin">
         <number>3</number>
        </property>
        <item>

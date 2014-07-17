@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\source\ui\ProjectCreator.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\projectcreator\ui\ProjectCreator.ui'
 #
-# Created: Mon Jul 14 20:00:15 2014
+# Created: Thu Jul 17 16:27:28 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\source\ui\ProjectForm.ui'
 #
-# Created: Mon Jul 14 20:02:57 2014
+# Created: Thu Jul 17 16:27:29 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -190,8 +190,6 @@ class Ui_ProjectMainForm(object):
         self.actionNew_Project.setObjectName(_fromUtf8("actionNew_Project"))
         self.actionEdit_Project = QtGui.QAction(ProjectMainForm)
         self.actionEdit_Project.setObjectName(_fromUtf8("actionEdit_Project"))
-        self.actionProject = QtGui.QAction(ProjectMainForm)
-        self.actionProject.setObjectName(_fromUtf8("actionProject"))
         self.menuAssets.addAction(self.actionAsset)
         self.menuConnect_to_Source_Control.addAction(self.actionPerforce)
         self.menuConnect_to_Source_Control.addAction(self.actionSVN)
@@ -268,5 +266,4 @@ class Ui_ProjectMainForm(object):
         self.actionRight.setText(_translate("ProjectMainForm", "Right", None))
         self.actionNew_Project.setText(_translate("ProjectMainForm", "New Project", None))
         self.actionEdit_Project.setText(_translate("ProjectMainForm", "Edit Project", None))
-        self.actionProject.setText(_translate("ProjectMainForm", "Project", None))
 

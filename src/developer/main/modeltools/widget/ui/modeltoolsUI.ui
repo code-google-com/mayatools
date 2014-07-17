@@ -6,32 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>407</width>
-    <height>310</height>
+    <width>360</width>
+    <height>192</height>
    </rect>
-  </property>
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <property name="styleSheet">
-   <string notr="true">QMainWindow{
-background-color: rgb(255, 85, 0);
-border-style: outset;
-}
-</string>
-  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
-    <property name="leftMargin">
-     <number>3</number>
-    </property>
-    <property name="rightMargin">
+    <property name="margin">
      <number>3</number>
     </property>
     <item>
@@ -39,103 +23,28 @@ border-style: outset;
       <property name="enabled">
        <bool>true</bool>
       </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
       <property name="font">
        <font>
         <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(67, 109, 177);
-</string>
-      </property>
       <property name="title">
-       <string>Modelling ToolBox</string>
+       <string/>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
-       <property name="spacing">
-        <number>3</number>
-       </property>
-       <property name="leftMargin">
-        <number>3</number>
-       </property>
-       <property name="topMargin">
-        <number>11</number>
-       </property>
-       <property name="rightMargin">
-        <number>3</number>
-       </property>
-       <property name="bottomMargin">
+       <property name="margin">
         <number>3</number>
        </property>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <property name="spacing">
-          <number>3</number>
-         </property>
-         <item>
-          <widget class="QPushButton" name="pushButton">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="toolTip">
-            <string>Combine mesh and weld</string>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(0, 170, 255);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../../source/icons/metroIcon/metroIconSet.qrc">
-             <normaloff>:/Icons/attach_weld_2.png</normaloff>:/Icons/attach_weld_2.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
-           </property>
-          </widget>
-         </item>
          <item>
           <widget class="QPushButton" name="btnAttach">
            <property name="enabled">
             <bool>true</bool>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
            </property>
            <property name="font">
             <font>
@@ -143,39 +52,8 @@ QPushButton:pressed
              <bold>false</bold>
             </font>
            </property>
-           <property name="toolTip">
-            <string>Combine mesh no weld</string>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-background-color: rgb(255, 85, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
            <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../../source/icons/metroIcon/metroIconSet.qrc">
-             <normaloff>:/Icons/attach_2.png</normaloff>:/Icons/attach_2.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
+            <string>Attach</string>
            </property>
           </widget>
          </item>
@@ -184,102 +62,27 @@ QPushButton:pressed
            <property name="enabled">
             <bool>true</bool>
            </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
            <property name="font">
             <font>
              <weight>50</weight>
              <bold>false</bold>
             </font>
            </property>
-           <property name="toolTip">
-            <string>Detach mesh</string>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-background-color: rgb(255, 170, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-	background-color: rgb(255, 170, 0);
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-}</string>
-           </property>
            <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../../source/icons/metroIcon/metroIconSet.qrc">
-             <normaloff>:/Icons/detach_2.png</normaloff>:/Icons/detach_2.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
+            <string>Detach</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="btnDuplicate">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
            <property name="font">
             <font>
              <weight>50</weight>
              <bold>false</bold>
             </font>
            </property>
-           <property name="toolTip">
-            <string>Duplicate face</string>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-background-color: rgb(85, 170, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
            <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../../source/icons/metroIcon/metroIconSet.qrc">
-             <normaloff>:/Icons/duplicate_2.png</normaloff>:/Icons/duplicate_2.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
+            <string>Duplicate</string>
            </property>
           </widget>
          </item>
@@ -287,63 +90,20 @@ QPushButton:pressed
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
-         <property name="spacing">
-          <number>3</number>
-         </property>
          <item>
-          <widget class="QPushButton" name="btnLoopEdges">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+          <widget class="QSpinBox" name="spnRing">
+           <property name="maximum">
+            <number>98</number>
            </property>
-           <property name="font">
-            <font>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>Loop Edges</string>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(255, 85, 127);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../../source/icons/metroIcon/metroIconSet.qrc">
-             <normaloff>:/Icons/loop.png</normaloff>:/Icons/loop.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
+           <property name="value">
+            <number>1</number>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="btnRingEdges">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -354,39 +114,38 @@ QPushButton:pressed
              <bold>false</bold>
             </font>
            </property>
-           <property name="toolTip">
-            <string>Ring Edges</string>
+           <property name="text">
+            <string>Dot ring selection</string>
            </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(0, 170, 127);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <item>
+          <widget class="QSpinBox" name="spnLoop">
+           <property name="value">
+            <number>1</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnLoopEdges">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
            </property>
            <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../../source/icons/metroIcon/metroIconSet.qrc">
-             <normaloff>:/Icons/ring.png</normaloff>:/Icons/ring.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
+            <string>Dot loop selection</string>
            </property>
           </widget>
          </item>
@@ -394,136 +153,29 @@ QPushButton:pressed
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
-         <property name="spacing">
-          <number>3</number>
-         </property>
-         <item>
-          <widget class="QPushButton" name="pushButton_2">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(170, 0, 127);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
-           </property>
-          </widget>
-         </item>
          <item>
           <widget class="QPushButton" name="btnSmartCollapse">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
            <property name="font">
             <font>
              <weight>50</weight>
              <bold>false</bold>
             </font>
            </property>
-           <property name="toolTip">
-            <string>Unchamferd Edges</string>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(170, 85, 255);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
            <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../../../../source/icons/metroIcon/metroIconSet.qrc">
-             <normaloff>:/Icons/unchamfered.png</normaloff>:/Icons/unchamfered.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
+            <string>Un-Chamfered</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="btnReplace">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
            <property name="font">
             <font>
              <weight>50</weight>
              <bold>false</bold>
             </font>
            </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(255, 0, 127);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
-           </property>
            <property name="text">
-            <string/>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>50</width>
-             <height>50</height>
-            </size>
+            <string>Edit Edge Flow</string>
            </property>
           </widget>
          </item>
@@ -533,8 +185,21 @@ QPushButton:pressed
         <layout class="QHBoxLayout" name="horizontalLayout_15">
          <item>
           <widget class="QPushButton" name="btnSnapVertexTool">
+           <property name="font">
+            <font>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Snap Vertex Tool</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="spnTolerance">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -545,29 +210,14 @@ QPushButton:pressed
              <bold>false</bold>
             </font>
            </property>
-           <property name="contextMenuPolicy">
-            <enum>Qt::CustomContextMenu</enum>
+           <property name="minimum">
+            <double>0.010000000000000</double>
            </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton{
-	background-color: rgb(255, 170, 0);
-border-style: outset;
-}
-QPushButton:hover
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: white;
-}
-QPushButton:pressed
-{
-	border-width: 1px;
-    border-style: solid;	
-	border-color: rgb(48, 96, 144);
-};</string>
+           <property name="singleStep">
+            <double>0.010000000000000</double>
            </property>
-           <property name="text">
-            <string/>
+           <property name="value">
+            <double>0.010000000000000</double>
            </property>
           </widget>
          </item>
@@ -579,8 +229,6 @@ QPushButton:pressed
    </layout>
   </widget>
  </widget>
- <resources>
-  <include location="../../../../source/icons/metroIcon/metroIconSet.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

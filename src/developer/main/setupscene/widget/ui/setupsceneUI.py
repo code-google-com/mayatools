@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\setupscene\widget\ui\setupsceneUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\setupscene\widget\ui\setupsceneUI.ui'
 #
-# Created: Mon Jul 14 03:26:11 2014
+# Created: Thu Jul 17 16:27:29 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -30,7 +30,7 @@ class Ui_MainWindow(object):
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout = QtGui.QVBoxLayout(self.centralwidget)
-        self.verticalLayout.setContentsMargins(3, -1, 3, -1)
+        self.verticalLayout.setMargin(3)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.groupBox_5 = QtGui.QGroupBox(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
@@ -38,10 +38,11 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.groupBox_5.sizePolicy().hasHeightForWidth())
         self.groupBox_5.setSizePolicy(sizePolicy)
+        self.groupBox_5.setTitle(_fromUtf8(""))
         self.groupBox_5.setAlignment(QtCore.Qt.AlignCenter)
         self.groupBox_5.setObjectName(_fromUtf8("groupBox_5"))
         self.horizontalLayout_6 = QtGui.QHBoxLayout(self.groupBox_5)
-        self.horizontalLayout_6.setContentsMargins(3, -1, 3, -1)
+        self.horizontalLayout_6.setMargin(3)
         self.horizontalLayout_6.setObjectName(_fromUtf8("horizontalLayout_6"))
         self.horizontalLayout_7 = QtGui.QHBoxLayout()
         self.horizontalLayout_7.setSpacing(0)
@@ -87,6 +88,5 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
-        self.groupBox_5.setTitle(_translate("MainWindow", "Set up Display Scene:", None))
         self.btnSetupAxis.setToolTip(_translate("MainWindow", "change Axis", None))
 

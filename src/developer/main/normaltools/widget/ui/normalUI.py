@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\normaltools\widget\ui\normalUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\normaltools\widget\ui\normalUI.ui'
 #
-# Created: Sun Jul 13 21:43:15 2014
+# Created: Thu Jul 17 16:27:28 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -30,17 +30,18 @@ class Ui_MainWindow(object):
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout = QtGui.QVBoxLayout(self.centralwidget)
-        self.verticalLayout.setContentsMargins(3, -1, 3, -1)
+        self.verticalLayout.setMargin(3)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.groupBox_4 = QtGui.QGroupBox(self.centralwidget)
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
         self.groupBox_4.setFont(font)
+        self.groupBox_4.setTitle(_fromUtf8(""))
         self.groupBox_4.setAlignment(QtCore.Qt.AlignCenter)
         self.groupBox_4.setObjectName(_fromUtf8("groupBox_4"))
         self.verticalLayout_5 = QtGui.QVBoxLayout(self.groupBox_4)
-        self.verticalLayout_5.setContentsMargins(3, -1, 3, -1)
+        self.verticalLayout_5.setMargin(3)
         self.verticalLayout_5.setObjectName(_fromUtf8("verticalLayout_5"))
         self.horizontalLayout_14 = QtGui.QHBoxLayout()
         self.horizontalLayout_14.setObjectName(_fromUtf8("horizontalLayout_14"))
@@ -164,7 +165,6 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
-        self.groupBox_4.setTitle(_translate("MainWindow", "Normal ToolBox", None))
         self.btnLockToLargeFace.setToolTip(_translate("MainWindow", "lock normal toward the large bevel faces", None))
         self.btnLockToLargeFace.setText(_translate("MainWindow", "Lock Large face", None))
         self.btnLockToSmallFace.setToolTip(_translate("MainWindow", "lock normal toward the small bevel faces", None))

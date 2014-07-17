@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\polytools\mirrortools\widget\ui\mirrorUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\mirrortools\widget\ui\mirrorUI.ui'
 #
-# Created: Thu Jul 03 09:24:21 2014
+# Created: Thu Jul 17 16:27:27 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -41,7 +41,7 @@ class Ui_MainWindow(object):
         self.centralwidget.setSizePolicy(sizePolicy)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout = QtGui.QVBoxLayout(self.centralwidget)
-        self.verticalLayout.setContentsMargins(3, -1, 3, -1)
+        self.verticalLayout.setContentsMargins(3, 3, 3, -1)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.groupBox_2 = QtGui.QGroupBox(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Minimum)
@@ -53,6 +53,7 @@ class Ui_MainWindow(object):
         font.setBold(True)
         font.setWeight(75)
         self.groupBox_2.setFont(font)
+        self.groupBox_2.setTitle(_fromUtf8(""))
         self.groupBox_2.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
         self.groupBox_2.setFlat(False)
         self.groupBox_2.setCheckable(False)
@@ -61,7 +62,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.groupBox_2)
         self.verticalLayout_3.setSpacing(7)
         self.verticalLayout_3.setSizeConstraint(QtGui.QLayout.SetDefaultConstraint)
-        self.verticalLayout_3.setContentsMargins(3, 11, 3, 11)
+        self.verticalLayout_3.setMargin(3)
         self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
         self.horizontalLayout_11 = QtGui.QHBoxLayout()
         self.horizontalLayout_11.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
@@ -209,7 +210,6 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
-        self.groupBox_2.setTitle(_translate("MainWindow", "Mirror ToolBox", None))
         self.rdbNoClone.setText(_translate("MainWindow", "No Copy", None))
         self.rdbClone.setText(_translate("MainWindow", "Clone", None))
         self.rdbInstance.setText(_translate("MainWindow", "Instance", None))

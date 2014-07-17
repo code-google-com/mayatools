@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\bakingao\widget\ui\bakingaoUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\bakingao\widget\ui\bakingaoUI.ui'
 #
-# Created: Sun Jul 13 21:43:15 2014
+# Created: Thu Jul 17 16:27:25 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,17 +26,18 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(317, 129)
+        MainWindow.resize(331, 81)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout = QtGui.QVBoxLayout(self.centralwidget)
-        self.verticalLayout.setContentsMargins(3, -1, 3, -1)
+        self.verticalLayout.setMargin(3)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.groupBox_3 = QtGui.QGroupBox(self.centralwidget)
+        self.groupBox_3.setTitle(_fromUtf8(""))
         self.groupBox_3.setAlignment(QtCore.Qt.AlignCenter)
         self.groupBox_3.setObjectName(_fromUtf8("groupBox_3"))
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.groupBox_3)
-        self.verticalLayout_3.setContentsMargins(3, -1, 3, -1)
+        self.verticalLayout_3.setMargin(3)
         self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
         self.horizontalLayout_5 = QtGui.QHBoxLayout()
         self.horizontalLayout_5.setObjectName(_fromUtf8("horizontalLayout_5"))
@@ -68,7 +69,6 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
-        self.groupBox_3.setTitle(_translate("MainWindow", "Bake AO ToolBox", None))
         self.btnSetGroundPlane.setText(_translate("MainWindow", "Setup Ground Plane", None))
         self.btnBakeToVertex.setText(_translate("MainWindow", "Bake AO to Vertex ...", None))
         self.btnBakeToTexture.setText(_translate("MainWindow", "Bake AO to Texture ...", None))

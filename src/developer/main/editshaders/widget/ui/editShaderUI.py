@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\shadertools\editshaders\widget\ui\editShaderUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\editshaders\widget\ui\editShaderUI.ui'
 #
-# Created: Thu Jul 03 09:24:22 2014
+# Created: Thu Jul 17 16:27:26 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,17 +26,18 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(409, 165)
+        MainWindow.resize(409, 116)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.centralwidget)
-        self.verticalLayout_2.setContentsMargins(3, -1, 3, -1)
+        self.verticalLayout_2.setMargin(3)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.groupBox = QtGui.QGroupBox(self.centralwidget)
+        self.groupBox.setTitle(_fromUtf8(""))
         self.groupBox.setAlignment(QtCore.Qt.AlignCenter)
         self.groupBox.setObjectName(_fromUtf8("groupBox"))
         self.verticalLayout = QtGui.QVBoxLayout(self.groupBox)
-        self.verticalLayout.setContentsMargins(3, -1, 3, -1)
+        self.verticalLayout.setMargin(3)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
@@ -108,7 +109,6 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
-        self.groupBox.setTitle(_translate("MainWindow", "Manipulate Shader:", None))
         self.label_2.setText(_translate("MainWindow", "Material", None))
         self.chkAuto.setText(_translate("MainWindow", "A", None))
         self.btnGet.setToolTip(_translate("MainWindow", "<html><head/><body><p>Chọn Shader được dùng bởi face được chọn.</p></body></html>", None))

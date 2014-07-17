@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\nametools\widget\ui\basicnameUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\nametools\widget\ui\basicnameUI.ui'
 #
-# Created: Sun Jul 13 21:43:15 2014
+# Created: Thu Jul 17 16:27:27 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,17 +26,19 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(399, 269)
+        MainWindow.resize(387, 223)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.centralwidget)
-        self.verticalLayout_2.setContentsMargins(3, -1, 3, -1)
+        self.verticalLayout_2.setContentsMargins(3, 1, 3, 1)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.groupBox = QtGui.QGroupBox(self.centralwidget)
+        self.groupBox.setTitle(_fromUtf8(""))
         self.groupBox.setAlignment(QtCore.Qt.AlignCenter)
         self.groupBox.setObjectName(_fromUtf8("groupBox"))
         self.verticalLayout = QtGui.QVBoxLayout(self.groupBox)
-        self.verticalLayout.setContentsMargins(3, -1, 3, -1)
+        self.verticalLayout.setSpacing(7)
+        self.verticalLayout.setMargin(3)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.horizontalLayout_5 = QtGui.QHBoxLayout()
         self.horizontalLayout_5.setObjectName(_fromUtf8("horizontalLayout_5"))
@@ -101,26 +103,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout_8.addWidget(self.edtNameSuffix)
         self.horizontalLayout_9.addLayout(self.horizontalLayout_8)
         self.verticalLayout.addLayout(self.horizontalLayout_9)
-        self.horizontalLayout_10 = QtGui.QHBoxLayout()
-        self.horizontalLayout_10.setObjectName(_fromUtf8("horizontalLayout_10"))
-        self.label_6 = QtGui.QLabel(self.groupBox)
-        font = QtGui.QFont()
-        font.setBold(True)
-        font.setWeight(75)
-        self.label_6.setFont(font)
-        self.label_6.setObjectName(_fromUtf8("label_6"))
-        self.horizontalLayout_10.addWidget(self.label_6)
-        self.edtSelectByName = QtGui.QLineEdit(self.groupBox)
-        self.edtSelectByName.setStyleSheet(_fromUtf8("QLineEdit {\n"
-"padding: 4px;\n"
-"border-style: solid;\n"
-"border: 1px solid gray;\n"
-"border-radius: 10px;\n"
-"font:  bold 11px\n"
-"}"))
-        self.edtSelectByName.setObjectName(_fromUtf8("edtSelectByName"))
-        self.horizontalLayout_10.addWidget(self.edtSelectByName)
-        self.verticalLayout.addLayout(self.horizontalLayout_10)
         self.horizontalLayout_3 = QtGui.QHBoxLayout()
         self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
         self.label = QtGui.QLabel(self.groupBox)
@@ -141,6 +123,26 @@ class Ui_MainWindow(object):
         self.ldtFind.setObjectName(_fromUtf8("ldtFind"))
         self.horizontalLayout_3.addWidget(self.ldtFind)
         self.verticalLayout.addLayout(self.horizontalLayout_3)
+        self.horizontalLayout_10 = QtGui.QHBoxLayout()
+        self.horizontalLayout_10.setObjectName(_fromUtf8("horizontalLayout_10"))
+        self.label_6 = QtGui.QLabel(self.groupBox)
+        font = QtGui.QFont()
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_6.setFont(font)
+        self.label_6.setObjectName(_fromUtf8("label_6"))
+        self.horizontalLayout_10.addWidget(self.label_6)
+        self.edtSelectByName = QtGui.QLineEdit(self.groupBox)
+        self.edtSelectByName.setStyleSheet(_fromUtf8("QLineEdit {\n"
+"padding: 4px;\n"
+"border-style: solid;\n"
+"border: 1px solid gray;\n"
+"border-radius: 10px;\n"
+"font:  bold 11px\n"
+"}"))
+        self.edtSelectByName.setObjectName(_fromUtf8("edtSelectByName"))
+        self.horizontalLayout_10.addWidget(self.edtSelectByName)
+        self.verticalLayout.addLayout(self.horizontalLayout_10)
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
         self.label_4 = QtGui.QLabel(self.groupBox)
@@ -187,12 +189,11 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
-        self.groupBox.setTitle(_translate("MainWindow", "Basic Naming", None))
         self.label_2.setText(_translate("MainWindow", "Rename", None))
         self.label_3.setText(_translate("MainWindow", "Prefix", None))
         self.label_5.setText(_translate("MainWindow", "Suffix", None))
-        self.label_6.setText(_translate("MainWindow", "Select By Name", None))
         self.label.setText(_translate("MainWindow", "Find", None))
+        self.label_6.setText(_translate("MainWindow", "Select By Name", None))
         self.label_4.setText(_translate("MainWindow", "Replace By:", None))
         self.chkHierrachy.setToolTip(_translate("MainWindow", "apply to whole Hierrachy", None))
         self.btnUpperCase.setText(_translate("MainWindow", "UpperCase", None))

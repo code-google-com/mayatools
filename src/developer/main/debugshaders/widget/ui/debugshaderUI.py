@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\shadertools\debugshaders\widget\ui\debugshaderUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\debugshaders\widget\ui\debugshaderUI.ui'
 #
-
+# Created: Thu Jul 17 16:27:26 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -30,13 +30,14 @@ class Ui_MainWindow(object):
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.centralwidget)
-        self.verticalLayout_2.setContentsMargins(3, -1, 3, -1)
+        self.verticalLayout_2.setMargin(3)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.groupBox = QtGui.QGroupBox(self.centralwidget)
+        self.groupBox.setTitle(_fromUtf8(""))
         self.groupBox.setAlignment(QtCore.Qt.AlignCenter)
         self.groupBox.setObjectName(_fromUtf8("groupBox"))
         self.verticalLayout = QtGui.QVBoxLayout(self.groupBox)
-        self.verticalLayout.setContentsMargins(3, -1, 3, -1)
+        self.verticalLayout.setMargin(3)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.horizontalLayout_4 = QtGui.QHBoxLayout()
         self.horizontalLayout_4.setObjectName(_fromUtf8("horizontalLayout_4"))
@@ -94,7 +95,6 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
-        self.groupBox.setTitle(_translate("MainWindow", "Debug Shaders", None))
         self.btnShowAOOnly.setToolTip(_translate("MainWindow", "change to AO", None))
         self.btnReflectionView.setToolTip(_translate("MainWindow", "change to Shininess", None))
         self.btnNormalView.setToolTip(_translate("MainWindow", "change to Normal", None))

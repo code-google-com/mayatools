@@ -37,14 +37,18 @@
 				<module name = "modeltools"/>
 				<module name = "normaltools"/> 
 			</tab>
-			<tab name="UV TOOLS"/>			
+			<tab name="UV TOOLS">
+				<module name = "uvtools"/>
+			</tab>			
 			<tab name="SHADER TOOLS">
 				<module name = "debugshaders"/>
 				<module name = "editshaders"/>
 				<module name = "editvertexcolors"/>	
-				<umodule name = "bakingao"/>	
+				<module name = "bakingao"/>	
 			</tab>
-			<tab name="PIVOT TOOLS"/>			
+			<tab name="PIVOT TOOLS">
+				<module name = "pivottools"/>
+			</tab>			
 			<tab name="ANIMATE TOOLS"/>			
 			<tab name="CLEAN UP TOOLS"/>
 			<tab name="THIRD PARTY TOOLS" />
