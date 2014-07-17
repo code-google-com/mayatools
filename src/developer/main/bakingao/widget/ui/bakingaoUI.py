@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\bakingao\widget\ui\bakingaoUI.ui'
 #
-# Created: Thu Jul 17 16:27:25 2014
+# Created: Thu Jul 17 17:30:10 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!

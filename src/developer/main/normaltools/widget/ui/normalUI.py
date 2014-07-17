@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\normaltools\widget\ui\normalUI.ui'
 #
-# Created: Thu Jul 17 16:27:28 2014
+# Created: Thu Jul 17 17:30:12 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!

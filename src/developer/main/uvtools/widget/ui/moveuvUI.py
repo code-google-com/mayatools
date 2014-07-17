@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\uvtools\widget\ui\moveuvUI.ui'
 #
-# Created: Thu Jul 17 16:27:29 2014
+# Created: Thu Jul 17 17:30:13 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -194,6 +194,11 @@ class Ui_MainWindow(object):
         self.pushButton_7.setObjectName(_fromUtf8("pushButton_7"))
         self.gridLayout.addWidget(self.pushButton_7, 2, 2, 1, 1)
         self.verticalLayout.addLayout(self.gridLayout)
+        self.line = QtGui.QFrame(self.groupBox)
+        self.line.setFrameShape(QtGui.QFrame.HLine)
+        self.line.setFrameShadow(QtGui.QFrame.Sunken)
+        self.line.setObjectName(_fromUtf8("line"))
+        self.verticalLayout.addWidget(self.line)
         self.horizontalLayout_3 = QtGui.QHBoxLayout()
         self.horizontalLayout_3.setSpacing(0)
         self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))

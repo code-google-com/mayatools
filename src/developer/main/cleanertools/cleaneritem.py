@@ -15,10 +15,7 @@ class cleanerWidget(QtGui.QWidget):
         self.chkbox.setChecked(True) 
         self.button.clicked.connect(instanceModule.execute)
         self.chkbox.clicked.connect(self.emitSignal)
-    
-    @staticmethod
-    
-        
+
     def toogleCheckBox(self):
         flag = self.chkbox.isChecked()
         self.chkbox.setChecked(not flag)
