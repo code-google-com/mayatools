@@ -1,5 +1,5 @@
 description = 'Add a locator to selected position.'
-name = 'addLocatorToPos' 
+tooltip = ''
 
 import maya.cmds as cmds
 import pymel.core as py

@@ -50,7 +50,23 @@
 				<module name = "pivottools"/>
 			</tab>			
 			<tab name="ANIMATE TOOLS"/>			
-			<tab name="CLEAN UP TOOLS"/>
+			<tab name="CLEAN UP TOOLS">
+				<module name = "Cleaning_Mesh_Tools">
+				
+				</module>
+				<module name = "Cleaning_Scene_Tools">
+				
+				</module>
+				<module name = "Cleaning_Shaders_and_Textures">
+				
+				</module>
+				<module name = "Fix_issues_on_mesh">
+				
+				</module>
+				<module name = "Technical_Setup ">
+				
+				</module>
+			</tab>	
 			<tab name="THIRD PARTY TOOLS" />
 		</Module>
 	</ProjectData>

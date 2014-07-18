@@ -1,5 +1,5 @@
 description = 'Optimize Scene (Maya default).'
-name = 'CleanUpScene'
+tooltip = ''
 
 import maya.cmds as cmds
 import maya.mel as mel

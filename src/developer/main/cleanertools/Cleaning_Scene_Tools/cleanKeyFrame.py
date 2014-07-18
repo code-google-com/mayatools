@@ -1,5 +1,5 @@
 description = 'Clean keyframes not needed.'
-name = 'cleanKeyFrame'
+tooltip = ''
 
 import maya.cmds as cmds
 import maya.mel as mel

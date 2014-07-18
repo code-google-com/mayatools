@@ -1,5 +1,4 @@
 description = 'Correct all node name.'
-name = 'CorrectNodeName'
 tooltip = 'Correct node name:\n\t Correct shape node.\n\t Correct shadingGroup node.\n\t Correct texture name.'
 
 import maya.cmds as cmds

@@ -1,7 +1,7 @@
-import clearnersetitems as csi # cleanersetitems
+from developer.main.cleanertools import cleanerGroup as csi
 
 class subWidget(QtGui.QWidget):
-    def __init__(self, inputFile):
+    def __init__(self, listQA):
         super(base_class,self).__init__()
         self.setupUi(self)
         self._contentCleanUp = list()

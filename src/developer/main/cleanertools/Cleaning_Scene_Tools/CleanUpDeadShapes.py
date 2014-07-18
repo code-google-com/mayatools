@@ -1,5 +1,5 @@
 description = 'Clean up dead shapes.'
-name = 'CleanUpDeadShapes'
+tooltip = ''
 
 import maya.cmds as cmds
 import maya.mel as mel

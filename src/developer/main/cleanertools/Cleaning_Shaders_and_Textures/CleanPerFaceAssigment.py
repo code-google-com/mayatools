@@ -1,5 +1,6 @@
 description = 'Fix double shader  on single face'
-name = 'CleanPerFaceAssigment'
+tooltip = ''
+
 import maya.cmds as cmds
 import maya.mel as mel
 
