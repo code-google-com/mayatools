@@ -1,3 +1,4 @@
+from PyQt4 import QtGui
 try:
     reload(cf)
 except:
@@ -7,11 +8,11 @@ class cleanerWidget(QtGui.QWidget):
     #checkedContent = QtCore.pyqtSignal('QString', name = 'tooggledStatus')
     def __init__(self, modName):
         super(QtGui.QWidget, self).__init__()
-        mod = cf.loadNestedModule('develop.main.cleanertools' + modName)
+        mod = cf.loadNestedModule('developer.main.cleanertools.' + modName)
         self.createGUI('Execute', mod.description, mod.tooltip)
         # ui signal
         self.button.clicked.connect(mod.execute)
-        self.chkbox.clicked.connect(self.emitSignal)
+        #self.chkbox.clicked.connect(self.emitSignal)
 
     def createGUI(self, *arg):
         self.label = QtGui.QLabel(arg[1]) # get description 
@@ -24,7 +25,7 @@ class cleanerWidget(QtGui.QWidget):
         self.layout.addWidget(self.label)
         self.layout.addStretch(1) 
         self.layout.addWidget(self.button)
-        self.setLayout(self.layout)
+
         
     def setEnabled(self, status):
         if status:

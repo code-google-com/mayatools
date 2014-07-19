@@ -4,7 +4,8 @@ import maya.mel as mel
 
 
 description = 'FCO on scene.'
-name = 'FCO'
+tooltip = ''
+
 fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 
 def execute():

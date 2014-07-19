@@ -1,11 +1,20 @@
 description = 'Correct all node name.'
-tooltip = 'Correct node name:\n\t Correct shape node.\n\t Correct shadingGroup node.\n\t Correct texture name.'
+tooltip = 'Correct node name:\n\t Correct shape node.\n\t Correct shadingGroup node.\n\t Correct texture name.\n\t Fix imported_ nodes and pasted_ nodes'
 
 import maya.cmds as cmds
 import pymel.core as py
 
 
 def execute():
+    print '--------------- FIX IMPORTED_ AND PASTED_ PREFIX-------------------------'
+    fixNodes = cmds.ls('imported_','pasted_')
+    for node in fixNodes:
+        try:
+            newName = node.replace('imported_','')
+        except:
+            newName = node.replace('pasted_','')
+        cmds.rename(node, newName)
+        
     print '--------------- RENAME SHAPENODE-------------------------'
     meshes = cmds.ls(type= 'mesh')
     for mesh in meshes:

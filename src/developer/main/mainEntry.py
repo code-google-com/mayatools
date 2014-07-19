@@ -74,11 +74,28 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
             pkgName = packages[index].getAttribute('name')   
             modules = packages[index].getElementsByTagName('module') # get package name --> assign this to a QtMainWidget inherited from DockWidget 
             for mod in modules:
-                submods = list()
-                for widget in mod.getElementsByTagName('submodule'): # get all widgets in package
-                    submods.append(widget.getAttribute('name'))
-                instMod = cf.loadNestedModule('developer.main.' + mod.getAttribute('name') + '.main')
-                dockWidget = instMod.subWidget(submods)
-                scrollWidget.loadWidgetCustomize(dockWidget)
+                
+                # loading cleaner tab
+                if mod.getAttribute('name') == 'cleanertools':
+                    itemChecks = list()
+                    for sub in mod.getElementsByTagName('submodule'):
+                        tmp = list()
+                        tmp.append(sub.getAttribute('name'))
+                        itemTmp = list()
+                        for item in sub.getElementsByTagName('item'):
+                            itemTmp.append(item.getAttribute('name'))
+                        tmp.append(itemTmp)
+                        itemChecks.append(tmp)
+                    instMod = cf.loadNestedModule('developer.main.cleanertools.main')
+                    dockWidget = instMod.subWidget(itemChecks)
+                    scrollWidget.loadWidgetCustomize(dockWidget)
+                #------------------
+                else:
+                    submods = list()
+                    for widget in mod.getElementsByTagName('submodule'): # get all widgets in package
+                        submods.append(widget.getAttribute('name'))
+                    instMod = cf.loadNestedModule('developer.main.' + mod.getAttribute('name') + '.main')
+                    dockWidget = instMod.subWidget(submods)
+                    scrollWidget.loadWidgetCustomize(dockWidget)
             scrollWidget.addSpacer()
             self.tabWidget.insertTab(index, scrollWidget, pkgName)

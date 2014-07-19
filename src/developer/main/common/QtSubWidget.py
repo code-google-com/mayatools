@@ -34,7 +34,6 @@ class QtSubWidget(DockWidget):
             if is_pkg and pkg_name == 'widget':
                 pkg = pkg_loader.find_module(pkg_name).load_module(pkg_name)
                 for mod_loader, mod_name, is_mod in pkgutil.iter_modules(pkg.__path__):
-                    print pkg.__path__
                     if len(modList) == 0:
                         if not is_mod and mod_name != '__init__':
                             mod = mod_loader.find_module(mod_name).load_module(mod_name)

@@ -1,6 +1,7 @@
 from cStringIO import StringIO
 import sys, os, shutil, re, imp
 from xml.dom.minidom import *
+import importlib
 
 import maya.OpenMayaUI as omUI
 import maya.cmds as cmds
@@ -12,12 +13,9 @@ from PyQt4 import QtCore, QtGui, uic
 import sip
 
 def loadNestedModule(name):
-    mod = __import__(name)
-    
-    components = name.split('.')
-    for comp in components[1:]:
-        mod = getattr(mod, comp)
-    return mod 
+    if name in sys.modules.keys():
+        sys.modules.pop(name)
+    return importlib.import_module(name)
 
 def getMayaVersion():
     return versions.current()

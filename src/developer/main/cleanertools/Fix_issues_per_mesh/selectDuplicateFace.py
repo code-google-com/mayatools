@@ -1,5 +1,5 @@
 description = 'Select duplicated faces.'
-name = 'CleanupDuplicateFace'
+tooltip = ''
 
 import os, inspect
 

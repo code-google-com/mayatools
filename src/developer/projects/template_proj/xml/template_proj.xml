@@ -51,20 +51,18 @@
 			</tab>			
 			<tab name="ANIMATE TOOLS"/>			
 			<tab name="CLEAN UP TOOLS">
-				<module name = "Cleaning_Mesh_Tools">
-				
-				</module>
-				<module name = "Cleaning_Scene_Tools">
-				
-				</module>
-				<module name = "Cleaning_Shaders_and_Textures">
-				
-				</module>
-				<module name = "Fix_issues_on_mesh">
-				
-				</module>
-				<module name = "Technical_Setup ">
-				
+				<module name = 'cleanertools'>
+					<submodule name = "Cleaning_Scene_Tools">
+						<item name = "CleanKeyFrame"/>
+						<item name = "CleanUpDeadShapes"/>
+						<item name = "CleanUpInstanceNodes"/>
+						<item name = "CleanUpScene"/>
+						<item name = "CorrectNodeName"/>			
+					</submodule>				
+					<submodule name = "Cleaning_Mesh_Tools"/>
+					<submodule name = "Cleaning_Shaders_and_Textures"/>
+					<submodule name = "Fix_issues_per_mesh"/>
+					<submodule name = "Technical_Setup"/>
 				</module>
 			</tab>	
 			<tab name="THIRD PARTY TOOLS" />

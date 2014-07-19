@@ -189,10 +189,6 @@ class DockWidgetTitleBar(QWidget):
         q.setFloating(not q.isFloating())
 
 
-    def toggleFloating(self):
-        q = self.parentWidget()
-        q.setFloating(not q.isFloating())
-
 
     def toggleCollapsed(self):
         q = self.parentWidget()
