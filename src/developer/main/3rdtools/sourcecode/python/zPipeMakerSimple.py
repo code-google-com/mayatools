@@ -1632,6 +1632,4 @@ class zPipeMaker(object):
 
 def gui(*arg):
     zPipeMaker()
-    
-def main():
-    gui()
+

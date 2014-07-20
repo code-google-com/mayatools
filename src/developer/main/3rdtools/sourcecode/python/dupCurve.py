@@ -100,10 +100,6 @@ if( cmds.window("dupCurve", ex=True)):
 RBSpecialModes="None"
 Distance=4
 
-def main():
-    gui()
-
-
 #_____________________________MAIN GUI_____________________________________#
 
 def gui(*arg):
