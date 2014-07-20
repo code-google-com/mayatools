@@ -65,7 +65,10 @@
 					<submodule name = "Technical_Setup"/>
 				</module>
 			</tab>	
-			<tab name="THIRD PARTY TOOLS" />
+			<tab name="THIRD PARTY TOOLS">
+				<module name = '3rdtools'>				
+				</module>			
+			</tab>	
 		</Module>
 	</ProjectData>
 </Project>
