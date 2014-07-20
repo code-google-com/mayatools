@@ -20,6 +20,12 @@ def loadNestedModule(name):
 def getMayaVersion():
     return versions.current()
 
+def getPath(path, remIdx):
+    out = path
+    for i in range(remIdx):
+        out = os.path.split(out)[0]
+    return out 
+
 def wrapinstance(ptr, base=None):
     if ptr is None:
         return None
