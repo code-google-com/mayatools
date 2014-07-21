@@ -66,7 +66,9 @@
 				</module>
 			</tab>	
 			<tab name="THIRD PARTY TOOLS">
-				<module name = '3rdtools'>				
+				<module name = 'thirdtools'>
+					<submodule name = "dDoMaterialManager"/>
+					<submodule name = "zPipeMakerSimple"/>		
 				</module>			
 			</tab>	
 		</Module>
