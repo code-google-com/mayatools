@@ -75,6 +75,16 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
             modules = packages[index].getElementsByTagName('module') # get package name --> assign this to a QtMainWidget inherited from DockWidget 
             for mod in modules:
                 
+                # loading 3rd tools
+                if mod.getAttribute('name') == 'thirdtools':
+                    lstTools = list()
+                    thirdtools = mod.getElementsByTagName('submodule')
+                    for submod in thirdtools:
+                        lstTools.append(submod.getAttribute('name'))
+                    instMod = cf.loadNestedModule('developer.main.thirdtools.main')
+                    dockWidget = instMod.subWidget(lstTools)
+                    scrollWidget.loadWidgetCustomize(dockWidget)
+                    
                 # loading cleaner tab
                 if mod.getAttribute('name') == 'cleanertools':
                     itemChecks = list()
@@ -89,6 +99,7 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
                     instMod = cf.loadNestedModule('developer.main.cleanertools.main')
                     dockWidget = instMod.subWidget(itemChecks)
                     scrollWidget.loadWidgetCustomize(dockWidget)
+                    
                 #------------------
                 else:
                     submods = list()
