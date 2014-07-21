@@ -1,3 +1,4 @@
+from PyQt4 import QtCore
 import os, sys, imp
 import maya.cmds as cmds
 import maya.mel as mel
@@ -11,15 +12,16 @@ def loadProject(projName):
     if os.environ.get('PROJECT_DIR') + '\\main\\' + projName not in sys.path:
         sys.path.append(os.environ.get('PROJECT_DIR') + '\\main\\')
     file, pathname, description = imp.find_module('startup')
-    #try:
-    mod = imp.load_module('startup', file, pathname, description)
-    mod.loadProject(projName)    
-    #except:
-    #    print 'cannot load project'
-    #finally:
-    #    if file: file.close() 
+    try:
+        mod = imp.load_module('startup', file, pathname, description)
+        mod.loadProject(projName)    
+    except:
+        print 'cannot load project'
+    finally:
+        if file: file.close() 
 
 def createMenu():
+    print 'A new project has been added to system ...............................................\n\n\n'
     projects = getNumProjects()
     mainWindow = mel.eval('global string $gMainWindow; $temp = $gMainWindow')
     if cmds.menu('Foxforest', q= True, exists = True):
@@ -35,4 +37,11 @@ print '--------------START TOOLS----------------'
 print '-----------------------------------------'
 print '--------------LOAD MENU------------------'
 
-createMenu()
+def main():
+    createMenu()
+    # create QFileWatcher to detect whether directories projects
+    fileWatcher = QtCore.QFileSystemWatcher([os.environ.get('PROJECT_DIR') + '\\projects\\'])
+    fileWatcher.directoryChanged.connect(createMenu)
+
+main()
+    
