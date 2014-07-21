@@ -1627,11 +1627,6 @@ class zPipeMaker(object):
             else:
                 cmds.select(cl=True)
 
-
-            
-
 def gui(*arg):
     zPipeMaker()
-    
-def main():
-    gui()
+

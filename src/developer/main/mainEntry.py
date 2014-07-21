@@ -49,7 +49,6 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         self.actionAsset.triggered.connect(self.openAssetBrowser)
         self.actionNew_Project.triggered.connect(self.openProjectCreator)
 
-
     ## show asset content form
     
     def openAssetBrowser(self):
@@ -57,8 +56,7 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
             py.deleteUI('assetContentForm')
         form = asc.assetContentForm()
         form.show()
-        
-        
+                
     ## show project creator form  
       
     def openProjectCreator(self):
@@ -76,7 +74,9 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
             for mod in modules:
                 
                 # loading 3rd tools
+                
                 if mod.getAttribute('name') == 'thirdtools':
+                    print 'loading:---------------------- Third Tools---------------------------------'
                     lstTools = list()
                     thirdtools = mod.getElementsByTagName('submodule')
                     for submod in thirdtools:
@@ -86,7 +86,9 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
                     scrollWidget.loadWidgetCustomize(dockWidget)
                     
                 # loading cleaner tab
-                if mod.getAttribute('name') == 'cleanertools':
+                
+                elif mod.getAttribute('name') == 'cleanertools':
+                    print 'loading:---------------------- Cleaner Tools---------------------------------'
                     itemChecks = list()
                     for sub in mod.getElementsByTagName('submodule'):
                         tmp = list()
@@ -100,13 +102,17 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
                     dockWidget = instMod.subWidget(itemChecks)
                     scrollWidget.loadWidgetCustomize(dockWidget)
                     
-                #------------------
+                # loading functional tabs
+                
                 else:
+                    print 'loading:---------------------- Functional Tools---------------------------------'
                     submods = list()
                     for widget in mod.getElementsByTagName('submodule'): # get all widgets in package
                         submods.append(widget.getAttribute('name'))
                     instMod = cf.loadNestedModule('developer.main.' + mod.getAttribute('name') + '.main')
                     dockWidget = instMod.subWidget(submods)
                     scrollWidget.loadWidgetCustomize(dockWidget)
+                    
+                #-------------------------------
             scrollWidget.addSpacer()
             self.tabWidget.insertTab(index, scrollWidget, pkgName)
