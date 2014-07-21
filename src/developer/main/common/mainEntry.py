@@ -1,4 +1,5 @@
 import pymel.core as py
+import getpass
 from xml.dom.minidom import *
 from PyQt4 import QtGui, QtCore
 
@@ -34,6 +35,16 @@ except:
     from developer.main.source.ui import ProjectForm
     
 from developer.main.common.QtMainWidget import *
+
+try:
+    reload(serverPub)
+except:
+    from developer.main.common import serverPub
+    
+try:
+    reload(clientSub)
+except:
+    from developer.main.common import clientSub
     
 #-- generate form_class and base_class to load Ui
 
@@ -46,8 +57,19 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         self.setWindowTitle(self.proj.ProjectName)
         self.loadUI()
         # -- set ui controller
+        
         self.actionAsset.triggered.connect(self.openAssetBrowser)
         self.actionNew_Project.triggered.connect(self.openProjectCreator)
+        
+        # -- create socket linked project name:
+        # ------ only Technician can publish and edit code
+        
+        #if getpass.getuser() in self.proj.Technician(): 
+        #    self.soc = serverPub.socketPublishProjectInfo(os.environ.get('PROJECT_DIR') + '\\projects\\' + self.proj.ProjectName)
+        # ------ artist can only subscribe and edit code
+        
+        #elif getpass.getuser() == 'trungtran':
+        #    self.soc = clientSub.socketSubscribeProjectInfo()
 
     ## show asset content form
     
@@ -116,3 +138,5 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
                 #-------------------------------
             scrollWidget.addSpacer()
             self.tabWidget.insertTab(index, scrollWidget, pkgName)
+    
+   

@@ -7,23 +7,27 @@ Created on Jul 6, 2014
 import zmq
 import sys
 import time
+from PyQt4 import QtCore
 
-def isUpdate():
-    return True
+server = 'tcp://127.0.0.1'
+port = '5000'
 
-def pubServer():
-    context = zmq.Context()
-    socket = context.socket(zmq.PUB)
-    server = 'tcp://127.0.0.1:5000'
-    socket.bind(server)
-    while True:
-        if isUpdate():
-            print ('Project update: Sony, IronMonkey ...')
-            socket.send('Project Sony need to updated')
-            socket.send('Project IronMonkey need to updated')
-            time.sleep(1)
-            
-if __name__ == '__main__':
-    pubServer()
+class socketPublishProjectInfo():
+    def __init__(self, projectDir):
+        print 'inititalize a socket to publish message to client.'
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PUB)
+        self.socket.bind(server + ':' + port)
+        self.fileWatcher = QtCore.QFileSystemWatcher()
+        self.fileWatcher.addPath(projectDir)
+        self.fileWatcher.directoryChanged.conect(sendMessage)
+          
+    def addPath(self, path):
+        print path + ' has been added to fileWatcher object.'
+        self.fileWatcher.addPath(path)
+    
+    def sendMessage(self, message):
+        print 'server has been sent a message ' + message
+        self.socket.send(message)
 
 
