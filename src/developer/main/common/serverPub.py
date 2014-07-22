@@ -34,5 +34,5 @@ class socketPubProjectInfo():
 
 if __name__  == '__main__':
     app = QtGui.QApplication(sys.argv)
-    socket = socketPubProjectInfo('D:/ge_Tools')
+    socket = socketPubProjectInfo('Z:/ge_Tools')
     sys.exit(app.exec_())
