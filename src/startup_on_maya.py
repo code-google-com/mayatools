@@ -4,22 +4,15 @@ import maya.cmds as cmds
 import maya.mel as mel
 
 def getNumProjects():
-    projDir = os.environ.get('PROJECT_DIR') + '\\projects\\'
+    projDir = os.environ.get('PROJECT_DIR') + 'projects\\'
     globalProjects = [p for p in os.listdir(projDir) if 'py' not in p]
     return globalProjects
 
 def loadProject(projName):
-    if os.environ.get('PROJECT_DIR') + '\\main\\' + projName not in sys.path:
-        sys.path.append(os.environ.get('PROJECT_DIR'))
-        sys.path.append(os.environ.get('PROJECT_DIR') + '\\main\\')
+    sys.path.append(os.environ.get('PROJECT_DIR') + 'main\\')
     file, pathname, description = imp.find_module('startup')
-    #try:
     mod = imp.load_module('startup', file, pathname, description)
     mod.loadProject(projName)    
-    #except:
-    #    print 'cannot load project'
-    #finally:
-    #    if file: file.close() 
 
 def createMenu():
     print 'A new project has been added to system ...............................................\n\n\n'
