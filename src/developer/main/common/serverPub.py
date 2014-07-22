@@ -20,7 +20,7 @@ class socketPublishProjectInfo():
         self.socket.bind(server + ':' + port)
         self.fileWatcher = QtCore.QFileSystemWatcher()
         self.fileWatcher.addPath(projectDir)
-        self.fileWatcher.directoryChanged.conect(sendMessage)
+        self.fileWatcher.directoryChanged.connect(self.sendMessage)
           
     def addPath(self, path):
         print path + ' has been added to fileWatcher object.'
@@ -28,6 +28,7 @@ class socketPublishProjectInfo():
     
     def sendMessage(self, message):
         print 'server has been sent a message ' + message
-        self.socket.send(message)
+        #self.socket.send(message)
 
-
+if __name__  == '__main__':
+    socket = socketPublishProjectInfo('Z:/ge_Tools')
