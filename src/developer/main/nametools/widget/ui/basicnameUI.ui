@@ -252,6 +252,13 @@ font:  bold 11px
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="btnUpper1stLetter">
+           <property name="text">
+            <string>Upper1stLetter</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="btnLowerCase">
            <property name="text">
             <string>LowerCase</string>

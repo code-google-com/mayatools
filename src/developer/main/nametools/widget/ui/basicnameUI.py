@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\nametools\widget\ui\basicnameUI.ui'
+# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\nametools\widget\ui\basicnameUI.ui'
 #
-# Created: Thu Jul 17 17:30:11 2014
+# Created: Wed Jul 23 23:03:25 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -177,6 +177,9 @@ class Ui_MainWindow(object):
         self.btnUpperCase = QtGui.QPushButton(self.groupBox)
         self.btnUpperCase.setObjectName(_fromUtf8("btnUpperCase"))
         self.horizontalLayout_2.addWidget(self.btnUpperCase)
+        self.btnUpper1stLetter = QtGui.QPushButton(self.groupBox)
+        self.btnUpper1stLetter.setObjectName(_fromUtf8("btnUpper1stLetter"))
+        self.horizontalLayout_2.addWidget(self.btnUpper1stLetter)
         self.btnLowerCase = QtGui.QPushButton(self.groupBox)
         self.btnLowerCase.setObjectName(_fromUtf8("btnLowerCase"))
         self.horizontalLayout_2.addWidget(self.btnLowerCase)
@@ -197,5 +200,6 @@ class Ui_MainWindow(object):
         self.label_4.setText(_translate("MainWindow", "Replace By:", None))
         self.chkHierrachy.setToolTip(_translate("MainWindow", "apply to whole Hierrachy", None))
         self.btnUpperCase.setText(_translate("MainWindow", "UpperCase", None))
+        self.btnUpper1stLetter.setText(_translate("MainWindow", "Upper1stLetter", None))
         self.btnLowerCase.setText(_translate("MainWindow", "LowerCase", None))
 
