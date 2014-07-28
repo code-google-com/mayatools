@@ -5,7 +5,8 @@ from functools import wraps
 def getSelectedNodeName():
     selNode = py.ls(sl = True)[0]
     return selNode
-                
+ 
+           
 def renaming(newStr):
     '''
         Rename the first selected node to new name.
@@ -93,6 +94,7 @@ def selectNode(param):
     message = 'Co ' + str(len(selObjects)) + ' object duoc chon.'
     QtGui.QMessageBox.Information(None,'Information', message, QtGui.QMessageBox.Ok, QtGui.QMessageBox.Cancel)
     
+
 def execute(afunc):
     @wraps
     def wrapper(*args, **kwargs):
