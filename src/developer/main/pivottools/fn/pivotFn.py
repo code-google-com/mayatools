@@ -1,13 +1,24 @@
-import maya.cmds as cmds
+# -- import maya packages
 
-import os, sys, inspect, decimal
+import maya.cmds as cmds
 import maya.mel as mel
 import pymel.core as py
 import pymel.core.datatypes as dt
 
-def setPivotToPos(pos):
-    pass
+# -- import python standard packages
 
+import os, sys, inspect, decimal
+
+#-- ending import prerequisites
+
+def zeroPivotOffset(node):
+    currWorldPos = py.xform(node, q = True, scalePivot = True, ws = True)
+    node.setAttr('translate', dt.Vector())
+    currWorldPiv = py.xform(node, q = True, scalePivot = True, ws = True)
+    node.setAttr('translate', -dt.Vector(currWorldPiv))
+    mel.eval('makeIdentity -apply true -t 1 -r 1 -s 1 -n 0 -pn 1;')
+    node.setAttr('translate', dt.Vector(currWorldPos))
+    
 def setPivotToMidSelection():
     
     '''

@@ -23,10 +23,12 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
         self.setupUi(self)
         self.setObjectName('basicnameWidget')
         
-        # -- set ui controls:
+        # -- create scriptJob to store name of selected mesh
         
-        self.scriptjobNaming = cmds.scriptJob(e = ['SelectionChanged',self.updateNodeName], protected = True)  
+        self.scriptjobNaming = cmds.scriptJob(e = ['SelectionChanged',self.updateNodeName], protected = True) 
          
+        # -- set ui controls:
+     
         self.edtNameStr.returnPressed.connect(functools.partial(self.excuteChangeName, 0))
         self.edtNamePrefix.returnPressed.connect(functools.partial(self.excuteChangeName, 1))
         self.edtNameSuffix.returnPressed.connect(functools.partial(self.excuteChangeName, 2))
@@ -56,7 +58,6 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
         
     def updateNodeName(self):
         selObj = cmds.ls(sl= True, fl = True)
-        print selObj
         if len(selObj) != 0:
             self.edtNameStr.setText(str(selObj[0]))
         if len(selObj) == 0:
