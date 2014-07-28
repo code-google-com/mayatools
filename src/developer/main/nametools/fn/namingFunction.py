@@ -1,5 +1,6 @@
 import pymel.core as py
 from PyQt4 import QtGui, QtCore
+from functools import wraps
 
 def getSelectedNodeName():
     selNode = py.ls(sl = True)[0]
@@ -55,7 +56,7 @@ def replacedBy(searchStr, newStr, isHierarchy):
                 newName = node.split('|')[-1].replace(searchStr, newStr)
                 py.rename(node, newname)
     
-def upperCase():
+def upperCase(*arg):
     '''
         Uppercase for all of selected nodes's name 
     '''
@@ -63,7 +64,7 @@ def upperCase():
     for obj in selObjs:
         py.rename(obj, obj.upper())
             
-def lowerCase():
+def lowerCase(*arg):
     '''
         Lowercase for all of selected nodes's name 
     '''
@@ -71,7 +72,7 @@ def lowerCase():
     for obj in selObjs:
         py.rename(obj, obj.lower())
         
-def upperCaseOnFirstLetter():
+def upperCaseOnFirstLetter(*arg):
     '''
         Uppercase for first letter of all selected nodes's name 
     '''
@@ -92,23 +93,12 @@ def selectNode(param):
     message = 'Co ' + str(len(selObjects)) + ' object duoc chon.'
     QtGui.QMessageBox.Information(None,'Information', message, QtGui.QMessageBox.Ok, QtGui.QMessageBox.Cancel)
     
-def excuteChangeName(*arg):
-    print arg[0]
-    if arg[-1] == 0:
-        renaming(arg[0])
-    elif arg[-1] == 1:
-        addPrefix(arg[0])
-    elif arg[-1] == 2:
-        addSuffix(arg[0])
-    elif arg[-1] == 3:
-        replacedBy(arg[0], arg[1], arg[2])
-    elif arg[-1] == 4:
-        selectNode(arg[0])
-    elif arg[-1] == 5:
-        upperCase()
-    elif arg[-1] == 6:
-        lowerCase()
-    elif arg[-1] == 7:
-        upperCaseOnFirstLetter()
+def execute(afunc):
+    @wraps
+    def wrapper(*args, **kwargs):
+        return afunc(*args, **kwargs)
+    return wrapper
+    
+
         
         
