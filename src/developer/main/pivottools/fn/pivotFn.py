@@ -27,7 +27,6 @@ def zeroPivotOffset(node):
     mel.eval('makeIdentity -apply true -t 1 -r 1 -s 1 -n 0 -pn 1;')
     node.setAttr('translate', dt.Vector(currWorldPos))
     
-    
 def setPivotToMidSelection():
     '''
         Set pivot to center of set selected vertexes. Auto convert to vertexes if edges or faces are chosen.
