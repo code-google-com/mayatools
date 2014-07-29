@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\pivottools\widget\ui\pivotUI.ui'
 #
-# Created: Wed Jul 23 23:03:25 2014
+# Created: Tue Jul 29 10:02:01 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -256,9 +256,9 @@ class Ui_MainWindow(object):
         self.pushButton_4 = QtGui.QPushButton(self.groupBox)
         self.pushButton_4.setObjectName(_fromUtf8("pushButton_4"))
         self.horizontalLayout_3.addWidget(self.pushButton_4)
-        self.pushButton_3 = QtGui.QPushButton(self.groupBox)
-        self.pushButton_3.setObjectName(_fromUtf8("pushButton_3"))
-        self.horizontalLayout_3.addWidget(self.pushButton_3)
+        self.btnSetPivotAlongEdge = QtGui.QPushButton(self.groupBox)
+        self.btnSetPivotAlongEdge.setObjectName(_fromUtf8("btnSetPivotAlongEdge"))
+        self.horizontalLayout_3.addWidget(self.btnSetPivotAlongEdge)
         self.verticalLayout.addLayout(self.horizontalLayout_3)
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
@@ -290,7 +290,7 @@ class Ui_MainWindow(object):
         self.btnPivottoanotherObj.setText(_translate("MainWindow", "2_Object", None))
         self.rdbXmid.setShortcut(_translate("MainWindow", "4, 8", None))
         self.pushButton_4.setText(_translate("MainWindow", "On faces", None))
-        self.pushButton_3.setText(_translate("MainWindow", "Along Edges", None))
+        self.btnSetPivotAlongEdge.setText(_translate("MainWindow", "Along Edges", None))
         self.pushButton_2.setText(_translate("MainWindow", "Freeze Translation", None))
         self.btnZeroOffset.setText(_translate("MainWindow", "Zero_Offset", None))
         self.pushButton.setText(_translate("MainWindow", "Rotate Pivot", None))

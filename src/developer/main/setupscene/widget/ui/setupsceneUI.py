@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\setupscene\widget\ui\setupsceneUI.ui'
 #
-# Created: Wed Jul 23 23:03:25 2014
+# Created: Tue Jul 29 10:02:02 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!

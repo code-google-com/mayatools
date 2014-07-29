@@ -4,14 +4,22 @@ import maya.cmds as cmds
 import maya.mel as mel
 import pymel.core as py
 import pymel.core.datatypes as dt
+from pymel.core.general import PyNode
 
 # -- import python standard packages
 
 import os, sys, inspect, decimal
 
+# -- import 3rd packages
+
+from PyQt4 import QtGui, QtCore
+
 #-- ending import prerequisites
 
 def zeroPivotOffset(node):
+    '''
+        Get world transformation of node, apply this button whenever export to game engine.
+    '''
     currWorldPos = py.xform(node, q = True, scalePivot = True, ws = True)
     node.setAttr('translate', dt.Vector())
     currWorldPiv = py.xform(node, q = True, scalePivot = True, ws = True)
@@ -19,12 +27,11 @@ def zeroPivotOffset(node):
     mel.eval('makeIdentity -apply true -t 1 -r 1 -s 1 -n 0 -pn 1;')
     node.setAttr('translate', dt.Vector(currWorldPos))
     
+    
 def setPivotToMidSelection():
-    
     '''
-    Set pivot to center of set selected vertexes. Auto convert to vertexes if edge or face was chosen.
+        Set pivot to center of set selected vertexes. Auto convert to vertexes if edges or faces are chosen.
     '''
-    
     vertexes = cmds.polyListComponentConversion(tv = True)
     cmds.select(vertexes)
     vertex = cmds.ls(sl=True,fl=True) 
@@ -43,7 +50,7 @@ def setPivotToMidSelection():
         
 def setPivotToCenter():
     '''
-    Set pivot to Center of selected mesh
+        Set pivot to Center of selected mesh
     '''
     selObj = cmds.ls(sl=True)
     for obj in selObj:
@@ -52,7 +59,7 @@ def setPivotToCenter():
         
 def setPivotToOrigin():
     '''
-    Set pivot to origin
+        Set pivot to origin
     '''
     selObj = cmds.ls(sl=True)
     for obj in selObj:
@@ -63,36 +70,48 @@ def setPivotToObject():
     target = cmds.xform(selObj[1],q=True,sp=True,ws=True)
     cmds.xform(selObj[0],piv=target, ws=True)
     
-def setPivotOnEdge():
-    pass
+def setPivotOnLine(isTranslate = False, axis = 'y', node = None):
+    '''
+         set Pivot Along Edge
+    '''
+    cmds.select(cmds.polyListComponentConversion(tv = True))
+    vertexes = py.ls(sl = True, fl = True)
+    if len(vertexes) != 2:
+        QtGui.QMessageBox.warning(None,'Error','Chi duoc chon 1 canh hoac 2 diem',QtGui.QMessageBox.Ok)
+        return 
+    
+    #-- Apply translation to midle position.
+    
+    if isTranslate:
+        setPivotToMidSelection()
+    
+    # get direction vector:
 
+    pos0 = vertexes[0].getPosition(space = 'world')
+    pos1 = vertexes[1].getPosition(space = 'world') 
+    vecDir = pos1 - pos0 # -- vector direction
+    vecDir = vecDir.normal()
+    print 'vector direction: '  + str(vecDir)
+    
+    # -- get mesh from select vertex
+    
+    nodeTransform = ''
+    if node == None:
+        nodeShape = PyNode(vertexes[0].split('.')[0])
+        nodeTransform = nodeShape.listRelatives(p = True)[0]
+    else:
+        nodeTransform = node
+     # -- get matrix transformation of mesh            
+    
+    m = nodeTransform.getMatrix()
+    
+    
 def setPivotOnFace():
     pass
     
 def setPivotRotation():
     pass
 
-def zeroPivotOffset():
-    pass
-
-def clearAll(self):
-        try:
-            selObj = cmds.ls(sl=True,transforms = True)[0]
-            bb = cmds.xform(q=True,bb = True)
-        
-            width = bb[3] - bb[0]
-            self.X.setText(str(round(width,2)))
-        
-            length = bb[4] - bb[1]
-            self.Y.setText(str(round(length,2)))
-        
-            height = bb[5] - bb[2]
-            self.Z.setText(str(round(height,2)))
-        except IndexError:
-            print 'No Problem'
-        except RuntimeError:
-            pass
-        
 def pivots_to_pos(Xpos, Ypos, Zpos):
         cmds.xform(cp=True)
         #selObjs = cmds.ls(sl=True)
@@ -129,10 +148,8 @@ def pivots_to_pos(Xpos, Ypos, Zpos):
         vector[2] = pivot[2] + vectorX[2] + vectorY[2] + vectorZ[2]
         
         cmds.xform(obj, piv = vector,ws=True, a=True)
-    
-
         
-def alignPivottoFace(self, mesh, face):
+def alignPivottoFace(mesh, face):
         if len(face) > 0:
             return False
         elif len(face) == 0:
@@ -151,12 +168,7 @@ def alignPivottoFace(self, mesh, face):
             
         cmds.xfom(mesh, roo = 'yzx', rp = [x0, y0,z0], ws = True)
 
-            
-
-                
-
-        
-def pivotOnAxis(self, axis):
+def pivotOnAxis(axis):
         selObj = cmds.ls(sl=True)[0]
         oldPivot = cmds.xform(q=True,sp=True,ws=True)
         if axis == 'x':
@@ -166,32 +178,7 @@ def pivotOnAxis(self, axis):
         if axis == 'z':
             cmds.xform(piv=[oldPivot[0],oldPivot[1],0],ws=True)
     
-def checkStatus(self):
-        if self.chkStatus.isChecked():
-            self.edtY.setText(self.edtX.text())
-            self.edtZ.setText(self.edtX.text())
-            self.lbY.setEnabled(False)
-            self.lbZ.setEnabled(False)
-            self.edtY.setEnabled(False)
-            self.edtZ.setEnabled(False)
-        else:
-            self.lbY.setEnabled(True)
-            self.lbZ.setEnabled(True)
-            self.edtY.setEnabled(True)
-            self.edtZ.setEnabled(True)
-            
-    def updateLineEdit(self):
-        if self.chkStatus.isChecked():
-            self.edtY.setText(self.edtX.text())
-            self.edtZ.setText(self.edtX.text())
-            
-    def scaleMeshes(self):
+def scaleMeshes(self):
         mesh = py.ls(sl = True)[0]
         currentScale = mesh.scaleX.get()
-        
-    
-        
-def main(xmlFile):
-    form = Pivots(xmlFile)
-    return form 
-    
+
