@@ -35,12 +35,15 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		
 		self.btnSetPivotAlongEdge.clicked.connect(partial(self.execute, 0))
 		self.btnZeroOffset.clicked.connect(partial(self.execute, 1))
+		self.btnPivottoOrigin.clicked.connect(partial(self.execute, 2))
 		
 	def execute(self, param):
 		if param == 0:
 			pFn.setPivotOnLine(isTranslate = False, axis  = 'y', node = None)
 		if param == 1:
 			pFn.zeroPivotOffset(py.ls(sl = True)[0])
+		if param == 2:
+			pFn.setPivotToOrigin()
 		
 		
 

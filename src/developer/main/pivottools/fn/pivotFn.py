@@ -86,10 +86,10 @@ def setPivotOnLine(isTranslate = False, axis = 'y', node = None):
     
     # get direction vector:
 
-    pos0 = vertexes[0].getPosition(space = 'world')
-    pos1 = vertexes[1].getPosition(space = 'world') 
+    pos0 = vertexes[0].getPosition(space = 'world') # -- get point's position in world coordinates
+    pos1 = vertexes[1].getPosition(space = 'world') # -- get point's position in world coordinates
     vecDir = pos1 - pos0 # -- vector direction
-    vecDir = vecDir.normal()
+    vecDir = vecDir.normal() # -- normalize vector dir
     print 'vector direction: '  + str(vecDir)
     
     # -- get mesh from select vertex
