@@ -24,7 +24,7 @@ import maya.cmds as cmds
 import maya.mel as mel
 import pymel.core as py 
 
-# -- ending import packages
+# -- end import packages
 
 class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 	def __init__(self):
@@ -33,17 +33,39 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		
 		# -- set up ui controls
 		
-		self.btnSetPivotAlongEdge.clicked.connect(partial(self.execute, 0))
-		self.btnZeroOffset.clicked.connect(partial(self.execute, 1))
+		self.btnPivottoCenterElement.clicked.connect(partial(self.execute, 0))
+		self.btnCenterPivot.clicked.connect(partial(self.execute, 1))
 		self.btnPivottoOrigin.clicked.connect(partial(self.execute, 2))
+		self.btnPivottoanotherObj.clicked.connect(partial(self.execute, 3))
+		self.btnFreezeTransform.clicked.connect(partial(self.execute, 4))
+		self.btnZeroOffset.clicked.connect(partial(self.execute, 5))
+		self.btnRotatePivot.clicked.connect(partial(self.execute, 6))
+		self.btnPivotOnFace.clicked.connect(partial(self.execute, 7))
+		self.btnSetPivotAlongEdge.clicked.connect(partial(self.execute, 8))
 		
 	def execute(self, param):
 		if param == 0:
-			pFn.setPivotOnLine(isTranslate = False, axis  = 'y', node = None)
+			pFn.setPivotToMidSelection()
 		if param == 1:
-			pFn.zeroPivotOffset(py.ls(sl = True)[0])
+			pFn.setPivotToCenter()
 		if param == 2:
 			pFn.setPivotToOrigin()
+		if param == 3:
+			pFn.setPivotToObject()
+		if param == 4: # freeze transform except rotation
+			pFn.freezeTransform(isTranslate = False, axis  = 'y', node = None)
+		if param == 5:
+			pFn.zeroPivotOffset()
+		if param == 6:
+			pFn.rotatePivot()
+		if param == 7:
+			pFn.pivotOnFace()
+		if param == 8:
+			pFn.setPivotOnLine(isTranslate, axis, node)
+
+			
+			
+		
 		
 		
 
