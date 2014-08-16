@@ -3,6 +3,7 @@ tooltip = ''
 
 import maya.cmds as cmds
 import maya.mel as mel
+from PyQt4 import QtGui
 
 stdColorSet = set(['colorSet1','damageLookup_colorSet','damageVector_colorSet'])
 def execute():
@@ -18,6 +19,9 @@ def execute():
             errorMesh.append(mesh)  
             print mesh + ' khong dap ung duoc so luong colorSet can co, uvset hien tai: ' + str(colorSets) + '.\n'
     cmds.select(cl = True)
+    if len(errorMesh) == 0:
+        QtGui.QMessageBox.information(None,'Result','Khong co objec nao bi loi ColorSet.',QtGui.QMessageBox.Ok)                
+
     cmds.select(errorMesh)
     mel.eval('HideUnselectedObjects;')
     

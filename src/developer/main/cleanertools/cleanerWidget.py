@@ -6,7 +6,7 @@ except:
 
 class cleanerWidget(QtGui.QWidget):
     #checkedContent = QtCore.pyqtSignal('QString', name = 'tooggledStatus')
-    def __init__(self, modName):
+    def __init__(self, modName, *arg):
         super(QtGui.QWidget, self).__init__()
         mod = cf.loadNestedModule('developer.main.cleanertools.' + modName)
         self.createGUI('Execute', mod.description, mod.tooltip)

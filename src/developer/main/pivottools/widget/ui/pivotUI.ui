@@ -136,6 +136,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="btnRotatePivot">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 0, 0);</string>
+           </property>
            <property name="text">
             <string>Rotate Pivot</string>
            </property>
@@ -147,6 +150,9 @@
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <widget class="QPushButton" name="btnPivotOnFace">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 0, 0);</string>
+           </property>
            <property name="text">
             <string>On faces</string>
            </property>
@@ -154,6 +160,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="btnSetPivotAlongEdge">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 0, 0);</string>
+           </property>
            <property name="text">
             <string>Along Edges</string>
            </property>
@@ -191,6 +200,9 @@
            <property name="flat">
             <bool>true</bool>
            </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_2</string>
+           </attribute>
           </widget>
          </item>
          <item row="2" column="0">
@@ -252,6 +264,9 @@
            <property name="flat">
             <bool>true</bool>
            </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_3</string>
+           </attribute>
           </widget>
          </item>
          <item row="3" column="0">
@@ -313,6 +328,9 @@
            <property name="flat">
             <bool>true</bool>
            </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_3</string>
+           </attribute>
           </widget>
          </item>
          <item row="3" column="3">
@@ -336,6 +354,9 @@
            <property name="flat">
             <bool>true</bool>
            </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_2</string>
+           </attribute>
           </widget>
          </item>
          <item row="0" column="2">
@@ -362,6 +383,9 @@
            <property name="flat">
             <bool>true</bool>
            </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup</string>
+           </attribute>
           </widget>
          </item>
          <item row="0" column="3">
@@ -385,6 +409,9 @@
            <property name="flat">
             <bool>true</bool>
            </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup</string>
+           </attribute>
           </widget>
          </item>
          <item row="0" column="1">
@@ -408,6 +435,9 @@
            <property name="flat">
             <bool>true</bool>
            </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup</string>
+           </attribute>
           </widget>
          </item>
          <item row="0" column="0">
@@ -469,6 +499,9 @@
            <property name="flat">
             <bool>true</bool>
            </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_2</string>
+           </attribute>
           </widget>
          </item>
          <item row="2" column="1">
@@ -492,6 +525,9 @@
            <property name="flat">
             <bool>true</bool>
            </property>
+           <attribute name="buttonGroup">
+            <string notr="true">buttonGroup_3</string>
+           </attribute>
           </widget>
          </item>
         </layout>
@@ -504,4 +540,9 @@
  </widget>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="buttonGroup"/>
+  <buttongroup name="buttonGroup_2"/>
+  <buttongroup name="buttonGroup_3"/>
+ </buttongroups>
 </ui>

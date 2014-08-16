@@ -47,22 +47,18 @@ def setPivotToMidSelection():
     cmds.select(mainObj)
     cmds.xform(rp = pivPos, ws= True)
         
-def setPivotToCenter():
+def setPivotToCenter(node):
     '''
         Set pivot to Center of selected mesh
     '''
-    selObj = cmds.ls(sl=True)
-    for obj in selObj:
-        cmds.select(obj)
-        cmds.xform(cp=True)
+    py.select(node)
+    py.xform(cp=True)
         
-def setPivotToOrigin():
+def setPivotToOrigin(node):
     '''
         Set pivot to origin
     '''
-    selObj = cmds.ls(sl=True)
-    for obj in selObj:
-        cmds.move(0,0,0,obj+'.scalePivot',obj+'.rotatePivot',a=True)
+    py.move(0,0,0,node+'.scalePivot',node+'.rotatePivot',a=True)
         
 def setPivotToObject():
     selObj = cmds.ls(sl=True)
@@ -114,8 +110,8 @@ def setPivotRotation():
 def pivots_to_pos(Xpos, Ypos, Zpos):
         cmds.xform(cp=True)
         #selObjs = cmds.ls(sl=True)
-        bbox = cmds.xform(obj, q=True,bb=True)
-        pivot = cmds.xform(obj, q=True,sp=True,ws=True)
+        bbox = cmds.xform(q=True,bb=True)
+        pivot = cmds.xform(q=True,sp=True,ws=True)
         vector  = [0,0,0] 
         vectorX = [0,0,0]
         vectorY = [0,0,0]
@@ -146,7 +142,7 @@ def pivots_to_pos(Xpos, Ypos, Zpos):
         vector[1] = pivot[1] + vectorX[1] + vectorY[1] + vectorZ[1]
         vector[2] = pivot[2] + vectorX[2] + vectorY[2] + vectorZ[2]
         
-        cmds.xform(obj, piv = vector,ws=True, a=True)
+        cmds.xform(piv = vector,ws=True, a=True)
         
 def alignPivottoFace(mesh, face):
         if len(face) > 0:
@@ -180,4 +176,8 @@ def pivotOnAxis(axis):
 def scaleMeshes(self):
         mesh = py.ls(sl = True)[0]
         currentScale = mesh.scaleX.get()
+        
+def freezeTransform(node):
+    mel.eval('makeIdentity -apply true -t 1 -r 0 -s 1 -n 0 -pn 1;')
+    
 
