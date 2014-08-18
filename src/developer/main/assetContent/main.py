@@ -14,9 +14,9 @@ except:
 try:
     reload(AssetContent)
 except:
-    from developer.main.assetContent.ui import AssetContent
+    from developer.main.assetContent.widget.ui import AssetContentUI
 
-class assetContentForm(QtGui.QMainWindow, AssetContent.Ui_MainWindow):
+class assetContentForm(QtGui.QMainWindow, AssetContentUI.Ui_MainWindow):
     def __init__(self, parent = cf.getMayaWindow()):
         super(QtGui.QMainWindow, self).__init__(parent)
         self.setupUi(self)
