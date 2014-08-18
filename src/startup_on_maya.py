@@ -10,8 +10,8 @@ def getNumProjects():
 
 def loadProject(projName):
     sys.path.append(os.environ.get('PROJECT_DIR') + 'main\\')
-    file, pathname, description = imp.find_module('startup')
-    mod = imp.load_module('startup', file, pathname, description)
+    file, pathname, description = imp.find_module('loadMayaTools')
+    mod = imp.load_module('loadMayaTools', file, pathname, description)
     mod.loadProject(projName)    
 
 def createMenu():

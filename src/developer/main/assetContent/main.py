@@ -12,7 +12,7 @@ except:
     from developer.main.common import commonFunctions as cf
     
 try:
-    reload(AssetContent)
+    reload(AssetContentUI)
 except:
     from developer.main.assetContent.widget.ui import AssetContentUI
 

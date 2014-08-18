@@ -105,6 +105,7 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 			pFn.pivots_to_pos(Xpos, Ypos, Zpos)
 			
 		if param == 10:
+			pass
 
 			
 			
