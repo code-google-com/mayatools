@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="Project">
+    <file>white, without circle/heart.png</file>
     <file>white, without circle/add.png</file>
     <file>white, without circle/back.png</file>
     <file>white, without circle/camera.png</file>

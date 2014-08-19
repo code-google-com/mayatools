@@ -7,14 +7,17 @@
     <x>0</x>
     <y>0</y>
     <width>1387</width>
-    <height>805</height>
+    <height>811</height>
    </rect>
+  </property>
+  <property name="acceptDrops">
+   <bool>true</bool>
   </property>
   <property name="windowTitle">
    <string>Asset Content</string>
   </property>
-  <property name="styleSheet">
-   <string notr="true"/>
+  <property name="windowOpacity">
+   <double>0.000000000000000</double>
   </property>
   <property name="documentMode">
    <bool>true</bool>
