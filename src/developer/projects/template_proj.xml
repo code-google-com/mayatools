@@ -28,11 +28,13 @@
 		<Module>
 			<tab name="NAMING TOOLS">
 				<module name = "nametools">
-					<submodule name = "basicnameWidget"  parameter=""/>	
+					<submodule name = "basicnameWidget"/>
 				</module>
 			</tab>		
 			<tab name="POLY TOOLS">
-				<module name = "setupscene"/>
+				<module name = "setupscene">
+					<submodule name = "setupsceneWidget"/>
+				</module>
 				<module name = "mirrortools"/>
 				<module name = "modeltools"/>
 				<module name = "normaltools"/> 

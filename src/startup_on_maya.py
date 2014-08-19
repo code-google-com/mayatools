@@ -23,7 +23,7 @@ def createMenu():
     menu = cmds.menu('Foxforest', parent = mainWindow, tearOff = True)
     cmds.menuItem('Project', parent = menu, subMenu = True)
     for p in projects:
-        cmds.menuItem(l = p, c = 'startup_on_maya.loadProject(\'{proj}\')'.format(proj = p))
+        cmds.menuItem(l = p.split('.')[0], c = 'startup_on_maya.loadProject(\'{proj}\')'.format(proj = p.split('.')[0]))
     cmds.setParent('..', menu = True)
 
 print '-----------------------------------------'
