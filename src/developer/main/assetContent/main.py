@@ -22,4 +22,9 @@ class assetContentForm(QtGui.QMainWindow, AssetContentUI.Ui_MainWindow):
         self.setupUi(self)
         self.setObjectName('assetContentForm')
         
+    def resizeEvent(self, event):
+        pixmap = QtGui.QPixmap('Z:/ge_Tools/src/developer/main/source/icons/window_bg.png')
+        region = QtGui.QRegion(pixmap.mask())
+        self.setMask(region)
+        
         

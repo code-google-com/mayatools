@@ -2,6 +2,12 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="windowModality">
+   <enum>Qt::WindowModal</enum>
+  </property>
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -19,6 +25,9 @@
   <property name="windowOpacity">
    <double>0.000000000000000</double>
   </property>
+  <property name="styleSheet">
+   <string notr="true">background-image: url(:/Project/window_bg.png);</string>
+  </property>
   <property name="documentMode">
    <bool>true</bool>
   </property>
@@ -30,7 +39,7 @@
        <enum>QTabWidget::North</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideLeft</enum>

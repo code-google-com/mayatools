@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\widget\ui\AssetContentUI.ui'
 #
-# Created: Mon Aug 18 23:20:21 2014
+# Created: Thu Aug 21 09:58:05 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,8 +26,12 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(1387, 805)
-        MainWindow.setStyleSheet(_fromUtf8(""))
+        MainWindow.resize(1387, 811)
+        MainWindow.setAcceptDrops(True)
+        MainWindow.setWindowOpacity(0.0)
+        MainWindow.setStyleSheet(_fromUtf8("\n"
+"background-image: url(:/Project/Sony_checker_01.tif);\n"
+""))
         MainWindow.setDocumentMode(True)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
