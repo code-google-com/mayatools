@@ -19,11 +19,6 @@ except:
     from developer.main.common import commonFunctions as cf
     
 try:
-    reload(asc)
-except:
-    from developer.main.assetContent import main as asc
-    
-try:
     reload(pjc)
 except:
     from developer.main.projectcreator import main as pjc
@@ -76,8 +71,8 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
     def openAssetBrowser(self):
         if py.window('assetContentForm', q = True, ex= True):
             py.deleteUI('assetContentForm')
-        form = asc.assetContentForm()
-        form.show()
+        asc = cf.loadNestedModule('developer.main.assetContent.main')
+        asc.show()
                 
     ## show project creator form  
       

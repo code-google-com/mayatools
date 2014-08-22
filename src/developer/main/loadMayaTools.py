@@ -1,5 +1,10 @@
 import pymel.core as py
-from developer.main.common import mainEntry
+
+try:
+    reload(mainEntry)
+except:
+    from developer.main.common import mainEntry
+    
 from developer.main.common import commonFunctions as cf
 
 def loadProject(projName):
