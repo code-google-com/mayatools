@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\widget\ui\AssetContentUI.ui'
 #
-# Created: Thu Aug 21 09:58:05 2014
+# Created: Fri Aug 22 09:08:11 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,12 +26,12 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
+        MainWindow.setWindowModality(QtCore.Qt.WindowModal)
+        MainWindow.setEnabled(True)
         MainWindow.resize(1387, 811)
         MainWindow.setAcceptDrops(True)
         MainWindow.setWindowOpacity(0.0)
-        MainWindow.setStyleSheet(_fromUtf8("\n"
-"background-image: url(:/Project/Sony_checker_01.tif);\n"
-""))
+        MainWindow.setStyleSheet(_fromUtf8("background-image: url(:/Project/window_bg.png);"))
         MainWindow.setDocumentMode(True)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
@@ -836,7 +836,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelps.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         self.tabWidget_2.setCurrentIndex(3)
         self.tabWidget_3.setCurrentIndex(2)
         self.tabWidget_4.setCurrentIndex(0)

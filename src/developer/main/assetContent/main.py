@@ -12,19 +12,22 @@ except:
     from developer.main.common import commonFunctions as cf
     
 try:
-    reload(AssetContentUI)
+    reload(acw)
 except:
-    from developer.main.assetContent.widget.ui import AssetContentUI
+    from developer.main.assetContent.widget import AssetContentWidget as acw
 
-class assetContentForm(QtGui.QMainWindow, AssetContentUI.Ui_MainWindow):
-    def __init__(self, parent = cf.getMayaWindow()):
-        super(QtGui.QMainWindow, self).__init__(parent)
+try:
+    reload(ui)
+except:
+    from developer.main.assetContent.widget.ui import AssetContentUI as ui
+
+from PyQt4 import QtGui
+
+class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
+                
+    def __init__(self):
+        super(QtGui.QMainWindow, self).__init__(parent = None)
         self.setupUi(self)
-        self.setObjectName('assetContentForm')
-        
-    def resizeEvent(self, event):
-        pixmap = QtGui.QPixmap('Z:/ge_Tools/src/developer/main/source/icons/window_bg.png')
-        region = QtGui.QRegion(pixmap.mask())
-        self.setMask(region)
+
         
         
