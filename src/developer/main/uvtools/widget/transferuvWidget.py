@@ -29,8 +29,9 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 	def __init__(self):
 		super(QtGui.QMainWindow, self).__init__(parent = None)
 		self.setupUi(self)
+		
 		self.cbbSourceMat.addItems(['Materials from source'])
-        self.cbbTargetMat.addItems(['Materials from target'])
+		self.cbbTargetMat.addItems(['Materials from target'])
 		self.btnTransferUV.clicked.connect(self.transferUV)
 	
 	def transferUV(self):
