@@ -27,6 +27,8 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
         super(QtGui.QMainWindow, self).__init__(parent)
         self.setupUi(self)
         self.setObjectName('mirrorToolBox')
+        
+        # THEM GUI TAO EVENT CHO CAC ACTION.
         self.btnAxisX.clicked.connect(functools.partial(mFn.mirrorTool, 'x', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By axis'))
         self.btnAxisY.clicked.connect(functools.partial(mFn.mirrorTool, 'y', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By axis'))
         self.btnAxisZ.clicked.connect(functools.partial(mFn.mirrorTool, 'z', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By axis'))
@@ -34,6 +36,17 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
         self.btnPivotX.clicked.connect(functools.partial(mFn.mirrorTool, 'x', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By pivot'))
         self.btnPivotY.clicked.connect(functools.partial(mFn.mirrorTool, 'y', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By pivot'))
         self.btnPivotZ.clicked.connect(functools.partial(mFn.mirrorTool, 'z', self.rdbKeepHistory.isChecked(), self.rdbNoClone.isChecked(), 'By pivot'))  
+        
+        self.btnMirrorU.clicked.connect(self.updateTextMirrorTool)
+        self.btnMirrorV.clicked.connect(self.updateTextMirrorTool)
+    
+    def updateTextMirrorTool(self):
+        if self.btnMirrorU.isChecked():
+            self.btnMirrorU.setText('Mirror U')
+        else:
+            self.btnMirrorU.setText('X')
+        if self.btnMirrorV.isChecked():
+            self.btnMirrorV.setText('Mirror V')
+        else:
+            self.btnMirrorV.setText('Z')
 
-
-print '    Mirror Widget: Finished module ....'
