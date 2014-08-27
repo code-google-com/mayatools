@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\uvtools\widget\ui\moveuvUI.ui'
 #
-# Created: Fri Aug 22 09:08:13 2014
+# Created: Wed Aug 27 07:27:58 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -120,7 +120,6 @@ class Ui_MainWindow(object):
 "border-radius: 10px;\n"
 "font:  bold 11px\n"
 "}"))
-        self.lineEdit.setInputMethodHints(QtCore.Qt.ImhDigitsOnly)
         self.lineEdit.setInputMask(_fromUtf8(""))
         self.lineEdit.setFrame(False)
         self.lineEdit.setDragEnabled(True)
@@ -235,7 +234,8 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
-        self.lineEdit.setPlaceholderText(_translate("MainWindow", "type number", None))
+        self.lineEdit.setProperty("placeholderText", _translate("MainWindow", "type number", None))
         self.btnMirrorU.setText(_translate("MainWindow", "Mirror U", None))
         self.btnMirrorV.setText(_translate("MainWindow", "Mirror V", None))
 
+import developer.main.source.IconResource_rc

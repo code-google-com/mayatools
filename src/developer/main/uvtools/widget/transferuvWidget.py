@@ -34,13 +34,13 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		self.cbbTargetMat.addItems(['Materials from target'])
 		self.btnTransferUV.clicked.connect(self.transferUV)
 	
-	def transferUV(self):
+	def transferUV(self, srcMesh, desMesh, material):
 		isAttached = False
         isDeleted = False
         # testing if node just have one shader
-        shaders = st.getShadersFromMesh(str(self.ldtSource.text()))
+        shaders = st.getShadersFromMesh(srcMesh)
         if len(shaders) > 1:
-            st.selectFaceByShaderPerMesh(str(self.ldtSource.text()), str(self.cbbSourceMat.currentText()))
+            st.selectFaceByShaderPerMesh(srcMesh, str(self.cbbSourceMat.currentText()))
             pt.extractMesh()
             sourceMesh = py.ls(sl = True)[0]
             isDeleted = True

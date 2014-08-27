@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\widget\ui\AssetContentUI.ui'
+# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\ui\AssetContentUI.ui'
 #
-# Created: Fri Aug 22 09:08:11 2014
+# Created: Wed Aug 27 07:27:54 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
