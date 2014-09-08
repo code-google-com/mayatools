@@ -7,20 +7,12 @@ import pymel.core as py
 import pymel.core.datatypes as dt
 import functools, imp
 
-#import Source.IconResource_rc
-#import CommonFunctions as cf
-
 checkerList = ['Custom_checker','IronMonkey_checker','Sony_checker_01', 'Sony_checker_02']
-
-fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
-dirUI= fileDirCommmon +'/UI/ShaderTools.ui'
-
-form_class, base_class = uic.loadUiType(dirUI)
 
 def getShadersFromMesh(mesh):                    
         # get shader from nodes
-        shapeNode = cmds.listRelatives(mesh, c = True, f = True)[0]
-        sgs = cmds.listConnections(shapeNode, t = 'shadingEngine')
+        shapeNode = mesh.listRelatives(c = True, f = True)[0]
+        sgs = shapeNode.listConnections(t = 'shadingEngine')
         if not sgs:
             return
         shaders = list()

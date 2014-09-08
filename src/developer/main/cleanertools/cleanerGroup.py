@@ -28,6 +28,6 @@ class cleanerGroup(DockWidget):
             contentCheck = [os.path.splitext(f)[0] for f in os.listdir(os.path.split(__file__)[0] + '\\' + pkgName) if f.endswith('py') if f != '__init__.py']
         
         for module in contentCheck:
-            print 'loading:' + pkgName + ' ......' + module
+            #print 'loading:' + pkgName + ' ......' + module
             widget = clw.cleanerWidget(pkgName + '.'+ module)
             self.layout.addLayout(widget.layout)

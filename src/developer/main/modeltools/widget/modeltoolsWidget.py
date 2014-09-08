@@ -29,8 +29,8 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
         self.btnAttach.clicked.connect(partial(self.execute, 0))
         self.btnDetach.clicked.connect(partial(self.execute, 1))
         self.btnDuplicate.clicked.connect(partial(self.execute, 2))
-        self.btnLoopEdges.clicked.connect(partial(self.execute, 3))
-        self.btnRingEdges.clicked.connect(partial(self.execute, 4))
+        #self.btnLoopEdges.clicked.connect(partial(self.execute, 3))
+        #self.btnRingEdges.clicked.connect(partial(self.execute, 4))
         self.btnSmartCollapse.clicked.connect(partial(self.execute, 5))
         self.btnSnapVertexTool.clicked.connect(partial(self.execute, 6))
         

@@ -93,7 +93,7 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
                 # loading 3rd tools
                 
                 if mod.getAttribute('name') == 'thirdtools':
-                    print 'loading:---------------------- Third Tools---------------------------------'
+                    #print 'loading:---------------------- Third Tools---------------------------------'
                     lstTools = list()
                     thirdtools = mod.getElementsByTagName('submodule')
                     for submod in thirdtools:
@@ -105,7 +105,7 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
                 # loading cleaner tab
                 
                 elif mod.getAttribute('name') == 'cleanertools':
-                    print 'loading:---------------------- Cleaner Tools---------------------------------'
+                    #print 'loading:---------------------- Cleaner Tools---------------------------------'
                     itemChecks = list()
                     for sub in mod.getElementsByTagName('submodule'):
                         tmp = list()
@@ -122,7 +122,7 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
                 # loading functional tabs
                 
                 else:
-                    print 'loading:---------------------- Functional Tools---------------------------------'
+                    #print 'loading:---------------------- Functional Tools---------------------------------'
                     submods = list()
                     for widget in mod.getElementsByTagName('submodule'): # get all widgets in package
                         submods.append(widget.getAttribute('name'))

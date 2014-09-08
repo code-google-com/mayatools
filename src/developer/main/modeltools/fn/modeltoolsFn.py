@@ -7,28 +7,25 @@ Created on May 27, 2014
 
 '''
 import maya.cmds as cmds
-from PyQt4 import QtGui, QtCore, uic
 import maya.OpenMaya as om
 import maya.OpenMayaUI as OpenMayaUI
 import pymel.core as py
 import maya.mel as mel
-import os, sys, inspect, re
-import functools
-from xml.dom.minidom import *
 import pymel.core as pm
 import pymel.core.datatypes as dt
 from math import *
-import sip
 
-#import CommonFunctions as cf
+from developer.main.common import commonFunctions as cf
+
 
 def attachMesh():
     # check shader assigned to faces before attaching
-    attachFileSource = '/mel/flattenCombine.mel'
+    attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/flattenCombine.mel'
+    print attachFileSource
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
 
 def detachMesh():
-    attachFileSource = '/mel/detachComponent.mel'
+    attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/detachComponent.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
 
 def extractMesh():
@@ -131,12 +128,16 @@ def smartCollapsing():
         polybase = cmds.ls(hl = True)
         cmds.select(polybase) 
         cmds.polyMergeVertex( d = 0.001)  
+        
 def snapTool(tolerance):
         #tolerance = str(self.spnTolerance.value())
-        attachFileSource = '/mel/geSnapVetexTools_M10.mel'
+        attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/geSnapVetexTools_M10.mel'
         mel.eval('source \"{f}\";'.format(f = attachFileSource))
         selObjs = list(set([x.split('.')[0] for x in cmds.ls(sl = True)]))
         if len(selObjs) == 1:
             mel.eval('geSnapToObjectItself(\"\{eps}\");'.format(eps = tolerance))
         elif len(selObjs) == 2:
             mel.eval('geSnapToTheOtherObject(\"\{eps}\");'.format(eps = tolerance))
+            
+def detachByMaterial(node):
+    

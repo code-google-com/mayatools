@@ -14,7 +14,7 @@ try:
 except:
 	from developer.main.uvtools.widget.ui import transferuvUI as ui
 
-import CommonFunctions as cf
+from developer.main.common import commonFunctions as cf
 reload(cf)
 
 from developer.main.modeltools.fn import modeltoolsFn as pt
@@ -36,40 +36,37 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 	
 	def transferUV(self, srcMesh, desMesh, material):
 		isAttached = False
-        isDeleted = False
-        # testing if node just have one shader
-        shaders = st.getShadersFromMesh(srcMesh)
-        if len(shaders) > 1:
-            st.selectFaceByShaderPerMesh(srcMesh, str(self.cbbSourceMat.currentText()))
-            pt.extractMesh()
-            sourceMesh = py.ls(sl = True)[0]
-            isDeleted = True
-        elif len(shaders) == 1: 
-            sourceMesh = str(self.ldtSource.text())
-        elif len(shaders) == 0:
-            QtGui.QMessageBox.critical(None, 'No shader found', 'Exit!', QtGui.QMessageBox.Ok)
-            return
-        #------------------------------------
-        shaders = st.getShadersFromMesh(str(self.ldtTarget.text()))
-        if len(shaders) > 1:
-            st.selectFaceByShaderPerMesh(str(self.ldtTarget.text()), str(self.cbbTargetMat.currentText()))
-            pt.detachMesh()
-            targetMesh = py.ls(sl = True)[0]
-        elif len(shaders) == 1:
-            isAttached = False 
-            targetMesh = str(self.ldtTarget.text())
-        elif len(shaders) == 0:
-            QtGui.QMessageBox.critical(None, 'No shader found', 'Exit!', QtGui.QMessageBox.Ok)
-            return
-        # transfer source mesh to target
-        cmds.transferAttributes(sourceMesh, targetMesh, uvs = 2)
-        # post-processing 
-        cmds.select(targetMesh)
-        mel.eval('DeleteHistory;')
-        
-        cmds.select(str(self.ldtTarget.text()))
-        cmds.select(targetMesh, add = True)
-        if isAttached:
-            pt.attachMesh()
-        if isDeleted:
-            cmds.delete(sourceMesh)
+		isDeleted = False
+		# testing if node just have one shader
+		shaders = st.getShadersFromMesh(srcMesh)
+		if len(shaders) > 1:
+			st.selectFaceByShaderPerMesh(srcMesh, str(self.cbbSourceMat.currentText()))
+			pt.extractMesh()
+			sourceMesh = py.ls(sl = True)[0]
+			isDeleted = True
+		elif len(shaders) == 1: 
+			sourceMesh = str(self.ldtSource.text())
+		elif len(shaders) == 0:
+			QtGui.QMessageBox.critical(None, 'No shader found', 'Exit!', QtGui.QMessageBox.Ok)
+			return
+		#------------------------------------
+		shaders = st.getShadersFromMesh(str(self.ldtTarget.text()))
+		if len(shaders) > 1:
+			st.selectFaceByShaderPerMesh(str(self.ldtTarget.text()), str(self.cbbTargetMat.currentText()))
+			pt.detachMesh()
+			targetMesh = py.ls(sl = True)[0]
+		elif len(shaders) == 1:
+			isAttached = False 
+			targetMesh = str(self.ldtTarget.text())
+		elif len(shaders) == 0:
+			QtGui.QMessageBox.critical(None, 'No shader found', 'Exit!', QtGui.QMessageBox.Ok)
+			return
+		cmds.transferAttributes(sourceMesh, targetMesh, uvs = 2)
+		cmds.select(targetMesh)
+		mel.eval('DeleteHistory;')
+		cmds.select(str(self.ldtTarget.text()))
+		cmds.select(targetMesh, add = True)
+		if isAttached:
+			pt.attachMesh()
+		if isDeleted:
+			cmds.delete(sourceMesh)
