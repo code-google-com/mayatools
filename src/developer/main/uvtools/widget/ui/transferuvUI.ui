@@ -6,33 +6,24 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>414</width>
-    <height>205</height>
+    <width>328</width>
+    <height>154</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
+   <layout class="QVBoxLayout" name="verticalLayout_2">
     <property name="margin">
      <number>3</number>
     </property>
     <item>
-     <widget class="QGroupBox" name="groupBox_3">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
+     <widget class="QGroupBox" name="groupBox">
       <property name="title">
        <string/>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_5">
-       <property name="spacing">
-        <number>7</number>
-       </property>
+      <layout class="QVBoxLayout" name="verticalLayout">
        <property name="margin">
         <number>3</number>
        </property>

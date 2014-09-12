@@ -26,12 +26,12 @@
 	<ProjectData>
 		<AssetList file="AssetList.xml" />
 		<Module>
-			<tab name="NAMING TOOLS">
+			<tab name="NAMING">
 				<module name = "nametools">
 					<submodule name = "basicnameWidget"/>
 				</module>
 			</tab>		
-			<tab name="POLY TOOLS">
+			<tab name="POLY">
 				<module name = "setupscene">
 					<submodule name = "setupsceneWidget"/>
 				</module>
@@ -39,20 +39,20 @@
 				<module name = "modeltools"/>
 				<module name = "normaltools"/> 
 			</tab>
-			<tab name="UV TOOLS">
+			<tab name="UV">
 				<module name = "uvtools"/>
 			</tab>			
-			<tab name="SHADER TOOLS">
+			<tab name="SHADER">
 				<module name = "debugshaders"/>
 				<module name = "editshaders"/>
 				<module name = "editvertexcolors"/>	
 				<module name = "bakingao"/>	
 			</tab>
-			<tab name="PIVOT TOOLS">
+			<tab name="PIVOT">
 				<module name = "pivottools"/>
 			</tab>			
-			<tab name="ANIMATE TOOLS"/>			
-			<tab name="CLEAN UP TOOLS">
+			<tab name="ANIMATE"/>			
+			<tab name="CLEAN UP">
 				<module name = 'cleanertools'>
 					<submodule name = "Cleaning_Scene_Tools">
 						<item name = "CleanKeyFrame"/>
@@ -67,7 +67,7 @@
 					<submodule name = "Technical_Setup"/>
 				</module>
 			</tab>	
-			<tab name="THIRD PARTY TOOLS">
+			<tab name="THIRD PARTY">
 				<module name = 'thirdtools'>
 					<submodule name = "dDoMaterialManager"/>
 					<submodule name = "zPipeMakerSimple"/>		

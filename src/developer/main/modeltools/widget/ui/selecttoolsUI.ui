@@ -24,17 +24,26 @@
        <string/>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
+       <property name="leftMargin">
+        <number>3</number>
+       </property>
+       <property name="topMargin">
+        <number>3</number>
+       </property>
+       <property name="rightMargin">
+        <number>3</number>
+       </property>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
-          <widget class="QPushButton" name="pushButton_2">
+          <widget class="QPushButton" name="btnSelectHardEdges">
            <property name="text">
             <string>Select HardEdges</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_3">
+          <widget class="QPushButton" name="btnSelectSoftEdges">
            <property name="text">
             <string>Select SoftEdges</string>
            </property>
@@ -43,7 +52,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="btnSelectContEdges">
          <property name="text">
           <string>Select Continous Edges</string>
          </property>

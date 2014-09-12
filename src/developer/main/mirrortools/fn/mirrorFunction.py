@@ -18,7 +18,8 @@ import maya.mel as mel
 presetNameforLeft = ['_L_','L_','left','LEFT','_FL_','_BL_','_RL_']
 presetNameforRight = ['_R_','R_','right','RIGHT','_FR_','_BR_','_RR_']
 
-def mirrorTool(axis, isKeepHistory, isClone, method):
+def mirrorTool(axis, isKeepHistory, isClone, isInstance, method):
+        cmds.undoInfo(openChunk = True)
         '''
         Executing mirror functions called in mirrorForm. Contains some features allow us can mirror a mesh base on pivot or axis.
         One convenient feature can be auto liped uvs  to the other side. 
@@ -37,7 +38,7 @@ def mirrorTool(axis, isKeepHistory, isClone, method):
                         index = presetNameforRight.index(matchName[0])
                         newname = obj.replace(matchName[0], presetNameforLeft[index])
                     
-            if isClone == 'Clone':
+            if isClone == True:
                 if isKeepHistory:
                     try: 
                         dupMesh = cmds.duplicate(n = newname, ic = True)
@@ -48,11 +49,11 @@ def mirrorTool(axis, isKeepHistory, isClone, method):
                         dupMesh = cmds.duplicate(n = newname, ic = True)
                     except NameError:
                         dupMesh = cmds.duplicate(n = obj + '_mirrored', ic = False)
-            elif isClone == 'Instance':
-                try:
-                    dupMesh = cmds.duplicate(n = newname, ilf = True)
-                except NameError:
-                    dupMesh = cmds.duplicate(n = obj + '_mirrored', ilf = True)
+                if isInstance == True:
+                    try:
+                        dupMesh = cmds.duplicate(n = newname, ilf = True)
+                    except NameError:
+                        dupMesh = cmds.duplicate(n = obj + '_mirrored', ilf = True)
             else:
                 dupMesh = [obj]
             if method == 'By axis':
@@ -82,3 +83,4 @@ def mirrorTool(axis, isKeepHistory, isClone, method):
             cmds.setAttr(dupMeshShape[0] + '.opposite', False)
             cmds.select(cl = True)
             cmds.select(dupMesh)
+            cmds.undoInfo(closeChunk = True)

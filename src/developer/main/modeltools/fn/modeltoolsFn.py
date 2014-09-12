@@ -38,14 +38,6 @@ def extractMesh():
     cmds.delete()
     cmds.select(midMesh)
 
-def LoopEdges(spnLoop):
-    #print N
-    mel.eval('polySelectEdgesEveryN "edgeLoop" \"{num}\";'.format(num = str(spnLoop + 1)))
-
-def RingEdges(spnRing):
-    #print N
-    mel.eval('polySelectEdgesEveryN "edgeRing" \"{num}\";'.format(num = str(spnRing + 1))) #self.spnRing.value()
-
 def lineIntersect(A, B, C, D):
     a = B - A
     b = D - C
@@ -75,9 +67,9 @@ def getConnectedEdges(self):
                 if e in selectedEdges:
                     selectedEdges.remove(e)
                     unconnectedSelectedEdges[len(unconnectedSelectedEdges) - 1].append(e)
-    return unconnectedSelectedEdges    
-def smartCollapsing():
-            
+    return unconnectedSelectedEdges   
+ 
+def smartCollapsing():          
     print '--execute ---'
     edgeSets = getConnectedEdges()
     for set in edgeSets:
@@ -140,4 +132,4 @@ def snapTool(tolerance):
             mel.eval('geSnapToTheOtherObject(\"\{eps}\");'.format(eps = tolerance))
             
 def detachByMaterial(node):
-    
+    pass

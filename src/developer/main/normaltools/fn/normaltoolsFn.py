@@ -13,45 +13,55 @@ import maya.OpenMayaUI as OpenMayaUI
 import pymel.core as py
 import maya.mel as mel
 import os, sys, inspect, re
-import functools
-from xml.dom.minidom import *
 import pymel.core as pm
 import pymel.core.datatypes as dt
 from math import *
-import sip
+
+try:
+    reload(cf)
+except:
+    from developer.main.common import commonFunctions as cf
+
 
 #fileDirCommmon = os.path.split(inspect.getfile(inspect.currentframe()))[0].replace('\\','/')
 def lockNormalToLargeFace():
-    attachFileSource = '/mel/boltNormalToolbox.mel'
+    attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/boltNormalToolbox.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
     mel.eval('$s=`ls -sl`; boltNorms.EdgeToVF(1); boltNorms.LockSelectedVFs(0); select $s')
     # set locked norml edges to softedge
     cmds.polySoftEdge( a= 180, ch = False)
+
 def lockNormalToSmallFace():
-    attachFileSource = '/mel/boltNormalToolbox.mel'
+    attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/boltNormalToolbox.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
     mel.eval('$s=`ls -sl`; boltNorms.EdgeToVF(0); boltNorms.LockSelectedVFs(0); select $s')
     cmds.polySoftEdge( a= 180, ch = False)
+
 def copyNormal():
-    attachFileSource = '/mel/geNFS14_NFS13NormalTools_UI.mel'
+    attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/geNFS14_NFS13NormalTools_UI.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
     mel.eval('CG_copyVertexNormal()')
+
 def copyAverageNormal():
-    attachFileSource = '/mel/geNFS14_NFS13NormalTools_UI.mel'
+    attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/geNFS14_NFS13NormalTools_UI.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
     mel.eval('CG_copyAverageVertexNormal()')
+
 def pasteNormal():
-    attachFileSource = '/mel/geNFS14_NFS13NormalTools_UI.mel'
+    attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/geNFS14_NFS13NormalTools_UI.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
     mel.eval('CG_pasteVertexNormals(\"x\")')
+
 def smoothBevelNormal():
-    attachFileSource = '/mel/boltNormalToolbox.mel'
+    attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/boltNormalToolbox.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
     mel.eval('boltNorms.SmoothBevel(0)')
+
 def matchseamNormal():
-    attachFileSource = '/mel/boltNormalToolbox.mel'
+    attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/boltNormalToolbox.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
     mel.eval('boltNorms.MatchSeamNormals()') 
+
 def lockUnLocked():
     #mel.eval('polyNormalPerVertex -ufn true;')
     selObject = cmds.ls(sl = True)[0]
@@ -59,15 +69,17 @@ def lockUnLocked():
     for i in range(vertNum):
         if not cmds.polyNormalPerVertex(selObject + '.vtx[' + str(i) + ']', q= True, ufn = True):
             cmds.polyNormalPerVertex(selObject + '.vtx[' + str(i) + ']', fn = True)
+
 def smoothBorderEdges(tolerance):
     #tolerance = str(self.spnSmoothEdges.value())
-    attachFileSource = '/mel/geSetNormalVertexTool.mel'
+    attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/geSetNormalVertexTool.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
     selObjs = list(set([x.split('.')[0] for x in cmds.ls(sl = True)]))
     if len(selObjs) == 1:
         mel.eval('geSnapToObjectItself(\"\{eps}\");'.format(eps = tolerance))
     elif len(selObjs) == 2:
         mel.eval('geSnapToTheOtherObject(\"\{eps}\",\"\{para}\");'.format(eps = tolerance,para = 3))
+
 def transferNormalWithoutDetachMesh():
     selObjs = cmds.ls(sl = True)
     transferedFaces = [x for x in selObjs if re.search(r'(.*).f\[(\.*)',x,re.I)]
@@ -92,11 +104,12 @@ def transferNormalWithoutDetachMesh():
     vertexnums = cmds.polyEvaluate(v = True) - 1
     cmds.select(midMesh[0] + '.vtx[0:' + str(vertexnums) + ']')
     cmds.select(desMesh, add = True)
-    attachFileSource = '/mel/geSetNormalVertexTool.mel'
+    attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/geSetNormalVertexTool.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
     mel.eval('geSnapToTheOtherObject(\"\{eps}\", \"\{para}\");'.format(eps = 0.01, para = 1))
     cmds.delete(midMesh)
+
 def mirrorNormalTool():
-    attachFileSource = '/mel/boltNormalToolbox.mel'
+    attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/boltNormalToolbox.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
     mel.eval('boltNorms.MirrorGUI(0.0005)')

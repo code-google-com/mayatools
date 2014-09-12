@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\modeltools\widget\ui\selecttoolsUI.ui'
 #
-# Created: Sun Sep 07 21:01:33 2014
+# Created: Wed Sep 10 14:50:51 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -36,19 +36,20 @@ class Ui_MainWindow(object):
         self.groupBox.setTitle(_fromUtf8(""))
         self.groupBox.setObjectName(_fromUtf8("groupBox"))
         self.verticalLayout = QtGui.QVBoxLayout(self.groupBox)
+        self.verticalLayout.setContentsMargins(3, 3, 3, -1)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
-        self.pushButton_2 = QtGui.QPushButton(self.groupBox)
-        self.pushButton_2.setObjectName(_fromUtf8("pushButton_2"))
-        self.horizontalLayout.addWidget(self.pushButton_2)
-        self.pushButton_3 = QtGui.QPushButton(self.groupBox)
-        self.pushButton_3.setObjectName(_fromUtf8("pushButton_3"))
-        self.horizontalLayout.addWidget(self.pushButton_3)
+        self.btnSelectHardEdges = QtGui.QPushButton(self.groupBox)
+        self.btnSelectHardEdges.setObjectName(_fromUtf8("btnSelectHardEdges"))
+        self.horizontalLayout.addWidget(self.btnSelectHardEdges)
+        self.btnSelectSoftEdges = QtGui.QPushButton(self.groupBox)
+        self.btnSelectSoftEdges.setObjectName(_fromUtf8("btnSelectSoftEdges"))
+        self.horizontalLayout.addWidget(self.btnSelectSoftEdges)
         self.verticalLayout.addLayout(self.horizontalLayout)
-        self.pushButton = QtGui.QPushButton(self.groupBox)
-        self.pushButton.setObjectName(_fromUtf8("pushButton"))
-        self.verticalLayout.addWidget(self.pushButton)
+        self.btnSelectContEdges = QtGui.QPushButton(self.groupBox)
+        self.btnSelectContEdges.setObjectName(_fromUtf8("btnSelectContEdges"))
+        self.verticalLayout.addWidget(self.btnSelectContEdges)
         self.pushButton_4 = QtGui.QPushButton(self.groupBox)
         self.pushButton_4.setObjectName(_fromUtf8("pushButton_4"))
         self.verticalLayout.addWidget(self.pushButton_4)
@@ -99,9 +100,9 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
-        self.pushButton_2.setText(_translate("MainWindow", "Select HardEdges", None))
-        self.pushButton_3.setText(_translate("MainWindow", "Select SoftEdges", None))
-        self.pushButton.setText(_translate("MainWindow", "Select Continous Edges", None))
+        self.btnSelectHardEdges.setText(_translate("MainWindow", "Select HardEdges", None))
+        self.btnSelectSoftEdges.setText(_translate("MainWindow", "Select SoftEdges", None))
+        self.btnSelectContEdges.setText(_translate("MainWindow", "Select Continous Edges", None))
         self.pushButton_4.setText(_translate("MainWindow", "Select Shortest Edges", None))
         self.btnRingEdges.setText(_translate("MainWindow", "Dot ring selection", None))
         self.btnLoopEdges.setText(_translate("MainWindow", "Dot loop selection", None))
