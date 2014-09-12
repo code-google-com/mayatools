@@ -33,6 +33,7 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
         #self.btnRingEdges.clicked.connect(partial(self.execute, 4))
         self.btnSmartCollapse.clicked.connect(partial(self.execute, 5))
         self.btnSnapVertexTool.clicked.connect(partial(self.execute, 6))
+        self.btnCleanUp.clicked.connect(partial(self.execute, 7))
         
         
     def execute(self, param):
@@ -59,5 +60,9 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
         if param == 6:
             tolerance = str(self.spnTolerance.value())
             mFn.snapTool(tolerance)
+            
+        if param == 7:
+            tolerance = str(self.spnTolerance.value())
+            mFn.CleanupMesh()
             
         

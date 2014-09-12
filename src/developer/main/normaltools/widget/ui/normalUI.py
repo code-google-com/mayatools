@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\normaltools\widget\ui\normalUI.ui'
 #
-# Created: Wed Sep 10 14:50:51 2014
+# Created: Sat Sep 13 05:36:14 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(716, 308)
+        MainWindow.resize(369, 324)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout = QtGui.QVBoxLayout(self.centralwidget)
@@ -126,7 +126,22 @@ class Ui_MainWindow(object):
         self.horizontalLayout_16.addWidget(self.radioButton_6)
         self.verticalLayout_5.addLayout(self.horizontalLayout_16)
         self.horizontalLayout_13 = QtGui.QHBoxLayout()
+        self.horizontalLayout_13.setSpacing(2)
         self.horizontalLayout_13.setObjectName(_fromUtf8("horizontalLayout_13"))
+        self.btnNormalSelected = QtGui.QPushButton(self.groupBox_4)
+        font = QtGui.QFont()
+        font.setBold(False)
+        font.setWeight(50)
+        self.btnNormalSelected.setFont(font)
+        self.btnNormalSelected.setObjectName(_fromUtf8("btnNormalSelected"))
+        self.horizontalLayout_13.addWidget(self.btnNormalSelected)
+        self.btnNormalClosest = QtGui.QPushButton(self.groupBox_4)
+        font = QtGui.QFont()
+        font.setBold(False)
+        font.setWeight(50)
+        self.btnNormalClosest.setFont(font)
+        self.btnNormalClosest.setObjectName(_fromUtf8("btnNormalClosest"))
+        self.horizontalLayout_13.addWidget(self.btnNormalClosest)
         self.btnSmoothAdjacentEdges = QtGui.QPushButton(self.groupBox_4)
         font = QtGui.QFont()
         font.setBold(False)
@@ -180,6 +195,8 @@ class Ui_MainWindow(object):
         self.radioButton_4.setText(_translate("MainWindow", "X", None))
         self.radioButton_5.setText(_translate("MainWindow", "Y", None))
         self.radioButton_6.setText(_translate("MainWindow", "Z", None))
-        self.btnSmoothAdjacentEdges.setText(_translate("MainWindow", "Smooth adjcent edges", None))
+        self.btnNormalSelected.setText(_translate("MainWindow", "Keep Select", None))
+        self.btnNormalClosest.setText(_translate("MainWindow", "Keep Closest", None))
+        self.btnSmoothAdjacentEdges.setText(_translate("MainWindow", "Keep Average ", None))
         self.btnTransferNormalWithoutDetachMesh.setText(_translate("MainWindow", "Transfer Normal without Detach mesh", None))
 

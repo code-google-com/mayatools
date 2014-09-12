@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>716</width>
-    <height>308</height>
+    <width>369</width>
+    <height>324</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -200,6 +200,35 @@
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_13">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="btnNormalSelected">
+           <property name="font">
+            <font>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Keep Select</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnNormalClosest">
+           <property name="font">
+            <font>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Keep Closest</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <widget class="QPushButton" name="btnSmoothAdjacentEdges">
            <property name="font">
@@ -209,7 +238,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Smooth adjcent edges</string>
+            <string>Keep Average </string>
            </property>
           </widget>
          </item>

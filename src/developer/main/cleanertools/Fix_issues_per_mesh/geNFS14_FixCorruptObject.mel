@@ -168,7 +168,7 @@ global proc geNFS14_FixCorruptObject(string $obj)
 
 global proc geNFS14_FixCorruptObjectGUI()
 {
-    CG_killTextureEditor();
+    //CG_killTextureEditor();
     
 	//string $slObjects[] = `ls -sl` ;
 	string $slObjects[] = `ls -type transform` ;

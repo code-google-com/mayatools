@@ -70,15 +70,15 @@ def lockUnLocked():
         if not cmds.polyNormalPerVertex(selObject + '.vtx[' + str(i) + ']', q= True, ufn = True):
             cmds.polyNormalPerVertex(selObject + '.vtx[' + str(i) + ']', fn = True)
 
-def smoothBorderEdges(tolerance):
+def smoothBorderEdges(tolerance, type):
     #tolerance = str(self.spnSmoothEdges.value())
     attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/geSetNormalVertexTool.mel'
     mel.eval('source \"{f}\";'.format(f = attachFileSource))
     selObjs = list(set([x.split('.')[0] for x in cmds.ls(sl = True)]))
     if len(selObjs) == 1:
-        mel.eval('geSnapToObjectItself(\"\{eps}\");'.format(eps = tolerance))
+        mel.eval('geSnapToObjectItself(\"\{eps}\", \"\{para}\");'.format(eps = tolerance, para = type))
     elif len(selObjs) == 2:
-        mel.eval('geSnapToTheOtherObject(\"\{eps}\",\"\{para}\");'.format(eps = tolerance,para = 3))
+        mel.eval('geSnapToTheOtherObject(\"\{eps}\",\"\{para}\");'.format(eps = tolerance, para = type))
 
 def transferNormalWithoutDetachMesh():
     selObjs = cmds.ls(sl = True)

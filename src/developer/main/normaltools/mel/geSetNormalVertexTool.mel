@@ -1,6 +1,6 @@
 proc geSetNormalVertex(string $vtxSrc[], string $vtxDst[], float $eps, float $para){
 	// para = 1: keep normal of selected vertexes
-	// para = 2: keep normal of selected mesh
+	// para = 2: keep normal of target vertexes
 	// para = 3: average normal 
 	string $closestVert ;
 	for ($i=0;$i<size($vtxDst);$i++)

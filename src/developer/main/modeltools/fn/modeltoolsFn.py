@@ -17,7 +17,6 @@ from math import *
 
 from developer.main.common import commonFunctions as cf
 
-
 def attachMesh():
     # check shader assigned to faces before attaching
     attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/flattenCombine.mel'
@@ -133,3 +132,8 @@ def snapTool(tolerance):
             
 def detachByMaterial(node):
     pass
+
+def CleanupMesh():
+    attachFileSource = cf.getPath(__file__, 2).replace('\\','/') + '/mel/geNFS14_SpecialFCCOnSelectedMeshes.mel'
+    mel.eval('source \"{f}\";'.format(f = attachFileSource))
+    

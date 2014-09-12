@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\modeltools\widget\ui\modeltoolsUI.ui'
 #
-# Created: Wed Sep 10 14:50:50 2014
+# Created: Sat Sep 13 05:36:14 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(435, 171)
+        MainWindow.resize(435, 198)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout = QtGui.QVBoxLayout(self.centralwidget)
@@ -129,6 +129,13 @@ class Ui_MainWindow(object):
         self.spnTolerance.setObjectName(_fromUtf8("spnTolerance"))
         self.horizontalLayout_15.addWidget(self.spnTolerance)
         self.verticalLayout_2.addLayout(self.horizontalLayout_15)
+        self.btnCleanUp = QtGui.QPushButton(self.groupBox_3)
+        font = QtGui.QFont()
+        font.setBold(False)
+        font.setWeight(50)
+        self.btnCleanUp.setFont(font)
+        self.btnCleanUp.setObjectName(_fromUtf8("btnCleanUp"))
+        self.verticalLayout_2.addWidget(self.btnCleanUp)
         self.verticalLayout.addWidget(self.groupBox_3)
         MainWindow.setCentralWidget(self.centralwidget)
 
@@ -145,4 +152,5 @@ class Ui_MainWindow(object):
         self.btnSmartCollapse.setText(_translate("MainWindow", "Un-Chamfered", None))
         self.btnReplace.setText(_translate("MainWindow", "Edit Edge Flow", None))
         self.btnSnapVertexTool.setText(_translate("MainWindow", "Snap Vertex Tool", None))
+        self.btnCleanUp.setText(_translate("MainWindow", "Clean up Mesh", None))
 

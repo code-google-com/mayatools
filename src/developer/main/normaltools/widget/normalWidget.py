@@ -34,6 +34,8 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
         self.btnmatchSeamNormal.clicked.connect(partial(self.execute, 6))
         self.btnUnlock.clicked.connect(partial(self.execute, 7))
         self.btnSmoothAdjacentEdges.clicked.connect(partial(self.execute, 8))
+        self.btnNormalSelected.clicked.connect(partial(self.execute, 11))
+        self.btnNormalClosest.clicked.connect(partial(self.execute, 12))
         self.btnTransferNormalWithoutDetachMesh.clicked.connect(partial(self.execute, 9))
         self.btnMirrorTools.clicked.connect(partial(self.execute, 10))
         
@@ -56,8 +58,14 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
             mFn.lockUnLocked()
         if param == 8:
             tolerance = str(self.spnSmoothEdges.value())
-            mFn.smoothBorderEdges(tolerance)
+            mFn.smoothBorderEdges(tolerance, 3)
         if param == 9:
             mFn.transferNormalWithoutDetachMesh()
         if param == 10:
             mFn.mirrorNormalTool()
+        if param == 11:
+            tolerance = str(self.spnSmoothEdges.value())
+            mFn.smoothBorderEdges(tolerance, 1)
+        if param == 12:
+            tolerance = str(self.spnSmoothEdges.value())
+            mFn.smoothBorderEdges(tolerance, 2)
