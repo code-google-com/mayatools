@@ -58,6 +58,9 @@
              <bold>false</bold>
             </font>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Combine 2 mesh to single mesh and keep:&lt;/p&gt;&lt;p&gt;- Keep name of first selected mesh.&lt;/p&gt;&lt;p&gt;- Keep pivot's position of first selected mesh.&lt;/p&gt;&lt;p&gt;- Clean up result mesh. (deleted history + freeze transformation).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Attach</string>
            </property>
@@ -74,6 +77,9 @@
              <bold>false</bold>
             </font>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Detach selected faces to a separated mesh.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Detach</string>
            </property>
@@ -86,6 +92,9 @@
              <weight>50</weight>
              <bold>false</bold>
             </font>
+           </property>
+           <property name="toolTip">
+            <string>Clone selected faces to a single mesh.</string>
            </property>
            <property name="text">
             <string>Duplicate</string>
@@ -104,6 +113,9 @@
              <bold>false</bold>
             </font>
            </property>
+           <property name="toolTip">
+            <string>Detach selected mesh to many separated meshes based on element.</string>
+           </property>
            <property name="text">
             <string>Detach By Element</string>
            </property>
@@ -117,12 +129,22 @@
              <bold>false</bold>
             </font>
            </property>
+           <property name="toolTip">
+            <string>Detach selected mesh base on materials.</string>
+           </property>
            <property name="text">
             <string>Detach By Material</string>
            </property>
           </widget>
          </item>
         </layout>
+       </item>
+       <item>
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -155,7 +177,46 @@
         </layout>
        </item>
        <item>
+        <widget class="Line" name="line_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_15">
+         <item>
+          <widget class="QPushButton" name="btnToSelected">
+           <property name="font">
+            <font>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Snap Closest Vertexes to Selected Vertexes</string>
+           </property>
+           <property name="text">
+            <string>To Selected</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnToClosest">
+           <property name="font">
+            <font>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Snap Selected Vertexes to Closest Vertexes </string>
+           </property>
+           <property name="text">
+            <string>To Closest</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <widget class="QPushButton" name="btnSnapVertexTool">
            <property name="font">
@@ -164,8 +225,11 @@
              <bold>false</bold>
             </font>
            </property>
+           <property name="toolTip">
+            <string>Snap to Center of vertexes</string>
+           </property>
            <property name="text">
-            <string>Snap Vertex Tool</string>
+            <string>To Center</string>
            </property>
           </widget>
          </item>
@@ -195,6 +259,13 @@
           </widget>
          </item>
         </layout>
+       </item>
+       <item>
+        <widget class="Line" name="line_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="btnCleanUp">

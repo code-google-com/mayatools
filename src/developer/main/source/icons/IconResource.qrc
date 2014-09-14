@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="Project">
+    <file>display_options.png</file>
     <file>white, without circle/heart.png</file>
     <file>window_bg.png</file>
     <file>white, without circle/add.png</file>

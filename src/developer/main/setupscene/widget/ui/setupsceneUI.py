@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\setupscene\widget\ui\setupsceneUI.ui'
 #
-# Created: Sat Sep 13 15:45:57 2014
+# Created: Sun Sep 14 20:56:00 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(445, 123)
+        MainWindow.resize(268, 123)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout = QtGui.QVBoxLayout(self.centralwidget)
@@ -79,9 +79,17 @@ class Ui_MainWindow(object):
         self.btnSetNormalSize.setFlat(True)
         self.btnSetNormalSize.setObjectName(_fromUtf8("btnSetNormalSize"))
         self.horizontalLayout_7.addWidget(self.btnSetNormalSize)
+        self.btnDisplayOptions = QtGui.QPushButton(self.groupBox_5)
+        self.btnDisplayOptions.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        self.btnDisplayOptions.setText(_fromUtf8(""))
+        icon3 = QtGui.QIcon()
+        icon3.addPixmap(QtGui.QPixmap(_fromUtf8(":/Project/display_options.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.btnDisplayOptions.setIcon(icon3)
+        self.btnDisplayOptions.setIconSize(QtCore.QSize(50, 50))
+        self.btnDisplayOptions.setFlat(True)
+        self.btnDisplayOptions.setObjectName(_fromUtf8("btnDisplayOptions"))
+        self.horizontalLayout_7.addWidget(self.btnDisplayOptions)
         self.horizontalLayout_6.addLayout(self.horizontalLayout_7)
-        spacerItem = QtGui.QSpacerItem(143, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayout_6.addItem(spacerItem)
         self.verticalLayout.addWidget(self.groupBox_5)
         MainWindow.setCentralWidget(self.centralwidget)
 
@@ -92,3 +100,4 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
         self.btnSetupAxis.setToolTip(_translate("MainWindow", "change Axis", None))
 
+import developer.main.source.IconResource_rc

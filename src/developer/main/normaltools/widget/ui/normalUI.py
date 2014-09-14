@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\normaltools\widget\ui\normalUI.ui'
 #
-# Created: Sat Sep 13 15:45:57 2014
+# Created: Sun Sep 14 20:55:59 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
