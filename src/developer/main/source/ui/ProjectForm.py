@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\source\ui\ProjectForm.ui'
 #
-# Created: Sat Sep 13 05:36:14 2014
+# Created: Sat Sep 13 15:45:57 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -51,7 +51,7 @@ class Ui_ProjectMainForm(object):
         self.tabWidget.setAutoFillBackground(True)
         self.tabWidget.setStyleSheet(_fromUtf8(""))
         self.tabWidget.setLocale(QtCore.QLocale(QtCore.QLocale.Vietnamese, QtCore.QLocale.VietNam))
-        self.tabWidget.setTabPosition(QtGui.QTabWidget.East)
+        self.tabWidget.setTabPosition(QtGui.QTabWidget.North)
         self.tabWidget.setTabShape(QtGui.QTabWidget.Triangular)
         self.tabWidget.setMovable(True)
         self.tabWidget.setObjectName(_fromUtf8("tabWidget"))
@@ -65,7 +65,7 @@ class Ui_ProjectMainForm(object):
         self.menuHelp = QtGui.QMenu(self.menubar)
         self.menuHelp.setObjectName(_fromUtf8("menuHelp"))
         self.menuIntegrate_with_Source_Control = QtGui.QMenu(self.menuHelp)
-        self.menuIntegrate_with_Source_Control.setGeometry(QtCore.QRect(915, 193, 248, 222))
+        self.menuIntegrate_with_Source_Control.setGeometry(QtCore.QRect(915, 193, 251, 222))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/Project/Exchange.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.menuIntegrate_with_Source_Control.setIcon(icon)

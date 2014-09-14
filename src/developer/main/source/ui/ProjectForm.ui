@@ -63,7 +63,7 @@
        <locale language="Vietnamese" country="VietNam"/>
       </property>
       <property name="tabPosition">
-       <enum>QTabWidget::East</enum>
+       <enum>QTabWidget::North</enum>
       </property>
       <property name="tabShape">
        <enum>QTabWidget::Triangular</enum>
@@ -99,7 +99,7 @@
       <rect>
        <x>915</x>
        <y>193</y>
-       <width>248</width>
+       <width>251</width>
        <height>222</height>
       </rect>
      </property>

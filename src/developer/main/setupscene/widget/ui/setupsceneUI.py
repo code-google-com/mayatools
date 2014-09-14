@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\setupscene\widget\ui\setupsceneUI.ui'
 #
-# Created: Sat Sep 13 05:36:14 2014
+# Created: Sat Sep 13 15:45:57 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -69,11 +69,13 @@ class Ui_MainWindow(object):
         self.btnSetupBackground.setObjectName(_fromUtf8("btnSetupBackground"))
         self.horizontalLayout_7.addWidget(self.btnSetupBackground)
         self.btnSetNormalSize = QtGui.QPushButton(self.groupBox_5)
+        self.btnSetNormalSize.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
         self.btnSetNormalSize.setText(_fromUtf8(""))
         icon2 = QtGui.QIcon()
         icon2.addPixmap(QtGui.QPixmap(_fromUtf8(":/Project/normal_off.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.btnSetNormalSize.setIcon(icon2)
         self.btnSetNormalSize.setIconSize(QtCore.QSize(50, 50))
+        self.btnSetNormalSize.setCheckable(True)
         self.btnSetNormalSize.setFlat(True)
         self.btnSetNormalSize.setObjectName(_fromUtf8("btnSetNormalSize"))
         self.horizontalLayout_7.addWidget(self.btnSetNormalSize)

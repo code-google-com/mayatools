@@ -1,6 +1,6 @@
-﻿# checkout files on Perforce
+﻿# checkout files on Perforce in src folders
 # copy src from SVN to Perforce 
-# remove .pyc and .ui
+# remove all things apart from .pyc
 # submit files to Perforce
 
 $SrcPath = $PSScriptRoot;
