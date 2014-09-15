@@ -1,0 +1,78 @@
+<?xml version="1.0" ?>
+<Project name="template_proj">
+	<Managers>
+		<Tech>
+			<user name = "trungtran" email = "trungtq@glassegg.com"/>
+			<user name = "quynguyen" email = "ndquy@glassegg.com"/>
+		</Tech>
+		<ArtDirector>
+			<user name = "tungvo" email = ""/>
+			<user name = "huongnguyen" email = ""/>
+			<user name = "phuongnguyen" email =""/>
+			<user name = "minhle" email = ""/>
+		</ArtDirector>
+		<Producer>
+			<user name = "thudang" email = "thudang@glassegg.com"/>
+			<user name = "phucdo" email = "phucdo@glassegg.com"/>
+		</Producer>
+	</Managers>
+	<Directories>
+		<ServerPath path = "//glassegg.com/projects/Scenes/Sony_Vehicles_2012/art/"/>
+		<LocalPath path = "M:/art/vehicles/"/>
+		<DocumentsPath path = "//glassegg.com/projects/Documents_Feedbacks/Sony_Vehicles_2012/"/>
+		<FeedbacksPath path = "//glassegg.com/projects/Documents_Feedbacks/Sony_Vehicles_2012/Feedbacks/"/>
+		<ReferencesImagePath path = "//glassegg.com/Images_References\Lives\Sony_Vehicles_2012/"/>
+	</Directories>
+	<ProjectData>
+		<AssetList file="AssetList.xml" />
+		<Module>
+			<tab name="NAMING">
+				<module name = "nametools">
+					<submodule name = "basicnameWidget"/>
+				</module>
+			</tab>		
+			<tab name="POLY">
+				<module name = "setupscene">
+					<submodule name = "setupsceneWidget"/>
+				</module>
+				<module name = "mirrortools"/>
+				<module name = "modeltools"/>
+				<module name = "normaltools"/> 
+			</tab>
+			<tab name="UV">
+				<module name = "uvtools"/>
+			</tab>			
+			<tab name="SHADER">
+				<module name = "debugshaders"/>
+				<module name = "editshaders"/>
+				<module name = "editvertexcolors"/>	
+				<module name = "bakingao"/>	
+			</tab>
+			<tab name="PIVOT">
+				<module name = "pivottools"/>
+			</tab>			
+			<tab name="ANIMATE"/>			
+			<tab name="CLEAN UP">
+				<module name = 'cleanertools'>
+					<submodule name = "Cleaning_Scene_Tools">
+						<item name = "CleanKeyFrame"/>
+						<item name = "CleanUpDeadShapes"/>
+						<item name = "CleanUpInstanceNodes"/>
+						<item name = "CleanUpScene"/>
+						<item name = "CorrectNodeName"/>			
+					</submodule>				
+					<submodule name = "Cleaning_Mesh_Tools"/>
+					<submodule name = "Cleaning_Shaders_and_Textures"/>
+					<submodule name = "Fix_issues_per_mesh"/>
+					<submodule name = "Technical_Setup"/>
+				</module>
+			</tab>	
+			<tab name="THIRD PARTY">
+				<module name = 'thirdtools'>
+					<submodule name = "dDoMaterialManager"/>
+					<submodule name = "zPipeMakerSimple"/>		
+				</module>			
+			</tab>	
+		</Module>
+	</ProjectData>
+</Project>
