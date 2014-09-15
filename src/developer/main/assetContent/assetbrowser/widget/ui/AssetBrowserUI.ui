@@ -3,7 +3,7 @@
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
   <property name="windowModality">
-   <enum>Qt::WindowModal</enum>
+   <enum>Qt::NonModal</enum>
   </property>
   <property name="enabled">
    <bool>true</bool>
@@ -23,7 +23,7 @@
    <string>Asset Browser</string>
   </property>
   <property name="windowOpacity">
-   <double>0.000000000000000</double>
+   <double>1.000000000000000</double>
   </property>
   <property name="documentMode">
    <bool>true</bool>
