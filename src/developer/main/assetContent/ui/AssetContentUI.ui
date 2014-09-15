@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>1387</width>
-    <height>811</height>
+    <height>781</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -92,7 +92,7 @@
                  <string/>
                 </property>
                 <property name="icon">
-                 <iconset resource="../../../source/icons/IconResource.qrc">
+                 <iconset>
                   <normaloff>:/Project/arrow-down.png</normaloff>:/Project/arrow-down.png</iconset>
                 </property>
                 <property name="iconSize">
@@ -720,7 +720,7 @@ background-image: url(:/images/strip.png);</string>
                  <string>Filter Asset</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../../../source/icons/IconResource.qrc">
+                 <iconset>
                   <normaloff>:/Project/arrow-right.png</normaloff>:/Project/arrow-right.png</iconset>
                 </property>
                 <property name="flat">
@@ -795,7 +795,7 @@ background-image: url(:/images/strip.png);</string>
            <enum>QTabWidget::Rounded</enum>
           </property>
           <property name="currentIndex">
-           <number>3</number>
+           <number>2</number>
           </property>
           <property name="documentMode">
            <bool>true</bool>
@@ -1121,7 +1121,7 @@ background-image: url(:/images/strip.png);</string>
                    <string/>
                   </property>
                   <property name="icon">
-                   <iconset resource="../../../source/icons/IconResource.qrc">
+                   <iconset>
                     <normaloff>:/Project/Check.png</normaloff>:/Project/Check.png</iconset>
                   </property>
                   <property name="flat">
@@ -1138,7 +1138,7 @@ background-image: url(:/images/strip.png);</string>
                    <string/>
                   </property>
                   <property name="icon">
-                   <iconset resource="../../../source/icons/IconResource.qrc">
+                   <iconset>
                     <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
                   </property>
                   <property name="flat">
@@ -1155,7 +1155,7 @@ background-image: url(:/images/strip.png);</string>
                    <string/>
                   </property>
                   <property name="icon">
-                   <iconset resource="../../../source/icons/IconResource.qrc">
+                   <iconset>
                     <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
                   </property>
                   <property name="flat">
@@ -1515,7 +1515,7 @@ background-image: url(:/images/strip.png);</string>
                   <string/>
                  </property>
                  <property name="icon">
-                  <iconset resource="../../../source/icons/IconResource.qrc">
+                  <iconset>
                    <normaloff>:/Project/Check.png</normaloff>:/Project/Check.png</iconset>
                  </property>
                  <property name="flat">
@@ -1532,7 +1532,7 @@ background-image: url(:/images/strip.png);</string>
                   <string/>
                  </property>
                  <property name="icon">
-                  <iconset resource="../../../source/icons/IconResource.qrc">
+                  <iconset>
                    <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
                  </property>
                  <property name="flat">
@@ -1549,7 +1549,7 @@ background-image: url(:/images/strip.png);</string>
                   <string/>
                  </property>
                  <property name="icon">
-                  <iconset resource="../../../source/icons/IconResource.qrc">
+                  <iconset>
                    <normaloff>:/Project/Delete.png</normaloff>:/Project/Delete.png</iconset>
                  </property>
                  <property name="flat">
@@ -1610,7 +1610,7 @@ background-image: url(:/images/strip.png);</string>
                   <string/>
                  </property>
                  <property name="icon">
-                  <iconset resource="../../../source/icons/IconResource.qrc">
+                  <iconset>
                    <normaloff>:/Project/Check.png</normaloff>:/Project/Check.png</iconset>
                  </property>
                  <property name="flat">
@@ -1627,7 +1627,7 @@ background-image: url(:/images/strip.png);</string>
                   <string/>
                  </property>
                  <property name="icon">
-                  <iconset resource="../../../source/icons/IconResource.qrc">
+                  <iconset>
                    <normaloff>:/Project/Edit.png</normaloff>:/Project/Edit.png</iconset>
                  </property>
                  <property name="flat">

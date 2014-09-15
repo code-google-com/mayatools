@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\source\ui\ProjectForm.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\source\ui\ProjectForm.ui'
 #
-# Created: Sun Sep 14 20:56:00 2014
+# Created: Mon Sep 15 15:45:18 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -65,7 +65,7 @@ class Ui_ProjectMainForm(object):
         self.menuHelp = QtGui.QMenu(self.menubar)
         self.menuHelp.setObjectName(_fromUtf8("menuHelp"))
         self.menuIntegrate_with_Source_Control = QtGui.QMenu(self.menuHelp)
-        self.menuIntegrate_with_Source_Control.setGeometry(QtCore.QRect(915, 193, 251, 222))
+        self.menuIntegrate_with_Source_Control.setGeometry(QtCore.QRect(915, 193, 248, 222))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/Project/Exchange.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.menuIntegrate_with_Source_Control.setIcon(icon)
@@ -114,8 +114,6 @@ class Ui_ProjectMainForm(object):
         self.actionQA = QtGui.QAction(ProjectMainForm)
         self.actionQA.setIcon(icon3)
         self.actionQA.setObjectName(_fromUtf8("actionQA"))
-        self.actionAsset = QtGui.QAction(ProjectMainForm)
-        self.actionAsset.setObjectName(_fromUtf8("actionAsset"))
         self.actionUpdatedProject = QtGui.QAction(ProjectMainForm)
         self.actionUpdatedProject.setCheckable(True)
         icon5 = QtGui.QIcon()
@@ -145,8 +143,6 @@ class Ui_ProjectMainForm(object):
         self.actionDelete = QtGui.QAction(ProjectMainForm)
         self.actionDelete.setIcon(icon2)
         self.actionDelete.setObjectName(_fromUtf8("actionDelete"))
-        self.actionAsset_Browser = QtGui.QAction(ProjectMainForm)
-        self.actionAsset_Browser.setObjectName(_fromUtf8("actionAsset_Browser"))
         self.actionSettings = QtGui.QAction(ProjectMainForm)
         self.actionSettings.setObjectName(_fromUtf8("actionSettings"))
         self.actionUpdate_tools = QtGui.QAction(ProjectMainForm)
@@ -190,7 +186,15 @@ class Ui_ProjectMainForm(object):
         self.actionNew_Project.setObjectName(_fromUtf8("actionNew_Project"))
         self.actionEdit_Project = QtGui.QAction(ProjectMainForm)
         self.actionEdit_Project.setObjectName(_fromUtf8("actionEdit_Project"))
-        self.menuAssets.addAction(self.actionAsset)
+        self.actionAssetQA = QtGui.QAction(ProjectMainForm)
+        self.actionAssetQA.setObjectName(_fromUtf8("actionAssetQA"))
+        self.actionAssetTracking = QtGui.QAction(ProjectMainForm)
+        self.actionAssetTracking.setObjectName(_fromUtf8("actionAssetTracking"))
+        self.actionAssetBrowser = QtGui.QAction(ProjectMainForm)
+        self.actionAssetBrowser.setObjectName(_fromUtf8("actionAssetBrowser"))
+        self.menuAssets.addAction(self.actionAssetQA)
+        self.menuAssets.addAction(self.actionAssetTracking)
+        self.menuAssets.addAction(self.actionAssetBrowser)
         self.menuConnect_to_Source_Control.addAction(self.actionPerforce)
         self.menuConnect_to_Source_Control.addAction(self.actionSVN)
         self.menuCheck_out.addAction(self.actionAdd_to_Existing_Changelist)
@@ -237,7 +241,6 @@ class Ui_ProjectMainForm(object):
         self.actionTo_Left.setText(_translate("ProjectMainForm", "to Left", None))
         self.actionTo_Right.setText(_translate("ProjectMainForm", "to Right", None))
         self.actionQA.setText(_translate("ProjectMainForm", "QA", None))
-        self.actionAsset.setText(_translate("ProjectMainForm", "Open Asset Content", None))
         self.actionUpdatedProject.setText(_translate("ProjectMainForm", "Install Update", None))
         self.actionUpdatedProject.setShortcut(_translate("ProjectMainForm", "Ctrl+U", None))
         self.actionSettings_2.setText(_translate("ProjectMainForm", "Settings...", None))
@@ -245,7 +248,6 @@ class Ui_ProjectMainForm(object):
         self.actionAdd.setText(_translate("ProjectMainForm", "Add file to Source Control", None))
         self.actionRevert.setText(_translate("ProjectMainForm", "Revert", None))
         self.actionDelete.setText(_translate("ProjectMainForm", "Delete file", None))
-        self.actionAsset_Browser.setText(_translate("ProjectMainForm", "Asset Browser", None))
         self.actionSettings.setText(_translate("ProjectMainForm", "Connect to Source Control ...", None))
         self.actionUpdate_tools.setText(_translate("ProjectMainForm", "Update tools", None))
         self.actionAbouts.setText(_translate("ProjectMainForm", "About", None))
@@ -266,4 +268,7 @@ class Ui_ProjectMainForm(object):
         self.actionRight.setText(_translate("ProjectMainForm", "Right", None))
         self.actionNew_Project.setText(_translate("ProjectMainForm", "New Project", None))
         self.actionEdit_Project.setText(_translate("ProjectMainForm", "Edit Project", None))
+        self.actionAssetQA.setText(_translate("ProjectMainForm", "Asset QA", None))
+        self.actionAssetTracking.setText(_translate("ProjectMainForm", "Asset Tracking", None))
+        self.actionAssetBrowser.setText(_translate("ProjectMainForm", "Asset Browser", None))
 

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\editvertexcolors\widget\ui\editVertexColorsUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\editvertexcolors\widget\ui\editVertexColorsUI.ui'
 #
-# Created: Sun Sep 14 20:55:59 2014
+# Created: Mon Sep 15 15:45:15 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!

@@ -88,7 +88,9 @@
     <property name="title">
      <string>Assets</string>
     </property>
-    <addaction name="actionAsset"/>
+    <addaction name="actionAssetQA"/>
+    <addaction name="actionAssetTracking"/>
+    <addaction name="actionAssetBrowser"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -99,7 +101,7 @@
       <rect>
        <x>915</x>
        <y>193</y>
-       <width>251</width>
+       <width>248</width>
        <height>222</height>
       </rect>
      </property>
@@ -228,11 +230,6 @@
     <string>QA</string>
    </property>
   </action>
-  <action name="actionAsset">
-   <property name="text">
-    <string>Open Asset Content</string>
-   </property>
-  </action>
   <action name="actionUpdatedProject">
    <property name="checkable">
     <bool>true</bool>
@@ -300,11 +297,6 @@
    </property>
    <property name="text">
     <string>Delete file</string>
-   </property>
-  </action>
-  <action name="actionAsset_Browser">
-   <property name="text">
-    <string>Asset Browser</string>
    </property>
   </action>
   <action name="actionSettings">
@@ -413,6 +405,21 @@
   <action name="actionEdit_Project">
    <property name="text">
     <string>Edit Project</string>
+   </property>
+  </action>
+  <action name="actionAssetQA">
+   <property name="text">
+    <string>Asset QA</string>
+   </property>
+  </action>
+  <action name="actionAssetTracking">
+   <property name="text">
+    <string>Asset Tracking</string>
+   </property>
+  </action>
+  <action name="actionAssetBrowser">
+   <property name="text">
+    <string>Asset Browser</string>
    </property>
   </action>
  </widget>

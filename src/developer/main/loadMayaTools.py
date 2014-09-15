@@ -5,7 +5,10 @@ try:
 except:
     from developer.main.common import mainEntry
     
-from developer.main.common import commonFunctions as cf
+try:
+    reload(cf)
+except:
+    from developer.main.common import commonFunctions as cf
 
 def loadProject(projName):
     ProjectXML = cf.getPath(__file__, 2) + '/projects/' + projName + '.xml'

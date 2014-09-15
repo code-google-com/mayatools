@@ -23,13 +23,14 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		self.btnRight.clicked.connect(functools.partial(self.moveUVShell,'right'))
 		self.btnMirrorU.clicked.connect(functools.partial(uFn.mirrorUV,'H'))
 		self.btnMirrorV.clicked.connect(functools.partial(uFn.mirrorUV,'V'))
-    
+       	
 	def moveUVShell(self, direction):
 		if direction == 'down':
 			cmds.polyEditUVShell( u = 0, v = -float(self.lineEdit.text()))
 		if direction == 'up':
 			cmds.polyEditUVShell( u = 0, v = float(self.lineEdit.text()))
 		if direction == 'left':
-			cmds.polyEditUVShell( u = -float(self.lineEdit.text()), v = 0)
+		    cmds.polyEditUVShell( u = -float(self.lineEdit.text()), v = 0)
 		if direction == 'right':
 			cmds.polyEditUVShell( u = float(self.lineEdit.text()), v = 0)
+

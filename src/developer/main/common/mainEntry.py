@@ -41,6 +41,16 @@ try:
 except:
     from developer.main.common import clientSub
     
+try:
+    reload(aBw)
+except:
+    from developer.main.assetContent.assetbrowser.widget import AssetBrowserWidget as aBw
+    
+try:
+    reload(aQa)
+except:
+    from developer.main.assetContent.assetQA.widget import AssetQAWidget as aQa
+    
 #-- generate form_class and base_class to load Ui
 
 class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
@@ -53,7 +63,8 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         self.loadUI()
         # -- set ui controller
         
-        self.actionAsset.triggered.connect(self.openAssetBrowser)
+        self.actionAssetBrowser.triggered.connect(self.openAssetBrowser)
+        self.actionAssetQA.triggered.connect(self.openAssetQA)
         self.actionNew_Project.triggered.connect(self.openProjectCreator)
         
         # -- create socket linked project name:
@@ -69,10 +80,16 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
     ## show asset content form
     
     def openAssetBrowser(self):
-        if py.window('assetContentForm', q = True, ex= True):
-            py.deleteUI('assetContentForm')
-        asc = cf.loadNestedModule('developer.main.assetContent.main')
-        asc.show()
+        if py.window('assetBrowserForm', q = True, ex= True):
+            py.deleteUI('assetBrowserForm')
+        form = aBw.QtWidget()
+        form.show()
+        
+    def openAssetQA(self):
+        if py.window('assetQAForm', q = True, ex= True):
+            py.deleteUI('assetQAForm')
+        form = aQa.QtWidget()
+        form.show()
                 
     ## show project creator form  
       

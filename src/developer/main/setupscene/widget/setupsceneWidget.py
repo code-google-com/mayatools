@@ -42,7 +42,7 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		self.sldEdgeSize.setMinimum(1)
 		self.actionEdgeSize = QtGui.QWidgetAction(self.sldEdgeSize)
 		self.actionEdgeSize.setDefaultWidget(self.sldEdgeSize)
-		self.btnSetNormalSize.addAction(self.actionEdgeSize)
+		
 		
 		self.btnDisplayOptions.addAction(self.actionShowBorderEdges)
 		self.btnDisplayOptions.addAction(self.actionShowUVSeams)
@@ -84,7 +84,7 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		if not isNormalShowup:
 			return
 		else:
-			cmds.polyOptions(gl = True, dn = isNormalShowup, pt = True, sn = self.slider.value()/10.0)
+			cmds.polyOptions(gl = True, dn = isNormalShowup, pt = True, sn = self.slider.value()/150.0)
 		
 	def switchToNormalView(self):
 		selObjs = cmds.ls(sl = True)
@@ -93,7 +93,7 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 			return
 		else:
 			isNormalShowup = cmds.polyOptions(selObjs[0], q = True, dn = True)[0]
-			cmds.polyOptions(gl = True, dn = not isNormalShowup, pt = True, sn = self.slider.value()/10.0)
+			cmds.polyOptions(gl = True, dn = not isNormalShowup, pt = True, sn = self.slider.value()/150.0)
 			self.btnSetNormalSize.setChecked(not isNormalShowup)
 			if isNormalShowup:	
 				self.btnSetNormalSize.setIcon(QtGui.QIcon(':/Project/normal_off.png'))
