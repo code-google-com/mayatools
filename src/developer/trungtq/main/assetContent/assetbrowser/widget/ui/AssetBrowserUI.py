@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\AssetBrowserUI.ui'
 #
-# Created: Mon Sep 15 16:28:28 2014
+# Created: Mon Sep 15 18:57:22 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -38,14 +38,18 @@ class Ui_MainWindow(object):
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.splitter = QtGui.QSplitter(self.centralwidget)
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
+        self.splitter.setOpaqueResize(True)
+        self.splitter.setHandleWidth(10)
+        self.splitter.setChildrenCollapsible(False)
         self.splitter.setObjectName(_fromUtf8("splitter"))
         self.layoutWidget = QtGui.QWidget(self.splitter)
         self.layoutWidget.setObjectName(_fromUtf8("layoutWidget"))
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.layoutWidget)
+        self.verticalLayout_2.setSizeConstraint(QtGui.QLayout.SetMaximumSize)
         self.verticalLayout_2.setMargin(0)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
-        self.horizontalLayout_2.setSizeConstraint(QtGui.QLayout.SetMaximumSize)
+        self.horizontalLayout_2.setSizeConstraint(QtGui.QLayout.SetFixedSize)
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
         self.ldtFilter_2 = QtGui.QLineEdit(self.layoutWidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
@@ -56,7 +60,7 @@ class Ui_MainWindow(object):
         self.ldtFilter_2.setObjectName(_fromUtf8("ldtFilter_2"))
         self.horizontalLayout_2.addWidget(self.ldtFilter_2)
         self.pushButton = QtGui.QPushButton(self.layoutWidget)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.pushButton.sizePolicy().hasHeightForWidth())
