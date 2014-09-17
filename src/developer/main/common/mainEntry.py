@@ -51,6 +51,11 @@ try:
 except:
     from developer.main.assetContent.assetQA.widget import AssetQAWidget as aQa
     
+try:
+    reload(lgW)
+except:
+    from developer.main.assetContent.assetbrowser.widget import loginWidget as lgW
+    
 #-- generate form_class and base_class to load Ui
 
 class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
@@ -80,10 +85,16 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
     ## show asset content form
     
     def openAssetBrowser(self):
-        if py.window('assetBrowserForm', q = True, ex= True):
-            py.deleteUI('assetBrowserForm')
-        form = aBw.QtWidget()
+        # -- open login form to authenticate Perforce connection
+        if py.window('loginForm', q = True, ex= True):
+            py.deleteUI('loginForm')
+        form = lgW.QtWidget()
         form.show()
+        
+        #if not py.window('assetBrowserForm', q = True, ex= True):
+        #    #py.deleteUI('assetBrowserForm')
+        #    form = aBw.QtWidget()
+        #    form.show()
         
     def openAssetQA(self):
         if py.window('assetQAForm', q = True, ex= True):

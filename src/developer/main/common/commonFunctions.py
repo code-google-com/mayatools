@@ -12,6 +12,7 @@ import xml.etree.ElementTree as xml
 from PyQt4 import QtCore, QtGui, uic
 import sip
 
+
 def loadNestedModule(name):
     if name in sys.modules.keys():
         sys.modules.pop(name)
@@ -231,4 +232,9 @@ def saveFileIncrement():
             print nameFile
         cmds.file(rn = nameFile)
         cmds.file(s = True, type = 'mayaBinary')
+        
+
+        
+
+            
         
