@@ -32,7 +32,8 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		self.btnLogin.clicked.connect(self.authenticateP4Conn)
 		self.btnLoginNoSC.clicked.connect(partial(self.SCConnected.emit, str(self.isConnected)))
 		
-	def showInfo(self):
+    def showInfo(self):
+		pass
 		
 	# -- loading workspaces base on 
     def loadWorkSpaces(self):
