@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>992</width>
-    <height>610</height>
+    <width>1405</width>
+    <height>867</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -32,6 +32,12 @@
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QSplitter" name="splitter">
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Sunken</enum>
+      </property>
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
@@ -43,12 +49,15 @@
            <enum>QLayout::SetMaximumSize</enum>
           </property>
           <item>
-           <widget class="QLineEdit" name="ldtFilter_2">
+           <widget class="QLineEdit" name="edtRootLocation">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -755,7 +764,7 @@ background-image: url(:/images/strip.png);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>992</width>
+     <width>1405</width>
      <height>26</height>
     </rect>
    </property>

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\loginUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\loginUI.ui'
 #
-# Created: Wed Sep 17 00:50:22 2014
+# Created: Wed Sep 17 15:12:59 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -27,7 +27,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.setWindowModality(QtCore.Qt.ApplicationModal)
-        MainWindow.resize(490, 258)
+        MainWindow.resize(490, 303)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.centralwidget)
@@ -82,14 +82,37 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addWidget(self.cbbWorkSpaces)
         self.horizontalLayout.addLayout(self.verticalLayout_2)
         self.verticalLayout_3.addLayout(self.horizontalLayout)
+        self.horizontalLayout_3 = QtGui.QHBoxLayout()
+        self.horizontalLayout_3.setSpacing(5)
+        self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
+        self.pushButton = QtGui.QPushButton(self.centralwidget)
+        font = QtGui.QFont()
+        font.setPointSize(6)
+        self.pushButton.setFont(font)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/Project/arrow-right.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.pushButton.setIcon(icon)
+        self.pushButton.setIconSize(QtCore.QSize(10, 10))
+        self.pushButton.setFlat(True)
+        self.pushButton.setObjectName(_fromUtf8("pushButton"))
+        self.horizontalLayout_3.addWidget(self.pushButton)
+        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_3.addItem(spacerItem)
+        self.verticalLayout_3.addLayout(self.horizontalLayout_3)
         self.textEdit = QtGui.QTextEdit(self.centralwidget)
         self.textEdit.setTextInteractionFlags(QtCore.Qt.TextSelectableByKeyboard|QtCore.Qt.TextSelectableByMouse)
         self.textEdit.setObjectName(_fromUtf8("textEdit"))
         self.verticalLayout_3.addWidget(self.textEdit)
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
-        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayout_2.addItem(spacerItem)
+        self.btnLogin = QtGui.QPushButton(self.centralwidget)
+        self.btnLogin.setObjectName(_fromUtf8("btnLogin"))
+        self.horizontalLayout_2.addWidget(self.btnLogin)
+        self.btnLoginNoSC = QtGui.QPushButton(self.centralwidget)
+        self.btnLoginNoSC.setObjectName(_fromUtf8("btnLoginNoSC"))
+        self.horizontalLayout_2.addWidget(self.btnLoginNoSC)
+        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_2.addItem(spacerItem1)
         self.checkBox = QtGui.QCheckBox(self.centralwidget)
         self.checkBox.setObjectName(_fromUtf8("checkBox"))
         self.horizontalLayout_2.addWidget(self.checkBox)
@@ -108,5 +131,9 @@ class Ui_MainWindow(object):
         self.edtPort.setPlaceholderText(_translate("MainWindow", "-- Ip server --", None))
         self.edtUserName.setPlaceholderText(_translate("MainWindow", "-- username --", None))
         self.edtPassWord.setPlaceholderText(_translate("MainWindow", "-- password --", None))
+        self.pushButton.setText(_translate("MainWindow", "Show more info", None))
+        self.btnLogin.setText(_translate("MainWindow", "Log In", None))
+        self.btnLoginNoSC.setText(_translate("MainWindow", "Log In Without SC", None))
         self.checkBox.setText(_translate("MainWindow", "Remember me", None))
 
+import developer.main.source.IconResource_rc

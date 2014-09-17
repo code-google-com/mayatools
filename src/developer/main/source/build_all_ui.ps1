@@ -1,4 +1,4 @@
-﻿$root = $PSScriptRoot;
+﻿    $root = $PSScriptRoot;
 $uis_dir = $root.Replace("source", "");
 $files = Get-ChildItem $uis_dir -Recurse -Filter *.ui;
 foreach($f in $files)

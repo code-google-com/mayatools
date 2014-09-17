@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>490</width>
-    <height>258</height>
+    <height>303</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -107,6 +107,51 @@
      </layout>
     </item>
     <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <property name="spacing">
+       <number>5</number>
+      </property>
+      <item>
+       <widget class="QPushButton" name="pushButton">
+        <property name="font">
+         <font>
+          <pointsize>6</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Show more info</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../../../source/icons/IconResource.qrc">
+          <normaloff>:/Project/arrow-right.png</normaloff>:/Project/arrow-right.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>10</width>
+          <height>10</height>
+         </size>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item>
      <widget class="QTextEdit" name="textEdit">
       <property name="textInteractionFlags">
        <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
@@ -116,14 +161,14 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="btnLogin">
         <property name="text">
          <string>Log In</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_2">
+       <widget class="QPushButton" name="btnLoginNoSC">
         <property name="text">
          <string>Log In Without SC</string>
         </property>
@@ -154,6 +199,8 @@
    </layout>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../../../source/icons/IconResource.qrc"/>
+ </resources>
  <connections/>
 </ui>

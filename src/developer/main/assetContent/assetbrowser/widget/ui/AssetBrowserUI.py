@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\AssetBrowserUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\AssetBrowserUI.ui'
 #
-# Created: Wed Sep 17 00:50:22 2014
+# Created: Wed Sep 17 15:12:58 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -28,7 +28,7 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.setWindowModality(QtCore.Qt.NonModal)
         MainWindow.setEnabled(True)
-        MainWindow.resize(992, 610)
+        MainWindow.resize(1405, 867)
         MainWindow.setAcceptDrops(True)
         MainWindow.setWindowOpacity(1.0)
         MainWindow.setDocumentMode(True)
@@ -37,6 +37,8 @@ class Ui_MainWindow(object):
         self.verticalLayout = QtGui.QVBoxLayout(self.centralwidget)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.splitter = QtGui.QSplitter(self.centralwidget)
+        self.splitter.setFrameShape(QtGui.QFrame.NoFrame)
+        self.splitter.setFrameShadow(QtGui.QFrame.Sunken)
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
         self.splitter.setObjectName(_fromUtf8("splitter"))
         self.layoutWidget = QtGui.QWidget(self.splitter)
@@ -47,14 +49,15 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
         self.horizontalLayout_2.setSizeConstraint(QtGui.QLayout.SetMaximumSize)
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
-        self.ldtFilter_2 = QtGui.QLineEdit(self.layoutWidget)
+        self.edtRootLocation = QtGui.QLineEdit(self.layoutWidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.ldtFilter_2.sizePolicy().hasHeightForWidth())
-        self.ldtFilter_2.setSizePolicy(sizePolicy)
-        self.ldtFilter_2.setObjectName(_fromUtf8("ldtFilter_2"))
-        self.horizontalLayout_2.addWidget(self.ldtFilter_2)
+        sizePolicy.setHeightForWidth(self.edtRootLocation.sizePolicy().hasHeightForWidth())
+        self.edtRootLocation.setSizePolicy(sizePolicy)
+        self.edtRootLocation.setReadOnly(True)
+        self.edtRootLocation.setObjectName(_fromUtf8("edtRootLocation"))
+        self.horizontalLayout_2.addWidget(self.edtRootLocation)
         self.pushButton = QtGui.QPushButton(self.layoutWidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -331,7 +334,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 992, 26))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1405, 26))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuPreferences = QtGui.QMenu(self.menubar)
         self.menuPreferences.setObjectName(_fromUtf8("menuPreferences"))

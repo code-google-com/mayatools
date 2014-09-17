@@ -66,11 +66,16 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         self.proj = projb.projectBase(XMLProject)
         self.setWindowTitle(self.proj.ProjectName)
         self.loadUI()
+        # -- form variables
+        
+        #self.logForm = lgW.QtWidget()
+        
         # -- set ui controller
         
-        self.actionAssetBrowser.triggered.connect(self.openAssetBrowser)
+        self.actionAssetBrowser.triggered.connect(self.openAssetLogin)
         self.actionAssetQA.triggered.connect(self.openAssetQA)
         self.actionNew_Project.triggered.connect(self.openProjectCreator)
+        
         
         # -- create socket linked project name:
         # ------ only Technician can publish and edit code
@@ -84,17 +89,23 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
 
     ## show asset content form
     
-    def openAssetBrowser(self):
+    def openAssetLogin(self):
         # -- open login form to authenticate Perforce connection
         if py.window('loginForm', q = True, ex= True):
             py.deleteUI('loginForm')
-        form = lgW.QtWidget()
+        self.logForm = lgW.QtWidget()
+        self.logForm.SCConnected.connect(self.openAssetBrowser)
+        self.logForm.show()
+            
+    def openAssetBrowser(self):
+        if py.window('assetBrowserForm', q = True, ex= True):
+            py.deleteUI('assetBrowserForm')
+        if self.logForm.isConnected:
+            form = aBw.QtWidget(self.logForm.dir)
+        else:
+            form = aBw.QtWidget()
+        self.logForm.close()
         form.show()
-        
-        #if not py.window('assetBrowserForm', q = True, ex= True):
-        #    #py.deleteUI('assetBrowserForm')
-        #    form = aBw.QtWidget()
-        #    form.show()
         
     def openAssetQA(self):
         if py.window('assetQAForm', q = True, ex= True):
