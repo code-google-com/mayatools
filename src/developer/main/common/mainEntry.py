@@ -22,7 +22,6 @@ try:
     reload(pjc)
 except:
     from developer.main.projectcreator import main as pjc
-#-- get ui dir 
 
 try:
     reload(ProjectForm)
@@ -90,9 +89,9 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         # -- open login form to authenticate Perforce connection
         if py.window('loginForm', q = True, ex= True):
             py.deleteUI('loginForm')
-        logForm = lgW.QtWidget()
-        logForm.SCConnected.connect(self.openAssetBrowser)
-        logForm.show()
+        self.logForm = lgW.QtWidget()
+        self.logForm.SCConnected.connect(self.openAssetBrowser)
+        self.logForm.show()
             
     def openAssetBrowser(self):
         if py.window('assetBrowserForm', q = True, ex= True):

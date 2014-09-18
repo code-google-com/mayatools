@@ -51,7 +51,7 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		    		self.cbbWorkSpaces.addItem(wp['client'])
 		except P4Exception:
 			for e in p4.errors:
-				print e
+				self.textEdit.append(e + '\n')
 		finally:
 			p4.disconnect()
 
@@ -68,7 +68,6 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 			p4.disconnect()
 			self.isConnected = True
 			self.SCConnected.emit(str(self.isConnected))
-			#self.close()
 		except P4Exception:
 			for e in p4.errors:
 				self.textEdit.append(e + '\n')

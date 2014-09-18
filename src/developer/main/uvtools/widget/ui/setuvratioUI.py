@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\uvtools\widget\ui\setuvratioUI.ui'
 #
-# Created: Wed Sep 17 15:13:06 2014
+# Created: Thu Sep 18 14:38:31 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
