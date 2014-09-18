@@ -66,9 +66,6 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         self.proj = projb.projectBase(XMLProject)
         self.setWindowTitle(self.proj.ProjectName)
         self.loadUI()
-        # -- form variables
-        
-        #self.logForm = lgW.QtWidget()
         
         # -- set ui controller
         
@@ -93,9 +90,9 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         # -- open login form to authenticate Perforce connection
         if py.window('loginForm', q = True, ex= True):
             py.deleteUI('loginForm')
-        self.logForm = lgW.QtWidget()
-        self.logForm.SCConnected.connect(self.openAssetBrowser)
-        self.logForm.show()
+        logForm = lgW.QtWidget()
+        logForm.SCConnected.connect(self.openAssetBrowser)
+        logForm.show()
             
     def openAssetBrowser(self):
         if py.window('assetBrowserForm', q = True, ex= True):
