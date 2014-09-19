@@ -60,7 +60,7 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 class assetWidget(QtGui.QListWidgetItem):
 	
 	def __init__(self):
-		super(assetWidget, self).__init__()bua 
+		super(assetWidget, self).__init__()
 			
 		
 		
