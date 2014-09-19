@@ -90,8 +90,8 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         if py.window('loginForm', q = True, ex= True):
             py.deleteUI('loginForm')
         self.logForm = lgW.QtWidget()
-        self.logForm.SCConnected.connect(self.openAssetBrowser)
         self.logForm.show()
+        self.logForm.SCConnected.connect(self.openAssetBrowser)
             
     def openAssetBrowser(self):
         if py.window('assetBrowserForm', q = True, ex= True):

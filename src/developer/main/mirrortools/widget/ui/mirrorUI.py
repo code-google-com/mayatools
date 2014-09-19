@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\mirrortools\widget\ui\mirrorUI.ui'
+# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\mirrortools\widget\ui\mirrorUI.ui'
 #
-# Created: Thu Sep 18 14:38:26 2014
+# Created: Thu Sep 18 10:47:11 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!

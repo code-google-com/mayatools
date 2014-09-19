@@ -14,7 +14,7 @@ from functools import partial
 import socket
 
 class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
-    SCConnected = QtCore.pyqtSignal('QString', name = 'sourceControlConnected')
+    SCConnected = QtCore.pyqtSignal([bool])
     def __init__(self, parent = cf.getMayaWindow()):
 		super(QtGui.QMainWindow, self).__init__(parent)
 		self.setupUi(self)
@@ -30,7 +30,7 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		#self.edtUserName.editingFinished.connect(self.loadWorkSpaces)
 		self.edtPassWord.editingFinished.connect(self.loadWorkSpaces)
 		self.btnLogin.clicked.connect(self.authenticateP4Conn)
-		self.btnLoginNoSC.clicked.connect(partial(self.SCConnected.emit, str(self.isConnected)))
+		self.btnLoginNoSC.clicked.connect(partial(self.SCConnected.emit, self.isConnected))
 		
     def showInfo(self):
 		pass
@@ -67,7 +67,7 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 			self.textEdit.append('Root location: ' + self.dir + '\n')
 			p4.disconnect()
 			self.isConnected = True
-			self.SCConnected.emit(str(self.isConnected))
+			self.SCConnected.emit(self.isConnected)
 		except P4Exception:
 			for e in p4.errors:
 				self.textEdit.append(e + '\n')
