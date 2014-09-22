@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="Project">
+    <file>empty.tif</file>
+    <file>mask.tif</file>
     <file>display_options.png</file>
     <file>white, without circle/heart.png</file>
     <file>window_bg.png</file>
@@ -43,7 +45,6 @@
     <file>IronMonkey_checker.tif</file>
     <file>Sony_checker_01.tif</file>
     <file>Sony_checker_02.tif</file>
-    <file>empty.tif</file>
     <file>Edit.png</file>
     <file>shader_damage.png</file>
     <file>normal.png</file>

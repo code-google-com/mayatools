@@ -97,9 +97,9 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         if py.window('assetBrowserForm', q = True, ex= True):
             py.deleteUI('assetBrowserForm')
         if self.logForm.isConnected:
-            form = aBw.QtWidget(self.logForm.dir)
+            form = aBw.QtWidget(self.logForm.dir) # connect to source control
         else:
-            form = aBw.QtWidget()
+            form = aBw.QtWidget() # not connect to source control
         self.logForm.close()
         form.show()
         

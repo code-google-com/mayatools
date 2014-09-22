@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\assetUI.ui'
 #
-# Created: Thu Sep 18 10:47:10 2014
+# Created: Sat Sep 20 09:29:39 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,12 +26,11 @@ except AttributeError:
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName(_fromUtf8("Form"))
-        Form.resize(281, 271)
-        self.verticalLayout = QtGui.QVBoxLayout(Form)
-        self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
+        Form.resize(390, 291)
         self.gpView = QtGui.QGraphicsView(Form)
+        self.gpView.setGeometry(QtCore.QRect(12, 12, 256, 192))
+        self.gpView.setRenderHints(QtGui.QPainter.Antialiasing|QtGui.QPainter.HighQualityAntialiasing|QtGui.QPainter.SmoothPixmapTransform|QtGui.QPainter.TextAntialiasing)
         self.gpView.setObjectName(_fromUtf8("gpView"))
-        self.verticalLayout.addWidget(self.gpView)
 
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
@@ -39,3 +38,4 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         Form.setWindowTitle(_translate("Form", "Form", None))
 
+import developer.main.source.IconResource_rc
