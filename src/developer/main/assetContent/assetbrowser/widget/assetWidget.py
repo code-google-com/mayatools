@@ -55,10 +55,8 @@ class assetWidget(QtGui.QGraphicsWidget):
  		# draw icon status
 		QPen = QtGui.QPen(QtCore.Qt.NoPen)
 		QBrush = QtGui.QBrush(QtCore.Qt.red, QtCore.Qt.SolidPattern)
- 		
 		QPainter.setBrush(QBrush)
 		QPainter.setPen(QPen)
-		
 		QPainter.drawEllipse(self._bg.width() - 20, self._bg.height() - 20, 15, 15)
 		
 	def updateIconStatus(self, newstatus):
