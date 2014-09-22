@@ -28,4 +28,6 @@ SET MAYA_MODULE_PATH="Z:\Software\Peregrine Labs Yeti 1.3.10 Maya 2014-2015 WinX
 REM use call to enter debug mode and see errors output from cmd
 REM call %COMMONPATH%"Maya "%MAYAVERSION%"-internalTools.lnk"
 
+CALL "E:\Program Files\Golaem\GolaemCrowd-3.1.0.1-Maya2014\bin\glmCrowdForMaya.bat"
+
 start %COMMONPATH%"Maya "%MAYAVERSION%"-internalTools.lnk"
