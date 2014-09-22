@@ -4,7 +4,6 @@ except:
 	from developer.main.common import commonFunctions as cf
 
 from PyQt4 import QtGui, QtCore
-from P4 import P4, P4Exception
 import os, sys
 
 status_dict = {'isLatestVersion':[0,1,0], 'isOutofDateVersion':[1,0,0],'isCheckedOutVersion':[1,0,0], 'isLocked':[0,0,0]}
@@ -16,7 +15,6 @@ script_type = ['py', 'mel', 'ms']
 
 class assetWidget(QtGui.QGraphicsWidget):
 	# create property for widget
-	NoSC, AddSC, UpSC, OutSC, CheckinSC, OtherSC = range(6) 
 	# create signal for item
 	
 	clicked = QtCore.pyqtSignal('QString')
