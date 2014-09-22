@@ -47,22 +47,26 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		
 		# set up connection treeView and listWidget
 		
-		self.view = QtGui.QGraphicsView()#aWg.AssetWidgetView()
-		#self.view.setViewport(QtOpenGL.QGLWidget())
-		self.view.setRenderHint(QtGui.QPainter.Antialiasing)
-		self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
-		self.view.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
-		#self.view.setCacheMode(QtGui.QGraphicsView.CacheNone)
+		self.view = aWg.AssetWidgetView()
+		
+		self.view.setSceneRect(0, 0, 1000, 500)
 		self.vGraphicsLayout.addWidget(self.view)
 		
 		# set scene to view
 		
 		self.scene = aWg.AssetWidgetScene()
-		self.scene.setSceneRect(0, 0, 100, 100)
 		self.view.setScene(self.scene)
+		self.view.setSceneRect(0, 0, 1000, 500)
 		
-		self.item = aWg.assetWidget()
-		self.scene.addItem(self.item)
+		self.item1 = aWg.assetWidget()
+		self.item2 = aWg.assetWidget()
+		self.scene.addItem(self.item1)
+		self.scene.addItem(self.item2)
+		self.item1.setPos(0,0)
+		self.item2.setPos(120,0)
+		
+	
+		
 		
 	
 		

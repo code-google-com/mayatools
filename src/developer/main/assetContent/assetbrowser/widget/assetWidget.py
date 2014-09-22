@@ -2,6 +2,11 @@ try:
 	reload(cf)
 except:
 	from developer.main.common import commonFunctions as cf
+	
+try: 
+	reload(fO)
+except:
+	from developer.main.assetContent.assetbrowser.widget import fileObject as fO
 
 from PyQt4 import QtGui, QtCore
 import os, sys
@@ -21,9 +26,12 @@ class assetWidget(QtGui.QGraphicsWidget):
 	changedStatus = QtCore.pyqtSignal()
 	changedBG = QtCore.pyqtSignal()
 
-	def __init__(self, image = None, lock = True,  parent = None):
+	def __init__(self, image = None, parent = None):
 		super(assetWidget, self).__init__(parent)
 		self._initSize = 100
+		self._radIcon = 10
+		
+		
 		if image:
 			self._bg = QtGui.QPixmap(image).scaled(self._initSize, self._initSize, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
 		else:
@@ -32,14 +40,16 @@ class assetWidget(QtGui.QGraphicsWidget):
 		self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
 		self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
 		self.setFlag(QtGui.QGraphicsItem.ItemIsFocusable)
-
+	
+	def boundingRect(self):
+		return QtCore.QRectF(0, 0, self._bg.size().width(), self._bg.size().height())
 		
 	def paint(self, QPainter, styleOption, widget = None):
 		
 		# draw a background image.
 		QPainter.drawPixmap(0, 0, self._bg)
 		
-		# draw reflection effect
+		# draw mirror image
 		QPainter.save()
 		QPixmapReflect = QtGui.QPixmap(self._bg)
 		QPixmapMask = QtGui.QPixmap(':/Project/mask.tif').scaled(self._initSize, self._initSize, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
@@ -50,14 +60,21 @@ class assetWidget(QtGui.QGraphicsWidget):
 		QPainter.drawPixmap(0, 0, QPixmapReflect)
 		QPainter.restore()
 		
+		# draw reflection effect
+		QPainter.save()
+		
+		QPainter.restore()
+		
+		# draw clipping rounded rectangle
+		
  		# draw icon status
 		QPen = QtGui.QPen(QtCore.Qt.NoPen)
-		QBrush = QtGui.QBrush(QtCore.Qt.red, QtCore.Qt.SolidPattern)
+		QBrush = QtGui.QBrush(QtGui.QColor(0,204,0), QtCore.Qt.SolidPattern)
 		QPainter.setBrush(QBrush)
 		QPainter.setPen(QPen)
-		QPainter.drawEllipse(self._bg.width() - 20, self._bg.height() - 20, 15, 15)
+		QPainter.drawEllipse(self._bg.width() - (self._radIcon + 5) , self._bg.height() - (self._radIcon + 5), self._radIcon, self._radIcon)
 		
-	def updateIconStatus(self, newstatus):
+	def updateIconStatus(self):
 		pass
 		
 class AssetWidgetScene(QtGui.QGraphicsScene):
@@ -86,10 +103,13 @@ class AssetWidgetView(QtGui.QGraphicsView):
 	def __init__(self, parent = None):
 		super(AssetWidgetView, self).__init__(parent)
 		self.setRenderHint(QtGui.QPainter.Antialiasing)
+		self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
+		self.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
+		self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+		self.setHorizontalScrollBarPolicy (QtCore.Qt.ScrollBarAsNeeded)
 	
 	def resizeEvent(self, event):
-		print event.size()
-			
+		super(AssetWidgetView, self).resizeEvent(event)
 
 			
 		

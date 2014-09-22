@@ -6,4 +6,5 @@ Created on Sep 21, 2014
 
 class fileObject(object):
     
-    def __init__:
+    def __init__(self):
+        pass
