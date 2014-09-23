@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\AssetBrowserUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\AssetBrowserUI.ui'
 #
-# Created: Sat Sep 20 09:29:39 2014
+# Created: Tue Sep 23 16:12:58 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -111,9 +111,25 @@ class Ui_MainWindow(object):
         self.horizontalSlider.setObjectName(_fromUtf8("horizontalSlider"))
         self.horizontalLayout.addWidget(self.horizontalSlider)
         self.verticalLayout_3.addLayout(self.horizontalLayout)
+        self.tabWidget = QtGui.QTabWidget(self.layoutWidget_2)
+        self.tabWidget.setObjectName(_fromUtf8("tabWidget"))
+        self.tab_3 = QtGui.QWidget()
+        self.tab_3.setObjectName(_fromUtf8("tab_3"))
+        self.verticalLayout_4 = QtGui.QVBoxLayout(self.tab_3)
+        self.verticalLayout_4.setMargin(3)
+        self.verticalLayout_4.setObjectName(_fromUtf8("verticalLayout_4"))
         self.vGraphicsLayout = QtGui.QVBoxLayout()
+        self.vGraphicsLayout.setSpacing(3)
         self.vGraphicsLayout.setObjectName(_fromUtf8("vGraphicsLayout"))
-        self.verticalLayout_3.addLayout(self.vGraphicsLayout)
+        self.verticalLayout_4.addLayout(self.vGraphicsLayout)
+        self.tabWidget.addTab(self.tab_3, _fromUtf8(""))
+        self.tab_4 = QtGui.QWidget()
+        self.tab_4.setObjectName(_fromUtf8("tab_4"))
+        self.tabWidget.addTab(self.tab_4, _fromUtf8(""))
+        self.tab = QtGui.QWidget()
+        self.tab.setObjectName(_fromUtf8("tab"))
+        self.tabWidget.addTab(self.tab, _fromUtf8(""))
+        self.verticalLayout_3.addWidget(self.tabWidget)
         self.verticalLayout.addWidget(self.splitter)
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
@@ -199,12 +215,16 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelps.menuAction())
 
         self.retranslateUi(MainWindow)
+        self.tabWidget.setCurrentIndex(2)
         QtCore.QObject.connect(self.treeViewPath, QtCore.SIGNAL(_fromUtf8("clicked(QModelIndex)")), self.edtRootLocation.show)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "Asset Browser", None))
         self.btnSearch.setText(_translate("MainWindow", "Filter Asset", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("MainWindow", "Asset", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), _translate("MainWindow", "Image", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Mesh", None))
         self.menuPreferences.setTitle(_translate("MainWindow", "Preferences", None))
         self.menuConnect_with_Source_Control.setTitle(_translate("MainWindow", "Connect with Source Control", None))
         self.menuHelps.setTitle(_translate("MainWindow", "Helps", None))

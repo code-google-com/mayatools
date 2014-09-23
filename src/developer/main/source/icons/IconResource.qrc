@@ -1,5 +1,11 @@
 <RCC>
   <qresource prefix="Project">
+    <file>mask_02.png</file>
+    <file>checkout.png</file>
+    <file>other.png</file>
+    <file>out.png</file>
+    <file>uptodate.png</file>
+    <file>mask_01.tif</file>
     <file>empty.tif</file>
     <file>mask.tif</file>
     <file>display_options.png</file>

@@ -25,18 +25,24 @@ class assetWidget(QtGui.QGraphicsWidget):
 	clicked = QtCore.pyqtSignal('QString')
 	changedStatus = QtCore.pyqtSignal()
 	changedBG = QtCore.pyqtSignal()
-
+	
 	def __init__(self, image = None, parent = None):
 		super(assetWidget, self).__init__(parent)
 		self._initSize = 100
 		self._radIcon = 10
-		
-		
+		# set up background
+		QPixmapOpaque = QtGui.QBitmap(':/Project/mask_01.tif')
 		if image:
-			self._bg = QtGui.QPixmap(image).scaled(self._initSize, self._initSize, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+			self._bg = QtGui.QPixmap(image)#.scaled(self._initSize, self._initSize, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
 		else:
-			self._bg = QtGui.QPixmap(':/Project/diffuse.png').scaled(self._initSize, self._initSize, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-
+			self._bg = QtGui.QPixmap(':/Project/diffuse.png')#.scaled(self._initSize, self._initSize, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+		
+		self._bg.setMask(QPixmapOpaque)
+		self._bg = self._bg.scaled(self._initSize, self._initSize, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+		# set up status
+		self._status = QtGui.QPixmap(':/Project/out.png').scaled(15, 15, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+		
+		
 		self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
 		self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
 		self.setFlag(QtGui.QGraphicsItem.ItemIsFocusable)
@@ -47,35 +53,48 @@ class assetWidget(QtGui.QGraphicsWidget):
 	def paint(self, QPainter, styleOption, widget = None):
 		
 		# draw a background image.
+
 		QPainter.drawPixmap(0, 0, self._bg)
 		
 		# draw mirror image
 		QPainter.save()
-		QPixmapReflect = QtGui.QPixmap(self._bg)
+		QPixmapMirror = QtGui.QPixmap(self._bg)
 		QPixmapMask = QtGui.QPixmap(':/Project/mask.tif').scaled(self._initSize, self._initSize, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-		QPixmapReflect.setAlphaChannel(QPixmapMask)
+		QPixmapMirror.setAlphaChannel(QPixmapMask)
 		QPainter.scale(1, -1)
 		QPainter.setOpacity(0.1)
 		QPainter.translate(0, -2 * self._bg.height())
-		QPainter.drawPixmap(0, 0, QPixmapReflect)
+		QPainter.drawPixmap(0, 0, QPixmapMirror)
 		QPainter.restore()
 		
 		# draw reflection effect
 		QPainter.save()
-		
+		QPainter.setOpacity(0.4)
+		QPixmapReflection = QtGui.QPixmap(':/Project/mask_02.png').scaled(self._initSize, self._initSize, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+		QPainter.drawPixmap(0, 0, QPixmapReflection)
 		QPainter.restore()
 		
-		# draw clipping rounded rectangle
-		
  		# draw icon status
-		QPen = QtGui.QPen(QtCore.Qt.NoPen)
-		QBrush = QtGui.QBrush(QtGui.QColor(0,204,0), QtCore.Qt.SolidPattern)
-		QPainter.setBrush(QBrush)
-		QPainter.setPen(QPen)
-		QPainter.drawEllipse(self._bg.width() - (self._radIcon + 5) , self._bg.height() - (self._radIcon + 5), self._radIcon, self._radIcon)
+
+		QPainter.drawPixmap(self._bg.width() - (self._radIcon) , self._bg.height() - (self._radIcon), self._status)
 		
 	def updateIconStatus(self):
 		pass
+	
+	def updateBackground(self):
+		pass
+	
+	def animateOnHover(self):
+		pass
+	
+	def animateOnClicked(self):
+		pass
+	
+	def animateOnDoubleClicked(self):
+		pass
+		
+	
+	
 		
 class AssetWidgetScene(QtGui.QGraphicsScene):
 	
