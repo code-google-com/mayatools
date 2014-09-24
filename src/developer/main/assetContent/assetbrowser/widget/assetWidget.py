@@ -42,7 +42,6 @@ class assetWidget(QtGui.QGraphicsWidget):
 		# set up status
 		self._status = QtGui.QPixmap(':/Project/out.png').scaled(15, 15, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
 		
-		
 		self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
 		self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable)
 		self.setFlag(QtGui.QGraphicsItem.ItemIsFocusable)
@@ -53,7 +52,6 @@ class assetWidget(QtGui.QGraphicsWidget):
 	def paint(self, QPainter, styleOption, widget = None):
 		
 		# draw a background image.
-
 		QPainter.drawPixmap(0, 0, self._bg)
 		
 		# draw mirror image
@@ -75,7 +73,6 @@ class assetWidget(QtGui.QGraphicsWidget):
 		QPainter.restore()
 		
  		# draw icon status
-
 		QPainter.drawPixmap(self._bg.width() - (self._radIcon) , self._bg.height() - (self._radIcon), self._status)
 		
 	def updateIconStatus(self):
@@ -93,8 +90,6 @@ class assetWidget(QtGui.QGraphicsWidget):
 	def animateOnDoubleClicked(self):
 		pass
 		
-	
-	
 		
 class AssetWidgetScene(QtGui.QGraphicsScene):
 	
@@ -107,6 +102,7 @@ class AssetWidgetScene(QtGui.QGraphicsScene):
 		painter.fillRect(rect, QBrush)
 		
 	def resizeEvent(self, event):
+		print 'scene is sizing'
 		super(AssetWidgetScene, self).resizeEvent(event)
 		
 	def mousePressEvent(self, mouseEvent):
@@ -124,10 +120,12 @@ class AssetWidgetView(QtGui.QGraphicsView):
 		self.setRenderHint(QtGui.QPainter.Antialiasing)
 		self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
 		self.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
-		self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-		self.setHorizontalScrollBarPolicy (QtCore.Qt.ScrollBarAsNeeded)
+		self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+		self.setHorizontalScrollBarPolicy (QtCore.Qt.ScrollBarAlwaysOff)
 	
 	def resizeEvent(self, event):
+		scene = self.scene()
+		scene.resizeEvent(event)
 		super(AssetWidgetView, self).resizeEvent(event)
 
 			

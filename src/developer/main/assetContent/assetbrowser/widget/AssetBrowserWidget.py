@@ -56,7 +56,7 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		
 		self.scene = aWg.AssetWidgetScene()
 		self.view.setScene(self.scene)
-		self.view.setSceneRect(0, 0, 1000, 500)
+		self.view.setSceneRect(0, 0, 1000, 750)
 		
 		self.item1 = aWg.assetWidget()
 		self.item2 = aWg.assetWidget()
@@ -64,6 +64,9 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		self.scene.addItem(self.item2)
 		self.item1.setPos(0,0)
 		self.item2.setPos(120,0)
+		
+	def resizeEvent(self, event):
+		self.view.resizeEvent(event)
 		
 	
 		
