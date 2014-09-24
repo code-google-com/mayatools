@@ -90,7 +90,6 @@ class assetWidget(QtGui.QGraphicsWidget):
 	def animateOnDoubleClicked(self):
 		pass
 		
-		
 class AssetWidgetScene(QtGui.QGraphicsScene):
 	
 	def __init__(self, parent = None):
@@ -112,7 +111,6 @@ class AssetWidgetScene(QtGui.QGraphicsScene):
 	def mouseMovingEvent(self, mouseEvent):
 		super(AssetWidgetScene, self).mouseMovingEvent(mouseEvent)
 		
-			
 class AssetWidgetView(QtGui.QGraphicsView):
 	
 	def __init__(self, parent = None):
