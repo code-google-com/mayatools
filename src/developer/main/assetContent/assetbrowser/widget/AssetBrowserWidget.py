@@ -13,7 +13,7 @@ try:
 except:
 	from developer.main.assetContent.assetbrowser.widget import assetWidget as aWg 
 
-from PyQt4 import QtGui, QtOpenGL
+from PyQt4 import QtGui, QtOpenGL, QtCore
 
 class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
                 
@@ -22,6 +22,7 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		self.setupUi(self)
 		self.setObjectName('assetBrowserForm')
 		self._root = ''
+		self._num = 100
 		if scRoot:
 			self._root = scRoot
 		else:
@@ -62,11 +63,33 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 		self.item2 = aWg.assetWidget()
 		self.scene.addItem(self.item1)
 		self.scene.addItem(self.item2)
-		self.item1.setPos(0,0)
-		self.item2.setPos(120,0)
+		self.item1.setPos(15,15)
+		self.item2.setPos(135,15)
 		
 	def resizeEvent(self, event):
 		self.view.resizeEvent(event)
+		
+	def showIconsOnView(self):
+		rootState = QtCore.QState()
+		centerState = QtCore.QState(rootState)
+		tableState = QtCore.QState(rootState)
+		states = QtCore.QStateMachine()
+		states.addState(rootState)
+		states.setInitialState(rootState)
+		rootState.setInitialState(centerState)
+		group = QtCore.QParallelAnimationGroup()
+		for i in range(100):
+			
+			item = aWg.assetWidget()
+	
+			tableState.assignProperty(item, 'pos', QtCore.QPointF((i % 10) * aWg.assetWidget().sizeX + 15, (i // 10) * aWg.assetWidget().sizeX + 15))
+			centerState.assignProperty(item, 'pos', QtCore.QPointF())
+			
+			anim = QtCore.QPropertyAnimation(item, 'pos')
+			anim.setDuration(750 + i * 25)
+			anim.setEasingCurve(QtCore.QEasingCurve.InOutBack)
+			group.addAnimation(anim)
+		
 		
 	
 		

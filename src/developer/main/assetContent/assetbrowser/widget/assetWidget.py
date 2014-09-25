@@ -19,12 +19,13 @@ script_type = ['py', 'mel', 'ms']
 
 
 class assetWidget(QtGui.QGraphicsWidget):
-	# create property for widget
+	
 	# create signal for item
 	
 	clicked = QtCore.pyqtSignal('QString')
 	changedStatus = QtCore.pyqtSignal()
 	changedBG = QtCore.pyqtSignal()
+	sizeX = 100
 	
 	def __init__(self, image = None, parent = None):
 		super(assetWidget, self).__init__(parent)
@@ -89,6 +90,19 @@ class assetWidget(QtGui.QGraphicsWidget):
 	
 	def animateOnDoubleClicked(self):
 		pass
+	
+	def _set_pos(self, pos):
+		self.setPos(pos)
+		
+	def _set_Size(self, size):
+		self.sizeX = size
+		
+	def _get_Size(self):
+		return self.sizeX
+	
+	# create property for widget
+	pos = QtCore.pyqtProperty(QtCore.QPointF, fset = _set_pos)
+	
 		
 class AssetWidgetScene(QtGui.QGraphicsScene):
 	
@@ -99,10 +113,6 @@ class AssetWidgetScene(QtGui.QGraphicsScene):
 		rect = self.sceneRect()
 		QBrush = QtGui.QBrush(QtCore.Qt.white, QtCore.Qt.NoBrush)
 		painter.fillRect(rect, QBrush)
-		
-	def resizeEvent(self, event):
-		print 'scene is sizing'
-		super(AssetWidgetScene, self).resizeEvent(event)
 		
 	def mousePressEvent(self, mouseEvent):
 		if mouseEvent.button() == QtCore.Qt.LeftButton:
@@ -118,12 +128,14 @@ class AssetWidgetView(QtGui.QGraphicsView):
 		self.setRenderHint(QtGui.QPainter.Antialiasing)
 		self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
 		self.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
-		self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-		self.setHorizontalScrollBarPolicy (QtCore.Qt.ScrollBarAlwaysOff)
+		self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+		self.setHorizontalScrollBarPolicy (QtCore.Qt.ScrollBarAsNeeded)
+		self.setTransformationAnchor(QtGui.QGraphicsView.AnchorViewCenter) 
+		self._layout = QtGui.QGraphicsGridLayout
 	
 	def resizeEvent(self, event):
 		scene = self.scene()
-		scene.resizeEvent(event)
+		scene.setSceneRect(0, 0, event.size().width(), event.size().height())
 		super(AssetWidgetView, self).resizeEvent(event)
 
 			
