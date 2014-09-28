@@ -1,0 +1,9 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+// enables debugging for the FileIO Extension
+function FileIO_enableDebugging(Boolean enable) = "FileIO_enableDebugging";
+
+// returns true if debugging is enabled
+function Boolean FileIO_isDebuggingEnabled() = "FileIO_isDebuggingEnabled";

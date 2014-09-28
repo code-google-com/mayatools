@@ -1,0 +1,65 @@
+{
+  "code": [
+    "SpecializedArrays.kl",
+		"ThreadsafeMetaDataContainer.kl",
+
+    "ContiguousAllocator.kl",
+    "ArrayOffsetAllocator.kl",
+    "CompactDataSets.kl",
+
+    "GeometryAttributes.kl",
+		"ScalarAttribute.kl",
+		"ScalarConstantArrayAttribute.kl",
+		"IntegerAttribute.kl",
+		"UInt32Attribute.kl",
+		"UInt16ConstantArrayAttribute.kl",
+		"RGBAttribute.kl",
+		"RGBAAttribute.kl",
+		"Vec2Attribute.kl",
+		"Vec3Attribute.kl",
+		"Vec3_dAttribute.kl",
+		"Vec4Attribute.kl",
+		"QuatAttribute.kl",
+		"ColorAttribute.kl",
+		"Mat33Attribute.kl",
+		"Mat44Attribute.kl",
+    "GeometryAttributesHelpers.kl",
+
+    "LocalBoundingVolume.kl",
+
+    "SpatialQueryCommon.kl",
+
+    "OctreeInternal.kl",
+    "OctreeQueryInternal.kl",
+    "Octree.kl",
+
+    "SparseGridInternal.kl",
+    "SparseGridQueryInternal.kl",
+    "SparseGrid.kl",
+
+		"GeometryInterfaces.kl",
+		"SpatialAccelerationChooser.kl",
+
+		"BaseGeometry.kl",
+		"GeometryInstancesSpatialQueries.kl",
+
+		"Points.kl",
+		"PointsLocation.kl",
+    "PointsModeling.kl",
+
+    "Lines.kl",
+    "LinesModeling.kl",
+    "LinesLocation.kl",
+    "LinesDCCConversion.kl",
+
+    "PolygonMesh.kl",
+    "PolygonMeshInternal.kl",
+    "PolygonMeshBase.kl",
+    "PolygonMeshAttributes.kl",
+    "PolygonMeshBaseModeling.kl",
+    "PolygonMeshModeling.kl",
+    "PolygonMeshPrimitives.kl",
+    "PolygonMeshLocation.kl",
+    "PolygonMeshDCCConversion.kl"
+  ]
+}

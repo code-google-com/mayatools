@@ -1,0 +1,168 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`oglnormalshader` implements the :ref:`inlineshader` interface for OpenGL direct rendering. It encapsulates the :ref:`oglinlineshader` for shading with flat colors, using the geometry normal for the diffuse.
+
+Attributes
+----------
+=============== ============ =====================================
+Name            Type         Description
+=============== ============ =====================================
+positions       Vec3         Geometry positions
+normals         Vec3         Geometry normals
+=============== ============ =====================================
+
+Example
+---------
+
+.. code-block:: kl
+
+    InlineShader shader = draw.registerShader(OGLNormalShader());
+    InlineMaterial mat = shader.getOrCreateMaterial('normals');
+*/
+
+require Math;
+require FabricOGL;
+
+object OGLNormalShader: InlineShader {
+  OGLInlineShader _shader;
+};
+
+// default constructor without a name
+function OGLNormalShader() {
+  this = OGLNormalShader(this.type());
+}
+
+// default constructor taking a name
+function OGLNormalShader(String name) {
+  this._shader = OGLInlineShader(
+    name,
+    "
+      #version 150 //required for OSX support
+      
+      uniform mat4 u_viewMatrix;
+      uniform mat4 u_projection;
+      uniform mat4 u_modelMatrix;
+      uniform mat3 u_normalMatrix;
+
+      in vec4 positions;
+      in vec3 normals;
+
+      out vec3 v_normal;
+
+      void main(){
+        v_normal = u_normalMatrix * normals;
+        gl_Position = u_projection * (u_viewMatrix * (u_modelMatrix * positions));
+      }
+    ", "
+      #version 150 //required for OSX support
+      
+      in vec3 v_normal;
+
+      out vec4 out_fragColor;
+
+      void main() {
+        vec4 final_color;
+        vec3 N = normalize(v_normal);
+
+        final_color.x = 0.5 + N.x * 0.5;
+        final_color.y = 0.5 + N.y * 0.5;
+        final_color.z = 0.5 + N.z * 0.5;
+
+        out_fragColor = final_color;
+      }
+    ");  
+  this._shader.defineUniform(InlineUniform("u_viewMatrix", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_projection", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_modelMatrix", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_normalMatrix", Mat33()));
+  this._shader.defineAttribute('positions', "Vec3");
+  this._shader.defineAttribute('normals', "Vec3");
+}
+
+// empties all materials of this shader
+function OGLNormalShader.reset!() {
+  this._shader.reset();
+}
+
+// returns the name of this shader
+function String OGLNormalShader.getName() {
+  return this._shader.getName();
+}
+
+// called by the InlineDrawing, should not be called manually
+function Boolean OGLNormalShader._draw!(io DrawContext context) {
+  return this._shader._draw(context);
+}
+
+// returns true if this shader has a material with a given name
+function Boolean OGLNormalShader.hasMaterial(String name) {
+  return this._shader.hasMaterial(name);
+}
+
+// returns (and eventually creates) a new matching material with a given name
+function InlineMaterial OGLNormalShader.getOrCreateMaterial!(String name) {
+  return this._shader.getOrCreateMaterial(name);
+}
+
+// returns the number of materials in this shader
+function Size OGLNormalShader.getMaterialCount() {
+  return this._shader.getMaterialCount();
+}
+
+// returns an existing material by index
+function InlineMaterial OGLNormalShader.getMaterial(Index index) {
+  return this._shader.getMaterial(index);
+}
+
+// define a new uniform on the shader.
+function OGLNormalShader.defineUniform!(InlineUniform uniform) {
+  return;
+}
+
+// returns true if this shader has a uniform with a given name
+function Boolean OGLNormalShader.hasUniform(String name) {
+  return this._shader.hasUniform(name);
+}
+
+// sets the global value of a uniform
+// this can be changed per material, per instance or even per transform
+function OGLNormalShader.setUniform!(InlineUniform uniform) {
+  this._shader.setUniform(uniform);
+}
+
+// draws a uniform for the shader, applies the value essentially. 
+// this should be used from within the InlineMaterial's _draw or 
+// the InlineInstance's _draw.
+function Boolean OGLNormalShader._drawUniform!(io DrawContext context, InlineUniform uniform) {
+  return this._shader._drawUniform(context, uniform);
+}
+
+// define a surface attribute with a given name and type
+function OGLNormalShader.defineAttribute!(String name, String attributeType) {
+  return;
+}
+
+// returns the number of attributes
+function Size OGLNormalShader.getAttributeCount() {
+  return this._shader.getAttributeCount();
+}
+
+// returns the name of an attribute
+function String OGLNormalShader.getAttributeName(Index index) {
+  return this._shader.getAttributeName(index);
+}
+
+// returns true if this shader has an attribute with a given name
+function Integer OGLNormalShader.getAttributeID(String name) {
+  return this._shader.getAttributeID(name);
+}
+
+// returns the ID / location of a given attribute inside the shader.
+function Boolean OGLNormalShader.hasAttribute(String name) {
+  return this._shader.hasAttribute(name);
+}

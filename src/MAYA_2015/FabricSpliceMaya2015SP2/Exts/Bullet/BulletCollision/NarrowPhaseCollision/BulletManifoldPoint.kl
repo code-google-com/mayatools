@@ -1,0 +1,72 @@
+
+
+
+
+/// ManifoldContactPoint collects and maintains persistent contactpoints.
+/// used to improve stability and performance of rigidbody dynamics response.
+object BulletManifoldPoint : BulletTypedObject
+{
+	Data pointer;
+};
+
+function Data BulletManifoldPoint.getPointer(){
+	return this.pointer;
+}
+
+function ~BulletManifoldPoint(){
+	this.__destroy();
+}
+function BulletManifoldPoint.__destroy!() = 'BulletManifoldPoint_destroy';
+
+			// Vec3 m_localPointA;			
+			// Vec3 m_localPointB;			
+			// Vec3	m_positionWorldOnB;
+			// ///m_positionWorldOnA is redundant information, see getPositionWorldOnA(), but for clarity
+			// Vec3	m_positionWorldOnA;
+			// Vec3 m_normalWorldOnB;
+		
+			// Scalar	m_distance1;
+			// Scalar	m_combinedFriction;
+			// Scalar	m_combinedRestitution;
+
+   //       //BP mod, store contact triangles.
+   //       Integer	   m_partId0;
+   //       Integer      m_partId1;
+   //       Integer      m_index0;
+   //       Integer      m_index1;
+				
+			// mutable void*	m_userPersistentData;
+			// Scalar		m_appliedImpulse;
+
+			// Boolean			m_lateralFrictionInitialized;
+			// Scalar		m_appliedImpulseLateral1;
+			// Scalar		m_appliedImpulseLateral2;
+			// Scalar		m_contactMotion1;
+			// Scalar		m_contactMotion2;
+			// Scalar		m_contactCFM1;
+			// Scalar		m_contactCFM2;
+
+			// Integer				m_lifeTime;//lifetime of the contactpoint in frames
+			
+			// Vec3		m_lateralFrictionDir1;
+			// Vec3		m_lateralFrictionDir2;
+
+
+
+			// btConstraintRow mConstraintRow[3];
+
+
+function Scalar BulletManifoldPoint.getDistance() = 'BulletManifoldPoint_getDistance';
+function Integer BulletManifoldPoint.getLifeTime() = 'BulletManifoldPoint_getLifeTime';
+
+function Vec3 BulletManifoldPoint.getPositionWorldOnA() = 'BulletManifoldPoint_getPositionWorldOnA';
+
+function Vec3 BulletManifoldPoint.getPositionWorldOnB() = 'BulletManifoldPoint_getPositionWorldOnB';
+
+function BulletManifoldPoint.setDistance!(Scalar dist) = 'BulletManifoldPoint_setDistance';
+
+///this returns the most recent applied impulse, to satisfy contact constraints by the constraint solver
+function Scalar	BulletManifoldPoint.getAppliedImpulse() = 'BulletManifoldPoint_getAppliedImpulse';
+
+
+

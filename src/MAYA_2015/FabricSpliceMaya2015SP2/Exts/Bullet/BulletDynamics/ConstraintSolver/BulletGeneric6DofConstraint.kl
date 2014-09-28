@@ -1,0 +1,379 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+//! Rotation Limit structure for generic joints
+object BulletRotationalLimitMotor : BulletTypedObject
+{
+    Data pointer;
+};
+
+function Data BulletRotationalLimitMotor.getPointer(){
+    return this.pointer;
+}
+
+    //! limit_parameters
+    //!@{
+function Scalar BulletRotationalLimitMotor.getLoLimit() = 'BulletRotationalLimitMotor_getLoLimit';//!< joint limit
+function BulletRotationalLimitMotor.setLoLimit!(Scalar value) = 'BulletRotationalLimitMotor_setLoLimit';//!< joint limit
+function Scalar BulletRotationalLimitMotor.getHiLimit() = 'BulletRotationalLimitMotor_getHiLimit';//!< joint limit
+function BulletRotationalLimitMotor.setHiLimit!(Scalar value) = 'BulletRotationalLimitMotor_setHiLimit';//!< joint limit
+function Scalar BulletRotationalLimitMotor.getTargetVelocity() = 'BulletRotationalLimitMotor_getTargetVelocity';//!< target motor velocity
+function BulletRotationalLimitMotor.setTargetVelocity!(Scalar value) = 'BulletRotationalLimitMotor_setTargetVelocity';//!< target motor velocity
+function Scalar BulletRotationalLimitMotor.getMaxMotorForce() = 'BulletRotationalLimitMotor_getMaxMotorForce';//!< max force on motor
+function BulletRotationalLimitMotor.setMaxMotorForce!(Scalar value) = 'BulletRotationalLimitMotor_setMaxMotorForce';//!< max force on motor
+function Scalar BulletRotationalLimitMotor.getMaxLimitForce() = 'BulletRotationalLimitMotor_getMaxLimitForce';//!< max force on limit
+function BulletRotationalLimitMotor.setMaxLimitForce!(Scalar value) = 'BulletRotationalLimitMotor_setMaxLimitForce';//!< max force on limit
+function Scalar BulletRotationalLimitMotor.getDamping() = 'BulletRotationalLimitMotor_getDamping';//!< Damping.
+function BulletRotationalLimitMotor.setDamping!(Scalar value) = 'BulletRotationalLimitMotor_setDamping';//!< Damping.
+function Scalar BulletRotationalLimitMotor.getLimitSoftness() = 'BulletRotationalLimitMotor_getLimitSoftness';//! Relaxation factor
+function BulletRotationalLimitMotor.setLimitSoftness!(Scalar value) = 'BulletRotationalLimitMotor_setLimitSoftness';//! Relaxation factor
+function Scalar BulletRotationalLimitMotor.getNormalCFM() = 'BulletRotationalLimitMotor_getNormalCFM';//!< Constraint force mixing factor
+function BulletRotationalLimitMotor.setNormalCFM!(Scalar value) = 'BulletRotationalLimitMotor_setNormalCFM';//!< Constraint force mixing factor
+function Scalar BulletRotationalLimitMotor.getStopERP() = 'BulletRotationalLimitMotor_getStopERP';//!< Error tolerance factor when joint is at limit
+function BulletRotationalLimitMotor.setStopERP!(Scalar value) = 'BulletRotationalLimitMotor_setStopERP';//!< Error tolerance factor when joint is at limit
+function Scalar BulletRotationalLimitMotor.getStopCFM() = 'BulletRotationalLimitMotor_getStopCFM';//!< Constraint force mixing factor when joint is at limit
+function BulletRotationalLimitMotor.setStopCFM!(Scalar value) = 'BulletRotationalLimitMotor_setStopCFM';//!< Constraint force mixing factor when joint is at limit
+function Scalar BulletRotationalLimitMotor.getBounce() = 'BulletRotationalLimitMotor_getBounce';//!< restitution factor
+function BulletRotationalLimitMotor.setBounce!(Scalar value) = 'BulletRotationalLimitMotor_setBounce';//!< restitution factor
+function Boolean BulletRotationalLimitMotor.getEnableMotor() = 'BulletRotationalLimitMotor_getEnableMotor';
+function BulletRotationalLimitMotor.setEnableMotor!(Boolean value) = 'BulletRotationalLimitMotor_setEnableMotor';
+
+    //!@}
+
+    //! temp_variables
+    //!@{
+function Scalar BulletRotationalLimitMotor.getCurrentLimitError() = 'BulletRotationalLimitMotor_getCurrentLimitError';//!  How much is violated this limit
+function Scalar BulletRotationalLimitMotor.getCurrentPosition() = 'BulletRotationalLimitMotor_getCurrentPosition';     //!  current value of angle 
+function Integer BulletRotationalLimitMotor.getCurrentLimit() = 'BulletRotationalLimitMotor_getCurrentLimit';//!< 0=free, 1=at lo limit, 2=at hi limit
+function Scalar BulletRotationalLimitMotor.getAccumulatedImpulse() = 'BulletRotationalLimitMotor_getAccumulatedImpulse';
+    //!@}
+
+
+
+
+	//! Is limited
+function Boolean BulletRotationalLimitMotor.isLimited() = 'BulletRotationalLimitMotor_isLimited';
+
+	//! Need apply correction
+function Boolean BulletRotationalLimitMotor.needApplyTorques() = 'BulletRotationalLimitMotor_needApplyTorques';
+
+	//! calculates  error
+	/*!
+	calculates m_currentLimit and m_currentLimitError.
+	*/
+function Integer BulletRotationalLimitMotor.testLimitValue(Scalar test_value) = 'BulletRotationalLimitMotor_testLimitValue';
+
+	//! apply the correction impulses for two bodies
+function Scalar BulletRotationalLimitMotor.solveAngularLimits(Scalar timeStep, io Vec3 axis, Scalar jacDiagABInv,BulletRigidBody body0, BulletRigidBody body1) = 'BulletRotationalLimitMotor_solveAngularLimits';
+
+
+object BulletTranslationalLimitMotor : BulletTypedObject
+{
+    Data pointer;
+};
+
+function Data BulletTranslationalLimitMotor.getPointer(){
+    return this.pointer;
+}
+
+function Vec3 BulletTranslationalLimitMotor.getLowerLimit() = 'BulletTranslationalLimitMotor_getLowerLimit';//!< the constraint lower limits
+function BulletTranslationalLimitMotor.setLowerLimit!(Vec3 value) = 'BulletTranslationalLimitMotor_setLowerLimit';//!< the constraint lower limits
+function Vec3 BulletTranslationalLimitMotor.getUpperLimit() = 'BulletTranslationalLimitMotor_getUpperLimit';//!< the constraint upper limits
+function BulletTranslationalLimitMotor.setUpperLimit!(Vec3 value) = 'BulletTranslationalLimitMotor_setUpperLimit';//!< the constraint upper limits
+function Vec3 BulletTranslationalLimitMotor.getAccumulatedImpulse() = 'BulletTranslationalLimitMotor_getAccumulatedImpulse';
+function BulletTranslationalLimitMotor.setAccumulatedImpulse!(Vec3 value) = 'BulletTranslationalLimitMotor_setAccumulatedImpulse';
+    //! Linear_Limit_parameters
+    //!@{
+function Scalar BulletTranslationalLimitMotor.getLimitSoftness() = 'BulletTranslationalLimitMotor_getLimitSoftness';//!< Softness for linear limit
+function BulletTranslationalLimitMotor.setLimitSoftness!(Scalar value) = 'BulletTranslationalLimitMotor_setLimitSoftness';//!< Softness for linear limit
+function BulletTranslationalLimitMotor.setDamping!(Scalar value) = 'BulletTranslationalLimitMotor_setDamping';//!< Damping for linear limit
+function Scalar BulletTranslationalLimitMotor.getDamping() = 'BulletTranslationalLimitMotor_getDamping';//!< Damping for linear limit
+function BulletTranslationalLimitMotor.setRestitution!(Scalar value) = 'BulletTranslationalLimitMotor_setRestitution';//! Bounce parameter for linear limit
+function BulletTranslationalLimitMotor.setRestitution!(Scalar value) = 'BulletTranslationalLimitMotor_setRestitution';//! Bounce parameter for linear limit
+function Vec3 BulletTranslationalLimitMotor.getNormalCFM() = 'BulletTranslationalLimitMotor_getNormalCFM';//!< Constraint force mixing factor
+function BulletTranslationalLimitMotor.setNormalCFM!(Vec3 value) = 'BulletTranslationalLimitMotor_setNormalCFM';//!< Constraint force mixing factor
+function Vec3 BulletTranslationalLimitMotor.getStopERP() = 'BulletTranslationalLimitMotor_getStopERP';//!< Error tolerance factor when joint is at limit
+function BulletTranslationalLimitMotor.setStopERP!(Vec3 value) = 'BulletTranslationalLimitMotor_setStopERP';//!< Error tolerance factor when joint is at limit
+function Vec3 BulletTranslationalLimitMotor.getStopCFM() = 'BulletTranslationalLimitMotor_getStopCFM';//!< Constraint force mixing factor when joint is at limit
+function BulletTranslationalLimitMotor.setStopCFM!(Vec3 value) = 'BulletTranslationalLimitMotor_setStopCFM';//!< Constraint force mixing factor when joint is at limit
+    //!@}
+function Boolean[3] BulletTranslationalLimitMotor.getEnableMotor() = 'BulletTranslationalLimitMotor_getEnableMotor';
+function BulletTranslationalLimitMotor.setEnableMotor!(Boolean value[3]) = 'BulletTranslationalLimitMotor_setEnableMotor';
+function Vec3 BulletTranslationalLimitMotor.getTargetVelocity() = 'BulletTranslationalLimitMotor_getTargetVelocity';//!< target motor velocity
+function BulletTranslationalLimitMotor.setTargetVelocity!(Vec3 value) = 'BulletTranslationalLimitMotor_setTargetVelocity';//!< target motor velocity
+function Vec3 BulletTranslationalLimitMotor.getMaxMotorForce() = 'BulletTranslationalLimitMotor_getMaxMotorForce';//!< max force on motor
+function BulletTranslationalLimitMotor.setMaxMotorForce!(Vec3 value) = 'BulletTranslationalLimitMotor_setMaxMotorForce';//!< max force on motor
+function Vec3 BulletTranslationalLimitMotor.getCurrentLimitError() = 'BulletTranslationalLimitMotor_getCurrentLimitError';//!  How much is violated this limit
+function BulletTranslationalLimitMotor.setCurrentLimitError!(Vec3 value) = 'BulletTranslationalLimitMotor_setCurrentLimitError';//!  How much is violated this limit
+function Vec3 BulletTranslationalLimitMotor.getCurrentLinearDiff() = 'BulletTranslationalLimitMotor_getCurrentLinearDiff';//!  Current relative offset of constraint frames
+function BulletTranslationalLimitMotor.setCurrentLinearDiff!(Vec3 value) = 'BulletTranslationalLimitMotor_setCurrentLinearDiff';//!  Current relative offset of constraint frames
+function Integer[3] BulletTranslationalLimitMotor.getCurrentLimit() = 'BulletTranslationalLimitMotor_getCurrentLimit';//!< 0=free, 1=at lower limit, 2=at upper limit
+function BulletTranslationalLimitMotor.setCurrentLimit!(Integer value[3]) = 'BulletTranslationalLimitMotor_setCurrentLimit';//!< 0=free, 1=at lower limit, 2=at upper limit
+
+    //! Test limit
+	/*!
+    - free means upper < lower,
+    - locked means upper == lower
+    - limited means upper > lower
+    - limitIndex: first 3 are linear, next 3 are angular
+    */
+function Boolean BulletTranslationalLimitMotor.isLimited(Integer limitIndex) = 'BulletTranslationalLimitMotor_isLimited';
+function Boolean BulletTranslationalLimitMotor.needApplyForce(Integer limitIndex) = 'BulletTranslationalLimitMotor_needApplyForce';
+function Integer BulletTranslationalLimitMotor.testLimitValue(Integer limitIndex, Scalar test_value) = 'BulletTranslationalLimitMotor_testLimitValue';
+
+
+function Scalar BulletTranslationalLimitMotor.solveLinearAxis(
+    	Scalar timeStep,
+        Scalar jacDiagABInv,
+        BulletRigidBody body1, Vec3 pointInA,
+        BulletRigidBody body2, Vec3 pointInB,
+        Integer limit_index,
+        Vec3 axis_normal_on_a,
+		Vec3 anchorPos) = 'BulletTranslationalLimitMotor_solveLinearAxis';
+
+
+
+const UInt32 Bullet_6DOF_FLAGS_CFM_NORM = 1;
+const UInt32 Bullet_6DOF_FLAGS_CFM_STOP = 2;
+const UInt32 Bullet_6DOF_FLAGS_ERP_STOP = 4;
+
+const UInt32 Bullet_6DOF_FLAGS_AXIS_SHIFT = 3; // bits per axis
+
+
+/// BulletGeneric6DofConstraint between two rigidbodies each with a pivotpoint that descibes the axis location in local space
+/*!
+BulletGeneric6DofConstraint can leave any of the 6 degree of freedom 'free' or 'locked'.
+currently this limit supports rotational motors<br>
+<ul>
+<li> For Linear limits, use BulletGeneric6DofConstraint.setLinearUpperLimit!, BulletGeneric6DofConstraint.setLinearLowerLimit!. You can set the parameters with the BulletTranslationalLimitMotor structure accsesible through the BulletGeneric6DofConstraint.getTranslationalLimitMotor method.
+At this moment translational motors are not supported. May be in the future. </li>
+
+<li> For Angular limits, use the BulletRotationalLimitMotor structure for configuring the limit.
+This is accessible through BulletGeneric6DofConstraint.getLimitMotor method,
+This brings support for limit parameters and motors. </li>
+
+<li> Angulars limits have these possible ranges:
+<table border=1 >
+<tr>
+	<td><b>AXIS</b></td>
+	<td><b>MIN ANGLE</b></td>
+	<td><b>MAX ANGLE</b></td>
+</tr><tr>
+	<td>X</td>
+	<td>-PI</td>
+	<td>PI</td>
+</tr><tr>
+	<td>Y</td>
+	<td>-PI/2</td>
+	<td>PI/2</td>
+</tr><tr>
+	<td>Z</td>
+	<td>-PI</td>
+	<td>PI</td>
+</tr>
+</table>
+</li>
+</ul>
+
+*/
+object BulletGeneric6DofConstraint : BulletTypedConstraint
+{
+    Data pointer;
+    BulletRigidBody rbA;
+    BulletRigidBody rbB;
+};
+
+function Data BulletGeneric6DofConstraint.getPointer(){
+    return this.pointer;
+}
+
+function BulletGeneric6DofConstraint(BulletRigidBody rbA,BulletRigidBody rbB, in Xfo rbAFrame, in Xfo rbBFrame,Boolean useLinearReferenceFrameA){
+    this.rbA = rbA;
+    this.rbB = rbB;
+    this.__construct(rbA, rbB, rbAFrame, rbBFrame, useLinearReferenceFrameA);
+}
+function BulletGeneric6DofConstraint.__construct!(BulletRigidBody rbA, BulletRigidBody rbB, in Xfo rbAFrame, in Xfo rbBFrame,Boolean useLinearReferenceFrameA) = "BulletGeneric6DofConstraint_construct1";
+
+
+function BulletGeneric6DofConstraint(BulletRigidBody rbA, in Xfo rbAFrame,Boolean useLinearReferenceFrameB){
+    this.rbA = rbA;
+    this.__construct( rbA, rbAFrame, useLinearReferenceFrameB);
+}
+
+function BulletGeneric6DofConstraint.__construct!(BulletRigidBody rbA, in Xfo rbAFrame,Boolean useLinearReferenceFrameB) = "BulletGeneric6DofConstraint_construct2";
+
+    
+function ~BulletGeneric6DofConstraint() = "BulletGeneric6DofConstraint_destroy";
+
+function BulletRigidBody BulletGeneric6DofConstraint.getRigidBodyA()
+{
+    return this.rbA;
+}
+function BulletRigidBody BulletGeneric6DofConstraint.getRigidBodyB()
+{
+    return this.rbB;
+}
+
+//! Calcs global transform of the offsets
+/*!
+\Calcs the global transform for the joint offset for body A an B, and also calcs the agle differences between the bodies.
+\sa getCalculatedTransformA , getCalculatedTransformB, calculateAngleInfo
+*/ 
+function BulletGeneric6DofConstraint.calculateTransforms!(in Xfo transA,in Xfo transB) = 'BulletGeneric6DofConstraint_calculateTransforms';
+
+function BulletGeneric6DofConstraint.calculateTransforms!() = 'BulletGeneric6DofConstraint_calculateTransforms';
+
+//! Gets the global transform of the offset for body A
+/*!
+\sa getFrameOffsetA, getFrameOffsetB, calculateAngleInfo.
+*/
+function Xfo BulletGeneric6DofConstraint.getCalculatedTransformA() = 'BulletGeneric6DofConstraint_getCalculatedTransformA';
+
+//! Gets the global transform of the offset for body B
+/*!
+\sa getFrameOffsetA, getFrameOffsetB, calculateAngleInfo.
+*/
+function Xfo BulletGeneric6DofConstraint.getCalculatedTransformB() = 'BulletGeneric6DofConstraint_getCalculatedTransformB';
+
+function Xfo BulletGeneric6DofConstraint.getFrameOffsetA() = 'BulletGeneric6DofConstraint_getFrameOffsetA';
+
+function Xfo BulletGeneric6DofConstraint.getFrameOffsetB() = 'BulletGeneric6DofConstraint_getFrameOffsetB';
+
+
+function Xfo BulletGeneric6DofConstraint.getFrameOffsetA() = 'BulletGeneric6DofConstraint_getFrameOffsetA';
+
+function Xfo BulletGeneric6DofConstraint.getFrameOffsetB() = 'BulletGeneric6DofConstraint_getFrameOffsetB';
+
+
+//! performs Jacobian calculation, and also calculates angle differences and axis
+function BulletGeneric6DofConstraint.buildJacobian!() = 'BulletGeneric6DofConstraint_buildJacobian';
+
+// function BulletGeneric6DofConstraint.getInfo1 (BulletConstraintInfo1 info) = 'BulletGeneric6DofConstraint_getInfo1';
+
+// function BulletGeneric6DofConstraint.getInfo1Non(BulletConstraintInfo1 info) = 'BulletGeneric6DofConstraint_getInfo1Non';
+
+// function BulletGeneric6DofConstraint.getInfo2 (BulletConstraintInfo2 info) = 'BulletGeneric6DofConstraint_getInfo2';
+
+// function BulletGeneric6DofConstraint.getInfo2Non(BulletConstraintInfo2 info,in Xfo transA,in Xfo transB,in Vec3 linVelA,in Vec3 linVelB,in Vec3 angVelA,in Vec3 angVelB) = 'BulletGeneric6DofConstraint_getInfo2Non';
+
+
+function BulletGeneric6DofConstraint.updateRHS!(Scalar timeStep) = 'BulletGeneric6DofConstraint_updateRHS';
+
+//! Get the rotation axis in global coordinates
+/*!
+\pre buildJacobian must be called previously.
+*/
+function Vec3 BulletGeneric6DofConstraint.getAxis(Integer axis_index) = 'BulletGeneric6DofConstraint_getAxis';
+
+//! Get the relative Euler angle
+/*!
+ \pre calculateTransforms() must be called previously.
+ */
+function Scalar BulletGeneric6DofConstraint.getAngle(Integer axis_index) = 'BulletGeneric6DofConstraint_getAngle';
+
+//! Get the relative position of the constraint pivot
+/*!
+\pre calculateTransforms() must be called previously.
+*/
+function Scalar BulletGeneric6DofConstraint.getRelativePivotPosition(Integer axis_index) = 'BulletGeneric6DofConstraint_getRelativePivotPosition';
+
+function BulletGeneric6DofConstraint.setFrames!(in Xfo frameA, in Xfo frameB) = 'BulletGeneric6DofConstraint_setFrames';
+
+//! Test angular limit.
+/*!
+Calculates angular correction and returns true if limit needs to be corrected.
+\pre calculateTransforms() must be called previously.
+*/
+function Boolean BulletGeneric6DofConstraint.testAngularLimitMotor(Integer axis_index) = 'BulletGeneric6DofConstraint_testAngularLimitMotor';
+
+function BulletGeneric6DofConstraint.setLinearLowerLimit!(in Vec3 linearLower) = 'BulletGeneric6DofConstraint_setLinearLowerLimit';
+
+function BulletGeneric6DofConstraint.getLinearLowerLimit(io Vec3 linearLower) = 'BulletGeneric6DofConstraint_getLinearLowerLimit';
+
+function BulletGeneric6DofConstraint.setLinearUpperLimit!(in Vec3 linearUpper) = 'BulletGeneric6DofConstraint_setLinearUpperLimit';
+
+function BulletGeneric6DofConstraint.getLinearUpperLimit(io Vec3 linearUpper) = 'BulletGeneric6DofConstraint_getLinearUpperLimit';
+
+function BulletGeneric6DofConstraint.setAngularLowerLimit!(in Vec3 angularLower) = 'BulletGeneric6DofConstraint_setAngularLowerLimit';
+
+function BulletGeneric6DofConstraint.getAngularLowerLimit(io Vec3 angularLower) = 'BulletGeneric6DofConstraint_getAngularLowerLimit';
+
+function BulletGeneric6DofConstraint.setAngularUpperLimit!(in Vec3 angularUpper) = 'BulletGeneric6DofConstraint_setAngularUpperLimit';
+
+function BulletGeneric6DofConstraint.getAngularUpperLimit(io Vec3 angularUpper) = 'BulletGeneric6DofConstraint_getAngularUpperLimit';
+
+//! Retrieves the angular limit informacion
+function BulletRotationalLimitMotor  BulletGeneric6DofConstraint.getRotationalLimitMotor(Integer index) = 'BulletGeneric6DofConstraint_getRotationalLimitMotor';
+
+//! Retrieves the  limit informacion
+function BulletTranslationalLimitMotor  BulletGeneric6DofConstraint.getTranslationalLimitMotor() = 'BulletGeneric6DofConstraint_getTranslationalLimitMotor';
+
+//first 3 are linear, next 3 are angular
+ function BulletGeneric6DofConstraint.setLimit!(Integer axis, Scalar lo, Scalar hi) = 'BulletGeneric6DofConstraint_setLimit';
+
+//! Test limit
+/*!
+- free means upper < lower,
+- locked means upper == lower
+- limited means upper > lower
+- limitIndex: first 3 are linear, next 3 are angular
+*/
+function Boolean	BulletGeneric6DofConstraint.isLimited(Integer limitIndex) = 'BulletGeneric6DofConstraint_isLimited';
+
+// function BulletGeneric6DofConstraint.calcAnchorPos() = 'BulletGeneric6DofConstraint_calcAnchorPos'; // overridable
+
+// function Integer BulletGeneric6DofConstraint.get_limit_motor_info2(	BulletRotationalLimitMotor limot,
+// 								in Xfo transA,in Xfo transB,in Vec3 linVelA,in Vec3 linVelB,in Vec3 angVelA,in Vec3 angVelB,
+// 								BulletConstraintInfo2 info, Integer row, io Vec3 ax1, Integer rotational, Integer rotAllowed = false) = 'BulletGeneric6DofConstraint_get_limit_motor_info2';
+
+// access for UseFrameOffset
+function Boolean BulletGeneric6DofConstraint.getUseFrameOffset() = 'BulletGeneric6DofConstraint_getUseFrameOffset';
+function BulletGeneric6DofConstraint.setUseFrameOffset!(Boolean frameOffsetOnOff) = 'BulletGeneric6DofConstraint_setUseFrameOffset';
+
+///override the default global value of a parameter (such as ERP or CFM), optionally provide the BulletGeneric6DofConstraint.axis (0..5). = 'BulletGeneric6DofConstraint_axis' 
+///If no axis is provided, it uses the default axis for this constraint.
+function BulletGeneric6DofConstraint.setParam!(Integer num, Scalar value) = 'BulletGeneric6DofConstraint_setParam';
+function BulletGeneric6DofConstraint.setParam!(Integer num, Scalar value, Integer axis) = 'BulletGeneric6DofConstraint_setParam';
+///return the local value of parameter
+function Scalar BulletGeneric6DofConstraint.getParam?(Integer num) = 'BulletGeneric6DofConstraint_getParam';
+function Scalar BulletGeneric6DofConstraint.getParam?(Integer num, Integer axis) = 'BulletGeneric6DofConstraint_getParam';
+
+function BulletGeneric6DofConstraint.setAxis!( in Vec3 axis1, in Vec3 axis2) = 'BulletGeneric6DofConstraint_setAxis';
+
+
+// Integer	calculateSerializeBufferSizeBulletGeneric6DofConstraint.?();
+
+// ///fills the dataBuffer and returns the struct name (and 0 on failure)
+// const char*	BulletGeneric6DofConstraint.serialize(void* dataBuffer, BulletSerializer* serializer);
+
+
+
+
+
+
+///////////////////////////////////////////////////////
+// From BulletTypedConstraint
+
+
+function Scalar BulletGeneric6DofConstraint.getBreakingImpulseThreshold() = 'BulletGeneric6DofConstraint_getBreakingImpulseThreshold';
+
+function BulletGeneric6DofConstraint.setBreakingImpulseThreshold!(Scalar threshold) = 'BulletGeneric6DofConstraint_setBreakingImpulseThreshold';
+
+function Boolean BulletGeneric6DofConstraint.isEnabled() = 'BulletGeneric6DofConstraint_isEnabled';
+
+function BulletGeneric6DofConstraint.setEnabled!(Boolean enabled) = 'BulletGeneric6DofConstraint_setEnabled';
+
+function Boolean BulletGeneric6DofConstraint.needsFeedback() = 'BulletGeneric6DofConstraint_needsFeedback';
+
+///enableFeedback will allow to read the applied linear and angular impulse
+///use getAppliedImpulse, getAppliedLinearImpulse and getAppliedAngularImpulse to read feedback information
+function BulletGeneric6DofConstraint.enableFeedback!(Boolean needsFeedback) = 'BulletGeneric6DofConstraint_enableFeedback';
+
+///getAppliedImpulse is an estimated total applied impulse. 
+///This feedback could be used to determine breaking constraints or playing sounds.
+function Scalar BulletGeneric6DofConstraint.getAppliedImpulse() = 'BulletGeneric6DofConstraint_getAppliedImpulse';
+
+function UInt32 BulletGeneric6DofConstraint.getConstraintType() = 'BulletGeneric6DofConstraint_getConstraintType';

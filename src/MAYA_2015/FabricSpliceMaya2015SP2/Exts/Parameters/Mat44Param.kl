@@ -1,0 +1,58 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`mat44param` implements the :ref:`param` interface for Mat44 values.
+*/
+
+require Math;
+
+object Mat44Param : Param {
+  String name;
+  Mat44 value;
+  Param options[String];
+};
+
+// default constructor
+function Mat44Param(String name) {
+  this.name = name;
+}
+
+// constructor taking input value
+function Mat44Param(String name, Mat44 value) {
+  this.name = name;
+  this.value = value;
+}
+
+// returns the name of this parameter
+function String Mat44Param.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String Mat44Param.getValueType() {
+  return "Mat44";
+}
+
+// getting an option on this param
+function Param Mat44Param.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function Mat44Param.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function Mat44 Mat44Param.getValue() {
+  return this.value;
+}
+
+// sets the param's value
+function Mat44Param.setValue!(Mat44 value) {
+  this.value = value;
+}

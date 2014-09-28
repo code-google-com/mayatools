@@ -1,0 +1,153 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`oglwireframeshader` implements the :ref:`inlineshader` interface for OpenGL direct rendering. It encapsulates any other :ref:`inlineshader`, while setting the polygon mode to lines.
+
+Example
+---------
+
+.. code-block:: kl
+
+    OGLWireFrameShader shader = draw.registerShader(OGLWireFrameShader(OGLSurfaceShader()));
+    shader.setPolygonOffset(-1.0); // draw as overlay
+    InlineMaterial mat = shader.getOrCreateMaterial('blue');
+    mat.setUniform('u_diffuseColor', Color(0.0, 0.0, 1.0));
+*/
+
+require Math;
+require FabricOGL;
+
+object OGLWireFrameShader: InlineShader {
+  String _name;
+  InlineShader _shader;
+  Boolean _asLines;
+  Scalar _polyOffset;
+
+};
+
+// default constructor without a name
+function OGLWireFrameShader(InlineShader shader) {
+  this = OGLWireFrameShader(this.type(), shader);
+}
+
+// default constructor taking a name
+function OGLWireFrameShader(String name, InlineShader shader) {
+  this._name = name;
+  this._shader = shader;
+  this._asLines = true;
+  this._polyOffset = 0.0;
+}
+
+// sets the wireframe option on the shader
+function OGLWireFrameShader.setWireFrame!(Boolean enabled) {
+  this._asLines = enabled;
+}
+
+// sets the polygonoffset (0.0 disables)
+function OGLWireFrameShader.setPolygonOffset!(Scalar offset) {
+  this._polyOffset = offset;
+}
+
+// empties all materials of this shader
+function OGLWireFrameShader.reset!() {
+  this._shader.reset();
+}
+
+// returns the name of this shader
+function String OGLWireFrameShader.getName() {
+  return this._name + '_' + this._shader.getName();
+}
+
+// called by the InlineDrawing, should not be called manually
+function Boolean OGLWireFrameShader._draw!(io DrawContext context) {
+
+  if(this._asLines)
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+  if(this._polyOffset != 0.0) {
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(this._polyOffset, 1.0);
+  }
+
+  Boolean result = this._shader._draw(context);
+
+  if(this._asLines)
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+  if(this._polyOffset != 0.0)
+    glDisable(GL_POLYGON_OFFSET_FILL);
+
+  return result;
+}
+
+// returns true if this shader has a material with a given name
+function Boolean OGLWireFrameShader.hasMaterial(String name) {
+  return this._shader.hasMaterial(name);
+}
+
+// returns (and eventually creates) a new matching material with a given name
+function InlineMaterial OGLWireFrameShader.getOrCreateMaterial!(String name) {
+  return this._shader.getOrCreateMaterial(name);
+}
+
+// returns the number of materials in this shader
+function Size OGLWireFrameShader.getMaterialCount() {
+  return this._shader.getMaterialCount();
+}
+
+// returns an existing material by index
+function InlineMaterial OGLWireFrameShader.getMaterial(Index index) {
+  return this._shader.getMaterial(index);
+}
+
+// define a new uniform on the shader.
+function OGLWireFrameShader.defineUniform!(InlineUniform uniform) {
+  return;
+}
+
+// returns true if this shader has a uniform with a given name
+function Boolean OGLWireFrameShader.hasUniform(String name) {
+  return this._shader.hasUniform(name);
+}
+
+// sets the global value of a uniform
+// this can be changed per material, per instance or even per transform
+function OGLWireFrameShader.setUniform!(InlineUniform uniform) {
+  this._shader.setUniform(uniform);
+}
+
+// draws a uniform for the shader, applies the value essentially. 
+// this should be used from within the InlineMaterial's _draw or 
+// the InlineInstance's _draw.
+function Boolean OGLWireFrameShader._drawUniform!(io DrawContext context, InlineUniform uniform) {
+  return this._shader._drawUniform(context, uniform);
+}
+
+// define a surface attribute with a given name and type
+function OGLWireFrameShader.defineAttribute!(String name, String attributeType) {
+  return;
+}
+
+// returns the number of attributes
+function Size OGLWireFrameShader.getAttributeCount() {
+  return this._shader.getAttributeCount();
+}
+
+// returns the name of an attribute
+function String OGLWireFrameShader.getAttributeName(Index index) {
+  return this._shader.getAttributeName(index);
+}
+
+// returns true if this shader has an attribute with a given name
+function Integer OGLWireFrameShader.getAttributeID(String name) {
+  return this._shader.getAttributeID(name);
+}
+
+// returns the ID / location of a given attribute inside the shader.
+function Boolean OGLWireFrameShader.hasAttribute(String name) {
+  return this._shader.hasAttribute(name);
+}

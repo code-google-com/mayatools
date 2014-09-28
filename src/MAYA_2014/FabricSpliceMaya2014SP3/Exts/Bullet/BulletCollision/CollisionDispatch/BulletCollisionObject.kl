@@ -1,0 +1,332 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+//island management, m_activationState1
+const UInt32 AS_ACTIVE_TAG = 1;
+const UInt32 AS_ISLAND_SLEEPING = 2;
+const UInt32 AS_WANTS_DEACTIVATION = 3;
+const UInt32 AS_DISABLE_DEACTIVATION = 4;
+const UInt32 AS_DISABLE_SIMULATION = 5;
+
+const UInt32 CF_STATIC_OBJECT = 1;
+const UInt32 CF_KINEMATIC_OBJECT = 2;
+const UInt32 CF_NO_CONTACT_RESPONSE = 4;
+const UInt32 CF_CUSTOM_MATERIAL_CALLBACK = 8;//this allows per-triangle material (friction/restitution)
+const UInt32 CF_CHARACTER_OBJECT = 16;
+const UInt32 CF_DISABLE_VISUALIZE_OBJECT = 32; //disable debug drawing
+const UInt32 CF_DISABLE_SPU_COLLISION_PROCESSING = 64;//disable parallel/SPU processing
+
+const UInt32 CO_COLLISION_OBJECT = 1;
+const UInt32 CO_RIGID_BODY = 2;
+///CO_GHOST_OBJECT keeps track of all objects overlapping its AABB and that pass its collision filter
+///It is useful for collision sensors; explosion objects; character controller etc.
+const UInt32 CO_GHOST_OBJECT = 4;
+const UInt32 CO_SOFT_BODY = 8;
+const UInt32 CO_HF_FLUID = 16;
+const UInt32 CO_USER_TYPE = 32;
+
+
+/// BulletICollisionObject can be used to manage collision detection objects. 
+/// BulletICollisionObject maintains all information that is needed for a collision detection: Shape, Transform and AABB proxy.
+/// They can be added to the BulletCollisionWorld.
+interface BulletICollisionObject
+{
+	Object getObject();
+	Data getPointer();
+
+	Boolean mergesSimulationIslands();
+
+	Vec3 getAnisotropicFriction();
+	setAnisotropicFriction!(Vec3 anisotropicFriction);
+	Boolean	hasAnisotropicFriction();
+
+	///the constraint solver can discard solving contacts, if the distance is above this threshold. 0 by default.
+	///Note that using contacts with positive distance can improve stability. It increases, however, the chance of colliding with degerate contacts, such as 'interior' triangle edges
+	setContactProcessingThreshold!( Scalar contactProcessingThreshold);
+	Scalar	getContactProcessingThreshold();
+
+	Boolean isStaticObject();
+
+	Boolean isKinematicObject();
+
+	Boolean isStaticOrKinematicObject();
+
+	Boolean hasContactResponse();
+	
+
+	setCollisionShape!(BulletCollisionShape collisionShape);
+
+	BulletCollisionShape	getCollisionShape();
+
+	// BulletCollisionShape	getRootCollisionShape();
+
+	Integer	getActivationState();
+
+	setActivationState!(Integer newState);
+
+	setDeactivationTime!(Scalar time);
+	Scalar	getDeactivationTime();
+
+	forceActivationState!(Integer newState);
+
+	// activate();
+	activate!(Boolean forceActivation);
+
+	Boolean isActive();
+
+	setRestitution!(Scalar rest);
+	Scalar	getRestitution();
+	setFriction!(Scalar frict);
+	Scalar	getFriction();
+
+	Xfo	getWorldTransform();
+
+	setWorldTransform!(Xfo worldTrans);
+
+
+	BulletBroadphaseProxy	getBroadphaseHandle();
+
+	// setBroadphaseHandle(BulletBroadphaseProxy handle);
+
+	Xfo	getInterpolationWorldTransform();
+
+	setInterpolationWorldTransform!(Xfo trans);
+
+	setInterpolationLinearVelocity!(Vec3 linvel);
+
+	setInterpolationAngularVelocity!(Vec3 angvel);
+
+	Vec3	getInterpolationLinearVelocity();
+
+	Vec3	getInterpolationAngularVelocity();
+
+	Integer getIslandTag();
+
+	setIslandTag!(Integer tag);
+
+	Integer getCompanionId();
+
+	setCompanionId!(Integer id);
+
+	Scalar	getHitFraction();
+
+	setHitFraction!(Scalar hitFraction);
+
+	Integer	getCollisionFlags();
+
+	setCollisionFlags!(Integer flags);
+	
+	///Swept sphere radius (0.0 by default), see BulletConvexConvexAlgorithm::
+	Scalar	getCcdSweptSphereRadius();
+
+	///Swept sphere radius (0.0 by default), see BulletConvexConvexAlgorithm::
+	setCcdSweptSphereRadius!(Scalar radius);
+
+	Scalar 	getCcdMotionThreshold();
+
+	Scalar 	getCcdSquareMotionThreshold();
+
+	/// Don't do continuous collision detection if the motion (in one step) is less then m_ccdMotionThreshold
+	setCcdMotionThreshold!(Scalar ccdMotionThreshold);
+
+	///users can point to their objects, userPointer is not used by Bullet
+	Object	getUserPointer();
+	
+	///users can point to their objects, userPointer is not used by Bullet
+	setUserPointer!(Object userPointer);
+
+	// Boolean checkCollideWith(BulletICollisionObject co);
+
+	// Integer	calculateSerializeBufferSize();
+
+	// ///fills the dataBuffer and returns the struct name (and 0 on failure)
+	// String	serialize(Object dataBuffer, class BulletSerializer serializer);
+
+	// serializeSingleObject(class BulletSerializer serializer);
+
+};
+
+
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+// BulletCollisionObject
+
+// The following is a workaround so that we can construct 
+// BulletCollisionObject classes directly. 
+// If KL supported inheritance, this wouldn't be necessary, 
+// and should be removed when it does. 
+// BulletICollisionObject is supported by 3 object types. 
+// BulletCollisionObject, BulletRigidBody, and BulletSoftBody;
+
+object BulletCollisionObject : BulletICollisionObject
+{
+	Data 					pointer;
+	Boolean 				__klManagedMemory;
+
+	BulletCollisionShape	__collisionShape;
+	Object 					__userPointer;
+};
+
+function Object BulletCollisionObject.getObject(){
+	return this;
+}
+
+function Data BulletCollisionObject.getPointer(){
+	return this.pointer;
+}
+
+// The BulletCollisionObject can be returned from
+// methods, and so we assume that the memory is not owned by the KL object.
+function BulletCollisionObject(Data pointer){
+	this.pointer = pointer;
+	this.__klManagedMemory = false;
+}
+
+function BulletCollisionObject(){
+	this.__construct();
+	this.__klManagedMemory = true;
+}
+
+function BulletCollisionObject.__construct!() = 'BulletCollisionObject_construct';
+
+function ~BulletCollisionObject(){
+	this.__collisionShape = null;
+	if(this.__klManagedMemory)
+		this.__destroy();
+}
+function BulletCollisionObject.__destroy!() = 'BulletCollisionObject_destroy';
+
+
+//////////////////////////////////////////////////
+// Implimentation of BulletICollisionObject
+
+function Boolean BulletCollisionObject.mergesSimulationIslands() = 'BulletCollisionObject_mergesSimulationIslands';
+
+function Vec3 BulletCollisionObject.getAnisotropicFriction() = 'BulletCollisionObject_getAnisotropicFriction';
+function BulletCollisionObject.setAnisotropicFriction!(Vec3 anisotropicFriction) = 'BulletCollisionObject_setAnisotropicFriction';
+function Boolean	BulletCollisionObject.hasAnisotropicFriction() = 'BulletCollisionObject_hasAnisotropicFriction';
+
+	///the constraint solver can discard solving contacts, if the distance is above this threshold. 0 by default.
+	///Note that using contacts with positive distance can improve stability. It increases, however, the chance of colliding with degerate contacts, such as 'interior' triangle edges
+function BulletCollisionObject.setContactProcessingThreshold!( Scalar contactProcessingThreshold) = 'BulletCollisionObject_setContactProcessingThreshold';
+function Scalar	BulletCollisionObject.getContactProcessingThreshold() = 'BulletCollisionObject_getContactProcessingThreshold';
+
+function Boolean BulletCollisionObject.isStaticObject() = 'BulletCollisionObject_isStaticObject';
+
+function Boolean BulletCollisionObject.isKinematicObject() = 'BulletCollisionObject_isKinematicObject';
+
+function Boolean BulletCollisionObject.isStaticOrKinematicObject() = 'BulletCollisionObject_isStaticOrKinematicObject';
+
+function Boolean BulletCollisionObject.hasContactResponse() = 'BulletCollisionObject_hasContactResponse';
+	
+
+function BulletCollisionObject.setCollisionShape!(BulletCollisionShape collisionShape){
+	this.__collisionShape = collisionShape;
+	this.__setCollisionShape(collisionShape);
+}
+function BulletCollisionObject.__setCollisionShape!(BulletCollisionShape collisionShape) = 'BulletCollisionObject_setCollisionShape';
+
+function BulletCollisionShape BulletCollisionObject.getCollisionShape(){
+	return this.__collisionShape;
+}
+
+
+
+function Integer BulletCollisionObject.getActivationState() = 'BulletCollisionObject_getActivationState';
+
+function BulletCollisionObject.setActivationState!(Integer newState) = 'BulletCollisionObject_setActivationState';
+
+function BulletCollisionObject.setDeactivationTime!(Scalar time) = 'BulletCollisionObject_setDeactivationTime';
+function Scalar BulletCollisionObject.getDeactivationTime() = 'BulletCollisionObject_getDeactivationTime';
+
+
+function BulletCollisionObject.forceActivationState!(Integer newState) = 'BulletCollisionObject_forceActivationState';
+
+function BulletCollisionObject.activate!(){
+	this.activate(false);
+}
+function BulletCollisionObject.activate!(Boolean forceActivation) = 'BulletCollisionObject_activate';
+
+function Boolean BulletCollisionObject.isActive() = 'BulletCollisionObject_isActive';
+
+
+
+function BulletCollisionObject.setRestitution!(Scalar rest) = 'BulletCollisionObject_setRestitution';
+function Scalar BulletCollisionObject.getRestitution() = 'BulletCollisionObject_getRestitution';
+function BulletCollisionObject.setFriction!(Scalar frict) = 'BulletCollisionObject_setFriction';
+function Scalar BulletCollisionObject.getFriction() = 'BulletCollisionObject_getFriction';
+
+
+function Xfo BulletCollisionObject.getWorldTransform() = 'BulletCollisionObject_getWorldTransform';
+
+function BulletCollisionObject.setWorldTransform!(Xfo worldTrans) = 'BulletCollisionObject_setWorldTransform';
+
+
+// function BulletCollisionObject.setBroadphaseHandle(BulletBroadphaseProxy handle){
+// 	this.handle = handle;
+// 	this.setNewBroadphaseProxy(handle);
+// };
+// function BulletCollisionObject.__setBroadphaseHandle(BulletBroadphaseProxy handle) = 'BulletCollisionObject_setBroadphaseHandle';
+
+function BulletBroadphaseProxy BulletCollisionObject.getBroadphaseHandle() = 'BulletCollisionObject_getBroadphaseHandle';
+
+
+function Xfo BulletCollisionObject.getInterpolationWorldTransform() = 'BulletCollisionObject_getInterpolationWorldTransform';
+
+function BulletCollisionObject.setInterpolationWorldTransform!(Xfo trans) = 'BulletCollisionObject_setInterpolationWorldTransform';
+
+function BulletCollisionObject.setInterpolationLinearVelocity!(Vec3 linvel) = 'BulletCollisionObject_setInterpolationLinearVelocity';
+
+function BulletCollisionObject.setInterpolationAngularVelocity!(Vec3 angvel) = 'BulletCollisionObject_setInterpolationAngularVelocity';
+
+function Vec3 BulletCollisionObject.getInterpolationLinearVelocity() = 'BulletCollisionObject_getInterpolationLinearVelocity';
+
+function Vec3 BulletCollisionObject.getInterpolationAngularVelocity() = 'BulletCollisionObject_getInterpolationAngularVelocity';
+
+
+
+function Integer BulletCollisionObject.getIslandTag() = 'BulletCollisionObject_getIslandTag';
+
+function BulletCollisionObject.setIslandTag!(Integer tag) = 'BulletCollisionObject_setIslandTag';
+
+function Integer BulletCollisionObject.getCompanionId() = 'BulletCollisionObject_getCompanionId';
+
+function BulletCollisionObject.setCompanionId!(Integer id) = 'BulletCollisionObject_setCompanionId';
+
+function Scalar			BulletCollisionObject.getHitFraction() = 'BulletCollisionObject_getHitFraction';
+
+function BulletCollisionObject.setHitFraction!(Scalar hitFraction) = 'BulletCollisionObject_setHitFraction';
+
+function Integer	BulletCollisionObject.getCollisionFlags() = 'BulletCollisionObject_getCollisionFlags';
+
+function BulletCollisionObject.setCollisionFlags!(Integer flags) = 'BulletCollisionObject_setCollisionFlags';
+	
+///Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
+function Scalar			BulletCollisionObject.getCcdSweptSphereRadius() = 'BulletCollisionObject_getCcdSweptSphereRadius';
+
+///Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
+function BulletCollisionObject.setCcdSweptSphereRadius!(Scalar radius) = 'BulletCollisionObject_setCcdSweptSphereRadius';
+
+function Scalar 	BulletCollisionObject.getCcdMotionThreshold() = 'BulletCollisionObject_getCcdMotionThreshold';
+
+function Scalar 	BulletCollisionObject.getCcdSquareMotionThreshold() = 'BulletCollisionObject_getCcdSquareMotionThreshold';
+
+/// Don't do continuous collision detection if the motion (in one step) is less then m_ccdMotionThreshold
+function BulletCollisionObject.setCcdMotionThreshold!(Scalar ccdMotionThreshold) = 'BulletCollisionObject_setCcdMotionThreshold';
+
+///users can point to their objects, userPointer is not used by Bullet
+function Object	BulletCollisionObject.getUserPointer(){
+	return this.__userPointer;
+}
+	
+///users can point to their objects, userPointer is not used by Bullet
+function BulletCollisionObject.setUserPointer!(Object userPointer){
+	this.__userPointer = userPointer;
+}
+
+function Boolean BulletCollisionObject.checkCollideWith(BulletICollisionObject co) = 'BulletCollisionObject_checkCollideWith';

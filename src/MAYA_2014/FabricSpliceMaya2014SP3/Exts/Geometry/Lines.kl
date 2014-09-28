@@ -1,0 +1,223 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+ /*SPHINX-description
+
+The ``Lines`` object implements line segments geometry, which are simply attribute indices pairs.
+
+The ``Lines`` have a ``raycastThickness`` member that defines the lines' thickness for bounding volume and raycast computations.
+
+Example
+---------
+
+.. code-block:: js
+
+    //Create a XYZ cross
+    Lines lines = Lines();
+    lines.addPoints( 6 );
+
+    lines.setPosition( 0, Vec3(1,0,0) );
+    lines.setPosition( 1, Vec3(-1,0,0) );
+    lines.addSegment( 0, 1 );
+
+    lines.setPosition( 2, Vec3(0,1,0) );
+    lines.setPosition( 3, Vec3(0,-1,0) );
+    lines.addSegment( 2, 3 );
+
+    lines.setPosition( 4, Vec3(0,0,1) );
+    lines.setPosition( 5, Vec3(0,0,-1) );
+    lines.addSegment( 4, 5 );
+
+*/
+
+require Math, FabricStatistics;
+
+object Lines : Geometry, SpatialQueryable, StatisticSourceWithAutoRegisterMember {
+  BaseGeometry base;
+
+  UInt32 indices[];
+  UInt32 version;
+
+  Scalar raycastThickness;
+
+  Object spatialAccelerationCache;//Created on demand. Cache from the meta-data dictionary to avoid locks.
+};
+
+function Lines() {
+  this.base.init("Lines", this);
+
+  this.raycastThickness = 1e-4;
+}
+
+//Returns the associated attributes container.
+//Use 'getLineAttributeIndices()' to get attribute indices corresponding to a line segment.
+inline Ref<GeometryAttributes> Lines.getAttributes() { return this.base.attributes; }
+
+function Lines._attachAttributes!( io GeometryAttributes attributes ) {
+  this.base.attachAttributes( attributes );
+}
+
+//Clears all data, including points and attributes. The version gets incremented.
+function Lines.clear!() {
+  UInt32 version = this.version;
+  this.version = this.version+1;
+  this.base.attributes.clear();
+  this.base.attributes.getOrCreatePositions();
+  this.indices.resize(0);
+}
+
+function Lines._copyStructure!( Lines src ) {
+  Size count = src.indices.size();
+  this.indices.resize( count );// Avoid reallocs; don't call clone()
+  for( Size i = 0; i < count; ++i )
+    this.indices[i] = src.indices[i];
+  ++this.version;
+}
+
+//Copies the content from the source Lines.
+function Lines.copy!( Lines src ) {
+  this._copyStructure(src);
+  this.base.attributes.copy(src.base.attributes);
+}
+
+function Lines Lines.clone() {
+  //The difference with default clone() is that new.base.autoStat will point to 'new' (from constructor)
+  Lines new = Lines();
+  new.copy( this );
+  return new;
+}
+
+//Returns the number of points, which is not directly related to the number of line segments.
+function Size Lines.pointCount() {
+  return this.base.attributes.size();
+}
+
+//Returns the number of line segments, which is not directly related to the number of points.
+inline Size Lines.lineCount() {
+  return this.indices.size()/2;
+}
+
+//Adds N points and returns the index of the first of the consecutive indices.
+inline Size Lines.addPoints!( Size count ) {
+  Size prevSize = this.base.attributes.size();
+  this.base.attributes.resize( prevSize + count );
+  return prevSize;
+}
+
+//Sets the positions of a point. Important: once all positions have been changed, call 'incrementPositionsVersion()'.
+inline Lines.setPosition!( Size point, Vec3 position ) {
+  this.base.attributes.setPosition( point, position );
+}
+
+//This should be called once position changes (setPosition) are finished, so caches (such as drawing data) know that they need to be regenerated.
+inline Lines.incrementPositionsVersion!() {
+  this.base.attributes.positionsAttribute.incrementVersion();
+}
+
+//Returns the position of a point.
+inline Vec3 Lines.getPosition( Size point ) {
+  return this.base.attributes.getPosition( point );
+}
+
+//Adds a line segment referring to 2 point indices (attribute indices).
+inline Lines.addSegment!( UInt32 ptIdx0, UInt32 ptIdx1 )
+{
+  this.indices.push(ptIdx0);
+  this.indices.push(ptIdx1);
+  this.version++;
+}
+
+//Adds a multiple line segments referring to consecutive point indices (attribute indices).
+//'ptIdxStart' is the first index of the first segment, and 'ptIdxEnd' is the last index of the last segment.
+//For example, 'addLine( 3, 6 )' will create segments [3,4], [4,5] and [5,6].
+inline Lines.addLine!( UInt32 ptIdxStart, UInt32 ptIdxEnd )
+{
+  for(Index i=ptIdxStart; i<ptIdxEnd; i++)
+  {
+    this.indices.push(i);
+    this.indices.push(i+1);
+  }
+  this.version++;
+}
+
+//Adds a loop of line segments referring to consecutive point indices (attribute indices).
+//'ptIdxStart' is the first index of the first segment and the last index of the last segment, and 'ptIdxEnd' is the first index of the last segment.
+//For example, 'addClosedLine( 3, 6 )' will create segments [3,4], [4,5], [5,6] and [6,3].
+inline Lines.addClosedLine!( UInt32 ptIdxStart, UInt32 ptIdxEnd )
+{
+  this.addLine(ptIdxStart, ptIdxEnd);
+  this.indices.push(ptIdxEnd);
+  this.indices.push(ptIdxStart);
+  this.version++;
+}
+
+//Returns the point (attribute) indices corresponding to segment 'lineIndex'.
+inline Lines.getLineAttributeIndices?( Size lineIndex, io Size start, io Size end ) {
+  start = this.indices[lineIndex*2];
+  end = this.indices[lineIndex*2+1];
+}
+
+//When setting the segment indices directly on 'indices' member, this should be called after changes are finished, so caches (such as drawing data) know that they need to be regenerated.
+function Lines.incrementVersion!( )
+{
+  this.version++;
+}
+
+//////////// Debugging
+
+//Returns a String description of the geometry structure. 
+// withAttributes: include the attribute values in the desc.
+// useUnitTestPrint: use the unitTestPrint method to ensure that the values are consistent accross platforms(used in unit testing).
+function String Lines.getDesc?( Boolean withAttributes, Boolean useUnitTestPrint ) {
+  String desc;
+  desc += "Lines: "+ this.base.debugName + " pointCount: " + this.pointCount() + " nbAttributeVectors: " + this.base.attributes.numAttributes() + '\n';
+  desc += "  Points:\n";
+  if( withAttributes ) {
+    desc += this.base.attributes.getDesc(useUnitTestPrint) + '\n';
+  }
+  return desc;
+}
+
+function String Lines.getDesc?( Boolean withAttributes ) {
+  return this.getDesc(withAttributes, false);
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] Lines.getStatistics() {
+  StatisticRecord stats[];
+  this.base.addStatistics(stats);
+  stats.push( StatisticRecord( "Lines", this.lineCount() ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, this.indices.size()*4 ) );
+  return stats;
+}
+
+//Returns the bbox of the lines (Geometry interface)
+//Takes into account the 'Lines.raycastThickness' member, which determines line segments' width.
+function LocalBoundingVolume Lines.getBoundingVolume() {
+  LocalBoundingVolume bBox = this.base.getBoundingVolume();
+  Vec3 thicknessVec = Vec3( this.raycastThickness, this.raycastThickness, this.raycastThickness );
+  bBox.bBoxSetMin( bBox.bBoxGetMin() - thicknessVec );
+  bBox.bBoxSetMax( bBox.bBoxGetMax() + thicknessVec );
+  return bBox;
+}
+
+//Geometry interface implementation: redirects to lineCount
+function Size Lines.elementCount() {
+  return this.lineCount();
+}
+
+//Geometry interface implementation
+function LocalBoundingVolume Lines.getElementBoundingVolume(Size index) {
+  Scalar halfThickness = this.raycastThickness*0.5;
+  Vec3 thicknessVec = Vec3( halfThickness, halfThickness, halfThickness );
+
+  LocalBoundingVolume bbox;
+  bbox.bBoxInit();
+  Size startIndex, endIndex;
+  this.getLineAttributeIndices( index, startIndex, endIndex );
+  bbox.bBoxAdd( this.base.attributes.getPosition( startIndex ) );
+  bbox.bBoxAdd( this.base.attributes.getPosition( endIndex ) );
+  bbox.pt1 -= thicknessVec;
+  bbox.pt2 += thicknessVec;
+  return bbox;
+}

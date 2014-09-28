@@ -1,0 +1,159 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+The :ref:`rgba` type represents a byte pixel color, storing the components ordered as red, green, blue and alpha.
+
+Example
+---------
+
+.. code-block:: js
+
+    RGBA red(255, 0, 0, 255);
+*/
+
+struct RGBA
+{
+  Byte r;
+  Byte g;
+  Byte b;
+  Byte a;
+};
+
+// default constructor from component wise bytes
+inline RGBA(Byte r, Byte g, Byte b, Byte a) {
+  this.r = r;
+  this.g = g;
+  this.b = b;
+  this.a = a;
+}
+
+// constructor from component wise integers.
+// Note: Automatic casting would mean that the defualt constructor
+// above would be called, but would also generate warnings due to the loss of precision
+inline RGBA(Integer r, Integer g, Integer b, Integer a) {
+  this.r = Byte(r);
+  this.g = Byte(g);
+  this.b = Byte(b);
+  this.a = Byte(a);
+}
+
+// returns true if this RGBA is the same as another one
+inline Boolean RGBA.equal(RGBA other) {
+  return this.r == other.r && this.g == other.g && this.b == other.b && this.a == other.a;
+}
+
+// equal operator
+inline Boolean == (RGBA a, RGBA b) {
+  return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+}
+
+// not equal operator
+inline Boolean != (RGBA a, RGBA b) {
+  return a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a;
+}
+
+// adds two RGBA colors
+inline RGBA + (RGBA a, RGBA b) {
+  return RGBA(
+    Integer(a.r) + Integer(b.r), 
+    Integer(a.g) + Integer(b.g), 
+    Integer(a.b) + Integer(b.b), 
+    Integer(a.a) + Integer(b.a)
+    );
+}
+
+// adds another RGBA color to this one
+inline RGBA. += (RGBA other) {
+  this = this + other;
+}
+
+// subtracts two RGBA colors
+inline RGBA - (RGBA a, RGBA b) {
+  Integer rval = Integer(a.r) - Integer(b.r);
+  Integer gval = Integer(a.g) - Integer(b.g);
+  Integer bval = Integer(a.b) - Integer(b.b);
+  Integer aval = Integer(a.a) - Integer(b.a);
+  if(rval < 0) rval = 0;
+  if(gval < 0) gval = 0;
+  if(bval < 0) bval = 0;
+  if(aval < 0) aval = 0;
+  return RGBA(rval, gval, bval, aval);
+}
+
+// subtracts another RGBA color from this one
+inline RGBA. -= (RGBA other) {
+  this = this - other;
+}
+
+// multiplies a scalar with a RGBA color
+inline RGBA * (Scalar a, RGBA b) {
+  return RGBA(
+    Integer(Scalar(Integer(b.r)) * a),
+    Integer(Scalar(Integer(b.g)) * a),
+    Integer(Scalar(Integer(b.b)) * a),
+    Integer(Scalar(Integer(b.a)) * a)
+    );
+}
+
+// multiplies a RGBA color with a scalar
+inline RGBA * (RGBA a, Scalar b) {
+  // Note: castring Byte -> Scalar generated incorrect results.
+  return RGBA(
+    Integer(Scalar(Integer(a.r)) * b), 
+    Integer(Scalar(Integer(a.g)) * b), 
+    Integer(Scalar(Integer(a.b)) * b), 
+    Integer(Scalar(Integer(a.a)) * b)
+    );
+}
+
+// multiplies two RGBA colors
+inline RGBA * (RGBA a, RGBA b) {
+  return RGBA(
+    Integer(Scalar(Integer(a.r)) * Scalar(Integer(b.r))), 
+    Integer(Scalar(Integer(a.g)) * Scalar(Integer(b.g))), 
+    Integer(Scalar(Integer(a.b)) * Scalar(Integer(b.b))), 
+    Integer(Scalar(Integer(a.a)) * Scalar(Integer(b.a)))
+    );
+}
+
+// multiplies a scalar with this RGBA color
+inline RGBA. *= (Scalar other) {
+  this = this * other;
+}
+
+// multiplies a this RGBA color with another one
+inline RGBA. *= (RGBA other) {
+  this = this * other;
+}
+
+// overload method for the add operator
+inline RGBA RGBA.add(RGBA other) {
+  return this + other;
+}
+
+// overload method for the subtract operator
+inline RGBA RGBA.subtract(RGBA other) {
+  return this - other;
+}
+
+// overload method for the multiply operator
+inline RGBA RGBA.multiply(RGBA other) {
+  return this * other;
+}
+
+// returns the product of this RGBA color and a scalar
+inline RGBA RGBA.multiplyScalar(Scalar other) {
+  return this * other;
+}
+
+// interpolates two RGBA colors given a scalar blend value (0.0 to 1.0)
+inline RGBA RGBA.linearInterpolate(in RGBA other, in Scalar t) {
+  // Byte values cannot be negative, so here we have inlined the sbutraction inline so that we can interpollate down towards zero
+  return RGBA( Integer(this.r) + Integer((Scalar(Integer(other.r) - Integer(this.r)) * t)),
+               Integer(this.g) + Integer((Scalar(Integer(other.g) - Integer(this.g)) * t)),
+               Integer(this.b) + Integer((Scalar(Integer(other.b) - Integer(this.b)) * t)),
+               Integer(this.a) + Integer((Scalar(Integer(other.a) - Integer(this.a)) * t)));
+}
+
+

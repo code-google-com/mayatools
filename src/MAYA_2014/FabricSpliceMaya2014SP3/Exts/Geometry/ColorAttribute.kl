@@ -1,0 +1,167 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+object ColorAttribute : GeometryAttribute, StatisticSourceWithAutoRegisterMember {
+  UInt32 version;
+  String name;
+  UInt32 containerIndex;
+
+  Color values[];
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function ColorAttribute() {
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] ColorAttribute.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, this.name ) );
+  stats.push( StatisticRecord( Statistic_Category, "Attribute" ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, this.values.size()*4*4 ) );
+  return stats;
+}
+
+inline String ColorAttribute.getName() {
+  return this.name;
+}
+
+inline UInt32 ColorAttribute.getVersion() {
+  return this.version;
+}
+
+inline Size ColorAttribute.getContainerIndex() {
+  return this.containerIndex;
+}
+
+inline ColorAttribute.setContainerIndex!( Size index ) {
+  this.containerIndex = index;
+}
+
+function ColorAttribute ColorAttribute.clone() {
+  //The difference with default clone() is that new.base.autoStat will point to 'new' (from constructor)
+  ColorAttribute new = ColorAttribute();
+  new.version = this.version;
+  new.name = this.name.clone();
+  new.containerIndex = this.containerIndex;
+  new.values = this.values.clone();
+  return new;
+}
+
+function Ref<StatisticSource> ColorAttribute.getStatisticsSource() {
+  return this.autoStats;
+}
+
+inline ColorAttribute.resize!(Size count) {
+  this.values.resize(count);
+  ++this.version;
+}
+
+inline Size ColorAttribute.size() {
+  return this.values.size();
+}
+
+inline Data ColorAttribute.data() {
+  Ref<ColorAttribute> thisRef = this;
+  return thisRef.values.data();
+}
+
+//Make sure to call this method after value changes are finished, so caches (such as drawing data) know that they need to be regenerated.
+inline ColorAttribute.incrementVersion!() {
+  ++this.version;
+}
+
+inline ColorAttribute.copyValue!( Size sourceIndex, Size targetIndex ) {
+  this.values[targetIndex] = this.values[sourceIndex];
+}
+
+inline ColorAttribute.copyValue!( Ref<Object> sourceAttr, Size sourceIndex, Size targetIndex ) {
+  Ref<ColorAttribute> source = sourceAttr;
+  this.values[targetIndex] = source.values[sourceIndex];
+}
+
+inline Color ColorAttribute.getLinearCombination( LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights ) {
+  Color result;
+  for( Size i = 0; i < sourceIndices.size(); ++i )
+    result += this.values[sourceIndices.get(i)]*sourceWeights.get(i);
+  return result;
+}
+
+inline ColorAttribute.linearCombine!( Ref<Object> sourceAttr, LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights, Size targetIndex ) {
+  Ref<ColorAttribute> source = sourceAttr;
+  this.values[targetIndex] = source.getLinearCombination( sourceIndices, sourceWeights );
+}
+
+inline ColorAttribute.copyFrom!( Ref<Object> otherAttr ) {
+  Ref<ColorAttribute> other = otherAttr;
+  this.incrementVersion();
+
+  // Copy in place to avoid mallocs
+  Size size = other.values.size();
+  this.values.resize( size );
+  for( Size i = 0; i < size; ++i )
+    this.values[i] = other.values[i];
+}
+
+inline ColorAttribute.setFromScalar!( Size index, LocalL16ScalarArray value ) {
+  this.values[index].r = value.get(0);
+  this.values[index].g = value.get(1);
+  this.values[index].b = value.get(2);
+  this.values[index].a = value.get(3);
+}
+
+inline Size ColorAttribute.getScalarValueSize() {
+  return 4;
+}
+
+inline Boolean ColorAttribute.equalValues( Size index1, Size index2 ) {
+  return this.values[index1].equal( this.values[index2] );
+}
+
+function String ColorAttribute.valueDesc( Size index ) {
+  return String(this.values[index]);
+}
+
+require Util;
+function String ColorAttribute.unitTestPrint( Size index ) {
+  return unitTestPrint(this.values[index]);
+}
+
+//Returns a string description of the attribute.
+function String ColorAttribute.getDesc?( Boolean includeValues) {
+  String desc;
+  desc += "Attribute: " + this.getName() + " nb elements = "+ this.values.size()+'\n';
+  if(includeValues){
+    if(this.values.size > 0){
+      desc += "  values:[ \n";
+      for(Integer i=0; i<this.values.size; i++){
+        desc += '    ' + unitTestPrint(this.values[i]) + " \n";
+      }
+      desc += "  ]\n";
+    }
+    else{
+      desc += "  values:[]\n";
+    }
+  }
+  return desc;
+}
+function String ColorAttribute.getDesc?() {
+  return this.getDesc(false);
+}
+
+function Ref<ColorAttribute> GeometryAttributes.getOrCreateColorAttribute!( String name ) {
+  Ref<GeometryAttribute> attr = this.getAttribute( name, ColorAttribute );
+  if( attr )
+    return attr;
+
+  ColorAttribute newAttr = ColorAttribute();
+  newAttr.resize(this.elementCount);
+  newAttr.name = name;
+  newAttr.version = this.keysVersion;
+  this.attachNewAttribute(newAttr);
+
+  return newAttr;
+}

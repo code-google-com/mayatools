@@ -1,0 +1,55 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+///BulletContactConstraint can be automatically created to solve contact constraints using the unified BulletTypedConstraint interface
+interface BulletContactConstraint //: BulletTypedConstraint
+{
+
+	Data getPointer();
+
+	setContactManifold(BulletPersistentManifold contactManifold);
+	BulletPersistentManifold getContactManifold();
+};
+
+// function BulletContactConstraint(BulletPersistentManifold contactManifold, BulletRigidBody rbA,BulletRigidBody rbB){
+// 	this.contactManifold = contactManifold;
+// 	this.rbA = rbA;
+// 	this.rbB = rbB;
+// 	this.__construct(contactManifold, rbA, rbB);
+// }
+// function BulletContactConstraint.__construct(BulletPersistentManifold contactManifold, BulletRigidBody rbA, BulletRigidBody rbB) = "BulletContactConstraint_construct1";
+
+// function ~BulletContactConstraint() = "BulletContactConstraint_destroy";
+
+// function BulletContactConstraint.setContactManifold(BulletPersistentManifold contactManifold){
+// 	this.contactManifold = contactManifold;
+// 	this.__setContactManifold(contactManifold);
+// }
+// function BulletContactConstraint.__setContactManifold(BulletPersistentManifold contactManifold) = "BulletContactConstraint_setContactManifold";
+
+// function BulletPersistentManifold BulletContactConstraint.getContactManifold(){
+// 	return this.contactManifold;
+// }
+
+// // function BulletContactConstraint.getInfo1 (BulletConstraintInfo1* info);
+
+// // function BulletContactConstraint.getInfo2 (BulletConstraintInfo2* info);
+
+// 	///obsolete methods
+// function BulletContactConstraint.buildJacobian() = "BulletContactConstraint_buildJacobian";
+
+
+
+// ///very basic collision resolution without friction
+// Scalar resolveSingleCollision(BulletRigidBody* body1, class BulletICollisionObject* colObj2, in Vec3 contactPositionWorld,in Vec3 contactNormalOnB, const struct BulletContactSolverInfo& solverInfo,Scalar distance);
+
+
+// ///resolveSingleBilateral is an obsolete methods used for vehicle friction between two dynamic objects
+// void resolveSingleBilateral(BulletRigidBody& body1, in Vec3 pos1,
+//                       BulletRigidBody& body2, in Vec3 pos2,
+//                       Scalar distance, in Vec3 normal,Scalar& impulse ,Scalar timeStep);
+
+

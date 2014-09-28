@@ -1,0 +1,240 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+require Images, FabricStatistics;
+require RTR;
+
+//////////////////// TextureFromImageGenerator
+
+interface ImageRTRGeneratorWrapper {
+  UInt32 getVersion();
+  Ref<Object> getImageRef();
+  loadToTexture( io OGLTexture2D texture );
+};
+
+object TextureFromImageGenerator : RTRParamGenerator {
+  ImageRTRGeneratorWrapper sourceImageWrapper;
+  UInt32 lastImageVersion;
+};
+
+function Type TextureFromImageGenerator.getGeneratedParamType() {
+  return OGLTexture2D;
+}
+
+function TextureFromImageGenerator.generate!(io Object value) {
+  OGLTexture2D texture = value;
+  this.sourceImageWrapper.loadToTexture(texture);
+}
+
+//SetFromImage: lazily upload the GL data if required by the rendering
+function Boolean RenderParamValues.setAsOGLTexture2DFromImageWrapper!(RenderValueKey key, ImageRTRGeneratorWrapper imageWrapper) {
+  this.setAsOGLTexture2D(key);
+  if( !this.hasDataGenerator(key) ) {
+    //Initialize
+    TextureFromImageGenerator generator = TextureFromImageGenerator();
+    generator.sourceImageWrapper = imageWrapper;
+    this.initDataGenerator(key, generator);
+  }
+  Ref<TextureFromImageGenerator> generator = this.getParamGenerator(key);
+  if( imageWrapper.getImageRef() != generator.sourceImageWrapper.getImageRef() ) {
+    generator.sourceImageWrapper = imageWrapper;
+    generator.lastImageVersion = 0;
+  }
+
+  if( synchronizeVersion( imageWrapper.getVersion(), generator.lastImageVersion ) ) {
+    this.incrementValueVersion_preGenerateIfWasRequired(key);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.setAsOGLTexture2DFromImageWrapper!(String name, ImageRTRGeneratorWrapper imageWrapper) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  return this.setAsOGLTexture2DFromImageWrapper(key, imageWrapper);
+}
+
+///////////////////// Built-in image types' implementations
+
+const UInt32 Image2DFlag_depth = 1;
+const UInt32 Image2DFlag_mipmap = 2;
+const UInt32 Image2DFlag_repeat = 4;
+
+function OGLTexture2D.updateTypeFromImageFlags!( UInt32 imageFlags ) {
+  if( imageFlags & Image2DFlag_mipmap )
+    this.buildMipmaps = true;
+  if( imageFlags & Image2DFlag_repeat ) {
+    this.wrapS = GL_REPEAT;
+    this.wrapT = GL_REPEAT;
+  } else {
+    this.wrapS = GL_CLAMP_TO_EDGE;
+    this.wrapT = GL_CLAMP_TO_EDGE;
+  }
+  this.textureMinFilter = this.buildMipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
+  this.textureMagFilter = GL_LINEAR;
+}
+
+function OGLTexture2D.setTypeFromImage!( Image2DRGB image ) {
+  this.name = image.name;
+  this.glTextureType = GL_TEXTURE_2D;
+  this.glInternalFormat = GL_RGB8;
+  this.glFormat = GL_RGB;
+  this.glType = GL_UNSIGNED_BYTE;
+
+  this.updateTypeFromImageFlags( image.flags );
+}
+
+function OGLTexture2D.loadFromImage!( Image2DRGB image ) {
+  this.setTypeFromImage(image);
+  Ref<Image2DRGB> imageNoConst = image;//Trick KL on 'const' since there's no .constData()
+  this.configure( imageNoConst.width, imageNoConst.height, imageNoConst.pixels.data() );
+}
+
+function OGLTexture2D.setTypeFromImage!( Image2DRGBA image ) {
+  this.name = image.name;
+  this.glTextureType = GL_TEXTURE_2D;
+  this.glInternalFormat = GL_RGBA8;
+  this.glFormat = GL_RGBA;
+  this.glType = GL_UNSIGNED_BYTE;
+
+  this.updateTypeFromImageFlags( image.flags );
+}
+
+function OGLTexture2D.loadFromImage!( Image2DRGBA image ) {
+  this.setTypeFromImage(image);
+  Ref<Image2DRGBA> imageNoConst = image;//Trick KL on 'const' since there's no .constData()
+  this.configure( imageNoConst.width, imageNoConst.height, imageNoConst.pixels.data() );
+}
+
+function OGLTexture2D.setTypeFromImage!( Image2DColor image ) {
+  this.name = image.name;
+  this.glTextureType = GL_TEXTURE_2D;
+  this.glInternalFormat = GL_RGBA32F;
+  this.glFormat = GL_RGBA;
+  this.glType = GL_FLOAT;
+
+  this.updateTypeFromImageFlags( image.flags );
+}
+
+function OGLTexture2D.loadFromImage!( Image2DColor image ) {
+  this.setTypeFromImage(image);
+  Ref<Image2DColor> imageNoConst = image;//Trick KL on 'const' since there's no .constData()
+  this.configure( imageNoConst.width, imageNoConst.height, imageNoConst.pixels.data() );
+}
+
+function OGLTexture2D.setTypeFromImage!( Image2DScalar image ) {
+  this.name = image.name;
+  this.glTextureType = GL_TEXTURE_2D;
+  this.glType = GL_FLOAT;
+  if( image.flags & Image2DFlag_depth ) {
+    this.glInternalFormat = GL_DEPTH_COMPONENT;
+    this.glFormat = GL_DEPTH_COMPONENT;
+  } else {
+    this.glInternalFormat = GL_R32F;
+    this.glFormat = GL_RED;
+  }
+  this.updateTypeFromImageFlags( image.flags );
+}
+
+function OGLTexture2D.loadFromImage!( Image2DScalar image ) {
+  this.setTypeFromImage(image);
+  Ref<Image2DScalar> imageNoConst = image;//Trick KL on 'const' since there's no .constData()
+  this.configure( imageNoConst.width, imageNoConst.height, imageNoConst.pixels.data() );
+}
+
+////// Image2DRGB_RTRGeneratorWrapper
+
+object Image2DRGB_RTRGeneratorWrapper : ImageRTRGeneratorWrapper {
+  Image2DRGB image;
+};
+
+function Image2DRGB_RTRGeneratorWrapper( Image2DRGB image ) {
+  this.image = image;
+}
+
+function UInt32 Image2DRGB_RTRGeneratorWrapper.getVersion() {
+  return this.image.version;
+}
+
+function Ref<Object> Image2DRGB_RTRGeneratorWrapper.getImageRef() {
+  return this.image;
+}
+
+function Image2DRGB_RTRGeneratorWrapper.loadToTexture( io OGLTexture2D texture ) {
+  texture.loadFromImage( this.image );
+  if(FabricStatisticsEnabled())
+    AddStatisticsChild(this.image.autoStats, texture.autoStats);
+}
+
+////// Image2DRGBA_RTRGeneratorWrapper
+
+object Image2DRGBA_RTRGeneratorWrapper : ImageRTRGeneratorWrapper {
+  Image2DRGBA image;
+};
+
+function Image2DRGBA_RTRGeneratorWrapper( Image2DRGBA image ) {
+  this.image = image;
+}
+
+function UInt32 Image2DRGBA_RTRGeneratorWrapper.getVersion() {
+  return this.image.version;
+}
+
+function Ref<Object> Image2DRGBA_RTRGeneratorWrapper.getImageRef() {
+  return this.image;
+}
+
+function Image2DRGBA_RTRGeneratorWrapper.loadToTexture( io OGLTexture2D texture ) {
+  texture.loadFromImage( this.image );
+  if(FabricStatisticsEnabled())
+    AddStatisticsChild(this.image.autoStats, texture.autoStats);
+}
+
+////// Image2DColor_RTRGeneratorWrapper
+
+object Image2DColor_RTRGeneratorWrapper : ImageRTRGeneratorWrapper {
+  Image2DColor image;
+};
+
+function Image2DColor_RTRGeneratorWrapper( Image2DColor image ) {
+  this.image = image;
+}
+
+function UInt32 Image2DColor_RTRGeneratorWrapper.getVersion() {
+  return this.image.version;
+}
+
+function Ref<Object> Image2DColor_RTRGeneratorWrapper.getImageRef() {
+  return this.image;
+}
+
+function Image2DColor_RTRGeneratorWrapper.loadToTexture( io OGLTexture2D texture ) {
+  texture.loadFromImage( this.image );
+  if(FabricStatisticsEnabled())
+    AddStatisticsChild(this.image.autoStats, texture.autoStats);
+}
+
+////// Image2DScalar_RTRGeneratorWrapper
+
+object Image2DScalar_RTRGeneratorWrapper : ImageRTRGeneratorWrapper {
+  Image2DScalar image;
+};
+
+function Image2DScalar_RTRGeneratorWrapper( Image2DScalar image ) {
+  this.image = image;
+}
+
+function UInt32 Image2DScalar_RTRGeneratorWrapper.getVersion() {
+  return this.image.version;
+}
+
+function Ref<Object> Image2DScalar_RTRGeneratorWrapper.getImageRef() {
+  return this.image;
+}
+
+function Image2DScalar_RTRGeneratorWrapper.loadToTexture( io OGLTexture2D texture ) {
+  texture.loadFromImage( this.image );
+  if(FabricStatisticsEnabled())
+    AddStatisticsChild(this.image.autoStats, texture.autoStats);
+}
+

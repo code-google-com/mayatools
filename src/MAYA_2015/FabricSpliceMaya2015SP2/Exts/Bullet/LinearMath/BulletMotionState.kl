@@ -1,0 +1,18 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+///The btMotionState interface class allows the dynamics world to synchronize and interpolate the updated world transforms with graphics
+///For optimizations, potentially only moving objects get synchronized (using setWorldPosition/setWorldOrientation)
+interface	BulletMotionState
+{
+    Data getPointer();
+
+	getWorldTransform?(io Xfo worldTrans );
+
+	//Bullet only calls the update of worldtransform for active objects
+	setWorldTransform!(Xfo worldTrans);
+};
+

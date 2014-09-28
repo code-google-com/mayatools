@@ -1,0 +1,91 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+///BulletCollisionDispatcher supports algorithms that handle ConvexConvex and ConvexConcave collision pairs.
+///Time of Impact, Closest Points and Penetration Depth.
+object BulletCollisionDispatcher : BulletDispatcher
+{
+  Data pointer;
+  BulletCollisionAlgorithmCreateFunc createFuncs[];
+};
+
+function Data BulletCollisionDispatcher.getPointer(){ 
+  return this.pointer; 
+}
+
+function BulletCollisionDispatcher (BulletCollisionConfiguration collisionConfiguration){
+  this.__construct(collisionConfiguration);
+}
+function BulletCollisionDispatcher.__construct!(BulletCollisionConfiguration collisionConfiguration) = 'BulletCollisionDispatcher_constructBulletCollisionConfiguration';
+
+function ~BulletCollisionDispatcher(){
+	this.__destroy();
+}
+function BulletCollisionDispatcher.__destroy!() = 'BulletCollisionDispatcher_destroy';
+
+//const Integer CD_STATIC_STATIC_REPORTED = 1;
+//const Integer CD_USE_RELATIVE_CONTACT_BREAKING_THRESHOLD = 2;
+//const Integer CD_DISABLE_CONTACTPOOL_DYNAMIC_ALLOCATION = 4;
+
+//function Integer BulletCollisionDispatcher.getDispatcherFlags() = 'BulletCollisionDispatcher_getDispatcherFlags';
+
+//function BulletCollisionDispatcher.setDispatcherFlags(Integer flags) = 'BulletCollisionDispatcher_';
+
+///registerCollisionCreateFunc allows registration of custom/alternative collision create functions
+function BulletCollisionDispatcher.registerCollisionCreateFunc!(Integer proxyType0, Integer proxyType1, BulletCollisionAlgorithmCreateFunc createFunc){
+	this.__registerCollisionCreateFunc(proxyType0, proxyType1, createFunc);
+	this.createFuncs.push(createFunc);
+}
+function BulletCollisionDispatcher.__registerCollisionCreateFunc!(Integer proxyType0, Integer proxyType1, BulletCollisionAlgorithmCreateFunc createFunc) = 'BulletCollisionDispatcher_registerCollisionCreateFunc';
+
+function Integer	BulletCollisionDispatcher.getNumManifolds() = 'BulletCollisionDispatcher_getNumManifolds';
+
+//function BulletPersistentManifold**	BulletCollisionDispatcher.getInternalManifoldPointer() = 'BulletCollisionDispatcher_';
+
+function BulletPersistentManifold BulletCollisionDispatcher.getManifoldByIndexInternal(Integer index) = 'BulletCollisionDispatcher_getManifoldByIndexInternal';
+
+
+
+// function BulletPersistentManifold*	BulletCollisionDispatcher.getNewManifold(void* b0,void* b1) = 'BulletCollisionDispatcher_';
+	
+// function BulletCollisionDispatcher.releaseManifold(BulletPersistentManifold* manifold) = 'BulletCollisionDispatcher_';
+
+
+// function BulletCollisionDispatcher.clearManifold(BulletPersistentManifold* manifold) = 'BulletCollisionDispatcher_';
+
+			
+// function BulletCollisionAlgorithm* findAlgorithm(BulletICollisionObject* body0,BulletICollisionObject* body1,BulletPersistentManifold* sharedManifold = 0) = 'BulletCollisionDispatcher_';
+		
+// function Boolean BulletCollisionDispatcher.BulletCollisionDispatcher.needsCollision(BulletICollisionObject* body0,BulletICollisionObject* body1) = 'BulletCollisionDispatcher_';
+	
+// function Boolean BulletCollisionDispatcher.BulletCollisionDispatcher.needsResponse(BulletICollisionObject* body0,BulletICollisionObject* body1) = 'BulletCollisionDispatcher_';
+	
+// function BulletCollisionDispatcher.dispatchAllCollisionPairs(BulletOverlappingPairCache* pairCache,const BulletDispatcherInfo& dispatchInfo,BulletDispatcher* dispatcher) = 'BulletCollisionDispatcher_';
+
+// function BulletCollisionDispatcher.setNearCallback(BulletNearCallback	nearCallback) = 'BulletCollisionDispatcher_';
+
+// function BulletNearCallback	BulletCollisionDispatcher.getNearCallback() = 'BulletCollisionDispatcher_';
+
+	//by default, Bullet will use this near callback
+// function BulletCollisionDispatcher.defaultNearCallback(BulletBroadphasePair& collisionPair, BulletCollisionDispatcher& dispatcher, const BulletDispatcherInfo& dispatchInfo) = 'BulletCollisionDispatcher_';
+
+// function Object BulletCollisionDispatcher.allocateCollisionAlgorithm(Integer size) = 'BulletCollisionDispatcher_';
+
+// function BulletCollisionDispatcher.freeCollisionAlgorithm(void* ptr) = 'BulletCollisionDispatcher_';
+
+// function BulletCollisionConfiguration BulletCollisionDispatcher.getCollisionConfiguration() = 'BulletCollisionDispatcher_';
+
+// function const BulletCollisionConfiguration*	getCollisionConfiguration() = 'BulletCollisionDispatcher_';
+
+// function BulletCollisionDispatcher.setCollisionConfiguration(BulletCollisionConfiguration* config) = 'BulletCollisionDispatcher_';
+
+// function BulletPoolAllocator* BulletCollisionDispatcher.getInternalManifoldPool() = 'BulletCollisionDispatcher_';
+
+// function BulletPoolAllocator* BulletCollisionDispatcher.getInternalManifoldPool() = 'BulletCollisionDispatcher_';
+
+
+

@@ -1,0 +1,212 @@
+
+
+
+inline AabbExpand ( io Vec3 aabbMin,
+					io Vec3 aabbMax,
+					in Vec3 expansionMin,
+					in Vec3 expansionMax)
+{
+	aabbMin = aabbMin + expansionMin;
+	aabbMax = aabbMax + expansionMax;
+}
+
+/// conservative test for overlap between two aabbs
+inline Boolean TestPointAgainstAabb2(in Vec3 aabbMin1, in Vec3 aabbMax1,
+									 in Vec3 point)
+{
+	Boolean overlap = true;
+	overlap = (aabbMin1.x > point.x || aabbMax1.x < point.x) ? false : overlap;
+	overlap = (aabbMin1.x > point.x || aabbMax1.x < point.x) ? false : overlap;
+	overlap = (aabbMin1.y > point.y || aabbMax1.y < point.y) ? false : overlap;
+	return overlap;
+}
+
+
+/// conservative test for overlap between two aabbs
+inline Boolean TestAabbAgainstAabb2(in Vec3 aabbMin1, in Vec3 aabbMax1,
+									in Vec3 aabbMin2, in Vec3 aabbMax2)
+{
+	Boolean overlap = true;
+	overlap = (aabbMin1.x > aabbMax2.x || aabbMax1.x < aabbMin2.x) ? false : overlap;
+	overlap = (aabbMin1.x > aabbMax2.x || aabbMax1.x < aabbMin2.x) ? false : overlap;
+	overlap = (aabbMin1.y > aabbMax2.y || aabbMax1.y < aabbMin2.y) ? false : overlap;
+	return overlap;
+}
+
+/// conservative test for overlap between triangle and aabb
+inline Boolean TestTriangleAgainstAabb2(Vec3 vertices[],
+										in Vec3 aabbMin, in Vec3 aabbMax)
+{
+	Vec3 p1 = vertices[0];
+	Vec3 p2 = vertices[1];
+	Vec3 p3 = vertices[2];
+
+	if (Math_min(Math_min(p1.x, p2.x), p3.x) > aabbMax.x) return false;
+	if (Math_max(Math_max(p1.x, p2.x), p3.x) < aabbMin.x) return false;
+
+	if (Math_min(Math_min(p1.z, p2.z), p3.z) > aabbMax.z) return false;
+	if (Math_max(Math_max(p1.z, p2.z), p3.z) < aabbMin.z) return false;
+  
+	if (Math_min(Math_min(p1.y, p2.y), p3.y) > aabbMax.y) return false;
+	if (Math_max(Math_max(p1.y, p2.y), p3.y) < aabbMin.y) return false;
+	return true;
+}
+
+
+inline Integer	btOutcode(in Vec3 p,in Vec3 halfExtent) 
+{
+	return (p.x  < -halfExtent.x ? 0x01 : 0x0) |    
+		   (p.x >  halfExtent.x ? 0x08 : 0x0) |
+		   (p.y < -halfExtent.y ? 0x02 : 0x0) |    
+		   (p.y >  halfExtent.y ? 0x10 : 0x0) |
+		   (p.x < -halfExtent.x ? 0x4 : 0x0) |    
+		   (p.x >  halfExtent.x ? 0x20 : 0x0);
+}
+
+
+
+inline Boolean btRayAabb2(in Vec3 rayFrom,
+						  in Vec3 rayInvDirection,
+						  in UInt32 raySign[3],
+						  in Vec3 bounds[2],
+						  io Scalar tmin,
+						  Scalar lambda_min,
+						  Scalar lambda_max)
+{
+	Scalar tmax, tymin, tymax, tzmin, tzmax;
+	tmin = (bounds[raySign[0]].x - rayFrom.x) * rayInvDirection.x;
+	tmax = (bounds[1-raySign[0]].x - rayFrom.x) * rayInvDirection.x;
+	tymin = (bounds[raySign[1]].y - rayFrom.y) * rayInvDirection.y;
+	tymax = (bounds[1-raySign[1]].y - rayFrom.y) * rayInvDirection.y;
+
+	if ( (tmin > tymax) || (tymin > tmax) )
+		return false;
+
+	if (tymin > tmin)
+		tmin = tymin;
+
+	if (tymax < tmax)
+		tmax = tymax;
+
+	tzmin = (bounds[raySign[2]].x - rayFrom.x) * rayInvDirection.x;
+	tzmax = (bounds[1-raySign[2]].x - rayFrom.x) * rayInvDirection.x;
+
+	if ( (tmin > tzmax) || (tzmin > tmax) )
+		return false;
+	if (tzmin > tmin)
+		tmin = tzmin;
+	if (tzmax < tmax)
+		tmax = tzmax;
+	return ( (tmin < lambda_max) && (tmax > lambda_min) );
+}
+
+inline Boolean btRayAabb(in Vec3 rayFrom, 
+						 in Vec3 rayTo, 
+						 in Vec3 aabbMin, 
+						 in Vec3 aabbMax,
+					 	 io Scalar param, io Vec3 normal) 
+{
+	Vec3 aabbHalfExtent = (aabbMax-aabbMin)* Scalar(0.5);
+	Vec3 aabbCenter = (aabbMax+aabbMin)* Scalar(0.5);
+	Vec3	source = rayFrom - aabbCenter;
+	Vec3	target = rayTo - aabbCenter;
+	Integer	sourceOutcode = btOutcode(source,aabbHalfExtent);
+	Integer targetOutcode = btOutcode(target,aabbHalfExtent);
+	if ((sourceOutcode & targetOutcode) == 0x0)
+	{
+		Scalar lambda_enter = Scalar(0.0);
+		Scalar lambda_exit  = param;
+		Vec3 r = target - source;
+		Integer i;
+		Scalar	normSign = 1;
+		Vec3	hitNormal(0,0,0);
+		Integer bit=1;
+
+		for (Integer j=0;j<2;j++)
+		{
+			for (i = 0; i != 3; ++i)
+			{
+				if (sourceOutcode & bit)
+				{
+					Scalar lambda = (-source.component(i) - aabbHalfExtent.component(i)*normSign) / r.component(i);
+					if (lambda_enter <= lambda)
+					{
+						lambda_enter = lambda;
+						hitNormal.set(0,0,0);
+						hitNormal.setComponent(i, normSign);
+					}
+				}
+				else if (targetOutcode & bit) 
+				{
+					Scalar lambda = (-source.component(i) - aabbHalfExtent.component(i)*normSign) / r.component(i);
+					lambda_exit = Math_min(lambda_exit, lambda);
+				}
+				bit<<=1;
+			}
+			normSign = Scalar(-1.);
+		}
+		if (lambda_enter <= lambda_exit)
+		{
+			param = lambda_enter;
+			normal = hitNormal;
+			return true;
+		}
+	}
+	return false;
+}
+
+
+
+inline btTransformAabb(in Vec3 halfExtents, Scalar margin,in Xfo t, io Vec3 aabbMinOut, io Vec3 aabbMaxOut)
+{
+	Vec3 halfExtentsWithMargin = halfExtents+Vec3(margin,margin,margin);
+	Mat33 abs_b = t.toMat44().upperLeft();  
+	Vec3 center = t.tr;
+	Vec3 extent = Vec3(abs_b.row0.dot(halfExtentsWithMargin),
+		   abs_b.row1.dot(halfExtentsWithMargin),
+		  abs_b.row2.dot(halfExtentsWithMargin));
+	aabbMinOut = center - extent;
+	aabbMaxOut = center + extent;
+}
+
+
+inline btTransformAabb(in Vec3 localAabbMin,in Vec3 localAabbMax, Scalar margin,in Xfo trans, io Vec3 aabbMinOut, io Vec3 aabbMaxOut)
+{
+	// btAssert(localAabbMin.x <= localAabbMax.x);
+	// btAssert(localAabbMin.y <= localAabbMax.y);
+	// btAssert(localAabbMin.x <= localAabbMax.x);
+	Vec3 localHalfExtents = Scalar(0.5)*(localAabbMax-localAabbMin);
+	localHalfExtents+=Vec3(margin,margin,margin);
+
+	Vec3 localCenter = Scalar(0.5)*(localAabbMax+localAabbMin);
+	Mat33 abs_b = trans.toMat44().upperLeft();
+	Vec3 center = trans.transformVector(localCenter);
+	Vec3 extent = Vec3(	abs_b.row0.dot(localHalfExtents),
+						abs_b.row1.dot(localHalfExtents),
+						abs_b.row2.dot(localHalfExtents));
+	aabbMinOut = center-extent;
+	aabbMaxOut = center+extent;
+}
+
+// #define USE_BANCHLESS 1
+// #ifdef USE_BANCHLESS
+// 	//This block replaces the block below and uses no branches, and replaces the 8 bit return with a 32 bit return for improved performance (~3x on XBox 360)
+// 	inline unsigned testQuantizedAabbAgainstQuantizedAabb( UInt16 aabbMin1[3], UInt16 aabbMax1[3], UInt16 aabbMin2[3], UInt16 aabbMax2[3])
+// 	{		
+// 		return static_cast<UInt32>(btSelect((unsigned)((aabbMin1[0] <= aabbMax2[0]) & (aabbMax1[0] >= aabbMin2[0])
+// 			& (aabbMin1[2] <= aabbMax2[2]) & (aabbMax1[2] >= aabbMin2[2])
+// 			& (aabbMin1[1] <= aabbMax2[1]) & (aabbMax1[1] >= aabbMin2[1])),
+// 			1, 0));
+// 	}
+// #else
+	inline Boolean testQuantizedAabbAgainstQuantizedAabb( UInt16 aabbMin1[3], UInt16 aabbMax1[3], UInt16 aabbMin2[3], UInt16 aabbMax2[3])
+	{
+		Boolean overlap = true;
+		overlap = (aabbMin1[0] > aabbMax2[0] || aabbMax1[0] < aabbMin2[0]) ? false : overlap;
+		overlap = (aabbMin1[2] > aabbMax2[2] || aabbMax1[2] < aabbMin2[2]) ? false : overlap;
+		overlap = (aabbMin1[1] > aabbMax2[1] || aabbMax1[1] < aabbMin2[1]) ? false : overlap;
+		return overlap;
+	}
+
+
+

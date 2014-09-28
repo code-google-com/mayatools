@@ -1,0 +1,83 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+
+The :ref:`MouseWheelEvent` object used to propagate mouse whee events into the Manipulation system. 
+
+
+*/
+
+
+object MouseWheelEvent : Event {
+
+    Host host;
+    Viewport viewport;
+
+    EventType eventType;
+    Boolean accepted;
+
+    // The keyboard modifier flags that existed immediately before the event occurred.
+    ModiferKey modifiers;
+
+    // The button state when the event was generated. 
+    // The button state is a combination of MouseButton_LeftButton, MouseButton_RightButton, MouseButton_MidButton using the OR operator. 
+    // For mouse move events, this is all buttons that are pressed down. 
+    // For mouse press and double click events this includes the button that caused the event.
+    // For mouse release events this excludes the button that caused the event.
+    MouseButton buttons;
+
+    // The distance that the wheel is rotated, in eighths of a degree. A positive value indicates that the wheel was rotated forwards away from the user; a negative value indicates that the wheel was rotated backwards toward the user.
+    Integer delta;
+
+    // The cursor position in pixels, relative to the viewport that received the event. 
+    Vec2 pos;
+};
+
+
+function MouseWheelEvent(EventType eventType, ModiferKey modifiers, MouseButton buttons, Integer delta, Vec2 pos, Viewport viewport){
+    this.eventType = eventType;
+    this.modifiers = modifiers;
+    this.buttons = buttons;
+    this.delta = delta;
+    this.pos = pos;
+    this.viewport = viewport;
+}
+
+function Host MouseWheelEvent.getHost(){
+    return this.host;
+}
+
+function Viewport MouseWheelEvent.getViewport(){
+    return this.viewport;
+}
+
+
+// Sets the accept flag of the event object, the equivalent of calling setAccepted(true).
+function MouseWheelEvent.accept!(){
+    this.accepted = true;
+}
+
+// Clears the accept flag parameter of the event object, the equivalent of calling setAccepted(false).
+function MouseWheelEvent.ignore!(){
+    this.accepted = false;
+}
+  
+// Returns true if the event has been accepted by the active manipulator. The host application should then
+function Boolean MouseWheelEvent.isAccepted(){
+    return this.accepted;
+}
+
+// when a manipulator processes and event, it should call either 'accept', or 'setAccepted(true)' to indicate that it has processed the event.
+function MouseWheelEvent.setAccepted!(Boolean accepted){
+    this.accepted = accepted;
+}
+
+// Returns the event type id. The list of supported Ids are defined in ManipulationConstants.kl.
+function EventType MouseWheelEvent.eventType(){
+    return this.eventType;
+}
+

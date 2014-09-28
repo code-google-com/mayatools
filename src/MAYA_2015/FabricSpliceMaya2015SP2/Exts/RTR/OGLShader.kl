@@ -1,0 +1,572 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require FabricOGL;
+
+const Integer OGLShaderProgramUsageHint_none = 0;
+const Integer OGLShaderProgramUsageHint_vector = 1;
+const Integer OGLShaderProgramUsageHint_normalizedVector = 2;
+const Integer OGLShaderProgramUsageHint_normalTransform = 3;
+
+const Integer OGLShaderProgram_uniformSource_genericVertex = -2;
+const Integer OGLShaderProgram_uniformSource_genericFragment = -1;
+const Integer OGLShaderProgram_uniformSource_uniform = 0;
+const Integer OGLShaderProgram_uniformSource_instancesTexture = 1;
+const Integer OGLShaderProgram_uniformSource_instancesAttribute = 2;
+const Integer OGLShaderProgram_uniformSource_attribute = 3;
+const Integer OGLShaderProgram_uniformSource_texture = 4;
+
+const Integer OGLShaderProgram_glType_flag = -2;
+
+struct OGLShaderProgramUniform {
+  String name;
+  String alternateNames[];
+  String paramName;
+
+  SInt32 programLocation;
+  SInt32 sourceType;
+  SInt32 genericTextureUVsAttributeIndex;
+  Integer space;
+  Integer usageHint;
+  Size count;
+
+  String klType;
+  SInt32 glType;
+  SInt32 originalGlType;
+
+  Boolean optional;
+  Boolean expose;
+  Object defaultValue;
+};
+
+function OGLShaderProgramUniform() {
+  this.expose = true;
+  this.genericTextureUVsAttributeIndex = -1;
+  this.programLocation = -1;
+  this.glType = -1;
+  this.count = 1;
+}
+
+function OGLShaderProgramUniform.addAlternateName!( String alternateName ) {
+  this.alternateNames.push(alternateName);
+}
+
+struct OGLShaderProgramAttribute {
+  String name;
+  String paramName;
+  String klType;
+  Integer glType;
+  Integer glSize;
+  Boolean optional;
+  Integer programLocation;
+};
+
+function OGLShaderProgramAttribute() {
+  this.programLocation = -1;
+  this.glType = -1;
+  this.glSize = -1;
+}
+
+struct OGLShaderProgramTexture {
+  String name;
+  String paramName;
+  Integer nbComp;
+  Integer glType;
+  Boolean optional;
+  Integer programLocation;
+};
+
+function OGLShaderProgramTexture() {
+  this.nbComp = 4;
+  this.programLocation = -1;
+  this.glType = -1;
+}
+
+struct OGLShaderProgramOption {
+  Integer id;
+  Integer value;
+};
+
+function OGLShaderProgramOption() {
+  this.id = 0;
+  this.value = -1;
+}
+
+struct OGLShaderSource {
+  String name;
+  String prefix;
+  String code;
+  Integer type;
+};
+
+object OGLShaderProgram {
+  String name;
+  String filename;
+
+  Integer uniqueId;
+  UInt32 programId;
+
+  Boolean debug;
+  UInt32 version;
+
+  Boolean compiled;
+  Boolean instanced;
+  Boolean hasGenericParameters;
+  Boolean hasUniformSource_attribute;
+
+  OGLShaderSource shaderSources[];
+  OGLShaderProgramOption programOptions[];
+  OGLShaderProgramUniform uniforms[];
+  OGLShaderProgramUniform defines[];
+  OGLShaderProgramAttribute attributes[];
+  OGLShaderProgramTexture textures[];
+  OGLShaderProgramTexture outputFragments[];
+
+  String defineStrings[];
+  Integer disableOptions[];
+  Integer enableOptions[];
+  Integer cullFace;
+  Integer blendModeSfactor;
+  Integer blendModeDfactor;
+  Integer drawMode;
+  Integer patchVertices;
+};
+
+function OGLShaderProgram() {
+  this.cullFace = -1;
+  this.drawMode = -1;
+  this.patchVertices = -1;
+}
+
+function OGLShaderProgram.addShaderSource!( OGLShaderSource shaderSource ) {
+  this.shaderSources.push(shaderSource);
+}
+
+function OGLShaderProgram.addProgramOption!( OGLShaderProgramOption shaderSource ) {
+  this.programOptions.push(shaderSource);
+}
+
+function OGLShaderProgram.addUniform!( io OGLShaderProgramUniform uniform ) {
+  //If exposed, ensure there is a default value
+  if( uniform.expose && uniform.defaultValue == null )
+    uniform.defaultValue = SimpleRenderParam_createDefaultFromKLTypeString(uniform.klType);
+  uniform.originalGlType = uniform.glType;
+  this.uniforms.push(uniform);
+}
+
+function OGLShaderProgram.addDefine!( io OGLShaderProgramUniform define ) {
+  //If exposed, ensure there is a default value
+  if( define.expose && define.defaultValue == null )
+    define.defaultValue = SimpleRenderParam_createDefaultFromKLTypeString(define.klType);
+  this.defines.push(define);
+}
+
+function OGLShaderProgram.addAttribute!( OGLShaderProgramAttribute attribute ) {
+  this.attributes.push(attribute);
+}
+
+function OGLShaderProgram.addTexture!( OGLShaderProgramTexture texture ) {
+  this.textures.push(texture);
+}
+
+function OGLShaderProgram.addOutputFragment!( OGLShaderProgramTexture outputFragment ) {
+  this.outputFragments.push(outputFragment);
+}
+
+function OGLShaderProgram.addDisableOption!( Integer disableOption ) {
+  this.disableOptions.push(disableOption);
+}
+
+function OGLShaderProgram.addEnableOption!( Integer enableOption ) {
+  this.enableOptions.push(enableOption);
+}
+
+inline OGLShaderProgram(String name) {
+  this.name = name;
+}
+
+inline OGLShaderProgram.free!() {
+  if (this.programId != 0 && cpglHaveContext())
+    glDeleteProgram(this.programId);
+  this.programId = 0;
+}
+
+inline ~OGLShaderProgram(){
+  this.free();
+}
+
+function Integer OGLShaderProgram.createAndCompileShader!(OGLShaderSource shadersrc) {
+
+  if(!cpglHaveContext()){
+    setError("ERROR: OGLShaderProgram.createAndCompileShader. OpenGL context not bound");
+    return 0;
+  }
+
+  String GLVersion;
+  glGetVersion(GLVersion);
+  if( GLVersion < "3.2" )
+    return 0;//Silently exit; the renderer will report an error later on
+
+  UInt32 shaderID = glCreateShader(shadersrc.type);
+  if (shaderID == 0) {
+    setError(this.name + ' : glCreateShader failed');
+    return 0;
+  }
+
+  // Load and compile the shader source
+  String shaderSource = shadersrc.prefix;
+  for(Size i = 0; i < this.defineStrings.size(); ++i)
+    shaderSource += this.defineStrings[i];
+
+  shaderSource += shadersrc.code;
+
+  Integer strlens[];
+  String srcs[];
+  strlens.push(shaderSource.length());
+  srcs.push(shaderSource);
+
+  glShaderSource(shaderID, srcs.size(), srcs, strlens);
+  glCompileShader(shaderID);
+
+  // Check the compile status
+  Integer compiled[];
+  compiled.push(0);
+  glGetShaderiv(shaderID, GL_COMPILE_STATUS, compiled);
+  if (compiled[0] == 0)
+    report(this.name + ' : Shader compilation failed:');
+
+  Integer infoLen[];
+  infoLen.resize(1);
+  glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, infoLen);
+
+  if (infoLen[0] > 1) {// > 1: some drivers report 1 byte strings containing '\0' (should not be treated as warning)
+    if (compiled[0] > 1) {
+      report(this.name + ' : Shader compilation succeeded with warnings:');
+    }
+    String infoLog;
+    UInt32 bufferSize[];
+    UInt32 bufferTotalSize = 0;
+    for(Size i=0;i<infoLen.size();i++){
+      bufferSize.push(infoLen[i]);
+      bufferTotalSize += bufferSize[i];
+    }
+      
+    glGetShaderInfoLog(shaderID, bufferTotalSize, bufferSize, infoLog);
+    if(infoLog)
+      report(infoLog);
+  }
+  else if (compiled[0] == 0) {
+    report('<Unknown reason>');
+  }
+  
+  if (compiled[0] == 0) {
+    glDeleteShader(shaderID);
+    return 0;
+  }
+
+  return shaderID;
+}
+
+
+function OGLShaderProgram.logShaderParameters!() {
+  String name, typeName;
+  UInt32 i, j;
+  for (i = 0; i < this.uniforms.size(); i++) {
+    if( this.uniforms[i].name == "" )
+      report('WARNING: ' + this.name + ': Uniform ' + i + 'has no name');
+    if( this.uniforms[i].paramName == "" ) {
+      report('WARNING: ' + this.name + ': Uniform ' + this.uniforms[i].name + ' has no paramName');
+      this.uniforms[i].programLocation = -1;
+    } else {
+
+      this.uniforms[i].programLocation = glGetUniformLocation(this.programId, this.uniforms[i].paramName);
+      if( this.uniforms[i].programLocation == -1 
+          && (  this.uniforms[i].sourceType < 0
+             || this.uniforms[i].sourceType == OGLShaderProgram_uniformSource_instancesAttribute
+             || this.uniforms[i].sourceType == OGLShaderProgram_uniformSource_attribute) ) {
+        this.uniforms[i].programLocation = glGetAttribLocation(this.programId, this.uniforms[i].paramName);
+        if( this.uniforms[i].programLocation != -1 ) {
+          this.uniforms[i].sourceType = OGLShaderProgram_uniformSource_instancesAttribute;
+          this.hasUniformSource_attribute = true;
+        }
+      }
+
+      if (this.uniforms[i].programLocation == - 1 && !this.uniforms[i].optional)
+        report('WARNING: ' + this.name + ': Uniform ' + this.uniforms[i].name + ' paramName does not exist in the shader code: ' + this.uniforms[i].paramName);
+    }
+  }
+
+  Integer attributeNameToIndex[String];
+  for (i = 0; i < this.attributes.size(); i++) {
+    if( this.attributes[i].name == "" )
+      report('WARNING: ' + this.name + ': Attribute ' + i + 'has no name');
+    if( this.attributes[i].paramName == "" ) {
+      report('WARNING: ' + this.name + ': Attribute ' + this.attributes[i].name + ' has no paramName');
+      this.attributes[i].programLocation = -1;
+    } else {
+      this.attributes[i].programLocation = glGetAttribLocation(this.programId, this.attributes[i].paramName);
+      if (this.attributes[i].programLocation == - 1 && !this.attributes[i].optional)
+        report('WARNING: ' + this.name + ': Attribute ' + this.attributes[i].name + ' paramName does not exist in the shader code: ' + this.attributes[i].paramName);
+    }
+
+    if(attributeNameToIndex.has(this.attributes[i].name))
+      report('WARNING: ' + this.name + ': Attribute defined twice in the shader code: ' + this.attributes[i].name);
+    else
+      attributeNameToIndex[this.attributes[i].name] = i;
+  }
+
+  Integer textureNameToIndex[String];
+  for (i = 0; i < this.textures.size(); i++) {
+    if( this.textures[i].name == "" )
+      report('WARNING: ' + this.name + ': Texture ' + i + 'has no name');
+    if( this.textures[i].paramName == "" ) {
+      report('WARNING: ' + this.name + ': Texture ' + this.textures[i].name + ' has no paramName');
+      this.textures[i].programLocation = -1;
+    } else {
+      this.textures[i].programLocation = glGetUniformLocation(this.programId, this.textures[i].paramName);
+      if (this.textures[i].programLocation == - 1 && !this.textures[i].optional)
+        report('WARNING: ' + this.name + ': Texture ' + this.textures[i].name + ' paramName does not exist in the shader code: ' + this.textures[i].paramName);
+    }
+    if(textureNameToIndex.has(this.textures[i].name))
+      report('WARNING: ' + this.name + ': Texture defined twice in the shader code: ' + this.textures[i].name);
+    else
+      textureNameToIndex[this.textures[i].name] = i;
+  }
+
+  Size attachmentIndex = 0;
+  Integer outputFragmentNameToIndex[String];
+  for (i = 0; i < this.outputFragments.size(); i++) {
+    if( this.outputFragments[i].name == "" )
+      report('WARNING: ' + this.name + ': OutputFragment ' + i + 'has no name');
+    this.outputFragments[i].programLocation = attachmentIndex;//Buffer attachment index
+
+    if( this.outputFragments[i].paramName == "" ) {
+      report('WARNING: ' + this.name + ': Attribute ' + this.outputFragments[i].name + ' has no paramName');
+      this.outputFragments[i].programLocation = -1;
+    } else {
+      this.outputFragments[i].programLocation = glGetFragDataLocation(this.programId, this.outputFragments[i].paramName);
+      if (this.outputFragments[i].programLocation == - 1) {
+        if(this.outputFragments[i].optional)
+          continue;//Don't increment attachmentIndex
+        report('WARNING: ' + this.name + ': Attribute ' + this.outputFragments[i].name + ' paramName does not exist in the shader code: ' + this.outputFragments[i].paramName);
+      }
+    }
+
+    if(outputFragmentNameToIndex.has(this.outputFragments[i].name))
+      report('WARNING: ' + this.name + ': OutputFragment defined twice in the shader code: ' + this.outputFragments[i].name);
+    else
+      outputFragmentNameToIndex[this.outputFragments[i].name] = i;
+    ++attachmentIndex;
+  }
+
+  Integer nbUniforms[];
+  nbUniforms.push(0);
+  glGetProgramiv(this.programId, GL_ACTIVE_UNIFORMS, nbUniforms);
+  for (i = 0; i < nbUniforms[0]; i++) {
+    SInt32 size[];
+    UInt32 type[];
+    UInt32 nbReceived[];
+    size.push(0);
+    type.push(0);
+    nbReceived.push(0);
+    glGetActiveUniform(this.programId, i, 1024, nbReceived, size, type, name);
+
+    //If array, remove the [0] at the end
+    if( name.length() > 3 && name[name.length()-3] == '[' && name[name.length()-2] == '0' && name[name.length()-1] == ']' ) {
+      String newName;
+      for( j = 0; j < name.length()-3; ++j )
+        newName += name[j];
+      name = newName;
+    }
+    if(this.debug){
+      report( "U: " + i + " - " + size + " - " + type + " - " + name );
+    }
+    
+    Integer index = -1;
+    for (j = 0; j < this.uniforms.size(); j++) {
+      if (name == this.uniforms[j].paramName) {
+        index = j;
+        if( this.uniforms[j].glType != -1 && this.uniforms[j].glType != type[0] && this.uniforms[j].sourceType == OGLShaderProgram_uniformSource_uniform )
+          report('WARNING: ' + this.name + ': Mismatch between KL type and GLSL parameter type for uniform parameter ' + name );
+
+        this.uniforms[j].glType = type[0];
+        if( size[0] != this.uniforms[j].count ) {
+          this.uniforms[j].count = size[0];
+          //report('WARNING: ' + this.name + ': Mismatch in uniform array count for parameter ' + name + ': description count = ' + this.uniforms[j].count + ', shader count = ' + size[0] );
+        }
+
+        if( this.uniforms[j].sourceType == OGLShaderProgram_uniformSource_uniform ) {
+          if(type[0] == GL_SAMPLER_1D || type[0] == GL_SAMPLER_2D || type[0] == GL_SAMPLER_2D_ARRAY || type[0] == GL_SAMPLER_2D_ARRAY_SHADOW || type[0] == GL_SAMPLER_3D || type[0] == GL_SAMPLER_CUBE || type[0] == GL_SAMPLER_1D_SHADOW || type[0] == GL_SAMPLER_2D_SHADOW || type[0] == GL_SAMPLER_CUBE_SHADOW)
+            report('WARNING: ' + this.name + ': Uniform parameter ' + name + ' is a texture; should be defined in the <textures> section?' );
+        } else if( this.uniforms[j].sourceType < 0 && type[0] == GL_SAMPLER_2D ) {
+          this.uniforms[j].sourceType = OGLShaderProgram_uniformSource_instancesTexture;
+          this.instanced = true;
+        }
+
+        break;
+      }
+    }
+    
+    //Check if it is a texture
+    for (j = 0; j < this.textures.size(); j++) {
+      if (name == this.textures[j].paramName) {
+        index = j;
+        this.textures[j].glType = type[0];
+        if( !(type[0] == GL_SAMPLER_1D || type[0] == GL_SAMPLER_2D || type[0] == GL_SAMPLER_2D_ARRAY || type[0] == GL_SAMPLER_2D_ARRAY_SHADOW || type[0] == GL_SAMPLER_3D || type[0] == GL_SAMPLER_CUBE || type[0] == GL_SAMPLER_1D_SHADOW || type[0] == GL_SAMPLER_2D_SHADOW || type[0] == GL_SAMPLER_CUBE_SHADOW) )
+          report('WARNING: ' + this.name + ': Texture parameter ' + name + ' is a not texture; should be defined in the <uniforms> section?' );
+        break;
+      }
+    }
+    if (index == -1)
+      report('WARNING: ' + this.name + ': Binding not specified for uniform or texture:' + name);
+  }
+  
+  Integer nbAttribs[];
+  nbAttribs.push(0);
+  glGetProgramiv(this.programId, GL_ACTIVE_ATTRIBUTES, nbAttribs);
+  for (i = 0; i < nbAttribs[0]; i++) {
+    
+    SInt32 size[];
+    UInt32 type[];
+    UInt32 nbReceived[];
+    size.push(0);
+    type.push(0);
+    nbReceived.push(0);
+    glGetActiveAttrib(this.programId, i, 1024, nbReceived, size, type, name);
+    if(this.debug){
+      report( "A: " + i + " - " + size + " - " + type + " - " + name );
+    }
+    Boolean found = false;
+    for (j = 0; j < this.attributes.size(); j++) {
+      if (name == this.attributes[j].paramName) {
+        found = true;
+        this.attributes[j].glType = type[0];
+        this.attributes[j].glSize = size[0];
+        //TODO: some type validation...
+        break;
+      }
+    }
+    //Might be a generic input
+    if( !found ) {
+      for (j = 0; j < this.uniforms.size(); j++) {
+        if(  this.uniforms[j].sourceType < 0 || this.uniforms[j].sourceType == OGLShaderProgram_uniformSource_instancesAttribute ) {
+          if( name == this.uniforms[j].paramName ) {
+            //TODO: could be non-instanced too..
+            found = true;
+            this.uniforms[j].glType = type[0];
+            if( this.uniforms[j].sourceType != OGLShaderProgram_uniformSource_instancesAttribute ) {
+              this.uniforms[j].sourceType = OGLShaderProgram_uniformSource_attribute;
+              this.hasUniformSource_attribute = true;
+            }
+          }
+        }
+      }
+    }
+
+    if (!found && name != 'gl_InstanceID') {
+      report('WARNING: ' + this.name + ': Binding not specified for attribute:' + name);
+    }
+  }
+}
+
+
+function OGLShaderProgram.createProgramFromShaders!() {
+  if( this.compiled )
+    return;//Already compiled...
+  this.compiled = true;
+
+  if (this.shaderSources.size() == 0) {
+    report(this.name + ' : No shaders given to build a this.programId from.');
+    return;
+  }
+  if(this.debug){
+    report("createProgramFromShaders "+this.name+":");
+  }
+  
+  Integer shaderIDs[];
+  for (Size i = 0; i < this.shaderSources.size(); i++) {
+    Integer shaderID = this.createAndCompileShader(this.shaderSources[i]);
+    if (shaderID == 0){
+      break;
+    }
+    shaderIDs.push(shaderID);
+  }
+
+  if (shaderIDs.size() == this.shaderSources.size()) {
+    this.programId = glCreateProgram();
+    if (this.programId != 0) {
+      for (Size i = 0; i < shaderIDs.size(); i++) {
+        glAttachShader(this.programId, shaderIDs[i]);
+      }
+      // The this.programId parameters need to be added before linking
+      for (Size i = 0; i < this.programOptions.size(); i++) {
+        glProgramParameteriEXT(this.programId, this.programOptions[i].id, this.programOptions[i].value);
+      }
+
+      glLinkProgram(this.programId);
+
+      SInt32 linked[];
+      linked.push(0);
+      glGetProgramiv(this.programId, GL_LINK_STATUS, linked);
+      if (linked[0] == 0) {
+        report(this.name + ' : Program linking failed:');
+      }
+      SInt32 infoLen[];
+      infoLen.resize(1);
+      glGetProgramiv(this.programId, GL_INFO_LOG_LENGTH, infoLen);
+
+      // phtaylor 22/08/2013: after a failed link, these lines crash.
+      // I've disabled error reporting after linking because of this.
+      if (linked[0] > 1 && infoLen[0] > 1) {
+        if (linked[0] > 1) {
+          report(this.name + ' : Program linking succeeded, with warnings:');
+        }
+        UInt32 bufferSize[];
+        UInt32 bufferTotalSize = 0;
+        for(Size i=0;i<infoLen.size();i++)
+        {
+          bufferSize.push(infoLen[i]);
+          bufferTotalSize += bufferSize[i];
+        }
+        String infoLog;
+        glGetProgramInfoLog(this.programId, bufferTotalSize, bufferSize, infoLog);
+        if(infoLog)
+          report(infoLog);
+      }
+      else if (linked[0] == 0) {
+        report('<Unknown reason>');
+      }
+
+      if (linked[0] == 0) {
+        glDeleteProgram(this.programId);
+        this.programId = 0;
+      }
+    }
+  }
+  
+  for (Size i = 0; i < shaderIDs.size(); i++) {
+    glDeleteShader(shaderIDs[i]);
+  }
+  
+  if (this.programId != 0) {
+    this.logShaderParameters();
+  }
+  
+  if(this.debug){
+    report("createProgramFromShaders Successful :"+ this.programId);
+  }
+
+  if(this.programId != 0){
+    glUseProgram(this.programId);
+    //Load texture uniforms; they don't change
+    for(Size i=0; i<this.textures.size(); i++){
+      glUniform1i( this.textures[i].programLocation, i );
+    }
+    Size nextTextureID = this.textures.size();
+    for(Size i=0; i<this.uniforms.size(); i++){
+      if( this.uniforms[i].glType == GL_SAMPLER_2D )
+        glUniform1i( this.uniforms[i].programLocation, nextTextureID++ );
+    }
+  }
+}

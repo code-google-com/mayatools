@@ -1,0 +1,215 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+The ``PolygonMesh`` type represents a polygon mesh and its attributes (see :ref:`geometryattributes`). ``PolygonMesh`` is an object, so it has to be initiated (see example). Point positions can be stored as single or double precision floats. The structure is very compact, making it memory efficient and fast (local, unfragmented memory access).
+
+``PolygonMesh`` structure modifications (eg. adding polygons) must done within a ``beginStructureChanges()`` and ``endStructureChanges()`` bracket (see these methods for more details). While doing modeling operations, polygon ordering around points might become invalid, in which case updatePointsPolygonOrder() or updatePointPolygonOrder() must be called.
+
+Mesh attribute values are automatically shared around point neighbors when possible. A point always has at least an attributeIndex corresponding to its index, and this is always true even during structure changes. Point neighbor attributes will be shared only if all attribute values are equal (normals, uvs, etc), a policy enabling direct translation to drawing API buffers.
+
+Naming conventions:
+
+- get/setPointX methods will get/set values related to the point. For example, ``getPointPolygonCount()`` returns the number of polygons adjacent to the point.
+
+- get/setPolygonX methods will get/set values related to the polygon. For example, ``getPolygonSize()`` returns the size of the polygon.
+
+- polygonPointIndex: refers to a polygon corner index, within a polygon, within the range 0 .. getPolygonSize()-1. 
+
+- neighborPolygonIndex: refers to a polygon adjacent to a point, within the range 0 .. getPointPolygonCount()-1.
+
+- border: an edge that is adjacent to only one polygon
+
+- attributeIndex: index of the attribute data associated to a polygon corner (polygon point)
+
+
+Example
+---------
+
+.. code-block:: js
+
+    // create a polygon mesh
+    PolygonMesh mesh = PolygonMesh();
+
+    mesh.beginStructureChanges();
+
+    // create points and set positions
+    Size firstPoint = mesh.createPoints(4);
+    mesh.setPointPosition( 0, Vec3( 0, 0, 0) );
+    mesh.setPointPosition( 1, Vec3( 1, 0, 0) );
+    mesh.setPointPosition( 2, Vec3( 0, 0, 1) );
+    mesh.setPointPosition( 3, Vec3( 1, 0, 1) );
+
+    // create a quad
+    mesh.addPolygon( 0, 1, 3, 2 );
+
+    mesh.endStructureChanges();
+
+    // generate default point normals.
+    // could set them explicitely too, using setPolygonPointNormal() or setPointNormal()
+    mesh.recomputePointNormals();
+*/
+ 
+// Check bounds for component indices
+const Boolean PolygonMesh_enableChecks = true;
+
+//LocalIndexArray: enables to pass a small array of UInt32 without dynamic allocation (if size <= 8)
+alias LocalL8UInt32Array LocalIndexArray;
+
+require Math;
+
+struct _AttributeInitializedBits {
+  BitVector vertexAttrInitialized;
+  Ref<GeometryAttribute> attrRefKey;//To synchronize
+};
+
+object PolygonMesh : Geometry, SpatialQueryable, StatisticSourceWithAutoRegisterMember {
+  BaseGeometry base;
+
+  ArrayOffsetAllocator polyData;
+  ArrayOffsetAllocator pointData;
+  UInt32 totalPolygonPoints;
+
+  UInt32 unsharedAttrToPointSlidingArray[];
+  UInt32 unsharedAttrToPointSlidingArrayBegin;
+
+  UInt32 version;
+  UInt32 attributeSharingVersion;
+  UInt32 attributesKeyVersion;
+  Boolean onlyUnshareAttributes;//Don't try to re-share
+
+  Boolean maintainOrderedPointPolygons;
+  BitVector unorderedPoints;
+  UInt32 unorderedPointsCount;
+
+  UInt8 minFreeDataPortionDiviserToRecompact;
+  UInt32 minFreeDataSizeToRecompact;
+  UInt32 topoChangesBracket;
+
+  _AttributeInitializedBits attrInitializedBits[];
+
+  Ref<Vec3Attribute> positionsAttribute;
+  Ref<Vec3_dAttribute> positionsAttribute_d;
+  Ref<Vec3Attribute> normalsAttribute;
+
+  Object spatialAccelerationCache;//Created on demand. Cache from the meta-data dictionary to avoid locks.
+};
+
+inline PolygonMesh._init!() {
+  this.base.init("PolygonMesh", this);
+  this.positionsAttribute = this.base.attributes.getPositions();
+
+  //Structure options:
+  this.maintainOrderedPointPolygons = true;
+  this.minFreeDataPortionDiviserToRecompact = 5;//Tolerate 20% of unused space
+  this.minFreeDataSizeToRecompact = 256;
+}
+
+inline PolygonMesh._incrementStructureVersion!() {
+  ++this.version;
+  ++this.attributeSharingVersion;
+}
+
+function PolygonMesh._copyStructure!( PolygonMesh src ) {
+  //NOTE: this should be reviewed; cloning all but attributes doesn't necessarely make
+  //      sense as the attribute sharing info might no longer reflect the values.
+  this.polyData = src.polyData.clone();
+  this.pointData = src.pointData.clone();
+  this.totalPolygonPoints = src.totalPolygonPoints;
+  this.unsharedAttrToPointSlidingArray = src.unsharedAttrToPointSlidingArray.clone();
+  this.unsharedAttrToPointSlidingArrayBegin = src.unsharedAttrToPointSlidingArrayBegin;
+
+  this.maintainOrderedPointPolygons = src.maintainOrderedPointPolygons;
+  this.unorderedPoints = src.unorderedPoints.clone();
+  this.unorderedPointsCount = src.unorderedPointsCount;
+
+  this.minFreeDataPortionDiviserToRecompact = src.minFreeDataPortionDiviserToRecompact;
+  this.minFreeDataSizeToRecompact = src.minFreeDataSizeToRecompact;
+
+  this._resizeAttributes(src.base.attributes.size());
+
+  this._incrementStructureVersion();
+}
+
+//Mesh default constructor: uses Float32 positions.
+inline PolygonMesh() {
+  this._init();
+}
+
+//Mesh constructor: takes the positions' precision as input (Float32 VS Float64)
+inline PolygonMesh(Boolean float64Positions) {
+  this._init();
+  if(float64Positions) {
+    Ref<Vec3Attribute> nullVec3Attr = null;
+    this.positionsAttribute = nullVec3Attr;
+    this.positionsAttribute_d = this.base.attributes.getOrCreatePositions_d();
+  }
+}
+
+//clears all data, including points, polygons and attributes. The mesh and attribute versions gets incremented.
+function PolygonMesh.clear!() {
+  UInt32 version = this.version;
+  UInt32 attributeSharingVersion = this.attributeSharingVersion;
+
+  this.polyData.clear();
+  this.pointData.clear();
+  this.totalPolygonPoints = 0;
+
+  this.version = this.version+1;
+  this.attributeSharingVersion = this.attributeSharingVersion+1;
+
+  Boolean float64Positions = this.positionsAttribute_d;
+  this.base.attributes.clear();
+  if(float64Positions)
+    this.positionsAttribute_d = this.base.attributes.getOrCreatePositions_d();
+  else
+    this.positionsAttribute = this.base.attributes.getOrCreatePositions();
+  this.normalsAttribute = null;
+
+  this.attrInitializedBits.resize(0);
+
+  this.unsharedAttrToPointSlidingArray.resize(0);
+  this.unsharedAttrToPointSlidingArrayBegin = 0;
+
+  this.unorderedPoints.resize(0);
+  this.unorderedPointsCount = 0;
+}
+
+//Copies all data from source, but increments mesh and attributes' versions.
+function PolygonMesh.copy!( PolygonMesh src ) {
+  this._copyStructure( src );
+  this.base.attributes.copy(src.base.attributes);
+
+  this.positionsAttribute = this.base.attributes.getPositions();
+  this.positionsAttribute_d = this.base.attributes.getPositions_d();
+  this.normalsAttribute = this.base.attributes.getNormals();
+
+  this._synchronizeGeometryAttributes();
+}
+
+function PolygonMesh PolygonMesh.clone() {
+  //The difference with default clone() is that new.base.autoStat will point to 'new' (from constructor)
+  PolygonMesh new = PolygonMesh();
+  new.copy( this );
+  return new;
+}
+
+//Returns the bbox of the polygon mesh (Geometry interface)
+function LocalBoundingVolume PolygonMesh.getBoundingVolume() {
+  return this.base.getBoundingVolume();
+}
+
+//memUsage: returns an approximation of the memory used by the mesh structure, including unused allocated space, but excluding attributes.
+function Size PolygonMesh.memUsage() {
+  Size memUsage = this.polyData.memUsage() + this.pointData.memUsage() + this.unsharedAttrToPointSlidingArray.size()*4 + this.unorderedPoints.memUsage();
+  for( Size i = 0; i < this.attrInitializedBits.size(); ++i )
+    memUsage += this.attrInitializedBits[i].vertexAttrInitialized.getMemUsage();
+
+  return memUsage;
+}
+
+//memUsage: returns the amount of unused allocated memory (due to memory fragmentation).
+function Size PolygonMesh._unusedMemUsage() {
+  //TODO: count attributes' memory
+  return this.polyData.data.unusedSize() + this.pointData.data.unusedSize();
+}

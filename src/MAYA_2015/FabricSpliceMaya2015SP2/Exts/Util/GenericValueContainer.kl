@@ -1,0 +1,161 @@
+//
+// Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+//
+
+alias GenericValue GenericValueArray[];
+
+object GenericValueContainer : GenericValue, GenericArrayValue {
+  GenericValueArray _value;
+  Index _nameToIndex[String];
+  Integer _layoutVersion;
+};
+
+// default constructor
+inline GenericValueContainer() {
+  this._layoutVersion = 0;
+}
+
+// returns type of the value
+inline String GenericValueContainer.getValueType() {
+  return "GenericValueContainer";
+}
+
+// returns the version of this container
+inline Integer GenericValueContainer.getLayoutVersion() {
+  return this._layoutVersion;
+}
+
+// increments the version of this container
+inline GenericValueContainer.incrementLayoutVersion!() {
+  this._layoutVersion++;
+}
+
+// returns true if this value contains an array
+inline Boolean GenericValueContainer.isArray() {
+  return true;
+}
+
+// return true if this value matches another one
+inline Boolean GenericValueContainer.equals(Ref<Object> other) {
+  return this == other;
+}
+
+// returns the size of the contained value array
+inline Size GenericValueContainer.size() {
+  return this._value.size();
+}
+
+// returns the size of the contained value array - disabled
+inline GenericValueContainer.resize!(Size newSize) {
+}
+
+// returns if the given key exists
+inline Boolean GenericValueContainer.has(String key) {
+  return this._nameToIndex.has(key);
+}
+
+// returns a value by name
+inline Ref<GenericValue> GenericValueContainer.get(String key) {
+  Integer index = this._nameToIndex.get(key, -1);
+  return this.get(index);
+}
+
+// sets a value by name
+inline GenericValueContainer.set!(String key, GenericValue value) {
+  Integer index = this._nameToIndex.get(key, -1);
+  if(index == -1) {
+    index = this.size();
+    this._nameToIndex[key] = index;
+    this._value.push(value);
+    this.incrementLayoutVersion();
+  }
+  else
+    this.set(index, value);
+}
+
+// returns a value by index
+inline Ref<GenericValue> GenericValueContainer.get(Integer index) {
+  if(index >= this.size() || index < 0)
+    return GenericValue();
+  return this._value[index];
+}
+
+// sets a value by index
+inline GenericValueContainer.set!(Integer index, GenericValue value) {
+  this._value[index] = value;
+}
+
+// pushed a value to the contained array
+inline GenericValueContainer.push!(GenericValue value) {
+  this._value.push(value);
+  this.incrementLayoutVersion();
+}
+
+// remove a value by name
+inline Boolean GenericValueContainer.remove!(String key) {
+  Integer index = this._nameToIndex.get(key, -1);
+  if(index < 0)
+    return false;
+
+  if(this._value.size() == 1) {
+    this._value.resize(0);
+    this._nameToIndex.clear();
+    this.incrementLayoutVersion();
+    return true;
+  }
+
+  String highestKey = key;
+  Integer highestIndex = index;
+  for(iterKey, iterValue in this._nameToIndex) {
+    if(highestIndex < iterValue) {
+      highestKey = iterKey;
+      highestIndex = iterValue;
+    }
+  }
+
+  if(highestIndex != index) {
+    this._nameToIndex[highestKey] = index;
+    this._value[index] = this._value[highestIndex];
+  }
+
+  this._nameToIndex.delete(key);
+  this._value.resize(this._value.size()-1);
+  this.incrementLayoutVersion();
+  return true;
+}
+
+// remove a value by index
+inline Boolean GenericValueContainer.remove!(Index index) {
+
+  if(this._value.size() == 1) {
+    this._value.resize(0);
+    this._nameToIndex.clear();
+    this.incrementLayoutVersion();
+    return true;
+  }
+
+  for(iterKey, iterValue in this._nameToIndex) {
+    if(iterValue == index)
+      return this.remove(iterKey);
+  }
+
+  Boolean lastSwitched = false;
+  for(iterKey, iterValue in this._nameToIndex) {
+    if(iterValue == this._value.size()-1) {
+      this._nameToIndex[iterKey] = index;
+      lastSwitched = true;
+      break;
+    }
+  }
+  if(!lastSwitched) {
+    for(iterKey, iterValue in this._nameToIndex) {
+      if(iterValue > index)
+        this._nameToIndex[iterKey]--;
+    }
+  }
+
+  this._value[index] = this._value[this._value.size()-1];
+  this._value.resize(this._value.size()-1);
+  this.incrementLayoutVersion();
+  return true;
+}

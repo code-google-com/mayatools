@@ -1,0 +1,701 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`inlinedebugshape` implements the :ref:`inlineshape` for debug drawing purposes.
+
+Example
+---------
+
+.. code-block:: kl
+
+    InlineDebugShape shape = InlineDebugShape('debug');
+
+    // draw a couple of points
+    shape.drawPoint(Vec3(5, 0, 0));
+    shape.drawPoint(Vec3(0, 5, 0));
+    shape.drawPoint(Vec3(0, 0, 5));
+
+    // draw a couple of lines
+    shape.drawLine(Vec3(0, 0, 0), Vec3(5, 0, 0));
+    shape.drawLine(Vec3(0, 0, 0), Vec3(0, 5, 0));
+    shape.drawLine(Vec3(0, 0, 0), Vec3(0, 0, 5));
+
+    // for more methods check the method description below.
+*/
+require Math;
+require Geometry;
+
+object InlineDebugShape : InlineShape {
+  String _name;
+  GeometryAttributes _attributes;
+  Scalar _pointSize;
+  Scalar _lineWidth;
+  Integer _pointsIndices[];
+  Integer _linesIndices[];
+  Integer _trianglesIndices[];
+  Integer _pointsIndicesOffset;
+  Integer _linesIndicesOffset;
+  Integer _trianglesIndicesOffset;
+
+  Vec3 _defaultNormal;
+
+  Object _metaData[String];
+  Integer _version;
+  Ref<InlineShapeAdaptor> _shapeAdaptor;
+};
+
+// default constructor
+function InlineDebugShape(String name) {
+  this._name = name;
+  this._attributes = GeometryAttributes();
+  this._pointsIndicesOffset;
+  this._linesIndicesOffset;
+  this._trianglesIndicesOffset;
+  this._defaultNormal = Vec3(0, 1, 0);
+  this._pointSize = 3.0;
+  this._lineWidth = 1.0;
+}
+
+// default constructor without a name
+function InlineDebugShape() {
+  this = InlineDebugShape('debug');
+}
+
+// returns the name of this shape
+function String InlineDebugShape.getName() {
+  return this._name;
+}
+
+  // Returns the geometry associated with this shape. 
+function Geometry InlineDebugShape.getGeometry() {
+  // Note: TODO: define a new object called DebugGeometry that supports the Geometry interfaces. 
+  // The InlineShape can the become a simple container for 'Geometry'
+  return null;
+}
+
+// returns the contained geometry attributes structure
+function GeometryAttributes InlineDebugShape.getAttributes() {
+  return this._attributes;
+}
+
+// return the current point size used
+function Scalar InlineDebugShape.getPointSize() {
+  return this._pointSize;
+}
+
+// sets the current point size used
+function InlineDebugShape.setPointSize!(Scalar value) {
+  this._pointSize = value;
+}
+
+// return the current line width used
+function Scalar InlineDebugShape.getLineWidth() {
+  return this._lineWidth;
+}
+
+// sets the current line width used
+function InlineDebugShape.setLineWidth!(Scalar value) {
+  this._lineWidth = value;
+}
+
+
+// draws the instance on screen. this is used by the 
+// material and should not be called manually.
+function Boolean InlineDebugShape._draw!(io DrawContext context, Index index, Size count) {
+
+  if(!this._shapeAdaptor) {
+    InlineDrawing drawing = context.getObject('drawing');
+    this._shapeAdaptor = drawing.getShapeAdaptor(this.type());
+  }
+  Ref<InlineShape> thisShape = this;
+  if(!this._shapeAdaptor || !this._shapeAdaptor._draw(context, thisShape, index, count))
+    return false;
+
+  return true;
+}
+
+
+////////////////////////////////////////////////////////////////
+
+// increment the topology version
+function InlineDebugShape.incrementVersion!() {
+  this._version++;
+}
+
+// returns the version of this debug shape
+function Integer InlineDebugShape.getVersion() {
+  return this._version;
+}
+
+// resets all offsets of this InlineDebugShape
+function InlineDebugShape.reset!() {
+  this._pointsIndicesOffset = 0;
+  this._linesIndicesOffset = 0;
+  this._trianglesIndicesOffset = 0;
+  this._attributes.resize(0);
+  this.incrementVersion();
+}
+
+// clears the content of the InlineDebugShape
+function InlineDebugShape.clear!() {
+  this._attributes.resize(0);
+  this._pointsIndices.resize(0);
+  this._linesIndices.resize(0);
+  this._trianglesIndices.resize(0);
+  this.reset();
+}
+
+// allocates space for new vertices
+function Index InlineDebugShape.allocateVertices!(Size nbVertices) {
+  Index firstIndex = this._attributes.size();
+  this._attributes.resize(firstIndex + nbVertices);
+  this.incrementVersion();
+  return firstIndex;
+}
+
+// allocates space for new points
+function Index InlineDebugShape.allocatePoints!(Size nbPoints) {
+  Index firstIndex = this.allocateVertices(nbPoints);
+  Size expectedSize = this._pointsIndicesOffset + nbPoints;
+  if(expectedSize > this._pointsIndices.size())
+    this._pointsIndices.resize(expectedSize);
+  return firstIndex;
+}
+
+// allocates space for new lines
+function Index InlineDebugShape.allocateLines!(Size nbPoints, Size nbLines) {
+  Index firstIndex = this.allocateVertices(nbPoints);
+  Size expectedSize = this._linesIndicesOffset + nbLines * 2;
+  if(expectedSize > this._linesIndices.size())
+    this._linesIndices.resize(expectedSize);
+  return firstIndex;
+}
+
+// allocates space for new lines
+function Index InlineDebugShape.allocateTriangles!(Size nbPoints, Size nbTriangles) {
+  Index firstIndex = this.allocateVertices(nbPoints);
+  Size expectedSize = this._trianglesIndicesOffset + nbTriangles * 3;
+  if(expectedSize > this._trianglesIndices.size())
+    this._trianglesIndices.resize(expectedSize);
+  return firstIndex;
+}
+
+// draws a single point given a position
+function InlineDebugShape InlineDebugShape.drawPoint!(Vec3 pos) {
+  Index firstIndex = this.allocatePoints(1);
+  this._pointsIndices[this._pointsIndicesOffset++] = firstIndex;
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+  positionsAttr.values[firstIndex] = pos;
+  normalsAttr.values[firstIndex] = this._defaultNormal;
+  positionsAttr.incrementVersion();
+  normalsAttr.incrementVersion();
+  return this;
+}
+
+// draws a line given two positions
+function InlineDebugShape InlineDebugShape.drawLine!(Vec3 from, Vec3 to) {
+  Index firstIndex = this.allocateLines(2, 1);
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+
+  this._linesIndices[this._linesIndicesOffset++] = firstIndex;
+  positionsAttr.values[firstIndex] = from;
+  normalsAttr.values[firstIndex++] = this._defaultNormal;
+
+  this._linesIndices[this._linesIndicesOffset++] = firstIndex;
+  positionsAttr.values[firstIndex] = to;
+  normalsAttr.values[firstIndex] = this._defaultNormal;
+
+  positionsAttr.incrementVersion();
+  normalsAttr.incrementVersion();
+  return this;
+}
+
+// draws a segmented line given two positions, a number of segmentation
+// segments (minimum of 2) and a segment ratio (0.0 to 1.0).
+function InlineDebugShape InlineDebugShape.drawSegmentedLine!(Vec3 from, Vec3 to, Size numSegments, Scalar ratio) {
+
+  if(numSegments <= 1)
+    return this.drawLine(from, to);
+
+  Size nbVertices = numSegments * 2;
+  Index firstIndex = this.allocateLines(nbVertices, numSegments);
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+
+  Vec3 pos = from;
+  Vec3 motion = (to - from);
+  Scalar totalRatio = Scalar(numSegments-1) + ratio;
+  Vec3 gap = (1.0 - ratio) * motion / totalRatio;
+  motion = ratio * motion / totalRatio;
+
+  for(Size i=0;i<nbVertices;i++) {
+    this._linesIndices[this._linesIndicesOffset++] = firstIndex;
+    positionsAttr.values[firstIndex] = pos;
+    normalsAttr.values[firstIndex++] = this._defaultNormal;
+    if(i % 2 == 0)
+      pos += motion;
+    else
+      pos += gap;
+  }
+
+  positionsAttr.incrementVersion();
+  normalsAttr.incrementVersion();
+
+  return this;
+}
+
+// overloaded method, uses 0.5 for the ratio
+function InlineDebugShape InlineDebugShape.drawSegmentedLine!(Vec3 from, Vec3 to, Size numSegments) {
+  return this.drawSegmentedLine(from, to, numSegments, 0.5);
+}
+
+// draws a line through all of the points provided
+function InlineDebugShape InlineDebugShape.drawLineStrip!(Vec3 points[]) {
+  Index firstIndex = this.allocateLines(points.size(), points.size()-1);
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+
+  for( Integer i=0; i<points.size(); i++){
+    positionsAttr.values[firstIndex] = points[i];
+    normalsAttr.values[firstIndex++] = this._defaultNormal;
+    if(i > 0){
+      this._linesIndices[this._linesIndicesOffset++] = firstIndex - 2;
+      this._linesIndices[this._linesIndicesOffset++] = firstIndex - 1;
+    }
+  }
+
+  positionsAttr.incrementVersion();
+  normalsAttr.incrementVersion();
+  return this;
+}
+
+// draws a line circle around the Y axis given a transform for the circle, 
+// a radius and a detail setting. the detail describes the number 
+// of line segments of the circle (minimum of 3).
+function InlineDebugShape InlineDebugShape.drawCircle!(Xfo xfo, Scalar radius, Integer detail) {
+  Index firstIndex = this.allocateLines(detail, detail);
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+
+  Integer id0 = firstIndex;
+  Vec3 p;
+  for (Integer i = 0; i < detail; i++) {
+    Scalar angle = (Scalar(i) / Scalar(detail)) * TWO_PI;
+    p = xfo.transformVector(Vec3(sin(angle) * radius, 0.0, cos(angle) * radius));
+    this._linesIndices[this._linesIndicesOffset++] = firstIndex;
+    positionsAttr.values[firstIndex] = p;
+    normalsAttr.values[firstIndex++] = this._defaultNormal;
+    if(i < (detail-1))
+      this._linesIndices[this._linesIndicesOffset++] = firstIndex;
+  }
+  this._linesIndices[this._linesIndicesOffset++] = id0;
+
+  positionsAttr.incrementVersion();
+  normalsAttr.incrementVersion();
+  return this;
+}
+
+// draws a line arc around the Y axis given a transform for the arc, 
+// a radius, a angular min and max as a Vec3 and a detail setting. 
+// the detail describes the number of line segments of the circle (minimum of 3).
+function InlineDebugShape InlineDebugShape.drawArc!(Xfo xfo, Scalar radius, Vec2 angleMinMax, Integer detail) {
+  Index firstIndex = this.allocateLines(detail, detail-1);
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+
+  Integer id0 = firstIndex;
+  Vec3 p;
+  for (Integer i = 0; i < detail; i++) {
+    Scalar blend = (Scalar(i) / Scalar(detail-1));
+    Scalar angle = (1.0 - blend) * angleMinMax.x + blend * angleMinMax.y;
+    p = xfo.transformVector(Vec3(sin(angle) * radius, 0.0, cos(angle) * radius));
+    if(i > 0)
+    {
+      this._linesIndices[this._linesIndicesOffset++] = firstIndex - 1;
+      this._linesIndices[this._linesIndicesOffset++] = firstIndex;
+    }
+    positionsAttr.values[firstIndex] = p;
+    normalsAttr.values[firstIndex++] = this._defaultNormal;
+  }
+
+  positionsAttr.incrementVersion();
+  normalsAttr.incrementVersion();
+  return this;
+}
+
+// draws three line circles representing a sphere given a transform
+// for the sphere, a radius and a detail setting. 
+// the detail describes the number of line segments for each circle (minimum of 3).
+function InlineDebugShape InlineDebugShape.drawSphereLines!(Xfo xfo, Scalar radius, Integer detail) {
+  Index firstIndex = this.allocateLines(detail * 3, detail * 3);
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+
+  Quat offset;
+  Xfo circleXfo = xfo;
+  this.drawCircle(circleXfo, radius, detail);
+
+  offset.setFromAxisAndAngle(Vec3(1.0, 0.0, 0.0), HALF_PI);
+  circleXfo.ori = xfo.ori * offset;
+  this.drawCircle(circleXfo, radius, detail);
+
+  offset.setFromAxisAndAngle(Vec3(0.0, 0.0, 1.0), HALF_PI);
+  circleXfo.ori = xfo.ori * offset;
+  this.drawCircle(circleXfo, radius, detail);
+  return this;
+}
+
+
+// draws a capsule shape using lines. 
+// the detail describes the number of line segments for each circle (minimum of 3).
+function InlineDebugShape InlineDebugShape.drawCapsuleLines!(Xfo xfo, Scalar radius, Scalar height, Integer detail) {
+
+  Xfo baseXfo;
+  baseXfo.tr.y = height * -0.5;
+  this.drawCircle(xfo * baseXfo, radius, 24);
+
+  Xfo arcXfo;
+  arcXfo.ori.setFromAxisAndAngle(Vec3(1.0, 0.0, 0.0), HALF_PI);
+  this.drawArc(xfo * baseXfo * arcXfo, radius, Vec2(-HALF_PI, HALF_PI), 24);
+
+  arcXfo.ori.setFromAxisAndAngle(Vec3(0.0, 0.0, 1.0), -HALF_PI);
+  Quat rotX;
+  rotX.setFromAxisAndAngle(Vec3(1.0, 0.0, 0.0), HALF_PI);
+  arcXfo.ori = rotX * arcXfo.ori;
+  this.drawArc(xfo * baseXfo * arcXfo, radius, Vec2(-HALF_PI, HALF_PI), 24);
+
+  Xfo tipXfo;
+  tipXfo.tr.y = height * 0.5;
+  this.drawCircle(tipXfo, radius, 24);
+
+  arcXfo.ori.setFromAxisAndAngle(Vec3(1.0, 0.0, 0.0), -HALF_PI);
+  this.drawArc(xfo * tipXfo * arcXfo, radius, Vec2(-HALF_PI, HALF_PI), 24);
+
+  arcXfo.ori.setFromAxisAndAngle(Vec3(0.0, 0.0, 1.0), -HALF_PI);
+  rotX.setFromAxisAndAngle(Vec3(1.0, 0.0, 0.0), -HALF_PI);
+  arcXfo.ori = rotX * arcXfo.ori;
+  this.drawArc(xfo * tipXfo * arcXfo, radius, Vec2(-HALF_PI, HALF_PI), 24);
+
+  this.drawLine(xfo.transformVector(Vec3(radius, height*-0.5, 0.0)), xfo.transformVector(Vec3(radius, height*0.5, 0.0)));
+  this.drawLine(xfo.transformVector(Vec3(-radius, height*-0.5, 0.0)), xfo.transformVector(Vec3(-radius, height*0.5, 0.0)));
+  this.drawLine(xfo.transformVector(Vec3(0.0, height*-0.5, radius)), xfo.transformVector(Vec3(0.0, height*0.5, radius)));
+  this.drawLine(xfo.transformVector(Vec3(0.0, height*-0.5, -radius)), xfo.transformVector(Vec3(0.0, height*0.5, -radius)));
+
+  return this;
+}
+
+// draws a line square given a transform for the square, a length (along X),
+// a width (along Z).
+function InlineDebugShape InlineDebugShape.drawSquare!(Xfo xfo, Scalar length, Scalar width) {
+  Index firstIndex = this.allocateLines(4, 4);
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+
+  Integer id0 = firstIndex;
+  
+  this._linesIndices[this._linesIndicesOffset++] = firstIndex;
+  positionsAttr.values[firstIndex] = xfo.tr + xfo.ori.rotateVector(Vec3(length * 0.5, 0.0, width * 0.5));
+  normalsAttr.values[firstIndex++] = this._defaultNormal;
+  this._linesIndices[this._linesIndicesOffset++] = firstIndex;
+  
+  this._linesIndices[this._linesIndicesOffset++] = firstIndex;
+  positionsAttr.values[firstIndex] = xfo.tr + xfo.ori.rotateVector(Vec3(length *-0.5, 0.0, width * 0.5));
+  normalsAttr.values[firstIndex++] = this._defaultNormal;
+  this._linesIndices[this._linesIndicesOffset++] = firstIndex;
+
+  this._linesIndices[this._linesIndicesOffset++] = firstIndex;
+  positionsAttr.values[firstIndex] = xfo.tr + xfo.ori.rotateVector(Vec3(length *-0.5, 0.0, width *-0.5));
+  normalsAttr.values[firstIndex++] = this._defaultNormal;
+  this._linesIndices[this._linesIndicesOffset++] = firstIndex;
+
+  this._linesIndices[this._linesIndicesOffset++] = firstIndex;
+  positionsAttr.values[firstIndex] = xfo.tr + xfo.ori.rotateVector(Vec3(length * 0.5, 0.0, width *-0.5));
+  normalsAttr.values[firstIndex++] = this._defaultNormal;
+  this._linesIndices[this._linesIndicesOffset++] = id0;
+
+  positionsAttr.incrementVersion();
+  normalsAttr.incrementVersion();
+  
+  return this;
+}
+
+// draws a line bounding box given a transform for the box, a minimum and
+// maximum position.
+function InlineDebugShape InlineDebugShape.drawBBox!(Xfo xfo, Vec3 bboxmin, Vec3 bboxmax) {
+  Index firstIndex = this.allocateLines(8, 12);
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+
+  Integer id0 = firstIndex;
+
+  positionsAttr.values[firstIndex] = xfo.transformVector(Vec3(bboxmin.x, bboxmin.y, bboxmin.z));
+  normalsAttr.values[firstIndex++] = this._defaultNormal;
+  positionsAttr.values[firstIndex] = xfo.transformVector(Vec3(bboxmin.x, bboxmax.y, bboxmin.z));
+  normalsAttr.values[firstIndex++] = this._defaultNormal;
+  positionsAttr.values[firstIndex] = xfo.transformVector(Vec3(bboxmin.x, bboxmax.y, bboxmax.z));
+  normalsAttr.values[firstIndex++] = this._defaultNormal;
+  positionsAttr.values[firstIndex] = xfo.transformVector(Vec3(bboxmin.x, bboxmin.y, bboxmax.z));
+  normalsAttr.values[firstIndex++] = this._defaultNormal;
+  positionsAttr.values[firstIndex] = xfo.transformVector(Vec3(bboxmax.x, bboxmin.y, bboxmin.z));
+  normalsAttr.values[firstIndex++] = this._defaultNormal;
+  positionsAttr.values[firstIndex] = xfo.transformVector(Vec3(bboxmax.x, bboxmax.y, bboxmin.z));
+  normalsAttr.values[firstIndex++] = this._defaultNormal;
+  positionsAttr.values[firstIndex] = xfo.transformVector(Vec3(bboxmax.x, bboxmax.y, bboxmax.z));
+  normalsAttr.values[firstIndex++] = this._defaultNormal;
+  positionsAttr.values[firstIndex] = xfo.transformVector(Vec3(bboxmax.x, bboxmin.y, bboxmax.z));
+  normalsAttr.values[firstIndex++] = this._defaultNormal;
+
+  this._linesIndices[this._linesIndicesOffset++] = id0 + 0; this._linesIndices[this._linesIndicesOffset++] = id0 + 4;
+  this._linesIndices[this._linesIndicesOffset++] = id0 + 1; this._linesIndices[this._linesIndicesOffset++] = id0 + 5;
+  this._linesIndices[this._linesIndicesOffset++] = id0 + 2; this._linesIndices[this._linesIndicesOffset++] = id0 + 6;
+  this._linesIndices[this._linesIndicesOffset++] = id0 + 3; this._linesIndices[this._linesIndicesOffset++] = id0 + 7;
+  this._linesIndices[this._linesIndicesOffset++] = id0 + 0; this._linesIndices[this._linesIndicesOffset++] = id0 + 1;
+  this._linesIndices[this._linesIndicesOffset++] = id0 + 1; this._linesIndices[this._linesIndicesOffset++] = id0 + 2;
+  this._linesIndices[this._linesIndicesOffset++] = id0 + 2; this._linesIndices[this._linesIndicesOffset++] = id0 + 3;
+  this._linesIndices[this._linesIndicesOffset++] = id0 + 3; this._linesIndices[this._linesIndicesOffset++] = id0 + 0;
+  this._linesIndices[this._linesIndicesOffset++] = id0 + 4; this._linesIndices[this._linesIndicesOffset++] = id0 + 5;
+  this._linesIndices[this._linesIndicesOffset++] = id0 + 5; this._linesIndices[this._linesIndicesOffset++] = id0 + 6;
+  this._linesIndices[this._linesIndicesOffset++] = id0 + 6; this._linesIndices[this._linesIndicesOffset++] = id0 + 7;
+  this._linesIndices[this._linesIndicesOffset++] = id0 + 7; this._linesIndices[this._linesIndicesOffset++] = id0 + 4;
+
+  positionsAttr.incrementVersion();
+  normalsAttr.incrementVersion();
+  return this;
+}
+
+// draws a single triangle given three positions and three normals
+function InlineDebugShape InlineDebugShape.drawTriangle!(Vec3 p0, Vec3 p1, Vec3 p2, Vec3 n0, Vec3 n1, Vec3 n2) {
+  Index firstIndex = this.allocateTriangles(3, 1);
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+
+  this._trianglesIndices[this._trianglesIndicesOffset++] = firstIndex;
+  positionsAttr.values[firstIndex] = p0;
+  normalsAttr.values[firstIndex++] = n0;
+
+  this._trianglesIndices[this._trianglesIndicesOffset++] = firstIndex;
+  positionsAttr.values[firstIndex] = p1;
+  normalsAttr.values[firstIndex++] = n1;
+
+  this._trianglesIndices[this._trianglesIndicesOffset++] = firstIndex;
+  positionsAttr.values[firstIndex] = p2;
+  normalsAttr.values[firstIndex++] = n2;
+  
+  positionsAttr.incrementVersion();
+  normalsAttr.incrementVersion();
+  return this;
+}
+
+
+// draws a single triangle given three positions and a single normal
+function InlineDebugShape InlineDebugShape.drawTriangle!(Vec3 p0, Vec3 p1, Vec3 p2, Vec3 n) {
+  return this.drawTriangle(p0, p1, p2, n, n, n,);
+}
+
+// draws a single triangle given only three positions
+function InlineDebugShape InlineDebugShape.drawTriangle!(Vec3 p0, Vec3 p1, Vec3 p2) {
+  Vec3 n = (p2 - p0).cross(p0 - p1).unit();
+  return this.drawTriangle(p0, p1, p2, n, n, n);
+}
+
+// draws a triangle sphere given a transform for the sphere, a radius
+// and a detail setting. the detail setting describes the 
+// number of segments along u and v of the sphere (minimum of 3).
+function InlineDebugShape InlineDebugShape.drawTrianglesSphere!(Xfo xfo, Scalar radius, Integer detail) {
+  Integer sides = (detail >= 0) ? (detail * 2 + 3) : 3;
+  Integer loops = (detail >= 0) ? (detail + 1) : 1;
+  Integer nbLoops = loops + 1;
+  Integer nbSides = sides + 1;
+  
+
+  Index firstIndex = this.allocateTriangles(2 * sides * (2 + loops), 2 * sides * (loops + 1));
+  Size numVertsStart = firstIndex;
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+
+  for (Integer i = 0; i <= nbLoops; i++) {
+    Scalar theta = (i / Scalar(nbLoops)) * PI;
+    for (Integer j = 0; j < nbSides; j++) {
+      Scalar phi = (j / Scalar(sides)) * 2.0 * PI;
+
+      Vec3 normal = Vec3(
+        sin(theta) * cos(phi),
+        cos(theta),
+        sin(theta) * sin(phi)
+      );
+      positionsAttr.values[firstIndex] = xfo.tr + normal * radius;
+      normalsAttr.values[firstIndex++] = normal;
+    }
+  }
+  
+  // Body of the sphere
+  for (Integer i = 0; i < nbLoops; i++) {
+    for (Integer j = 0; j < sides; j++) {
+      Integer v0, v1, v2, v3;
+      v0 = (nbSides * i) + j;
+      v1 = (nbSides * i) + ((j + 1) % nbSides);
+      v2 = (nbSides * (i+1)) + ((j + 1) % nbSides);
+      v3 = (nbSides * (i+1)) + j;
+      
+      this._trianglesIndices[this._trianglesIndicesOffset++] = numVertsStart + v0;
+      this._trianglesIndices[this._trianglesIndicesOffset++] = numVertsStart + v1;
+      this._trianglesIndices[this._trianglesIndicesOffset++] = numVertsStart + v3;
+      this._trianglesIndices[this._trianglesIndicesOffset++] = numVertsStart + v1;
+      this._trianglesIndices[this._trianglesIndicesOffset++] = numVertsStart + v2;
+      this._trianglesIndices[this._trianglesIndicesOffset++] = numVertsStart + v3;
+    }
+  }
+
+  positionsAttr.incrementVersion();
+  normalsAttr.incrementVersion();
+  return this;
+}
+
+// draws a triangle cone given a transform for the cone, a radius,
+// a height (along Y) and a detail setting. the detail setting
+// describes the segmentation of the cone circle (minimum of 3).
+function InlineDebugShape InlineDebugShape.drawTrianglesCone!(Xfo xfo, Scalar radius, Scalar height, Integer detail) {
+  Integer sides = (detail >= 0) ? (detail * 2 + 3) : 3;
+  Index firstIndex = this.allocateTriangles(sides * 2 + 2, 2 * sides);
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+  
+  Size numVertsStart = firstIndex;
+
+  Vec3 yNormal = xfo.ori.getYaxis().negate();
+  positionsAttr.values[firstIndex] = xfo.tr;
+  normalsAttr.values[firstIndex++] = yNormal;
+  positionsAttr.values[firstIndex] = xfo.transformVector(Vec3(0, height, 0));
+  normalsAttr.values[firstIndex++] = yNormal.negate();
+
+  for (Integer j = 0; j < sides; j++) {
+    Scalar phi = (j / Scalar(sides)) * 2.0 * PI;
+    Vec3 normal = Vec3(cos(phi), 0.0, sin(phi));
+    Vec3 pos = xfo.transformVector(normal * radius);
+
+    positionsAttr.values[firstIndex] = pos;
+    normalsAttr.values[firstIndex++] = normal;
+    positionsAttr.values[firstIndex] = pos;
+    normalsAttr.values[firstIndex++] = yNormal;
+  }
+  
+  for (Integer j = 0; j < sides; j++) {
+    Integer v0, v1, v2, v3;
+    v0 = 0;
+    v1 = 2 + (j % sides) * 2;
+    v2 = 2 + ((j + 1) % sides) * 2;
+    v3 = 1;
+    
+    this._trianglesIndices[this._trianglesIndicesOffset++] = numVertsStart + v0;
+    this._trianglesIndices[this._trianglesIndicesOffset++] = numVertsStart + v1+1;
+    this._trianglesIndices[this._trianglesIndicesOffset++] = numVertsStart + v2+1;
+    this._trianglesIndices[this._trianglesIndicesOffset++] = numVertsStart + v1;
+    this._trianglesIndices[this._trianglesIndicesOffset++] = numVertsStart + v3;
+    this._trianglesIndices[this._trianglesIndicesOffset++] = numVertsStart + v2;
+  }
+
+  positionsAttr.incrementVersion();
+  normalsAttr.incrementVersion();
+
+  return this;
+}
+
+// draws a triangle cube given a transform for the cube, a width (along X),
+// a height (along Y), a length (along Z).
+function InlineDebugShape InlineDebugShape.drawTrianglesCube!(Xfo xfo, Scalar width, Scalar height, Scalar length) {
+  Index firstIndex = this.allocateTriangles(24, 12);
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+
+  Size numVertsStart = firstIndex;
+
+  Vec3 p0 = xfo.transformVector(Vec3(-width * 0.5, -height * 0.5, -length * 0.5));
+  Vec3 p1 = xfo.transformVector(Vec3(-width * 0.5, -height * 0.5, length * 0.5));
+  Vec3 p2 = xfo.transformVector(Vec3(width * 0.5, -height * 0.5, length * 0.5));
+  Vec3 p3 = xfo.transformVector(Vec3(width * 0.5, -height * 0.5, -length * 0.5));
+  Vec3 p4 = xfo.transformVector(Vec3(-width * 0.5, height * 0.5, -length * 0.5));
+  Vec3 p5 = xfo.transformVector(Vec3(-width * 0.5, height * 0.5, length * 0.5));
+  Vec3 p6 = xfo.transformVector(Vec3(width * 0.5, height * 0.5, length * 0.5));
+  Vec3 p7 = xfo.transformVector(Vec3(width * 0.5, height * 0.5, -length * 0.5));
+
+  Vec3 nX = xfo.ori.getXaxis();
+  Vec3 nY = xfo.ori.getYaxis();
+  Vec3 nZ = xfo.ori.getZaxis();
+
+  // bot
+  this.drawTriangle(p2, p1, p0, nY.negate());
+  this.drawTriangle(p0, p3, p2, nY.negate());
+
+  // top
+  this.drawTriangle(p4, p5, p6, nY);
+  this.drawTriangle(p6, p7, p4, nY);
+
+  // left
+  this.drawTriangle(p0, p1, p4, nX.negate());
+  this.drawTriangle(p1, p5, p4, nX.negate());
+
+  // right
+  this.drawTriangle(p2, p3, p6, nX);
+  this.drawTriangle(p3, p7, p6, nX);
+
+  // front
+  this.drawTriangle(p1, p2, p5, nZ);
+  this.drawTriangle(p2, p6, p5, nZ);
+
+  // back
+  this.drawTriangle(p3, p0, p7, nZ.negate());
+  this.drawTriangle(p0, p4, p7, nZ.negate());
+
+  positionsAttr.incrementVersion();
+  normalsAttr.incrementVersion();
+  return this;
+}
+
+// draws a triangle plane given a transform for the plane, a width (along X),
+// a height (along Z).
+function InlineDebugShape InlineDebugShape.drawTrianglesPlane!(Xfo xfo, Scalar width, Scalar height) {
+  Index firstIndex = this.allocateTriangles(6, 2);
+
+  Vec3Attribute positionsAttr = this._attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Vec3Attribute normalsAttr = this._attributes.getOrCreateAttribute('normals', Vec3Attribute);
+  
+  Vec3 p0 = xfo.transformVector(Vec3(-width * 0.5, 0, -height * 0.5));
+  Vec3 p1 = xfo.transformVector(Vec3(width * 0.5, 0, -height * 0.5));
+  Vec3 p2 = xfo.transformVector(Vec3(width * 0.5, 0, height * 0.5));
+  Vec3 p3 = xfo.transformVector(Vec3(-width * 0.5, 0, height * 0.5));
+
+  this.drawTriangle(p0, p1, p2);
+  this.drawTriangle(p2, p3, p0);
+
+  positionsAttr.incrementVersion();
+  normalsAttr.incrementVersion();
+  return this;
+}
+
+// stores an arbitrary meta data object on the Shape
+function InlineDebugShape.setMetaData!(String key, Object metaData){
+  this._metaData[key] = metaData;
+}
+
+// retrieves meta data from the Shape
+function Object InlineDebugShape.getMetaData(String key){
+  Object nullObj = null;
+  return this._metaData.get(key, nullObj);
+}

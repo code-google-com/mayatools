@@ -1,0 +1,36 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+object TextWriter : FileWriter {
+  Data handle;
+};
+
+// standard constructor
+function TextWriter() = "TextWriter_construct";
+
+// standard destructor
+function ~TextWriter() = "TextWriter_free";
+
+// constructs a new writer object with a given filePath
+inline TextWriter(String filePath) {
+  this = TextWriter();
+  this.open(filePath);
+} 
+
+// opens a new writable file, returns true if successful
+function Boolean TextWriter.open!(String filePath) = "TextWriter_open";
+
+// closes a currently opened file, returns true if successful
+function Boolean TextWriter.close!() = "TextWriter_close";
+
+// returns true if the file is currently open
+function Boolean TextWriter.isOpen() = "TextWriter_isOpen";
+
+// writes the content of the string into the file
+function TextWriter.write!(String text) = "TextWriter_write";
+
+// writes the content of the string into the file, adding a line break
+inline TextWriter.writeLine!(String text) {
+  this.write(text+'\n');
+}

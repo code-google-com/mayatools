@@ -1,0 +1,83 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+
+AnimationInterfaces are the set of interfaces that the character tools are built on top of. 
+
+This sytem is design for high-level character systems to be built, such as crowd simulation, ragdoll, previz character tools. 
+It is not designed to facilitate building of rigs for hero animation work. 
+
+
+*/
+require Math;
+
+//
+// A Skeleton stores the hierarchy that defines the skeleton. 
+//
+interface ISkeleton {
+  String getName();
+
+  Size getNumBones();
+  Bone getBone(Index index);
+  Xfo getReferencePose(Index index);
+  Xfo getReferenceLocalPose(Index index);
+
+  Integer findBone(String boneName, Index startingPoint);
+  Integer findBone(String boneName);
+
+  Size[] getDeformerIndices();
+  Bone[] getDeformers();
+
+  UInt64 getVersion();
+
+  String getDesc(String indent, Boolean includeBones);
+  String getDesc();
+};
+
+//
+// A Pose is an array of global space transforms, based on a specific skeleton.
+//
+
+interface IPose {
+  // Reset the pose back to the reference pose stored in the skeleon.
+  reset!();
+  // Get the pose of a bone in the skeleton using its index.
+  Xfo getBoneXfo!(Index index);
+  setBoneXfo!(Index index, Xfo xfo);
+
+  UInt64 getVersion();  
+
+  String getDesc(String indent, Boolean includeXfos);
+  String getDesc();
+};
+
+
+//
+// A Character is made up of a collection of geometries that are deformed by a skeleton and a pose.
+// 
+interface ICharacter {
+  String getName();
+
+  Size getNumGeometries();
+  Geometry getGeometry(Index index);
+  Geometry getDeformedGeometry!(Index index);
+
+  ISkeleton getSkeleton();
+  IPose getPose();
+
+  setGlobalXfo!(Xfo xfo);
+  Xfo getGlobalXfo();
+
+  // Returns the array of skinning matricies
+  Mat44 getBindShapeTransform(Index index);
+  Mat44[] getSkinningMatrices!();
+  
+  UInt64 getVersion();
+
+  LocalBoundingVolume getBoundingVolume!();
+
+  String getDesc(String indent, Boolean includeGeometries);
+  String getDesc();
+};
+

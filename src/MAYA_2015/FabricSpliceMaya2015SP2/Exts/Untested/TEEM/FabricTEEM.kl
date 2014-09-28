@@ -1,0 +1,24 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+function FabricTeemNRRDLoadUShort(
+  Data data,
+  Size dataSize,
+  io Size imageWidth,
+  io Size imageHeight,
+  io Size imageDepth,
+  io Byte imageUShortVoxels[],
+  io Mat44 xfoMat
+  ) = "FabricTeemNRRDLoadUShort";
+  
+function FabricTeemNRRDLoadUShortFromFileHandle(
+  String handle,
+  io Size imageWidth,
+  io Size imageHeight,
+  io Size imageDepth,
+  io Byte imageUShortVoxels[],
+  io Mat44 xfoMat
+  ) = "FabricTeemNRRDLoadUShortFromFileHandle";

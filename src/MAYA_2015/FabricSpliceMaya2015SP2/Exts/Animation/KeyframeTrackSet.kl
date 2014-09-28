@@ -1,0 +1,546 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+The :ref:`keyframetrackset` ...
+
+Example
+---------
+
+*/
+require Math;
+
+const UInt32 TRACKSETFLAG_TR_TRACKS = 2; // (1<<1)
+const UInt32 TRACKSETFLAG_ORI_TRACKS = 4; // (1<<2)
+const UInt32 TRACKSETFLAG_EULERANGLES_TRACKS = 8; // (1<<3)
+const UInt32 TRACKSETFLAG_SC_TRACKS = 16; // (1<<4)
+
+const UInt32 TRACKSETFLAG_BEZIER_TRACKS = 32; // (1<<4)
+
+object KeyframeTrackSet : ITrackSet {
+  String name;
+  String valueType;
+  UInt32 flags;
+  KeyframeTrack tracks[];
+};
+
+/////////////////////////////////////////////////////
+// Constructors
+
+function KeyframeTrackSet (
+  String name,
+  UInt32 flags
+){
+  this.name = name;
+  this.flags = flags;
+  this.valueType = 'Scalar';
+}
+
+function KeyframeTrackSet (
+  String name,
+  Color color,
+  Scalar defaultValue,
+  UInt32 flags
+){
+  this.name = name;
+  this.flags = flags;
+  this.addTrack(name, color, defaultValue);
+  this.valueType = 'Scalar';
+}
+
+function KeyframeTrackSet (
+  String name,
+  Vec2 defaultValue,
+  UInt32 flags
+){
+  this.name = name;
+  this.flags = flags;
+  this.addTrack("x", Color(1.0,0.0,0.0), defaultValue.x);
+  this.addTrack("y", Color(1.0,1.0,0.0), defaultValue.y);
+  this.valueType = 'Vec2';
+}
+
+function KeyframeTrackSet (
+  String name,
+  Vec3 defaultValue,
+  UInt32 flags
+){
+  this.name = name;
+  this.flags = flags;
+  this.addTrack("x", Color(1.0,0.0,0.0), defaultValue.x);
+  this.addTrack("y", Color(0.0,1.0,0.0), defaultValue.y);
+  this.addTrack("z", Color(0.0,0.0,1.0), defaultValue.z);
+  this.valueType = 'Vec3';
+}
+function KeyframeTrackSet (
+  String name,
+  Vec4 defaultValue,
+  UInt32 flags
+){
+  this.name = name;
+  this.flags = flags;
+  this.addTrack("x", Color(1.0,0.0,0.0), defaultValue.x);
+  this.addTrack("y", Color(0.0,1.0,0.0), defaultValue.y);
+  this.addTrack("z", Color(0.0,0.0,1.0), defaultValue.z);
+  this.addTrack("t", Color(1.0,0.0,1.0), defaultValue.t);
+  this.valueType = 'Vec4';
+}
+
+function KeyframeTrackSet (
+  String name,
+  Quat defaultValue,
+  UInt32 flags
+){
+  this.name = name;
+  this.flags = flags;
+  this.addTrack("v.x", Color(1.0,0.0,0.0), defaultValue.v.x);
+  this.addTrack("v.y", Color(0.0,1.0,0.0), defaultValue.v.y);
+  this.addTrack("v.z", Color(0.0,0.0,1.0), defaultValue.v.z);
+  this.addTrack("w", Color(0.0,1.0,1.0), defaultValue.w);
+  this.valueType = 'Quat';
+}
+
+function KeyframeTrackSet (
+  String name,
+  Euler defaultValue,
+  UInt32 flags
+){
+  this.name = name;
+  this.flags = flags;
+  this.addTrack("euler.x", Color(1.0,0.0,0.0), defaultValue.x);
+  this.addTrack("euler.y", Color(0.0,1.0,0.0), defaultValue.y);
+  this.addTrack("euler.z", Color(0.0,0.0,1.0), defaultValue.z);
+  this.setFlag(TRACKSETFLAG_EULERANGLES_TRACKS);
+  this.valueType = 'Euler';
+}
+
+function KeyframeTrackSet (
+  String name,
+  Xfo defaultValue,
+  UInt32 flags
+){
+  this.name = name;
+  this.flags = flags;
+
+  if(this.testFlag(TRACKSETFLAG_TR_TRACKS)){
+    this.addTrack("tr.x", Color(1.0,0.0,0.0), defaultValue.tr.x);
+    this.addTrack("tr.y", Color(0.0,1.0,0.0), defaultValue.tr.y);
+    this.addTrack("tr.z", Color(0.0,0.0,1.0), defaultValue.tr.z);
+  }
+
+  if(this.testFlag(TRACKSETFLAG_ORI_TRACKS)){
+    // report("KeyframeTrackSet. TRACKSETFLAG_EULERANGLES_TRACKS:" + this.testFlag(TRACKSETFLAG_EULERANGLES_TRACKS));
+    if(this.testFlag(TRACKSETFLAG_EULERANGLES_TRACKS)){
+      Euler euler = defaultValue.ori.toEuler(RotationOrder('zyx'));
+      this.addTrack("euler.x", Color(1.0,0.0,0.0), euler.x);
+      this.addTrack("euler.y", Color(0.0,1.0,0.0), euler.y);
+      this.addTrack("euler.z", Color(0.0,0.0,1.0), euler.z);
+    }
+    else{
+      this.addTrack("ori.v.x", Color(1.0,0.0,0.0), defaultValue.ori.v.x);
+      this.addTrack("ori.v.y", Color(0.0,1.0,0.0), defaultValue.ori.v.y);
+      this.addTrack("ori.v.z", Color(0.0,0.0,1.0), defaultValue.ori.v.z);
+      this.addTrack("ori.w", Color(0.0,1.0,1.0), defaultValue.ori.w);
+    }
+  }
+
+  if(this.testFlag(TRACKSETFLAG_SC_TRACKS)){    
+    this.addTrack("sc.x", Color(1.0,0.0,0.0), defaultValue.sc.x);
+    this.addTrack("sc.y", Color(0.0,1.0,0.0), defaultValue.sc.y);
+    this.addTrack("sc.z", Color(0.0,0.0,1.0), defaultValue.sc.z);
+  }
+
+  this.valueType = 'Xfo';
+}
+
+
+
+
+/////////////////////////////////////////////////////
+// Utility functions.
+
+function String KeyframeTrackSet.getName() {
+  return this.name;
+}
+
+function String KeyframeTrackSet.getValueType() {
+  return this.valueType;
+}
+
+
+function KeyframeTrackSet.setFlag!(UInt32 flag) {
+  this.flags |= flag;
+}
+
+function Boolean KeyframeTrackSet.testFlag(UInt32 flag) {
+  return this.flags & flag;
+}
+
+function UInt32 KeyframeTrackSet.getFlags() {
+  return this.flags;
+}
+
+
+// clears the content of the KeyframeTrack
+function KeyframeTrackSet.clear!() {
+  this.tracks.resize(0);
+}
+
+// adds a tracks to the track set.
+function KeyframeTrackSet.addTrack!(IKeyframeTrack track) {
+  this.tracks.push(track);
+}
+
+// find a track by name, returning the track index. 
+function Integer KeyframeTrackSet.findTrack(
+  String name
+) {
+  for (Integer i = 0; i < this.tracks.size; i++) {
+    if(this.tracks[i].name == name)
+      return i;
+  }
+  return -1;
+}
+
+function UInt32 KeyframeTrackSet.getNumTracks() {
+  return this.tracks.size;
+}
+
+// returns a track by name
+function IKeyframeTrack KeyframeTrackSet.getTrack(String name) {
+  Integer trackId = this.findTrack(name);
+  if(trackId == -1)
+    throw("KeyframeTrackSet.getTrack: Track '" + name + "' not found in :"+this.getTrackNames());
+  return this.tracks[trackId];
+}
+
+function IKeyframeTrack KeyframeTrackSet.getTrack(UInt32 index) {
+  return this.tracks[index];
+}
+
+function KeyframeTrackSet.setTrack!(String name, IKeyframeTrack track){
+  Integer trackId = this.findTrack(name);
+  if(trackId == -1)
+    throw("KeyframeTrackSet.getTrack: Track '" + name + "' not found in :"+this.getTrackNames());
+  this.tracks[trackId] = track;
+}
+
+function Vec2 KeyframeTrackSet.getTimeRange() {
+  Vec2 timeRange(BIGSCALAR_POSITIVE, BIGSCALAR_NEGATIVE);
+  for (Integer i = 0; i < this.tracks.size; i++) {
+    if(this.tracks[i].keys.size == 0){
+      continue;
+    }
+    if(i==0){
+      timeRange.x = this.tracks[i].keys[0].time;
+      timeRange.y = this.tracks[i].keys[this.tracks[i].keys.size-1].time;
+    }
+    else{
+      if(timeRange.x > this.tracks[i].keys[0].time){
+        timeRange.x = this.tracks[i].keys[0].time;
+      }
+      if(timeRange.y < this.tracks[i].keys[this.tracks[i].keys.size-1].time){
+        timeRange.y = this.tracks[i].keys[this.tracks[i].keys.size-1].time;
+      }
+    }
+  }
+  return timeRange;
+}
+
+
+function KeyframeTrackSet.clearTracks!() {
+  for (Integer i = 0; i < this.tracks.size; i++) {
+    this.tracks[i].clear();
+  }
+}
+
+
+function Integer KeyframeTrackSet.addTrack!(
+  String name,
+  Color color,
+  Scalar defaultValue
+) {
+  if(this.findTrack(name) != -1){
+    setError("Track Set already contains track:" + name);
+  }
+  UInt32 defaultInterpolation = Keyframe_Interpolation_Linear;
+  if(this.testFlag(TRACKSETFLAG_BEZIER_TRACKS))
+    defaultInterpolation = Keyframe_Interpolation_Bezier;
+  this.addTrack(KeyframeTrack(name, color, defaultValue, defaultInterpolation));
+  return this.tracks.size-1;
+}
+
+// returns a clone of this KeyframeTrackSet
+// function KeyframeTrackSet KeyframeTrackSet.clone() {
+//   KeyframeTrackSet cloned;
+//   cloned.name = this.name;
+//   cloned.tracks = this.tracks.clone();
+//   return cloned;
+// }
+
+/////////////////////////////////////////////////////
+// Evauation functions.
+
+function KeyframeTrackSet.evaluate?(Scalar time, io Scalar value, io Integer keyIndices[]){
+  if(this.valueType != 'Scalar'){
+    setError("Track set is not a Scalar TrackSet");
+    return;
+  }
+  keyIndices.resize(1);
+  value = this.tracks[0].evaluate(time, keyIndices[0]);
+}
+
+function KeyframeTrackSet.evaluate?(Scalar time, io Scalar values[], io Integer keyIndices[]){
+  if(this.valueType != 'Scalar'){
+    setError("Track set is not a Scalar TrackSet");
+    return;
+  }
+  keyIndices.resize(this.tracks.size);
+  values.resize(this.tracks.size);
+  for(Integer i=0; i<this.tracks.size; i++)
+    values[i] = this.tracks[i].evaluate(time, keyIndices[i]);
+}
+
+function KeyframeTrackSet.evaluate?(Scalar time, io Vec2 value, io Integer keyIndices[]){
+  if(this.valueType != 'Vec2'){
+    setError("Track set is not a Vec2 TrackSet");
+    return;
+  }
+  keyIndices.resize(2);
+  value.set(this.tracks[0].evaluate(time, keyIndices[0]),
+            this.tracks[1].evaluate(time, keyIndices[1]));
+}
+
+function KeyframeTrackSet.evaluate?(Scalar time, io Vec3 value, io Integer keyIndices[]){
+  if(this.valueType != 'Vec3'){
+    setError("Track set is not a Vec3 TrackSet");
+    return;
+  }
+  keyIndices.resize(3);
+  value.set(this.tracks[0].evaluate(time, keyIndices[0]),
+            this.tracks[1].evaluate(time, keyIndices[1]),
+            this.tracks[2].evaluate(time, keyIndices[2]));
+}
+
+function KeyframeTrackSet.evaluate?(Scalar time, io Vec4 value, io Integer keyIndices[]){
+  if(this.valueType != 'Vec4'){
+    setError("Track set is not a Vec4 TrackSet");
+    return;
+  }
+  keyIndices.resize(4);
+  value.set(this.tracks[0].evaluate(time, keyIndices[0]),
+            this.tracks[1].evaluate(time, keyIndices[1]),
+            this.tracks[2].evaluate(time, keyIndices[2]),
+            this.tracks[3].evaluate(time, keyIndices[3]));
+}
+
+function KeyframeTrackSet.evaluate?(Scalar time, io Quat value, io Integer keyIndices[]){
+  if(this.valueType != 'Quat' && this.valueType != 'Euler'){
+    setError("Track set is not a Rotation TrackSet");
+    return;
+  }
+  if(this.testFlag(TRACKSETFLAG_EULERANGLES_TRACKS)){
+    keyIndices.resize(3);
+    // Euler to Quat
+    Euler euler(this.tracks[0].evaluate(time, keyIndices[0]),
+                this.tracks[1].evaluate(time, keyIndices[1]),
+                this.tracks[2].evaluate(time, keyIndices[2]),
+                RotationOrder('zyx'));
+    value.setFromEuler(euler);
+  }
+  else{
+    keyIndices.resize(4);
+    value.set(this.tracks[0].evaluate(time, keyIndices[0]),
+              this.tracks[1].evaluate(time, keyIndices[1]),
+              this.tracks[2].evaluate(time, keyIndices[2]),
+              this.tracks[3].evaluate(time, keyIndices[3]));
+    value.setUnit();
+  }
+}
+
+function KeyframeTrackSet.evaluate?(Scalar time, io Euler value, io Integer keyIndices[]){
+  if(!(this.valueType == 'Quat' || this.valueType == 'Euler') && this.testFlag(TRACKSETFLAG_EULERANGLES_TRACKS)){
+    setError("Track set is not a Euler TrackSet");
+    return;
+  }
+  keyIndices.resize(3);
+  // Euler to Quat
+  value.set(this.tracks[0].evaluate(time, keyIndices[0]),
+            this.tracks[1].evaluate(time, keyIndices[1]),
+            this.tracks[2].evaluate(time, keyIndices[2]),
+            RotationOrder('zyx'));
+}
+
+function KeyframeTrackSet.evaluate?(Scalar time, io Xfo value, io Integer keyIndices[]){
+  if(this.valueType != 'Xfo'){
+    setError("Track set is not a Xfo TrackSet");
+    return;
+  }
+  keyIndices.resize(10);
+  Index i = 0;
+  if(this.testFlag(TRACKSETFLAG_TR_TRACKS)){    
+    value.tr.set(
+      this.tracks[i+0].evaluate(time, keyIndices[i+0]),
+      this.tracks[i+1].evaluate(time, keyIndices[i+1]),
+      this.tracks[i+2].evaluate(time, keyIndices[i+2])
+    );
+    i += 3;
+  }
+  if(this.testFlag(TRACKSETFLAG_ORI_TRACKS)){
+    if(this.testFlag(TRACKSETFLAG_EULERANGLES_TRACKS)){
+      Euler euler(this.tracks[i+0].evaluate(time, keyIndices[i+0]),
+                  this.tracks[i+1].evaluate(time, keyIndices[i+1]),
+                  this.tracks[i+2].evaluate(time, keyIndices[i+2]),
+                  RotationOrder('zyx'));
+      value.ori.setFromEuler(euler);
+      i += 3;
+    }
+    else{
+      value.ori.set(
+        this.tracks[i+0].evaluate(time, keyIndices[i+0]),
+        this.tracks[i+1].evaluate(time, keyIndices[i+1]),
+        this.tracks[i+2].evaluate(time, keyIndices[i+2]),
+        this.tracks[i+3].evaluate(time, keyIndices[i+3])
+      );
+      value.ori.setUnit();
+      i += 4;
+    }
+  }
+
+  if(this.testFlag(TRACKSETFLAG_SC_TRACKS)){    
+    value.sc.set(
+      this.tracks[i+0].evaluate(time, keyIndices[i+0]),
+      this.tracks[i+1].evaluate(time, keyIndices[i+1]),
+      this.tracks[i+2].evaluate(time, keyIndices[i+2])
+    );
+  }
+}
+
+
+/////////////////////////////////////////////////////
+// Set Value functions.
+
+function KeyframeTrackSet.setTrackValues!(Scalar time, Scalar value){
+  if(this.valueType != 'Scalar'){
+    setError("Track set is not a Scalar TrackSet");
+    return;
+  }
+  this.tracks[0].setValue(time, value);
+}
+
+function KeyframeTrackSet.setTrackValues!(Scalar time, Vec2 value){
+  if(this.valueType != 'Vec2'){
+    setError("Track set is not a Vec2 TrackSet");
+    return;
+  }
+  this.tracks[0].setValue(time, value.x);
+  this.tracks[1].setValue(time, value.y);
+}
+
+function KeyframeTrackSet.setTrackValues!(Scalar time, Vec3 value){
+  if(this.valueType != 'Vec3'){
+    setError("Track set is not a Vec3 TrackSet");
+    return;
+  }
+  this.tracks[0].setValue(time, value.x);
+  this.tracks[1].setValue(time, value.y);
+  this.tracks[2].setValue(time, value.z);
+}
+
+function KeyframeTrackSet.setTrackValues!(Scalar time, Vec4 value){
+  if(this.valueType != 'Vec4'){
+    setError("Track set is not a Vec4 TrackSet");
+    return;
+  }
+  this.tracks[0].setValue(time, value.x);
+  this.tracks[1].setValue(time, value.y);
+  this.tracks[2].setValue(time, value.z);
+  this.tracks[3].setValue(time, value.y);
+}
+
+function KeyframeTrackSet.setTrackValues!(Scalar time, Quat value){
+  if(this.valueType != 'Quat'){
+    setError("Track set is not a Quat TrackSet");
+    return;
+  }
+  if(this.testFlag(TRACKSETFLAG_EULERANGLES_TRACKS)){
+    Euler euler = value.toEuler(RotationOrder('zyx'));
+    this.tracks[0].setValue(time, euler.x);
+    this.tracks[1].setValue(time, euler.y);
+    this.tracks[2].setValue(time, euler.z);
+  }
+  else{
+    this.tracks[0].setValue(time, value.v.x);
+    this.tracks[1].setValue(time, value.v.y);
+    this.tracks[2].setValue(time, value.v.z);
+    this.tracks[3].setValue(time, value.w);
+  }
+}
+
+function KeyframeTrackSet.setTrackValues!(Scalar time, Xfo value){
+  if(this.valueType != 'Xfo'){
+    setError("Track set is not a Xfo TrackSet");
+    return;
+  }
+  Index i = 0;
+  if(this.testFlag(TRACKSETFLAG_TR_TRACKS)){
+    this.tracks[i+0].setValue(time, value.tr.x);
+    this.tracks[i+1].setValue(time, value.tr.y);
+    this.tracks[i+2].setValue(time, value.tr.z);
+    i += 3;
+  }
+
+  if(this.testFlag(TRACKSETFLAG_ORI_TRACKS)){
+    if(this.testFlag(TRACKSETFLAG_EULERANGLES_TRACKS)){
+      Euler euler = value.ori.toEuler(RotationOrder('zyx'));
+      this.tracks[i+0].setValue(time, euler.x);
+      this.tracks[i+1].setValue(time, euler.y);
+      this.tracks[i+2].setValue(time, euler.z);
+      i += 3;
+    }
+    else{
+      this.tracks[i+0].setValue(time, value.ori.v.x);
+      this.tracks[i+1].setValue(time, value.ori.v.y);
+      this.tracks[i+2].setValue(time, value.ori.v.z);
+      this.tracks[i+3].setValue(time, value.ori.w);
+      i += 4;
+    }
+  }
+
+  if(this.testFlag(TRACKSETFLAG_SC_TRACKS)){
+    this.tracks[i+0].setValue(time, value.sc.x);
+    this.tracks[i+1].setValue(time, value.sc.y);
+    this.tracks[i+2].setValue(time, value.sc.z); 
+  }
+}
+
+
+// Returns an array of the names of the track sets in the clip.
+function String[] KeyframeTrackSet.getTrackNames() {
+  String names[];
+  for(Integer i=0; i<this.tracks.size; i++)
+    names.push(this.tracks[i].name);
+  return names;
+}
+
+
+function String KeyframeTrackSet.getDesc(String indent, Boolean includeTracks) {
+  String desc;
+  desc += indent + "KeyframeTrackSet { \n";
+  desc += indent + "  name: " + this.name + " \n";
+  desc += indent + "  valueType: " + this.valueType + " \n";
+  desc += indent + "  flags: " + this.flags + " \n";
+  if(includeTracks){
+    desc += indent + "  tracks:[ \n";
+    for(Integer i=0; i<this.tracks.size; i++){
+      desc += this.tracks[i].getDesc(indent+"  ", true) + " \n";
+    }
+    desc += indent + "  ]\n";
+  }
+  return desc;
+}
+
+function String KeyframeTrackSet.getDesc() {
+  return this.getDesc("", true);
+}
+

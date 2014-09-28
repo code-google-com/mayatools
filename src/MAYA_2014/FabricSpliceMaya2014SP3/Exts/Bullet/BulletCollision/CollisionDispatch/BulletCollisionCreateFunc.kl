@@ -1,0 +1,14 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+///Used by the BulletCollisionDispatcher to register and create instances for BulletCollisionAlgorithm
+interface BulletCollisionAlgorithmCreateFunc
+{
+	Data getPointer();
+
+	// If defining custom collision create funcs in KL, we will need to expose this method.
+	// BulletCollisionAlgorithm CreateCollisionAlgorithm(BulletCollisionAlgorithmConstructionInfo info, io BulletICollisionObject body0, io BulletICollisionObject body1);
+};
+

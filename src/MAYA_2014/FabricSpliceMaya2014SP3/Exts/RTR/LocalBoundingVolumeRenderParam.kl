@@ -1,0 +1,161 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+require Geometry;
+
+//////////////////// LocalBoundingVolume
+
+object LocalBoundingVolumeRenderParam {
+  LocalBoundingVolume value;
+  Boolean isArray;
+  LocalBoundingVolume arrayValues[];
+};
+
+inline Boolean LocalBoundingVolumeRenderParam.set!(LocalBoundingVolume value, UInt32 index) {
+  if(this.isArray) {
+    if(!this.arrayValues[index].equal(value)) {
+      this.arrayValues[index] = value;
+      return true;
+    }
+  } else {
+    if(index)
+      throw("Error: LocalBoundingVolumeRenderParam.set: index ("+index+") out of range (1)");
+    if(!this.value.equal(value)) {
+      this.value = value;
+      return true;
+    }
+  }
+  return false;
+}
+
+inline Boolean LocalBoundingVolumeRenderParam.set!(LocalBoundingVolume value) {
+  if(this.isArray)
+    throw("Error: LocalBoundingVolumeRenderParam.set: setting an array value without an index");
+  if(!this.value.equal(value)) {
+    this.value = value;
+    return true;
+  }
+  return false;
+}
+
+inline LocalBoundingVolumeRenderParam.get(io LocalBoundingVolume value, UInt32 index) {
+  if(this.isArray) {
+    value = this.arrayValues[index];
+  } else {
+    if(index)
+      throw("Error: LocalBoundingVolumeRenderParam.get: index ("+index+") out of range (1)");
+    value = this.value;
+  }
+}
+
+inline LocalBoundingVolumeRenderParam.get(io LocalBoundingVolume value) {
+  if(this.isArray)
+    throw("Error: LocalBoundingVolumeRenderParam.get: setting an array value without an index");
+  value = this.value;
+}
+
+function RenderParamValues.setAsLocalBoundingVolume!(RenderValueKey key, Size elementCount) {
+  Boolean isArray = elementCount != 1;
+  this.setType(key, LocalBoundingVolumeRenderParam, RenderParamCategory_baseType, isArray ? (RenderParamFlag_OGLShaderCompatible|RenderParamFlag_array) : RenderParamFlag_OGLShaderCompatible);
+
+  LocalBoundingVolumeRenderParam param;
+  if( this.paramsData[key.index].param.data == null ) {
+    param = LocalBoundingVolumeRenderParam();
+    this.paramsData[key.index].param.data = param;
+  } else
+    param = LocalBoundingVolumeRenderParam(this.paramsData[key.index].param.data);
+
+  if(isArray) {
+    this.setElementCount(key, elementCount);
+    param.arrayValues.resize(elementCount);
+    if( !param.isArray && elementCount != 0 )
+      param.arrayValues[0] = param.value;
+  } else {
+    if( param.isArray && param.arrayValues.size() != 0 ) {
+      param.value = param.arrayValues[0];
+      param.arrayValues.resize(0);
+    }
+  }
+  param.isArray = isArray;
+}
+
+inline RenderParamValues.setAsLocalBoundingVolume!(RenderValueKey key) {
+  this.setAsLocalBoundingVolume(key, 1);
+}
+
+inline RenderValueKey RenderParamValues.setAsLocalBoundingVolume!(String name) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsLocalBoundingVolume(key, 1);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.setAsLocalBoundingVolume!(String name, Size elementCount) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsLocalBoundingVolume(key, elementCount);
+  return key;
+}
+
+inline Boolean RenderParamValues.isLocalBoundingVolume(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == LocalBoundingVolumeRenderParam;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, LocalBoundingVolume value, UInt32 index) {
+  Ref<LocalBoundingVolumeRenderParam> param = this.get(key);
+  if( param.set(value, index) ) {
+    this.incrementValueVersion(key, index);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, LocalBoundingVolume value) {
+  return this.set(key, value, 0);
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, LocalBoundingVolume value, UInt32 index) {
+  if( this.layers[key.layerIndex].params.set(key.valueKey, value, index) ) {
+    this.synchronizeVersion(key.layerIndex);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, LocalBoundingVolume value) {
+  return this.set(key, value, 0);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io LocalBoundingVolume value, UInt32 index) {
+  Ref<LocalBoundingVolumeRenderParam> param = this.get(key);
+  param.get(value, index);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io LocalBoundingVolume value) {
+  this.get(key, value, 0);
+}
+
+inline RenderParams.get?(RenderParamKey key, io LocalBoundingVolume value, UInt32 index) {
+  this.layers[key.layerIndex].params.get(key.valueKey, value, index);
+}
+
+inline RenderParams.get?(RenderParamKey key, io LocalBoundingVolume value) {
+  this.get(key, value, 0);
+}
+
+inline RenderParams.get?(RenderParamVersionedKey key, io LocalBoundingVolume v) {
+  this.get(key.key, v, key.elementIndex);
+}
+
+function String LocalBoundingVolumeRenderParam.getDesc() {
+  if( this.isArray ) {
+    String desc = '[';
+    for( Size i = 0; i < this.arrayValues.size(); ++i ) {
+      if( i != 0 )
+        desc += ', ';
+      desc += this.arrayValues[i].getDesc();
+    }
+    return desc + ']';
+  } else {
+    return this.value.getDesc();
+  }
+}

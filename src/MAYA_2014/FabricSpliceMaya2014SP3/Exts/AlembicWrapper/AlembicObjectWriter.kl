@@ -1,0 +1,12 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+
+interface AlembicObjectWriter {
+  String getPath();
+  Boolean valid();
+  reset!();
+  AlembicOObject getOObject();
+};

@@ -1,0 +1,58 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`eulerparam` implements the :ref:`param` interface for Euler values.
+*/
+
+require Math;
+
+object EulerParam : Param {
+  String name;
+  Euler value;
+  Param options[String];
+};
+
+// default constructor
+function EulerParam(String name) {
+  this.name = name;
+}
+
+// constructor taking input value
+function EulerParam(String name, Euler value) {
+  this.name = name;
+  this.value = value;
+}
+
+// returns the name of this parameter
+function String EulerParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String EulerParam.getValueType() {
+  return "Euler";
+}
+
+// getting an option on this param
+function Param EulerParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function EulerParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function Euler EulerParam.getValue() {
+  return this.value;
+}
+
+// sets the param's value
+function EulerParam.setValue!(Euler value) {
+  this.value = value;
+}

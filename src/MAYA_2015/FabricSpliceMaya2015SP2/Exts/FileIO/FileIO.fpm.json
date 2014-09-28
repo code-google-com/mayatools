@@ -1,0 +1,14 @@
+{
+  "libs": [
+    "FileIO"
+  ],
+  "code": [
+    "Debugging.kl",
+    "FilePath.kl",
+    "FileSystem.kl",
+    "FileReader.kl",
+    "FileWriter.kl",
+    "TextReader.kl",
+    "TextWriter.kl"
+  ]
+}

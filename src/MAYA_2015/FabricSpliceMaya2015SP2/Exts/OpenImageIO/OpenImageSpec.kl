@@ -1,0 +1,104 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+object OpenImageSpec {
+  Data handle;
+};
+
+function OpenImageSpec() = "OpenImageSpec_construct";
+function ~OpenImageSpec() = "OpenImageSpec_free";
+function OpenImageSpec.reset() = "OpenImageSpec_free";
+
+function OpenImageSpec(OpenImageTypeDesc fmt) = "OpenImageSpec_construct_1arg";
+function OpenImageSpec(SInt32 xres, SInt32 yres, SInt32 nchans, OpenImageTypeDesc fmt) = "OpenImageSpec_construct_4args";
+
+function SInt32 OpenImageSpec.get_x() = "OpenImageSpec_get_x";
+function OpenImageSpec.set_x(SInt32 value) = "OpenImageSpec_set_x";
+function SInt32 OpenImageSpec.get_y() = "OpenImageSpec_get_y";
+function OpenImageSpec.set_y(SInt32 value) = "OpenImageSpec_set_y";
+function SInt32 OpenImageSpec.get_z() = "OpenImageSpec_get_z";
+function OpenImageSpec.set_z(SInt32 value) = "OpenImageSpec_set_z";
+function SInt32 OpenImageSpec.get_width() = "OpenImageSpec_get_width";
+function OpenImageSpec.set_width(SInt32 value) = "OpenImageSpec_set_width";
+function SInt32 OpenImageSpec.get_height() = "OpenImageSpec_get_height";
+function OpenImageSpec.set_height(SInt32 value) = "OpenImageSpec_set_height";
+function SInt32 OpenImageSpec.get_depth() = "OpenImageSpec_get_depth";
+function OpenImageSpec.set_depth(SInt32 value) = "OpenImageSpec_set_depth";
+function SInt32 OpenImageSpec.get_full_x() = "OpenImageSpec_get_full_x";
+function OpenImageSpec.set_full_x(SInt32 value) = "OpenImageSpec_set_full_x";
+function SInt32 OpenImageSpec.get_full_y() = "OpenImageSpec_get_full_y";
+function OpenImageSpec.set_full_y(SInt32 value) = "OpenImageSpec_set_full_y";
+function SInt32 OpenImageSpec.get_full_z() = "OpenImageSpec_get_full_z";
+function OpenImageSpec.set_full_z(SInt32 value) = "OpenImageSpec_set_full_z";
+function SInt32 OpenImageSpec.get_full_width() = "OpenImageSpec_get_full_width";
+function OpenImageSpec.set_full_width(SInt32 value) = "OpenImageSpec_set_full_width";
+function SInt32 OpenImageSpec.get_full_height() = "OpenImageSpec_get_full_height";
+function OpenImageSpec.set_full_height(SInt32 value) = "OpenImageSpec_set_full_height";
+function SInt32 OpenImageSpec.get_full_depth() = "OpenImageSpec_get_full_depth";
+function OpenImageSpec.set_full_depth(SInt32 value) = "OpenImageSpec_set_full_depth";
+function SInt32 OpenImageSpec.get_tile_width() = "OpenImageSpec_get_tile_width";
+function OpenImageSpec.set_tile_width(SInt32 value) = "OpenImageSpec_set_tile_width";
+function SInt32 OpenImageSpec.get_tile_height() = "OpenImageSpec_get_tile_height";
+function OpenImageSpec.set_tile_height(SInt32 value) = "OpenImageSpec_set_tile_height";
+function SInt32 OpenImageSpec.get_tile_depth() = "OpenImageSpec_get_tile_depth";
+function OpenImageSpec.set_tile_depth(SInt32 value) = "OpenImageSpec_set_tile_depth";
+function SInt32 OpenImageSpec.get_nchannels() = "OpenImageSpec_get_nchannels";
+function OpenImageSpec.set_nchannels(SInt32 value) = "OpenImageSpec_set_nchannels";
+function OpenImageTypeDesc OpenImageSpec.format() = "OpenImageSpec_format";
+function OpenImageTypeDesc[] OpenImageSpec.channelformats() = "OpenImageSpec_channelformats";
+function String[] OpenImageSpec.channelnames() = "OpenImageSpec_channelnames";
+function SInt32 OpenImageSpec.get_alpha_channel() = "OpenImageSpec_get_alpha_channel";
+function OpenImageSpec.set_alpha_channel(SInt32 value) = "OpenImageSpec_set_alpha_channel";
+function SInt32 OpenImageSpec.get_z_channel() = "OpenImageSpec_get_z_channel";
+function OpenImageSpec.set_z_channel(SInt32 value) = "OpenImageSpec_set_z_channel";
+function Boolean OpenImageSpec.get_deep() = "OpenImageSpec_get_deep";
+function OpenImageSpec.set_deep(Boolean value) = "OpenImageSpec_set_deep";
+function SInt32 OpenImageSpec.get_quant_black() = "OpenImageSpec_get_quant_black";
+function OpenImageSpec.set_quant_black(SInt32 value) = "OpenImageSpec_set_quant_black";
+function SInt32 OpenImageSpec.get_quant_white() = "OpenImageSpec_get_quant_white";
+function OpenImageSpec.set_quant_white(SInt32 value) = "OpenImageSpec_set_quant_white";
+function SInt32 OpenImageSpec.get_quant_min() = "OpenImageSpec_get_quant_min";
+function OpenImageSpec.set_quant_min(SInt32 value) = "OpenImageSpec_set_quant_min";
+function SInt32 OpenImageSpec.get_quant_max() = "OpenImageSpec_get_quant_max";
+function OpenImageSpec.set_quant_max(SInt32 value) = "OpenImageSpec_set_quant_max";
+function OpenImageSpec.set_format(OpenImageTypeDesc fmt) = "OpenImageSpec_set_format";
+function OpenImageSpec.default_channel_names() = "OpenImageSpec_default_channel_names";
+function OpenImageTypeDesc OpenImageSpec.format_from_quantize(SInt32 quant_black, SInt32 quant_white, SInt32 quant_min, SInt32 quant_max) = "OpenImageSpec_format_from_quantize";
+function UInt64 OpenImageSpec.channel_bytes() = "OpenImageSpec_channel_bytes";
+function UInt64 OpenImageSpec.channel_bytes (SInt32 chan, Boolean native) = "OpenImageSpec_channel_bytes_2args";
+function UInt64 OpenImageSpec.pixel_bytes (Boolean native) = "OpenImageSpec_pixel_bytes";
+function UInt64 OpenImageSpec.pixel_bytes (SInt32 chbegin, SInt32 chend, Boolean native) = "OpenImageSpec_pixel_bytes_3args";
+function UInt64 OpenImageSpec.scanline_bytes (Boolean native) = "OpenImageSpec_scanline_bytes";
+function UInt64 OpenImageSpec.tile_pixels () = "OpenImageSpec_tile_pixels";
+function UInt64 OpenImageSpec.tile_bytes (Boolean native) = "OpenImageSpec_tile_bytes";
+function UInt64 OpenImageSpec.image_pixels () = "OpenImageSpec_image_pixels";
+function UInt64 OpenImageSpec.image_bytes (Boolean native) = "OpenImageSpec_image_bytes";
+function Boolean OpenImageSpec.size_t_safe() = "OpenImageSpec_size_t_safe";
+function OpenImageSpec.auto_stride(io SInt64 xstride, io SInt64 ystride, io SInt64 zstride, SInt64 channelsize, SInt32 nchannels, SInt32 width, SInt32 height) = "OpenImageSpec_auto_stride_7args";
+function OpenImageSpec.auto_stride(io SInt64 xstride, io SInt64 ystride, io SInt64 zstride, OpenImageTypeDesc format, SInt32 nchannels, SInt32 width, SInt32 height) = "OpenImageSpec_auto_stride_from_format";
+function OpenImageSpec.auto_stride(io SInt64 xstride, OpenImageTypeDesc format, SInt32 nchannels) = "OpenImageSpec_auto_stride_3args";
+function OpenImageSpec.attribute(String name, OpenImageTypeDesc fmt, Data value) = "OpenImageSpec_attribute_Format_Data";
+function OpenImageSpec.attribute(String name, OpenImageTypeDesc fmt, String value) = "OpenImageSpec_attribute_Format_String";
+function OpenImageSpec.attribute(String name, UInt32 value) = "OpenImageSpec_attribute_UInt32";
+function OpenImageSpec.attribute(String name, SInt32 value) = "OpenImageSpec_attribute_SInt32";
+function OpenImageSpec.attribute(String name, Float32 value) = "OpenImageSpec_attribute_Float32";
+function OpenImageSpec.attribute(String name, String value) = "OpenImageSpec_attribute_String";
+function OpenImageSpec.erase_attribute(String name, OpenImageTypeDesc searchtype, Boolean casesensitive) = "OpenImageSpec_erase_attribute";
+inline OpenImageSpec.erase_attribute(String name, Boolean casesensitive) { this.erase_attribute(name, OpenImageTypeDesc(), casesensitive); }
+function SInt32 OpenImageSpec.get_int_attribute(String name, SInt32 defaultval) = "OpenImageSpec_get_int_attribute";
+function Float32 OpenImageSpec.get_float_attribute(String name, Float32 defaultval) = "OpenImageSpec_get_float_attribute";
+function String OpenImageSpec.get_string_attribute (String name, String defaultval) = "OpenImageSpec_get_string_attribute";
+function String OpenImageSpec.to_xml() = "OpenImageSpec_to_xml";
+function OpenImageSpec.from_xml(String xml) = "OpenImageSpec_from_xml";
+function Boolean OpenImageSpec.valid_tile_range(SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend, SInt32 zbegin, SInt32 zend) = "OpenImageSpec_valid_tile_range";
+function OpenImageTypeDesc OpenImageSpec.channelformat(SInt32 chan) = "OpenImageSpec_channelformat";
+
+/* 
+  unmapped class methods:
+  -------------------------
+  ImageIOParameter * find_attribute (const std::string &name, TypeDesc searchtype=TypeDesc::UNKNOWN, bool casesensitive=false);
+  const ImageIOParameter *find_attribute (const std::string &name, TypeDesc searchtype=TypeDesc::UNKNOWN, bool casesensitive=false) const;
+  std::string metadata_val (const ImageIOParameter &p, bool human=false) const;
+*/

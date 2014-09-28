@@ -1,0 +1,328 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`ConstantScreenSizeTransform` implements the :ref:`inlinetransform` interface to represent a nestable transform without animation. The :ref:`ConstantScreenSizeTransform` supports, as dictacted by the interface, nesting of transforms to represent scene hierarchies, and uses caching to ensure avoiding recomputation of hierarchies.
+
+Example
+---------
+
+.. code-block:: kl
+
+    // create a couple of transforms
+    ConstantScreenSizeTransform transfo1 = ConstantScreenSizeTransform('parent', Xfo());
+    ConstantScreenSizeTransform transfo2 = ConstantScreenSizeTransform('childA', Xfo(Vec3(-5, 0, 0)));
+    ConstantScreenSizeTransform transfo3 = ConstantScreenSizeTransform('childB', Xfo(Vec3(5, 0, 0)));
+
+    // create hierarchy by parenting them
+    transfo1.addChild(transfo2);
+    transfo1.addChild(transfo3);
+
+    // add some more transform values
+    transfo3.pushLocalXfo(Xfo(Vec3(5, 5, 0)));
+    transfo3.pushLocalXfo(Xfo(Vec3(5, 10, 0)));
+
+*/
+require FabricSynchronization;
+
+object ConstantScreenSizeTransform : InlineTransform {
+  String _name;
+  Xfo _xfos[];
+  Ref<InlineTransform> _parent;
+  Object _children[];
+  Xfo _globalXfos[];
+
+  UInt32 version;
+  UInt32 _cachedVersion;
+
+  InlineTransformAdaptor _transformAdaptor;
+  SimpleLock lock;
+};
+
+// default constructor given name and the first xfo value
+function ConstantScreenSizeTransform(String name, Xfo xfo) {
+  this.lock = SimpleLock("ConstantScreenSizeTransform");
+  this._name = name;
+  this._xfos.push(xfo);
+  this._globalXfos.push(xfo);
+  this._children.resize(0);
+  this.incrementVersion();
+}
+
+// default constructor just taking a name
+function ConstantScreenSizeTransform(String name) {
+  this = ConstantScreenSizeTransform(name, Xfo());
+}
+
+// returns the name of the transform
+inline String ConstantScreenSizeTransform.getName() {
+  return this._name;
+}
+
+// returns the path, encoding the hierarchy joined by '/'
+function String ConstantScreenSizeTransform.getPath() {
+  if(this.hasParent())
+    return InlineTransform(this.getParent()).getPath() + '/' + this.getName();
+  return this.getName();
+}
+
+// returns the number of local xfo values
+inline Size ConstantScreenSizeTransform.getLocalCount() {
+  AutoLock AL(this.lock);
+  return this._nonLocking_getLocalCount();
+}
+
+// returns the number of local xfo values
+inline Size ConstantScreenSizeTransform._nonLocking_getLocalCount() {
+  return this._xfos.size();
+}
+
+// resizes the tranform to store n local transform values
+function ConstantScreenSizeTransform.setLocalCount!(Size n) {
+  AutoLock AL(this.lock);
+  this._xfos.resize(n);
+  this.incrementVersion();
+}
+
+// returns the number of global xfo values
+inline Size ConstantScreenSizeTransform.getGlobalCount() {
+  AutoLock AL(this.lock);
+  return this._nonLocking_getGlobalCount();
+}
+
+// returns the number of global xfo values
+function Size ConstantScreenSizeTransform._nonLocking_getGlobalCount() {
+  if(this.hasParent())
+    return InlineTransform(this.getParent())._nonLocking_getGlobalCount() * this._nonLocking_getLocalCount();
+  return this._nonLocking_getLocalCount();
+}
+
+
+// sets a local xfo value given an index
+function ConstantScreenSizeTransform.setLocalXfo!(Index index, Xfo xfo) {
+  AutoLock AL(this.lock);
+  if(index >= this._xfos.size()) {
+    setError("ConstantScreenSizeTransform: Local xfo index "+index+" out of bounds.");
+    return;
+  }
+  this._xfos[index] = xfo;
+  this.incrementVersion();
+}
+
+// returns a local xfo value given an index and context
+inline Xfo ConstantScreenSizeTransform.getLocalXfo(Index index) {
+  AutoLock AL(this.lock);
+  return this._nonLocking_getLocalXfo(index);
+}
+
+// An internal method that avoids placing a lock while querying the local xfo.
+inline Xfo ConstantScreenSizeTransform._nonLocking_getLocalXfo(Index index) {
+  if(index >= this._xfos.size()) {
+    setError("ConstantScreenSizeTransform: Local xfo index "+index+" out of bounds.");
+    return Xfo();
+  }
+  return this._xfos[index];
+}
+
+// returns a global xfo value given an index and context
+function Xfo ConstantScreenSizeTransform.getGlobalXfo!(Index index) {
+  AutoLock AL(this.lock);
+  return this._nonLocking_getGlobalXfo(index);
+}
+
+
+// An internal method that avoids placing a lock while querying the global xfo.
+function Xfo ConstantScreenSizeTransform._nonLocking_getGlobalXfo!(Index index) {
+  if(this.hasParent()) {
+    Size totalCount = this._nonLocking_getGlobalCount();
+    if(totalCount == 1 && this._cachedVersion == this.version) {
+      return this._globalXfos[index];
+    }
+    if(index >= totalCount) {
+      setError("ConstantScreenSizeTransform: Global xfo index "+index+" out of bounds.");
+      return Xfo();
+    }
+    Size localCount = this._nonLocking_getLocalCount();
+    Size localIndex = index % localCount;
+    Size parentIndex = (index - localIndex) / localCount;
+    InlineTransform parent = this.getParent();
+    Xfo globalXfo = parent.getGlobalXfo(parentIndex) * this._nonLocking_getLocalXfo(localIndex);
+    if(totalCount == 1) {
+      this._cachedVersion = this.version;
+      this._globalXfos[localIndex] = globalXfo;
+    }
+    return globalXfo;
+  }
+  return this._nonLocking_getLocalXfo(index);
+}
+
+
+// set the global transform value. The Transform is responsible for computing local.
+function ConstantScreenSizeTransform.setGlobalXfo!(Index index, Xfo xfo) {
+  AutoLock AL(this.lock);
+  if(this.hasParent()) {
+    Size localCount = this._nonLocking_getLocalCount();
+    Size localIndex = index % localCount;
+    Size parentIndex = (index - localIndex) / localCount;
+    InlineTransform parent = this.getParent();
+    Xfo localXfo = parent.getGlobalXfo(parentIndex).inverse() * xfo;
+    this.setLocalXfo(localIndex, localXfo);
+  }
+  this.setLocalXfo(index, xfo);
+}
+
+
+// returns true if this transform has a parent
+function Boolean ConstantScreenSizeTransform.hasParent() {
+  AutoLock AL(this.lock);
+  return this._parent;
+}
+
+// returns the parent of this transform, or null
+function InlineTransform ConstantScreenSizeTransform.getParent() {
+  AutoLock AL(this.lock);
+  return this._parent;
+}
+
+// sets the parent of this transform
+inline ConstantScreenSizeTransform.setParent!(io InlineTransform parent) {
+  if(this._parent)
+    this._parent.removeChild(this);
+  if(parent)
+    parent.addChild(this);
+  this.incrementVersion();
+}
+
+// interal method that sets the parent.
+function ConstantScreenSizeTransform._setParent!(InlineTransform parent) {
+  AutoLock AL(this.lock);
+  this._parent = parent;
+  this.incrementVersion();
+}
+
+// adds a child to this transform
+function Object ConstantScreenSizeTransform.addChild!(Object child) {
+  AutoLock AL(this.lock);
+  InlineTransform childTransform = child;
+  if(childTransform)
+    childTransform._setParent(this);
+  this._children.push(child);
+  return child;
+}
+
+// removes a child object to this transform by index
+function ConstantScreenSizeTransform.removeChild!(Index index) {
+  AutoLock AL(this.lock);
+  InlineTransform childTransform = this._children[index];
+  if(childTransform){
+    childTransform._setParent(null);
+  }
+  else{
+    InlineInstance instance = this._children[index];
+    if(instance)
+      instance.setTransform(null);
+  }
+  for(Size j=index; j<this._children.size()-1; j++) {
+    this._children[j] = this._children[j+1];
+  }
+  this._children.resize(this._children.size-1);
+}
+
+// removes a child to this transform
+function ConstantScreenSizeTransform.removeChild!(Object child) {
+  AutoLock AL(this.lock);
+  for(Size i=0; i<this._children.size(); i++) {
+    if(child == this._children[i]){
+      this.removeChild(i);
+      return;
+    }
+  }
+}
+
+// returns the number of children of this transform
+function Size ConstantScreenSizeTransform.getChildCount() {
+  AutoLock AL(this.lock);
+  return this._children.size();
+}
+
+// returns a child of this transform given an index
+function Object ConstantScreenSizeTransform.getChild(Index index) {
+  AutoLock AL(this.lock);
+  if(index >= this.getChildCount()) {
+    setError('Requested child index '+index+' is out of bounds.');
+    return null;
+  }
+  return this._children[index];
+}
+
+// returns a child of this transform given a name, or null
+function Object ConstantScreenSizeTransform.getChild(String name) {
+  AutoLock AL(this.lock);
+  for(Size i=0; i<this._children.size(); i++) {
+    InlineTransform childTransform = this._children[i];
+    if(childTransform){
+      if(childTransform.getName() == name)
+        return childTransform;
+    }
+    InlineInstance instance = this._children[i];
+    if(instance){
+      if(instance.getName() == name)
+        return instance;
+    }
+  }
+  return null;
+}
+
+// removes all children from this transform
+function ConstantScreenSizeTransform.removeAllChildren!() {
+  AutoLock AL(this.lock);
+  for(Size i=0;i<this._children.size();i++) {
+    InlineTransform childTransform = this._children[i];
+    if(childTransform){
+      childTransform._setParent(null);
+    }
+    InlineInstance instance = this._children[i];
+    if(instance){
+      InlineTransform nullTransfo = null;
+      instance.setTransform(nullTransfo);
+    }
+  }
+  this._children.resize(0);
+  this.incrementVersion();
+}
+
+// adds an additional local transform
+function ConstantScreenSizeTransform.pushLocalXfo!(Xfo xfo) {
+  AutoLock AL(this.lock);
+  this._xfos.push(xfo);
+}
+
+// empties the internal caches of this transform
+function ConstantScreenSizeTransform.incrementVersion!() {
+  AutoLock AL(this.lock);
+  this.version += 1;
+  for(Size i=0; i<this._children.size(); i++) {
+    InlineTransform childTransform = this._children[i];
+    if(childTransform)
+      childTransform.incrementVersion();
+  }
+}
+
+// draws the instance on screen. this is used by the 
+// material and should not be called manually.
+function Boolean ConstantScreenSizeTransform._draw!(io DrawContext context, Index index, Size count) {
+
+  if(!this._transformAdaptor) {
+    InlineDrawing drawing = context.getObject('drawing');
+    this._transformAdaptor = drawing.getTransformAdaptor(this.type());
+  }
+  Ref<InlineTransform> thisTransform = this;
+  if(!this._transformAdaptor || !this._transformAdaptor._draw(context, thisTransform, index, count))
+    return false;
+
+  return true;
+}
+

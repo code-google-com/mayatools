@@ -1,0 +1,88 @@
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+
+The :ref:`MouseEvent` object used to propagate mouse events into the Manipulation system. 
+
+A given MouseEvent object may be generated for a wide range of mouse events in the Host DCC of application.
+The event type should always be checked for the exact type of the event. 
+e.g. MouseEnter and MouseLeave are sent to the system as moue events from Maya and Softimage. The mouse position is not valid in these 2 cases. 
+In Qt 5 based applications, the MouseEnter vent can be populated using the mouse position and other data.
+
+
+*/
+
+
+object MouseEvent : Event {
+
+    Host host;
+    Viewport viewport;
+
+    EventType eventType;
+    Boolean accepted;
+
+    // The keyboard modifier flags that existed immediately before the event occurred.
+    ModiferKey modifiers;
+
+    // The button that caused the event.
+    MouseButton button;
+
+    // The button state when the event was generated. 
+    // The button state is a combination of MouseButton_LeftButton, MouseButton_RightButton, MouseButton_MidButton using the OR operator. 
+    // For mouse move events, this is all buttons that are pressed down. 
+    // For mouse press and double click events this includes the button that caused the event.
+    // For mouse release events this excludes the button that caused the event.
+    MouseButton buttons;
+
+    // The cursor position in pixels, relative to the viewport that received the event. 
+    Vec2 pos;
+};
+
+function MouseEvent(EventType eventType, ModiferKey modifiers, MouseButton button, MouseButton buttons, Vec2 pos, Viewport viewport){
+    this.eventType = eventType;
+    this.modifiers = modifiers;
+    this.button = button;
+    this.buttons = buttons;
+    this.pos = pos;
+    this.viewport = viewport;
+}
+
+function Host MouseEvent.getHost(){
+    return this.host;
+}
+
+function Viewport MouseEvent.getViewport(){
+    return this.viewport;
+}
+
+
+// Sets the accept flag of the event object, the equivalent of calling setAccepted(true).
+function MouseEvent.accept!(){
+    this.accepted = true;
+}
+
+// Clears the accept flag parameter of the event object, the equivalent of calling setAccepted(false).
+function MouseEvent.ignore!(){
+    this.accepted = false;
+}
+  
+// Returns true if the event has been accepted by the active manipulator. The host application should then
+function Boolean MouseEvent.isAccepted(){
+    return this.accepted;
+}
+
+// when a manipulator processes and event, it should call either 'accept', or 'setAccepted(true)' to indicate that it has processed the event.
+function MouseEvent.setAccepted!(Boolean accepted){
+    this.accepted = accepted;
+}
+
+// Returns the event type id. The list of supported Ids are defined in ManipulationConstants.kl.
+function EventType MouseEvent.eventType(){
+    return this.eventType;
+}
+
+
+

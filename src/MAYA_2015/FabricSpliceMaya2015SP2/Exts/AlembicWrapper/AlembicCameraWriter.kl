@@ -1,0 +1,177 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+
+object AlembicCameraWriter : AlembicObjectWriter{
+  AlembicOCamera _camera;
+  AlembicOCameraSchema _schema;
+  AlembicCameraSample _sample;
+  UInt32 _numSamples;
+  UInt32 _storedSamples;
+};
+
+function AlembicCameraWriter(AlembicOObject parent, String name, SInt32 timeSampling) {
+  this._camera = AlembicOCamera(parent, name, timeSampling);
+  this._schema = this._camera.getSchema();
+  this._sample = AlembicCameraSample();
+  this._numSamples = this._schema.getTimeSampling().getNumStoredTimes();
+  if(this._numSamples == 0)
+    this._numSamples = 1;
+  this._storedSamples = 0;
+}
+
+function String AlembicCameraWriter.getPath() {
+  return this._camera.asOObject().getFullName();
+}
+
+function Boolean AlembicCameraWriter.valid() {
+  return this._camera.valid();
+}
+
+function AlembicCameraWriter.reset!() {
+  this._camera.reset();
+}
+
+function AlembicOObject AlembicCameraWriter.getOObject() {
+  return this._camera.asOObject();
+}
+
+function Float64 AlembicCameraWriter.getFocalLength() {
+  return this._sample.getFocalLength();
+}
+
+function Float64 AlembicCameraWriter.getHorizontalAperture() {
+  return this._sample.getHorizontalAperture();
+}
+
+function Float64 AlembicCameraWriter.getHorizontalFilmOffset() {
+  return this._sample.getHorizontalFilmOffset();
+}
+
+function Float64 AlembicCameraWriter.getVerticalAperture() {
+  return this._sample.getVerticalAperture();
+}
+
+function Float64 AlembicCameraWriter.getVerticalFilmOffset() {
+  return this._sample.getVerticalFilmOffset();
+}
+
+function Float64 AlembicCameraWriter.getLensSqueezeRatio() {
+  return this._sample.getLensSqueezeRatio();
+}
+
+function Float64 AlembicCameraWriter.getOverScanLeft() {
+  return this._sample.getOverScanLeft();
+}
+
+function Float64 AlembicCameraWriter.getOverScanRight() {
+  return this._sample.getOverScanRight();
+}
+
+function Float64 AlembicCameraWriter.getOverScanTop() {
+  return this._sample.getOverScanTop();
+}
+
+function Float64 AlembicCameraWriter.getOverScanBottom() {
+  return this._sample.getOverScanBottom();
+}
+
+function Float64 AlembicCameraWriter.getFStop() {
+  return this._sample.getFStop();
+}
+
+function Float64 AlembicCameraWriter.getFocusDistance() {
+  return this._sample.getFocusDistance();
+}
+
+function Float64 AlembicCameraWriter.getShutterOpen() {
+  return this._sample.getShutterOpen();
+}
+
+function Float64 AlembicCameraWriter.getShutterClose() {
+  return this._sample.getShutterClose();
+}
+
+function Float64 AlembicCameraWriter.getNearClippingPlane() {
+  return this._sample.getNearClippingPlane();
+}
+
+function Float64 AlembicCameraWriter.getFarClippingPlane() {
+  return this._sample.getFarClippingPlane();
+}
+
+function AlembicCameraWriter.setFocalLength!(Float64 value) {
+  this._sample.setFocalLength(value);
+}
+
+function AlembicCameraWriter.setHorizontalAperture!(Float64 value) {
+  this._sample.setHorizontalAperture(value);
+}
+
+function AlembicCameraWriter.setHorizontalFilmOffset!(Float64 value) {
+  this._sample.setHorizontalFilmOffset(value);
+}
+
+function AlembicCameraWriter.setVerticalAperture!(Float64 value) {
+  this._sample.setVerticalAperture(value);
+}
+
+function AlembicCameraWriter.setVerticalFilmOffset!(Float64 value) {
+  this._sample.setVerticalFilmOffset(value);
+}
+
+function AlembicCameraWriter.setLensSqueezeRatio!(Float64 value) {
+  this._sample.setLensSqueezeRatio(value);
+}
+
+function AlembicCameraWriter.setOverScanLeft!(Float64 value) {
+  this._sample.setOverScanLeft(value);
+}
+
+function AlembicCameraWriter.setOverScanRight!(Float64 value) {
+  this._sample.setOverScanRight(value);
+}
+
+function AlembicCameraWriter.setOverScanTop!(Float64 value) {
+  this._sample.setOverScanTop(value);
+}
+
+function AlembicCameraWriter.setOverScanBottom!(Float64 value) {
+  this._sample.setOverScanBottom(value);
+}
+
+function AlembicCameraWriter.setFStop!(Float64 value) {
+  this._sample.setFStop(value);
+}
+
+function AlembicCameraWriter.setFocusDistance!(Float64 value) {
+  this._sample.setFocusDistance(value);
+}
+
+function AlembicCameraWriter.setShutterOpen!(Float64 value) {
+  this._sample.setShutterOpen(value);
+}
+
+function AlembicCameraWriter.setShutterClose!(Float64 value) {
+  this._sample.setShutterClose(value);
+}
+
+function AlembicCameraWriter.setNearClippingPlane!(Float64 value) {
+  this._sample.setNearClippingPlane(value);
+}
+
+function AlembicCameraWriter.setFarClippingPlane!(Float64 value) {
+  this._sample.setFarClippingPlane(value);
+}
+
+function Boolean AlembicCameraWriter.writeSample!() {
+  if(this._storedSamples == this._numSamples) {
+    setError('AlembicCameraWriter: Max number of samples reached.');
+    return false;
+  }
+  this._schema.set(this._sample);
+  this._storedSamples++;
+  return true;
+}

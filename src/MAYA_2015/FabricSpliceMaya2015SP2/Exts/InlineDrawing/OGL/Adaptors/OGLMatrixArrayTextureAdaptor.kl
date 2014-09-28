@@ -1,0 +1,52 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`oglmatrixarraytextureadaptor` is used to render objects such as the :ref:`inlinematrixarraytexture`.
+*/
+
+object OGLMatrixArrayTextureAdaptor : InlineTextureAdaptor {
+};
+
+// returns the types this adaptor is capable of drawing
+function String[] OGLMatrixArrayTextureAdaptor.getTextureTypes() {
+  String result[];
+  result.push('InlineMatrixArrayTexture');
+  return result;
+}
+
+// standard constructor
+function OGLMatrixArrayTextureAdaptor() {}
+
+function Boolean OGLMatrixArrayTextureAdaptor._draw!(io DrawContext context, io InlineTexture texture, Object metaData) {
+
+  _OGLTexture2DAdaptorMetaData localMetaData = metaData;
+  if(localMetaData == null)
+    return false;
+
+  if(texture.type() != InlineMatrixArrayTexture) {
+    setError(texture.type()+' not supported by OGLMatrixArrayTextureAdaptor.');
+    return false;
+  }
+
+  InlineMatrixArrayTexture matrixTex = texture;
+  Mat44 matrices[] = matrixTex._matrices;
+
+  // upload if we have received pixels
+  if(matrices.size() > 0) {
+    if(localMetaData._texture == null)
+      localMetaData._texture = OGLTexture2D();
+    if(localMetaData._textureVersion != texture.getVersion()){
+      localMetaData._texture.configureImageMatrixArray(matrices);
+      localMetaData._textureVersion = texture.getVersion();
+    }
+  }
+
+  if(localMetaData._texture != null) {
+    localMetaData._texture.bind(localMetaData._textureUnit);
+  }
+  return true;
+}

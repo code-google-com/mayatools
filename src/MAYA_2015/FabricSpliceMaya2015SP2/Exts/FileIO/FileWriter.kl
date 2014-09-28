@@ -1,0 +1,12 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+interface FileWriter {
+  // opens a file (eventually closes the previous one)
+  Boolean open!(String filePath);
+  // closes an open file
+  Boolean close!();
+  // returns true if this writer has a valid file open
+  Boolean isOpen();
+};

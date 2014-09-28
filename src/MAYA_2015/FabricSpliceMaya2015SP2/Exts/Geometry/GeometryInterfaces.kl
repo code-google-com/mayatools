@@ -1,0 +1,360 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+
+Geometry and GeometryLocation
+-------------------------
+
+This file contains definition of the Geometry interfaces and the GeometryLocation structure.
+
+A GeometryLocation represents a surface location on a Geometry, and its content is geometry-type specific. The 'GetAttributeAtLocation' and 'Geometry.getPositionAtLocation' functions then enable to read interpolated attribute values.
+
+SpatialQueryable and SpatialQuery
+--------------------------
+
+The SpatialQueryable interface allows to perform spatial searches such as raycasting a geometry.
+
+These can be performed with or without a cached acceleration structure like an octree (see 'Acceleration structures' below). Performing multiple queries without a cached acceleration structure can be very slow, particularly on complex geometries.
+
+The 'prepareForSpatialQueries' method will install or update an acceleration structure, and subsequent query calls will get accelerated and can be multi-threaded. If the geometry is modified, another call to 'prepareForSpatialQueries' is required to update the acceleration (often a fast incremental update). 'removeSpatialQueryAcceleration' will delete the acceleration structure and free its memory, and will cause the next 'prepareForSpatialQueries' to fully rebuild the acceleration structure (no incremental update in that scenario).
+
+A Query object can be obtained by calling the thread-safe 'beginSpatialQuery' method, and must be released by calling 'endSpatialQuery' after usage. The Query itself is not threadsafe, and should be used by the thread that called 'beginSpatialQuery'. If a thread will issue multiple queries, it is faster to reuse the query and avoid to call begin/end multiple times.
+
+Acceleration structures
+-------------------
+
+Built-in geometries (PolygonMesh, Lines, Points) support none, octree or sparseGrid acceleration structures through the 'prepareForSpatialQueries' options (see 'PrepareForSpatialQueries_set...' helper functions). The default acceleration structure is the octree since it behaves well in all situations. Both acceleration structures support incremental updates (bigger the changes, bigger the update). Here is a quick comparison between the two:
+
+- Memory: Octree takes about twice the memory of a SparseGrid. As a comparison, the memory required by acceleration structures on a PolygonMesh is similar to the mesh itself.
+
+- Build or incremental update: Sparse grid builds and updates faster than the Octree, typically by a factor of 2 or 3.
+
+- Raycast: When geometry elements (polygons, points) are relatively well distributed into geometry's bounding box, SparseGrid is often faster, and the Octree is faster otherwise.
+
+- getClosest: Octree is usually faster than the SparseGrid, unless the search position is very close to the geometry. SparseGrid can be extremely slow if the search point is far from the geometry.
+
+- getElementsInBBox, getElementsInBSphere: SparseGrid will be faster if the search volume is similar to the average distance between geometry elements and if the elements are relatively well distributed into geometry's bounding box.
+
+Example
+---------
+
+.. code-block:: js
+
+  operator ParallelRaycast<<index>>( PolygonMesh mesh, io Vec3 resultPositions ) {
+    Ray ray;
+    ... initialize start and ray direction ...
+    GeometryLocation location = mesh.raycast(ray, true, 0, 0.0, SCALARINFINITE);
+    if( location.isValid() )
+      resultPositions[index] = mesh.getPositionAtLocation( location );
+  }
+
+  function test() {
+    PolygonMesh mesh;
+    ... build the mesh ...
+
+    GenericValueContainer options = GenericValueContainer();
+    PrepareForSpatialQueries_setSparseGrid(options);
+
+    mesh.prepareForSpatialQueries( 10000, options );
+    Vec3 resultPositions[];
+    results.resize(10000);
+
+    ParallelRaycast<<<10000>>>( mesh, resultPositions );
+  }
+
+*/
+
+//The GeometryLocation struct represents the description of a location on the surface of a geometry 
+//such as a PolygonMesh. Its members are a union to be used as required by the specialized geometries.
+//A struct union has been chosen over an Object for performance reasons, but this is likely to be 
+//improved in the future (eg: by having a LocationArray abstract type).
+struct GeometryLocation
+{
+  Size index;
+  Size subIndex;
+  Vec3 barycentric;
+};
+
+inline GeometryLocation() {
+  this.index = InvalidIndex;
+}
+
+//Returns true if the attribute location was initialized. However, this is not verifying that the values are valid for a given geometry.
+inline Boolean GeometryLocation.isValid() {
+  return this.index != InvalidIndex;
+}
+
+//The 'Geometry' interface regroups a minimum of function that should be implemented by every 'Geometry' type.
+interface Geometry {
+
+  //Returns the local bounding volume of the geometry (typically a bounding box around the point positions)
+  LocalBoundingVolume getBoundingVolume();
+
+  //Returns the number of elements.
+  //Elements are geometry specific: polygons for PolygonMesh, line segments for Lines, points for Points...
+  Size elementCount();
+
+  //Returns the bounding box of an element.
+  //Elements are geometry specific: polygons for PolygonMesh, line segments for Lines, points for Points...
+  LocalBoundingVolume getElementBoundingVolume( Size index );
+
+  //Returns the associated attribute container, if any.
+  //Note: the attribute elements may not be related to the point indices of the geometry.
+  Ref<GeometryAttributes> getAttributes();
+
+  //From a GeometryLocation built from this Geometry, returns the attribute indices and weights required to linearly interpolate attribute values.
+  //The location must be valid.
+  getLocationAttributeIndicesAndWeights?( GeometryLocation location, io LocalL16UInt32Array attributeIndices, io LocalL16ScalarArray weights );
+
+  //From a GeometryLocation built from this Geometry, returns the local position.
+  //The location must be valid.
+  Vec3 getPositionAtLocation( GeometryLocation location );
+
+  String getDesc?( Boolean withAttributes, Boolean useUnitTestPrint );
+};
+
+interface SpatialQuery {
+  //Raycasts a Geometry and returns the result as a GeometryLocation, which will be invalid if no intersection was found (.isValid() == false).
+  //If 'doubleSided', intersections for both front and back faces will be considered.
+  //'coneThreshold' will turn the raycast to a thin cone cast, which is mostly used for selection in a projected view.
+  //'coneThreshold' represents the radius of a cone of height 1.
+  //Currently, if 'coneThreshold' != 0, no octree acceleration is provided (currently used for selection).
+  //'maxDistance' defines a cutoff distance for the raycast. To have no distance limit, pass SCALARINFINITE
+  //Calling prepareForSpatialQueries() will accelerate a lot the computations of multiple raycasts.
+  //Note: this function is threadsafe, as long as the Geometry is not modified,
+  //and prepareForSpatialQueries() is not called during this function.
+  GeometryLocation raycast!( Ray ray, Boolean doubleSided, Scalar coneThreshold, Scalar maxDistance );
+
+  //Finds the closest position of a Geometry from a specified a position. A scaling factor needs to be specified 
+  //for proper support of non-uniform scaling (influences the result).
+  //'maxUnscaledDistance' defines a cutoff distance for the raycast. To have no distance limit, pass SCALARINFINITE.
+  //The 'maxUnscaledDistance' is defined in non-scaled space (world space, before 'scaling' is applied).
+  //The result is returned as a GeometryLocation, which will be invalid if the Geometry is empty (.isValid() == false). 
+  //Calling prepareForSpatialQueries() will accelerate a lot the computations of multiple getClosest().
+  //Note: this function is threadsafe, as long as the Geometry is not modified,
+  //and prepareForSpatialQueries() is not called during this function.
+  GeometryLocation getClosest!( Vec3 position, Vec3 scaling, Scalar maxUnscaledDistance );
+
+  //Gets the elements intersecting a local bounding box. The count is returned.
+  //and individual IDs can be gathered with 'getQueriedElement' until another query is made.
+  //An 'element' is Geometry-specific: polygon for PolygonMesh, segment for Lines, point for Points...
+  //Note: the returned values is a conservative approximation since
+  //      only the bounding volume of the elements will be considered.
+  Size getElementsInBBox!( Vec3 min, Vec3 max );
+
+  //Gets the elements intersecting a local bounding sphere. The count is returned.
+  //and individual IDs can be gathered with 'getQueriedElement' until another query is made.
+  //An 'element' is Geometry-specific: polygon for PolygonMesh, segment for Lines, point for Points...
+  //Note: the returned values is a conservative approximation since
+  //      only the bounding volume of the elements will be considered.
+  Size getElementsInBSphere!( Vec3 center, Scalar radius );
+
+  //Returns an element ID from a call to 'getElementsInBBox' or 'getElementsInBSphere'.
+  //These methods returned the element count.
+  //Element IDs are valid until another query is made.
+  //Note: this method is preferred to returning an array as it avoids memory allocations.
+  Size getQueriedElement( Size index );
+};
+
+//The SpatialQueryable interface can be implemented by geometries supporting operations such as raycast and get closest location.
+interface SpatialQueryable {
+
+  //Builds an acceleration structure that will accelerate future queries such as raycast() or getClosest().
+  //'options' can be null, and values are implementation specific. See PrepareForSpatialQueries_set... functions
+  //for details related to these options. By default, method is 'Octree'.
+  //
+  //Calling prepareForSpatialQueries is currently not threadsafe, and must be called before starting parallel raycasts.
+  //The 'approximateNumberOfQueries' is an approximation of the number of queries (eg: raycast) that will be issued.
+  //This function should only be called when multiple raycasts are expected,
+  //because of related memory and computation overhead. The computation overhead will
+  //be ajusted based on the required number of spatial queries, however it has an initial cost.
+  //Note that the acceleration structure will remain attached to the geometry so it can be
+  //reused, until removeSpatialQueryAcceleration() is called.
+  prepareForSpatialQueries!( Size approximateNumberOfQueries, GenericValueContainer options );
+
+  //If a spactial query acceleration structure was previously build for the Geometry by calling prepareForSpatialQueries(),
+  //it will be released. Releasing the acceleration structure will decrease memory usage, however it
+  //will cause the acceleration structure to be fully rebuilt on the next 'prepareForSpatialQueries'
+  //since it prevents the ability to do incremental updates.
+  removeSpatialQueryAcceleration!();
+
+  //Returns a SpatialQuery object.
+  //IMPORTANT: Once the object is no longer used, endSpatialQuery() must
+  //be called in order to release it, else memory will leak.
+  //This allows for 'recycling' the query objects, allowing for better performance.
+  //beginSpatialQuery is threadsafe but the SpatialQuery methods themselve are not.
+  //Calling prepareForSpatialQueries or removeSpatialQueryAcceleration while using
+  //a query object is not supported.
+  Ref<SpatialQuery> beginSpatialQuery();
+
+  endSpatialQuery( Ref<SpatialQuery> query );
+
+  //Shortcut to SpatialQuery's raycast with no begin/EndSpatialQuery.
+  //For issuing multiple queries from the same thread, using begin/EndSpatialQuery
+  //will give a better performance.
+  //This function is threadsafe if the geometry is not modified, and if
+  //prepareForSpatialQueries or removeSpatialQueryAcceleration are not called.
+  GeometryLocation raycast( Ray ray, Boolean doubleSided, Scalar coneThreshold, Scalar maxDistance );
+
+  //Shortcut to SpatialQuery's raycast with no begin/EndSpatialQuery
+  //For issuing multiple queries from the same thread, using begin/EndSpatialQuery
+  //will give a better performance.
+  //This function is threadsafe if the geometry is not modified, and if
+  //prepareForSpatialQueries or removeSpatialQueryAcceleration are not called.
+  GeometryLocation getClosest( Vec3 position, Vec3 scaling, Scalar maxUnscaledDistance );
+
+};
+
+const String _PrepareForSpatialQueriesOption_method = "method";
+const String _PrepareForSpatialQueriesOption_octree = "Octree";
+const String _PrepareForSpatialQueriesOption_octreeMaxDepth = "OctreeMaxDepth";
+const String _PrepareForSpatialQueriesOption_sparseGrid = "SparseGrid";
+const String _PrepareForSpatialQueriesOption_sparseGridCellSize = "SparseGridCellSize";
+const String _PrepareForSpatialQueriesOption_sparseGridAutoCellSizeMultiplier = "SparseGridAutoCellSizeMultiplier";
+
+//Helper for prepareForSpatialQueries options: sets preferred method as 'Octree'
+function PrepareForSpatialQueries_setNoAcceleration( io GenericValueContainer options ) {
+  options.set( _PrepareForSpatialQueriesOption_method, GenericStringValue( "" ) );
+}
+
+//Helper for prepareForSpatialQueries options: sets preferred method as 'Octree' (see prepareForSpatialQueries)
+function PrepareForSpatialQueries_setOctree( io GenericValueContainer options ) {
+  options.set( _PrepareForSpatialQueriesOption_method, GenericStringValue( _PrepareForSpatialQueriesOption_octree ) );
+}
+
+//Helper for prepareForSpatialQueries options: sets Octree's maximum depth 'SparseGrid' (see prepareForSpatialQueries)
+function PrepareForSpatialQueries_setOctreeMaxDepth( io GenericValueContainer options, UInt8 octreeMaxDepth ) {
+  options.set( _PrepareForSpatialQueriesOption_octreeMaxDepth, GenericUInt8Value( octreeMaxDepth ) );
+}
+
+//Helper for prepareForSpatialQueries options: sets preferred method as 'SparseGrid' (see prepareForSpatialQueries)
+function PrepareForSpatialQueries_setSparseGrid( io GenericValueContainer options ) {
+  options.set( _PrepareForSpatialQueriesOption_method, GenericStringValue( _PrepareForSpatialQueriesOption_sparseGrid ) );
+}
+
+//Helper for prepareForSpatialQueries options: sets SparseGrid's cellSize (see prepareForSpatialQueries).
+//By default, SparseGrid use 'auto-cell-size'.
+function PrepareForSpatialQueries_setSparseGridCellSize( io GenericValueContainer options, Scalar cellSize ) {
+  options.set( _PrepareForSpatialQueriesOption_sparseGridCellSize, GenericFloat32Value( cellSize ) );
+}
+
+//Helper for prepareForSpatialQueries options: make SparseGrid use auto-cell-size, multiplied by this factor (see prepareForSpatialQueries)
+//By default, the value is 1.0.
+function PrepareForSpatialQueries_setSparseGridAutoCellSizeMultiplier( io GenericValueContainer options, Scalar autoCellSizeMultiplier ) {
+  options.set( _PrepareForSpatialQueriesOption_sparseGridAutoCellSizeMultiplier, GenericFloat32Value( autoCellSizeMultiplier ) );
+}
+
+// Geometry location attribute helpers
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline Scalar GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<ScalarAttribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline LocalL16ScalarArray GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<ScalarConstantArrayAttribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline UInt32 GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<UInt32Attribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline LocalL16UInt32Array GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<UInt16ConstantArrayAttribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline RGB GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<RGBAttribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline RGBA GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<RGBAAttribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline Vec2 GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<Vec2Attribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline Vec3 GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<Vec3Attribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline Vec3_d GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<Vec3_dAttribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline Vec4 GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<Vec4Attribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline Quat GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<QuatAttribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline Color GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<ColorAttribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline Mat33 GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<Mat33Attribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}
+
+//Evaluates the attribute at a specific location. The 'location' must have been created by the 'geometry'.
+inline Mat44 GetAttributeAtLocation( Geometry geometry, GeometryLocation location, Ref<Mat44Attribute> attribute ) {
+  LocalL16UInt32Array attributeIndices;
+  LocalL16ScalarArray weights;
+  geometry.getLocationAttributeIndicesAndWeights( location, attributeIndices, weights );
+  return attribute.getLinearCombination( attributeIndices, weights );
+}

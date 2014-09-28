@@ -1,0 +1,57 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+///The btSphereShape implements an implicit sphere, centered around a local origin with radius.
+object BulletSphereShape : BulletCollisionShape
+{
+  Data pointer;
+};
+
+function Data BulletSphereShape.getPointer(){ 
+  return this.pointer; 
+}
+
+function BulletSphereShape (Scalar radius){
+  this.__construct(radius);
+}
+function BulletSphereShape.__construct!(Scalar radius) = 'BulletSphereShape_construct';
+
+function ~BulletSphereShape(){
+	this.__destroy();
+}
+function BulletSphereShape.__destroy!() = 'BulletSphereShape_destroy';
+
+	
+function Vec3 BulletSphereShape.localGetSupportingVertex(in Vec3 vec) = 'BulletSphereShape_localGetSupportingVertex';
+function Vec3 BulletSphereShape.localGetSupportingVertexWithoutMargin(in Vec3 vec) = 'BulletSphereShape_localGetSupportingVertexWithoutMargin';
+ //notice that the vectors should be unit length
+function BulletSphereShape.batchedUnitVectorGetSupportingVertexWithoutMargin?( Vec3 vectors[], io Vec3 supportVerticesOut[])  = 'BulletSphereShape_batchedUnitVectorGetSupportingVertexWithoutMargin';
+
+
+function BulletSphereShape.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = 'BulletSphereShape_calculateLocalInertia';
+
+function BulletSphereShape.getAabb(in Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletSphereShape_getAabb';
+
+
+function Scalar	BulletSphereShape.getRadius() = 'BulletSphereShape_getRadius';
+
+function BulletSphereShape.setUnscaledRadius!(Scalar	radius) = 'BulletSphereShape_setUnscaledRadius';
+
+	// debugging
+function String	BulletSphereShape.getName() = 'BulletSphereShape_getName';
+
+function BulletSphereShape.setMargin!(Scalar margin) = 'BulletSphereShape_setMargin';
+
+function Scalar	BulletSphereShape.getMargin() = 'BulletSphereShape_getMargin';
+
+
+
+////////////////////////////////////////////////
+// From BulletCollisionShape
+
+function BulletSphereShape.setMargin!(Scalar margin) = 'BulletSphereShape_setMargin';
+function Scalar	BulletSphereShape.getMargin() = 'BulletSphereShape_getMargin';
+
+

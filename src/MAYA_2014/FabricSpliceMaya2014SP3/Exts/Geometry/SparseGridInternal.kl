@@ -1,0 +1,1239 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+require Math, Util;
+
+const Boolean SparseGrid_debug = false;
+
+//SparseGrid_cellCountForVeryLarge: if an object spans more than this number, it will be
+//added to the list of objects always tested (instead of adding to many cells which implies
+//its own overhead).
+const UInt32 SparseGrid_cellCountForVeryLarge = 1000;
+
+const UInt8 SparseGrid_none = 0;
+const UInt8 SparseGrid_point = 1;
+const UInt8 SparseGrid_bBox = 2;
+const UInt8 SparseGrid_bSphere = 3;
+const UInt8 SparseGrid_veryLarge = 4;
+
+const UInt8 _SparseGrid_dirtyFlag = 1;
+const UInt8 _SparseGrid_usedFlag = 2;
+const UInt8 _SparseGrid_veryLargeFlag = 4;
+
+const UInt8 SparseGridCellDataOffset_X = 0;
+const UInt8 SparseGridCellDataOffset_Y = 1;
+const UInt8 SparseGridCellDataOffset_Z = 2;
+const UInt8 SparseGridCellDataOffset_ObjectsCount = 3;
+const UInt8 SparseGridCellDataOffset_ObjectsOffset = 4;
+const UInt8 SparseGridCellDataOffset_NbFields = 5;
+
+inline Boolean getFlag( UInt8 val, UInt8 flag ) {
+  return Boolean(val & flag);
+}
+
+inline setFlag( io UInt8 val, UInt8 flag ) {
+  val = val | flag;
+}
+
+inline clearFlag( io UInt8 val, UInt8 flag ) {
+  val = val & ~flag;
+}
+
+struct _SparseGridObject {
+  Vec3 pos1;//min if bbox, pos if point, center if sphere
+  Vec3 pos2;//max if bbox, unused if point, .x = radius and .y = radius^2 if sphere
+  UInt8 type; //if bSphere and bBox: will span 2 structs
+  UInt8 stateBits;
+};
+
+inline Boolean _SparseGridObject.isUsed() {
+  return getFlag( this.stateBits, _SparseGrid_usedFlag );
+}
+
+inline Boolean _SparseGridObject.isDirty() {
+  return getFlag( this.stateBits, _SparseGrid_dirtyFlag );
+}
+
+inline Boolean _SparseGridObject.isVeryLarge() {
+  return getFlag( this.stateBits, _SparseGrid_veryLargeFlag );
+}
+
+
+inline _SparseGridObject.addToBBox( io LocalBoundingVolume bbox ) {
+  if( this.isUsed() ) {
+    if( this.type == SparseGrid_point )
+      bbox.bBoxAdd( this.pos1 );
+    else if( this.type == SparseGrid_bBox ) {
+      bbox.bBoxAddBBox( this.pos1, this.pos2 );
+    } else if( this.type == SparseGrid_bSphere ) {
+      Vec3 radVec(this.pos2.x, this.pos2.x, this.pos2.x);
+      bbox.bBoxAddBBox( this.pos1-radVec, this.pos1+radVec );
+    }
+  }
+}
+
+inline Scalar _SparseGridObject.getSize() {
+  if( this.isUsed() ) {
+    if( this.type == SparseGrid_bBox ) {
+      Vec3 side = this.pos2 - this.pos1;
+      Scalar size = side.x > side.y ? side.x : side.y;
+      return size > side.z ? size : side.z;
+    } else if( this.type == SparseGrid_bSphere )
+      return this.pos2.x * 2.0;
+  }
+  return 0;
+}
+
+inline _SparseGridObject.getBBox( io Vec3 min, io Vec3 max ) {
+  if( this.type == SparseGrid_point ) {
+    Vec3 radiusVec(1e-5, 1e-5, 1e-5);
+    min = this.pos1 - radiusVec;
+    max = this.pos1 + radiusVec;
+  } else if( this.type == SparseGrid_bBox ) {
+    min = this.pos1;
+    max = this.pos2;
+  } else if( this.type == SparseGrid_bSphere ) {
+    Vec3 radiusVec(this.pos2.x, this.pos2.x, this.pos2.x);
+    min = this.pos1 - radiusVec;
+    max = this.pos1 + radiusVec;
+  }
+}
+
+inline Boolean _SparseGridObject.intersectsBBox( LocalBoundingVolume bbox ) {
+  if( this.type == SparseGrid_point )
+    return bbox.bBoxContains( this.pos1 );
+  else if( this.type == SparseGrid_bBox )
+    return bBoxIntersectsBBox( bbox.pt1, bbox.pt2, this.pos1, this.pos2 );
+  else if( this.type == SparseGrid_bSphere )
+    return bBoxIntersectsBSphere( bbox.pt1, bbox.pt2, this.pos1, this.pos2.y );
+  return false;
+}
+
+inline Boolean _SparseGridObject.intersectsBSphere( LocalBoundingVolume bSphere ) {
+  if( this.type == SparseGrid_point )
+    return bSphere.bSphereContains( this.pos1 );
+  else if( this.type == SparseGrid_bBox )
+    return bBoxIntersectsBSphere( this.pos1, this.pos2, bSphere.pt1, bSphere.sc2 );
+  else if( this.type == SparseGrid_bSphere )
+    return bSphere.bSphereIntersectsBSphere( this.pos1, this.pos2.x );
+  return false;
+}
+
+inline Boolean _SparseGridObject.contains( Vec3 position ) {
+  if( this.type == SparseGrid_point )
+    return (this.pos1 - position).lengthSquared() < 1e-9;//arbitrary eps...
+  else if( this.type == SparseGrid_bBox )
+    return BBoxContains( this.pos1, this.pos2, position );
+  else if( this.type == SparseGrid_bSphere )
+    return (this.pos1 - position).lengthSquared() <= this.pos2.y;//arbitrary eps...
+  return false;
+}
+
+struct _IntVec3 {
+  SInt32 x;
+  SInt32 y;
+  SInt32 z;
+};
+
+inline _IntVec3(SInt32 x, SInt32 y, SInt32 z) {
+  this.x = x;
+  this.y = y;
+  this.z = z;
+}
+
+inline Boolean == (_IntVec3 a, _IntVec3 b) {
+  return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+
+inline Boolean != (_IntVec3 a, _IntVec3 b) {
+  return a.x != b.x || a.y != b.y || a.z != b.z;
+}
+
+struct _IntBBoxInclusive {
+  _IntVec3 min;
+  _IntVec3 max;
+};
+
+inline UInt64 _IntBBoxInclusive.getTotalCells() {
+  return UInt64(1 + this.max.x - this.min.x) * UInt64(1 + this.max.y - this.min.y) * UInt64(1 + this.max.y - this.min.y);
+}
+
+inline Boolean _IntBBoxInclusive.intersects( _IntBBoxInclusive other ) {
+  return this.min.x <= other.max.x && this.max.x >= other.min.x
+      && this.min.y <= other.max.y && this.max.y >= other.min.y
+      && this.min.z <= other.max.z && this.max.z >= other.min.z;
+}
+
+inline Boolean _IntBBoxInclusive.contains( _IntVec3 coord ) {
+  return coord.x >= this.min.x && coord.x <= this.max.x
+      && coord.y >= this.min.y && coord.y <= this.max.y
+      && coord.z >= this.min.z && coord.z <= this.max.z;
+}
+
+//TODO: objects: 
+const UInt8 _SparseGridUpdateInfo_add = 0;
+const UInt8 _SparseGridUpdateInfo_remove = 1;
+const UInt8 _SparseGridUpdateInfo_setVeryLarge = 2;
+const UInt8 _SparseGridUpdateInfo_removeVeryLarge = 3;
+
+struct _SparseGridUpdateInfo {
+  _IntVec3 coords;
+  UInt32 hash;
+  UInt32 objectIndex;
+  UInt32 position;
+  UInt8 op;
+};
+
+struct _SparseGridStruct {
+
+  ContiguousUInt32Allocator data;
+  UInt32 hashToData[];
+
+  UInt32 veryLargeObjects[];//cleaned up lazily: confirm with object's type
+  _SparseGridObject objects[];
+  UInt32 objectCount;
+
+  UInt32 hashDivisor;
+  Scalar cellSize;
+  Vec3 cellSizeVec;
+  Scalar invCellSize;
+  Vec3 gridOrigin;
+
+  Boolean initialized;
+  Boolean veryLargeListDirty;
+  UInt32 initialObjectCount;
+  LocalBoundingVolume initialBBox;
+  LocalBoundingVolume currentBBox;
+
+  //Auto cell size heuristics
+  Boolean autoCellSize;
+  Scalar cellSizeHint; //0: no hint
+  Scalar autoCellSizeMultiplierHint;
+  Float64 volumeObjectSizeSum;
+  Size volumeObjectCount; //number of 'volume' objects (bbox, bsphere)
+  Scalar initialVolumePerObject;
+};
+
+function _SparseGridStruct() {
+  this.autoCellSize = true;
+  this.autoCellSizeMultiplierHint = 1.0;
+}
+
+inline _IntVec3 _SparseGridStruct.getCellCoords( Vec3 position ) {
+  Vec3 gridCoord = (position - this.gridOrigin)*this.invCellSize;
+  _IntVec3 intCoord( SInt32(floor(gridCoord.x)), SInt32(floor(gridCoord.y)), SInt32(floor(gridCoord.z)) );
+  return intCoord;
+}
+
+inline Vec3 _SparseGridStruct.getCellMin( _IntVec3 cellCoords ) {
+  return Vec3( Float32(cellCoords.x), Float32(cellCoords.y), Float32(cellCoords.z) ) * this.cellSizeVec + this.gridOrigin;
+}
+
+inline _SparseGridStruct.getCellBBox( _IntVec3 cellCoords, io Vec3 min, io Vec3 max ) {
+  min = Vec3( Float32(cellCoords.x), Float32(cellCoords.y), Float32(cellCoords.z) ) * this.cellSizeVec + this.gridOrigin;
+  max = min + this.cellSizeVec;
+}
+
+inline _SparseGridStruct.setUsed!( UInt32 index, io _SparseGridObject gridObject ) {
+  if( !gridObject.isUsed() ) {
+    setFlag( gridObject.stateBits, _SparseGrid_usedFlag );
+    ++this.objectCount;
+    //Check if object count changed enough that we should rehash
+    if( this.objectCount > this.initialObjectCount*2 )
+      this.initialized = false;
+  }
+}
+
+inline UInt32 _SparseGridStruct.getHash( _IntVec3 cellCoords ) {
+  return abs( cellCoords.x + (cellCoords.y * 13) + (cellCoords.z * 37) ) % this.hashDivisor;
+}
+
+inline _SparseGridStruct.getHashData( UInt32 hash, io UInt32 hashDataOffset, io UInt32 hashCellCount ) {
+  hashDataOffset = this.hashToData[hash];
+  if( hashDataOffset )
+    hashCellCount = this.data.data[hashDataOffset];
+  else
+    hashCellCount = 0;
+}
+
+inline _SparseGridStruct.getCellData( UInt32 hashDataOffset, UInt32 index, io _IntVec3 cellCoords, io UInt32 objectCount, io UInt32 objectDataOffset ) {
+  UInt32 offset = hashDataOffset + 1 + index*SparseGridCellDataOffset_NbFields;
+  cellCoords.x = SInt32(this.data.data[offset+SparseGridCellDataOffset_X]);
+  cellCoords.y = SInt32(this.data.data[offset+SparseGridCellDataOffset_Y]);
+  cellCoords.z = SInt32(this.data.data[offset+SparseGridCellDataOffset_Z]);
+  objectCount = this.data.data[offset+SparseGridCellDataOffset_ObjectsCount];
+  objectDataOffset = this.data.data[offset+SparseGridCellDataOffset_ObjectsOffset];
+}
+
+inline _SparseGridStruct.getHashDataOffset( _IntVec3 cellCoords, io UInt32 hash, io UInt32 hashDataOffset ) {
+  hash = this.getHash(cellCoords);
+  hashDataOffset = this.hashToData[hash];
+}
+
+inline UInt32 _SparseGridStruct.getCellDataOffsetInternal( _IntVec3 cellCoords, UInt32 hashDataOffset, io UInt32 hashCellCount ) {
+  if( hashDataOffset ) {
+    hashCellCount = this.data.data[hashDataOffset];
+    UInt32 cellDataOffset = hashDataOffset+1;
+    for( Size i = 0; i < hashCellCount; ++i ) {
+      if(  this.data.data[cellDataOffset+SparseGridCellDataOffset_X] == UInt32(cellCoords.x)
+        && this.data.data[cellDataOffset+SparseGridCellDataOffset_Y] == UInt32(cellCoords.y)
+        && this.data.data[cellDataOffset+SparseGridCellDataOffset_Z] == UInt32(cellCoords.z) ) {
+        return cellDataOffset;
+      }
+      cellDataOffset += SparseGridCellDataOffset_NbFields;
+    }
+  } else
+    hashCellCount = 0;
+  return 0;
+}
+
+inline UInt32 _SparseGridStruct.getCellDataOffset( _IntVec3 cellCoords, io UInt32 hash, io UInt32 hashDataOffset, io UInt32 hashCellCount ) {
+  this.getHashDataOffset( cellCoords, hash, hashDataOffset );
+  return this.getCellDataOffsetInternal( cellCoords, hashDataOffset, hashCellCount );
+}
+
+inline UInt32 _SparseGridStruct.getCellDataOffset?( _IntVec3 cellCoords ) {
+  UInt32 hash, hashDataOffset, hashCellCount;
+  return this.getCellDataOffset( cellCoords, hash, hashDataOffset, hashCellCount );
+}
+
+inline _SparseGridStruct.getCellData( UInt32 cellDataOffset, io UInt32 objectsDataOffset, io UInt32 objectCount ) {
+  if( cellDataOffset ) {
+    objectsDataOffset = this.data.data[cellDataOffset+SparseGridCellDataOffset_ObjectsOffset];
+    objectCount = this.data.data[cellDataOffset+SparseGridCellDataOffset_ObjectsCount];
+  } else {
+    objectsDataOffset = 0;
+    objectCount = 0;
+  }
+}
+
+inline _SparseGridStruct.getCellData( _IntVec3 cellCoords, io UInt32 objectsDataOffset, io UInt32 objectCount ) {
+  UInt32 hash, hashDataOffset, hashCellCount;
+  UInt32 cellDataOffset = this.getCellDataOffset( cellCoords, hash, hashDataOffset, hashCellCount );
+  this.getCellData( cellDataOffset, objectsDataOffset, objectCount );
+}
+
+function _SparseGridStruct.addObjectToCell!( UInt32 objectIndex, _IntVec3 cellCoords, Boolean checkForDuplicates ) {
+  UInt32 hash, hashDataOffset, hashCellCount, hashCellDataOffset;
+  hashCellDataOffset = this.getCellDataOffset( cellCoords, hash, hashDataOffset, hashCellCount );
+  Boolean createCell;
+  if(!hashDataOffset) {
+    //Create hashData
+    hashDataOffset = this.data.allocate(SparseGridCellDataOffset_NbFields+1, 0);
+    this.hashToData[hash] = hashDataOffset;
+    this.data.data[hashDataOffset] = 1;//cell count
+    hashCellDataOffset = hashDataOffset+1;
+    createCell = true;
+  } else if(!hashCellDataOffset) {
+    //Create cellData
+    hashCellDataOffset = 1+hashCellCount*SparseGridCellDataOffset_NbFields;
+    hashDataOffset = this.data.reallocate(hashDataOffset, hashCellDataOffset, hashCellDataOffset+SparseGridCellDataOffset_NbFields, (hashCellCount>>2)*SparseGridCellDataOffset_NbFields);
+    hashCellDataOffset += hashDataOffset;
+    this.hashToData[hash] = hashDataOffset;
+    createCell = true;
+  }
+  if(createCell) {
+    this.data.data[hashDataOffset] = hashCellCount+1;
+    this.data.data[hashCellDataOffset+SparseGridCellDataOffset_X] = cellCoords.x;
+    this.data.data[hashCellDataOffset+SparseGridCellDataOffset_Y] = cellCoords.y;
+    this.data.data[hashCellDataOffset+SparseGridCellDataOffset_Z] = cellCoords.z;
+    this.data.data[hashCellDataOffset+SparseGridCellDataOffset_ObjectsCount] = 1;
+    UInt32 objectsData = this.data.allocate(1, 0);
+    this.data.data[hashCellDataOffset+SparseGridCellDataOffset_ObjectsOffset] = objectsData;
+    this.data.data[objectsData] = objectIndex;
+  } else {
+    UInt32 objectsData = this.data.data[hashCellDataOffset+SparseGridCellDataOffset_ObjectsOffset];
+    UInt32 prevCount = this.data.data[hashCellDataOffset+SparseGridCellDataOffset_ObjectsCount];
+
+    if( checkForDuplicates || SparseGrid_debug ) {
+      for( Size i = 0; i < prevCount; ++i ) {
+        if( this.data.data[objectsData + i] == objectIndex ) {
+          if( checkForDuplicates )
+            return;
+          else
+            throw("_SparseGridStruct.addObjectToCell: unexpected: duplicate object: "+objectIndex);
+        }
+      }
+    }
+    this.data.data[hashCellDataOffset+SparseGridCellDataOffset_ObjectsCount] = prevCount+1;
+
+    UInt32 newObjectsData = this.data.reallocate(objectsData, prevCount, prevCount+1, prevCount>>2);
+    if( objectsData != newObjectsData )
+      this.data.data[hashCellDataOffset+SparseGridCellDataOffset_ObjectsOffset] = newObjectsData;
+    this.data.data[newObjectsData + prevCount] = objectIndex;
+  }
+}
+
+function _SparseGridStruct.removeObjectFromCell!( UInt32 objectIndex, _IntVec3 cellCoords, Boolean tolerateErrors ) {
+  if( !this.initialized )
+    return; //Grid will be rebuilt and is out of date
+
+  UInt32 hash, hashDataOffset, hashCellCount, hashCellDataOffset;
+  hashCellDataOffset = this.getCellDataOffset( cellCoords, hash, hashDataOffset, hashCellCount );
+  if( (SparseGrid_debug || tolerateErrors) && hashCellDataOffset == 0 ) {
+    if( tolerateErrors )
+      return;
+    else
+      throw("_SparseGridStruct.removeObjectFromCell: unexpected");
+  }
+  UInt32 objectsData = this.data.data[hashCellDataOffset+SparseGridCellDataOffset_ObjectsOffset];
+  UInt32 prevCount = this.data.data[hashCellDataOffset+SparseGridCellDataOffset_ObjectsCount];
+
+  if( prevCount > 1 ) {
+    UInt32 i;
+    for( ; i < prevCount; ++i ) {
+      if( this.data.data[objectsData+i] == objectIndex )
+        break;
+    }
+    if( i == prevCount ) {
+      if( tolerateErrors )
+        return;
+      else if(SparseGrid_debug)
+        throw("_SparseGridStruct.removeObjectFromCell: unexpected (2) "+objectIndex);
+    }
+
+    if( i != prevCount-1 )//shuffle
+      this.data.data[objectsData+i] = this.data.data[objectsData+prevCount-1];
+    this.data.data[hashCellDataOffset+SparseGridCellDataOffset_ObjectsCount] = prevCount-1;
+    this.data.reallocate(objectsData, prevCount, prevCount-1, 1);//Keep it reserved (minimize 'free' overhead')
+  } else {
+    //Last object: free cell data
+    if( SparseGrid_debug || tolerateErrors ) {
+      if( prevCount == 0 || this.data.data[objectsData] != objectIndex ) {
+        if( tolerateErrors )
+          return;
+        else
+          throw("_SparseGridStruct.removeObjectFromCell: unexpected (3)");
+      }
+    }
+    this.data.free(objectsData, 1);
+    
+    //Free cell data
+    if( hashCellCount == 1 ) {
+      this.hashToData[hash] = 0;
+      this.data.free(hashDataOffset, 1+SparseGridCellDataOffset_NbFields);
+    } else {
+      UInt32 cellSubIndex = hashCellDataOffset / SparseGridCellDataOffset_NbFields;
+      UInt32 prevHashDataSize = 1 + hashCellCount*SparseGridCellDataOffset_NbFields;
+      this.data.data[hashDataOffset] = hashCellCount-1;
+      if( cellSubIndex != hashCellCount-1 ) {
+        //Shuffle
+        UInt32 lastHashCellDataOffset = hashDataOffset + prevHashDataSize - SparseGridCellDataOffset_NbFields;
+        for( Size i = 0; i < SparseGridCellDataOffset_NbFields; ++i ) {
+          this.data.data[hashCellDataOffset+i] = this.data.data[lastHashCellDataOffset+i];
+        }
+      }
+      this.data.reallocate(hashDataOffset, prevHashDataSize, prevHashDataSize-SparseGridCellDataOffset_NbFields, SparseGridCellDataOffset_NbFields);//Keep it reserved (minimize 'free' overhead')
+    }
+  }
+}
+
+function _SparseGridStruct.recompactDataIfRequired!( UInt8 freePortionDivisor ) {
+
+  if( this.data.freeDataCount * freePortionDivisor > this.data.size() ) {
+    //report("_SparseGridStruct.recompactDataIfRequired "+this.data.freeDataCount+" / "+this.data.size() );
+    UInt32 oldIndexToNewIndex[];
+    this.data.recompact( oldIndexToNewIndex );
+
+    //Remap all indices: hashData + cellData
+    for( Size i = 0; i < this.hashDivisor; ++i ) {
+      UInt32 hashDataOffset = oldIndexToNewIndex[this.hashToData[i]];
+      if(hashDataOffset) {
+        this.hashToData[i] = hashDataOffset;
+
+        UInt32 cellCount = this.data.data[hashDataOffset];
+        UInt32 cellDataOffset = hashDataOffset+1;
+        for( Size j = 0; j < cellCount; ++j ) {
+          UInt32 prevCellObjectsDataOffset = this.data.data[cellDataOffset+SparseGridCellDataOffset_ObjectsOffset];
+          this.data.data[cellDataOffset+SparseGridCellDataOffset_ObjectsOffset] = oldIndexToNewIndex[prevCellObjectsDataOffset];
+          cellDataOffset += SparseGridCellDataOffset_NbFields;
+        }
+      }
+    }
+  }
+}
+
+inline _SparseGridStruct.debugCheckCell?( _IntVec3 cellCoords ) {
+  if( SparseGrid_debug && this.initialized ) {
+    UInt32 objectsDataOffset, objectCount;
+    this.getCellData( cellCoords, objectsDataOffset, objectCount );
+    for( Size n = 0; n < objectCount; ++n ) {
+      Size objectIndex = this.data.data[objectsDataOffset+n];
+      if(objectIndex > this.objects.size() )
+        throw("Unexpected object "+objectIndex+" for cell "+cellCoords);
+    }
+  }
+}
+
+inline _SparseGridStruct.debugPrintCell?( _IntVec3 cellCoords ) {
+  if( SparseGrid_debug && this.initialized ) {
+    UInt32 objectsDataOffset, objectCount;
+    this.getCellData( cellCoords, objectsDataOffset, objectCount );
+    Size objects[];
+    for( Size n = 0; n < objectCount; ++n )
+      objects.push( this.data.data[objectsDataOffset+n] );
+    report("Objects for cell "+cellCoords+": "+objects);
+  }
+}
+
+inline _SparseGridStruct.addObjectToCells!( UInt32 objectIndex, _IntBBoxInclusive coordBBox ) {
+  for( SInt32 i = coordBBox.min.x; i <= coordBBox.max.x; ++i ) {
+    for( SInt32 j = coordBBox.min.y; j <= coordBBox.max.y; ++j ) {
+      for( SInt32 k = coordBBox.min.z; k <= coordBBox.max.z; ++k )
+        this.addObjectToCell( objectIndex, _IntVec3(i, j, k), false );
+    }
+  }
+}
+
+inline _SparseGridStruct.removeObjectFromCells!( UInt32 objectIndex, _IntBBoxInclusive coordBBox ) {
+  for( SInt32 i = coordBBox.min.x; i <= coordBBox.max.x; ++i ) {
+    for( SInt32 j = coordBBox.min.y; j <= coordBBox.max.y; ++j ) {
+      for( SInt32 k = coordBBox.min.z; k <= coordBBox.max.z; ++k )
+        this.removeObjectFromCell( objectIndex, _IntVec3(i, j, k), false );
+    }
+  }
+}
+
+function _SparseGridStruct.updateBBoxObjectCells!( UInt32 objectIndex, _IntBBoxInclusive prevCellBBox, _IntBBoxInclusive newCellBBox ) {
+  if( !prevCellBBox.intersects(newCellBBox) ) {
+    this.removeObjectFromCells(objectIndex, prevCellBBox);
+    this.addObjectToCells(objectIndex, newCellBBox);
+  } else {
+    for( SInt32 i = prevCellBBox.min.x; i <= prevCellBBox.max.x; ++i ) {
+      for( SInt32 j = prevCellBBox.min.y; j <= prevCellBBox.max.y; ++j ) {
+        for( SInt32 k = prevCellBBox.min.z; k <= prevCellBBox.max.z; ++k ) {
+          _IntVec3 coord(i, j, k);
+          if( !newCellBBox.contains(coord) )
+            this.removeObjectFromCell( objectIndex, coord, false );
+        }
+      }
+    }
+    for( SInt32 i = newCellBBox.min.x; i <= newCellBBox.max.x; ++i ) {
+      for( SInt32 j = newCellBBox.min.y; j <= newCellBBox.max.y; ++j ) {
+        for( SInt32 k = newCellBBox.min.z; k <= newCellBBox.max.z; ++k ) {
+          _IntVec3 coord(i, j, k);
+          if( !prevCellBBox.contains(coord) )
+            this.addObjectToCell( objectIndex, coord, false );
+        }
+      }
+    }
+  }
+}
+
+inline _SparseGridStruct.setVeryLarge!( UInt32 objectIndex, io _SparseGridObject gridObject ) {
+  if( !gridObject.isVeryLarge() ) {
+    setFlag( gridObject.stateBits, _SparseGrid_veryLargeFlag );
+    this.veryLargeObjects.push(objectIndex);
+    this.veryLargeListDirty = true;
+  }
+}
+
+inline _SparseGridStruct.noLongerVeryLarge!( io _SparseGridObject gridObject ) {
+  if( gridObject.isVeryLarge() ) {
+    clearFlag( gridObject.stateBits, _SparseGrid_veryLargeFlag );
+    this.veryLargeListDirty = true;
+  }
+}
+
+function _SparseGridStruct.addBBoxToCells!( UInt32 objectIndex, io _SparseGridObject gridObject ) {
+  _IntBBoxInclusive coordBBox;
+  coordBBox.min = this.getCellCoords(gridObject.pos1);
+  coordBBox.max = this.getCellCoords(gridObject.pos2);
+
+  UInt64 totalCells = coordBBox.getTotalCells();
+  if( totalCells > SparseGrid_cellCountForVeryLarge ) {
+    //Add as a 'very large object' to limit add/query overhead
+    this.setVeryLarge(objectIndex, gridObject);
+    return;
+  }
+
+  this.addObjectToCells( objectIndex, coordBBox );
+}
+
+function _SparseGridStruct.removeBBoxFromCells!( UInt32 objectIndex, _SparseGridObject gridObject ) {
+  //Note: very large case already treated
+  _IntBBoxInclusive coordBBox;
+  coordBBox.min = this.getCellCoords(gridObject.pos1);
+  coordBBox.max = this.getCellCoords(gridObject.pos2);
+  this.removeObjectFromCells( objectIndex, coordBBox );
+}
+
+function Boolean _SparseGridStruct.incrementalUpdateBBoxObject!( UInt32 objectIndex, io _SparseGridObject gridObject, Vec3 newMin, Vec3 newMax ) {
+  if( newMin == gridObject.pos1 && newMax == gridObject.pos2 )
+    return false;
+
+  //Remove prev size
+  if( this.autoCellSize )
+    this.volumeObjectSizeSum -= gridObject.getSize();
+
+  _IntBBoxInclusive newCoordBBox;
+  newCoordBBox.min = this.getCellCoords(newMin);
+  newCoordBBox.max = this.getCellCoords(newMax);
+
+  UInt64 totalCells = newCoordBBox.getTotalCells();
+  if( totalCells > SparseGrid_cellCountForVeryLarge ) {
+    if( !gridObject.isVeryLarge() )
+      this.removeBBoxFromCells(objectIndex, gridObject);
+    this.setVeryLarge(objectIndex, gridObject);
+  } else {
+    if( gridObject.isVeryLarge() ) {
+      this.noLongerVeryLarge(gridObject);
+      this.addObjectToCells( objectIndex, newCoordBBox );
+    } else {
+      _IntBBoxInclusive prevCoordBBox;
+      prevCoordBBox.min = this.getCellCoords(gridObject.pos1);
+      prevCoordBBox.max = this.getCellCoords(gridObject.pos2);
+      this.updateBBoxObjectCells( objectIndex, prevCoordBBox, newCoordBBox );
+    }
+  }
+  gridObject.pos1 = newMin;
+  gridObject.pos2 = newMax;
+
+  //Add new size
+  if( this.autoCellSize ) {
+    this.volumeObjectSizeSum += gridObject.getSize();
+    this.updateCurrentBBox( gridObject );
+  }
+  return true;
+}
+
+inline _SparseGridStruct.getSphereCellsType( Vec3 center, Scalar radius, io _IntBBoxInclusive coordBBox, io Boolean veryLarge, io Boolean allBBoxCells ) {
+  Scalar radiusWithEps = radius*1.0001;
+  Vec3 radiusVec( radiusWithEps, radiusWithEps, radiusWithEps );
+  Vec3 min = center - radiusVec;
+  Vec3 max = center + radiusVec;
+
+  coordBBox.min = this.getCellCoords(min);
+  coordBBox.max = this.getCellCoords(max);
+
+  UInt64 totalCells = coordBBox.getTotalCells();
+  veryLarge = totalCells > SparseGrid_cellCountForVeryLarge;
+  if( !veryLarge ) {
+    if( totalCells == 1 ) {
+      //Optimize easy/frequent case
+      allBBoxCells = true;
+      return;
+    }
+    if( totalCells == 8 ) {
+      //Optimize easy/frequent case: if center cell point in sphere
+      Vec3 cellsCenter = this.getCellMin(coordBBox.max);
+      LocalBoundingVolume bSphere;
+      bSphere.bSphereInit(center, radius);
+      if( bSphere.bSphereContains(cellsCenter) ) {
+        allBBoxCells = true;
+        return;
+      }
+    }
+  }
+  allBBoxCells = false;
+}
+
+//_SphereCellsLoopData: factoring out sphere loop data since it's used at 4 places
+struct _SphereCellsLoopData {
+  Scalar cellSize;
+  Vec3 initialCellMin, relativeCellMin, relativeCellMax, cellClosestPoint, cellSqDist;
+  Scalar maxSqDistance, xySqDist;
+};
+
+inline _SparseGridStruct._SphereCellsLoopDataInit( Vec3 center, Scalar radius, _IntBBoxInclusive coordBBox, io _SphereCellsLoopData data ) {
+  data.cellSize = this.cellSize;//being paranoid about compiler aliasing paranoia
+  data.initialCellMin = Vec3( Float32(coordBBox.min.x), Float32(coordBBox.min.y), Float32(coordBBox.min.z) ) * this.cellSizeVec + (this.gridOrigin - center);
+  data.relativeCellMin.x = data.initialCellMin.x;
+  Scalar radiusPlusEpsilon = radius*1.00001;//Increase radius to compensate for precision errors
+  data.maxSqDistance = radiusPlusEpsilon*radiusPlusEpsilon;
+}
+
+inline _SphereCellsLoopData._preLoopX!() {
+  this.relativeCellMax.x = this.relativeCellMin.x + this.cellSize;
+  this.cellClosestPoint.x = Math_clamp( 0, this.relativeCellMin.x, this.relativeCellMax.x );
+  this.cellSqDist.x = this.cellClosestPoint.x*this.cellClosestPoint.x;
+  this.relativeCellMin.y = this.initialCellMin.y;
+}
+
+inline _SphereCellsLoopData._preLoopY!() {
+  this.relativeCellMax.y = this.relativeCellMin.y + this.cellSize;
+  this.cellClosestPoint.y = Math_clamp( 0, this.relativeCellMin.y, this.relativeCellMax.y );
+  this.cellSqDist.y = this.cellClosestPoint.y*this.cellClosestPoint.y;
+  this.xySqDist = this.cellSqDist.x + this.cellSqDist.y;
+  this.relativeCellMin.z = this.initialCellMin.z;
+}
+
+inline _SphereCellsLoopData._preLoopZ!() {
+  this.relativeCellMax.z = this.relativeCellMin.z + this.cellSize;
+}
+
+inline Boolean _SphereCellsLoopData._loopZTest!() {
+  this.cellClosestPoint.z = Math_clamp( 0, this.relativeCellMin.z, this.relativeCellMax.z );
+  this.cellSqDist.z = this.cellClosestPoint.z*this.cellClosestPoint.z;
+  Scalar sqDistToCenter = this.xySqDist + this.cellSqDist.z;
+  return sqDistToCenter <= this.maxSqDistance;
+}
+
+inline _SphereCellsLoopData._postLoopX!() {
+  this.relativeCellMin.x = this.relativeCellMax.x;
+}
+
+inline _SphereCellsLoopData._postLoopY!() {
+  this.relativeCellMin.y = this.relativeCellMax.y;
+}
+
+inline _SphereCellsLoopData._postLoopZ!() {
+  this.relativeCellMin.z = this.relativeCellMax.z;
+}
+
+function _SparseGridStruct.addBSphereToCellsInternal!( UInt32 objectIndex, io _SparseGridObject gridObject, _IntBBoxInclusive coordBBox, Boolean veryLarge, Boolean allBBoxCells ) {
+  Vec3 center = gridObject.pos1;
+  Scalar radius = gridObject.pos2.x;
+  if( veryLarge ) {
+    this.setVeryLarge( objectIndex, gridObject );
+    return;
+  }
+
+  if( allBBoxCells ) {
+    this.addObjectToCells( objectIndex, coordBBox );
+    return;
+  }
+
+  //Bigger sphere: test cells 1 by 1
+  _SphereCellsLoopData sphereLoopData;
+  this._SphereCellsLoopDataInit( center, radius, coordBBox, sphereLoopData );
+  for( SInt32 i = coordBBox.min.x; i <= coordBBox.max.x; ++i ) {
+    sphereLoopData._preLoopX();
+    for( SInt32 j = coordBBox.min.y; j <= coordBBox.max.y; ++j ) {
+      sphereLoopData._preLoopY();
+      for( SInt32 k = coordBBox.min.z; k <= coordBBox.max.z; ++k ) {
+        sphereLoopData._preLoopZ();
+        if( sphereLoopData._loopZTest() )
+          this.addObjectToCell( objectIndex, _IntVec3(i, j, k), false );
+        sphereLoopData._postLoopZ();
+      }
+      sphereLoopData._postLoopY();
+    }
+    sphereLoopData._postLoopX();
+  }
+}
+
+function _SparseGridStruct.addBSphereToCells!( UInt32 objectIndex, io _SparseGridObject gridObject ) {
+  _IntBBoxInclusive coordBBox;
+  Boolean veryLarge, allBBoxCells;
+  this.getSphereCellsType( gridObject.pos1, gridObject.pos2.x, coordBBox, veryLarge, allBBoxCells );
+  this.addBSphereToCellsInternal( objectIndex, gridObject, coordBBox, veryLarge, allBBoxCells );
+}
+
+function _SparseGridStruct.removeBSphereFromCellsInternal!( UInt32 objectIndex, io _SparseGridObject gridObject, _IntBBoxInclusive coordBBox, Boolean veryLarge, Boolean allBBoxCells ) {
+  //Note: very large case already treated
+  Vec3 center = gridObject.pos1;
+  Scalar radius = gridObject.pos2.x;
+
+  if( allBBoxCells ) {
+    this.removeObjectFromCells( objectIndex, coordBBox );
+    return;
+  }
+
+  //Bigger sphere: test cells 1 by 1
+  _SphereCellsLoopData sphereLoopData;
+  this._SphereCellsLoopDataInit( center, radius, coordBBox, sphereLoopData );
+
+  for( SInt32 i = coordBBox.min.x; i <= coordBBox.max.x; ++i ) {
+    sphereLoopData._preLoopX();
+    for( SInt32 j = coordBBox.min.y; j <= coordBBox.max.y; ++j ) {
+      sphereLoopData._preLoopY();
+      for( SInt32 k = coordBBox.min.z; k <= coordBBox.max.z; ++k ) {
+        sphereLoopData._preLoopZ();
+        if( sphereLoopData._loopZTest() )
+          this.removeObjectFromCell( objectIndex, _IntVec3(i, j, k), false );
+        sphereLoopData._postLoopZ();
+      }
+      sphereLoopData._postLoopY();
+    }
+    sphereLoopData._postLoopX();
+  }
+}
+
+function _SparseGridStruct.removeBSphereFromCells!( UInt32 objectIndex, io _SparseGridObject gridObject ) {
+  _IntBBoxInclusive coordBBox;
+  Boolean veryLarge, allBBoxCells;
+  this.getSphereCellsType( gridObject.pos1, gridObject.pos2.x, coordBBox, veryLarge, allBBoxCells );
+  this.removeBSphereFromCellsInternal( objectIndex, gridObject, coordBBox, veryLarge, allBBoxCells );
+}
+
+function Boolean _SparseGridStruct.incrementalUpdateBSphereObject!( UInt32 objectIndex, io _SparseGridObject gridObject, Vec3 center, Scalar radius ) {
+  if( center == gridObject.pos1 && radius == gridObject.pos2.x )
+    return false;
+
+  //Remove prev size
+  if( this.autoCellSize )
+    this.volumeObjectSizeSum -= gridObject.getSize();
+
+  _IntBBoxInclusive newCoordBBox;
+  Boolean newVeryLarge, newAllBBoxCells;
+  this.getSphereCellsType( center, radius, newCoordBBox, newVeryLarge, newAllBBoxCells );
+
+  if( newVeryLarge ) {
+    if( !gridObject.isVeryLarge() )
+      this.removeBSphereFromCells(objectIndex, gridObject);
+    this.setVeryLarge(objectIndex, gridObject);
+  } else {
+    if( gridObject.isVeryLarge() ) {
+      this.noLongerVeryLarge(gridObject);
+      this.addBSphereToCellsInternal( objectIndex, gridObject, newCoordBBox, newVeryLarge, newAllBBoxCells );
+    } else {
+      _IntBBoxInclusive prevCoordBBox;
+      Boolean prevVeryLarge, prevAllBBoxCells;
+      this.getSphereCellsType( gridObject.pos1, gridObject.pos2.x, prevCoordBBox, prevVeryLarge, prevAllBBoxCells );
+
+      if( newAllBBoxCells && prevAllBBoxCells ) {
+        //Optimize: both use all bbox cells: call bbox case
+        this.updateBBoxObjectCells( objectIndex, prevCoordBBox, newCoordBBox );
+      } else {
+        if( !prevCoordBBox.intersects(newCoordBBox) ) {
+          this.removeBSphereFromCellsInternal( objectIndex, gridObject, prevCoordBBox, prevVeryLarge, prevAllBBoxCells );
+          gridObject.pos1 = center;
+          gridObject.pos2.x = radius;
+          gridObject.pos2.y = radius*radius;
+          this.addBSphereToCellsInternal( objectIndex, gridObject, newCoordBBox, newVeryLarge, newAllBBoxCells );
+        } else {
+          //Real incremental update: avoid data changes in overlapping zones
+          //NOTE: here we must be extremely precise to give the SAME result, even including epsilon precision errors,
+          //      else it would create inconsistencies.
+          if(  newCoordBBox.min != prevCoordBBox.min
+            || newCoordBBox.max != prevCoordBBox.max ) {
+            if( prevAllBBoxCells ) {
+              for( SInt32 i = prevCoordBBox.min.x; i <= prevCoordBBox.max.x; ++i ) {
+                for( SInt32 j = prevCoordBBox.min.y; j <= prevCoordBBox.max.y; ++j ) {
+                  for( SInt32 k = prevCoordBBox.min.z; k <= prevCoordBBox.max.z; ++k ) {
+                    _IntVec3 coord(i, j, k);
+                    if( !newCoordBBox.contains(coord) )
+                      this.removeObjectFromCell( objectIndex, coord, false );
+                  }
+                }
+              }
+            } else {
+              _SphereCellsLoopData prevSphereLoopData;
+              this._SphereCellsLoopDataInit( gridObject.pos1, gridObject.pos2.x, prevCoordBBox, prevSphereLoopData );
+              for( SInt32 i = prevCoordBBox.min.x; i <= prevCoordBBox.max.x; ++i ) {
+                prevSphereLoopData._preLoopX();
+                for( SInt32 j = prevCoordBBox.min.y; j <= prevCoordBBox.max.y; ++j ) {
+                  prevSphereLoopData._preLoopY();
+                  for( SInt32 k = prevCoordBBox.min.z; k <= prevCoordBBox.max.z; ++k ) {
+                    prevSphereLoopData._preLoopZ();
+                    _IntVec3 coord(i, j, k);
+                    if( !newCoordBBox.contains(coord) && prevSphereLoopData._loopZTest() ) {
+                      this.removeObjectFromCell( objectIndex, coord, false );
+                    }
+                    prevSphereLoopData._postLoopZ();
+                  }
+                  prevSphereLoopData._postLoopY();
+                }
+                prevSphereLoopData._postLoopX();
+              }
+            }
+          }
+
+          if( newAllBBoxCells ) {
+            for( SInt32 i = newCoordBBox.min.x; i <= newCoordBBox.max.x; ++i ) {
+              for( SInt32 j = newCoordBBox.min.y; j <= newCoordBBox.max.y; ++j ) {
+                for( SInt32 k = newCoordBBox.min.z; k <= newCoordBBox.max.z; ++k ) {
+                  _IntVec3 coord(i, j, k);
+                  this.addObjectToCell( objectIndex, coord, true );
+                }
+              }
+            }
+          } else {
+            _SphereCellsLoopData newSphereLoopData;
+            this._SphereCellsLoopDataInit( center, radius, newCoordBBox, newSphereLoopData );
+
+            for( SInt32 i = newCoordBBox.min.x; i <= newCoordBBox.max.x; ++i ) {
+              newSphereLoopData._preLoopX();
+              for( SInt32 j = newCoordBBox.min.y; j <= newCoordBBox.max.y; ++j ) {
+                newSphereLoopData._preLoopY();
+                for( SInt32 k = newCoordBBox.min.z; k <= newCoordBBox.max.z; ++k ) {
+                  newSphereLoopData._preLoopZ();
+                  _IntVec3 coord(i, j, k);
+                  if( newSphereLoopData._loopZTest() )
+                    this.addObjectToCell( objectIndex, coord, true );
+                  else
+                    this.removeObjectFromCell( objectIndex, coord, true );
+                  newSphereLoopData._postLoopZ();
+                }
+                newSphereLoopData._postLoopY();
+              }
+              newSphereLoopData._postLoopX();
+            }
+          }
+        }
+      }
+    }
+  }
+  gridObject.pos1 = center;
+  gridObject.pos2.x = radius;
+  gridObject.pos2.y = radius*radius;
+
+  //Add new size
+  if( this.autoCellSize ) {
+    this.volumeObjectSizeSum += gridObject.getSize();
+    this.updateCurrentBBox( gridObject );
+  }
+  return true;
+}
+
+inline _SparseGridStruct.addObjectToCells!( UInt32 objectIndex, io _SparseGridObject gridObject ) {
+  if( gridObject.type == SparseGrid_point ) {
+    _IntVec3 cellCoords = this.getCellCoords( gridObject.pos1 );
+    this.addObjectToCell( objectIndex, cellCoords, false );
+  } else if( gridObject.type == SparseGrid_bSphere )
+    this.addBSphereToCells( objectIndex, gridObject );
+  else if( gridObject.type == SparseGrid_bBox )
+    this.addBBoxToCells( objectIndex, gridObject );
+}
+
+function _SparseGridStruct.removeObjectFromCells!( UInt32 objectIndex, io _SparseGridObject gridObject ) {
+  if( !gridObject.isUsed() )
+    return;
+
+  if( this.autoCellSize ) {
+    //Remove prev size
+    if( gridObject.type == SparseGrid_bSphere || gridObject.type == SparseGrid_bBox ) {
+      this.volumeObjectSizeSum -= gridObject.getSize();
+      --this.volumeObjectCount;
+    }
+  }
+  if( !this.initialized )
+    return;
+
+  if( gridObject.isVeryLarge() ) {
+    this.noLongerVeryLarge(gridObject);
+    return;//Do nothing: will be cleaned up lazily
+  }
+
+  if( gridObject.type == SparseGrid_point ) {
+    _IntVec3 cellCoords = this.getCellCoords( gridObject.pos1 );
+    this.removeObjectFromCell( objectIndex, cellCoords, false );
+  } else if( gridObject.type == SparseGrid_bSphere )
+    this.removeBSphereFromCells( objectIndex, gridObject );
+  else if( gridObject.type == SparseGrid_bBox )
+    this.removeBBoxFromCells( objectIndex, gridObject );
+}
+
+inline _SparseGridStruct.updateCurrentBBox!( _SparseGridObject gridObject ) {
+  if( this.initialized && this.autoCellSize )
+    gridObject.addToBBox( this.currentBBox );
+}
+
+function _SparseGridStruct.updatePointObjectInternal!( UInt32 objectIndex, io _SparseGridObject gridObject, Vec3 position ) {
+  _IntVec3 newCoords;
+  if( this.initialized ) {
+    newCoords = this.getCellCoords( position );
+    if( gridObject.isUsed() && gridObject.type == SparseGrid_point ) {
+      //Incrementally update
+      if( position == gridObject.pos1 )
+        return;
+
+      _IntVec3 prevCoords = this.getCellCoords( gridObject.pos1 );
+      if( prevCoords != newCoords ) {
+        this.removeObjectFromCell(objectIndex, prevCoords, false);
+        this.addObjectToCell( objectIndex, newCoords, false );
+      }
+      this.recompactDataIfRequired(1);//Tolerate 50% fragmentation while updating
+      gridObject.pos1 = position;
+      this.updateCurrentBBox( gridObject );
+      return;
+    }
+  }
+  this.removeObjectFromCells(objectIndex, gridObject);
+  this.setUsed( objectIndex, gridObject );
+  gridObject.type = SparseGrid_point;
+  gridObject.pos1 = position;
+
+  if( this.initialized ) {
+    this.addObjectToCell( objectIndex, newCoords, false );
+    this.recompactDataIfRequired(1);//Tolerate 50% fragmentation while updating
+    this.updateCurrentBBox( gridObject );
+  }
+}
+
+function _SparseGridStruct.updatePointObject!( UInt32 objectIndex, Vec3 position ) {
+  if( objectIndex >= this.objects.size() )
+    this.objects.resize(objectIndex+1);
+  this.updatePointObjectInternal( objectIndex, this.objects[objectIndex], position );
+}
+
+function _SparseGridStruct.updateBBoxObjectInternal!( UInt32 objectIndex, io _SparseGridObject gridObject, Vec3 min, Vec3 max ) {
+  if( this.initialized && gridObject.isUsed() && gridObject.type == SparseGrid_bBox ) {
+    //Faster, incremental update
+    if( this.incrementalUpdateBBoxObject(objectIndex, gridObject, min, max) )
+      this.recompactDataIfRequired(1);//Tolerate 50% fragmentation while updating
+    return;
+  }
+  this.removeObjectFromCells(objectIndex, gridObject);
+  this.setUsed( objectIndex, gridObject );
+  gridObject.type = SparseGrid_bBox;
+  gridObject.pos1 = min;
+  gridObject.pos2 = max;
+
+  if( this.autoCellSize ) {
+    this.volumeObjectSizeSum += gridObject.getSize();
+    ++this.volumeObjectCount;
+  }
+
+  if( this.initialized ) {
+    this.addBBoxToCells( objectIndex, gridObject );
+    this.recompactDataIfRequired(1);//Tolerate 50% fragmentation while updating
+    this.updateCurrentBBox( gridObject );
+  }
+}
+
+function _SparseGridStruct.updateBBoxObject!( UInt32 objectIndex, Vec3 min, Vec3 max ) {
+  if( objectIndex >= this.objects.size() )
+    this.objects.resize(objectIndex+1);
+  //Slightly increase BBox to avoid epsilon errors in queries
+  Vec3 delta = (max-min)*1e-5 + Vec3(1e-5, 1e-5, 1e-5);
+  this.updateBBoxObjectInternal( objectIndex, this.objects[objectIndex], min-delta, max+delta );
+}
+
+function _SparseGridStruct.updateBSphereObjectInternal!( UInt32 objectIndex, io _SparseGridObject gridObject, Vec3 center, Scalar radius ) {
+  if( this.initialized && gridObject.isUsed() && gridObject.type == SparseGrid_bSphere ) {
+    //Faster, incremental update
+    if( this.incrementalUpdateBSphereObject(objectIndex, gridObject, center, radius) )
+      this.recompactDataIfRequired(1);//Tolerate 50% fragmentation while updating
+    return;
+  }
+  this.removeObjectFromCells(objectIndex, gridObject);
+  this.setUsed( objectIndex, gridObject );
+  gridObject.type = SparseGrid_bSphere;
+  gridObject.pos1 = center;
+  gridObject.pos2.x = radius;
+  gridObject.pos2.y = radius*radius;
+
+  if( this.autoCellSize ) {
+    this.volumeObjectSizeSum += radius*2.0;
+    ++this.volumeObjectCount;
+  }
+
+  if( this.initialized ) {
+    this.addBSphereToCells( objectIndex, gridObject );
+    this.updateCurrentBBox( gridObject );
+    this.recompactDataIfRequired(1);//Tolerate 50% fragmentation while updating
+  }
+}
+
+function _SparseGridStruct.updateBSphereObject!( UInt32 objectIndex, Vec3 center, Scalar radius ) {
+  if( objectIndex >= this.objects.size() )
+    this.objects.resize(objectIndex+1);
+  //Slightly increase BSphere to avoid epsilon errors in queries
+  Scalar increasedRadius = radius*1.00001 + 1e-5;
+  this.updateBSphereObjectInternal( objectIndex, this.objects[objectIndex], center, increasedRadius );
+}
+
+inline _SparseGridStruct.removeObject!( UInt32 index ) {
+  if( index < this.objects.size() && this.objects[index].isUsed() ) {
+    if( this.initialized )
+      this.removeObjectFromCells(index, this.objects[index]);
+    this.noLongerVeryLarge(this.objects[index]);
+    clearFlag( this.objects[index].stateBits, _SparseGrid_usedFlag );
+    --this.objectCount;
+    //Check if object count changed enough that we should rehash
+    if( this.objectCount*2 < this.initialObjectCount )
+      this.initialized = false;
+  }
+}
+
+//updateGrid must be called to update based on the new cell size
+function _SparseGridStruct.setCellSize!( Scalar cellSize ) {
+  if( this.cellSizeHint != cellSize ) {
+    this.cellSizeHint = cellSize;
+    if(cellSize)
+      this.autoCellSize = false;
+
+    this.initialized = false;//Will need to re-hash
+  }
+}
+
+function _SparseGridStruct.setAutoCellSize!( Scalar autoCellSizeMultiplierHint ) {
+  if( !this.autoCellSize ) {
+    this.initialized = false;
+    this.autoCellSize = true;
+  }
+  if( autoCellSizeMultiplierHint != this.autoCellSizeMultiplierHint ) {
+    if( autoCellSizeMultiplierHint <= 0.0 )
+      throw( "_SparseGridStruct.setAutoCellSize: wrong multiplier value: "+autoCellSizeMultiplierHint );
+    this.initialized = false;
+    this.autoCellSizeMultiplierHint = autoCellSizeMultiplierHint;
+  }
+}
+
+function _SparseGridStruct.setAutoCellSize!() {
+  this.setAutoCellSize( 1.0 );
+}
+
+//Compute a volume, but support 1D, 2D and 3D arrangements of points.
+function Scalar _SparseGridStruct.getVolumePerObjectApproximation( Vec3 min, Vec3 max ) {
+  Vec3 bboxSize = max - min;
+  Scalar side = bboxSize.x > bboxSize.y ? bboxSize.x : bboxSize.y;
+  if( bboxSize.z > side )
+    side = bboxSize.z;
+  Scalar minObjectSide;
+  if( this.objectCount )
+    minObjectSide = 0.25 * side / Scalar(this.objectCount);
+  if( minObjectSide < 1e-5 )
+    minObjectSide = 1e-5;
+
+  Scalar volumePerObject = (  (bboxSize.x < minObjectSide ? minObjectSide : bboxSize.x)
+                            *(bboxSize.y < minObjectSide ? minObjectSide : bboxSize.y)
+                            *(bboxSize.z < minObjectSide ? minObjectSide : bboxSize.z) ) / this.objectCount;
+
+  //Multiply by 0.25: assuming that usually the points won't be evenly placed (surface in 3D and not volumes)
+  volumePerObject *= 0.25;
+
+  //If there is a good proportion of volumetric objects, use their size to set the min
+  if( this.volumeObjectCount*2 > this.objectCount ) {
+    Scalar avgSize = Scalar( this.volumeObjectSizeSum / this.volumeObjectCount );
+    Scalar avgVolume = avgSize*avgSize*avgSize;
+    if( avgVolume > volumePerObject )
+      volumePerObject = avgVolume;
+  }
+  return volumePerObject;
+}
+
+//updateGrid must be called after all 'updateXObject' are finished.
+function _SparseGridStruct.updateGrid!() {
+  //Check if bbox changed enough that we should determine a new cell size
+  if( this.initialized && this.autoCellSize && 
+      ( this.currentBBox.pt1 != this.initialBBox.pt1 || this.currentBBox.pt2 != this.initialBBox.pt2 ) ) {
+    Scalar currentVolumePerObject = this.getVolumePerObjectApproximation( this.currentBBox.pt1, this.currentBBox.pt2 );
+    if( currentVolumePerObject > this.initialVolumePerObject*2.0 || currentVolumePerObject < this.initialVolumePerObject*0.5 )
+      this.initialized = false;
+  }
+  if( !this.initialized ) {
+    //Clear data
+    this.data.clear();
+    this.hashToData.resize(0);
+    this.initialObjectCount = this.objectCount;
+    this.hashDivisor = this.objectCount*4 + 17;//More than number of objects; +17: make it more 'prime-ish'
+    this.hashToData.resize(this.hashDivisor);
+
+    Size objectsSize = this.objects.size();
+
+    this.initialBBox.bBoxInit();
+
+    for( Size i = 0; i < objectsSize; ++i )
+      this.objects[i].addToBBox(this.initialBBox);
+
+    this.currentBBox = this.initialBBox;
+
+    //Auto-determine cell size.
+    if( this.autoCellSize ) {
+      if( this.objectCount ) {
+        Vec3 bboxSize = this.initialBBox.bBoxGetMax() - this.initialBBox.bBoxGetMin();
+        this.initialVolumePerObject = this.getVolumePerObjectApproximation( this.initialBBox.pt1, this.initialBBox.pt2 );
+        this.cellSize = pow( this.initialVolumePerObject, 1.0f/3.0f )*this.autoCellSizeMultiplierHint + 1e-5;
+        this.gridOrigin = this.initialBBox.bBoxGetMin();
+      } else {
+        this.cellSize = 1.0;//arbitrary
+        this.gridOrigin = Vec3();
+      }
+    } else {
+      this.cellSize = this.cellSizeHint;
+      //Bbox origin: use an arbitrary point
+      this.gridOrigin = Vec3();
+      for( Size i = 0; i < objectsSize; ++i ) {
+        if( this.objects[i].isUsed() ) {
+          this.gridOrigin = this.objects[i].pos1;
+          break;
+        }
+      }
+    }
+    this.invCellSize = 1.0f/this.cellSize;
+    this.cellSizeVec = Vec3(this.cellSize, this.cellSize, this.cellSize);
+    this.initialized = true;
+
+    for( Size i = 0; i < objectsSize; ++i ) {
+      if( this.objects[i].isUsed() )
+        this.addObjectToCells( i, this.objects[i] );
+    }
+  }
+  if( this.veryLargeListDirty ) {
+    //Refresh list: remove obselete items & duplicates
+    IndexSet largeObjects;
+    for( Size i = 0; i < this.veryLargeObjects.size(); ++i ) {
+      Size objectIndex = this.veryLargeObjects[i];
+      if( objectIndex < this.objects.size() && this.objects[objectIndex].isVeryLarge() )
+        largeObjects.add( objectIndex );
+    }
+    this.veryLargeObjects = largeObjects.indices;//Transfer array
+    this.veryLargeListDirty = false;
+  }
+  this.recompactDataIfRequired(3);//Tolerate 25% fragmentation after update
+}
+
+//Returns false if there is no intersection
+function Boolean _SparseGridStruct.reduceBBoxToGrid( io Vec3 min, io Vec3 max ) {
+  if( !bBoxIntersectsBBox( this.currentBBox.pt1, this.currentBBox.pt2, min, max ) )
+    return false;
+  if( min.x < this.currentBBox.pt1.x )
+    min.x = this.currentBBox.pt1.x;
+  if( min.y < this.currentBBox.pt1.y )
+    min.y = this.currentBBox.pt1.y;
+  if( min.z < this.currentBBox.pt1.z )
+    min.z = this.currentBBox.pt1.z;
+
+  if( max.x > this.currentBBox.pt2.x )
+    max.x = this.currentBBox.pt2.x;
+  if( max.y > this.currentBBox.pt2.y )
+    max.y = this.currentBBox.pt2.y;
+  if( max.z > this.currentBBox.pt2.z )
+    max.z = this.currentBBox.pt2.z;
+  return true;
+}
+
+function _SparseGridStruct.report( Boolean printDetails ) {
+  report( "SparseGrid: objCount="+this.objectCount+" initialized="+this.initialized );
+  if( this.initialized ) {
+    report( "  cellSize="+unitTestPrint(this.cellSize)+" bbox={"+unitTestPrint(this.currentBBox.pt1)+", "+unitTestPrint(this.currentBBox.pt2)+"} origin="+unitTestPrint(this.gridOrigin)+" hashSize="+this.hashDivisor+" veryLargeObjectCount="+this.veryLargeObjects.size() );
+    if( this.autoCellSize )
+      report( "  autoCellSize=true initialVolumePerObject="+this.initialVolumePerObject );
+  }
+
+  if( printDetails ) {
+    report("  Objects:");
+    for( Size i = 0; i < this.objects.size(); ++i ) {
+      if(this.objects[i].isUsed()) {
+        if( this.objects[i].type == SparseGrid_point )
+          report("    "+i+": point "+unitTestPrint(this.objects[i].pos1));
+        else if( this.objects[i].type == SparseGrid_bBox )
+          report("    "+i+": bbox {"+unitTestPrint(this.objects[i].pos1)+", "+unitTestPrint(this.objects[i].pos2));
+        else if( this.objects[i].type == SparseGrid_bSphere )
+          report("    "+i+": sphere ctr="+unitTestPrint(this.objects[i].pos1)+" rad="+unitTestPrint(this.objects[i].pos2.x));
+      }
+    }
+    if( this.initialized ) {
+      report("  Cells:");
+      for( Size i = 0; i < this.hashToData.size(); ++i ) {
+        UInt32 hashDataOffset, hashCellCount;
+        this.getHashData( i, hashDataOffset, hashCellCount );
+        for( Size j = 0; j < hashCellCount; ++j ) {
+          _IntVec3 cellCoords;
+          UInt32 objectCount, objectDataOffset;
+          this.getCellData( hashDataOffset, j, cellCoords, objectCount, objectDataOffset );
+          Vec3 min, max;
+          this.getCellBBox( cellCoords, min, max );
+
+          UInt32 objects[];
+          for( Size k = 0; k < objectCount; ++k )
+            objects.push( this.data.data[objectDataOffset+k] );
+
+          report("    hash="+i+" cellCoords="+cellCoords+" cellBBox={"+unitTestPrint(min)+", "+unitTestPrint(max)+"} objectCount="+objectCount+" objects="+objects);
+        }
+      }
+    }
+  }
+}
+
+function Size _SparseGridStruct.getMemUsage() {
+  return  this.data.memUsage() +
+          this.hashToData.size()*4 +
+          this.veryLargeObjects.size()*4 +
+          this.objects.size() * 4 * 7 +
+          43 * 4;
+}

@@ -1,0 +1,54 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+require Alembic;
+
+struct AlembicSampleInfo {
+  UInt32 indexA;
+  UInt32 indexB;
+  Float64 time;
+  Float64 timeA;
+  Float64 timeB;
+  Float64 fraction;
+  Float64 ifraction;
+};
+
+function AlembicSampleInfo() {
+  this.indexA = -1;
+  this.indexB = -1;
+  this.time = -100000.0;
+  this.timeA = this.time;
+  this.timeB = this.time;
+  this.fraction = 0.0;
+  this.ifraction = 1.0;
+}
+
+function AlembicSampleInfo(Float64 time, AlembicTimeSampling ts, SInt32 numSamples) {
+  this.time = time;
+  AlembicTimeSamplingPair pairA = ts.getFloorIndex(time, numSamples);
+  AlembicTimeSamplingPair pairB = ts.getCeilIndex(time, numSamples);
+  this.indexA = pairA.index;  
+  this.indexB = pairB.index;  
+  this.timeA = pairA.time;  
+  this.timeB = pairB.time;  
+
+  if(this.requiresInterpolation()) {
+    this.fraction = (time - this.timeA) / (this.timeB - this.timeA);
+    this.ifraction = 1.0 - this.fraction;
+  } else {
+    this.fraction = 0.0;
+    this.ifraction = 1.0;
+  }
+}
+
+function Boolean AlembicSampleInfo.requiresInterpolation() {
+  return this.indexA != this.indexB;
+}
+
+function Boolean == (AlembicSampleInfo a, AlembicSampleInfo b) {
+  return a.indexA == b.indexA && a.indexB == b.indexB && a.fraction == b.fraction;
+}
+
+function Boolean != (AlembicSampleInfo a, AlembicSampleInfo b) {
+  return a.indexA != b.indexA || a.indexB != b.indexB || a.fraction != b.fraction;
+}

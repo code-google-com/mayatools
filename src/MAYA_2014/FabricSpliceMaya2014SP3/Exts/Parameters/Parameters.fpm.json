@@ -1,0 +1,29 @@
+{
+  "code": [
+    "Param.kl",
+    "CompoundParam.kl",
+    "CompoundArrayParam.kl",
+    "BooleanParam.kl",
+    "BooleanArrayParam.kl",
+    "SInt32Param.kl",
+    "SInt32ArrayParam.kl",
+    "Float64Param.kl",
+    "Float64ArrayParam.kl",
+    "StringParam.kl",
+    "StringArrayParam.kl",
+    "ObjectParam.kl",
+    "ObjectArrayParam.kl",
+    "Vec3Param.kl",
+    "Vec3ArrayParam.kl",
+    "EulerParam.kl",
+    "EulerArrayParam.kl",
+    "QuatParam.kl",
+    "QuatArrayParam.kl",
+    "Mat33Param.kl",
+    "Mat33ArrayParam.kl",
+    "Mat44Param.kl",
+    "Mat44ArrayParam.kl",
+    "ColorParam.kl",
+    "ColorArrayParam.kl"
+  ]
+}

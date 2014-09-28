@@ -1,0 +1,93 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+
+The :ref:`StatisticsAutoRegisterMember` struct is intended to simplify the implementation of the ``StatisticSource`` interface, by managing automatically registration and unregistration, and storage of the private key.
+
+The object using a :ref:`StatisticsAutoRegisterMember` must have it as an object member, and construct it in its constructor (with ``this`` as argument). The object then only needs to implement the ``StatisticSourceWithAutoRegisterMember`` interface which only has the ``getStatistics()`` function.
+
+.. note::
+
+  To minimize overhead, the :ref:`StatisticsAutoRegisterMember` member might only be constructed if ``FabricStatisticsEnabled()`` is true.
+
+See :ref:`FabricStatistics` for an example of usage.
+
+.. warning::
+
+  The ``StatisticsAutoRegisterMember`` member should never be cloned or copied as is, since it needs maintain the association of its ``key`` with the same source object.
+
+*/
+
+interface StatisticSourceWithAutoRegisterMember {
+  StatisticRecord[] getStatistics();
+};
+
+object StatisticsAutoRegisterMember : StatisticSource {
+  Ref<StatisticSourceWithAutoRegisterMember> source;
+  Size key;
+};
+
+//Constructs from the actual source.
+function StatisticsAutoRegisterMember(Ref<StatisticSourceWithAutoRegisterMember> source) {
+  if(!source)
+    setError("StatisticsAutoRegisterMember: null source");
+  this.source = source;
+  RegisterToFabricStatistics(this);
+}
+
+function ~StatisticsAutoRegisterMember() {
+  //CAREFUL: at this point, this.source points to garbage memory!
+  if(!this.source)
+    return;
+  this.unregister();
+}
+
+function StatisticsAutoRegisterMember.unregister!() {
+  //Set to null: ensure that we don't call 'getStatistics' on garbage
+  Ref<StatisticSourceWithAutoRegisterMember> nullSource = null;
+  this.source = nullSource;
+  UnregisterFromFabricStatistics(this);
+}
+
+function StatisticRecord[] StatisticsAutoRegisterMember.getStatistics() {
+  if( this.source ) {
+    StatisticRecord stats[] = this.source.getStatistics();
+    //Since we defer the real source, push the 'Type' from it
+    stats.push(StatisticRecord("Type", this.source.type()));
+    return stats;
+  } else {
+    setError("StatisticsAutoRegisterMember.getStatistics: null source (uninitialized or in destructor)");
+    StatisticRecord empty[];
+    return empty;
+  }
+}
+
+function StatisticsAutoRegisterMember.setStatisticsKey!( Size key ) {
+  this.key = key;
+}
+
+function Size StatisticsAutoRegisterMember.getStatisticsKey() {
+  return this.key;
+}
+
+//We can't really clone ourselves since we don't know the new owner, however at least don't copy the 'source'
+//else it would corrupt the statistics database. So we set it to 'null' and expect the owner to call postCloneRefresh();
+function StatisticsAutoRegisterMember StatisticsAutoRegisterMember.clone() {
+  return StatisticsAutoRegisterMember();
+}
+
+function StatisticsAutoRegisterMember._init!(Ref<StatisticSourceWithAutoRegisterMember> source) {
+  if( this.source !== source ) {
+    this.source = source;
+    this.key = 0;
+    RegisterToFabricStatistics(this);
+  }
+}
+
+//postCloneRefresh: a "patch" in case the source object was cloned, hence StatisticsAutoRegisterMember
+//was cloned too but its 'source' member is no longer valid. Since clone() can't be overriden right now,
+//it makes things even more dangerous.
+function StatisticsAutoRegisterMember.postCloneRefresh!(Ref<StatisticSourceWithAutoRegisterMember> source) {
+  this._init(source);
+}

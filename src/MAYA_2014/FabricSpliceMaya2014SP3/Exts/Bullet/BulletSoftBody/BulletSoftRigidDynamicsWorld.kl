@@ -1,0 +1,409 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+// object BulletSoftRigidDynamicsWorld : BulletDiscreteDynamicsWorld
+object BulletSoftRigidDynamicsWorld : BulletDynamicsWorld, BulletCollisionWorld
+{
+	Data pointer;
+	BulletDispatcher 				__dispatcher;
+	BulletBroadphaseInterface 		__pairCache;
+	BulletConstraintSolver 			__constraintSolver;
+	BulletCollisionConfiguration 	__collisionConfiguration;
+
+	BulletICollisionObject 			__collisionObjects[];
+	BulletTypedConstraint 			__constraints[];
+	BulletActionInterface 			__actions[];
+
+	BulletSoftBody					__softBodies[];
+	// Integer						drawFlags;
+	// Boolean						drawNodeTree;
+	// Boolean						drawFaceTree;
+	// Boolean						drawClusterTree;
+	BulletSoftBodyWorldInfo 		__sbi;
+	///Solver classes that encapsulate multiple soft bodies for solving
+	BulletSoftBodySolver 			__softBodySolver;
+	// Boolean						ownsSolver;
+
+};
+
+
+function Data BulletSoftRigidDynamicsWorld.getPointer(){ 
+  return this.pointer; 
+}
+
+// Note: we can't directly override the constructor, so we instead call __construct on construction.
+///this BulletSoftRigidDynamicsWorld constructor gets created objects from the user, and will not delete those
+function BulletSoftRigidDynamicsWorld(BulletDispatcher dispatcher, BulletBroadphaseInterface pairCache, BulletConstraintSolver constraintSolver, BulletCollisionConfiguration collisionConfiguration){
+	this.__dispatcher = dispatcher;
+	this.__pairCache = pairCache;
+	this.__constraintSolver = constraintSolver;
+	this.__collisionConfiguration = collisionConfiguration;
+	this.__construct(dispatcher, pairCache, constraintSolver, collisionConfiguration, null);
+}
+
+function BulletSoftRigidDynamicsWorld(BulletDispatcher dispatcher, BulletBroadphaseInterface pairCache, BulletConstraintSolver constraintSolver, BulletCollisionConfiguration collisionConfiguration, BulletSoftBodySolver softBodySolver){
+	this.__dispatcher = dispatcher;
+	this.__pairCache = pairCache;
+	this.__constraintSolver = constraintSolver;
+	this.__collisionConfiguration = collisionConfiguration;
+	this.__softBodySolver = softBodySolver;
+	this.__construct(dispatcher, pairCache, constraintSolver, collisionConfiguration, softBodySolver);
+}
+
+function BulletSoftRigidDynamicsWorld.__construct!(BulletDispatcher dispatcher, BulletBroadphaseInterface pairCache, BulletConstraintSolver constraintSolver, BulletCollisionConfiguration collisionConfiguration, BulletSoftBodySolver softBodySolver) = 'BulletSoftRigidDynamicsWorld_construct';
+
+
+function ~BulletSoftRigidDynamicsWorld(){
+	// Before we destroy the btWorld, we remove all the references
+	// to Collision objects and rigid bodies. This will cause the destructors to be called.  
+	// (unless another class holds a ref)
+	// The objects will then all auto-destrouct and free thier memory.
+	// We must destory all the collision objects and soft bodies before destorying the world.
+	for(Integer i=this.__collisionObjects.size-1; i>=0; i--)
+		this.removeCollisionObject( this.__collisionObjects[i] );
+	this.__collisionObjects.resize(0);
+
+	for(Integer i=this.__softBodies.size-1; i>=0; i--)
+		this.removeSoftBody( this.__softBodies[i] );
+	this.__softBodies.resize(0);
+
+	this.__destroy();
+
+	this.__constraintSolver = null;
+	this.__pairCache = null;
+	this.__dispatcher = null;
+	this.__collisionConfiguration = null;
+
+}
+function BulletSoftRigidDynamicsWorld.__destroy!() = 'BulletSoftRigidDynamicsWorld_destroy';
+
+
+	// virtual void	debugDrawWorld();
+
+function BulletSoftRigidDynamicsWorld.addSoftBody!(BulletSoftBody body){
+	this.__softBodies.push(body);
+	this.__addSoftBody(body);
+}
+function BulletSoftRigidDynamicsWorld.__addSoftBody!(BulletSoftBody body) = 'BulletSoftRigidDynamicsWorld_addSoftBody';
+
+
+function BulletSoftRigidDynamicsWorld.addSoftBody!(BulletSoftBody body, UInt16 group, UInt16 mask){
+	this.__softBodies.push(body);
+	this.__addSoftBody(body, group, mask);
+}
+function BulletSoftRigidDynamicsWorld.__addSoftBody!(BulletSoftBody body, UInt16 group, UInt16 mask) = 'BulletSoftRigidDynamicsWorld_addSoftBody2';
+
+// function BulletSoftRigidDynamicsWorld.addSoftBody(BulletSoftBody body, UInt16 group, UInt16 mask) = 'BulletSoftRigidDynamicsWorld_addSoftBodyGroupMask';
+
+function BulletSoftRigidDynamicsWorld.removeSoftBody!(BulletSoftBody body){
+	this.__removeSoftBody(body);
+	for(Integer i=0; i<this.__softBodies.size; i++){
+		// Note: the following is a workaround('getObject'), because without it I get the following error:
+		// extension 'Bullet': KL compile failed: BulletSoftRigidDynamicsWorld.kl:104:6: error: no resolution for binary operation BulletSoftBody == BulletSoftBody
+		// RigtBody resmbles SoftBody and the comparison works fine there. 
+		// Not sure why I have the problem here. 
+		if(this.__softBodies[i].getObject() == body.getObject()){
+			for(Integer j=i; j<this.__softBodies.size-1; j++){
+				this.__softBodies[j] = this.__softBodies[j+1];
+			}
+      		this.__softBodies.resize(this.__softBodies.size-1);
+			i--;
+		}
+	}
+}
+function BulletSoftRigidDynamicsWorld.__removeSoftBody!(BulletSoftBody body) = 'BulletSoftRigidDynamicsWorld_removeSoftBody';
+
+function Size BulletSoftRigidDynamicsWorld.getNumSoftBodies(){
+	return this.__softBodies.size();
+}
+
+function BulletSoftBody BulletSoftRigidDynamicsWorld.getSoftBody(Size index){
+	return this.__softBodies[index];
+}
+
+// Integer		BulletSoftRigidDynamicsWorld.getDrawFlags();
+// void	BulletSoftRigidDynamicsWorld.setDrawFlags(Integer f);
+
+function BulletSoftBodyWorldInfo BulletSoftRigidDynamicsWorld.getWorldInfo(){
+	return this.__sbi;
+}
+
+
+function BulletSoftBody[] BulletSoftRigidDynamicsWorld.getSoftBodyArray(){
+	return this.__softBodies;
+}
+
+
+
+
+	// virtual void rayTest(in Vec3 rayFromWorld, in Vec3 rayToWorld, RayResultCallback& resultCallback) const; 
+
+	// /// rayTestSingle performs a raycast call and calls the resultCallback. It is used internally by rayTest.
+	// /// In a future implementation, we consider moving the ray test as a virtual method in BulletCollisionShape.
+	// /// This allows more customization.
+	// static void	rayTestSingle(in Xfo rayFromTrans,in Xfo rayToTrans,
+	// 				  BulletICollisionObject* collisionObject,
+	// 				  const BulletCollisionShape* collisionShape,
+	// 				  in Xfo colObjWorldTransform,
+	// 				  RayResultCallback& resultCallback);
+
+	// virtual	void	serialize(BulletSerializer* serializer);
+
+
+///////////////////////////////////////
+// From base class BulletDiscreteDynamicsWorld
+
+
+// ///if maxSubSteps > 0, it will interpolate motion between fixedTimeStep's
+function Integer	BulletSoftRigidDynamicsWorld.stepSimulation( Scalar timeStep, Integer maxSubSteps, Scalar fixedTimeStep) = 'BulletSoftRigidDynamicsWorld_stepSimulation';
+function Integer	BulletSoftRigidDynamicsWorld.stepSimulation( Scalar timeStep, Integer maxSubSteps) = 'BulletSoftRigidDynamicsWorld_stepSimulation2';
+function Integer	BulletSoftRigidDynamicsWorld.stepSimulation( Scalar timeStep) = 'BulletSoftRigidDynamicsWorld_stepSimulation3';
+
+function BulletSoftRigidDynamicsWorld.synchronizeMotionStates!() = 'BulletSoftRigidDynamicsWorld_synchronizeMotionStates';
+
+///this can be useful to synchronize a single rigid body -> graphics object
+function BulletSoftRigidDynamicsWorld.synchronizeSingleMotionState!(BulletRigidBody body) = 'BulletSoftRigidDynamicsWorld_synchronizeSingleMotionState';
+
+function BulletSoftRigidDynamicsWorld.addConstraint!(BulletTypedConstraint constraint){
+	this.addConstraint(constraint, false);
+}
+function BulletSoftRigidDynamicsWorld.addConstraint!(BulletTypedConstraint constraint, Boolean disableCollisionsBetweenLinkedBodies){
+	this.__constraints.push(constraint);
+	this.__addConstraint(constraint, disableCollisionsBetweenLinkedBodies);
+}
+function BulletSoftRigidDynamicsWorld.__addConstraint!(BulletTypedConstraint constraint, Boolean disableCollisionsBetweenLinkedBodies) = 'BulletSoftRigidDynamicsWorld_addConstraint';
+
+function BulletSoftRigidDynamicsWorld.removeConstraint!(BulletTypedConstraint constraint){
+	this.__removeConstraint(constraint);
+	for(Integer i=0; i<this.__constraints.size; i++){
+		if(this.__constraints[i] == constraint){
+			for(Integer j=i; j<this.__constraints.size-1; j++){
+				this.__constraints[j] = this.__constraints[j+1];
+			}
+      		this.__constraints.resize(this.__constraints.size-1);
+			i--;
+		}
+	}
+}
+function BulletSoftRigidDynamicsWorld.__removeConstraint!(BulletTypedConstraint constraint) = 'BulletSoftRigidDynamicsWorld_removeConstraint';
+
+
+function BulletSoftRigidDynamicsWorld.addAction!(BulletActionInterface action){
+	this.__actions.push(action);
+	this.__addAction(action);
+}
+function BulletSoftRigidDynamicsWorld.__addAction!(BulletActionInterface action) = 'BulletSoftRigidDynamicsWorld_addAction';
+
+function BulletSoftRigidDynamicsWorld.removeAction!(BulletActionInterface action){
+	this.__removeAction(action);
+	for(Integer i=0; i<this.__actions.size; i++){
+		if(this.__actions[i] == action){
+			for(Integer j=i; j<this.__actions.size-1; j++){
+				this.__actions[j] = this.__actions[j+1];
+			}
+      		this.__actions.resize(this.__actions.size-1);
+			i--;
+		}
+	}
+}
+function BulletSoftRigidDynamicsWorld.__removeAction!(BulletActionInterface action) = 'BulletSoftRigidDynamicsWorld_removeAction';
+
+// function BulletSimulationIslandManager	BulletSoftRigidDynamicsWorld.getSimulationIslandManager() = 'BulletSoftRigidDynamicsWorld_getSimulationIslandManager';
+
+// function const BulletSimulationIslandManager	BulletSoftRigidDynamicsWorld.getSimulationIslandManager() = 'BulletSoftRigidDynamicsWorld_getSimulationIslandManager'; 
+
+// function BulletCollisionWorld	BulletSoftRigidDynamicsWorld.getCollisionWorld() = 'BulletSoftRigidDynamicsWorld_getCollisionWorld';
+
+function BulletSoftRigidDynamicsWorld.setGravity!(Vec3 gravity) = 'BulletSoftRigidDynamicsWorld_setGravity';
+
+function Vec3 BulletSoftRigidDynamicsWorld.getGravity() = 'BulletSoftRigidDynamicsWorld_getGravity';
+
+// function BulletSoftRigidDynamicsWorld.addCollisionObject(BulletICollisionObject* collisionObject,UInt16 collisionFilterGroup=BulletBroadphaseProxy::StaticFilter,UInt16 collisionFilterMask=BulletBroadphaseProxy::AllFilter ^ BulletBroadphaseProxy::StaticFilter);
+function BulletSoftRigidDynamicsWorld.addCollisionObject!(BulletICollisionObject collisionObject){
+	SInt16 collisionFilterGroup = BulletBroadphaseProxy_DefaultFilter;
+	SInt16 collisionFilterMask = BulletBroadphaseProxy_AllFilter;
+	this.addCollisionObject(collisionObject, collisionFilterGroup, collisionFilterMask);
+}
+function BulletSoftRigidDynamicsWorld.addCollisionObject!(BulletICollisionObject collisionObject, SInt16 collisionFilterGroup, SInt16 collisionFilterMask){
+	this.__collisionObjects.push(collisionObject);
+	this.__addCollisionObject(collisionObject, collisionFilterGroup, collisionFilterMask);
+}
+function BulletSoftRigidDynamicsWorld.__addCollisionObject!(BulletICollisionObject collisionObject, SInt16 collisionFilterGroup, SInt16 collisionFilterMask) = 'BulletSoftRigidDynamicsWorld_addCollisionObject';
+
+function BulletSoftRigidDynamicsWorld.addRigidBody!(BulletRigidBody body){
+	this.__collisionObjects.push(body);
+	this.__addRigidBody(body);
+}
+function BulletSoftRigidDynamicsWorld.__addRigidBody!(BulletRigidBody body) = 'BulletSoftRigidDynamicsWorld_addRigidBody';
+
+// function BulletSoftRigidDynamicsWorld.addRigidBody(BulletRigidBody body, UInt16 group, UInt16 mask) = 'BulletSoftRigidDynamicsWorld_addRigidBodyGroupMask';
+
+function BulletSoftRigidDynamicsWorld.removeRigidBody!(BulletRigidBody body){
+	this.__removeRigidBody(body);
+	for(Integer i=0; i<this.__collisionObjects.size; i++){
+		if(this.__collisionObjects[i] == body){
+			for(Integer j=i; j<this.__collisionObjects.size-1; j++){
+				this.__collisionObjects[j] = this.__collisionObjects[j+1];
+			}
+      		this.__collisionObjects.resize(this.__collisionObjects.size-1);
+			i--;
+		}
+	}
+}
+function BulletSoftRigidDynamicsWorld.__removeRigidBody!(BulletRigidBody body) = 'BulletSoftRigidDynamicsWorld_removeRigidBody';
+
+// ///removeCollisionObject will first check if it is a rigid body, if so call removeRigidBody otherwise call BulletCollisionWorld::removeCollisionObject
+function BulletSoftRigidDynamicsWorld.removeCollisionObject!(BulletICollisionObject collisionObject){
+	// Check if the type of the collision object is a rigid body. If so, then remove it as a rigid body.
+	if(collisionObject.type == BulletRigidBody){
+		this.removeRigidBody(collisionObject);
+	}
+	else{
+		this.__removeCollisionObject(collisionObject);
+		for(Integer i=0; i<this.__collisionObjects.size; i++){
+			if(this.__collisionObjects[i] == collisionObject){
+				for(Integer j=i; j<this.__collisionObjects.size-1; j++){
+					this.__collisionObjects[j] = this.__collisionObjects[j+1];
+				}
+      			this.__collisionObjects.resize(this.__collisionObjects.size-1);
+				i--;
+			}
+		}
+	}
+}
+
+function BulletSoftRigidDynamicsWorld.__removeCollisionObject!(BulletICollisionObject collisionObject) = 'BulletSoftRigidDynamicsWorld_removeCollisionObject';
+
+
+
+// function BulletSoftRigidDynamicsWorld.debugDrawConstraint(BulletTypedConstraint constraint);
+
+// function BulletSoftRigidDynamicsWorld.debugDrawWorld();
+
+function BulletSoftRigidDynamicsWorld.setConstraintSolver!(BulletConstraintSolver solver){
+	this.__constraintSolver = solver;
+	this.__setConstraintSolver(solver);
+}
+function BulletSoftRigidDynamicsWorld.__setConstraintSolver!(BulletConstraintSolver solver) = 'BulletSoftRigidDynamicsWorld_setConstraintSolver';
+
+function BulletConstraintSolver BulletSoftRigidDynamicsWorld.getConstraintSolver(){ 
+	return this.__constraintSolver; 
+}
+
+function Integer BulletSoftRigidDynamicsWorld.getNumConstraints(){
+	return this.__constraints.size;
+}
+
+function BulletTypedConstraint BulletSoftRigidDynamicsWorld.getConstraint(Integer index){
+	return this.__constraints[index];
+}
+
+
+function UInt32 BulletSoftRigidDynamicsWorld.getWorldType() = 'BulletSoftRigidDynamicsWorld_getWorldType';
+
+///the forces on each rigidbody is accumulating together with gravity. clear this after each timestep.
+function BulletSoftRigidDynamicsWorld.clearForces!() = 'BulletSoftRigidDynamicsWorld_clearForces';
+
+///apply gravity, call this once per timestep
+function BulletSoftRigidDynamicsWorld.applyGravity!() = 'BulletSoftRigidDynamicsWorld_applyGravity';
+
+function BulletSoftRigidDynamicsWorld.setNumTasks!(Integer numTasks) = 'BulletSoftRigidDynamicsWorld_setNumTasks';
+
+function BulletSoftRigidDynamicsWorld.setSynchronizeAllMotionStates!(Boolean synchronizeAll) = 'BulletSoftRigidDynamicsWorld_setSynchronizeAllMotionStates';
+function Boolean BulletSoftRigidDynamicsWorld.getSynchronizeAllMotionStates() = 'BulletSoftRigidDynamicsWorld_getSynchronizeAllMotionStates';
+
+// ///Preliminary serialization test for Bullet 2.76. Loading those files requires a separate parser (see Bullet/Demos/SerializeDemo)
+// function BulletSoftRigidDynamicsWorld.serialize(BulletSerializer* serializer);
+
+
+///////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
+// Inherited from BulletCollisionWorld
+
+
+function BulletSoftRigidDynamicsWorld.setBroadphase!(BulletBroadphaseInterface pairCache){
+	this.__pairCache = pairCache;
+}
+function BulletSoftRigidDynamicsWorld.__setBroadphase!(BulletBroadphaseInterface pairCache) = 'BulletSoftRigidDynamicsWorld_setBroadphase';
+
+function BulletBroadphaseInterface	BulletSoftRigidDynamicsWorld.getBroadphase(){
+	return this.__pairCache;
+}
+
+// btOverlappingPairCache	getPairCache();
+
+function BulletDispatcher	BulletSoftRigidDynamicsWorld.getDispatcher(){
+	return this.__dispatcher;
+}
+
+function BulletSoftRigidDynamicsWorld.updateSingleAabb!(BulletICollisionObject colObj) = 'BulletSoftRigidDynamicsWorld_updateSingleAabb';
+
+function BulletSoftRigidDynamicsWorld.updateAabbs!() = 'BulletSoftRigidDynamicsWorld_updateAabbs';
+
+//function BulletSoftRigidDynamicsWorld.setDebugDrawer(btIDebugDraw	debugDrawer);
+
+//function BulletSoftRigidDynamicsWorld.btIDebugDraw	getDebugDrawer();
+
+//function BulletSoftRigidDynamicsWorld.debugDrawWorld();
+
+// void BulletSoftRigidDynamicsWorld.debugDrawObject(Xfo worldTransform, btCollisionShape shape, Vec3 color);
+
+
+function Integer BulletSoftRigidDynamicsWorld.getNumCollisionObjects(){
+	return this.__collisionObjects.size;
+}
+
+/// rayTest performs a raycast on all objects in the btCollisionWorld, and calls the resultCallback
+/// This allows for several queries: first hit, all hits, any hit, dependent on the value returned by the callback.
+// function BulletSoftRigidDynamicsWorld.rayTest(Vec3 rayFromWorld, Vec3 rayToWorld, RayResultCallback resultCallback) = 'BulletCollisionWorld_rayTest';
+
+/// convexTest performs a swept convex cast on all objects in the btCollisionWorld, and calls the resultCallback
+/// This allows for several queries: first hit, all hits, any hit, dependent on the value return by the callback.
+// function BulletSoftRigidDynamicsWorld.convexSweepTest (BulletConvexShape castShape, Xfo from, Xfo to, ConvexResultCallback resultCallback){
+// 	this.convexSweepTest(castShape, from, to, resultCallback, 0.0);
+// }
+// function BulletSoftRigidDynamicsWorld.convexSweepTest (BulletConvexShape castShape, Xfo from, Xfo to, ConvexResultCallback resultCallback,  Scalar allowedCcdPenetration) = 'BulletCollisionWorld_convexSweepTest';
+
+///contactTest performs a discrete collision test between colObj against all objects in the btCollisionWorld, and calls the resultCallback.
+///it reports one or more contact points for every overlapping object (including the one with deepest penetration)
+// function BulletSoftRigidDynamicsWorld.contactTest(BulletICollisionObject colObj, ContactResultCallback resultCallback) = 'BulletCollisionWorld_contactTest';
+
+// ///contactTest performs a discrete collision test between two collision objects and calls the resultCallback if overlap if detected.
+// ///it reports one or more contact points (including the one with deepest penetration)
+// function BulletSoftRigidDynamicsWorld.contactPairTest(BulletICollisionObject colObjA, BulletICollisionObject colObjB, ContactResultCallback resultCallback) = 'BulletCollisionWorld_contactPairTest';
+
+
+// /// rayTestSingle performs a raycast call and calls the resultCallback. It is used internally by rayTest.
+// /// In a future implementation, we consider moving the ray test as a method in btCollisionShape.
+// /// This allows more customization.
+// function  static rayTestSingle(Xfo rayFromTrans, Xfo rayToTrans,
+// 				  BulletICollisionObject collisionObject,
+// 				  btCollisionShape collisionShape,
+// 				  Xfo colObjWorldTransform,
+// 				  RayResultCallback resultCallback);
+
+// /// objectQuerySingle performs a collision detection query and calls the resultCallback. It is used internally by rayTest.
+// function static objectQuerySingle(btConvexShape castShape, Xfo rayFromTrans,Xfo rayToTrans,
+// 				  BulletICollisionObject collisionObject,
+// 				  btCollisionShape collisionShape,
+// 				  Xfo colObjWorldTransform,
+// 				  ConvexResultCallback resultCallback, Scalar	allowedPenetration);
+
+function BulletICollisionObject[] BulletSoftRigidDynamicsWorld.getCollisionObjectArray(){
+	return this.__collisionObjects;
+}
+
+function BulletSoftRigidDynamicsWorld.performDiscreteCollisionDetection!() = 'BulletSoftRigidDynamicsWorld_performDiscreteCollisionDetection';
+
+// function BulletDispatcherInfo BulletSoftRigidDynamicsWorld.getDispatchInfo() = 'BulletSoftRigidDynamicsWorld_getDispatchInfo';
+
+function Boolean BulletSoftRigidDynamicsWorld.getForceUpdateAllAabbs() = 'BulletSoftRigidDynamicsWorld_getForceUpdateAllAabbs';
+function BulletSoftRigidDynamicsWorld.setForceUpdateAllAabbs!( Boolean forceUpdateAllAabbs) = 'BulletSoftRigidDynamicsWorld_setForceUpdateAllAabbs';
+
+// ///Preliminary serialization test for Bullet 2.76. Loading those files requires a separate parser (Bullet/Demos/SerializeDemo)
+// function	BulletSoftRigidDynamicsWorld.serialize(btSerializer serializer);
+

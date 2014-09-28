@@ -1,0 +1,225 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+require Geometry;
+
+object AlembicCurvesReader : AlembicObjectReader{
+  AlembicICurves _curves;
+  AlembicICurvesSchema _schema;
+  AlembicTimeSampling _timeSampling;
+  AlembicSampleInfo _info;
+  UInt32 _numSamples;
+  UInt32 _numCurves;
+  UInt32 _vertexToCurve[];
+  AlembicICurvesSample _sampleA;
+  AlembicICurvesSample _sampleB;
+  AlembicGeometryAttributesReader _attributesReader;
+};
+
+function AlembicCurvesReader(AlembicIObject curves) {
+  this._curves = AlembicICurves(curves);
+  this._schema = this._curves.getSchema();
+  this._sampleA = AlembicICurvesSample();
+  this._sampleB = AlembicICurvesSample();
+  this._timeSampling = this._schema.getTimeSampling();
+  this._numSamples = this._schema.getNumSamples();
+  this._attributesReader = AlembicGeometryAttributesReader(this._schema.getArbGeomParams());
+
+  // backwards compatibility
+  // properties might be stored on other props
+  AlembicICompoundProperty mainProps = this._curves.getProperties();
+  AlembicICompoundProperty geomProps = AlembicICompoundProperty(mainProps, ".geom");
+  if(geomProps.valid()) {
+    for(Size i=0;i<geomProps.getNumProperties();i++) {
+
+      AlembicPropertyHeader ph = geomProps.getPropertyHeader(i);
+      if(ph.getName() == '.color') {
+        AlembicGeometryParamReader paramReader = AlembicGeometryParamReader(AlembicIColorfGeomParam(geomProps, ph.getName()));
+        paramReader._name = 'vertexColors';
+        this._attributesReader.addParamReader(paramReader);
+      }
+    }
+  }
+}
+
+function String AlembicCurvesReader.getPath() {
+  return this._curves.asIObject().getFullName();
+}
+
+function Boolean AlembicCurvesReader.valid() {
+  return this._curves.valid();
+}
+
+function AlembicCurvesReader.reset!() {
+  this._curves.reset();
+  this._schema.reset();
+  this._sampleA = null;
+  this._sampleB = null;
+}
+
+function AlembicIObject AlembicCurvesReader.getIObject() {
+  return this._curves.asIObject();
+}
+
+function SInt32 AlembicCurvesReader.getNumSamples() {
+  return this._numSamples;
+}
+
+function AlembicCurvesReader.readSample!(Float64 time, io Lines lines) {
+  if(this._info.time == time)
+    return;
+
+  AlembicSampleInfo info(time, this._timeSampling, this._numSamples);
+  if(info == this._info)
+    return;
+  this._info = info;
+
+  this._schema.get(this._sampleA, AlembicISampleSelector(this._info.indexA));
+  if(this._info.requiresInterpolation())
+    this._schema.get(this._sampleB, AlembicISampleSelector(this._info.indexB));
+
+  Vec3 positionsValuesA<> = this._sampleA.getPositions();
+  Vec3 positionsValuesB<>;
+  if(this._info.requiresInterpolation())
+    positionsValuesB = this._sampleB.getPositions();
+
+  GeometryAttributes attributes = lines.getAttributes();
+
+  // topology
+  if(lines.indices.size() == 0 || this._numCurves != this._sampleA.getNumCurves()) {
+    lines.indices.resize(0);
+    attributes.clear();
+    SInt32 numVertices<> = this._sampleA.getCurvesNumVertices();
+    this._numCurves = numVertices.size();
+
+    Size offset = 0;
+    this._vertexToCurve.resize(positionsValuesA.size());
+    for(Size i=0;i<this._numCurves;i++) {
+      for(Size j=0;j<numVertices[i];j++) {
+        this._vertexToCurve[offset++] = i;
+      }
+    }
+
+    offset = 0;
+    for(Size i=0;i<this._numCurves;i++) {
+      lines.indices.push(offset++);
+      for(Size j=2;j<numVertices[i];j++) {
+        lines.indices.push(offset);
+        lines.indices.push(offset++);
+      }
+      lines.indices.push(offset);
+      offset++;
+    }
+    lines.version++;
+  }
+
+  Size nbPoints = positionsValuesA.size();
+  attributes.resize(nbPoints);
+
+  // perform positions
+  Vec3Attribute positionsAttr = attributes.getOrCreateVec3Attribute('positions');
+  if(this._info.requiresInterpolation()) {
+    for(Size i=0;i<nbPoints;i++)
+      positionsAttr.values[i] = positionsValuesA[i].linearInterpolate(positionsValuesB[i], Float32(this._info.fraction));
+  } else {
+    for(Size i=0;i<nbPoints;i++)
+      positionsAttr.values[i] = positionsValuesA[i];
+  }
+  positionsAttr.incrementVersion();
+
+  // perform velocities
+  Vec3 velocitiesValuesA<> = this._sampleA.getVelocities();
+  if(velocitiesValuesA.size() > 0) {
+    Vec3Attribute velocitiesAttr = attributes.getOrCreateVec3Attribute('velocities');
+    if(this._info.requiresInterpolation()) {
+      Vec3 velocitiesValuesB<> = this._sampleB.getVelocities();
+      for(Size i=0;i<nbPoints;i++)
+        velocitiesAttr.values[i] = velocitiesValuesA[i].linearInterpolate(velocitiesValuesB[i], Float32(this._info.fraction));
+    } else {
+      for(Size i=0;i<nbPoints;i++)
+        velocitiesAttr.values[i] = velocitiesValuesA[i];
+    }
+    velocitiesAttr.incrementVersion();
+  }  
+
+  // uvs
+  AlembicIVec2VfGeomParam uvsParam = this._schema.getUVsParam();
+  if(uvsParam.valid()) {
+    info = AlembicSampleInfo(time, this._timeSampling, uvsParam.getNumSamples());
+    if(uvsParam.isIndexed()) {
+      AlembicIVec2VfGeomParamSample sampleA = uvsParam.getIndexed(AlembicISampleSelector(info.indexA));
+      Vec2 uvsValuesA[] = sampleA.getVals();
+      UInt32 indicesA<> = sampleA.getIndices();
+      if(uvsValuesA.size() > 0) {
+        Ref<Vec2Attribute> attr = attributes.getOrCreateVec2Attribute('uvs0');
+        if(info.requiresInterpolation()) {
+          AlembicIVec2VfGeomParamSample sampleB = uvsParam.getIndexed(AlembicISampleSelector(info.indexB));
+          Vec2 uvsValuesB[] = sampleB.getVals();
+          UInt32 indicesB<> = sampleB.getIndices();
+          if(indicesA.size() == this._numCurves) {
+            for(UInt32 i=0;i<attributes.size();i++) {
+              Vec2 value = uvsValuesA[indicesA[this._vertexToCurve[i]]].linearInterpolate(uvsValuesB[indicesB[this._vertexToCurve[i]]], Float32(info.fraction));
+              attr.values[i] = value;
+            }
+          } else {
+            for(UInt32 i=0;i<attributes.size();i++) {
+              Vec2 value = uvsValuesA[indicesA[i]].linearInterpolate(uvsValuesB[indicesB[i]], Float32(info.fraction));
+              attr.values[i] = value;
+            }
+          }
+        } else {
+          if(uvsValuesA.size() == this._numCurves) {
+            for(UInt32 i=0;i<attributes.size();i++) {
+              Vec2 value = uvsValuesA[indicesA[this._vertexToCurve[i]]];
+              attr.values[i] = value;
+            }
+          } else {
+            for(UInt32 i=0;i<attributes.size();i++) {
+              Vec2 value = uvsValuesA[indicesA[i]];
+              attr.values[i] = value;
+            }
+          }
+        }
+        attr.incrementVersion();
+      }
+    } else {
+      AlembicIVec2VfGeomParamSample sampleA = uvsParam.getExpanded(AlembicISampleSelector(info.indexA));
+      Vec2 uvsValuesA[] = sampleA.getVals();
+      if(uvsValuesA.size() > 0) {
+        Ref<Vec2Attribute> attr = attributes.getOrCreateVec2Attribute('uvs0');
+        if(info.requiresInterpolation()) {
+          AlembicIVec2VfGeomParamSample sampleB = uvsParam.getExpanded(AlembicISampleSelector(info.indexB));
+          Vec2 uvsValuesB[] = sampleB.getVals();
+          if(uvsValuesA.size() == this._numCurves) {
+            for(UInt32 i=0;i<attributes.size();i++) {
+              Vec2 value = uvsValuesA[this._vertexToCurve[i]].linearInterpolate(uvsValuesB[this._vertexToCurve[i]], Float32(info.fraction));
+              attr.values[i] = value;
+            }
+          } else {
+            for(UInt32 i=0;i<attributes.size();i++) {
+              Vec2 value = uvsValuesA[i].linearInterpolate(uvsValuesB[i], Float32(info.fraction));
+              attr.values[i] = value;
+            }
+          }
+        } else {
+          if(uvsValuesA.size() == this._numCurves) {
+            for(UInt32 i=0;i<attributes.size();i++) {
+              Vec2 value = uvsValuesA[this._vertexToCurve[i]];
+              attr.values[i] = value;
+            }
+          } else {
+            for(UInt32 i=0;i<attributes.size();i++) {
+              Vec2 value = uvsValuesA[i];
+              attr.values[i] = value;
+            }
+          }
+        }
+        attr.incrementVersion();
+      }
+    }
+  }
+
+  this._attributesReader.readSample(time, attributes);
+}

@@ -1,0 +1,419 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+const Boolean ContiguousUInt32Allocator_enableChecks = false;
+//const Boolean ContiguousUInt32Allocator_enableStats = false;
+const UInt32 UInt32HighBit = 2147483648;
+const UInt32 UInt32NoHighBitMask = 2147483647;
+const UInt32 PrevIsHeadSkip = 4294967294;
+
+struct ContiguousUInt32Allocator {
+  UInt32 data[];
+
+  BitVector freeData;
+  UInt32 freeDataCount;
+
+  UInt32 freeBlocsListUpperPow2[];
+
+  //used if ContiguousUInt32Allocator_enableStats
+/*  UInt32 removeNodeCount;  
+  UInt32 removeMergeNodeCount;
+  UInt32 addNodeCount;
+  UInt32 reallocUpCount;
+  UInt32 reallocUpReuseCount;
+  UInt32 reallocUpReuseFreeCount;
+  UInt32 reallocDownCount;
+  UInt32 reallocDownFreeCount;
+  UInt32 allocResizeNodeCount;
+  UInt32 allocReuseNodeCount;
+  UInt32 allocReuseSameLog2NodeCount;
+  UInt32 allocReuseSplitNodeCount;*/
+};
+
+function ContiguousUInt32Allocator() {
+  this.data.resize(1);//0 is reserved (NULL key)
+  this.freeData.resize(1);
+}
+
+function ContiguousUInt32Allocator.clear!() {
+  this.data.resize(1);
+  this.freeData.resize(1);
+  this.freeDataCount = 0;
+  this.freeBlocsListUpperPow2.resize(0);
+}
+
+function Size ContiguousUInt32Allocator.memUsage() {
+  return this.data.size()*4 + this.freeData.memUsage();
+}
+
+struct _ContiguousUInt32Allocator_FreeNodeInfo {
+  UInt32 prev;
+  UInt32 next;
+  UInt32 count;
+};
+
+function _ContiguousUInt32Allocator_FreeNodeInfo ContiguousUInt32Allocator._getFreeNodeInfo( UInt32 head ) {
+  _ContiguousUInt32Allocator_FreeNodeInfo info;
+  if( head ) {
+    if( ContiguousUInt32Allocator_enableChecks && !this.freeData.get(head) )
+      throw("ContiguousUInt32Allocator._getFreeNodeInfo: corrupt freeData");
+
+    info.next = this.data[head];
+    if( info.next == InvalidIndex ) {
+        info.prev = 0;
+        info.next = 0;
+        info.count = 1;
+    } else {
+      if( info.next & UInt32HighBit ) {
+        info.next &= UInt32NoHighBitMask;
+        info.count = 2;
+      } else
+        info.count = this.data[head+2];
+      info.prev = this.data[head+1];
+    }
+  }
+  return info;
+}
+
+function ContiguousUInt32Allocator._removeFreeNode!( Size head, _ContiguousUInt32Allocator_FreeNodeInfo info ) {
+  if( info.count < 2 ) {
+    if( info.count )
+      this.data[head] = 0;//Remove 'InvalidIndex'
+    return;//Not tracked
+  }
+  //Remove end marker
+  if( info.count > 5 )
+    this.data[head+info.count-1] = 0;
+
+  if( info.prev ) {
+    this.data[info.prev] = info.next | (this.data[info.prev] & UInt32HighBit);
+  } else {
+    //head of the list
+    UInt32 listIndex = Log2RoundUp(info.count);
+    this.freeBlocsListUpperPow2[listIndex] = info.next;
+    if( !info.next ) {//Cleanup free lists
+      while( this.freeBlocsListUpperPow2.size() != 0 && this.freeBlocsListUpperPow2[this.freeBlocsListUpperPow2.size()-1] == 0 )
+        this.freeBlocsListUpperPow2.resize(this.freeBlocsListUpperPow2.size()-1);
+    }
+  }
+  if( info.next )
+    this.data[info.next+1] = info.prev;
+//  if(ContiguousUInt32Allocator_enableStats)++this.removeNodeCount;
+}
+
+function Boolean ContiguousUInt32Allocator.isUsed( UInt32 i ) {
+  return !this.freeData.get(i);
+}
+
+function ContiguousUInt32Allocator._addFreeNode!( UInt32 head, UInt32 count, UInt32 pow2Index ) {
+  if( ContiguousUInt32Allocator_enableChecks ) {
+    for( Size i = 0; i < count; ++i ) {
+      if( !this.freeData.get(head+i) )
+        throw("ContiguousUInt32Allocator._addFreeNode: not marked as free");
+    }
+  }
+  if( pow2Index >= this.freeBlocsListUpperPow2.size() )
+    this.freeBlocsListUpperPow2.resize(pow2Index+1);
+
+  UInt32 next = this.freeBlocsListUpperPow2[pow2Index];
+  this.data[head] = (count == 2) ? (next|UInt32HighBit) : next;
+  this.data[head+1] = 0;//prev
+  if(count > 2)
+    this.data[head+2] = count;
+
+  this.freeBlocsListUpperPow2[pow2Index] = head;
+  if(next)
+    this.data[next+1] = head;
+
+  //Put end 'skip' marker
+  if( count > 5 ) {
+    this.data[head+count-1] = PrevIsHeadSkip;
+    this.data[head+count-2] = count-2;//How many to skip down
+  }
+//  if(ContiguousUInt32Allocator_enableStats)++this.addNodeCount;
+}
+
+inline ContiguousUInt32Allocator._addFreeNode!( UInt32 head, UInt32 count ) {
+  if( count == 1 ) {
+    //Untracked
+    this.data[head] = InvalidIndex;
+  } else {
+    UInt32 listIndex = Log2RoundUp(count);
+    this._addFreeNode( head, count, listIndex );
+  }
+}
+
+function UInt32 ContiguousUInt32Allocator.allocate!( UInt32 allocateCount, UInt32 reserveCount ) {
+  UInt32 total = allocateCount + reserveCount;
+
+  UInt32 freeBlocsUpperPow2 = this.freeBlocsListUpperPow2.size();
+
+  if( total > 1 && (1 << freeBlocsUpperPow2) >= total ) {
+    //Check for existing blocs. This is not retrieving the optimal bloc, but slows down degradation.
+    UInt32 best = 0;
+    _ContiguousUInt32Allocator_FreeNodeInfo bestFreeNodeInfo;
+    bestFreeNodeInfo.count = InvalidIndex;
+
+    UInt32 log2 = Log2RoundUp(total);
+    while( log2 < this.freeBlocsListUpperPow2.size() ) {
+      UInt32 head = this.freeBlocsListUpperPow2[log2];
+
+      Size nbToCheck = 4;//check a few of the first entries since on the 1st iteration it is not garanteed to be large enough
+      while( head && nbToCheck ) {
+        _ContiguousUInt32Allocator_FreeNodeInfo freeNodeInfo;
+        freeNodeInfo = this._getFreeNodeInfo( head );
+        if( freeNodeInfo.count >= total && freeNodeInfo.count < bestFreeNodeInfo.count ) {
+          best = head;
+          bestFreeNodeInfo = freeNodeInfo;
+        }
+        head = freeNodeInfo.next;
+        --nbToCheck;
+      }
+      if( best ) {
+        //use that bloc, re-classify remaining bits
+        this._removeFreeNode( best, bestFreeNodeInfo );
+        //Unmark free bits, adjust free bits count
+        for( Size i = 0; i < allocateCount; ++i )//todo: optimize clearing many contiguous bits
+          this.freeData.clear(best+i);
+
+        for( Size i = allocateCount; i < total; ++i )
+          this.data[best+i] = InvalidIndex;//Reserved: untracked free data
+
+        if( ContiguousUInt32Allocator_enableChecks && total > this.freeDataCount )
+          throw("ContiguousUInt32Allocator: freeDataCount overflow: double free?");
+
+        this.freeDataCount -= allocateCount;//reserveCount still considered "free"
+        this._freeNoMark( best + total, bestFreeNodeInfo.count - total, false );
+        /*if(ContiguousUInt32Allocator_enableStats) {
+          if(bestFreeNodeInfo.count - total > 1)
+            ++this.allocReuseSplitNodeCount;
+          ++this.allocReuseNodeCount;
+          if(Log2RoundUp(bestFreeNodeInfo.count - total) == Log2RoundUp(bestFreeNodeInfo.count))
+          ++this.allocReuseSameLog2NodeCount;
+        }*/
+        return best;
+      }
+      ++log2;
+    }
+  }
+
+  Size prevSize = this.data.size();
+  this.data.resize( prevSize + total );
+  this.freeData.resize( prevSize + total );
+
+  for( Size i = allocateCount; i < total; ++i ) {
+    this.data[prevSize+i] = InvalidIndex;//Reserved: untracked free data
+    this.freeData.set(prevSize+i);
+  }
+  this.freeDataCount += reserveCount;
+//  if(ContiguousUInt32Allocator_enableStats)++this.allocResizeNodeCount;
+  return prevSize;
+}
+
+function UInt32 ContiguousUInt32Allocator.reallocate!( UInt32 head, UInt32 prevCount, UInt32 newCount, UInt32 reserveCountIfShrinkOrMove ) {
+
+  if( ContiguousUInt32Allocator_enableChecks ) {
+    for( Size i = 0; i < prevCount; ++i ) {
+      if( this.freeData.get(head+i) )
+        throw( "ContiguousUInt32Allocator.reallocate: error: not allocated" );
+    }
+  }
+
+  if( prevCount > newCount ) {
+    UInt32 delta = prevCount - newCount;
+    UInt32 end = head+newCount;
+
+    UInt32 reserved = reserveCountIfShrinkOrMove;
+    if(reserved) {
+      if( reserved > delta )
+        reserved = delta;
+      for(UInt32 i = 0; i < reserved; ++i) {
+        this.data[end+i] = InvalidIndex;//Untracked free data
+        this.freeData.set(end+i);
+      }
+      this.freeDataCount += reserved;
+      delta -= reserved;
+    }
+    this.free(end+reserved, delta);
+
+    /*if(ContiguousUInt32Allocator_enableStats) {
+      ++this.reallocDownCount;
+      if(delta>1)
+        ++this.reallocDownFreeCount;
+    }*/
+  } else if( prevCount < newCount ) {
+    //if(ContiguousUInt32Allocator_enableStats)++this.reallocUpCount;
+    UInt32 size = this.data.size();
+    UInt32 next = head+prevCount;
+    UInt32 end = head+newCount;
+    UInt32 trunkEnd = end > size ? size : end;
+
+    //Check if contiguous data is available
+    Boolean available = true;
+    for( Size i = next; i < trunkEnd; ++i ) {
+      if( !this.freeData.get(i) )
+        available = false;
+    }
+    if( available ) {
+      //if(ContiguousUInt32Allocator_enableStats)++this.reallocUpReuseCount;
+      //Use subsequent data
+      while( next < trunkEnd ) {
+        _ContiguousUInt32Allocator_FreeNodeInfo freeNodeInfo;
+        freeNodeInfo = this._getFreeNodeInfo( next );
+        this._removeFreeNode( next, freeNodeInfo );
+        //if(ContiguousUInt32Allocator_enableStats && freeNodeInfo.count>1)
+        //  ++this.reallocUpReuseFreeCount;
+
+        UInt32 nodeEnd = next + freeNodeInfo.count;
+        UInt32 nextTail = nodeEnd;
+        if( nextTail > trunkEnd )
+          nextTail = trunkEnd;
+        this.freeDataCount -= nextTail - next;
+        for( UInt32 i = next; i < nextTail; ++i )
+          this.freeData.clear(i);
+
+        if( nextTail < nodeEnd )//set as free node (bytes are already counted as free)
+          this._addFreeNode( nextTail, nodeEnd - nextTail );
+        next = nextTail;
+      }
+      if( trunkEnd < end ) {
+        this.data.resize(end);
+        this.freeData.resize(end);
+      }
+    } else {
+      UInt32 newHead = this.allocate( newCount, reserveCountIfShrinkOrMove );
+      for( UInt32 i = 0; i < prevCount; ++i )
+        this.data[newHead+i] = this.data[head+i];
+      this.free(head, prevCount);
+      return newHead;
+    }
+  }
+  return head;
+}
+
+function ContiguousUInt32Allocator._freeNoMark!( UInt32 head, UInt32 count, Boolean needClear ) {
+  if( count == 0 )
+    return;
+
+  Size next = head+count;
+  Size prev = head;
+
+  if(needClear) {
+    for( Size i = head; i < next; ++i )
+      this.data[i] = 0;
+  }
+
+  Boolean mergeBlocs = true;
+  if( mergeBlocs ) {
+    //Check if the block can be merge with contiguous ones
+
+    Size dataSize = this.data.size();
+    while( next < dataSize && this.freeData.get(next) ) {
+      //Contiguous free bloc: merge
+      _ContiguousUInt32Allocator_FreeNodeInfo freeNodeInfo;
+      freeNodeInfo = this._getFreeNodeInfo( next );
+      this._removeFreeNode( next, freeNodeInfo );
+      next += freeNodeInfo.count;
+      //if(ContiguousUInt32Allocator_enableStats)++this.removeMergeNodeCount;
+    }
+
+    //Merge preceding blocs, but not leading reserved entries
+    while( prev != 0 && this.freeData.get(prev-1) && this.data[prev-1] != InvalidIndex ) {
+      --prev;
+      if( this.data[prev] == PrevIsHeadSkip ) {
+        Size toSkip = this.data[--prev];
+        prev -= toSkip;
+      }
+    }
+    if( prev != head ) {
+      Size iter = prev;
+      while( iter < head ) {
+        //Contiguous free bloc: merge
+        _ContiguousUInt32Allocator_FreeNodeInfo freeNodeInfo;
+        freeNodeInfo = this._getFreeNodeInfo( iter );
+        this._removeFreeNode( iter, freeNodeInfo );
+        iter += freeNodeInfo.count;
+        //if(ContiguousUInt32Allocator_enableStats)++this.removeMergeNodeCount;
+      }
+      if( ContiguousUInt32Allocator_enableChecks && iter != head )
+        throw("ContiguousUInt32Allocator._freeNoMark: corrupt data");
+    }
+  }
+  //Add to free list
+  this._addFreeNode( prev, next - prev );
+}
+
+function ContiguousUInt32Allocator.free!( UInt32 head, UInt32 count ) {
+
+  if( ContiguousUInt32Allocator_enableChecks ) {
+    if( head + count > this.data.size() )
+      throw( "ContiguousUInt32Allocator.free: out of range" );
+    for( Size i = 0; i < count; ++i ) {
+      if( this.freeData.get(head+i) )
+        throw( "ContiguousUInt32Allocator.free: error: double free" );
+    }
+  }
+  for( Size i = 0; i < count; ++i )//todo: optimize setting many contiguous bits
+    this.freeData.set(head+i);
+  this.freeDataCount += count;
+
+  this._freeNoMark(head, count, true);
+}
+
+inline UInt32 ContiguousUInt32Allocator.size() {
+  return this.data.size()-1;//Don't count 'dummy' 0
+}
+
+inline UInt32 ContiguousUInt32Allocator.unusedSize() {
+  return this.freeDataCount;
+}
+
+//recompact: caller needs to remap its data based on the returned index mapping (oldIndexToNewIndex)
+//NOTE: only call if there is a significant portion to be recompacted (compare return unusedSize() to size() )
+function ContiguousUInt32Allocator.recompact!( io UInt32 oldIndexToNewIndex[] ) {
+  if( this.freeDataCount ) {
+    Size dataSize = this.data.size();
+    oldIndexToNewIndex.resize(dataSize);
+
+    Size target;
+    for( Size i = 0; i < dataSize; ++i ) {
+      if( this.freeData.get(i) )
+        oldIndexToNewIndex[i] = 0;
+      else {
+        oldIndexToNewIndex[i] = target;
+        this.data[target] = this.data[i];
+        ++target;
+      }
+    }
+    this.data.resize(target);
+    this.freeDataCount = 0;
+    this.freeData.clearAll();
+    this.freeBlocsListUpperPow2.resize(0);
+  }
+}
+
+function ContiguousUInt32Allocator.append!( ContiguousUInt32Allocator other, io Size dataOffset ) {
+  dataOffset = this.data.size();
+
+  this.data += other.data;
+  
+  this.freeDataCount += other.freeDataCount;
+  this.freeData += other.freeData;
+
+  if( other.freeBlocsListUpperPow2.size() > this.freeBlocsListUpperPow2.size() )
+    this.freeBlocsListUpperPow2.resize( other.freeBlocsListUpperPow2.size() );
+
+  for( Size i = 0; i < other.freeBlocsListUpperPow2.size(); ++i ) {
+    UInt32 otherHead = other.freeBlocsListUpperPow2[i];
+    while( otherHead ) {
+      _ContiguousUInt32Allocator_FreeNodeInfo freeNodeInfo = this._getFreeNodeInfo( otherHead + dataOffset );
+      this._addFreeNode( otherHead + dataOffset, freeNodeInfo.count, i );
+      otherHead = freeNodeInfo.next;
+    }
+  }
+  //Entry 0 of 'other' becomes a free entry (simpler like this, and could be recompacted eventually)
+  this.freeData.set(dataOffset);
+  this.data[dataOffset] = InvalidIndex;
+  ++this.freeDataCount;
+}

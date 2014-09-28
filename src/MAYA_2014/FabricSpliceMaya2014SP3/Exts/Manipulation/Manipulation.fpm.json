@@ -1,0 +1,42 @@
+{
+  "code": [
+    "UndoRedo/UndoRedoCommand.kl",
+    "Host.kl",
+
+    "Events/ManipulationConstants.kl",
+    "Events/Event.kl",
+    "Events/KeyEvent.kl",
+    "Events/MouseEvent.kl",
+    "Events/MouseWheelEvent.kl",
+
+    "Manipulators/Manipulator.kl",
+
+    "Manipulators/Painting/SurfacePaintManipulator.kl",
+    "Manipulators/Painting/SurfaceAttributePaintManipulator.kl",
+    "Manipulators/Painting/SurfaceSculptManipulator.kl",
+    "Manipulators/Painting/MultiChannelWeightAttributePaintManipulator.kl",
+
+    "Manipulators/Gizmos/GizmoHandler.kl",
+    "Manipulators/Gizmos/GizmoManipulationCallback.kl",
+    "Manipulators/Gizmos/GizmoManipulator.kl",
+
+    "Manipulators/Gizmos/TransformManipulationCommand.kl",
+    "Manipulators/Gizmos/TransformManipulationCallback.kl",
+    "Manipulators/Gizmos/PositionAxisGizmoHandler.kl",
+    "Manipulators/Gizmos/PositionAxisManipulator.kl",
+    "Manipulators/Gizmos/PositionPlanarGizmoHandler.kl",
+    "Manipulators/Gizmos/PositionPlanarManipulator.kl",
+    "Manipulators/Gizmos/PositionManipulator.kl",
+
+    "Manipulators/Gizmos/OrientationAxisGizmoHandler.kl",
+    "Manipulators/Gizmos/OrientationAxisManipulator.kl",
+    "Manipulators/Gizmos/OrientationSphericalGizmoHandler.kl",
+    "Manipulators/Gizmos/OrientationSphericalManipulator.kl",
+    "Manipulators/Gizmos/OrientationManipulator.kl",
+    
+    "Manipulators/Gizmos/TransformManipulator.kl",
+
+    "EventDispatcher.kl",
+    "ManipulationHandle.kl"
+  ]
+}

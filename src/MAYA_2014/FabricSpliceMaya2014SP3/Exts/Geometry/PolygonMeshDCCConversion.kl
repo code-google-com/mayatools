@@ -1,0 +1,452 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+const Integer PolygonMesh_ExecuteParallel_Count = 10000;
+
+operator PolygonMesh_getPointsAsExternalArrayTask_d(Index index, io Float64 values<>, Size components, io PolygonMesh mesh) {
+  Index offset = index * components;
+  Vec3_d pos = mesh.getPointPosition_d(index);  
+  values[offset++] = pos.x;
+  values[offset++] = pos.y;
+  values[offset++] = pos.z;
+  if(components > 3)
+    values[offset] = 1.0;
+}
+
+// gets the points as a Float64 array
+// this is used in the splice integrations
+function PolygonMesh.getPointsAsExternalArray_d!(io Float64 values<>, Size components) {
+  PolygonMesh foo = this;
+  if(values.size() / components >= this.pointCount()) {
+    if(this.pointCount() >= PolygonMesh_ExecuteParallel_Count) {
+      PolygonMesh_getPointsAsExternalArrayTask_d<<<this.pointCount()>>>(values, components, foo);
+    } else {
+      for(Size i=0;i<this.pointCount();i++) {
+        PolygonMesh_getPointsAsExternalArrayTask_d(i, values, components, foo);
+      }
+    }
+  }
+}
+
+operator PolygonMesh_getPointsAsExternalArrayTask(Index index, io Float32 values<>, Size components, io PolygonMesh mesh) {
+  Index offset = index * components;
+  Vec3 pos = mesh.getPointPosition(index);  
+  values[offset++] = pos.x;
+  values[offset++] = pos.y;
+  values[offset++] = pos.z;
+  if(components > 3)
+    values[offset] = 1.0;
+}
+
+// gets the points as a Float32 array
+// this is used in the splice integrations
+function PolygonMesh.getPointsAsExternalArray!(io Float32 values<>, Size components) {
+  PolygonMesh foo = this;
+  if(values.size() / components >= this.pointCount()) {
+    if(this.pointCount() >= PolygonMesh_ExecuteParallel_Count) {
+      PolygonMesh_getPointsAsExternalArrayTask<<<this.pointCount()>>>(values, components, foo);
+    } else {
+      for(Size i=0;i<this.pointCount();i++) {
+        PolygonMesh_getPointsAsExternalArrayTask(i, values, components, foo);
+      }
+    }
+  }
+}
+
+
+operator PolygonMesh_setPointsFromExternalArrayTask_d(Index index, Float64 values<>, Size components, io PolygonMesh mesh) {
+  Index offset = index * components;
+  Vec3_d pos;
+  pos.x = values[offset++];
+  pos.y = values[offset++];
+  pos.z = values[offset++];
+  mesh.setPointPosition(index, pos);
+}
+
+// Sets the points from a Float64 array
+// this is used in the splice integrations
+function PolygonMesh.setPointsFromExternalArray_d!(Float64 values<>, Size components) {
+  PolygonMesh foo = this;
+  Size newSize = (values.size() - values.size() % components) / components;
+  if(newSize != this.pointCount()) {
+    this.clear();
+    // this.beginStructureChanges();
+    this.createPoints(newSize);
+    // this.endStructureChanges();
+  }
+
+  if(this.pointCount() >= PolygonMesh_ExecuteParallel_Count) {
+    PolygonMesh_setPointsFromExternalArrayTask_d<<<this.pointCount()>>>(values, components, foo);
+  } else {
+    for(Size i=0;i<this.pointCount();i++) {
+      PolygonMesh_setPointsFromExternalArrayTask_d(i, values, components, foo);
+    }
+  }
+}
+
+operator PolygonMesh_setPointsFromExternalArrayTask(Index index, Float32 values<>, Size components, io PolygonMesh mesh) {
+  Index offset = index * components;
+  Vec3 pos;
+  pos.x = values[offset++];
+  pos.y = values[offset++];
+  pos.z = values[offset++];
+  mesh.setPointPosition(index, pos);
+}
+
+// Sets the points from a Float32 array
+// this is used in the splice integrations
+function PolygonMesh.setPointsFromExternalArray!(Float32 values<>, Size components) {
+  PolygonMesh foo = this;
+  Size newSize = (values.size() - values.size() % components) / components;
+  if(newSize != this.pointCount()) {
+    this.clear();
+    this.beginStructureChanges();
+    this.createPoints(newSize);
+    this.endStructureChanges();
+  }
+
+  if(this.pointCount() >= PolygonMesh_ExecuteParallel_Count) {
+    PolygonMesh_setPointsFromExternalArrayTask<<<this.pointCount()>>>(values, components, foo);
+  } else {
+    for(Size i=0;i<this.pointCount();i++) {
+      PolygonMesh_setPointsFromExternalArrayTask(i, values, components, foo);
+    }
+  }
+}
+
+// gets the normals as a Float32 array
+// this is used in the splice integrations
+function PolygonMesh.getNormalsAsExternalArray!(io Float32 values<>) {
+  if(values.size() / 3 >= this.polygonPointsCount()) {
+    Size offset = 0;
+    for(Size i=0;i<this.polygonCount();i++) {
+      Size count = this.getPolygonSize(i);
+      for(Size j=0;j<count;j++) {
+        Vec3 normal = this.getPolygonPointNormal(i, j);
+        values[offset++] = normal.x;
+        values[offset++] = normal.y;
+        values[offset++] = normal.z;
+      }
+    }
+  }
+}
+
+// gets the normals as a Float64 array
+// this is used in the splice integrations
+function PolygonMesh.getNormalsAsExternalArray_d!(io Float64 values<>) {
+  if(values.size() / 3 >= this.polygonPointsCount()) {
+    Size offset = 0;
+    for(Size i=0;i<this.polygonCount();i++) {
+      Size count = this.getPolygonSize(i);
+      for(Size j=0;j<count;j++) {
+        Vec3 normal = this.getPolygonPointNormal(i, j);
+        values[offset++] = normal.x;
+        values[offset++] = normal.y;
+        values[offset++] = normal.z;
+      }
+    }
+  }
+}
+
+// Sets the Normals from a Float32 array
+// this is used in the splice integrations
+function PolygonMesh.setNormalsFromExternalArray!(Float32 values<>) {
+  Size sampleCount = (values.size() - values.size() % 3) / 3;
+  if(sampleCount != this.polygonPointsCount())
+  {
+    setError("setNormalsFromExternalArray: sampleCount doesn't match! ("+sampleCount+" vs. "+this.polygonPointsCount()+").");
+    return;
+  }
+
+  Size offset = 0;
+  Ref<Vec3Attribute> attr = this.getOrCreateVec3Attribute( "normals" );
+  for(Size i=0;i<this.polygonCount();i++) {
+    Size count = this.getPolygonSize(i);
+    for(UInt32 j=0;j<count;j++) {
+      Vec3 value;
+      value.x = values[offset++];
+      value.y = values[offset++];
+      value.z = values[offset++];
+
+      this.setPolygonAttribute( i, j, attr, value );
+    }
+  }
+  attr.incrementVersion();
+}
+
+// Sets the Normals from a Float64 array
+// this is used in the splice integrations
+function PolygonMesh.setNormalsFromExternalArray_d!(Float64 values<>) {
+  Size sampleCount = (values.size() - values.size() % 3) / 3;
+  if(sampleCount != this.polygonPointsCount())
+  {
+    setError("setNormalsFromExternalArray_d: sampleCount doesn't match! ("+sampleCount+" vs. "+this.polygonPointsCount()+").");
+    return;
+  }
+
+  Size offset = 0;
+  Ref<Vec3Attribute> attr = this.getOrCreateVec3Attribute( "normals" );
+  for(Size i=0;i<this.polygonCount();i++) {
+    Size count = this.getPolygonSize(i);
+    for(UInt32 j=0;j<count;j++) {
+      Vec3 value;
+      value.x = Float32(values[offset++]);
+      value.y = Float32(values[offset++]);
+      value.z = Float32(values[offset++]);
+      this.setPolygonAttribute( i, j, attr, value );
+    }
+  }
+  attr.incrementVersion();
+}
+
+// gets the counts and indices as two external arrays
+function PolygonMesh.getTopologyAsCountsIndicesExternalArrays!(io UInt32 counts<>, io UInt32 indices<>) {
+  Size countOffset = 0;
+  Size indexOffset = 0;
+
+  if(counts.size() >= this.polygonCount() && indices.size() >= this.polygonPointsCount()) {
+    LocalIndexArray vertices;
+    for(Size i=0;i<this.polygonCount();i++) {
+      this.getPolygonPoints(i, vertices);
+      counts[countOffset++] = vertices.size();
+      for(UInt32 j=0;j<vertices.size();j++) {
+        indices[indexOffset++] = vertices.get(j);
+      }
+    }
+  }
+}
+
+// sets the topology from two external arrays representing counts and indices
+function PolygonMesh.setTopologyFromCountsIndicesExternalArrays!(UInt32 counts<>, UInt32 indices<>) {
+  this.addPolygons(counts, indices);
+}
+
+// gets the counts and indices as a combined external array
+function PolygonMesh.getTopologyAsCombinedExternalArray!(io UInt32 indices<>) {
+  Size offset = 0;
+  if(indices.size() >= this.polygonCount() + this.polygonPointsCount()) {
+    LocalIndexArray vertices;
+    for(Size i=0;i<this.polygonCount();i++) {
+      this.getPolygonPoints(i, vertices);
+      indices[offset++] = vertices.size();
+      for(UInt32 j=0;j<vertices.size();j++) {
+        indices[offset++] = vertices.get(j);
+      }
+    }
+  }
+}
+
+
+// sets the topology from one external array interleaving counts and indices
+function PolygonMesh.setTopologyFromCombinedExternalArray!(UInt32 indices<>) {
+  this.beginStructureChanges();
+
+  LocalIndexArray indexArray;
+  for( UInt32 ptIndexIter = 0; ptIndexIter < indices.size(); ) {
+    UInt32 polSize = indices[ptIndexIter++];
+    indexArray.resize(0);
+    for( Size j = 0; j < polSize; ++j )
+      indexArray.push( indices[ptIndexIter++] );
+    this.addPolygon( indexArray );
+  }
+
+  this.endStructureChanges();
+}
+
+// returns true if the PolygonMesh has uvs (stored as a Vec2 attribute named 'uvs0')
+function Boolean PolygonMesh.hasUVs() {
+  GeometryAttributes attributes = this.getAttributes();
+  return attributes.has('uvs0');
+}
+
+// Gets the UVs as a Float32 array
+// this is used in the splice integrations
+function PolygonMesh.getUVsAsExternalArray?(io Float32 values<>, Size components) {
+  Size sampleCount = (values.size() - values.size() % components) / components;
+  if(sampleCount != this.polygonPointsCount())
+  {
+    setError("getUVsAsExternalArray: sampleCount doesn't match! ("+sampleCount+" vs. "+this.polygonPointsCount()+").");
+    return;
+  }
+  if(!this.hasUVs())
+    return;
+
+  Size offset = 0;
+  Ref<Vec2Attribute> attr = this.getAttribute( "uvs0", Vec2Attribute );
+  for(Size i=0;i<this.polygonCount();i++) {
+    Size count = this.getPolygonSize(i);
+    for(UInt32 j=0;j<count;j++) {
+      Size index = this.getPolygonAttributeIndex(i, j);
+      Vec2 value = attr.values[index];
+      values[offset++] = value.x;
+      values[offset++] = value.y;
+      if(components == 3)
+        values[offset++] = 0.0;
+    }
+  }
+}
+
+// Sets the UVs from a Float32 array
+// this is used in the splice integrations
+function PolygonMesh.setUVsFromExternalArray!(Float32 values<>, Size components) {
+  Size sampleCount = (values.size() - values.size() % components) / components;
+  if(sampleCount != this.polygonPointsCount())
+  {
+    setError("setUVsFromExternalArray: sampleCount doesn't match! ("+sampleCount+" vs. "+this.polygonPointsCount()+").");
+    return;
+  }
+
+  Size offset = 0;
+  Ref<Vec2Attribute> attr = this.getOrCreateVec2Attribute( "uvs0" );
+  for(Size i=0;i<this.polygonCount();i++) {
+    Size count = this.getPolygonSize(i);
+    for(UInt32 j=0;j<count;j++) {
+      Vec2 value;
+      value.x = values[offset++];
+      value.y = values[offset++];
+
+      this.setPolygonAttribute( i, j, attr, value );
+      offset += components - 2;
+    }
+  }
+  attr.incrementVersion();
+}
+
+// returns true if the PolygonMesh has vertexColors (stored as a Color attribute named 'vertexColors')
+function Boolean PolygonMesh.hasVertexColors() {
+  GeometryAttributes attributes = this.getAttributes();
+  return attributes.has('vertexColors');
+}
+
+// Gets the VertexColors as a Float32 array
+// this is used in the splice integrations
+function PolygonMesh.getVertexColorsAsExternalArray!(io Float32 values<>, Size components) {
+  Size sampleCount = (values.size() - values.size() % components) / components;
+  if(sampleCount != this.polygonPointsCount())
+  {
+    setError("getVertexColorsAsExternalArray: sampleCount doesn't match! ("+sampleCount+" vs. "+this.polygonPointsCount()+").");
+    return;
+  }
+  if(!this.hasVertexColors())
+    return;
+
+  Size offset = 0;
+  Ref<ColorAttribute> attr = this.getAttribute( "vertexColors", ColorAttribute );
+  for(Size i=0;i<this.polygonCount();i++) {
+    Size count = this.getPolygonSize(i);
+    for(UInt32 j=0;j<count;j++) {
+      Size index = this.getPolygonAttributeIndex(i, j);
+      Color value = attr.values[index];
+      values[offset++] = value.r;
+      values[offset++] = value.g;
+      values[offset++] = value.b;
+      if(components == 4)
+        values[offset++] = value.a;
+    }
+  }
+}
+
+// Sets the VertexColors from a Float32 array
+// this is used in the splice integrations
+function PolygonMesh.setVertexColorsFromExternalArray!(Float32 values<>, Size components) {
+  Size sampleCount = (values.size() - values.size() % components) / components;
+  if(sampleCount != this.polygonPointsCount()) {
+    setError("setVertexColorsFromExternalArray: sampleCount doesn't match! ("+sampleCount+" vs. "+this.polygonPointsCount()+").");
+    return;
+  }
+
+  Size offset = 0;
+  Ref<ColorAttribute> attr = this.getOrCreateColorAttribute( "vertexColors" );
+  for(Size i=0;i<this.polygonCount();i++) {
+    Size count = this.getPolygonSize(i);
+    for(UInt32 j=0;j<count;j++) {
+      Color value;
+      value.r = values[offset++];
+      value.g = values[offset++];
+      value.b = values[offset++];
+      if(components == 4)
+        value.a = values[offset++];
+
+      this.setPolygonAttribute( i, j, attr, value );
+    }
+  }
+  attr.incrementVersion();
+}
+
+
+function Boolean PolygonMesh.getMeshExternalArrayForArnold(
+  io Boolean hasuv,
+  io UInt32 nsides<>,
+  io UInt32 vidxs<>,
+  io UInt32 nidxs<>,
+  io UInt32 uvidxs<>,
+  io Float32 nlist<>,
+  io Float32 vlist<>,
+  io Float32 uvlist<>)
+{
+  Vec2 uv;
+  UInt32 offset_ndixs, offset_vidxs, offset_nidxs, offset_vlist, offset_uvlist;
+
+  hasuv = this.hasUVs();
+  Ref<Vec2Attribute> attrUVs = null;
+  if(hasuv) 
+    attrUVs = this.getAttribute("uvs0", Vec2Attribute);
+
+  // Get the nsides, vidxs, nidxs, nlist and the uvs
+  for(Size i=0; i<this.polygonCount(); ++i) {
+    LocalIndexArray vertices;
+    this.getPolygonPoints(i, vertices);
+    nsides[i] = vertices.size();
+    UInt32 count = this.getPolygonSize(i);
+
+    for(Size j=0;j<count; ++j) {
+      nidxs[offset_ndixs] = offset_ndixs;
+      uvidxs[offset_ndixs] = offset_ndixs;
+      ++offset_ndixs;
+      vidxs[offset_vidxs++] = vertices.get(j);
+
+      Vec3 normal = this.getPolygonPointNormal(i, j);
+      nlist[offset_nidxs++] = normal.x;
+      nlist[offset_nidxs++] = normal.y;
+      nlist[offset_nidxs++] = normal.z;
+
+      if(hasuv) {
+        uv = attrUVs.values[this.getPolygonAttributeIndex(i, j)];
+        uvlist[offset_uvlist++] = uv.x;
+        uvlist[offset_uvlist++] = uv.y;
+      }
+    }
+  }
+  
+  // Get the point list
+  for(Size i=0; i<this.pointCount(); ++i) {
+    Vec3 pos = this.getPointPosition(i);  
+    vlist[offset_vlist++] = (pos.x);
+    vlist[offset_vlist++] = (pos.y);
+    vlist[offset_vlist++] = (pos.z);
+  }
+
+  return true;
+} 
+
+// Extracts the cound and indices that enable the raw geometry attribtue data to be indexed.
+// this method is used by the Arnold DSO in Horde. 
+function PolygonMesh.getTopologyCountsAndAttributeIndices(
+  io UInt32 nsides[],
+  io UInt32 attr_idxs[]
+){
+  nsides.resize(this.polygonCount());
+  attr_idxs.resize(0);
+  UInt32 offset_attr_idxs = 0;
+  for(Size i=0; i<this.polygonCount(); ++i) {
+    UInt32 count = this.getPolygonSize(i);
+    nsides[i] = count;
+    attr_idxs.resize(attr_idxs.size + count);
+    for(Size j=0;j<count; ++j) {
+      attr_idxs[offset_attr_idxs++] = this.getPolygonAttributeIndex(i, j);
+    }
+  }
+}
+

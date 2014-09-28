@@ -1,0 +1,97 @@
+
+//
+// BulletSoftBodyCollisionShape
+//
+object BulletSoftBodyCollisionShape : BulletConcaveShape, BulletCollisionShape
+{
+	Data pointer;
+};
+
+function Data BulletSoftBodyCollisionShape.getPointer(){ 
+	return this.pointer; 
+}
+
+function BulletSoftBodyCollisionShape(BulletSoftBody backptr){
+  this.__construct(backptr);
+}
+
+function BulletSoftBodyCollisionShape.__construct!(BulletSoftBody backptr) = 'BulletSoftBodyCollisionShape_construct';
+
+// function BulletSoftBodyCollisionShape(BulletOverlappingPairCache* paircache);
+function ~BulletSoftBodyCollisionShape(){
+	// The BulletSoftBodyCollisionShape is freed by the soft body when it is destroyed, 
+	// so we should not free the memory here. 
+    // this.__destroy();
+}
+
+// function BulletSoftBodyCollisionShape.__destroy() = 'BulletSoftBodyCollisionShape_destroy';
+
+function BulletSoftBodyCollisionShape.getAabb(Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletSoftBodyCollisionShape_getAabb';
+
+////////////////////////////////////////////////
+// From BulletCollisionShape
+
+function BulletSoftBodyCollisionShape.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = 'BulletSoftBodyCollisionShape_calculateLocalInertia';
+
+function BulletSoftBodyCollisionShape.setMargin!(Scalar margin) = 'BulletSoftBodyCollisionShape_setMargin';
+function Scalar	BulletSoftBodyCollisionShape.getMargin() = 'BulletSoftBodyCollisionShape_getMargin';
+
+//
+// BulletSoftClusterCollisionShape
+//
+object BulletSoftClusterCollisionShape : BulletConvexInternalShape, BulletCollisionShape
+{
+	Data pointer;
+};
+
+function Data BulletSoftClusterCollisionShape.getPointer(){ 
+	return this.pointer; 
+}
+
+function BulletSoftClusterCollisionShape(BulletSoftBodyCluster cluster){
+  this.__construct(cluster);
+}
+
+function BulletSoftClusterCollisionShape.__construct!(BulletSoftBodyCluster cluster) = 'BulletSoftClusterCollisionShape_construct';
+
+// function BulletSoftClusterCollisionShape(BulletOverlappingPairCache* paircache);
+function ~BulletSoftClusterCollisionShape(){
+	// The BulletSoftClusterCollisionShape is freed by the soft body when it is destroyed, 
+	// so we should not free the memory here. 
+    // this.__destroy();
+}
+
+// function BulletSoftClusterCollisionShape.__destroy() = 'BulletSoftClusterCollisionShape_destroy';
+
+////////////////////////////////////////////////
+// From BulletCollisionShape
+
+function BulletSoftClusterCollisionShape.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = 'BulletSoftClusterCollisionShape_calculateLocalInertia';
+
+function BulletSoftClusterCollisionShape.setMargin!(Scalar margin) = 'BulletSoftClusterCollisionShape_setMargin';
+function Scalar	BulletSoftClusterCollisionShape.getMargin() = 'BulletSoftClusterCollisionShape_getMargin';
+
+
+
+function Vec3 BulletSoftClusterCollisionShape.localGetSupportingVertex?(in Vec3 vec) = 'BulletSoftClusterCollisionShape_localGetSupportingVertex';
+function Vec3 BulletSoftClusterCollisionShape.localGetSupportingVertexWithoutMargin?(in Vec3 vec) = 'BulletSoftClusterCollisionShape_localGetSupportingVertexWithoutMargin';
+	//notice that the vectors should be unit length
+function BulletSoftClusterCollisionShape.batchedUnitVectorGetSupportingVertexWithoutMargin?(in Vec3 vectors[],Vec3 supportVerticesOut[])
+	{}
+
+
+function BulletSoftClusterCollisionShape.calculateLocalInertia?(Scalar mass, io Vec3 inertia)
+	{}
+
+function BulletSoftClusterCollisionShape.getAabb(in Xfo t, io Vec3 aabbMin, io Vec3 aabbMax)
+	{}
+
+function Integer BulletSoftClusterCollisionShape.getShapeType() { return SOFTBODY_SHAPE_PROXYTYPE; }
+
+	//debugging
+// function String	BulletSoftClusterCollisionShape.getName?();
+
+function BulletSoftClusterCollisionShape.setMargin!(Scalar margin) = 'BulletSoftClusterCollisionShape_setMargin';
+function Scalar	BulletSoftClusterCollisionShape.getMargin() = 'BulletSoftClusterCollisionShape_getMargin';
+
+

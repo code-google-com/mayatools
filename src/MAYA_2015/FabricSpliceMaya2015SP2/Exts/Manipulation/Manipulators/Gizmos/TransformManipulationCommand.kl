@@ -1,0 +1,46 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`TransformManipulationCommand` is used to store a manipulation in 3d and enable the change to be sotred in an undo stack to be undone later. 
+
+*/
+
+
+object TransformManipulationCommand : UndoRedoCommand {
+    InlineTransform targets[];
+    Xfo oldValues[][];
+    Xfo newValues[][];
+};
+
+function TransformManipulationCommand(InlineTransform targets[]){
+    this.targets = targets;
+    this.oldValues.resize(this.targets.size);
+    this.newValues.resize(this.targets.size);
+    for(Integer i=0; i<this.targets.size; i++){
+        this.oldValues[i].resize(this.targets[i].getGlobalCount());
+        this.newValues[i].resize(this.targets[i].getGlobalCount());
+        for(Integer j=0; j<this.targets[i].getGlobalCount(); j++){
+            this.oldValues[i][j] = this.targets[i].getGlobalXfo(j);
+        }
+    }
+}
+
+function TransformManipulationCommand.doAction!(){
+    for(Integer i=0; i<this.targets.size; i++){
+        for(Integer j=0; j<this.targets[i].getGlobalCount(); j++){
+            this.targets[i].setGlobalXfo(j, this.newValues[i][j]);
+        }
+    }
+}
+
+function TransformManipulationCommand.undoAction!(){
+    for(Integer i=0; i<this.targets.size; i++){
+        for(Integer j=0; j<this.targets[i].getGlobalCount(); j++){
+            this.targets[i].setGlobalXfo(j, this.oldValues[i][j]);
+        }
+    }
+}

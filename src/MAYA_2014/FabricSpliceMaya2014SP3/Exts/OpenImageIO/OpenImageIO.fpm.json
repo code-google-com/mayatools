@@ -1,0 +1,14 @@
+{
+  "libs": [
+    "OpenImageIO"
+  ],
+  "code": [
+    "OpenImageTypeDesc.kl",
+    "OpenImageSpec.kl",
+    "OpenImageDeepData.kl",
+    "OpenImageInput.kl",
+    "OpenImageOutput.kl",
+    "OpenImageROI.kl",
+    "OpenImageBuf.kl"
+  ]
+}

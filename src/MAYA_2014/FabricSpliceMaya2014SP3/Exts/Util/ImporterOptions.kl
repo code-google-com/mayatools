@@ -1,0 +1,182 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+struct ImporterOptions {
+  String boolKey[];
+  Boolean boolValue[];
+  String scalarKey[];
+  Scalar scalarValue[];
+  String intKey[];
+  Integer intValue[];
+  String stringKey[];
+  String stringValue[];
+};
+
+function Boolean ImporterOptions.hasBoolOption(String key) {
+  for(Size i=0;i<this.boolKey.size();i++) {
+    if(this.boolKey[i] == key)
+      return true;
+  }
+  return false;
+}
+
+function Boolean ImporterOptions.getBoolOption(String key, Boolean defaultValue) {
+  for(Size i=0;i<this.boolKey.size();i++) {
+    if(this.boolKey[i] == key)
+      return this.boolValue[i];
+  }
+  return defaultValue;
+}
+
+function Boolean ImporterOptions.getBoolOption(String key) {
+  return this.getBoolOption(key, false);
+}
+
+function ImporterOptions.setBoolOption!(String key, Boolean value) {
+  for(Size i=0;i<this.boolKey.size();i++) {
+    if(this.boolKey[i] == key) {
+      this.boolValue[i] = value;
+      return;
+    }
+  }
+  this.boolKey.push(key);
+  this.boolValue.push(value);
+}
+
+function Boolean ImporterOptions.hasScalarOption(String key) {
+  for(Size i=0;i<this.scalarKey.size();i++) {
+    if(this.scalarKey[i] == key)
+      return true;
+  }
+  return false;
+}
+
+function Scalar ImporterOptions.getScalarOption(String key, Scalar defaultValue) {
+  for(Size i=0;i<this.scalarKey.size();i++) {
+    if(this.scalarKey[i] == key)
+      return this.scalarValue[i];
+  }
+  return defaultValue;
+}
+
+function Scalar ImporterOptions.getScalarOption(String key) {
+  return this.getScalarOption(key, 0.0);
+}
+
+function ImporterOptions.setScalarOption!(String key, Scalar value) {
+  for(Size i=0;i<this.scalarKey.size();i++) {
+    if(this.scalarKey[i] == key) {
+      this.scalarValue[i] = value;
+      return;
+    }
+  }
+  this.scalarKey.push(key);
+  this.scalarValue.push(value);
+}
+
+function Boolean ImporterOptions.hasIntOption(String key) {
+  for(Size i=0;i<this.intKey.size();i++) {
+    if(this.intKey[i] == key)
+      return true;
+  }
+  return false;
+}
+
+function Integer ImporterOptions.getIntOption(String key, Integer defaultValue) {
+  for(Size i=0;i<this.intKey.size();i++) {
+    if(this.intKey[i] == key)
+      return this.intValue[i];
+  }
+  return defaultValue;
+}
+
+function Integer ImporterOptions.getIntOption(String key) {
+  return this.getIntOption(key, 0);
+}
+
+function ImporterOptions.setIntOption!(String key, Integer value) {
+  for(Size i=0;i<this.intKey.size();i++) {
+    if(this.intKey[i] == key) {
+      this.intValue[i] = value;
+      return;
+    }
+  }
+  this.intKey.push(key);
+  this.intValue.push(value);
+}
+
+function Boolean ImporterOptions.hasStringOption(String key) {
+  for(Size i=0;i<this.stringKey.size();i++) {
+    if(this.stringKey[i] == key)
+      return true;
+  }
+  return false;
+}
+
+function Boolean ImporterOptions.hasStringOption(String key, String value) {
+  for(Size i=0;i<this.stringKey.size();i++) {
+    if(this.stringKey[i] == key)
+      return this.stringValue[i] == value;
+  }
+  return false;
+}
+
+function Boolean ImporterOptions.matchesFilter(String key, String value) {
+  String match = this.getStringOption(key, value);
+  Boolean result = match == value;
+  if(result)
+    return true;
+  Integer filterCount = this.getIntOption(key+'Count', 1);
+  for(Size i=1;i<filterCount;i++) {
+    match = this.getStringOption(key+i, value);
+    result = match == value;
+    if(result)
+      return true;
+  }
+  return false;
+}
+
+function String ImporterOptions.getStringOption(String key, String defaultValue) {
+  for(Size i=0;i<this.stringKey.size();i++) {
+    if(this.stringKey[i] == key)
+      return this.stringValue[i];
+  }
+  return defaultValue;
+}
+
+function String ImporterOptions.getStringOption(String key) {
+  return this.getStringOption(key, "");
+}
+
+function ImporterOptions.setStringOption!(String key, String value) {
+  for(Size i=0;i<this.stringKey.size();i++) {
+    if(this.stringKey[i] == key) {
+      this.stringValue[i] = value;
+      return;
+    }
+  }
+  this.stringKey.push(key);
+  this.stringValue.push(value);
+}
+
+
+
+function ImporterOptions ImporterOptions.clone() {
+  ImporterOptions cloned;
+  cloned.boolKey = this.boolKey.clone();
+  cloned.boolValue = this.boolValue.clone();
+
+  cloned.scalarKey = this.scalarKey.clone();
+  cloned.scalarValue = this.scalarValue.clone();
+
+  cloned.intKey = this.intKey.clone();
+  cloned.intValue = this.intValue.clone();
+
+  cloned.stringKey = this.stringKey.clone();
+  cloned.stringValue = this.stringValue.clone();
+
+  return cloned;
+}
+

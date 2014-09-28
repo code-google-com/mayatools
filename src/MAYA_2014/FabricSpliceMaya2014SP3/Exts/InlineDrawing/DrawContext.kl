@@ -1,0 +1,55 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`drawcontext` is used to provide contextual information during a custom draw. Please see the :ref:`oglinlinedrawing` for an example of this.
+/*/
+
+require Math;
+
+object DrawContext {
+  InlineViewport viewport;
+
+  Mat44 projectionMat;
+  Mat44 viewMat;
+  Mat33 invViewMat;
+
+  // I don't think the following are used anywhere, 
+  Vec3 lightPositions[];
+  Color lightColors[];
+
+  // A cached used to propagate data down the drawing stack.
+  Ref<Object> _objects[];
+  Size _objectOffsets[String];
+};
+
+function DrawContext(){
+  this.viewport = InlineViewport();
+}
+
+function InlineViewport DrawContext.getViewport(){
+  return this.viewport;
+}
+
+
+// Store an arbitrary object inside the DrawContext for later use
+inline DrawContext.storeObject!(String name, Object obj) {
+  Size offset = this._objectOffsets.get(name, this._objects.size());
+  if(offset == this._objects.size()) {
+    this._objectOffsets[name] = offset;
+    this._objects.push(obj);
+  } else {
+    this._objects[offset] = obj;
+  }
+}
+
+// Query an arbitrary object from the DrawContext
+inline Object DrawContext.getObject(String name) {
+  Size offset = this._objectOffsets.get(name, this._objects.size());
+  if(offset < this._objects.size())
+    return this._objects[offset];
+  return null;
+}

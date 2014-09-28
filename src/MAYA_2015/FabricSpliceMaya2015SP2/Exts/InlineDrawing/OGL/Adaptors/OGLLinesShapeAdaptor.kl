@@ -1,0 +1,82 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`ogllinesshapeadaptor` implements the :ref:`inlineshapeadaptor` interface. It is used to draw a :ref:`inlinelinesshape` within an OpenGL viewport.
+*/
+
+require RTR;
+
+object OGLLinesShapeAdaptor : InlineShapeAdaptor {
+};
+
+// default constructor
+function OGLLinesShapeAdaptor() {}
+
+// returns the types this adaptor is capable of drawing
+function String[] OGLLinesShapeAdaptor.getShapeTypes() {
+  String result[];
+  result.push('InlineLinesShape');
+  return result;
+}
+
+// draws the lines to the screen. this is used by the 
+// InlineInstance, and should not be called manually.
+function Boolean OGLLinesShapeAdaptor._draw!(io DrawContext context, io Ref<InlineShape> shape, Index index, Size count) {
+
+  // access the lines shape
+  InlineLinesShape linesShape = shape;
+  Lines lines = linesShape.getLines();
+  OGLBufferDictionary buffers = linesShape.getMetaData('buffers');
+  if(buffers == null) {
+    buffers = OGLBufferDictionary();
+    linesShape.setMetaData('buffers', buffers);
+  }
+
+  if(lines.indices.size() == 0)
+    return true;
+
+  if(index == 0)
+  {
+    InlineShader shader = context.getObject('currentShader');
+    _OGLShape_updateGeometryAttributeBuffers(context, buffers, lines.getAttributes());
+
+    if(buffers.getVersion('topology') != lines.version) {
+      OGLBuffer buffer = buffers.get('topology');
+      if(buffer == null) {
+        buffer = OGLBuffer();
+        buffer.bufferType = GL_ARRAY_BUFFER;
+        buffer.bufferUsage = GL_STATIC_DRAW;
+        buffers.set('topology', buffer);
+      }
+      if( buffer.bufferID )
+        buffer.bufferUsage = GL_DYNAMIC_DRAW;//Loaded at least 2 times: lazily upgrade to "dynamic"
+
+      buffer.bufferElementComponentType = GL_UNSIGNED_INT;
+
+      buffer.genBuffer(lines.indices.data(), lines.indices.dataSize(), lines.indices.size());
+
+      buffers.setVersion('topology', lines.version);
+    }
+  }
+    
+  OGLBuffer buffer = buffers.get('topology');
+  if(buffer == null)
+    return false;
+
+  if(index == 0)
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.bufferID);
+
+  glLineWidth(linesShape.getLineWidth());
+
+  Data NULL;
+  glDrawElements(GL_LINES, buffer.elementCount, buffer.bufferElementComponentType, NULL);
+
+  if(index == count - 1)
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+  return true;
+}

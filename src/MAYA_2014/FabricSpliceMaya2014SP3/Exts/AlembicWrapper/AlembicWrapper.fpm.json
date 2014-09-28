@@ -1,0 +1,25 @@
+{
+  "code": [
+    "AlembicSampleInfo.kl",
+    "AlembicObjectWriter.kl",
+    "AlembicObjectReader.kl",
+    "AlembicXformWriter.kl",
+    "AlembicXformReader.kl",
+    "AlembicCameraWriter.kl",
+    "AlembicCameraReader.kl",
+    "AlembicGeometryParamWriter.kl",
+    "AlembicGeometryParamReader.kl",
+    "AlembicGeometryAttributesWriter.kl",
+    "AlembicGeometryAttributesReader.kl",
+    "AlembicPointsWriter.kl",
+    "AlembicPointsReader.kl",
+    "AlembicPolyMeshWriter.kl",
+    "AlembicPolyMeshReader.kl",
+    "AlembicSubDWriter.kl",
+    "AlembicSubDReader.kl",
+    "AlembicCurvesWriter.kl",
+    "AlembicCurvesReader.kl",
+    "AlembicArchiveWriter.kl",
+    "AlembicArchiveReader.kl"
+  ]
+}

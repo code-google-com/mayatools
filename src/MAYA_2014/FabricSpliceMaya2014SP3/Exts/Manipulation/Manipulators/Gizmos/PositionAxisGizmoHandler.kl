@@ -1,0 +1,84 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`PositionAxisGizmoHandler` converts mouse events into translation along a predefined axis.
+
+
+*/
+
+require InlineDrawing;
+
+
+
+object PositionAxisGizmoHandler : GizmoHandler {
+  Ref<InlineInstance> owner; // The instance that owns the handler. Note: weak ref so the owner is not kept alive by the handler
+  Vec3 manipulationVector;
+  InlineTransform targets[];
+
+  Boolean dragging;
+  Vec3 p1, p2;
+  Vec3 hitPointStart;
+  Vec2 limits;
+
+  GizmoManipulationCallback callback;
+};
+
+function PositionAxisGizmoHandler(InlineInstance owner, Vec3 manipulationVector, GizmoManipulationCallback callback){
+    this.owner = owner;
+    this.owner.setMetaData('gizmoHandler', this);
+    this.manipulationVector = manipulationVector;
+    this.limits.set(BIGSCALAR_NEGATIVE, BIGSCALAR_POSITIVE);
+    this.callback = callback;
+}
+
+function PositionAxisGizmoHandler.onEvent!(io MouseEvent event){
+    if(event.eventType() == Event_MouseButtonPress){
+        MouseEvent mouseEvent = event;
+
+        // On MouseMove/Mousedown.
+        if(mouseEvent.button == MouseButton_LeftButton){
+            
+            Ray ray = event.getViewport().calcRayFromScreenPos(event.pos);
+            Xfo xfo = this.owner.getTransform().getGlobalXfo(0);
+            this.p1 = xfo.tr;
+            this.p2  = this.p1 + xfo.ori.rotateVector(this.manipulationVector);
+
+            Vec2 params = ray.intersectLine(this.p1, this.p2);
+            this.hitPointStart = this.p1 + ((this.p2 - this.p1).unit() * params.y);
+            this.dragging = true;
+
+            this.callback.onDragBegin(mouseEvent);
+            event.accept();
+        }
+    }
+    else if(event.eventType() == Event_MouseMove){
+        MouseEvent mouseEvent = event;
+        // On drag
+        if(this.dragging){
+            Ray ray = event.getViewport().calcRayFromScreenPos(event.pos);
+            Vec2 params = ray.intersectLine(this.p1, this.p2);
+
+            Vec3 hitPoint2 = this.p1 + ((this.p2 - this.p1).unit() * params.y);
+            Xfo delta();
+            delta.tr = hitPoint2 - this.hitPointStart;
+            
+            this.callback.onDrag(mouseEvent, Xfo(), delta, ManipulationMode_Position);
+            event.accept();
+        }
+    }
+    else if(event.eventType() == Event_MouseButtonRelease){
+        MouseEvent mouseEvent = event;
+        // On release
+        if(this.dragging){
+            this.dragging = false;
+            this.callback.onDragEnd(mouseEvent);
+            event.accept();
+        }
+    }
+}
+
+

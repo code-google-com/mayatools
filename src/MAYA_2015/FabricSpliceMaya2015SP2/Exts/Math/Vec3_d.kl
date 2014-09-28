@@ -1,0 +1,424 @@
+
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+/*SPHINX-description
+The :ref:`vec3` type represents a vector with 3 components. The :ref:`vec3` is also used as the row type for the :ref:`mat33`.
+
+Example
+---------
+
+.. code-block:: js
+
+    Vec3 v(0.0, 0.0, 0.0);
+*/
+
+struct Vec3_d
+{
+  Float64 x;
+  Float64 y;
+  Float64 z;
+};
+
+
+// constructor from scalar components
+inline Vec3_d(Float64 x, Float64 y, Float64 z) {
+  this.set(x, y, z);
+}
+
+// constructor from a Vec3
+/*inline Vec3_d(Vec3 v) {
+  this.set(v);
+}*/
+
+// setter from scalar components
+inline Vec3_d Vec3_d.set!(Float64 x, Float64 y, Float64 z) {
+  this.x = x;
+  this.y = y;
+  this.z = z;
+  return this;
+}
+
+// setter from another vector
+inline Vec3_d Vec3_d.set!(Vec3_d v) {
+  this.x = v.x;
+  this.y = v.y;
+  this.z = v.z;
+  return this;
+}
+
+// setter from a Vec3
+inline Vec3_d Vec3_d.set!(Vec3 v) {
+  this.x = v.x;
+  this.y = v.y;
+  this.z = v.z;
+  return this;
+}
+
+// setter from (standard/external) float32 array and an offset
+inline Vec3_d.set!(Float32 v<>, UInt32 o) {
+  if(v.size() >= 3 + o) {
+    this.x = v[o + 0];
+    this.y = v[o + 1];
+    this.z = v[o + 2];
+  }
+}
+
+// getter as external float32 array and an offset
+inline Vec3_d.get(io Float32 v<>, UInt32 o) {
+  if(v.size() >= 3 + o) {
+    v[o + 0] = Float32(this.x);
+    v[o + 1] = Float32(this.y);
+    v[o + 2] = Float32(this.z);
+  }
+}
+
+// getter as float32 array and an offset
+inline Vec3_d.get(io Float32 v[], UInt32 o) {
+  if(v.size() < 3 + o)
+    v.resize(3 + o);
+  v[o + 0] = Float32(this.x);
+  v[o + 1] = Float32(this.y);
+  v[o + 2] = Float32(this.z);
+}
+
+// setter from (standard/external) float64 array and an offset
+inline Vec3_d.set!(Float64 v<>, UInt32 o) {
+  if(v.size() >= 3 + o) {
+    this.x = v[o + 0];
+    this.y = v[o + 1];
+    this.z = v[o + 2];
+  }
+}
+
+// getter as external float64 array and an offset
+inline Vec3_d.get(io Float64 v<>, UInt32 o) {
+  if(v.size() >= 3 + o) {
+    v[o + 0] = this.x;
+    v[o + 1] = this.y;
+    v[o + 2] = this.z;
+  }
+}
+
+// getter as float64 array and an offset
+inline Vec3_d.get(io Float64 v[], UInt32 o) {
+  if(v.size() < 3 + o)
+    v.resize(3 + o);
+  v[o + 0] = this.x;
+  v[o + 1] = this.y;
+  v[o + 2] = this.z;
+}
+
+// setter from (standard/external) float32 array
+inline Vec3_d.set!(Float32 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float32 array
+inline Vec3_d.get(io Float32 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float32 array
+inline Vec3_d.get(io Float32 v[]) {
+  this.get(v, 0);
+}
+
+// setter from (standard/external) float64 array
+inline Vec3_d.set!(Float64 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float64 array
+inline Vec3_d.get(io Float64 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float64 array
+inline Vec3_d.get(io Float64 v[]) {
+  this.get(v, 0);
+}
+
+// sets all components of this vec to 0.0
+inline Vec3_d.setNull!() {
+  this.x = this.y = this.z = 0.0;
+}
+
+inline Vec3 Vec3_d.toVec3() {
+  return Vec3( Scalar(this.x), Scalar(this.y), Scalar(this.z) );
+}
+
+// returns true if this vector is the same as another one
+inline Boolean Vec3_d.equal(in Vec3_d other) {
+  return this.x == other.x && this.y == other.y && this.z == other.z;
+}
+
+// returns true if this vector is the same as another one
+// (given a precision)
+inline Boolean Vec3_d.almostEqual(in Vec3_d other, in Float64 precision) {
+  return
+      (abs(this.x - other.x) < precision) &&
+      (abs(this.y - other.y) < precision) &&
+      (abs(this.z - other.z) < precision);
+}
+
+// returns true if this vector is the same as another one
+// (using a default precision)
+inline Boolean Vec3_d.almostEqual(in Vec3_d other) {
+  return this.almostEqual(other, DOUBLEPRECISION);
+}
+
+// returns the component of this vector by index
+inline Float64 Vec3_d.component( Size i ) {
+  if(i == 0)
+    return this.x;
+  else if(i == 1)
+    return this.y;
+  else
+    return this.z;
+}
+
+// sets the component of this vector by index
+inline Vec3_d.setComponent!( Size i, Float64 v ) {
+  if(i == 0)
+    this.x = v;
+  else if(i == 1)
+    this.y = v;
+  else
+    this.z = v;
+}
+
+// equals operator
+inline Boolean == (Vec3_d a, Vec3_d b) {
+  return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+
+// not equals operator
+inline Boolean != (Vec3_d a, Vec3_d b) {
+  return a.x != b.x || a.y != b.y || a.z != b.z;
+}
+
+// unary -
+inline Vec3_d -Vec3_d() {
+  return Vec3_d(-this.x, -this.y, -this.z);
+}
+
+// adds to vectors
+inline Vec3_d + (Vec3_d a, Vec3_d b) {
+  return vecAdd(a, b);
+}
+
+// adds a vector to this one
+inline Vec3_d. += (Vec3_d other) {
+  this = this + other;
+}
+
+// subtracts two vectors
+inline Vec3_d - (Vec3_d a, Vec3_d b) {
+  return vecSub(a, b);
+}
+
+// subtracts a vector from this one
+inline Vec3_d. -= (Vec3_d other) {
+  this = this - other;
+}
+
+// multiplies a scalar and a vector
+inline Vec3_d * (Float64 a, Vec3_d b) {
+  return vecMul(a, b);
+}
+
+// multiplies a vector and a scalar
+inline Vec3_d * (Vec3_d a, Float64 b) {
+  return vecMul(a, b);
+}
+
+// multiplies two vectors
+inline Vec3_d * (Vec3_d a, Vec3_d b) {
+  return vecMul(a, b);
+}
+
+// multiplies this vector with a scalar
+inline Vec3_d. *= (Float64 other) {
+  this = this * other;
+}
+
+// multiplies this vector with another one
+inline Vec3_d. *= (Vec3_d other) {
+  this = this * other;
+}
+
+// divides two vectors
+inline Vec3_d / (Vec3_d a, Vec3_d b) {
+  if( Math_badDivisor( b.x ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( b.x, "Vec3_d.divide: b.x" );
+  if( Math_badDivisor( b.y ) )
+    Math_reportBadDivisor( b.y, "Vec3_d.divide: b.y" );
+  if( Math_badDivisor( b.z ) )
+    Math_reportBadDivisor( b.z, "Vec3_d.divide: b.z" );
+  return vecDiv(a, b);
+}
+
+// divides a vector by a scalar
+inline Vec3_d / (Vec3_d a, Float64 b) {
+  if( Math_badDivisor( b ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( b, "Vec3_d.divide" );
+  return vecDiv(a, b);
+}
+
+// divides this vector with a scalar
+inline Vec3_d. /= (Float64 other) {
+  this = this / other;
+}
+
+// divides this vector with another one
+inline Vec3_d. /= (Vec3_d other) {
+  this = this / other;
+}
+
+// overload method for the add operator
+inline Vec3_d Vec3_d.add(Vec3_d other) {
+  return this + other;
+}
+
+// overload method for the subtract operator
+inline Vec3_d Vec3_d.subtract(Vec3_d other) {
+  return this - other;
+}
+
+// overload method for the multiply operator
+inline Vec3_d Vec3_d.multiply(Vec3_d other) {
+  return this * other;
+}
+
+// overload method for the divide operator
+inline Vec3_d Vec3_d.divide(Vec3_d other) {
+  return this / other;
+}
+
+// returns the product of this vector and a scalar
+inline Vec3_d Vec3_d.multiplyScalar(Float64 other) {
+  return this * other;
+}
+
+// returns the division of this vector and a scalar
+inline Vec3_d Vec3_d.divideScalar(Float64 other) {
+  return this / other;
+}
+
+// returns the negated version of this vector
+inline Vec3_d Vec3_d.negate() {
+  return Vec3_d(-this.x, -this.y, -this.z);
+}
+
+// returns the inversed version of this vector
+inline Vec3_d Vec3_d.inverse() {
+  if( Math_badDivisor( this.x ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( this.x, "Vec3_d.inverse: this.x" );
+  if( Math_badDivisor( this.y ) )
+    Math_reportBadDivisor( this.y, "Vec3_d.inverse: this.y" );
+  if( Math_badDivisor( this.z ) )
+    Math_reportBadDivisor( this.z, "Vec3_d.inverse: this.z" );
+  return Vec3_d(1.0/this.x, 1.0/this.y, 1.0/this.z);
+}
+
+// returns the inversed version of this vector
+// by correcting bad components.
+inline Vec3_d Vec3_d.safeInverse() {
+  Vec3_d res;
+  if( !Math_badDivisor( this.x ) )
+    res.x = 1.0 / this.x;
+  if( !Math_badDivisor( this.y ) )
+    res.y = 1.0 / this.y;
+  if( !Math_badDivisor( this.z ) )
+    res.z = 1.0 / this.z;
+  return res;
+}
+
+// returns the dot product of this vector and another one
+inline Float64 Vec3_d.dot(Vec3_d other) {
+  return this.x * other.x + this.y * other.y + this.z * other.z;
+}
+
+// returns the cross product of this vector and another one
+inline Vec3_d Vec3_d.cross(in Vec3_d other) {
+  return Vec3_d(
+    this.y * other.z - this.z * other.y,
+    this.z * other.x - this.x * other.z,
+    this.x * other.y - this.y * other.x
+  );
+}
+
+// returns the squared length of this vector
+inline Float64 Vec3_d.lengthSquared() {
+  return this.dot(this);
+}
+
+// returns the length of this vector
+inline Float64 Vec3_d.length() {
+  return sqrt(this.lengthSquared());
+}
+
+// returns the unit vector of this one
+inline Vec3_d Vec3_d.unit() {
+  Float64 n = this.length();
+  if( Math_badDivisor( n ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( n, "Vec3_d.unit" );
+  return this / n;
+}
+
+inline Vec3_d Vec3_d.unit_safe() {
+  Float64 n = this.length();
+  if( !Math_badDivisor( n ) )//Perf: check first to avoid building the report string
+    return this / n;
+  else
+    return Vec3_d(0,1,0);
+}
+
+// sets this vector to its unit vector
+// and returns its previous length
+inline Float64 Vec3_d.setUnit!() {
+  Float64 n = this.length();
+  if( Math_badDivisor( n ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( n, "Vec3_d.setUnit" );
+  this /= n;
+  return n;
+}
+
+// clamps this vector per component by 
+// a min and max vector
+inline Vec3_d Vec3_d.clamp(in Vec3_d min, in Vec3_d max) {
+  return Vec3_d(
+    (this.x < min.x ? min.x : (this.x > max.x ? max.x : this.x)),
+    (this.y < min.y ? min.y : (this.y > max.y ? max.y : this.y)),
+    (this.z < min.z ? min.z : (this.z > max.z ? max.z : this.z))
+  );
+}
+
+// returns the angle (in radians) of this vector
+// to another one
+//Note: expects both vectors to be units (else use angleTo)
+inline Float64 Vec3_d.unitsAngleTo(in Vec3_d other) {
+  Float64 acosAngle = Math_clamp(this.dot(other), -1.0, 1.0);
+  return acos(acosAngle);
+}
+
+// returns the angle (in radians) of this vector
+// to another one
+inline Float64 Vec3_d.angleTo(in Vec3_d other) {
+  return this.unit().unitsAngleTo(other.unit());
+}
+
+// returns the distance of this vector to another one
+inline Float64 Vec3_d.distanceTo(in Vec3_d other) {
+  return (this - other).length();
+}
+
+// linearly interpolates this vector with another one
+// based on a scalar blend value (0.0 to 1.0)
+inline Vec3_d Vec3_d.linearInterpolate(in Vec3_d other, in Float64 t) {
+  return this + ((other - this) * t);
+}
+
+
+

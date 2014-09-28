@@ -1,0 +1,26 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+///ConvexPenetrationDepthSolver provides an interface for penetration depth calculation.
+interface BulletConvexPenetrationDepthSolver
+{
+	Data getPointer();
+
+	// Boolean calcPenDepth( 
+	// 	io BulletSimplexSolverInterface simplexSolver, 
+	// 	in BulletConvexShape convexA,
+	// 	in BulletConvexShape convexB,
+	// 	in Xfo transA,
+	// 	in Xfo transB,
+	// 	io Vec3 v,
+	// 	io Vec3 pa,
+	// 	io Vec3 pb/*,
+	// 	io BulletIDebugDraw debugDraw,
+	// 	io BulletStackAlloc stackAlloc
+	// 	*/
+	// 	);
+};
+

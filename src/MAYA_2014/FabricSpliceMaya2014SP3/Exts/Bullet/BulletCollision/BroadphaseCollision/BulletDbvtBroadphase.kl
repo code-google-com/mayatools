@@ -1,0 +1,107 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+
+// //
+// // BulletDbvtProxy
+// //
+// object BulletDbvtProxy : BulletBroadphaseProxy
+// {
+//  /* Fields     */ 
+//  //BulletDbvtAabbMm  aabb;
+//  BulletDbvtNode*     leaf;
+//  BulletDbvtProxy*    links[2];
+//  Integer          stage;
+//  /* ctor        */ 
+//  BulletDbvtProxy(in Vec3 aabbMin,in Vec3 aabbMax,Object userPtr,SInt16 collisionFilterGroup, SInt16 collisionFilterMask) :
+//  BulletBroadphaseProxy(aabbMin,aabbMax,userPtr,collisionFilterGroup,collisionFilterMask)
+//  {
+//      links[0]=links[1]=0;
+//  }
+// };
+
+// typedef BulletAlignedObjectArray<BulletDbvtProxy*>   BulletDbvtProxyArray;
+
+///The BulletDbvtBroadphase implements a broadphase using two dynamic AABB bounding volume hierarchies/trees (see BulletDbvt).
+///One tree is used for static/non-moving objects, and another tree is used for dynamic objects. Objects can move from one tree to the other.
+///This is a very fast broadphase, especially for very dynamic worlds where many objects are moving. Its insert/add and remove of objects is generally faster than the sweep and prune broadphases BulletAxisSweep3 and Bullet32BitAxisSweep3.
+object BulletDbvtBroadphase : BulletBroadphaseInterface
+{
+  Data pointer;
+};
+
+function Data BulletDbvtBroadphase.getPointer(){ 
+  return this.pointer; 
+}
+
+    /* Config   */ 
+const Integer DYNAMIC_SET   = 0;  /* Dynamic set index */ 
+const Integer FIXED_SET     =  1;   /* Fixed set index       */ 
+const Integer STAGECOUNT    =  2;   /* Number of stages     */ 
+
+    /* Methods     */ 
+
+// Note: we can't directly override the constructor, so we instead call __construct on construction.
+function BulletDbvtBroadphase( ){
+  this.__construct();
+}
+
+function BulletDbvtBroadphase.__construct!() = 'BulletDbvtBroadphase_construct';
+
+// function BulletDbvtBroadphase(BulletOverlappingPairCache* paircache);
+function ~BulletDbvtBroadphase(){
+    this.__destroy();
+}
+
+function BulletDbvtBroadphase.__destroy!() = 'BulletDbvtBroadphase_destroy';
+// function BulletDbvtBroadphase.collide(BulletDispatcher* dispatcher);
+// function BulletDbvtBroadphase.optimize();
+
+/* BulletBroadphaseInterface Implementation */
+// function BulletBroadphaseProxy*  BulletDbvtBroadphase.createProxy(in Vec3 aabbMin,in Vec3 aabbMax,Integer shapeType,Object userPtr,SInt16 collisionFilterGroup,SInt16 collisionFilterMask,BulletDispatcher* dispatcher,Object multiSapProxy);
+// function BulletDbvtBroadphase.destroyProxy(BulletBroadphaseProxy* proxy,BulletDispatcher* dispatcher);
+// function BulletDbvtBroadphase.setAabb(BulletBroadphaseProxy* proxy,in Vec3 aabbMin,in Vec3 aabbMax,BulletDispatcher* dispatcher);
+// function BulletDbvtBroadphase.rayTest(in Vec3 rayFrom,in Vec3 rayTo, BulletBroadphaseRayCallback& rayCallback, in Vec3 aabbMin=Vec3(0,0,0), in Vec3 aabbMax = Vec3(0,0,0));
+function BulletDbvtBroadphase.aabbTest?(Vec3 aabbMin, Vec3 aabbMax, BulletBroadphaseAabbCallback callback){
+  // TODO: Once the builtin bullet Aabb callbacks are supported, check for them here. 
+  Boolean isCustomCallback = true;//(callback.type != BulletBroadphaseRayCallback);
+  if(isCustomCallback){
+    // If a custom callback is being registered, then the RTVal will be wrapped in C++
+    // and the KL callback function invoked from the wrapping class. 
+    this.__customAabbTest(aabbMin, aabbMax, callback);
+  }
+  else
+    this.__aabbTest(aabbMin, aabbMax, callback);
+}
+function BulletDbvtBroadphase.__customAabbTest?(Vec3 aabbMin, Vec3 aabbMax, BulletBroadphaseAabbCallback callback) = 'BulletDbvtBroadphase_customAabbTest';
+function BulletDbvtBroadphase.__aabbTest?(Vec3 aabbMin, Vec3 aabbMax, BulletBroadphaseAabbCallback callback) = 'BulletDbvtBroadphase_aabbTest';
+
+
+function BulletDbvtBroadphase.getAabb?(BulletBroadphaseProxy proxy, io Vec3 aabbMin, io Vec3 aabbMax ) = 'BulletDbvtBroadphase_getAabb';
+function BulletDbvtBroadphase.calculateOverlappingPairs!(BulletDispatcher dispatcher) = 'BulletDbvtBroadphase_calculateOverlappingPairs';
+function BulletOverlappingPairCache BulletDbvtBroadphase.getOverlappingPairCache() = 'BulletDbvtBroadphase_getOverlappingPairCache';
+function BulletDbvtBroadphase.getBroadphaseAabb?(io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletDbvtBroadphase_getBroadphaseAabb';
+// function BulletDbvtBroadphase.printStats() = 'BulletDbvtBroadphase_printStats';
+
+
+ ///reset broadphase internal structures, to ensure determinism/reproducability
+function BulletDbvtBroadphase.resetPool!(BulletDispatcher dispatcher) = 'BulletDbvtBroadphase_resetPool';
+
+function BulletDbvtBroadphase.performDeferredRemoval!(BulletDispatcher dispatcher) = 'BulletDbvtBroadphase_performDeferredRemoval';
+
+function BulletDbvtBroadphase.setVelocityPrediction!(Scalar prediction) = 'BulletDbvtBroadphase_setVelocityPrediction';
+function Scalar BulletDbvtBroadphase.getVelocityPrediction() = 'BulletDbvtBroadphase_getVelocityPrediction';
+
+//  ///this setAabbForceUpdate is similar to setAabb but always forces the aabb update. 
+//  ///it is not part of the BulletBroadphaseInterface but specific to BulletDbvtBroadphase.
+//  ///it bypasses certain optimizations that prevent aabb updates (when the aabb shrinks), see
+//  ///http://code.google.com/p/bullet/issues/detail?id=223
+// function BulletDbvtBroadphase.setAabbForceUpdate(       BulletBroadphaseProxy* absproxy,in Vec3 aabbMin,in Vec3 aabbMax,BulletDispatcher* /*dispatcher*/);
+
+// function BulletDbvtBroadphase.benchmark(BulletBroadphaseInterface*);
+
+

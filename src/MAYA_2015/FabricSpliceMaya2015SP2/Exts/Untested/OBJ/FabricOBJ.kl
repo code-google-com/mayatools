@@ -1,0 +1,31 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+require Util;
+
+struct OBJDataHandle {
+  Data handle;
+};
+
+function OBJDataHandle.openFileHandle!( String fileHandle, ImporterOptions options ) = "FabricOBJOpenFileHandle";
+function OBJDataHandle.isValid!( io Boolean valid ) = "FabricOBJIsHandleValid";
+function OBJDataHandle.clear!() = "FabricOBJFreeParsedData";
+function OBJDataHandle.hasTextureCoords!( io Boolean hasTextureCoords ) = "FabricOBJHasTextureCoords";
+function OBJDataHandle.getIdentifiers!( io ImporterIdentifier identifiers[] ) = "FabricOBJGetIdentifiers";
+function OBJDataHandle.getNbEntityPoints!( Integer entity /* -1: all */, io Size nbPoints ) = "FabricOBJGetNbEntityPoints";
+function OBJDataHandle.getEntityPoints!( Integer entity /* -1: all */, io Vec3 points[] ) = "FabricOBJGetEntityPoints";
+function OBJDataHandle.getEntityPointsSliced!( Integer entity /* -1: all */, io Vec3 points<> ) = "FabricOBJGetEntityPointsSliced";
+function OBJDataHandle.getEntityNormals!( Integer entity /* -1: all */, io Vec3 normals[] ) = "FabricOBJGetEntityNormals";
+function OBJDataHandle.getEntityNormalsSliced!( Integer entity /* -1: all */, io Vec3 normals<> ) = "FabricOBJGetEntityNormalsSliced";
+function OBJDataHandle.getEntityTextureCoords!( Integer entity /* -1: all */, io Vec2 texCoords[] ) = "FabricOBJGetEntityTextureCoords";
+function OBJDataHandle.getEntityTextureCoordsSliced!( Integer entity /* -1: all */, io Vec2 texCoords<> ) = "FabricOBJGetEntityTextureCoordsSliced";
+function OBJDataHandle.getNbEntityFaces!( Integer entity /* -1: all */, io Size nbTriangles ) = "FabricOBJGetNbEntityFaces";
+function OBJDataHandle.getEntityFaceIndices!( Integer entity /* -1: all */, io Size faceIndices[] ) = "FabricOBJGetEntityFaceIndices";
+function OBJDataHandle.getEntityFaceTopologyIndices!( Integer entity /* -1: all */, io Size faceIndices[] ) = "FabricOBJGetEntityFaceTopologyIndices";
+function OBJDataHandle.getEntityFaceSizes!( Integer entity /* -1: all */, io Size faceSizes[] ) = "FabricOBJGetEntityFaceSizes";
+function OBJDataHandle.getEntityFaceMaterialIndices!( Integer entity /* -1: all */, io Size triangleIndices[] ) = "FabricOBJGetEntityFaceMaterialIndices";
+function OBJDataHandle.getMaterialNames!( io String materialNames[] ) = "FabricOBJGetMaterialNames";
+
+function ~OBJDataHandle() = "FabricOBJFreeParsedData";

@@ -1,0 +1,87 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+
+The :ref:`FabricStatistics_RTValWrapper` struct simply wraps global functions of the :ref:`FabricStatistics` extension, since global functions are currently not accessible by RTVals (limitation). See :ref:`FabricStatistics`'s equivalent functions for more information.
+
+*/
+
+//FabricStatistics_RTValWrapper: RTVal don't support on global functions yet
+struct FabricStatistics_RTValWrapper {};
+
+function Boolean FabricStatistics_RTValWrapper.statisticsEnabled() {
+  return FabricStatisticsEnabled();
+}
+
+function FabricStatistics_RTValWrapper.enableStatistics() {
+  EnableFabricStatistics();
+}
+
+function FabricStatistics_RTValWrapper.disableStatistics() {
+  DisableFabricStatistics();
+}
+
+function String[] FabricStatistics_RTValWrapper.getStatisticsCSV( String columnsToSelect[], String columnsToSum[] ) {
+  return GetStatisticsCSV( columnsToSelect, columnsToSum );
+}
+
+function String[] FabricStatistics_RTValWrapper.getStatisticsCSV( String columnsToSelect[] ) {
+  return GetStatisticsCSV( columnsToSelect );
+}
+
+function String[] FabricStatistics_RTValWrapper.getStatisticsCSV() {
+  return GetStatisticsCSV();
+}
+
+function FabricStatistics_RTValWrapper.getStatisticStrings( io String lines[], io Size levels[], String columnsToSelect[], String columnsToSum[] ) {
+  GetStatisticStrings( lines, levels, columnsToSelect, columnsToSum );
+}
+
+function FabricStatistics_RTValWrapper.getStatisticStrings( io String lines[], io Size levels[], String columnsToSelect[] ) {
+  GetStatisticStrings( lines, levels, columnsToSelect );
+}
+
+function FabricStatistics_RTValWrapper.getStatisticStrings( io String lines[], io Size levels[] ) {
+  GetStatisticStrings( lines, levels );
+}
+
+function String FabricStatistics_RTValWrapper.getStatisticsReport( String columnsToSelect[], String columnsToSum[] ) {
+  return GetStatisticsReport( columnsToSelect, columnsToSum );
+}
+
+function String FabricStatistics_RTValWrapper.getStatisticsReport( String columnsToSelect[] ) {
+  return GetStatisticsReport( columnsToSelect );
+}
+
+function String FabricStatistics_RTValWrapper.getStatisticsReport() {
+  return GetStatisticsReport();
+}
+
+function Boolean FabricStatistics_RTValWrapper.profilingEnabled() {
+  return FabricProfilingEnabled();
+}
+
+function FabricStatistics_RTValWrapper.startProfiling() {
+  StartFabricProfiling();
+}
+
+function FabricStatistics_RTValWrapper.startProfiling( Scalar time ) {
+  StartFabricProfiling(time);
+}
+
+function FabricStatistics_RTValWrapper.startProfilingFrames( Size frameCount ) {
+  StartFabricProfilingFrames(frameCount);
+}
+
+function FabricStatistics_RTValWrapper.stopProfiling() {
+  StopFabricProfiling();
+}
+
+function ProfilingEvent[] FabricStatistics_RTValWrapper.getProfilingEvents() {
+  return GetProfilingEvents();
+}
+
+function String FabricStatistics_RTValWrapper.getProfilingReport() {
+  return GetProfilingReport();
+}

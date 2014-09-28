@@ -1,0 +1,29 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+// /// PHY_ScalarType enumerates possible scalar types.
+// /// See the BulletStridingMeshInterface or BulletHeightfieldTerrainShape for its use
+// typedef enum PHY_ScalarType {
+// 	PHY_FLOAT,
+// 	PHY_DOUBLE,
+// 	PHY_INTEGER,
+// 	PHY_SHORT,
+// 	PHY_FIXEDPOINT88,
+// 	PHY_UCHAR
+// } PHY_ScalarType;
+
+///The BulletConcaveShape class provides an interface for non-moving (static) concave shapes.
+///It has been implemented by the BulletStaticPlaneShape, BulletBvhTriangleMeshShape and BulletHeightfieldTerrainShape.
+interface BulletConcaveShape //: BulletCollisionShape
+{
+
+	// processAllTriangles(BulletTriangleCallback* callback, Vec3 aabbMin, Vec3 aabbMax);
+
+	// Scalar getMargin();
+
+	// setMargin(Scalar collisionMargin);
+
+};
+

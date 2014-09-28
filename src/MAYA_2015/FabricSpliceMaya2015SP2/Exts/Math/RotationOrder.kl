@@ -1,0 +1,146 @@
+
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+/*SPHINX-description
+The :ref:`rotationorder` type represents the order in which rotations should be accumulated for a :ref:`euler` rotation. :ref:`rotationorder` can be constructed from order indices or strings.
+
+Example
+---------
+
+.. code-block:: js
+
+    RotationOrder ro1(0);
+    RotationOrder ro2('xyz');
+*/
+
+struct RotationOrder
+{
+  Integer order;
+};
+
+
+// constructor from the order index (0 to 5)
+inline RotationOrder(in Integer order) {
+  if (order < 0 || order > 5) {
+    report('Invalid rotation order: ' + order);
+    this.setXYZ();
+  }
+  else
+    this.order = order;
+}
+
+// constructor from order string, for ex: 'xyz'
+inline RotationOrder(in String order) {
+  this.order = -1;
+  if(order == 'xyz' || order == 'XYZ')
+    this.order = 0;
+  else if(order == 'yzx' || order == 'YZX')
+    this.order = 1;
+  else if(order == 'zxy' || order == 'ZXY')
+    this.order = 2;
+  else if(order == 'xzy' || order == 'XZY')
+    this.order = 3;
+  else if(order == 'zyx' || order == 'ZYX')
+    this.order = 4;
+  else if(order == 'yxz' || order == 'YXZ')
+    this.order = 5;
+  if (this.order < 0 || this.order > 5) {
+    report('Invalid rotation order: ' + order);
+    this.setXYZ();
+  }
+}
+
+/*
+// It would be most excellent to be able to override String casts.
+inline String( in RotationOrder o )
+{
+     if( o.order = 0 ) return "xyz";
+  else if( o.order = 1 ) return "yzx";
+  else if( o.order = 2 ) return "zxy";
+  else if( o.order = 3 ) return "xzy";
+  else if( o.order = 4 ) return "zyx";
+  else if( o.order = 5 ) return "yxz";
+  else return "<unknown>";
+}
+*/
+
+// returns true if this rotationorder is XYZ
+inline Boolean RotationOrder.isXYZ() {
+  return this.order == 0;
+}
+
+// returns true if this rotationorder is YZX
+inline Boolean RotationOrder.isYZX() {
+  return this.order == 1;
+}
+
+// returns true if this rotationorder is ZXY
+inline Boolean RotationOrder.isZXY() {
+  return this.order == 2;
+}
+
+// returns true if this rotationorder is XZY
+inline Boolean RotationOrder.isXZY() {
+  return this.order == 3;
+}
+
+// returns true if this rotationorder is ZYX
+inline Boolean RotationOrder.isZYX() {
+  return this.order == 4;
+}
+
+// returns true if this rotationorder is YXZ
+inline Boolean RotationOrder.isYXZ() {
+  return this.order == 5;
+}
+
+// returns true if this rotation order is one
+// of the reversed ones (XZY, ZYX or YXZ)
+inline Boolean RotationOrder.isReversed() {
+  return this.isXZY() || this.isZYX() || this.isYXZ();
+}
+
+// sets this rotation order to be XYZ
+inline RotationOrder.setXYZ!() {
+  this.order = 0;
+}
+
+// sets this rotation order to be YZX
+inline RotationOrder.setYZX!() {
+  this.order = 1;
+}
+
+// sets this rotation order to be ZXY
+inline RotationOrder.setZXY!() {
+  this.order = 2;
+}
+
+// sets this rotation order to be XZY
+inline RotationOrder.setXZY!() {
+  this.order = 3;
+}
+
+// sets this rotation order to be ZYX
+inline RotationOrder.setZYX!() {
+  this.order = 4;
+}
+
+// sets this rotation order to be YXZ
+inline RotationOrder.setYXZ!() {
+  this.order = 5;
+}
+
+// equals operator
+inline Boolean == (RotationOrder a, RotationOrder b) {
+  return a.order == b.order;
+}
+
+// not equals operator
+inline Boolean != (RotationOrder a, RotationOrder b) {
+  return a.order != b.order;
+}
+
+
+
+

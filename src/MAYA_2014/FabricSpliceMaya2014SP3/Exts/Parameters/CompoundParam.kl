@@ -1,0 +1,105 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`compoundparam` implements the :ref:`param` interface for a nestable data structure. Compound parameters can be used to define a tree of values.
+
+Example
+---------
+
+.. code-block:: kl
+
+    CompoundParam param = CompoundParam('settings');
+    CompoundParam flags = param.addParam(CompoundParam('flags'));
+    flags.addParam(BooleanParam('visible', true));
+    flags.addParam(BooleanParam('transparent', false));
+    flags.addParam(BooleanParam('culling', true));
+*/
+
+object CompoundParam : Param {
+  String name;
+  Index paramIDs[String];
+  Param params[];
+  Param options[String];
+};
+
+// default constructor
+function CompoundParam(String name) {
+  this.name = name;
+}
+
+// returns the name of this parameter
+function String CompoundParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String CompoundParam.getValueType() {
+  return "Compound";
+}
+
+// getting an option on this param
+function Param CompoundParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function CompoundParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the number of parameters in this compound
+function Size CompoundParam.paramCount() {
+  return this.params.size();
+}
+
+// returns a parameter by index
+function Param CompoundParam.getParam(Index index) {
+  return this.params[index];
+}
+
+// returns true if a parameter with a given name exists
+function Boolean CompoundParam.hasParam(String name) {
+  return this.paramIDs.has(name);
+}
+
+// returns a parameter by name
+function Param CompoundParam.getParam(String name) {
+  return this.params[this.paramIDs[name]];
+}
+
+// adds a parameter
+function Param CompoundParam.addParam!(Param param) {
+  String name = param.getName();
+  if(this.hasParam(name))
+    throw('Compound "'+this.name+'" already contains a param "'+name+'".');
+  Index id = this.params.size();
+  this.paramIDs[name] = id;
+  this.params.push(param);
+  return param;
+}
+
+// removes a parameter
+function CompoundParam.removeParam!(String name) {
+  if(!this.hasParam(name))
+    throw('Compound "'+this.name+'" does not contain a param "'+name+'".');
+
+  Param newParams[];
+  for(key in this.paramIDs) {
+    if(key == name)
+      continue;
+    Index index = this.paramIDs[key];
+    this.paramIDs[key] = newParams.size();
+    newParams.push(this.params[index]);
+  }
+  this.paramIDs.delete(name);
+  this.params = newParams;
+}
+
+// removes a parameter
+function CompoundParam.removeParam!(Param param) {
+  this.removeParam(param.getName());
+}

@@ -1,0 +1,377 @@
+  /*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+require Util;
+
+object AlembicArchiveReader {
+  AlembicIArchive _archive;
+  AlembicIObject _objects[String];
+  AlembicObjectReader _readers[String];
+  Boolean _getAllPathsCalled;
+};
+
+inline AlembicArchiveReader(String fileName) {
+  this._archive = AlembicIArchive(fileName);
+  this._getAllPathsCalled = false;
+}
+
+inline ~AlembicArchiveReader() {
+  this.reset();
+}
+
+inline String AlembicArchiveReader.getPath() {
+  return '';
+}
+
+inline Boolean AlembicArchiveReader.valid() {
+  return this._archive.valid();
+}
+
+function AlembicArchiveReader.reset!() {
+  this._archive.reset();
+  for(path in this._readers)
+    this._readers[path].reset();
+  for(path in this._objects)
+    this._objects[path].reset();
+  this._objects.clear();
+  this._getAllPathsCalled = false;
+}
+
+function AlembicIObject AlembicArchiveReader._findIObject!(String path) {
+  if(path == '')
+    return this._archive.getTop();
+  if(this._objects.has(path))
+    return this._objects[path];
+  String parts[] = path.reversePartition('/');
+  AlembicIObject parent = this._findIObject(parts[0]);
+  if(!parent.valid())
+  {
+    setError('AlembicArchiveReader: Path can not be resolved: "'+path+'".');
+    return AlembicIObject();
+  }
+  AlembicIObject child = parent.getChild(parts[2]);
+  if(child.valid())
+    this._objects[path] = child;
+  return child;
+}
+
+function String AlembicArchiveReader._getIObjectType(AlembicIObject obj) {
+  if(!obj.valid())
+    return "";
+  AlembicMetaData md = obj.getMetaData();
+  if(AlembicIXform().matches(md))
+    return "Xform";
+  if(AlembicICamera().matches(md))
+    return "Camera";
+  if(AlembicILight().matches(md))
+    return "Light";
+  if(AlembicIPoints().matches(md))
+    return "Points";
+  if(AlembicIPolyMesh().matches(md))
+    return "PolyMesh";
+  if(AlembicISubD().matches(md))
+    return "SubD";
+  if(AlembicINuPatch().matches(md))
+    return "NuPatch";
+  if(AlembicICurves().matches(md))
+    return "Curves";
+  return "";
+}
+
+function String AlembicArchiveReader.getObjectType!(String path) {
+  AlembicIObject obj = this._findIObject(path);
+  return this._getIObjectType(obj);
+}
+
+function String[] AlembicArchiveReader.getAllPaths!() {
+  String result[];
+  if(this._getAllPathsCalled) {
+    for(key in this._objects)
+      result.push(key);
+  } else {
+    AlembicIObject parents[];
+    parents.push(this._archive.getTop());
+    for(Size i=0;i<parents.size();i++) {
+      if(!parents[i].valid())
+        continue;
+      for(Size j=0;j<parents[i].getNumChildren();j++) {
+        AlembicIObject child = parents[i].getChild(j);
+        if(!child.valid())
+          continue;
+        String path = child.getFullName();
+        if(!this._objects.has(path))
+          this._objects[path] = child;
+        result.push(path);
+        parents.push(child);
+      }
+    } 
+    this._getAllPathsCalled = true;
+  }
+  return result;
+}
+
+function String[] AlembicArchiveReader.getPathsOfType!(String objType) {
+  this.getAllPaths();
+  String result[];
+  for(path, obj in this._objects) {
+    if(this._getIObjectType(obj) == objType) {
+      result.push(path);
+    }
+  }
+  return result;
+}
+
+inline SInt32 AlembicArchiveReader.getNumTimeSamplings() {
+  return this._archive.getNumTimeSamplings();
+}
+
+function Float64[] AlembicArchiveReader.getTimeSampling(SInt32 timeSampling) {
+  Float64 result[]; 
+  if(!this.valid()) {
+    setError('AlembicArchiveReader: Requesting timesampling on invalidated reader.');
+    return result;
+  }
+  return this._archive.getTimeSampling(timeSampling).getStoredTimes();
+}
+
+function Vec2 AlembicArchiveReader.getTimeRange() {
+  Boolean init = false;
+  Vec2 range;
+  for(Size i=1;i<this.getNumTimeSamplings();i++) {
+    Float64 times[] = this.getTimeSampling(i);
+    if(times.size() == 0)
+      continue;
+    if(!init) {
+      range.x = Scalar(times[0]);
+      range.y = Scalar(times[times.size()-1]);
+      init = true;
+    } else {
+      if(times[0] < range.x)
+        range.x = Scalar(times[0]);
+      if(times[times.size()-1] > range.y) 
+        range.y = Scalar(times[times.size()-1]);
+    }
+  }
+  return range;
+}
+
+function AlembicIObject AlembicArchiveReader.getIObject!(String path) {
+  if(!this.valid()) {
+    setError('AlembicArchiveReader: Requesting object on invalidated reader.');
+    return AlembicIObject();
+  }
+  return this._findIObject(path);
+}
+
+function AlembicXformReader AlembicArchiveReader.getXform!(String parentPath, String childPath) {
+  String path;
+  if(parentPath.length() > 0)
+    path = parentPath + '/' + childPath;
+  else
+    path = childPath;
+  if(this._readers.has(path))
+    return this._readers[path];
+
+  if(!this.valid()) {
+    setError('AlembicArchiveReader: Requesting object on invalidated reader.');
+    return null;
+  }
+  AlembicIObject obj = this._findIObject(path);
+  if(!obj.valid()) {
+    return null;
+  }
+  String objType = this._getIObjectType(obj);
+  if(objType != 'Xform') {
+    setError('AlembicArchiveReader: Requesting object "'+path+'" as Xform (is "'+objType+'").');
+    return null;
+  }
+  AlembicXformReader reader = AlembicXformReader(obj);
+  this._readers[path] = reader;
+  return reader;
+}
+
+function AlembicXformReader AlembicArchiveReader.getXform!(Ref<AlembicObjectReader> parent, String childPath) {
+  return this.getXform(parent.getPath(), childPath);
+}
+
+function AlembicXformReader AlembicArchiveReader.getXform!(String path) {
+  return this.getXform('', path);
+}
+
+function AlembicCameraReader AlembicArchiveReader.getCamera!(String parentPath, String childPath) {
+  String path;
+  if(parentPath.length() > 0)
+    path = parentPath + '/' + childPath;
+  else
+    path = childPath;
+  if(this._readers.has(path))
+    return this._readers[path];
+
+  if(!this.valid()) {
+    setError('AlembicArchiveReader: Requesting object on invalidated reader.');
+    return null;
+  }
+  AlembicIObject obj = this._findIObject(path);
+  if(!obj.valid()) {
+    return null;
+  }
+  String objType = this._getIObjectType(obj);
+  if(objType != 'Camera') {
+    setError('AlembicArchiveReader: Requesting object "'+path+'" as Camera (is "'+objType+'").');
+    return null;
+  }
+  AlembicCameraReader reader = AlembicCameraReader(obj);
+  this._readers[path] = reader;
+  return reader;
+}
+
+function AlembicCameraReader AlembicArchiveReader.getCamera!(Ref<AlembicObjectReader> parent, String childPath) {
+  return this.getCamera(parent.getPath(), childPath);
+}
+
+function AlembicCameraReader AlembicArchiveReader.getCamera!(String path) {
+  return this.getCamera('', path);
+}
+
+function AlembicPointsReader AlembicArchiveReader.getPoints!(String parentPath, String childPath) {
+  String path;
+  if(parentPath.length() > 0)
+    path = parentPath + '/' + childPath;
+  else
+    path = childPath;
+  if(this._readers.has(path))
+    return this._readers[path];
+
+  if(!this.valid()) {
+    setError('AlembicArchiveReader: Requesting object on invalidated reader.');
+    return null;
+  }
+  AlembicIObject obj = this._findIObject(path);
+  if(!obj.valid()) {
+    return null;
+  }
+  String objType = this._getIObjectType(obj);
+  if(objType != 'Points') {
+    setError('AlembicArchiveReader: Requesting object "'+path+'" as Points (is "'+objType+'").');
+    return null;
+  }
+  AlembicPointsReader reader = AlembicPointsReader(obj);
+  this._readers[path] = reader;
+  return reader;
+}
+
+function AlembicPointsReader AlembicArchiveReader.getPoints!(Ref<AlembicObjectReader> parent, String childPath) {
+  return this.getPoints(parent.getPath(), childPath);
+}
+
+function AlembicPointsReader AlembicArchiveReader.getPoints!(String path) {
+  return this.getPoints('', path);
+}
+
+function AlembicPolyMeshReader AlembicArchiveReader.getPolyMesh!(String parentPath, String childPath) {
+  String path;
+  if(parentPath.length() > 0)
+    path = parentPath + '/' + childPath;
+  else
+    path = childPath;
+  if(this._readers.has(path))
+    return this._readers[path];
+
+  if(!this.valid()) {
+    setError('AlembicArchiveReader: Requesting object on invalidated reader.');
+    return null;
+  }
+  AlembicIObject obj = this._findIObject(path);
+  if(!obj.valid()) {
+    return null;
+  }
+  String objType = this._getIObjectType(obj);
+  if(objType != 'PolyMesh') {
+    setError('AlembicArchiveReader: Requesting object "'+path+'" as PolyMesh (is "'+objType+'").');
+    return null;
+  }
+  AlembicPolyMeshReader reader = AlembicPolyMeshReader(obj);
+  this._readers[path] = reader;
+  return reader;
+}
+
+function AlembicPolyMeshReader AlembicArchiveReader.getPolyMesh!(Ref<AlembicObjectReader> parent, String childPath) {
+  return this.getPolyMesh(parent.getPath(), childPath);
+}
+
+function AlembicPolyMeshReader AlembicArchiveReader.getPolyMesh!(String path) {
+  return this.getPolyMesh('', path);
+}
+
+function AlembicSubDReader AlembicArchiveReader.getSubD!(String parentPath, String childPath) {
+  String path;
+  if(parentPath.length() > 0)
+    path = parentPath + '/' + childPath;
+  else
+    path = childPath;
+  if(this._readers.has(path))
+    return this._readers[path];
+
+  if(!this.valid()) {
+    setError('AlembicArchiveReader: Requesting object on invalidated reader.');
+    return null;
+  }
+  AlembicIObject obj = this._findIObject(path);
+  if(!obj.valid()) {
+    return null;
+  }
+  String objType = this._getIObjectType(obj);
+  if(objType != 'SubD') {
+    setError('AlembicArchiveReader: Requesting object "'+path+'" as SubD (is "'+objType+'").');
+    return null;
+  }
+  AlembicSubDReader reader = AlembicSubDReader(obj);
+  this._readers[path] = reader;
+  return reader;
+}
+
+function AlembicSubDReader AlembicArchiveReader.getSubD!(Ref<AlembicObjectReader> parent, String childPath) {
+  return this.getSubD(parent.getPath(), childPath);
+}
+
+function AlembicSubDReader AlembicArchiveReader.getSubD!(String path) {
+  return this.getSubD('', path);
+}
+
+function AlembicCurvesReader AlembicArchiveReader.getCurves!(String parentPath, String childPath) {
+  String path;
+  if(parentPath.length() > 0)
+    path = parentPath + '/' + childPath;
+  else
+    path = childPath;
+  if(this._readers.has(path))
+    return this._readers[path];
+
+  if(!this.valid()) {
+    setError('AlembicArchiveReader: Requesting object on invalidated reader.');
+    return null;
+  }
+  AlembicIObject obj = this._findIObject(path);
+  if(!obj.valid()) {
+    return null;
+  }
+  String objType = this._getIObjectType(obj);
+  if(objType != 'Curves') {
+    setError('AlembicArchiveReader: Requesting object "'+path+'" as Curves (is "'+objType+'").');
+    return null;
+  }
+
+  AlembicCurvesReader reader = AlembicCurvesReader(obj);
+  this._readers[path] = reader;
+  return reader;
+}
+
+function AlembicCurvesReader AlembicArchiveReader.getCurves!(Ref<AlembicObjectReader> parent, String childPath) {
+  return this.getCurves(parent.getPath(), childPath);
+}
+
+function AlembicCurvesReader AlembicArchiveReader.getCurves!(String path) {
+  return this.getCurves('', path);
+}

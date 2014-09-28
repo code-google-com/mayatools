@@ -1,0 +1,80 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlinemeshsmhape` implements the :ref:`inlineshape` interface. It provides a shape type for :ref:`polygonmesh` objects. The :ref:`inlinemeshsmhape` keeps a reference to the mesh, so if the mesh changes (being deformed etc) the shape will updates its buffers automatically.
+
+Example
+---------
+
+.. code-block:: kl
+
+    // create a mesh
+    PolygonMesh mesh = PolygonMesh();
+    mesh.addCuboid(Xfo(), 5, 5, 5, true, true);
+
+    // create a shape
+    InlineShape shape = InlineMeshShape('cube', mesh);
+*/
+
+require Geometry;
+
+object InlineMeshShape : InlineShape {
+  String _name;
+  PolygonMesh _mesh;
+  Object _metaData[String];
+  Ref<InlineShapeAdaptor> _shapeAdaptor;
+};
+
+// returns the name of the shape
+function String InlineMeshShape.getName() {
+  return this._name;
+}
+
+// default constructor, taking a name and a PolygonMesh
+function InlineMeshShape(String name, PolygonMesh mesh) {
+  this._name = name;
+  this._mesh = mesh;
+}
+
+  // Returns the geometry associated with this shape. 
+function Geometry InlineMeshShape.getGeometry() {
+  return this._mesh;
+}
+
+// returns the PolygonMesh used by this shape
+function PolygonMesh InlineMeshShape.getMesh() {
+  return this._mesh;
+}
+
+// stores an arbitrary meta data object on the Shape
+function InlineMeshShape.setMetaData!(String key, Object metaData)
+{
+  this._metaData[key] = metaData;
+}
+
+// retrieves meta data from the Shape
+function Object InlineMeshShape.getMetaData(String key)
+{
+  Object nullObj = null;
+  return this._metaData.get(key, nullObj);
+}
+
+// draws the instance on screen. this is used by the 
+// material and should not be called manually.
+function Boolean InlineMeshShape._draw!(io DrawContext context, Index index, Size count) {
+
+  if(!this._shapeAdaptor) {
+    InlineDrawing drawing = context.getObject('drawing');
+    this._shapeAdaptor = drawing.getShapeAdaptor(this.type());
+  }
+  Ref<InlineShape> thisShape = this;
+  if(!this._shapeAdaptor || !this._shapeAdaptor._draw(context, thisShape, index, count))
+    return false;
+
+  return true;
+}
+

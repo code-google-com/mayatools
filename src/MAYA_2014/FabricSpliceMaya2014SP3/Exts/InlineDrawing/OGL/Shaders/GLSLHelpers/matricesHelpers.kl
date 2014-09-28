@@ -1,0 +1,52 @@
+
+function String loadMatrix43FromTextureGLSL(){
+  return "
+mat4x3 loadMatrix43FromTexture(sampler2D texture, in int index) {
+  int pixel = index*4;
+  int width = textureSize( texture, 0 ).x;
+  int row = pixel / width;
+  int column = pixel - row*width;
+
+	mat4x3 result;
+  for( int i = 0; i < 3; ++i ) {
+    vec4 value = texelFetch( texture, ivec2(column+i, row), 0 );
+    //transpose
+    result[0][i] = value[0];
+    result[1][i] = value[1];
+    result[2][i] = value[2];
+    result[3][i] = value[3];
+  }
+	return result;
+}";
+
+}
+
+function String inverseAndTransposeMat33GLSL(){
+  return "
+mat3 inverseAndTransposeMat33(in mat3 m)
+{
+  float det = m[0].x * m[1].y * m[2].z
+            + m[0].y * m[1].z * m[2].x
+            + m[0].z * m[1].x * m[2].y
+            - m[0].x * m[1].z * m[2].y
+            - m[0].y * m[1].x * m[2].z
+            - m[0].z * m[1].y * m[2].x;
+  float invDet = 1.0 / det;
+
+  mat3 result;
+
+  result[0].x = (m[1].y * m[2].z - m[1].z * m[2].y) * invDet;
+  result[1].x = (m[0].z * m[2].y - m[0].y * m[2].z) * invDet;
+  result[2].x = (m[0].y * m[1].z - m[0].z * m[1].y) * invDet;
+
+  result[0].y = (m[1].z * m[2].x - m[1].x * m[2].z) * invDet;
+  result[1].y = (m[0].x * m[2].z - m[0].z * m[2].x) * invDet;
+  result[2].y = (m[0].z * m[1].x - m[0].x * m[1].z) * invDet;
+
+  result[0].z = (m[1].x * m[2].y - m[1].y * m[2].x) * invDet;
+  result[1].z = (m[0].y * m[2].x - m[0].x * m[2].y) * invDet;
+  result[2].z = (m[0].x * m[1].y - m[0].y * m[1].x) * invDet;
+  return result;
+}";
+
+}

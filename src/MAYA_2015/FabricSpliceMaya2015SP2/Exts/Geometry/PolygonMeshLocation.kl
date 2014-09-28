@@ -1,0 +1,519 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+//Returns the polygon index corresponding to the location.
+inline Size PolygonMesh.getLocationPolygon( GeometryLocation location ) {
+  return location.index;
+}
+
+//Returns the polygon point indices and weights corresponding to the location.
+inline PolygonMesh.getLocationPolygonPointIndicesAndWeights( GeometryLocation location, io UInt32 polygonPointIndices[3], io Scalar weights[3] ) {
+  polygonPointIndices[0] = 0;
+  polygonPointIndices[1] = location.subIndex+1;
+  polygonPointIndices[2] = location.subIndex+2;
+
+  weights[0] = location.barycentric.x;
+  weights[1] = location.barycentric.y;
+  weights[2] = location.barycentric.z;
+}
+
+//Returns the point indices and weights corresponding to the location.
+inline PolygonMesh.getLocationPointsAndWeights( GeometryLocation location, io UInt32 points[3], io Scalar weights[3] ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( location.index, location.subIndex+2, "getLocationPointsAndWeights" );
+
+  DataIter polyIter = this._getPolygonIter(location.index);
+  points[0] = this._getPolyIterPoint( polyIter, 0 );
+  points[1] = this._getPolyIterPoint( polyIter, location.subIndex+1 );
+  points[2] = this._getPolyIterPoint( polyIter, location.subIndex+2 );
+
+  weights[0] = location.barycentric.x;
+  weights[1] = location.barycentric.y;
+  weights[2] = location.barycentric.z;
+}
+
+//From a GeometryLocation built from this polygon mesh, returns the attribute indices and weights required to linearly interpolate attribute values.
+inline PolygonMesh.getLocationAttributeIndicesAndWeights?( GeometryLocation location, io UInt32 attributeIndices[3], io Scalar weights[3] ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( location.index, location.subIndex+2, "getLocationAttributeIndicesAndWeights" );
+
+  DataIter polyIter = this._getPolygonIter(location.index);
+
+  attributeIndices[0] = this._getPolyIterAttributeIndex( polyIter, 0 );
+  attributeIndices[1] = this._getPolyIterAttributeIndex( polyIter, location.subIndex+1 );
+  attributeIndices[2] = this._getPolyIterAttributeIndex( polyIter, location.subIndex+2 );
+
+  weights[0] = location.barycentric.x;
+  weights[1] = location.barycentric.y;
+  weights[2] = location.barycentric.z;
+}
+
+//From a GeometryLocation built from this polygon mesh, returns the attribute indices and weights required to linearly interpolate attribute values (Geometry interface)
+inline PolygonMesh.getLocationAttributeIndicesAndWeights?( GeometryLocation location, io LocalL16UInt32Array attributeIndices, io LocalL16ScalarArray weights ) {
+  UInt32 _attributeIndices[3];
+  Scalar _weights[3];
+  this.getLocationAttributeIndicesAndWeights( location, _attributeIndices, _weights );
+
+  attributeIndices.push(_attributeIndices[0]);
+  attributeIndices.push(_attributeIndices[1]);
+  attributeIndices.push(_attributeIndices[2]);
+
+  weights.push(_weights[0]);
+  weights.push(_weights[1]);
+  weights.push(_weights[2]);
+}
+
+//Evaluates the position attribute at a specific location.
+inline Vec3 PolygonMesh.getPositionAtLocation( GeometryLocation location ) {
+  if( this.hasFloat64Positions() )
+    return GetAttributeAtLocation( this, location, this.positionsAttribute_d ).toVec3();
+  else
+    return GetAttributeAtLocation( this, location, this.positionsAttribute );
+}
+
+//Evaluates the position attribute at a specific location (Float64).
+inline Vec3_d PolygonMesh.getPositionAtLocation_d( GeometryLocation location ) {
+  if( this.hasFloat64Positions() )
+    return GetAttributeAtLocation( this, location, this.positionsAttribute_d );
+  else {
+    Vec3_d pos;
+    pos.set( GetAttributeAtLocation( this, location, this.positionsAttribute ) );
+    return pos;
+  }
+}
+
+//Evaluates the position attribute at a specific location.
+inline Vec3 PolygonMesh.getNormalAtLocation( GeometryLocation location ) {
+  Ref<Vec3Attribute> normals = this.base.attributes.getNormals();
+  if( normals )
+    return GetAttributeAtLocation( this, location, normals );
+  else
+    return Vec3(0,1,0);
+}
+
+object _PolygonMeshSpatialQueryCache {
+  Ref<PolygonMesh> mesh; //Don't keep a hard ref, since this cache can be stored as a Mesh shared user data
+  Ref<Vec3_dAttribute> pos_dAttr;
+  Ref<Vec3Attribute> posAttr;
+
+  Size meshVersion;
+  Size positionsVersion;
+  Boolean dirtyPositions;
+
+  SpatialAccelerationChooser acceleration;
+  SimpleLock updateLock;
+
+  FewObjectsRecyclingAllocator queryAllocator;//PolygonMeshSpatialQuery objects
+};
+
+object _MeshRaycastResult : RaycastResult {
+  Vec3 start;
+  Vec3 unitDir;
+  Boolean doubleSided;
+  Scalar coneThreshold;
+  GeometryLocation location;
+  Ref<_PolygonMeshSpatialQueryCache> queryCache;
+};
+
+function _MeshRaycastResult(Ref<_PolygonMeshSpatialQueryCache> queryCache) {
+  this.queryCache = queryCache;
+}
+
+function _MeshRaycastResult.reset!( Vec3 start, Vec3 unitDir, Boolean doubleSided, Scalar coneThreshold ) {
+  this.start = start;
+  this.unitDir = unitDir;
+  this.doubleSided = doubleSided;
+  this.coneThreshold = coneThreshold;//Not used for now
+  this.location = GeometryLocation();//Invalidate
+}
+
+function Boolean _MeshRaycastResult.raycastPolygon!( Size polygonIndex, Ref<Vec3_dAttribute> pos_dAttr, Ref<Vec3Attribute> posAttr, io Scalar maxDistance ) {
+
+  LocalIndexArray polyPoints;
+  this.queryCache.mesh.getPolygonPoints( polygonIndex, polyPoints );
+  if( polyPoints.size() < 3 )
+    return false;
+
+  Size triangleCount = polyPoints.size()-2;
+
+  Size point0 = polyPoints.get(0);
+  Size point2 = polyPoints.get(1);
+  Vec3 point0Pos, point2Pos;
+  if( pos_dAttr ) {
+    point0Pos = pos_dAttr.values[point0].toVec3();
+    point2Pos = pos_dAttr.values[point2].toVec3();
+  } else {
+    point0Pos = posAttr.values[point0];
+    point2Pos = posAttr.values[point2];
+  }
+
+  Ray ray(this.start, this.unitDir);
+  Boolean doubleSided = this.doubleSided;
+  Boolean intersected;
+  for( Size i = 0; i < triangleCount; ++i ) {
+    Vec3 point1Pos = point2Pos;
+    point2 = polyPoints.get(i+2);
+
+    if( pos_dAttr )
+      point2Pos = pos_dAttr.values[point2].toVec3();
+    else
+      point2Pos = posAttr.values[point2];
+
+    Vec3 intersPos;
+    Scalar interDist, triU, triV;
+    if(! ray.intersectTriangle( !doubleSided, point0Pos, point1Pos, point2Pos, 
+          intersPos, interDist, triU, triV) || interDist >= maxDistance )
+      continue;
+
+    intersected = true;
+    maxDistance = interDist;
+    this.location.index = polygonIndex;
+    this.location.subIndex = i;
+    this.location.barycentric.x = 1.0 - (triU + triV);
+    this.location.barycentric.y = triU;
+    this.location.barycentric.z = triV;
+  }
+  return intersected;
+}
+
+function Boolean _MeshRaycastResult.compareAndUpdate!( Size objectIndex, io Scalar maxDistance ) {
+  return this.raycastPolygon( objectIndex, this.queryCache.pos_dAttr, this.queryCache.posAttr, maxDistance );
+}
+
+function _MeshRaycastResult.copyResultFrom!( Ref<RaycastResult> other ) {
+  Ref<_MeshRaycastResult> otherResult = other;
+  this.location = otherResult.location;
+}
+
+object _MeshClosestResult : ClosestResult {
+  Vec3 position;
+  Vec3 scaling;
+  Boolean hasScaling;
+  GeometryLocation location;
+  Ref<_PolygonMeshSpatialQueryCache> queryCache;
+};
+
+function _MeshClosestResult(Ref<_PolygonMeshSpatialQueryCache> queryCache) {
+  this.queryCache = queryCache;
+}
+
+function _MeshClosestResult.reset!( Vec3 position, Vec3 scaling, Boolean hasScaling ) {
+  this.position = position;
+  this.scaling = scaling;
+  this.hasScaling = hasScaling;
+  this.location = GeometryLocation();//Invalidate
+}
+
+//NOTE: bestHit must be initialized to the distance to beat. Returns 'true' if a new closest was found.
+function Boolean _MeshClosestResult.getClosestPolygonLocation!( Size polygonIndex, Ref<Vec3_dAttribute> pos_dAttr, Ref<Vec3Attribute> posAttr, io Scalar maxScaledSquaredDistance ) {
+
+  LocalIndexArray polyPoints;
+  this.queryCache.mesh.getPolygonPoints( polygonIndex, polyPoints );
+  if( polyPoints.size() < 3 )
+    return false;
+  Size triangleCount = polyPoints.size()-2;
+
+  Size point0 = polyPoints.get(0);
+  Size point2 = polyPoints.get(1);
+  Vec3 point0Pos, point2Pos;
+  if( pos_dAttr ) {
+    point0Pos = pos_dAttr.values[point0].toVec3();
+    point2Pos = pos_dAttr.values[point2].toVec3();
+  } else {
+    point0Pos = posAttr.values[point0];
+    point2Pos = posAttr.values[point2];
+  }
+
+  Vec3 pt0ToStart = (this.position - point0Pos)*this.scaling;
+
+  Boolean found;
+  for( Size i = 0; i < triangleCount; ++i ) {
+    Vec3 point1Pos = point2Pos;
+    point2 = polyPoints.get(i+2);
+
+    if( pos_dAttr )
+      point2Pos = pos_dAttr.values[point2].toVec3();
+    else
+      point2Pos = posAttr.values[point2];
+
+    Vec3 pt0ToPt1 = point1Pos - point0Pos;
+    Vec3 pt0ToPt2 = point2Pos - point0Pos;
+
+    if(this.hasScaling) {
+      pt0ToPt1 *= this.scaling;
+      pt0ToPt2 *= this.scaling;
+    }
+    Vec3 triCross = pt0ToPt1.cross(pt0ToPt2);
+    Scalar triCrossSqLen = triCross.dot(triCross);
+
+    Scalar denom;
+    Vec3 pt0ToInters;
+    Scalar d00, d01, d11, d20, d21;
+
+    if( triCrossSqLen > 1.0e-16 ) {
+      //Note: we can't take pt0ToStart.dot(normal) as the dist, since this is wrong
+      //if non-uniform scaling. Anyway this distance is not a good way to invalidate
+      //a result, since in general it will be closer than the actual result.
+      pt0ToInters = pt0ToStart - (pt0ToStart.dot(triCross)/triCrossSqLen)*triCross;
+
+      //Check if it is inside the triangle.
+      //Fast method to compute barycentrics: http://gamedev.stackexchange.com/questions/23743/whats-the-most-efficient-way-to-find-barycentric-coordinates
+      d00 = pt0ToPt1.dot(pt0ToPt1);
+      d01 = pt0ToPt1.dot(pt0ToPt2);
+      d11 = pt0ToPt2.dot(pt0ToPt2);
+      d20 = pt0ToInters.dot(pt0ToPt1);
+      d21 = pt0ToInters.dot(pt0ToPt2);
+      denom = d00 * d11 - d01 * d01;
+    }
+
+    Size neg[3];
+    Scalar u,v,w;
+
+    if( abs(denom) < 1.0e-8) {
+      //Small triangle, or far away
+      neg[0] = 1;
+      neg[1] = 1;
+      pt0ToInters = Vec3();//Check segment distance to the starting point
+    } else {
+      Scalar invDenom = 1.0/denom;
+      v = (d11 * d20 - d01 * d21) * invDenom;
+      w = (d00 * d21 - d01 * d20) * invDenom;
+      u = 1.0 - v - w;
+      neg[0] = u < 0 ? 1 : 0;
+      neg[1] = v < 0 ? 1 : 0;
+      neg[2] = w < 0 ? 1 : 0;
+    }
+    Size negSum = neg[0] + neg[1] + neg[2];
+    Vec3 pt0ToClosestPos;//Keep relative in case there is scaling
+    Scalar scaledSqDist;
+    if( negSum ) {
+      Scalar ratio;
+      Boolean hasClosestPos;
+
+      if( neg[0] ) {
+        pt0ToClosestPos = closestSegmentPoint( pt0ToStart, pt0ToPt1, pt0ToPt2, ratio );
+        scaledSqDist = (pt0ToStart-pt0ToClosestPos).lengthSquared();
+        hasClosestPos = true;
+        u = 0;
+        v = 1.0-ratio;
+      } 
+      if( neg[1] ) {
+        Vec3 otherClosestPos = closestSegmentPoint( pt0ToStart, Vec3(), pt0ToPt2, ratio );
+        Scalar otherScaledSqDist = (pt0ToStart-otherClosestPos).lengthSquared();
+        if(!hasClosestPos || otherScaledSqDist < scaledSqDist) {
+          scaledSqDist = otherScaledSqDist;
+          pt0ToClosestPos = otherClosestPos;
+          hasClosestPos = true;
+          u = 1.0-ratio;
+          v = 0;
+        }
+      }
+      if( neg[2] ) {
+        Vec3 otherClosestPos = closestSegmentPoint( pt0ToStart, Vec3(), pt0ToPt1, ratio );
+        Scalar otherScaledSqDist = (pt0ToStart-otherClosestPos).lengthSquared();
+        if(!hasClosestPos || otherScaledSqDist < scaledSqDist) {
+          scaledSqDist = otherScaledSqDist;
+          pt0ToClosestPos = otherClosestPos;
+          u = 1.0-ratio;
+          v = ratio;
+        }
+      }
+    } else {
+      pt0ToClosestPos = pt0ToInters;
+      scaledSqDist = (pt0ToStart-pt0ToClosestPos).lengthSquared();
+    }
+    if( scaledSqDist >= maxScaledSquaredDistance )
+      continue;
+
+    found = true;
+    maxScaledSquaredDistance = scaledSqDist;
+    this.location.index = polygonIndex;
+    this.location.subIndex = i;
+    this.location.barycentric.x = u;
+    this.location.barycentric.y = v;
+    this.location.barycentric.z = 1.0 - (u+v);
+  }
+  return found;
+}
+
+function Boolean _MeshClosestResult.compareAndUpdate!( Size objectIndex, io Scalar maxScaledSquaredDistance ) {
+  return this.getClosestPolygonLocation( objectIndex, this.queryCache.pos_dAttr, this.queryCache.posAttr, maxScaledSquaredDistance );
+}
+
+function _MeshClosestResult.copyResultFrom!( Ref<ClosestResult> other ) {
+  Ref<_MeshClosestResult> otherResult = other;
+  this.location = otherResult.location;
+}
+
+object PolygonMeshSpatialQuery : SpatialQuery {
+  _StatialQueryData data;
+  _MeshRaycastResult raycastResult;
+  _MeshClosestResult closestResult;
+  Ref<_PolygonMeshSpatialQueryCache> queryCache;
+};
+
+function PolygonMeshSpatialQuery( Ref<_PolygonMeshSpatialQueryCache> queryCache ) {
+  this.queryCache = queryCache;
+  this.raycastResult = _MeshRaycastResult(queryCache);
+  this.closestResult = _MeshClosestResult(queryCache);
+}
+
+function _PolygonMeshSpatialQueryCache( PolygonMesh mesh ) {
+  this.mesh = mesh;
+  this.acceleration = SpatialAccelerationChooser( mesh.base.autoStats );
+  this.updateLock = SimpleLock();
+  this.queryAllocator = FewObjectsRecyclingAllocator( PolygonMeshSpatialQuery(this), 1000, "Warning: PolygonMesh.beginSpatialQuery: called more than 1000 times, intentional or missing a matching 'endSpatialQuery'?" );
+  this.dirtyPositions = true;
+}
+
+operator _computePolygonBBox(Size index, io Ref<_PolygonMeshSpatialQueryCache> queryCache, io Vec3 results[]) {
+  LocalBoundingVolume bbox = queryCache.mesh.computePolygonBBox(index);
+  results[index*2] = bbox.pt1;
+  results[index*2+1] = bbox.pt2;
+}
+
+function Ref<_PolygonMeshSpatialQueryCache> PolygonMesh._getQueryCache() {
+  //Note: this is complex to avoid unrequired locking
+  Ref<_PolygonMeshSpatialQueryCache> queryCache = null;
+  if( this.spatialAccelerationCache ) {
+    queryCache = this.spatialAccelerationCache;
+  } else {
+    Ref<ThreadsafeMetaDataContainer> mutableMetaData = this.base.metaData;//Make non-const
+    AutoLock AL(mutableMetaData.lock);
+    //Another thread might have created it
+    queryCache = mutableMetaData.lockedGet("spatialAccel");
+    if( !queryCache ) {
+      _PolygonMeshSpatialQueryCache newQueryCache = _PolygonMeshSpatialQueryCache(this);
+      mutableMetaData.lockedSet("spatialAccel", newQueryCache);
+      queryCache = newQueryCache;
+    }
+  }
+  //Check if it is synchronized. Note: another thread might be synchronizing it at the same time.
+  Ref<GeometryAttributes> attr = this.getAttributes();
+  Ref<Vec3_dAttribute> pos_d = attr.getPositions_d();
+  Ref<Vec3Attribute> pos = attr.getPositions();
+
+  if(  this.version != queryCache.meshVersion ||
+      (Boolean(pos_d) && (queryCache.pos_dAttr !== pos_d || pos_d.getVersion() != queryCache.positionsVersion) ) ||
+      (Boolean(pos) && (queryCache.posAttr !== pos || pos.getVersion() != queryCache.positionsVersion) ) ) {
+    //We assume no mesh changes during spatial queries. TODO: use a readers-writers lock here.
+    AutoLock AL(queryCache.updateLock);
+ 
+    //NOTE: conditions need to be checked again since another thread might have updated it
+    if( synchronizeVersion( this.version, queryCache.meshVersion ) ) {
+      queryCache.acceleration.setObjectCount( this.polygonCount(), false );
+      queryCache.dirtyPositions = true;
+    }
+
+    if( pos_d !== queryCache.pos_dAttr || pos !== queryCache.posAttr ) {
+      //For thread safety, only update pointers if they change
+      queryCache.pos_dAttr = pos_d;
+      queryCache.posAttr = pos;
+      queryCache.dirtyPositions = true;
+    }
+    if(  ( Boolean(pos_d) && synchronizeVersion( pos_d.getVersion(), queryCache.positionsVersion ) )
+      || ( Boolean(pos) && synchronizeVersion( pos.getVersion(), queryCache.positionsVersion ) ) )
+      queryCache.dirtyPositions = true;
+  }
+  return queryCache;
+}
+
+//See SpatialQueryable interface.
+function PolygonMesh.prepareForSpatialQueries!( Size approximateNumberOfQueries, GenericValueContainer options ) {
+  Ref<_PolygonMeshSpatialQueryCache> queryCache = this._getQueryCache();
+  if( queryCache.queryAllocator.allocatedCount() )
+    throw("PolygonMesh.prepareForSpatialQueries: preparing before all endSpatialQuery() were called");
+  {
+    AutoLock AL(queryCache.updateLock);//TODO: use readers-writers lock
+
+    Boolean accelerationChanged = queryCache.acceleration.synchronizeOptions( options );
+
+    if( accelerationChanged || queryCache.dirtyPositions ) {
+      //Compute poly bboxes in parallel
+      Size polygonCount = this.polygonCount();
+      queryCache.acceleration.setObjectCount( polygonCount, true );
+      Vec3 polyBBoxes[];
+      polyBBoxes.resize(polygonCount*2);
+      if( polygonCount > 500 )
+        _computePolygonBBox<<<polygonCount>>>(queryCache, polyBBoxes);
+      else {
+        for( Size i = 0; i < polygonCount; ++i )
+          _computePolygonBBox(i, queryCache, polyBBoxes);
+      }
+      for( Size i = 0; i < polygonCount; ++i ) 
+        queryCache.acceleration.updateObjectVolume(i, polyBBoxes[i*2], polyBBoxes[i*2+1] );
+      queryCache.dirtyPositions = false;
+    }
+    queryCache.acceleration.prepare( approximateNumberOfQueries );
+  }
+}
+
+//See SpatialQueryable interface.
+inline PolygonMesh.removeSpatialQueryAcceleration!() {
+  this.base.metaData.remove("spatialAccel");
+  this.spatialAccelerationCache = null;
+}
+
+//See SpatialQueryable interface.
+inline Ref<SpatialQuery> PolygonMesh.beginSpatialQuery() {
+  return this._getQueryCache().queryAllocator.allocate();
+}
+
+//See SpatialQueryable interface.
+inline PolygonMesh.endSpatialQuery( Ref<SpatialQuery> query ) {
+  Ref<PolygonMeshSpatialQuery> meshQuery = query;
+  if( meshQuery.queryCache.mesh !== this )
+    throw("PolygonMesh.endSpatialQuery: invalid query object for this");
+  this._getQueryCache().queryAllocator.free(query);
+}
+
+//See SpatialQuery interface. Points with no adjacent polygons will be ignored.
+inline GeometryLocation PolygonMeshSpatialQuery.raycast!( Ray ray, Boolean doubleSided, Scalar coneThreshold, Scalar maxDistance ) {
+  Ref<RaycastResult> result = this.raycastResult;
+  this.queryCache.acceleration.raycast( !this.queryCache.dirtyPositions, ray, doubleSided, coneThreshold, maxDistance, this.data, result  );
+  return this.raycastResult.location;
+}
+
+//See PolygonMeshSpatialQuery.raycast
+inline GeometryLocation PolygonMesh.raycast( Ray ray, Boolean doubleSided, Scalar coneThreshold, Scalar maxDistance ) {
+  Ref<PolygonMeshSpatialQuery> query = this.beginSpatialQuery();
+  GeometryLocation location = query.raycast( ray, doubleSided, coneThreshold, maxDistance );
+  this.endSpatialQuery(query);
+  return location;
+}
+
+//See SpatialQuery interface. Points with no adjacent polygons will be ignored.
+inline GeometryLocation PolygonMeshSpatialQuery.getClosest!( Vec3 position, Vec3 scaling, Scalar maxUnscaledDistance ) {
+  Ref<ClosestResult> result = this.closestResult;
+  this.queryCache.acceleration.getClosest( !this.queryCache.dirtyPositions, position, scaling, maxUnscaledDistance, this.data, result );
+  return this.closestResult.location;
+}
+
+//See PolygonMeshSpatialQuery.getClosest
+inline GeometryLocation PolygonMesh.getClosest( Vec3 position, Vec3 scaling, Scalar maxUnscaledDistance ) {
+  Ref<PolygonMeshSpatialQuery> query = this.beginSpatialQuery();
+  GeometryLocation location = query.getClosest( position, scaling, maxUnscaledDistance );
+  this.endSpatialQuery(query);
+  return location;
+}
+
+//See SpatialQuery interface. Elements are polygon indices.
+//Only polygons' bounding box is considered (conservative approximation).
+function Size PolygonMeshSpatialQuery.getElementsInBBox!( Vec3 min, Vec3 max ) {
+  return this.queryCache.acceleration.getElementsInBBox( this.queryCache.mesh, !this.queryCache.dirtyPositions, min, max, this.data );
+}
+
+//See SpatialQuery interface. Elements are polygon indices.
+//Only polygons' bounding box is considered (conservative approximation).
+function Size PolygonMeshSpatialQuery.getElementsInBSphere!( Vec3 center, Scalar radius ) {
+  return this.queryCache.acceleration.getElementsInBSphere( this.queryCache.mesh, !this.queryCache.dirtyPositions, center, radius, this.data );
+}
+
+//See SpatialQuery interface. Elements are polygon indices.
+//Only polygons' bounding box is considered (conservative approximation).
+function Size PolygonMeshSpatialQuery.getQueriedElement( Size index ) {
+  return this.data.getQueriedElement(index);
+}

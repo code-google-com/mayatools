@@ -1,0 +1,721 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+/*SPHINX-description
+The :ref:`quat` represents a 3D rotation as a quaternion. Quaternions are used within the :ref:`Xfo` type. A :ref:`quat` can be converted to and from :ref:`mat33`  as well as :ref:`euler` types.
+
+Example
+---------
+
+.. code-block:: js
+
+    // create several quaternions
+    Quat q0, q1, q2, q3, q4;
+    q0 = Quat(Vec3(1.0, 0.0, 0.0), 0.0);
+    q1.setFromEuler(Euler(PI, 0.0, 0.0));
+    q2.setFromDirectionAndUpvector(Vec3(1.0, 0.0, 0.0), Vec3(0.0, 1.0, 0.0));
+    q3.setFrom2Vectors(Vec3(1.0, 0.0, 0.0), Vec3(1.0, 1.0, 0.0));
+    q4.setFromAxisAndAngle(Vec3(0.0, 1.0, 0.0), HALF_PI);
+*/
+
+struct Quat
+{
+  Vec3 v;
+  Scalar w;
+};
+
+// default constructor - set to identity
+inline Quat() {
+  this.setIdentity();
+}
+
+// construct from scalars
+inline Quat(in Scalar x, in Scalar y, in Scalar z, in Scalar w) {
+  this.v.set(x, y, z);
+  this.w = w;
+}
+
+// construct from scalar and vector
+inline Quat(in Scalar w, in Vec3 v) {
+  this.v = v;
+  this.w = w;
+}
+
+// construct from vector and scalar
+inline Quat(in Vec3 v, in Scalar w) {
+  this.v = v;
+  this.w = w;
+}
+
+// construct from euler angles
+inline Quat(in Euler e) {
+  this.setFromEuler(e);
+}
+
+// setter from scalars
+inline Quat.set!(in Scalar x, in Scalar y, in Scalar z, in Scalar w) {
+  this.v.set(x, y, z);
+  this.w = w;
+}
+
+// setter from scalar and vector
+inline Quat.set!(in Scalar w, in Vec3 v) {
+  this.v = v;
+  this.w = w;
+}
+
+// setter from vector and scalar
+inline Quat.set!(in Vec3 v, in Scalar w) {
+  this.v = v;
+  this.w = w;
+}
+
+// setter from (standard/external) float32 array and an offset
+inline Quat.set!(Float32 v<>, UInt32 o) {
+  if(v.size() >= 4 + o) {
+    this.v.set(v, o);
+    this.w = v[o + 3];
+  }
+}
+// getter as external float32 array and an offset
+inline Quat.get(io Float32 v<>, UInt32 o) {
+  if(v.size() >= 4 + o) {
+    this.v.get(v, o);
+    v[o + 3] = this.w;
+  }
+}
+
+// getter as float32 array and an offset
+inline Quat.get(io Float32 v[], UInt32 o) {
+  if(v.size() < 4 + o)
+    v.resize(4 + o);
+  this.v.get(v, o);
+  v[o + 3] = this.w;
+}
+
+// setter from (standard/external) float64 array and an offset
+inline Quat.set!(Float64 v<>, UInt32 o) {
+  if(v.size() >= 4 + o) {
+    this.v.set(v, o);
+    this.w = Float32(v[o + 3]);
+  }
+}
+
+// getter as external float64 array and an offset
+inline Quat.get(io Float64 v<>, UInt32 o) {
+  if(v.size() >= 4 + o) {
+    this.v.get(v, o);
+    v[o + 3] = this.w;
+  }
+}
+
+// getter as float64 array and an offset
+inline Quat.get(io Float64 v[], UInt32 o) {
+  if(v.size() < 4 + o)
+    v.resize(4 + o);
+  this.v.get(v, o);
+  v[o + 3] = this.w;
+}
+
+// setter from (standard/external) float32 array
+inline Quat.set!(Float32 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float32 array
+inline Quat.get(io Float32 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float32 array
+inline Quat.get(io Float32 v[]) {
+  this.get(v, 0);
+}
+
+// setter from (standard/external) float64 array
+inline Quat.set!(Float64 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float64 array
+inline Quat.get(io Float64 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float64 array
+inline Quat.get(io Float64 v[]) {
+  this.get(v, 0);
+}
+
+// set this quat to the identity
+inline Quat.setIdentity!() {
+  this.v = Vec3(0.0, 0.0, 0.0);
+  this.w = 1.0;
+}
+
+// set this quat from a euler rotation
+function Quat Quat.setFromEuler!(in Euler e) {
+  Vec3 ordered;
+  if (e.ro.isZYX()) {
+    ordered.set(e.z,e.y,e.x);
+  }
+  else if (e.ro.isXZY()) {
+    ordered.set(e.x,e.z,e.y);
+  }
+  else if (e.ro.isYXZ()) {
+    ordered.set(e.y,e.x,e.z);
+  }
+  else if (e.ro.isYZX()) {
+    ordered.set(e.y,-e.z,e.x);
+  }
+  else if (e.ro.isXYZ()) {
+    ordered.set(e.x,-e.y,e.z);
+  }
+  else if (e.ro.isZXY()) {
+    ordered.set(e.z,-e.x,e.y);
+  }
+
+  Scalar ti, tj, tk;
+  ti = ordered.x * 0.5;
+  tj = ordered.y * 0.5;
+  tk = ordered.z * 0.5;
+  Scalar ci = cos(ti), cj = cos(tj), ck = cos(tk);
+  Scalar si = sin(ti), sj = sin(tj), sk = sin(tk);
+  Scalar cc = ci * ck, cs = ci * sk, sc = si * ck, ss = si * sk;
+  Scalar ai, aj, ak;
+  ai = cj * sc - sj * cs;
+  aj = cj * ss + sj * cc;
+  ak = cj * cs - sj * sc;
+
+  this.w = cj * cc + sj * ss;
+
+  if (e.ro.isZYX()) {
+    this.v.x = ak; this.v.y = aj; this.v.z = ai;
+  }
+  else if (e.ro.isXZY()) {
+    this.v.x = ai; this.v.y = ak; this.v.z = aj;
+  }
+  else if (e.ro.isYXZ()) {
+    this.v.x = aj; this.v.y = ai; this.v.z = ak;
+  }
+  else if (e.ro.isYZX()) {
+    this.v.x = ak; this.v.y = ai; this.v.z = -aj;
+  }
+  else if (e.ro.isXYZ()) {
+    this.v.x = ai; this.v.y = -aj; this.v.z = ak;
+  }
+  else if (e.ro.isZXY()) {
+    this.v.x = -aj; this.v.y = ak; this.v.z = ai;
+  }
+  return this;
+}
+
+// set this quat to a given angles vector (in radians) and a rotation order
+inline Quat Quat.setFromEulerAngles!(Vec3 angles, RotationOrder ro) {
+  Euler euler(angles, ro);
+  return this.setFromEuler(euler);
+}
+
+// set this quat to a given angles vector (in radians) using
+// the default XYZ rotation order
+inline Quat Quat.setFromEulerAngles!(Vec3 angles) {
+  return this.setFromEulerAngles(angles, RotationOrder(0));
+}
+
+// set this quat to a rotation defined by an axis and an angle (in radians)
+inline Quat Quat.setFromAxisAndAngle!(in Vec3 axis, in Scalar angle) {
+  Scalar halfAngle = angle / 2.0;
+  this.set(cos(halfAngle), sin(halfAngle) * axis.unit());
+  return this;
+}
+
+// set this quat to the rotation described by a 
+// 3x3 rotation matrix
+function Quat Quat.setFromMat33!(in Mat33 mat) {
+  Scalar trace = mat.row0.x + mat.row1.y + mat.row2.z;
+  if (trace > 0) {
+    Scalar s = 2.0 * sqrt(trace + 1.0);
+    this.w = 0.25 * s;
+    if( Math_badDivisor( s ) )
+      Math_reportBadDivisor( s, "Quat.setFromMat33" );
+    Scalar invS = 1.0 / s;
+    this.v.x = (mat.row2.y - mat.row1.z) * invS;
+    this.v.y = (mat.row0.z - mat.row2.x) * invS;
+    this.v.z = (mat.row1.x - mat.row0.y) * invS;
+  }else if (mat.row0.x > mat.row1.y && mat.row0.x > mat.row2.z) {
+    Scalar s = 2.0 * sqrt(1.0 + mat.row0.x - mat.row1.y - mat.row2.z);
+    if( Math_badDivisor( s ) )
+      Math_reportBadDivisor( s, "Quat.setFromMat33" );
+    Scalar invS = 1.0 / s;
+    this.w = (mat.row2.y - mat.row1.z) * invS;
+    this.v.x = 0.25 * s;
+    this.v.y = (mat.row0.y + mat.row1.x) * invS;
+    this.v.z = (mat.row0.z + mat.row2.x) * invS;
+  }else if (mat.row1.y > mat.row2.z) {
+    Scalar s = 2.0 * sqrt(1.0 + mat.row1.y - mat.row0.x - mat.row2.z);
+    Scalar invS = 1.0 / s;
+    if( Math_badDivisor( s ) )
+      Math_reportBadDivisor( s, "Quat.setFromMat33" );
+    this.w = (mat.row0.z - mat.row2.x) * invS;
+    this.v.x = (mat.row0.y + mat.row1.x) * invS;
+    this.v.y = 0.25 * s;
+    this.v.z = (mat.row1.z + mat.row2.y) * invS;
+  }else {
+    Scalar s = 2.0 * sqrt(1.0 + mat.row2.z - mat.row0.x - mat.row1.y);
+    Scalar invS = 1.0 / s;
+    if( Math_badDivisor( s ) )
+      Math_reportBadDivisor( s, "Quat.setFromMat33" );
+    this.w = (mat.row1.x - mat.row0.y) * invS;
+    this.v.x = (mat.row0.z + mat.row2.x) * invS;
+    this.v.y = (mat.row1.z + mat.row2.y) * invS;
+    this.v.z = 0.25 * s;
+  }
+  this.setUnit();
+  return this;
+}
+
+// set the quaternion to the rotation required to rotate the source
+// vector to the destination vector
+// Function taken from the 'Game Programming Gems' article 'The Shortest Arc Quat' by Stan Melax
+// Both vectors must be units.
+function Quat Quat.setFrom2Vectors!(in Vec3 sourceDirVec, in Vec3 destDirVec, Boolean arbitraryIfAmbiguous) {
+  Scalar val = sourceDirVec.dot(destDirVec) + 1;
+  if( val > 0.0 )
+    val = sqrt(val * 2);
+  if (val <= DIVIDEPRECISION) {
+    if(arbitraryIfAmbiguous) {
+      // the vectors pointed in opposite directions OR they are not unit vectors.
+      // creating the quaterion is ambiguous (many answers)
+      //Take any orthogonal vector as an intermediate step
+      Vec3 ortho(sourceDirVec.y, sourceDirVec.z, sourceDirVec.x);
+      ortho = ortho.cross(sourceDirVec).unit();
+      //Important: call with arbitraryIfAmbiguous = false, else it could recurse infinitely if sourceDirVec or destDirVec was (0,0,0)
+      Quat q1, q2;
+      q1.setFrom2Vectors(sourceDirVec, ortho, false);
+      q2.setFrom2Vectors(ortho, destDirVec, false);
+      this = q1 * q2;
+      return this;
+    }
+    Math_reportBadDivisor( val, "Quat.setFromMat33: ambiguous answer" );
+  }
+  this.v = sourceDirVec.cross(destDirVec) / val;
+  this.w = val / 2;
+  return this;
+}
+
+// overload for previous setFrom2Vectors method, avoid arbitrary rotations.
+inline Quat Quat.setFrom2Vectors!(in Vec3 sourceDirVec, in Vec3 destDirVec) {
+  this.setFrom2Vectors(sourceDirVec, destDirVec, false);
+  return this;
+}
+
+// set the quat to represent the direction as the Z axis
+// and the upvector pointing along the XY plane.
+inline Quat Quat.setFromDirectionAndUpvector!(in Vec3 direction, in Vec3 upvector) {
+  Vec3 zaxis = direction.unit();
+  Vec3 yaxis = zaxis.cross(upvector.unit()).cross(zaxis).unit();
+  Vec3 xaxis = yaxis.cross(zaxis).unit();
+  this.setFromMat33(Mat33(xaxis, yaxis, zaxis).transpose());
+  return this;
+}
+
+// returns true if this quaternion is equal
+// to another one
+inline Boolean Quat.equal (in Quat other) {
+  return this.v.equal(other.v) && this.w == other.w;
+}
+
+// returns true if this quaternion is
+// almost equal to another one (given a precision)
+inline Boolean Quat.almostEqual(in Quat other, in Scalar precision) {
+  return
+      this.v.almostEqual(other.v, precision) &&
+      (abs(this.w - other.w) < precision);
+}
+
+// returns true if this quaternion is
+// almost equal to another one (using a default precision)
+inline Boolean Quat.almostEqual(in Quat other) {
+  return this.almostEqual(other, PRECISION);
+}
+
+// equals operator
+inline Boolean == (Quat a, Quat b) {
+  return a.v == b.v && a.w == b.w;
+}
+
+// not equals operator
+inline Boolean != (Quat a, Quat b) {
+  return a.v != b.v || a.w != b.w;
+}
+
+// adds two quaternions
+inline Quat + (in Quat a, in Quat b) {
+  return Quat(a.w + b.w, a.v + b.v);
+}
+
+// adds another quaternion to this one
+inline Quat. += (in Quat b) {
+  this = this + b;
+}
+
+// subtracts two quaternions
+inline Quat - (in Quat a, in Quat b) {
+  return Quat(a.w - b.w, a.v - b.v);
+}
+
+// subtracts another quaternion from this one
+inline Quat. -= (in Quat b) {
+  this = this - b;
+}
+
+// multiplies two quaternions
+inline Quat * (in Quat a, in Quat b) {
+  return Quat(a.w * b.w - a.v.dot(b.v), a.v.cross(b.v) + (a.w * b.v) + (a.v * b.w));
+}
+
+// multiplies this quaternion with another one
+inline Quat. *= (in Quat b) {
+  this = this * b;
+}
+
+// multiplies a scalar with a quaternion
+inline Quat * (in Scalar a, in Quat b) {
+  return Quat(a * b.w, a * b.v);
+}
+
+// multiplies a quaternion with a scalar
+inline Quat * (in Quat a, in Scalar b) {
+  return Quat(a.w * b, a.v * b);
+}
+
+// multiplies this quaternion with a scalar
+inline Quat. *= (in Scalar b) {
+  this = this * b;
+}
+
+// returns the division of two quaternions
+inline Quat / (in Quat a, in Quat b) {
+  return Quat(a.w * b.w + a.v.dot(b.v), (a.v * b.w) - (a.w * b.v) - a.v.cross(b.v));
+}
+
+// divides this quaternion by another one
+inline Quat. /= (in Quat b) {
+  this = this / b;
+}
+
+// returns the division of a quaternion and a scalar
+inline Quat / (Quat a, Scalar b) {
+  if( Math_badDivisor( b ) )
+    Math_reportBadDivisor( b, "Quat.divide" );
+  return a * (1.0 / b);
+}
+
+// divides this quaternion by a scalar
+inline Quat. /= (in Scalar b) {
+  this = this / b;
+}
+
+// overload method for the add operator
+inline Quat Quat.add(Quat other) {
+  return this + other;
+}
+
+// overload method for the subtract operator
+inline Quat Quat.subtract(Quat other) {
+  return this - other;
+}
+
+// overload method for the multiply operator
+inline Quat Quat.multiply(Quat other) {
+  return this * other;
+}
+
+// overload method for the divide operator
+inline Quat Quat.divide(Quat other) {
+  return this / other;
+}
+
+// returns the product of this quaternion and a scalar
+inline Quat Quat.multiplyScalar(Scalar other) {
+  return this * other;
+}
+
+// returns the division of this quaternion and a scalar
+inline Quat Quat.divideScalar(Scalar other) {
+  return this / other;
+}
+
+// rotates a vector by this quaterion.
+// Don't forget to normalise the quaternion unless 
+// you want axial translation as well as rotation.
+inline Vec3 Quat.rotateVector(in Vec3 v) {
+  Quat vq = Quat(0.0, v);
+  Quat pq = this * vq * this.conjugate();
+  return pq.v;
+}
+
+// returns the dot product of this quaternion and another one
+inline Scalar Quat.dot(in Quat other) {
+  return this.w * other.w + this.v.dot(other.v);
+}
+
+// returns the conjugate of this quaternion
+inline Quat Quat.conjugate() {
+  return Quat(this.w, this.v.negate());
+}
+
+// returns the squared length of this quaternion
+inline Scalar Quat.lengthSquared() {
+  return this.w * this.w + this.v.lengthSquared();
+}
+
+// returns the length of this quaternion
+inline Scalar Quat.length() {
+  return sqrt(this.lengthSquared());
+}
+
+// returns a unit quaternion of this one
+inline Quat Quat.unit() {
+  Scalar n = this.length();
+  if( Math_badDivisor( n ) )
+    Math_reportBadDivisor( n, "Quat.unit" );
+  return this / n;
+}
+
+// returns a unit quaternion of this one, no error reported if cannot be made unit
+inline Quat Quat.unit_safe() {
+  Scalar n = this.length();
+  if( Math_badDivisor( n ) )
+    return Quat();
+  return this / n;
+}
+
+// sets this quaternion to a unit quaternion and returns
+// the previous length
+inline Scalar Quat.setUnit!() {
+  Scalar n = this.length();
+  if( Math_badDivisor( n ) )
+    Math_reportBadDivisor( n, "Quat.setUnit" );
+  this /= n;
+  return n;
+}
+
+// returns a inverse quaternion of this one
+inline Quat Quat.inverse() {
+  return this.unit().conjugate();
+}
+
+// aligns this quaternion with another one
+inline Quat.alignWith!(in Quat other) {
+  if(this.dot(other) < 0.0){
+    this = Quat(-this.w, this.v.negate());
+  }
+}
+
+// returns the angle of this quaternion (in radians)
+inline Scalar Quat.getAngle() {
+  return acos(this.w) * 2.0;
+}
+
+// returns the X axis of this quaternion
+inline Vec3 Quat.getXaxis() {
+  Vec3 temp;
+  Scalar xy = this.v.x * this.v.y; Scalar xz = this.v.x * this.v.z;
+  Scalar yy = this.v.y * this.v.y; Scalar yw = this.v.y * this.w;
+  Scalar zz = this.v.z * this.v.z; Scalar zw = this.v.z * this.w;
+
+  temp.x = 1.0 - 2.0 * (zz + yy);
+  temp.y = 2.0 * (xy + zw);
+  temp.z = 2.0 * (xz - yw);
+  return temp;
+}
+
+// returns the Y axis of this quaternion
+inline Vec3 Quat.getYaxis() {
+  Vec3 temp;
+  Scalar xx = this.v.x * this.v.x; Scalar xy = this.v.x * this.v.y; Scalar xw = this.v.x * this.w;
+  Scalar yz = this.v.y * this.v.z;
+  Scalar zz = this.v.z * this.v.z; Scalar zw = this.v.z * this.w;
+
+  temp.x = 2.0 * (xy - zw);
+  temp.y = 1.0 - 2.0 * (zz + xx);
+  temp.z = 2.0 * (yz + xw);
+  return temp;
+}
+
+// returns the Z axis of this quaternion
+inline Vec3 Quat.getZaxis() {
+  Vec3 temp;
+  Scalar xx = this.v.x * this.v.x; Scalar xz = this.v.x * this.v.z; Scalar xw = this.v.x * this.w;
+
+  Scalar yy = this.v.y * this.v.y; Scalar yz = this.v.y * this.v.z; Scalar yw = this.v.y * this.w;
+
+  temp.x = 2.0 * (yw + xz);
+  temp.y = 2.0 * (yz - xw);
+  temp.z = 1.0 - 2.0 * (yy + xx);
+  return temp;
+}
+
+inline Quat.mirror!(in Integer axisIndex) {
+  Scalar tempW = this.w;
+  switch (axisIndex) {
+    case 0: this.w = this.v.y; this.v.set(this.v.z, tempW, this.v.x); break;
+    case 1: this.w = - this.v.x; this.v.set(-tempW, this.v.z, this.v.y); break;
+    case 2: this.w = - this.w; this.v.set(this.v.x, this.v.y, - this.v.z); break;
+  }
+}
+
+// returns this quaternion as a 3x3 rotation matrix
+inline Mat33 Quat.toMat33() {
+  Mat33 temp;
+
+  Scalar xx = this.v.x * this.v.x, xy = this.v.x * this.v.y, xz = this.v.x * this.v.z, xw = this.v.x * this.w;
+  Scalar yy = this.v.y * this.v.y, yz = this.v.y * this.v.z, yw = this.v.y * this.w;
+  Scalar zz = this.v.z * this.v.z, zw = this.v.z * this.w;
+
+  temp.row0.x = 1.0 - 2.0 * (zz + yy);
+  temp.row1.x = 2.0 * (xy + zw);
+  temp.row2.x = 2.0 * (xz - yw);
+
+  temp.row0.y = 2.0 * (xy - zw);
+  temp.row1.y = 1.0 - 2.0 * (zz + xx);
+  temp.row2.y = 2.0 * (yz + xw);
+
+  temp.row0.z = 2.0 * (yw + xz);
+  temp.row1.z = 2.0 * (yz - xw);
+  temp.row2.z = 1.0 - 2.0 * (yy + xx);
+
+  return temp;
+}
+
+// returns this quaternion as a Euler rotation
+// giving a rotation order
+function Euler Quat.toEuler( RotationOrder rotationOrder ) {
+  Quat unit = this.unit();//We cannot modify 'this'...
+  Vec3 ordered;
+  if (rotationOrder.isZYX()) {
+    ordered.set(unit.v.x,-unit.v.z,unit.v.y);
+  }
+  else if (rotationOrder.isXZY()) {
+    ordered.set(unit.v.y,-unit.v.x,unit.v.z);
+  }
+  else if (rotationOrder.isYXZ()) {
+    ordered.set(unit.v.z,-unit.v.y,unit.v.x);
+  }
+  else if (rotationOrder.isYZX()) {
+    ordered.set(unit.v.x,unit.v.y,unit.v.z);
+  }
+  else if (rotationOrder.isXYZ()) {
+    ordered.set(unit.v.z,unit.v.x,unit.v.y);
+  }
+  else if (rotationOrder.isZXY()) {
+    ordered.set(unit.v.y,unit.v.z,unit.v.x);
+  }
+
+  Vec3 euler;
+  Scalar test = ordered.x*ordered.y + ordered.z*unit.w;
+	if (test > 0.49999) { // singularity at north pole
+		euler.y = 2.0 * atan2(ordered.x, unit.w);
+		euler.z = HALF_PI;
+		euler.x = 0.0;
+	}
+  else if (test < -0.49999) { // singularity at south pole
+		euler.y = -2.0 * atan2(ordered.x,unit.w);
+		euler.z = -HALF_PI;
+		euler.x = 0.0;
+	}
+  else {
+    Scalar sqx = ordered.x*ordered.x;
+    Scalar sqy = ordered.y*ordered.y;
+    Scalar sqz = ordered.z*ordered.z;
+    euler.y = atan2(2.0*ordered.y*unit.w-2.0*ordered.x*ordered.z , 1.0 - 2.0*sqy - 2.0*sqz);
+	  euler.z = asin(2.0*test);
+	  euler.x = atan2(2.0*ordered.x*unit.w-2.0*ordered.y*ordered.z , 1.0 - 2.0*sqx - 2.0*sqz);
+  }
+
+  if (rotationOrder.isZYX()) {
+    return Euler(euler.x,euler.z,-euler.y,rotationOrder);
+  }
+  else if (rotationOrder.isXZY()) {
+    return Euler(-euler.y,euler.x,euler.z,rotationOrder);
+  }
+  else if (rotationOrder.isYXZ()) {
+    return Euler(euler.z,-euler.y,euler.x,rotationOrder);
+  }
+  else if (rotationOrder.isYZX()) {
+    return Euler(euler.x,euler.y,euler.z,rotationOrder);
+  }
+  else if (rotationOrder.isXYZ()) {
+    return Euler(euler.y,euler.z,euler.x,rotationOrder);
+  }
+  else if (rotationOrder.isZXY()) {
+    return Euler(euler.z,euler.x,euler.y,rotationOrder);
+  }
+  return Euler(0.0,0.0,0.0);
+}
+
+// returns this quaternion as a Euler angles using the rotationorder XYZ
+inline Vec3 Quat.toEulerAngles(RotationOrder order) {
+  return this.toEuler(order).getAngles();
+}
+
+// returns this quaternion as a Euler angles using the rotationorder XYZ
+inline Vec3 Quat.toEulerAngles() {
+  return this.toEulerAngles(RotationOrder(0));
+}
+
+// interpolates two quaternions spherically
+// given a scalar blend value (0.0 to 1.0).
+// Note: this and q2 should be unit Quaternions
+function Quat Quat.sphericalLinearInterpolate(in Quat q2, in Scalar t) {
+  Scalar angle = this.dot(q2);
+  Quat _q2 = q2;
+  if (angle < 0.0) {
+    _q2.v = _q2.v.negate();
+    _q2.w *= - 1.0;
+  }
+
+  Quat r;
+
+  Scalar cosHalfTheta = this.dot(_q2);
+
+  if (abs(cosHalfTheta) < 1.0) {
+    Scalar halfTheta = acos(cosHalfTheta);
+    Scalar sinHalfTheta = sqrt(1.0 - cosHalfTheta * cosHalfTheta);
+
+    if (abs(sinHalfTheta) < DIVIDEPRECISION) {
+      r = Quat((this.w + _q2.w) * 0.5, (this.v + _q2.v) * 0.5);
+    }
+    else {
+      Scalar rA = sin((1 - t) * halfTheta) / sinHalfTheta;
+      Scalar rB = sin(t * halfTheta) / sinHalfTheta;
+
+      r = Quat(this.w * rA + _q2.w * rB, this.v * rA + _q2.v * rB);
+    }
+  }
+  else {
+    // They're the same
+    r = this;
+  }
+  return r.unit();
+}
+
+// interpolates two quaternions lineally (slerp)
+// with a given blend value (0.0 to 1.0).
+function Quat Quat.linearInterpolate(in Quat other, in Scalar t) {
+  Scalar angle = this.dot(other);
+  Quat _other = other;
+  if (angle < 0.0) {
+    _other.v = _other.v.negate();
+    _other.w *= - 1.0;
+  }
+
+  Quat q;
+  q.v = this.v.linearInterpolate(_other.v, t);
+  q.w = this.w + ((_other.w - this.w) * t);
+  return q.unit();
+}
+
+
+

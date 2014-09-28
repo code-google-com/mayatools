@@ -1,0 +1,250 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+
+// enum BulletHingeFlags
+// {
+// 	BT_HINGE_FLAGS_CFM_STOP = 1,
+// 	BT_HINGE_FLAGS_ERP_STOP = 2,
+// 	BT_HINGE_FLAGS_CFM_NORM = 4
+// };
+
+
+/// hinge constraint between two rigidbodies each with a pivotpoint that descibes the axis location in local space
+/// axis defines the orientation of the hinge axis
+object BulletHingeConstraint : BulletTypedConstraint, BulletTypedObject
+{
+	Data pointer;
+	BulletRigidBody	rbA;
+	BulletRigidBody	rbB;
+};
+
+function Data BulletHingeConstraint.getPointer(){
+	return this.pointer;
+}
+
+// #ifdef IN_PARALLELL_SOLVER
+// public:
+// #endif
+// 	BulletJacobianEntry	jac[3]; //3 orthogonal linear constraints
+// 	BulletJacobianEntry	jacAng[3]; //2 orthogonal angular constraints+ 1 for limit/motor
+
+// 	Xfo rbAFrame; // constraint axii. Assumes z is hinge axis.
+// 	Xfo rbBFrame;
+
+// 	Scalar	motorTargetVelocity;
+// 	Scalar	maxMotorImpulse;
+
+
+// #ifdef	_BT_USE_CENTER_LIMIT_
+// 	BulletAngularLimit	limit;
+// #else
+// 	Scalar	lowerLimit;	
+// 	Scalar	upperLimit;	
+// 	Scalar	limitSign;
+// 	Scalar	correction;
+
+// 	Scalar	limitSoftness; 
+// 	Scalar	biasFactor; 
+// 	Scalar	relaxationFactor; 
+
+// 	Boolean		solveLimit;
+// #endif
+
+// 	Scalar	kHinge;
+
+
+// 	Scalar	accLimitImpulse;
+// 	Scalar	hingeAngle;
+// 	Scalar	referenceSign;
+
+// 	Boolean		angularOnly;
+// 	Boolean		enableAngularMotor;
+// 	Boolean		useSolveConstraintObsolete;
+// 	Boolean		useOffsetForConstraintFrame;
+// 	Boolean		useReferenceFrameA;
+
+// 	Scalar	accMotorImpulse;
+
+// 	Integer			flags;
+// 	Scalar	normalCFM;
+// 	Scalar	stopCFM;
+// 	Scalar	stopERP;
+
+	
+// public:
+
+function BulletHingeConstraint(BulletRigidBody rbA,BulletRigidBody rbB, in Vec3 pivotInA, in Vec3 pivotInB, in Vec3 axisInA,in Vec3 axisInB){
+	this.rbA = rbA;
+	this.rbB = rbB;
+	this.__construct(rbA,rbB, pivotInA, pivotInB, axisInA, axisInB, false);
+}
+function BulletHingeConstraint(BulletRigidBody rbA,BulletRigidBody rbB, in Vec3 pivotInA, in Vec3 pivotInB, in Vec3 axisInA,in Vec3 axisInB, Boolean useReferenceFrameA){
+	this.rbA = rbA;
+	this.rbB = rbB;
+	this.__construct(rbA,rbB, pivotInA, pivotInB, axisInA, axisInB, useReferenceFrameA);
+}
+function BulletHingeConstraint.__construct!(BulletRigidBody rbA,BulletRigidBody rbB, in Vec3 pivotInA, in Vec3 pivotInB, in Vec3 axisInA,in Vec3 axisInB, Boolean useReferenceFrameA) = "BulletHingeConstraint_construct1";
+
+
+function BulletHingeConstraint(BulletRigidBody rbA,in Vec3 pivotInA,in Vec3 axisInA){
+	this.rbA = rbA;
+	this.__construct( rbA, pivotInA, axisInA, false);
+}
+function BulletHingeConstraint(BulletRigidBody rbA,in Vec3 pivotInA,in Vec3 axisInA, Boolean useReferenceFrameA){
+	this.rbA = rbA;
+	this.__construct( rbA, pivotInA, axisInA, useReferenceFrameA);
+}
+function BulletHingeConstraint.__construct!(BulletRigidBody rbA,in Vec3 pivotInA,in Vec3 axisInA, Boolean useReferenceFrameA) = "BulletHingeConstraint_construct2";
+
+	
+function BulletHingeConstraint(BulletRigidBody rbA,BulletRigidBody rbB, in Xfo rbAFrame, in Xfo rbBFrame){
+	this.rbA = rbA;
+	this.rbB = rbB;
+	this.__construct( rbA, rbB, rbAFrame, rbBFrame, false);
+}
+function BulletHingeConstraint(BulletRigidBody rbA,BulletRigidBody rbB, in Xfo rbAFrame, in Xfo rbBFrame, Boolean useReferenceFrameA){
+	this.rbA = rbA;
+	this.rbB = rbB;
+	this.__construct( rbA, rbB, rbAFrame, rbBFrame, useReferenceFrameA);
+}
+function BulletHingeConstraint.__construct!(BulletRigidBody rbA,BulletRigidBody rbB, in Xfo rbAFrame, in Xfo rbBFrame, Boolean useReferenceFrameA) = "BulletHingeConstraint_construct3";
+
+
+function BulletHingeConstraint(BulletRigidBody rbA, in Xfo rbAFrame){
+	this.rbA = rbA;
+	this.__construct(rbA, rbAFrame, false);
+}
+function BulletHingeConstraint(BulletRigidBody rbA,in Xfo rbAFrame, Boolean useReferenceFrameA){
+	this.rbA = rbA;
+	this.__construct(rbA, rbAFrame, useReferenceFrameA);
+
+}
+function BulletHingeConstraint.__construct!(BulletRigidBody rbA,in Xfo rbAFrame, Boolean useReferenceFrameA) = "BulletHingeConstraint_construct4";
+
+
+function ~BulletHingeConstraint() = "BulletHingeConstraint_destroy";
+
+
+	// virtual void	buildJacobian();
+
+	// virtual void getInfo1 (BulletConstraintInfo1* info);
+
+	// void getInfo1NonVirtual(BulletConstraintInfo1* info);
+
+	// virtual void getInfo2 (BulletConstraintInfo2* info);
+
+	// void	getInfo2NonVirtual(BulletConstraintInfo2* info,in Xfo transA,in Xfo transB,in Vec3 angVelA,in Vec3 angVelB);
+
+	// void	getInfo2Internal(BulletConstraintInfo2* info,in Xfo transA,in Xfo transB,in Vec3 angVelA,in Vec3 angVelB);
+	// void	getInfo2InternalUsingFrameOffset(BulletConstraintInfo2* info,in Xfo transA,in Xfo transB,in Vec3 angVelA,in Vec3 angVelB);
+		
+
+	// void	updateRHS(Scalar	timeStep);
+
+function BulletRigidBody BulletHingeConstraint.getRigidBodyA()
+{
+	return this.rbA;
+}
+function BulletRigidBody BulletHingeConstraint.getRigidBodyB()
+{
+	return this.rbB;
+}
+
+
+
+function Xfo BulletHingeConstraint.getFrameOffsetA() = 'BulletHingeConstraint_getFrameOffsetA';
+
+function Xfo BulletHingeConstraint.getFrameOffsetB() = 'BulletHingeConstraint_getFrameOffsetB';
+
+function BulletHingeConstraint.setFrames!(in Xfo frameA, in Xfo frameB) = 'BulletHingeConstraint_setFrames';
+	
+function BulletHingeConstraint.setAngularOnly!(Boolean angularOnly) = 'BulletHingeConstraint_setAngularOnly';
+
+function BulletHingeConstraint.enableAngularMotor!(Boolean enableMotor,Scalar targetVelocity,Scalar maxMotorImpulse) = 'BulletHingeConstraint_enableAngularMotor';
+
+// extra motor API, including ability to set a target rotation (as opposed to angular velocity)
+// note: setMotorTarget sets angular velocity under the hood, so you must call it every tick to
+//       maintain a given angular target.
+function BulletHingeConstraint.enableMotor!(Boolean enableMotor) = 'BulletHingeConstraint_enableMotor';
+function BulletHingeConstraint.setMaxMotorImpulse!(Scalar maxMotorImpulse) = 'BulletHingeConstraint_setMaxMotorImpulse';
+// qAinB is rotation of body A wrt body B.
+function BulletHingeConstraint.setMotorTarget!(Quat qAinB, Scalar dt) = 'BulletHingeConstraint_setMotorTarget';
+function BulletHingeConstraint.setMotorTarget!(Scalar targetAngle, Scalar dt) = 'BulletHingeConstraint_setMotorTarget';
+
+
+function BulletHingeConstraint.setLimit!(Scalar low,Scalar high) = 'BulletHingeConstraint_setLimit1';
+function BulletHingeConstraint.setLimit!(Scalar low,Scalar high,Scalar _softness) = 'BulletHingeConstraint_setLimit2';
+function BulletHingeConstraint.setLimit!(Scalar low,Scalar high,Scalar _softness, Scalar _biasFactor) = 'BulletHingeConstraint_setLimit3';
+function BulletHingeConstraint.setLimit!(Scalar low,Scalar high,Scalar _softness, Scalar _biasFactor, Scalar _relaxationFactor) = 'BulletHingeConstraint_setLimit4';
+
+function BulletHingeConstraint.setAxis!(in Vec3 axisInA) = 'BulletHingeConstraint_setAxis';
+
+function Scalar	BulletHingeConstraint.getLowerLimit() = 'BulletHingeConstraint_getLowerLimit';
+
+function Scalar	BulletHingeConstraint.getUpperLimit() = 'BulletHingeConstraint_getUpperLimit';
+
+
+function Scalar BulletHingeConstraint.getHingeAngle() = 'BulletHingeConstraint_getHingeAngle';
+
+function Scalar BulletHingeConstraint.getHingeAngle(in Xfo transA,in Xfo transB) = 'BulletHingeConstraint_getHingeAngle';
+
+function BulletHingeConstraint.testLimit!(in Xfo transA,in Xfo transB) = 'BulletHingeConstraint_testLimit';
+
+function Xfo BulletHingeConstraint.getAFrame() = 'BulletHingeConstraint_getAFrame';
+function Xfo BulletHingeConstraint.getBFrame() = 'BulletHingeConstraint_getBFrame';
+
+function Integer BulletHingeConstraint.getSolveLimit() = 'BulletHingeConstraint_getSolveLimit';
+
+function Scalar BulletHingeConstraint.getLimitSign() = 'BulletHingeConstraint_getLimitSign';
+
+function Boolean BulletHingeConstraint.getAngularOnly() = 'BulletHingeConstraint_getAngularOnly';
+function Boolean BulletHingeConstraint.getEnableAngularMotor() = 'BulletHingeConstraint_getEnableAngularMotor';
+function Scalar BulletHingeConstraint.getMotorTargetVelosity() = 'BulletHingeConstraint_getMotorTargetVelosity';
+function Scalar BulletHingeConstraint.getMaxMotorImpulse() = 'BulletHingeConstraint_getMaxMotorImpulse';
+// access for UseFrameOffset
+function Boolean BulletHingeConstraint.getUseFrameOffset() = 'BulletHingeConstraint_getUseFrameOffset';
+function BulletHingeConstraint.setUseFrameOffset!(Boolean frameOffsetOnOff) = 'BulletHingeConstraint_setUseFrameOffset';
+
+
+///override the default global value of a parameter (such as ERP or CFM), optionally provide the axis (0..5). 
+///If no axis is provided, it uses the default axis for this constraint.
+function BulletHingeConstraint.setParam!(Integer num, Scalar value) = 'BulletHingeConstraint_setParam1';
+function BulletHingeConstraint.setParam!(Integer num, Scalar value, Integer axis) = 'BulletHingeConstraint_setParam2';
+///return the local value of parameter
+function Scalar BulletHingeConstraint.getParam(Integer num) = 'BulletHingeConstraint_getParam1';
+function Scalar BulletHingeConstraint.getParam(Integer num, Integer axis) = 'BulletHingeConstraint_getParam2';
+
+// function BulletHingeConstraint	Integer	calculateSerializeBufferSize() const;
+
+// ///fills the dataBuffer and returns the struct name (and 0 on failure)
+// function BulletHingeConstraint	const char*	serialize(void* dataBuffer, BulletSerializer* serializer) const;
+
+///////////////////////////////////////////////////////
+// From BulletTypedConstraint
+
+
+function Scalar BulletHingeConstraint.getBreakingImpulseThreshold() = 'BulletHingeConstraint_getBreakingImpulseThreshold';
+
+function BulletHingeConstraint.setBreakingImpulseThreshold!(Scalar threshold) = 'BulletHingeConstraint_setBreakingImpulseThreshold';
+
+function Boolean BulletHingeConstraint.isEnabled() = 'BulletHingeConstraint_isEnabled';
+
+function BulletHingeConstraint.setEnabled!(Boolean enabled) = 'BulletHingeConstraint_setEnabled';
+
+function Boolean BulletHingeConstraint.needsFeedback() = 'BulletHingeConstraint_needsFeedback';
+
+///enableFeedback will allow to read the applied linear and angular impulse
+///use getAppliedImpulse, getAppliedLinearImpulse and getAppliedAngularImpulse to read feedback information
+function BulletHingeConstraint.enableFeedback!(Boolean needsFeedback) = 'BulletHingeConstraint_enableFeedback';
+
+///getAppliedImpulse is an estimated total applied impulse. 
+///This feedback could be used to determine breaking constraints or playing sounds.
+function Scalar	BulletHingeConstraint.getAppliedImpulse() = 'BulletHingeConstraint_getAppliedImpulse';
+
+function UInt32 BulletHingeConstraint.getConstraintType() = 'BulletHingeConstraint_getConstraintType';
+
+

@@ -1,0 +1,281 @@
+
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+/*SPHINX-description
+The :ref:`ray` type represents linear 3D ray. This is expressed by a start and direction :ref:`Vec3`
+
+Example
+---------
+
+.. code-block:: js
+
+    Ray ray(Vec3(0.0, 0.0, 0.0), Vec3(0.1, -1.0, 0.4));
+*/
+
+struct Ray
+{
+  Vec3 start;
+  Vec3 direction;
+};
+
+// default constructor from two Vec3s
+inline Ray(Vec3 start, Vec3 direction) {
+  this.start = start;
+  this.direction = direction;
+}
+
+// setter from two Vec3s
+inline Ray.set!(Vec3 start, Vec3 direction) {
+  this.start = start;
+  this.direction = direction;
+}
+
+// return the point along the ray given a factor
+inline Vec3 Ray.pointFromFactor(in Scalar factor) {
+  return this.start + this.direction * factor;
+}
+
+// equals operator
+inline Boolean == (Ray a, Ray b) {
+  return a.start == b.start && a.direction == b.direction;
+}
+
+// not equals operator
+inline Boolean != (Ray a, Ray b) {
+  return a.start != b.start || a.direction != b.direction;
+}
+
+// returns the distance to a point in 3D.
+// rayParam returns the factor value along the ray,
+// while the result of the method if the actual
+// 3D distance.
+inline Scalar Ray.distanceToPoint(
+  Vec3 point, 
+  io Scalar rayParam
+) {
+  Vec3 w;
+  Scalar c1, c2;
+
+  w = point - this.start;
+  c1 = w.dot(this.direction);
+  c2 = this.direction.dot(this.direction);
+  rayParam = c1 / c2;
+
+  if (rayParam >= 0.0) {
+    Vec3 pointOnRay = this.start + (rayParam * this.direction);
+    return pointOnRay.distanceTo(point);
+  }
+  else {
+    rayParam = 0.0;
+    return this.start.distanceTo(point);
+  }
+}
+
+// returns true if the line segment is not behind the ray
+// dist returns the distance to the line segment
+// rayParam returns the factor along the ray 
+// of the intersection
+// segmentParam returns the factor along the line 
+// segment of the intersection
+inline Boolean Ray.intersectLineSegment(
+  Vec3 lineP0,
+  Vec3 lineP1,
+  io Scalar dist,
+  io Scalar rayParam,
+  io Scalar segmentParam,
+) {
+  Vec3 rayP1;
+  rayP1 = this.start + this.direction;
+
+  dist = distanceFromLineToLine(
+    this.start, rayP1,
+    lineP0, lineP1,
+    rayParam, segmentParam
+  );
+  
+  if (rayParam > 0.0){
+    if (segmentParam >= 0.0 && segmentParam <= 1.0) {
+      return true;
+    }
+    if (segmentParam < 0.0) {
+      dist = this.distanceToPoint(lineP0, rayParam);
+      segmentParam = 0.0;
+      return true;
+    }
+    if (segmentParam > 1.0) {
+      dist = this.distanceToPoint(lineP1, rayParam);
+      segmentParam = 1.0;
+      return true;
+    }
+  }
+  return false;
+}
+
+// returns the two factors on the ray as well as
+// on the line as a Vec2. the line to intersect with
+// is expressed as two points on the line
+inline Vec2 Ray.intersectLine(Vec3 lineP0, Vec3 lineP1) {
+  Vec3 rayP1;
+  rayP1 = this.start + this.direction;
+
+  Scalar rayT, lineT, dist;
+  dist = distanceFromLineToLine(
+    this.start, rayP1,
+    lineP0, lineP1,
+    rayT, lineT
+  );
+  return Vec2(rayT, lineT);
+}
+
+// returns the factor along the ray of the intersection
+// with a plane. -1 is returned if the ray is parallel
+// to the plane or there is no intersection.
+// the plane is defined as a point and a normal.
+inline Scalar Ray.intersectPlane(in Vec3 planePoint, in Vec3 planeNormal) {
+  Vec3 w;
+  Scalar D, N;
+  w = this.start - planePoint;
+  D = planeNormal.dot(this.direction);
+  N = - planeNormal.dot(w);
+  
+  if (abs(D) < DIVIDEPRECISION) {
+    // segment is parallel to plane
+    if (N == 0.0) 
+      return -1.0; // segment lies in plane
+    else
+      return -1.0; // no intersection
+  }
+  // they are not parallel
+  // compute intersect param
+  Scalar sI = N / D;
+  if (sI < -1.0e-6) {
+    return - 1; // no intersection
+  }
+  return sI;
+}
+
+// overloaded inline returning the intersection point
+inline Vec3 Ray.intersectPlaneVec3(in Vec3 planePoint, in Vec3 planeNormal) {
+  Scalar factor = this.intersectPlane(planePoint, planeNormal);
+  return this.pointFromFactor(factor);
+}
+
+// returns true if the ray intersections
+// with a triangle. the cull parameter defines
+// if a back face should be ignored or not. 
+// point returns the intersection point
+// dist returns the distance to the intersection
+// u and v return the barycentric coordinate on
+// the triangle of the intersection
+inline Boolean Ray.intersectTriangle(
+  Boolean cull,
+  Vec3 v0,
+  Vec3 v1,
+  Vec3 v2,
+  io Vec3 point,
+  io Scalar dist,
+  io Scalar u,
+  io Scalar v
+) {
+  Vec3 e1 = v1 - v0;
+  Vec3 e2 = v2 - v0;
+  Vec3 pvec = this.direction.cross(e2);
+  Scalar det = e1.dot(pvec);
+
+  if (cull) {
+    if (det < DIVIDEPRECISION) {
+      return false;
+    }
+    Vec3 tvec = this.start - v0;
+    u = tvec.dot(pvec);
+    if (u < -0.00001 || u > det*1.00001) {
+      return false;
+    }
+    Vec3 qvec = tvec.cross(e1);
+    v = this.direction.dot(qvec);
+    if (v < -0.00001 || (u + v) > det*1.00001) {
+      return false;
+    }
+    Scalar inv_det = 1.0 / det;
+    dist = e2.dot(qvec) * inv_det;
+    u *= inv_det;
+    v *= inv_det;
+  }
+  else {
+    if (abs(det) < DIVIDEPRECISION) {
+      return false;
+    }
+    Scalar inv_det = 1.0 / det;
+    Vec3 tvec = this.start - v0;
+    u = tvec.dot(pvec) * inv_det;
+    if (u < -0.00001 || u > 1.00001) {
+      return false;
+    }
+    Vec3 qvec = tvec.cross(e1);
+    v = this.direction.dot(qvec) * inv_det;
+    if (v < -0.00001 || (u + v) > 1.00001) {
+      return false;
+    }
+    dist = e2.dot(qvec) * inv_det;
+  }
+  point = this.start + (this.direction * dist);
+  if( dist < -1.0e-6 )
+    return false;
+
+  return true;
+}
+
+// returns true if ray intersects with a
+// bounding box edge
+inline Boolean Ray.intersectBBoxEdge(
+  Vec3 bboxCenter,
+  io Vec3 e1,
+  io Vec3 e2
+) {
+  Vec2 p = this.intersectLine(e1, e2);
+  if (p.y < 0.0 || p.y > 1.0) {
+    return false;
+  }
+  Vec3 rayPoint = this.start + (this.direction * p.x);
+  Vec3 edgeP = e1.linearInterpolate(e2, p.y);
+  return ((rayPoint - edgeP).dot(rayPoint - bboxCenter) < 0.0);
+}
+
+// returns true if a ray intersects with a given bounding box.
+// Note: This intersection test should be performed in bbox space,
+// removing the need for all the matrix > vector multiplications
+inline Boolean Ray.intersectBoundingBox(
+  Vec3 bboxmin,
+  Vec3 bboxmax
+) {
+  Vec3 bboxCenter = (bboxmin + bboxmax) * 0.5;
+
+  Vec3 b1 = Vec3(bboxmin.x, bboxmin.y, bboxmin.z);
+  Vec3 b2 = Vec3(bboxmin.x, bboxmax.y, bboxmin.z);
+  Vec3 b3 = Vec3(bboxmin.x, bboxmax.y, bboxmax.z);
+  Vec3 b4 = Vec3(bboxmin.x, bboxmin.y, bboxmax.z);
+
+  Vec3 t1 = Vec3(bboxmax.x, bboxmin.y, bboxmin.z);
+  Vec3 t2 = Vec3(bboxmax.x, bboxmax.y, bboxmin.z);
+  Vec3 t3 = Vec3(bboxmax.x, bboxmax.y, bboxmax.z);
+  Vec3 t4 = Vec3(bboxmax.x, bboxmin.y, bboxmax.z);
+
+  return (this.intersectBBoxEdge(bboxCenter, b1, t1)
+    || this.intersectBBoxEdge(bboxCenter, b2, t2)
+    || this.intersectBBoxEdge(bboxCenter, b3, t3)
+    || this.intersectBBoxEdge(bboxCenter, b4, t4)
+
+    || this.intersectBBoxEdge(bboxCenter, b1, b2)
+    || this.intersectBBoxEdge(bboxCenter, b2, b3)
+    || this.intersectBBoxEdge(bboxCenter, b3, b4)
+    || this.intersectBBoxEdge(bboxCenter, b4, b1)
+
+    || this.intersectBBoxEdge(bboxCenter, t1, t2)
+    || this.intersectBBoxEdge(bboxCenter, t2, t3)
+    || this.intersectBBoxEdge(bboxCenter, t3, t4)
+  || this.intersectBBoxEdge(bboxCenter, t4, t1));
+}
+
+
+

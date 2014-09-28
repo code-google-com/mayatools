@@ -1,0 +1,71 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`InstanceCollectorCallback` can be used to collect data from the InlineDrawing scene hierarchy. 
+A callback object must be defined supporting the InstanceCollectorCallback interface. tshi custon callback object determines if a given InlineInstance should be part of the collection.
+    
+
+object PointsCollectorCallback {
+};
+
+function Boolean PointsCollectorCallback.callback!(InlineInstance instance){
+    Points points = instance.getShape().getGeometry();
+    return points != null;
+}
+
+// Now the instance collector can be used to collect geometries from the 
+// tree that based on the filter callback. 
+InstanceCollectorcollector = pointsCollection(PointsCollectorCallback());
+
+Points pointsGeometries[] = pointsCollection.collect();
+
+*/
+
+
+interface InstanceCollectorCallback {
+    Boolean callback!(InlineInstance instance);
+};
+
+object InstanceCollector {
+    InstanceCollectorCallback callbackObj;
+    UInt32 sceneHierarchyVersion;
+    InlineInstance collection[];
+};
+
+function InstanceCollector(InstanceCollectorCallback callbackObj){
+    this.callbackObj = callbackObj;
+}
+
+function InstanceCollector._traverseTransform!(InlineTransform transform){
+    for(Integer i=0; i<transform.getChildCount(); i++){
+        Object child = transform.getChild(i);
+        InlineTransform childTransform = child;
+        if(childTransform != null)
+            this._traverseTransform(childTransform);
+        else{
+            InlineInstance instance = child;
+            if(instance != null && this.callbackObj.callback(instance)){
+                this.collection.push(instance);
+            }
+        }
+    }
+}
+
+
+function InlineInstance[] InstanceCollector.collect!(){
+
+    // TODO: the collector should cache its collection and 
+    // only re-collect if the hierarchy has changed in some way. 
+    // if(this.sceneHierarchyVersion != drawing.getSceneHierarchyVersion())
+    {
+        this.collection.resize(0);
+        InlineDrawing drawing = Singleton_get('InlineDrawing');
+        this._traverseTransform(drawing.getRoot());
+        //this.sceneHierarchyVersion != drawing.getSceneHierarchyVersion();
+    }
+    return this.collection;
+}

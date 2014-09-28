@@ -1,0 +1,13 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+
+interface AlembicObjectReader {
+  String getPath();
+  Boolean valid();
+  reset!();
+  AlembicIObject getIObject();
+  SInt32 getNumSamples();
+};

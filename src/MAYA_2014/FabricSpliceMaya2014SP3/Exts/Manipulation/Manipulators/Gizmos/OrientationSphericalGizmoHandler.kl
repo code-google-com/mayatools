@@ -1,0 +1,79 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`OrientationSphericalGizmoHandler` converts mouse events into rotation around an axis defined by the direction of the mouse stroke.
+
+
+*/
+
+require InlineDrawing;
+
+
+object OrientationSphericalGizmoHandler : GizmoHandler {
+  Ref<InlineInstance> owner; // The instance that owns the handler. 
+  InlineTransform targets[];
+  Scalar orbitSpeed;
+
+  Boolean dragging;
+  Ray ray1;
+  Vec2 mouseDownPos;
+  Vec3 point;
+
+  GizmoManipulationCallback callback;
+};
+
+function OrientationSphericalGizmoHandler(InlineInstance owner, Scalar orbitSpeed, GizmoManipulationCallback callback){
+    this.owner = owner;
+    this.orbitSpeed = 0.02;
+    this.owner.setMetaData('gizmoHandler', this);
+    this.callback = callback;
+}
+
+function OrientationSphericalGizmoHandler.onEvent!(io MouseEvent event){
+    if(event.eventType() == Event_MouseButtonPress){
+        MouseEvent mouseEvent = event;
+
+        // On MouseMove/Mousedown.
+        if(mouseEvent.button == MouseButton_LeftButton){
+            
+            this.ray1 = event.getViewport().calcRayFromScreenPos(event.pos);
+            this.mouseDownPos = event.pos;
+            this.point = this.owner.getTransform().getGlobalXfo(0).tr;
+            this.dragging = true;
+            this.callback.onDragBegin(mouseEvent);
+            event.accept();
+        }
+    }
+    else if(event.eventType() == Event_MouseMove){
+        MouseEvent mouseEvent = event;
+        // On drag
+        if(this.dragging){
+            Ray ray2 = event.getViewport().calcRayFromScreenPos(event.pos);
+            Vec3 axis = ray2.direction.cross(this.ray1.direction).unit();
+            Scalar angle = (event.pos - this.mouseDownPos).length() * this.orbitSpeed;
+
+            Xfo space();
+            space.tr = this.point;
+            Xfo delta();
+            delta.ori.setFromAxisAndAngle(axis, angle);
+                
+            this.callback.onDrag(mouseEvent, space, delta, ManipulationMode_Orientation);
+            event.accept();
+        }
+    }
+    else if(event.eventType() == Event_MouseButtonRelease){
+        MouseEvent mouseEvent = event;
+        // On release
+        if(this.dragging){
+            this.dragging = false;
+            this.callback.onDragEnd(mouseEvent);
+            event.accept();
+        }
+    }
+}
+
+

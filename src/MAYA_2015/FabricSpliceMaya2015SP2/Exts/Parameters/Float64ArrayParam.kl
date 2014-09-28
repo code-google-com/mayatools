@@ -1,0 +1,72 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`float64arrayparam` implements the :ref:`param` interface for Float64 array values.
+
+Example
+---------
+
+.. code-block:: kl
+
+    Float64ArrayParam param = Float64ArrayParam('dimensions');
+    param.resize(3);
+    param.setValue(0, 12.7);
+    param.setValue(1, 13.8);
+    param.setValue(2, 14.9);
+    report(param.getValue(2));
+*/
+
+object Float64ArrayParam : Param {
+  String name;
+  Float64 values[];
+  Param options[String];
+};
+
+// default constructor
+function Float64ArrayParam(String name) {
+  this.name = name;
+}
+
+// returns the size of the values
+function Size Float64ArrayParam.size() {
+  return this.values.size();
+}
+
+// resizes the values to a certain count
+function Float64ArrayParam.resize!(Size size) {
+  this.values.resize(size);
+}
+
+// returns the name of this parameter
+function String Float64ArrayParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String Float64ArrayParam.getValueType() {
+  return "Float64[]";
+}
+
+// getting an option on this param
+function Param Float64ArrayParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function Float64ArrayParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function Float64 Float64ArrayParam.getValue(Index index) {
+  return this.values[index];
+}
+
+// sets the param's value
+function Float64ArrayParam.setValue!(Index index, Float64 value) {
+  this.values[index] = value;
+}

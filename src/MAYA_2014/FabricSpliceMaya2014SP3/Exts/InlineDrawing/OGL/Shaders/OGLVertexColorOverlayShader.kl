@@ -1,0 +1,250 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`oglsurfaceoverlashader` is used fr rendering surface attributes as a semitransparent colored overlay on top of existing geometry.
+It offsets the overlay geometry in the -Z space to ansure no z-fighting occurs between the underlying geometry and the overlay.
+
+This shader is often used to display multi-channel maps over the top of geometry in the viewport.  
+
+Uniforms
+----------
+==================== ============ ===================================== ==================================
+Name                 Type         Description                           Default
+==================== ============ ===================================== ==================================
+u_light0Position     Vec3         Position of the first light           Position of the camera
+u_light0Color        Color        Color of the first light              Color(1.0, 1.0, 1.0)
+u_specularFactor     Color        Specular distribution factor          16.0
+u_normalIsTangent    Integer      Flag defining normal type             0
+u_doubleSided        Integer      Flag defining backface shading model  0
+==================== ============ ===================================== ==================================
+
+Attributes
+----------
+=============== ============ =====================================
+Name            Type         Description
+=============== ============ =====================================
+positions       Vec3         Geometry positions
+normals         Vec3         Geometry normals
+vertexColors    Color        Color per vertex
+=============== ============ =====================================
+
+Example
+---------
+
+.. code-block:: kl
+
+    InlineShader shader = draw.registerShader(OGLVertexColorOverlayShader());
+    InlineMaterial mat = shader.getOrCreateMaterial('vertexColors');
+*/
+
+require Math;
+require FabricOGL;
+
+object OGLVertexColorOverlayShader: InlineShader {
+  OGLInlineShader _shader;
+};
+
+// default constructor without a name
+function OGLVertexColorOverlayShader() {
+  this = OGLVertexColorOverlayShader(this.type());
+}
+
+// default constructor taking a name
+function OGLVertexColorOverlayShader(String name) {
+  this._shader = OGLInlineShader(
+    name,
+    "
+      #version 150 //required for OSX support
+      
+      uniform mat4 u_viewMatrix;
+      uniform mat4 u_projection;
+      uniform mat4 u_modelMatrix;
+      uniform mat3 u_normalMatrix;
+
+      uniform vec3 u_light0Position;
+      uniform vec4 u_light0Color;
+
+      in vec4 positions;
+      in vec3 normals;
+      in vec4 vertexColors;
+
+      out vec3 v_normal;
+      out vec4 v_position;
+      out vec3 v_lightDir;
+      out vec4 v_lightColor;
+      out vec3 v_eyeVec;
+      out vec4 v_vertexColor;
+
+      void main(){
+        v_normal = u_normalMatrix * normals;
+        v_position = u_modelMatrix * positions;
+        vec4 v_positionInv = (u_viewMatrix * vec4(v_position.xyz, 1.0));
+        gl_Position = u_projection * v_positionInv;
+  
+        v_lightDir = (u_viewMatrix * vec4(u_light0Position, 1.0)).xyz - v_positionInv.xyz;
+        v_lightColor = u_light0Color;
+        v_eyeVec = -v_positionInv.xyz;
+        v_vertexColor = vertexColors;
+      }
+    ", "
+      #version 150 //required for OSX support
+      
+      uniform int u_normalIsTangent;
+      uniform int u_doubleSided;
+
+      in vec3 v_normal;
+      in vec4 v_position;
+      in vec3 v_lightDir;
+      in vec4 v_lightColor;
+      in vec3 v_eyeVec;
+      in vec4 v_vertexColor;
+
+      out vec4 out_fragColor;
+
+      void main() {
+        vec4 final_color = vec4(0.0, 0.0, 0.0, 0.0);
+        
+        vec3 N;
+        if(u_normalIsTangent == 0)
+          N = normalize(v_normal);
+        else
+        {
+          N = normalize(cross(v_normal, cross(v_normal, v_eyeVec)));
+          if(dot(N, v_eyeVec) < 0.0)
+            N = -N;
+        }
+        vec3 L = normalize(v_lightDir);
+
+        float lambertTerm = dot(N,L);
+        if(u_doubleSided != 0)
+          lambertTerm = abs(lambertTerm);
+        
+        if(lambertTerm > 0.0)
+        {
+          final_color += v_lightColor * v_vertexColor * lambertTerm; 
+        }
+        final_color.w = v_vertexColor.w;
+        out_fragColor = final_color;
+      }
+    ");  
+  this._shader.defineUniform(InlineUniform("u_viewMatrix", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_projection", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_modelMatrix", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_normalMatrix", Mat33()));
+
+  this._shader.defineUniform(InlineUniform("u_light0Position", Vec3(100, 100, 100)));
+  this._shader.defineUniform(InlineUniform("u_light0Color", Color(1.0, 1.0, 1.0)));
+
+  this._shader.defineUniform(InlineUniform("u_normalIsTangent", Integer(0)));
+  this._shader.defineUniform(InlineUniform("u_doubleSided", Integer(0)));
+
+  this._shader.defineAttribute('positions', "Vec3");
+  this._shader.defineAttribute('normals', "Vec3");
+  this._shader.defineAttribute('vertexColors', "Color");
+}
+
+// empties all materials of this shader
+function OGLVertexColorOverlayShader.reset!() {
+  this._shader.reset();
+}
+
+// returns the name of this shader
+function String OGLVertexColorOverlayShader.getName() {
+  return this._shader.getName();
+}
+
+// called by the InlineDrawing, should not be called manually
+function Boolean OGLVertexColorOverlayShader._draw!(io DrawContext context) {
+
+  if(context.lightPositions.size() > 0)
+    this.setUniform(InlineUniform('u_light0Position', context.lightPositions[0]));
+  else
+    this.setUniform(InlineUniform('u_light0Position', context.viewport.getCamera().getMat44().translation()));
+
+  if(context.lightColors.size() > 0)
+    this.setUniform(InlineUniform('u_light0Color', context.lightColors[0]));
+
+  // enable overlay and blending 
+  glDepthFunc (GL_LEQUAL);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  
+  glEnable(GL_POLYGON_OFFSET_FILL);
+  glPolygonOffset(-1.0,1.0);
+
+  Boolean result = this._shader._draw(context);
+
+  return result;
+}
+
+// returns true if this shader has a material with a given name
+function Boolean OGLVertexColorOverlayShader.hasMaterial(String name) {
+  return this._shader.hasMaterial(name);
+}
+
+// returns (and eventually creates) a new matching material with a given name
+function InlineMaterial OGLVertexColorOverlayShader.getOrCreateMaterial!(String name) {
+  return this._shader.getOrCreateMaterial(name);
+}
+
+// returns the number of materials in this shader
+function Size OGLVertexColorOverlayShader.getMaterialCount() {
+  return this._shader.getMaterialCount();
+}
+
+// returns an existing material by index
+function InlineMaterial OGLVertexColorOverlayShader.getMaterial(Index index) {
+  return this._shader.getMaterial(index);
+}
+
+// define a new uniform on the shader.
+function OGLVertexColorOverlayShader.defineUniform!(InlineUniform uniform) {
+  return;
+}
+
+// returns true if this shader has a uniform with a given name
+function Boolean OGLVertexColorOverlayShader.hasUniform(String name) {
+  return this._shader.hasUniform(name);
+}
+
+// sets the global value of a uniform
+// this can be changed per material, per instance or even per transform
+function OGLVertexColorOverlayShader.setUniform!(InlineUniform uniform) {
+  this._shader.setUniform(uniform);
+}
+
+// draws a uniform for the shader, applies the value essentially. 
+// this should be used from within the InlineMaterial's _draw or 
+// the InlineInstance's _draw.
+function Boolean OGLVertexColorOverlayShader._drawUniform!(io DrawContext context, InlineUniform uniform) {
+  return this._shader._drawUniform(context, uniform);
+}
+
+// define a surface attribute with a given name and type
+function OGLVertexColorOverlayShader.defineAttribute!(String name, String attributeType) {
+  return;
+}
+
+// returns the number of attributes
+function Size OGLVertexColorOverlayShader.getAttributeCount() {
+  return this._shader.getAttributeCount();
+}
+
+// returns the name of an attribute
+function String OGLVertexColorOverlayShader.getAttributeName(Index index) {
+  return this._shader.getAttributeName(index);
+}
+
+// returns true if this shader has an attribute with a given name
+function Integer OGLVertexColorOverlayShader.getAttributeID(String name) {
+  return this._shader.getAttributeID(name);
+}
+
+// returns the ID / location of a given attribute inside the shader.
+function Boolean OGLVertexColorOverlayShader.hasAttribute(String name) {
+  return this._shader.hasAttribute(name);
+}

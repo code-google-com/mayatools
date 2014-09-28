@@ -1,0 +1,65 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`stringparam` implements the :ref:`param` interface for String values.
+
+Example
+---------
+
+.. code-block:: kl
+
+    StringParam param = StringParam('name', 'Fabric');
+    report(param.getValue());
+*/
+
+object StringParam : Param {
+  String name;
+  String value;
+  Param options[String];
+};
+
+// default constructor
+function StringParam(String name) {
+  this.name = name;
+  this.value = '';
+}
+
+// constructor taking input value
+function StringParam(String name, String value) {
+  this.name = name;
+  this.value = value;
+}
+
+// returns the name of this parameter
+function String StringParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String StringParam.getValueType() {
+  return "String";
+}
+
+// getting an option on this param
+function Param StringParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function StringParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function String StringParam.getValue() {
+  return this.value;
+}
+
+// sets the param's value
+function StringParam.setValue!(String value) {
+  this.value = value;
+}

@@ -1,0 +1,622 @@
+
+require Util;
+require Characters;
+require Fbx;
+
+object FbxCharacter : ICharacter {
+  // We keep an member of type Character.
+  // When KL supports inheritance, we should not need this.
+  Character character;
+
+  /////
+  String filePath;
+  FbxHandle handle;
+  ImporterIdentifier identifiers[];
+  ImporterIdentifier skinMeshIdentifiers[];
+  ImporterIdentifier deformerIdentifiers[];
+  ImporterIdentifier boneIdentifiers[];
+  String includedBones[];
+  String includedSubtrees[];
+
+  Color chainColors[String];
+  Color suffixColors[String];
+
+};
+
+function FbxCharacter(String filePath) {
+  this.load(filePath);
+}
+
+function String FbxCharacter.getFilePath(){
+  return this.filePath;
+}
+
+////////////////////////////////////////////////////////////
+// ICharacter methods 
+
+function String FbxCharacter.getName(){
+  return this.character.getName();
+}
+
+function Size FbxCharacter.getNumGeometries(){
+  return this.character.getNumGeometries();
+}
+
+function Geometry FbxCharacter.getGeometry(Index index){
+  return this.character.getGeometry(index);
+}
+
+function ISkeleton FbxCharacter.getSkeleton(){
+  return this.character.getSkeleton();
+}
+
+function IPose FbxCharacter.getPose(){
+  return this.character.getPose();
+}
+
+function Geometry FbxCharacter.getDeformedGeometry!(Index index){
+  return this.character.getDeformedGeometry(index);
+}
+
+function LocalBoundingVolume FbxCharacter.getBoundingVolume!(){
+  return this.character.getBoundingVolume();
+}
+
+
+function Xfo FbxCharacter.getGlobalXfo(){
+  return this.character.getGlobalXfo();
+}
+
+function FbxCharacter.setGlobalXfo!(Xfo globalXfo){
+  this.character.setGlobalXfo(globalXfo);
+}
+
+
+function Mat44[] FbxCharacter.getSkinningMatrices!(){
+  return this.character.getSkinningMatrices();
+}
+
+function UInt64 FbxCharacter.getVersion(){
+  return this.character.getVersion();
+}
+
+function String FbxCharacter.getDesc(String indent, Boolean includeGeometries){
+  return this.character.getDesc(indent, includeGeometries);
+}
+function String FbxCharacter.getDesc(){
+  return this.character.getDesc();
+}
+
+////////////////////////////////////////////////////////////
+
+function Mat44 FbxCharacter.getBindShapeTransform(Index index){
+  return this.character.bindShapeTransforms[index];
+}
+
+
+function Boolean FbxCharacter.initialized(){
+  return this.handle != null;
+}
+
+function Integer _findIdentifierByPath(String path, ImporterIdentifier identifiers[]) {
+  for(Index i=0; i<identifiers.size(); i++) 
+    if(path == identifiers[i].path)
+      return i;
+  return -1;
+}
+
+function Integer _findIdentifier(ImporterIdentifier identifier, ImporterIdentifier identifiers[]) {
+  for(Index i=0; i<identifiers.size(); i++)
+    if(identifier.path == identifiers[i].path)
+      return i;
+  return -1;
+}
+
+function FbxCharacter._addNodeToSkeleton!(ImporterIdentifier nodeIdentifier) {
+  // Check if the node is not already in the skeleton. This would happen
+  // if the node was in the parent chain of a previously added node.
+  Index index = _findIdentifier(nodeIdentifier, this.boneIdentifiers);
+  if(index == -1){
+    // We first add the parent chain. We want the array of identifiers to be sorted, such
+    // that parents always appear first in the list, and that we have a continuous chain
+    // all the way to the root.
+    ImporterIdentifier parentChainIdentifiers[];
+    this.handle.collectParentHierarchyChain(nodeIdentifier, parentChainIdentifiers);
+    for(Index i=0; i<parentChainIdentifiers.size(); i++) {
+      index = _findIdentifier(parentChainIdentifiers[i], this.boneIdentifiers);
+      if(index == -1){
+        Index sceneIndex = _findIdentifierByPath(parentChainIdentifiers[i].path, this.identifiers);
+        this.boneIdentifiers.push(this.identifiers[sceneIndex]);
+      }
+    }
+    this.boneIdentifiers.push(nodeIdentifier);
+  }
+}
+
+function ImporterIdentifier[] FbxCharacter._collectChidren(ImporterIdentifier nodeIdentifier) {
+  ImporterIdentifier children[];
+  for(Index i=0; i<this.identifiers.size(); i++){
+    String parentPath = this.identifiers[i].getStringData('parentPath', '');
+    if(parentPath == nodeIdentifier.path)
+      children.push(this.identifiers[i]);
+  }
+  return children;
+}
+
+function FbxCharacter._addSubTreeToSkeleton!(ImporterIdentifier nodeIdentifier) {
+  // Check if the node is not already in the skeleton. This would happen
+  // if the node was in the parent chain of a previously added node.
+  Index index = _findIdentifier(nodeIdentifier, this.boneIdentifiers);
+  if(index == -1){
+    this.boneIdentifiers.push(nodeIdentifier);
+  }
+  ImporterIdentifier children[] = this._collectChidren(nodeIdentifier);
+  for(Index i=0; i<children.size(); i++){
+    this._addSubTreeToSkeleton(children[i]);
+  }
+}
+
+
+function FbxCharacter.load!(String filePath) {
+  if(this.handle){
+    if(this.handle.getOpenedFilePath() != filePath){
+      this.handle.close();
+      this.handle = null;
+    }
+  }
+
+  if(!this.handle){
+    this.handle = FbxHandle();
+    this.handle.openFileHandle(filePath, '');
+    this.filePath = filePath;
+  }
+
+  this.character = Character(pathSplitExt(pathSplit(this.handle.getOpenedFilePath())[1])[0]);
+  
+  ImporterOptions options;
+  this.identifiers.resize(0);
+  this.handle.getIdentifiers(this.identifiers, options);
+  
+  // Now find all the skin meshes in the list of identifiers.
+  this.skinMeshIdentifiers.resize(0);
+  for(Index i=0;i<this.identifiers.size();i++) {
+    if(this.identifiers[i].type == 'NUSKIN'){
+      this.skinMeshIdentifiers.push(this.identifiers[i]);
+    }
+  }
+
+  // The file contains many skin meshes, but we assume that they are all relating
+  // to the same character. 
+  this.boneIdentifiers.resize(0);
+  this.deformerIdentifiers.resize(0);
+  ImporterIdentifier skinDeformerIdentifiers[][];
+  skinDeformerIdentifiers.resize(this.skinMeshIdentifiers.size);
+  for(Index i=0;i<this.skinMeshIdentifiers.size();i++) {
+    this.handle.parseSkeleton(this.skinMeshIdentifiers[i], skinDeformerIdentifiers[i]);
+    for(Index j=0;j<skinDeformerIdentifiers[i].size();j++) {
+      if(_findIdentifier(skinDeformerIdentifiers[i][j], this.deformerIdentifiers) == -1){
+        // Collect an array of deformers. We require this array later to flag bones as visible,
+        // and to be used in bounding box computation.
+        this.deformerIdentifiers.push(skinDeformerIdentifiers[i][j]);
+      }
+      Index sceneIndex = _findIdentifierByPath(skinDeformerIdentifiers[i][j].path, this.identifiers);
+      this._addNodeToSkeleton(this.identifiers[sceneIndex]);
+      
+      this.identifiers[sceneIndex].setScalarData('referencePose.tr.x', skinDeformerIdentifiers[i][j].getScalarData('referencePose.tr.x'));
+      this.identifiers[sceneIndex].setScalarData('referencePose.tr.y', skinDeformerIdentifiers[i][j].getScalarData('referencePose.tr.y'));
+      this.identifiers[sceneIndex].setScalarData('referencePose.tr.z', skinDeformerIdentifiers[i][j].getScalarData('referencePose.tr.z'));
+      this.identifiers[sceneIndex].setScalarData('referencePose.ori.v.x', skinDeformerIdentifiers[i][j].getScalarData('referencePose.ori.v.x'));
+      this.identifiers[sceneIndex].setScalarData('referencePose.ori.v.y', skinDeformerIdentifiers[i][j].getScalarData('referencePose.ori.v.y'));
+      this.identifiers[sceneIndex].setScalarData('referencePose.ori.v.z', skinDeformerIdentifiers[i][j].getScalarData('referencePose.ori.v.z'));
+      this.identifiers[sceneIndex].setScalarData('referencePose.ori.w', skinDeformerIdentifiers[i][j].getScalarData('referencePose.ori.w'));
+      this.identifiers[sceneIndex].setScalarData('referencePose.sc.x', skinDeformerIdentifiers[i][j].getScalarData('referencePose.sc.x'));
+      this.identifiers[sceneIndex].setScalarData('referencePose.sc.y', skinDeformerIdentifiers[i][j].getScalarData('referencePose.sc.y'));
+      this.identifiers[sceneIndex].setScalarData('referencePose.sc.z', skinDeformerIdentifiers[i][j].getScalarData('referencePose.sc.z'));
+    }
+  }
+
+
+  // Now add any extra included bones. These are often bones that are not part of the
+  // hierarchy, or used in skinning. They could be attachment points, or marker bones
+  // such as the COM bone.
+  for(Index i=0;i<this.includedBones.size();i++) {
+    for(Index j=0;j<this.identifiers.size();j++) {
+      if(this.identifiers[j].name == this.includedBones[i])
+        this._addNodeToSkeleton(this.identifiers[j]);
+    }
+  }
+
+
+  // Now add any extra included bones. These are often bones that are not part of the
+  // hierarchy, or used in skinning. They could be attachment points, or marker bones
+  // such as the COM bone.
+  for(Index i=0;i<this.includedSubtrees.size();i++) {
+    for(Index j=0;j<this.identifiers.size();j++) {
+      if(this.identifiers[j].name.startsWith(this.includedSubtrees[i]))
+        this._addSubTreeToSkeleton(this.identifiers[j]);
+    }
+  }
+
+  this._buildSkeleton();
+  this._parseSkinnedPolygonMeshes();
+
+
+  String animationLayerNames[];
+  this.handle.getAnimationLayerNames(animationLayerNames);
+  if(animationLayerNames.size > 0){
+    // We can generate a clip based on the fbx file, and connect that clip directly
+    // to the pose.
+    FbxClip fbxClip(this.handle);
+    ClipPose pose(this.character.getSkeleton(), fbxClip);
+    this.character.setPose(pose);
+  }
+}
+
+
+function Xfo _getXfo(ImporterIdentifier identifier, String key) {
+  Xfo xfo;
+  xfo.tr.x = identifier.getScalarData(key+'.tr.x', 0.0);
+  xfo.tr.y = identifier.getScalarData(key+'.tr.y', 0.0);
+  xfo.tr.z = identifier.getScalarData(key+'.tr.z', 0.0);
+  xfo.ori.v.x = identifier.getScalarData(key+'.ori.v.x', 1.0);
+  xfo.ori.v.y = identifier.getScalarData(key+'.ori.v.y', 0.0);
+  xfo.ori.v.z = identifier.getScalarData(key+'.ori.v.z', 0.0);
+  xfo.ori.w = identifier.getScalarData(key+'.ori.w', 0.0);
+  xfo.sc.x = identifier.getScalarData(key+'.sc.x', 1.0);
+  xfo.sc.y = identifier.getScalarData(key+'.sc.y', 1.0);
+  xfo.sc.z = identifier.getScalarData(key+'.sc.z', 1.0);
+  return xfo;
+}
+
+function FbxCharacter._buildSkeleton!() {
+
+  //////////////////////////////////
+  // Generate the final skeleton
+  Bone bones[];
+  Boolean visibleBones[];
+
+  visibleBones.resize(this.boneIdentifiers.size);
+  bones.resize(this.boneIdentifiers.size);
+
+  for(Index i=0;i<this.boneIdentifiers.size();i++) {
+
+    Bone bone;
+    bone.name = this.boneIdentifiers[i].name;
+
+    // report("bone.name:" + bone.name);
+
+    bone.length = 0.0;
+    bone.radius = 0.0;
+
+    // Find bones that are either manually added, or are skinning deformers. 
+    // These bones will be drawn with the skeleton.
+    visibleBones[i] = false;
+    for(Index j=0;j<this.deformerIdentifiers.size();j++) {
+      if(this.boneIdentifiers[i].path == this.deformerIdentifiers[j].path){
+        visibleBones[i] = true;
+
+        // Only deformers are used when computing the skinning matricies. 
+        bone.setFlag(BONEFLAG_DEFORMER);
+        break;
+      }
+    }
+    if(!visibleBones[i]){
+
+      // check if this bone was manually added to the skeleton.
+      for(Index j=0; j<this.includedBones.size(); j++) {
+        if(this.boneIdentifiers[i].name == this.includedBones[j]){
+          visibleBones[i] = true;
+          break;
+        }
+      }
+    }
+
+    String parentPath = this.boneIdentifiers[i].getStringData('parentPath', '');
+    bone.parent = _findIdentifierByPath(parentPath, this.boneIdentifiers);
+
+    if(bone.parent >= i){
+      // Note: this should never happen as we always add parents before children
+      setError("ERROR Bone hierarchy is not sorted");
+      return;
+    }
+
+    // Note: Each skin mesh stores a bind pose for each bone, so we could search the 
+    // Skin meshes and use those stored bind poses. 
+    if(this.boneIdentifiers[i].hasScalarData('referencePose.tr.x')){
+      bone.referencePose = _getXfo(this.boneIdentifiers[i], 'referencePose');
+    }else{
+      Xfo referenceLocalPose = _getXfo(this.boneIdentifiers[i], 'xfo');
+      // Compute the global pose values for the skeleton based on the local pose.
+      if(bone.parent == -1){
+        bone.referencePose = referenceLocalPose;
+      }else{
+        bone.referencePose = bones[bone.parent].referencePose * referenceLocalPose;
+      }
+    }
+    bones[i] = bone;
+  }
+
+  //////////////////////////////////////////////////////
+  // Skeleton processing
+  // Now calculate the bone length by checking the offsets of the bones children.
+  for(Index i=0; i<bones.size(); i++) {
+    Size children[];
+    for(Size j=i+1; j<bones.size(); j++) {
+      if(bones[j].parent == i){
+        children.push(j);
+      }
+    }
+    if(children.size() > 0){
+      Scalar boneLength = 0.0;
+      Integer numChildrenContributingToBoneLength = 0;
+      Boolean chainBone = false;
+      Integer childChainBoneIndex = -1;
+      for(Integer j=0;j<children.size();j++) {
+        // We compute the bones lenght, by looking at all children,a nd seeing if they are offset
+        // along the bones vector (X axis). We then take the furtherest child's distance as the bones length.
+        // Compute the local pose values for the skeleton based on the global pose.
+        Xfo referenceLocalPose;
+        if(bones[children[j]].parent == -1){
+          referenceLocalPose = bones[children[j]].referencePose;
+        }else{
+          referenceLocalPose = bones[bones[children[j]].parent].referencePose.inverse() * bones[children[j]].referencePose;
+        }
+        Vec3 childOffset = referenceLocalPose.tr;
+        Scalar boneVecProjectionLength = childOffset.x;
+        childOffset.x = 0.0;
+        // Check if the chld bone is aligned with the x axis of this bone.
+        if(chainBone || (childOffset.length() < (abs(boneVecProjectionLength) * 0.05))){
+          if(!chainBone || abs(boneVecProjectionLength) > boneLength){
+            boneLength = boneVecProjectionLength;
+            childChainBoneIndex = j;
+          }
+          chainBone = true;
+        }
+        else{
+          boneLength += boneVecProjectionLength;
+          numChildrenContributingToBoneLength++;
+        }
+      }
+      if(chainBone){
+        // We are a chain bone, and our length is
+        // the distance to the next joint in the chain. 
+        bones[i].length = boneLength;
+        // report(bones[i].name + ":" + bones[i].length + " > " + bones[children[childChainBoneIndex]].name);
+      }
+      else if(numChildrenContributingToBoneLength > 0){
+        // Or this bone has a collection of children bones,
+        // and its length is the average distance to children in the +X direction
+        boneLength /= Scalar(numChildrenContributingToBoneLength);
+        bones[i].length = boneLength;
+      }
+    }
+    else{
+      if(bones[i].parent > 0){
+        bones[i].length = bones[bones[i].parent].length * 0.75;
+
+        // Clamp bones from extending below the level of the floor.
+        Vec3 bonePos = bones[i].referencePose.tr;
+        Vec3 boneVec = bones[i].referencePose.ori.getXaxis();
+        if(bonePos.y > 0.0 && boneVec.y < 0.0 && (bonePos + (boneVec * bones[i].length)).y < 0.0){
+          bones[i].length = (1.0/boneVec.dot(Vec3(0.0, -1.0, 0.0))) * bonePos.y;
+        }
+      }
+    }
+  }
+  // To compute the bone radius, we find the longest bone in the skeleton, and 
+  // require its length to compute a good radius for the bones. 
+  Scalar maxBoneLength = 0.0;
+  Scalar minBoneLength = 99999999.0;
+  for(Index i=0; i<bones.size(); i++) {
+    if(abs(bones[i].length) > maxBoneLength)
+      maxBoneLength = abs(bones[i].length);
+    if(abs(bones[i].length) > 0.0 && abs(bones[i].length) < minBoneLength)
+      minBoneLength = abs(bones[i].length);
+  }
+  Scalar shortBoneLength = Math_linearInterpolate(minBoneLength, maxBoneLength, 0.1);
+  for(Index i=0; i<bones.size(); i++) {
+    if(bones[i].length == 0.0 && visibleBones[i]){
+      // Assign a length skinning bones
+      if(bones[i].parent > 0 && bones[bones[i].parent].length < 0.0){
+        bones[i].length = -shortBoneLength;
+      }
+      else{
+        bones[i].length = shortBoneLength;
+      }
+    }
+    if(bones[i].length != 0.0){
+      // the bones radius is based on its length vs the max bone length. 
+      // A bones raduis is proportional to its length, but shorter bones are fatter, 
+      // and longer bones are skinnier. 
+      Scalar boneLengthRatio = abs(bones[i].length) / maxBoneLength;
+      bones[i].radius = abs(bones[i].length) * Math_linearInterpolate(0.2, 0.05, boneLengthRatio);
+    }
+  }
+
+  ///////////////////////////////////////
+  // Color the skeleton
+  // We want to color the bones by the chain they are part of. 
+  // This is to make it easy to identify where chains are broken,
+  // and how deep in the chain a bone is. 
+  // The bone colors are a gradient from the root of the chain, to
+  // the deepest bone in the chain. Short chains have more steeper gradients.
+  // Compute the root bone colors
+  Index cid = 0;
+  Integer chainIds[];
+  Integer boneDepths[];
+  Integer chainDepths[Integer];
+  boneDepths.resize(bones.size());
+  chainIds.resize(bones.size());
+
+  Color chainColors[Integer];
+
+  for(Index i=0; i<bones.size(); i++) {
+    // Find bones that are either root bones, 
+    // or whose parents is not in the skinning hierarchy.
+    if(this.chainColors.has(bones[i].name)){
+      bones[i].color = this.chainColors[bones[i].name];
+      cid++;
+      chainIds[i] = i; 
+      boneDepths[i] = 0;
+
+      chainColors[i] = this.chainColors[bones[i].name];
+    }
+    else{
+      Integer parentBoneIndex = bones[i].parent;
+      while(parentBoneIndex != -1 && !chainColors.has(parentBoneIndex))
+        parentBoneIndex = bones[parentBoneIndex].parent;
+      if(chainColors.has(parentBoneIndex))
+        bones[i].color = bones[parentBoneIndex].color;
+    }
+  }
+
+
+  for(suffix, color in this.suffixColors){
+    for(Index i=0; i<bones.size(); i++) {
+      if(bones[i].name.endsWith(suffix)){
+        bones[i].color = color;
+      }
+    }
+  }
+  
+  this.character.setSkeleton(Skeleton(this.getName(), bones));
+}
+
+
+
+function FbxCharacter._parseSkinnedPolygonMeshes!(){
+
+  UInt32 i, j, k;
+  this.character.geometries.resize(this.skinMeshIdentifiers.size);
+  this.character.bindShapeTransforms.resize(this.skinMeshIdentifiers.size);
+
+  for(Integer mid=0; mid<this.skinMeshIdentifiers.size; mid++){
+    ImporterIdentifier skinMeshIdentifier = this.skinMeshIdentifiers[mid];
+
+    String geometryName = skinMeshIdentifier.name;
+    String materialPresetName = skinMeshIdentifier.getStringData("material");
+    PolygonMesh mesh();
+
+    // report("materialPresetName:" + materialPresetName);
+
+    UInt32 polygonSizes[];
+    UInt32 packedPolyPointIndices[];
+    Vec3 positionsData[];
+    Vec3 polyPointNormalsData[];
+    Vec2 polyPointUVsData[][];
+
+    this.handle.parsePolygonMeshAndAttributes( skinMeshIdentifier, polygonSizes, packedPolyPointIndices, positionsData, polyPointNormalsData, polyPointUVsData);
+    UInt32 nbPoints = positionsData.size();
+    UInt32 nbPolys = polygonSizes.size();
+
+    mesh.clear();
+
+    mesh.createPoints( nbPoints );
+    mesh.addPolygons( polygonSizes, packedPolyPointIndices );
+
+    Ref<Vec3Attribute> normals = mesh.getOrCreateNormals();
+
+    for( i = 0; i < nbPoints; ++i )
+      mesh.setPointPosition( i, positionsData[i] );
+    mesh.incrementPointPositionsVersion();
+
+    mesh.setAttributeFromPolygonPackedData( 'normals', polyPointNormalsData );
+    normals.incrementVersion();
+    if( polyPointUVsData.size() != 0 ) {
+      for( i = 0; i < polyPointUVsData.size(); ++i )
+        mesh.setAttributeFromPolygonPackedData( 'uvs'+i, polyPointUVsData[i] );
+    }
+
+
+    //////////////////////////////////////////////
+    // Parse the skinning data
+
+    // setup the bindShapeTransform
+    Xfo bindShapeTransform = _getXfo(skinMeshIdentifier, 'referencePose');
+    this.character.bindShapeTransforms[mid] = bindShapeTransform.toMat44();
+
+
+    // Get the skin deformers for this skin mesh. 
+    ImporterIdentifier skinDeformerIdentifiers[];
+    this.handle.parseSkeleton(skinMeshIdentifier, skinDeformerIdentifiers);
+
+    // The Rig can have more bones in it than the skin mesh uses, so we need
+    // to provide a mapping between the rigs bones, and the bones used to
+    // deform the geometry. 
+    // Remapping the bone IDs enables all skin meshes bound to a particular rig to share
+    // a set of skinning matrices. A set of skinning matrices is generated for the
+    // rig, and each geometry is deformed by a subset of the skinning matrices.
+    ISkeleton skeleton = this.character.getSkeleton();
+    Bone deformers[] = skeleton.getDeformers();
+    Integer boneMapping[];
+    boneMapping.resize(skinDeformerIdentifiers.size());
+    for(i=0; i<skinDeformerIdentifiers.size(); i++) {
+      for(j=0; j<deformers.size(); j++) {
+        if(skinDeformerIdentifiers[i].name == deformers[j].name){
+          boneMapping[i] = j;
+          break;
+        }
+      }
+    }
+
+    Boolean packIn4Scalars = true;
+    if(!packIn4Scalars ){
+      setError("Skinning with arbitrary number of weights is not implemented yet");//TODO; add variable length scalar attributes
+      continue;
+    }
+    else
+    {
+      Ref<ScalarConstantArrayAttribute> boneWeights = mesh.getOrCreateAttribute("boneWeights", ScalarConstantArrayAttribute);
+      boneWeights.setArraySize(4);
+      Ref<UInt16ConstantArrayAttribute> boneIds = mesh.getOrCreateAttribute("boneIds", UInt16ConstantArrayAttribute);
+      boneIds.setArraySize(4);
+
+      UInt32 nb[];
+      UInt32 packedOrderedIds[];
+      Scalar packedOrderedWeights[];
+      this.handle.parseSkinWeights(skinMeshIdentifier, nb, packedOrderedIds, packedOrderedWeights);
+      if( nb.size() != mesh.pointCount() ) {
+        setError("Skinning weight count don't match polygon mesh point count");
+        return;
+      }
+
+      LocalL16ScalarArray weightValues;
+      LocalL16UInt32Array idValues;
+      weightValues.resize(4);
+      idValues.resize(4);
+
+      Size srcOffset = 0;
+      for( i = 0; i < nb.size(); ++i ) {
+        UInt32 count = nb[i];
+        UInt32 actualCount = count < 4 ? count : 4;
+
+        Scalar sum = 0;
+        for( j = 0; j < actualCount; ++j ) {
+          Scalar weight = packedOrderedWeights[srcOffset+j];
+          sum += weight;
+          weightValues.set(j, weight);
+          idValues.set( j, boneMapping[ packedOrderedIds[srcOffset+j] ] );
+        }
+        for( j = actualCount; j < 4; ++j ) {
+          weightValues.set(j, 0);
+          idValues.set(j, 0);
+        }
+
+        if( sum < 0.9999 && sum > 0.00001 ) {
+          Scalar invSum = 1.0/sum;
+          for( j = 0; j < actualCount; ++j )
+            weightValues.set( j, weightValues.get(j)*invSum );
+        }
+        mesh.setPointAttribute( i, boneWeights, weightValues );
+        mesh.setPointAttribute( i, boneIds, idValues );
+        srcOffset += count;
+      }
+    }
+    mesh.recomputePointNormals();
+    this.character.geometries[mid] = mesh;
+  }
+}
+
+
+
+

@@ -1,0 +1,44 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+
+/// The BulletConvexShape is an abstract shape interface, implemented by all convex shapes such as BulletBoxShape, BulletConvexHullShape etc.
+/// It describes general convex shapes using the localGetSupportingVertex interface, used by collision detectors such as BulletGjkPairDetector.
+interface BulletConvexShape //: BulletCollisionShape
+{
+	Data getPointer();
+
+	// Vec3	localGetSupportingVertex?(Vec3 vec);
+
+	// ////////
+	// Vec3	localGetSupportingVertexWithoutMargin?(Vec3 vec);
+
+	// Vec3 BulletConvexShape.localGetSupportVertexWithoutMarginNonVirtual?(Vec3 vec);
+	// Vec3 BulletConvexShape.localGetSupportVertexNonVirtual?(Vec3 vec);
+	// Scalar getMarginNonVirtual ();
+	// getAabbNonVirtual?(Xfo t,  io Vec3 aabbMin,  io Vec3 aabbMax);
+
+	
+	// //notice that the vectors should be unit length
+	// batchedUnitVectorGetSupportingVertexWithoutMargin?(const Vec3* vectors,Vec3* supportVerticesOut,Integer numVectors);
+
+	// ///getAabb's default implementation is brute force, expected derived classes to implement a fast dedicated version
+	// getAabb?(Xfo t, io Vec3 aabbMin, io Vec3 aabbMax);
+
+	// getAabbSlow?(Xfo t, io Vec3 aabbMin, io Vec3 aabbMax);
+
+	// setLocalScaling(Vec3 scaling);
+	// Vec3 BulletConvexShape.getLocalScaling();
+
+	// setMargin(Scalar margin);
+
+	// Scalar BulletConvexShape.getMargin();
+
+	// Integer BulletConvexShape.getNumPreferredPenetrationDirections();
+	
+	// getPreferredPenetrationDirection?(Integer index,  io Vec3 penetrationVector);
+
+};

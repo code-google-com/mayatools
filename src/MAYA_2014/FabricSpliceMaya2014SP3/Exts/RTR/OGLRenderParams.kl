@@ -1,0 +1,72 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+//////////////////// OGLBuffer param
+
+function RenderValueKey RenderParamValues.setAsOGLBuffer!(String name) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name, OGLBuffer, RenderParamCategory_attribute, RenderParamFlag_OGLShaderCompatible);
+  if( this.paramsData[key.index].param.data == null )
+    this.paramsData[key.index].param.data = OGLBuffer();
+  return key;
+}
+
+function RenderValueKey RenderParamValues.setAsOGLBuffer!(String name, io OGLBuffer value) {
+  RenderValueKey key = this.setAsOGLBuffer(name);
+  value = this.paramsData[key.index].param.data;
+  return key;
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Ref<OGLBuffer> value) {
+  value = this.paramsData[key.index].param.data;
+}
+
+inline Ref<OGLBuffer> RenderParamValues.getOGLBuffer(RenderValueKey key) {
+  Ref<OGLBuffer> buffer = this.paramsData[key.index].param.data;
+  return buffer;
+}
+
+inline Boolean RenderParamValues.isOGLBuffer(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == OGLBuffer;
+}
+
+function String OGLBuffer.getDesc?() {
+  return "OGLBuffer: elementCount=" + this.elementCount + " bufferID=" + this.bufferID + " numComp=" + this.numBufferElementComponents + " compGlType=" + this.bufferElementComponentType;
+}
+
+//////////////////// OGLTexture2D param
+
+function RenderParamValues.setAsOGLTexture2D!(RenderValueKey key) {
+  this.setType(key, OGLTexture2D, RenderParamCategory_image, RenderParamFlag_OGLShaderCompatible);
+  if( this.paramsData[key.index].param.data == null )
+    this.paramsData[key.index].param.data = OGLTexture2D();
+}
+
+function RenderValueKey RenderParamValues.setAsOGLTexture2D!(String name) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsOGLTexture2D(key);
+  return key;
+}
+
+function RenderValueKey RenderParamValues.setAsOGLTexture2D!(String name, io OGLTexture2D value) {
+  RenderValueKey key = this.setAsOGLTexture2D(name);
+  value = this.paramsData[key.index].param.data;
+  return key;
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Ref<OGLTexture2D> value) {
+  value = this.paramsData[key.index].param.data;
+}
+
+inline Ref<OGLTexture2D> RenderParamValues.getOGLTexture2D(RenderValueKey key) {
+  Ref<OGLTexture2D> texture = this.paramsData[key.index].param.data;
+  return texture;
+}
+
+inline Boolean RenderParamValues.isOGLTexture2D(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == OGLTexture2D;
+}
+
+function String OGLTexture2D.getDesc?() {
+  return "OGLTexture2D: textureName=" + this.name + " bufferID=" + this.bufferID + " glTextureType=" + this.glTextureType + " width=" + this.width + " height=" + this.height;
+}

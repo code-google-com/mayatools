@@ -1,0 +1,72 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`sint32arrayparam` implements the :ref:`param` interface for SInt32 array values.
+
+Example
+---------
+
+.. code-block:: kl
+
+    SInt32ArrayParam param = SInt32ArrayParam('counts');
+    param.resize(3);
+    param.setValue(0, 3);
+    param.setValue(1, 8);
+    param.setValue(2, 12);
+    report(param.getValue(2));
+*/
+
+object SInt32ArrayParam : Param {
+  String name;
+  SInt32 values[];
+  Param options[String];
+};
+
+// default constructor
+function SInt32ArrayParam(String name) {
+  this.name = name;
+}
+
+// returns the size of the values
+function Size SInt32ArrayParam.size() {
+  return this.values.size();
+}
+
+// resizes the values to a certain count
+function SInt32ArrayParam.resize!(Size size) {
+  this.values.resize(size);
+}
+
+// returns the name of this parameter
+function String SInt32ArrayParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String SInt32ArrayParam.getValueType() {
+  return "SInt32[]";
+}
+
+// getting an option on this param
+function Param SInt32ArrayParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function SInt32ArrayParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function SInt32 SInt32ArrayParam.getValue(Index index) {
+  return this.values[index];
+}
+
+// sets the param's value
+function SInt32ArrayParam.setValue!(Index index, SInt32 value) {
+  this.values[index] = value;
+}

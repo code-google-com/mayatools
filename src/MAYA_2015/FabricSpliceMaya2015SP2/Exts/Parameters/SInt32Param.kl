@@ -1,0 +1,65 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`sint32param` implements the :ref:`param` interface for SInt32 values.
+
+Example
+---------
+
+.. code-block:: kl
+
+    SInt32Param param = SInt32Param('subdiv', 12);
+    report(param.getValue());
+*/
+
+object SInt32Param : Param {
+  String name;
+  SInt32 value;
+  Param options[String];
+};
+
+// default constructor
+function SInt32Param(String name) {
+  this.name = name;
+  this.value = 0;
+}
+
+// constructor taking input value
+function SInt32Param(String name, SInt32 value) {
+  this.name = name;
+  this.value = value;
+}
+
+// returns the name of this parameter
+function String SInt32Param.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String SInt32Param.getValueType() {
+  return "SInt32";
+}
+
+// getting an option on this param
+function Param SInt32Param.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function SInt32Param.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function SInt32 SInt32Param.getValue() {
+  return this.value;
+}
+
+// sets the param's value
+function SInt32Param.setValue!(SInt32 value) {
+  this.value = value;
+}

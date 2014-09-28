@@ -1,0 +1,135 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+The :ref:`clip` stores a collection of track sets, each one representing a complex values such as a Vec3 or Xfo.
+
+Example
+---------
+
+*/
+require Math;
+
+
+
+interface IKeyframeTrack {
+  String getName();
+
+  Scalar evaluate?(Scalar time, io Integer keyIndex);
+  Scalar evaluate?(Scalar time);
+
+  setValue!(Scalar time, Scalar value);
+
+  String getDesc(String indent, Boolean includeKeys);
+  String getDesc();
+};
+
+
+interface ITrackSet {
+
+  String getName();
+  String getValueType();
+
+  setFlag!(UInt32 flag);
+  Boolean testFlag(UInt32 flag);
+  UInt32 getFlags();
+
+  // clears the content of the ITrackSet
+  clear!();
+
+  // adds a tracks to the track set.
+  addTrack!(IKeyframeTrack track);
+
+  UInt32 getNumTracks();
+
+  // returns a track by name
+  IKeyframeTrack getTrack(String name);
+  IKeyframeTrack getTrack(UInt32 index);
+  setTrack!(String name, IKeyframeTrack track);
+
+  Vec2 getTimeRange();
+
+  clearTracks!();
+
+  Integer addTrack!(String name, Color color, Scalar defaultValue);
+
+  // Evauation functions
+  evaluate?(Scalar time, io Scalar value, io Integer keyIndices[]);
+  evaluate?(Scalar time, io Vec2 value, io Integer keyIndices[]);
+  evaluate?(Scalar time, io Vec3 value, io Integer keyIndices[]);
+  evaluate?(Scalar time, io Vec4 value, io Integer keyIndices[]);
+  evaluate?(Scalar time, io Quat value, io Integer keyIndices[]);
+  evaluate?(Scalar time, io Xfo value, io Integer keyIndices[]);
+
+  // Set Value functions.
+  setTrackValues!(Scalar time, Scalar value);
+  setTrackValues!(Scalar time, Vec2 value);
+  setTrackValues!(Scalar time, Vec3 value);
+  setTrackValues!(Scalar time, Vec4 value);
+  setTrackValues!(Scalar time, Quat value);
+  setTrackValues!(Scalar time, Xfo value);
+
+  String getDesc(String indent, Boolean includeTracks);
+  String getDesc();
+};
+
+
+interface IClipValues {
+  Boolean hasScalarValue(String name);
+  Scalar getScalarValue(String name);
+  setScalarValue!(String name, Scalar value);
+
+  Boolean hasVec2Value(String name);
+  Vec2 getVec2Value(String name);
+  setVec2Value!(String name, Vec2 value);
+
+  Boolean hasVec3Value(String name);
+  Vec3 getVec3Value(String name);
+  setVec3Value!(String name, Vec3 value);
+
+  Boolean hasVec4Value(String name);
+  Vec4 getVec4Value(String name);
+  setVec4Value!(String name, Vec4 value);
+
+  Boolean hasQuatValue(String name);
+  Quat getQuatValue(String name);
+  setQuatValue!(String name, Quat value);
+
+  Boolean hasXfoValue(String name);
+  Xfo getXfoValue(String name);
+  setXfoValue!(String name, Xfo value);
+
+  //////////////////////////////////
+  // Debugging
+
+  String getDesc();
+};
+
+interface IClip {
+
+  String getName();
+
+  UInt32 getNumTrackSets();
+
+  // returns True if the Clip contains the given trackSet
+  Boolean hasTrackSet(String name);
+
+  // returns a trackSet by name
+  ITrackSet getTrackSet(String name);
+
+  // sets a trackSet by name
+  setTrackSet!(String name, ITrackSet trackSet);
+
+  // Returns an array of the names of the track sets in the clip.
+  String[] getTrackSetNames();
+
+  Vec2 getTimeRange();
+
+  // Evaluate the clip returning a ClipValues structure. 
+  IClipValues evaluate(Scalar time, io Integer keyIndices[][]);
+  IClipValues evaluate!(Scalar time);
+
+  String getDesc(String indent);
+  String getDesc();
+};
+

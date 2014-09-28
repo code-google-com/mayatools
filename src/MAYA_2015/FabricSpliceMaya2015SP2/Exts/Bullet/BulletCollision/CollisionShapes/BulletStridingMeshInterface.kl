@@ -1,0 +1,130 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+
+///	The btStridingMeshInterface is the interface class for high performance generic access to triangle meshes, used in combination with btBvhTriangleMeshShape and some other collision shapes.
+/// Using index striding of 3*sizeof(integer) it can use triangle arrays, using index striding of 1*sizeof(integer) it can handle triangle strips.
+/// It allows for sharing graphics and collision meshes. Also it provides locking/unlocking of graphics meshes that are in gpu memory.
+interface  BulletStridingMeshInterface
+{
+	Data getPointer();
+
+/*
+
+	///brute force method to calculate aabb
+	void	calculateAabbBruteForce(io Vec3 aabbMin, io Vec3 aabbMax);
+
+	/// get read and write access to a subpart of a triangle mesh
+	/// this subpart has a continuous array of vertices and indices
+	/// in this way the mesh can be handled as chunks of memory with striding
+	/// very similar to OpenGL vertexarray support
+	/// make a call to unLockVertexBase when the read and write access is finished	
+	virtual void	getLockedVertexIndexBase(unsigned char **vertexbase, Integer& numverts,PHY_ScalarType& type, Integer& stride,unsigned char **indexbase,Integer & indexstride,Integer& numfaces,PHY_ScalarType& indicestype,Integer subpart=0)=0;
+	
+	virtual void	getLockedReadOnlyVertexIndexBase(const unsigned char **vertexbase, Integer& numverts,PHY_ScalarType& type, Integer& stride,const unsigned char **indexbase,Integer & indexstride,Integer& numfaces,PHY_ScalarType& indicestype,Integer subpart=0) const=0;
+
+	/// unLockVertexBase finishes the access to a subpart of the triangle mesh
+	/// make a call to unLockVertexBase when the read and write access (using getLockedVertexIndexBase) is finished
+	virtual void	unLockVertexBase(Integer subpart)=0;
+
+	virtual void	unLockReadOnlyVertexBase(Integer subpart) const=0;
+
+
+	/// getNumSubParts returns the number of seperate subparts
+	/// each subpart has a continuous array of vertices and indices
+	virtual Integer		getNumSubParts() const=0;
+
+	virtual void	preallocateVertices(Integer numverts)=0;
+	virtual void	preallocateIndices(Integer numindices)=0;
+
+	virtual Boolean	hasPremadeAabb() const { return false; }
+	virtual void	setPremadeAabb(in Vec3 aabbMin, in Vec3 aabbMax ) const
+            {
+                    (void) aabbMin;
+                    (void) aabbMax;
+            }
+	virtual void	getPremadeAabb(Vec3* aabbMin, Vec3* aabbMax ) const
+    {
+        (void) aabbMin;
+        (void) aabbMax;
+    }
+
+	in Vec3	getScaling() const {
+		return m_scaling;
+	}
+	void	setScaling(in Vec3 scaling)
+	{
+		m_scaling = scaling;
+	}
+
+	virtual	Integer	calculateSerializeBufferSize() const;
+
+	///fills the dataBuffer and returns the struct name (and 0 on failure)
+	virtual	const char*	serialize(void* dataBuffer, btSerializer* serializer) const;
+
+*/
+};
+
+/*
+struct	btIntIndexData
+{
+	Integer	m_value;
+};
+
+struct	btShortIntIndexData
+{
+	short m_value;
+	char m_pad[2];
+};
+
+struct	btShortIntIndexTripletData
+{
+	short	m_values[3];
+	char	m_pad[2];
+};
+
+struct	btCharIndexTripletData
+{
+	unsigned char m_values[3];
+	char	m_pad;
+};
+
+
+///do not change those serialization structures, it requires an updated sBulletDNAstr/sBulletDNAstr64
+struct	btMeshPartData
+{
+	btVector3FloatData			*m_vertices3f;
+	btVector3DoubleData			*m_vertices3d;
+
+	btIntIndexData				*m_indices32;
+	btShortIntIndexTripletData	*m_3indices16;
+	btCharIndexTripletData		*m_3indices8;
+
+	btShortIntIndexData			*m_indices16;//backwards compatibility
+
+	Integer                     m_numTriangles;//length of m_indices = m_numTriangles
+	Integer                     m_numVertices;
+};
+
+
+///do not change those serialization structures, it requires an updated sBulletDNAstr/sBulletDNAstr64
+struct	btStridingMeshInterfaceData
+{
+	btMeshPartData	*m_meshPartsPtr;
+	btVector3FloatData	m_scaling;
+	Integer	m_numMeshParts;
+	char m_padding[4];
+};
+
+
+
+
+SIMD_FORCE_INLINE	Integer	btStridingMeshInterface::calculateSerializeBufferSize() const
+{
+	return sizeof(btStridingMeshInterfaceData);
+}
+
+*/

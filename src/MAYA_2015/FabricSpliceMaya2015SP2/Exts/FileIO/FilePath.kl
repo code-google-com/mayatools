@@ -1,0 +1,120 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`filepath` maps closely to the boost::filesystem::path. Please see the boost documentation for each of the methods.
+
+http://www.boost.org/doc/libs/1_33_1/libs/filesystem/doc/path.htm
+*/
+
+object FilePath {
+  Data handle;
+};
+
+// standard constructor
+function FilePath() = "FilePath_construct";
+
+// standard destructor
+function ~FilePath() = "FilePath_destruct";
+
+// standard constructor from string
+function FilePath(String value) = "FilePath_constructFromString";
+
+// appends a new segment to this path and returns this
+function FilePath FilePath.append!(FilePath a) = "FilePath_append1";
+
+// returns the concatenation of two paths
+function FilePath / (FilePath a, FilePath b) = "FilePath_append2";
+
+// returns the concatenation of a path and a segment
+inline FilePath / (FilePath a, String b) { return a / FilePath(b); }
+
+// clears the content of this path
+function FilePath.clear!() = "FilePath_clear";
+
+// makes this a preferred path
+// ISO/IEC 9945: no effect. Windows: convert slashes to backslashes
+function FilePath FilePath.makePreferred!() = "FilePath_makePreferred";
+
+// removes the filename from this path
+function FilePath FilePath.removeFileName!() = "FilePath_removeFileName";
+
+// replaces the extension of the file with a new one
+function FilePath FilePath.replaceExtension!(String newExtension) = "FilePath_replaceExtension";
+
+// returns this path as a string
+function String FilePath.string() = "FilePath_string";
+
+// returns true of both paths match
+function Boolean == (FilePath a, FilePath b) = "FilePath_compare";
+
+// returns the root name of this path
+function FilePath FilePath.rootName() = "FilePath_rootName";
+
+// returns the directory of this path
+function FilePath FilePath.rootDirectory() = "FilePath_rootDirectory";
+
+// returns the root path of this path
+function FilePath FilePath.rootPath() = "FilePath_rootPath";
+
+// returns the relative path of this path
+function FilePath FilePath.relativePath() = "FilePath_relativePath";
+
+// returns the parent path of this path
+function FilePath FilePath.parentPath() = "FilePath_parentPath";
+
+// returns the filename of this path
+function FilePath FilePath.fileName() = "FilePath_fileName";
+
+// returns the stem of this path
+function String FilePath.stem() = "FilePath_stem";
+
+// returns the extension of this path
+function String FilePath.extension() = "FilePath_extension";
+
+// returns true if this path is empty
+function Boolean FilePath.isEmpty() = "FilePath_isEmpty";
+
+// returns true of this path has a root name
+function Boolean FilePath.hasRootName() = "FilePath_hasRootName";
+
+// returns true of this path has a root directory
+function Boolean FilePath.hasRootDirectory() = "FilePath_hasRootDirectory";
+
+// returns true of this path has a relative path
+function Boolean FilePath.hasRelativePath() = "FilePath_hasRelativePath";
+
+// returns true of this path has a parent path
+function Boolean FilePath.hasParentPath() = "FilePath_hasParentPath";
+
+// returns true of this path has a filename
+function Boolean FilePath.hasFileName() = "FilePath_hasFileName";
+
+// returns true of this path has a stem
+function Boolean FilePath.hasStem() = "FilePath_hasStem";
+
+// returns true of this path has a extension
+function Boolean FilePath.hasExtension() = "FilePath_hasExtension";
+
+// returns true of this path has a filename
+function Boolean FilePath.isAbsolute() = "FilePath_isAbsolute";
+
+// returns true of this path has a filename
+function Boolean FilePath.isRelative() = "FilePath_isRelative";
+
+// returns true of this path is a directory on disk
+function Boolean FilePath.isDirectory() = "FilePath_isDirectory";
+
+// returns true of this path is a file on disk
+function Boolean FilePath.isRegularFile() = "FilePath_isRegularFile";
+
+// returns true of this path is a file on disk
+function Boolean FilePath.isSymlink() = "FilePath_isSymlink";
+
+// returns true if this path exists
+function Boolean FilePath.exists() = "FilePath_exists";
+
+// returns all child paths
+function FilePath[] FilePath.getSubPaths() = "FilePath_getSubPaths";

@@ -1,0 +1,89 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`TransformManipulator` combines a :ref:`PositionManipulator` and a :ref:`OrientationManipulator` to support trnalsation or rotation in 3d.
+
+*/
+
+
+object  TransformManipulator : Manipulator {
+  GizmoManipulator gizmoManipulator;
+
+  PositionManipulator positionManipulator;
+  OrientationManipulator orientationManipulator;
+
+  ManipulationMode mode;
+};
+
+function TransformManipulator(io InlineTransform parent, Scalar size, GizmoManipulationCallback callback){
+
+  this.gizmoManipulator = GizmoManipulator();
+
+	Xfo xfo();
+	xfo.sc *= size;
+  InlineTransform transform = StaticInlineTransform('torusTransform', xfo);
+  parent.addChild(transform);
+
+  this.positionManipulator = PositionManipulator( transform, callback );
+  this.orientationManipulator = OrientationManipulator( transform, callback );
+
+  this.mode = ManipulationMode_Position;
+}
+
+function TransformManipulator.hide!(){
+    this.positionManipulator.hide();
+    this.orientationManipulator.hide();
+}
+
+function TransformManipulator.show!(){
+    // this.positionManipulator.show();
+    // this.orientationManipulator.show();
+    this.setManpulationMode(this.mode);
+}
+
+function TransformManipulator.setManpulationMode!(ManipulationMode mode){
+    this.mode = mode;
+    this.positionManipulator.setManpulationMode(mode);
+    this.orientationManipulator.setManpulationMode(mode);
+}
+
+
+function InlineInstance[] TransformManipulator.getGizmos(){
+    InlineInstance gizmos[];
+    gizmos = gizmos + this.positionManipulator.getGizmos();
+    gizmos = gizmos + this.orientationManipulator.getGizmos();
+    return gizmos;
+}
+
+
+function TransformManipulator.onEnable!(){
+  this.show();
+  this.gizmoManipulator.gizmos = this.getGizmos();
+  this.setManpulationMode(this.mode);
+}
+
+function TransformManipulator.onDisable!(){
+  this.hide();
+}
+
+
+function TransformManipulator.onEvent!(io Event event){
+    if(event.type() == MouseEvent){
+      this.gizmoManipulator.onEvent(event);
+    }
+    else if(event.type() == KeyEvent){
+        KeyEvent keyEvent = event;
+        if(keyEvent.key == Key_Z)
+          this.setManpulationMode(ManipulationMode_Position);
+        if(keyEvent.key == Key_X)
+          this.setManpulationMode(ManipulationMode_Orientation);
+        
+        event.getHost().requestRedraw();
+        event.accept();
+    }
+
+}

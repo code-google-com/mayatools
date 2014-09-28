@@ -1,0 +1,1534 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+// This file contains various specialized array types. These are used by the PolygonMesh and SubdivisionSurface types, however
+// they could be useful for other purposes.
+
+const UInt32 InvalidIndex = 4294967295;// -UInt32(1)
+
+inline swap( io UInt32 first, io UInt32 second ) {
+  UInt32 temp = first;
+  first = second;
+  second = first;
+}
+
+inline UInt8 Log2RoundUp(UInt32 value) {
+  UInt8 nextBit;
+  UInt32 shiftValue = value;
+  if( shiftValue >> 16 ) {
+    shiftValue = shiftValue >> 16;
+    nextBit += 16;
+  }
+  if( shiftValue >> 8 ) {
+    shiftValue = shiftValue >> 8;
+    nextBit += 8;
+  }
+  if( shiftValue >> 4 ) {
+    shiftValue = shiftValue >> 4;
+    nextBit += 4;
+  }
+  if( shiftValue >> 2 ) {
+    shiftValue = shiftValue >> 2;
+    nextBit += 2;
+  }
+  if( shiftValue >> 1 ) {
+    shiftValue = shiftValue >> 1;
+    nextBit += 1;
+  }
+  if( (1 << nextBit) != value )//round up
+    nextBit += 1;
+
+  return nextBit;
+}
+
+////////////////////////////////////////////////////////////////////
+
+struct LocalL16UInt8Array {
+  UInt8 first16[16];
+  UInt8 others[];
+  UInt32 count;
+};
+
+function LocalL16UInt8Array.=( LocalL16UInt8Array other ) {
+  if( other.count <= 16 ) {
+    for( Size i = 0; i < other.count; ++i )
+      this.first16[i] = other.first16[i];
+    UInt32 end = this.count;
+    if( end > 16 )
+      end = 16;
+    for( Size i = other.count; i < end; ++i )
+      this.first16[i] = 0;
+  } else {
+    this.first16 = other.first16;
+    this.others = other.others.clone();
+  }
+  this.count = other.count;
+}
+
+inline LocalL16UInt8Array( LocalL16UInt8Array other ) {
+  this = other;
+}
+
+function Size LocalL16UInt8Array.getMemUsage?() {
+  return 16 + 8 + 4 + this.others.size();
+}
+
+inline UInt8 LocalL16UInt8Array.size() {
+  return UInt8(this.count);
+}
+
+inline LocalL16UInt8Array.resize!( UInt8 size ) {
+  if( size >> 4 )
+    this.others.resize( size-16 );
+  else
+  {
+    this.others.resize( 0 );
+    if( size < this.count ) {
+      UInt32 end = this.count;
+      if( end > 16 )
+        end = 16;
+      for( UInt32 i = size; i != end; ++i )
+        this.first16[i] = 0;
+    }
+  }
+  this.count = size;
+}
+
+inline UInt8 LocalL16UInt8Array.get( UInt32 index ) {
+  if( index >> 4 )
+    return this.others[ index-16 ];
+  else
+    return this.first16[ index ];
+}
+
+inline LocalL16UInt8Array.set!( UInt32 index, UInt8 value ) {
+  if( index >> 4 )
+    this.others[ index-16 ] = value;
+  else
+    this.first16[ index ] = value;
+}
+
+inline LocalL16UInt8Array.push!( UInt8 value ) {
+  if( this.count >> 4 )
+    this.others.push( value );
+  else
+    this.first16[ this.count ] = value;
+  ++this.count;
+}
+
+function String LocalL16UInt8Array.getString() {
+  String str = "[";
+  for( UInt32 i = 0; i != this.count; ++i ) {
+    if( i != 0 )
+      str += ", ";
+    str += this.get(i);
+  }
+  str += "]";
+  return str;
+}
+
+////////////////////////////////////////////////////////////////////
+
+struct LocalL16UInt32Array {
+  UInt32 first16[16];
+  UInt32 others[];
+  UInt32 count;
+};
+
+function LocalL16UInt32Array.=( LocalL16UInt32Array other ) {
+  if( other.count <= 16 ) {
+    for( Size i = 0; i < other.count; ++i )
+      this.first16[i] = other.first16[i];
+    UInt32 end = this.count;
+    if( end > 16 )
+      end = 16;
+    for( Size i = other.count; i < end; ++i )
+      this.first16[i] = 0;
+  } else {
+    this.first16 = other.first16;
+    this.others = other.others.clone();
+  }
+  this.count = other.count;
+}
+
+inline LocalL16UInt32Array( LocalL16UInt32Array other ) {
+  this = other;
+}
+
+function Size LocalL16UInt32Array.getMemUsage?() {
+  return 16*4 + 8 + 4 + this.others.size()*4;
+}
+
+function swap( io LocalL16UInt32Array first, io LocalL16UInt32Array second ) {
+  UInt32 tempFirst16[16] = first.first16;
+  first.first16 = second.first16;
+  second.first16 = tempFirst16;
+  swap( first.others, second.others );
+  swap( first.count, second.count );
+}
+
+inline UInt32 LocalL16UInt32Array.size() {
+  return this.count;
+}
+
+inline LocalL16UInt32Array.resize!( UInt32 size ) {
+  if( size >> 4 )
+    this.others.resize( size-16 );
+  else
+  {
+    this.others.resize( 0 );
+    if( size < this.count ) {
+      UInt32 end = this.count;
+      if( end > 16 )
+        end = 16;
+      for( UInt32 i = size; i != end; ++i )
+        this.first16[i] = 0;
+    }
+  }
+  this.count = size;
+}
+
+inline LocalL16UInt32Array.resizeNoClear!( UInt32 size ) {
+  if( size >> 4 )
+    this.others.resize( size-16 );
+  else
+    this.others.resize( 0 );
+  this.count = size;
+}
+
+inline UInt32 LocalL16UInt32Array.get( UInt32 index ) {
+  if( index >> 4 )
+    return this.others[ index-16 ];
+  else
+    return this.first16[ index ];
+}
+
+inline LocalL16UInt32Array.set!( UInt32 index, UInt32 value ) {
+  if( index >> 4 )
+    this.others[ index-16 ] = value;
+  else
+    this.first16[ index ] = value;
+}
+
+inline LocalL16UInt32Array.set!( UInt32 nb, UInt32 valuesOffset, UInt32 values[] ) {
+  this.resize( nb );
+  for( UInt32 i = 0; i < nb; ++i )
+    this.set( i, values[ valuesOffset + i ] );
+}
+
+inline LocalL16UInt32Array.push!( UInt32 value ) {
+  if( this.count >> 4 )
+    this.others.push( value );
+  else
+    this.first16[ this.count ] = value;
+  ++this.count;
+}
+
+function String LocalL16UInt32Array.getString() {
+  String str = "[";
+  for( UInt32 i = 0; i != this.count; ++i ) {
+    if( i != 0 )
+      str += ", ";
+    str += this.get(i);
+  }
+  str += "]";
+  return str;
+}
+
+////////////////////////////////////////////////////////////////////
+
+struct LocalL8UInt32Array {
+  UInt32 first8[8];
+  UInt32 others[];
+  UInt32 count;
+};
+
+function LocalL8UInt32Array.=( LocalL8UInt32Array other ) {
+  if( other.count <= 8 ) {
+    for( Size i = 0; i < other.count; ++i )
+      this.first8[i] = other.first8[i];
+    UInt32 end = this.count;
+    if( end > 8 )
+      end = 8;
+    for( Size i = other.count; i < end; ++i )
+      this.first8[i] = 0;
+  } else {
+    this.first8 = other.first8;
+    this.others = other.others.clone();
+  }
+  this.count = other.count;
+}
+
+inline LocalL8UInt32Array( LocalL8UInt32Array other ) {
+  this = other;
+}
+
+function Size LocalL8UInt32Array.getMemUsage?() {
+  return 8*4 + 8 + 4 + this.others.size()*4;
+}
+
+inline UInt32 LocalL8UInt32Array.size() {
+  return this.count;
+}
+
+inline LocalL8UInt32Array.resize!( UInt32 size ) {
+  if( size >> 3 )
+    this.others.resize( size-8 );
+  else
+  {
+    this.others.resize( 0 );
+    if( size < this.count ) {
+      UInt32 end = this.count;
+      if( end > 8 )
+        end = 8;
+      for( UInt32 i = size; i != end; ++i )
+        this.first8[i] = 0;
+    }
+  }
+  this.count = size;
+}
+
+inline LocalL8UInt32Array.resizeNoClear!( UInt32 size ) {
+  if( size >> 3 )
+    this.others.resize( size-8 );
+  else
+    this.others.resize( 0 );
+  this.count = size;
+}
+
+inline UInt32 LocalL8UInt32Array.get( UInt32 index ) {
+  if( index >> 3 )
+    return this.others[ index-8 ];
+  else
+    return this.first8[ index ];
+}
+
+inline LocalL8UInt32Array.set!( UInt32 index, UInt32 value ) {
+  if( index >> 3 )
+    this.others[ index-8 ] = value;
+  else
+    this.first8[ index ] = value;
+}
+
+inline LocalL8UInt32Array.set!( UInt32 nb, UInt32 valuesOffset, UInt32 values[] ) {
+  this.resize( nb );
+  for( UInt32 i = 0; i < nb; ++i )
+    this.set( i, values[ valuesOffset + i ] );
+}
+
+inline LocalL8UInt32Array.push!( UInt32 value ) {
+  if( this.count >> 3 )
+    this.others.push( value );
+  else
+    this.first8[ this.count ] = value;
+  ++this.count;
+}
+
+function String LocalL8UInt32Array.getString() {
+  String str = "[";
+  for( UInt32 i = 0; i != this.count; ++i ) {
+    if( i != 0 )
+      str += ", ";
+    str += this.get(i);
+  }
+  str += "]";
+  return str;
+}
+
+////////////////////////////////////////////////////////////////////
+
+struct LocalL4UInt32Array {
+  UInt32 first4[4];
+  UInt32 others[];
+  UInt32 count;
+};
+
+function LocalL4UInt32Array.=( LocalL4UInt32Array other ) {
+  if( other.count <= 4 ) {
+    for( Size i = 0; i < other.count; ++i )
+      this.first4[i] = other.first4[i];
+    UInt32 end = this.count;
+    if( end > 4 )
+      end = 4;
+    for( Size i = other.count; i < end; ++i )
+      this.first4[i] = 0;
+  } else {
+    this.first4 = other.first4;
+    this.others = other.others.clone();
+  }
+  this.count = other.count;
+}
+
+inline LocalL4UInt32Array( LocalL4UInt32Array other ) {
+  this = other;
+}
+
+function Size LocalL4UInt32Array.getMemUsage?() {
+  return 4*4 + 8 + 4 + this.others.size()*4;
+}
+
+function swap( io LocalL4UInt32Array first, io LocalL4UInt32Array second ) {
+  UInt32 tempFirst4[4] = first.first4;
+  first.first4 = second.first4;
+  second.first4 = tempFirst4;
+  swap( first.others, second.others );
+  swap( first.count, second.count );
+}
+
+inline UInt32 LocalL4UInt32Array.size() {
+  return this.count;
+}
+
+inline LocalL4UInt32Array.resize!( UInt32 size ) {
+  if( size >> 2 )
+    this.others.resize( size-4 );
+  else
+  {
+    this.others.resize( 0 );
+    if( size < this.count ) {
+      UInt32 end = this.count;
+      if( end > 4 )
+        end = 4;
+      for( UInt32 i = size; i != end; ++i )
+        this.first4[i] = 0;
+    }
+  }
+  this.count = size;
+}
+
+inline LocalL4UInt32Array.resizeNoClear!( UInt32 size ) {
+  if( size >> 2 )
+    this.others.resize( size-4 );
+  else
+    this.others.resize( 0 );
+  this.count = size;
+}
+
+inline UInt32 LocalL4UInt32Array.get( UInt32 index ) {
+  if( index >> 2 )
+    return this.others[ index-4 ];
+  else
+    return this.first4[ index ];
+}
+
+inline LocalL4UInt32Array.set!( UInt32 index, UInt32 value ) {
+  if( index >> 2 )
+    this.others[ index-4 ] = value;
+  else
+    this.first4[ index ] = value;
+}
+
+inline LocalL4UInt32Array.set!( UInt32 nb, UInt32 valuesOffset, UInt32 values[] ) {
+  this.resize( nb );
+  for( UInt32 i = 0; i < nb; ++i )
+    this.set( i, values[ valuesOffset + i ] );
+}
+
+inline LocalL4UInt32Array.push!( UInt32 value ) {
+  if( this.count >> 2 )
+    this.others.push( value );
+  else
+    this.first4[ this.count ] = value;
+  ++this.count;
+}
+
+function String LocalL4UInt32Array.getString() {
+  String str = "[";
+  for( UInt32 i = 0; i != this.count; ++i ) {
+    if( i != 0 )
+      str += ", ";
+    str += this.get(i);
+  }
+  str += "]";
+  return str;
+}
+
+///////////////////////////////////////////////////////////
+
+struct LocalL64UInt32Array {
+  UInt32 first64[64];
+  UInt32 others[];
+  UInt32 count;
+};
+
+function LocalL64UInt32Array.=( LocalL64UInt32Array other ) {
+  if( other.count <= 64 ) {
+    for( Size i = 0; i < other.count; ++i )
+      this.first64[i] = other.first64[i];
+    UInt32 end = this.count;
+    if( end > 64 )
+      end = 64;
+    for( Size i = other.count; i < end; ++i )
+      this.first64[i] = 0;
+  } else {
+    this.first64 = other.first64;
+    this.others = other.others.clone();
+  }
+  this.count = other.count;
+}
+
+inline LocalL64UInt32Array( LocalL64UInt32Array other ) {
+  this = other;
+}
+
+function Size LocalL4UInt32Array.getMemUsage?() {
+  return 64*4 + 8 + 4 + this.others.size()*4;
+}
+
+function swap( io LocalL64UInt32Array first, io LocalL64UInt32Array second ) {
+  UInt32 tempFirst64[64] = first.first64;
+  first.first64 = second.first64;
+  second.first64 = tempFirst64;
+  swap( first.others, second.others );
+  swap( first.count, second.count );
+}
+
+inline UInt32 LocalL64UInt32Array.size() {
+  return this.count;
+}
+
+inline LocalL64UInt32Array.resize!( UInt32 size ) {
+  if( size >> 6 )
+    this.others.resize( size-64 );
+  else
+  {
+    this.others.resize( 0 );
+    if( size < this.count ) {
+      UInt32 end = this.count;
+      if( end > 64 )
+        end = 64;
+      for( UInt32 i = size; i != end; ++i )
+        this.first64[i] = 0;
+    }
+  }
+  this.count = size;
+}
+
+inline LocalL64UInt32Array.resizeNoClear!( UInt32 size ) {
+  if( size >> 6 )
+    this.others.resize( size-64 );
+  else
+    this.others.resize( 0 );
+  this.count = size;
+}
+
+inline UInt32 LocalL64UInt32Array.get( UInt32 index ) {
+  if( index >> 6 )
+    return this.others[ index-64 ];
+  else
+    return this.first64[ index ];
+}
+
+inline LocalL64UInt32Array.set!( UInt32 index, UInt32 value ) {
+  if( index >> 6 )
+    this.others[ index-64 ] = value;
+  else
+    this.first64[ index ] = value;
+}
+
+inline LocalL64UInt32Array.set!( UInt32 nb, UInt32 valuesOffset, UInt32 values[] ) {
+  this.resize( nb );
+  for( UInt32 i = 0; i < nb; ++i )
+    this.set( i, values[ valuesOffset + i ] );
+}
+
+inline LocalL64UInt32Array.push!( UInt32 value ) {
+  if( this.count >> 6 )
+    this.others.push( value );
+  else
+    this.first64[ this.count ] = value;
+  ++this.count;
+}
+
+function String LocalL64UInt32Array.getString() {
+  String str = "[";
+  for( UInt32 i = 0; i != this.count; ++i ) {
+    if( i != 0 )
+      str += ", ";
+    str += this.get(i);
+  }
+  str += "]";
+  return str;
+}
+
+///////////////////////////////////////////////////////////
+
+struct LocalL16ScalarArray {
+  Scalar first16[16];
+  Scalar others[];
+  UInt32 count;
+};
+
+function LocalL16ScalarArray.=( LocalL16ScalarArray other ) {
+  if( other.count <= 16 ) {
+    for( Size i = 0; i < other.count; ++i )
+      this.first16[i] = other.first16[i];
+    UInt32 end = this.count;
+    if( end > 16 )
+      end = 16;
+    for( Size i = other.count; i < end; ++i )
+      this.first16[i] = 0;
+  } else {
+    this.first16 = other.first16;
+    this.others = other.others.clone();
+  }
+  this.count = other.count;
+}
+
+inline LocalL16ScalarArray( LocalL16ScalarArray other ) {
+  this = other;
+}
+
+function Size LocalL16ScalarArray.getMemUsage?() {
+  return 16*4 + 8 + 4 + this.others.size()*4;
+}
+
+function swap( io LocalL16ScalarArray first, io LocalL16ScalarArray second ) {
+  Scalar tempFirst16[16] = first.first16;
+  first.first16 = second.first16;
+  second.first16 = tempFirst16;
+  swap( first.others, second.others );
+  swap( first.count, second.count );
+}
+
+inline UInt32 LocalL16ScalarArray.size() {
+  return this.count;
+}
+
+inline LocalL16ScalarArray.resize!( UInt32 size ) {
+  if( size >> 4 )
+    this.others.resize( size-16 );
+  else
+  {
+    this.others.resize( 0 );
+    if( size < this.count ) {
+      //Initialize mem (could be an option...)
+      UInt32 end = this.count;
+      if( end > 16 )
+        end = 16;
+      for( UInt32 i = size; i != end; ++i )
+        this.first16[i] = 0;
+    }
+  }
+  this.count = size;
+}
+
+inline Scalar LocalL16ScalarArray.get( UInt32 index ) {
+  if( index >> 4 )
+    return this.others[ index-16 ];
+  else
+    return this.first16[ index ];
+}
+
+inline LocalL16ScalarArray.set!( UInt32 index, Scalar value ) {
+  if( index >> 4 )
+    this.others[ index-16 ] = value;
+  else
+    this.first16[ index ] = value;
+}
+
+inline LocalL16ScalarArray.set!( UInt32 nb, UInt32 valuesOffset, Scalar values[] ) {
+  this.resize( nb );
+  for( UInt32 i = 0; i < nb; ++i )
+    this.set( i, values[ valuesOffset + i ] );
+}
+
+inline LocalL16ScalarArray.push!( Scalar value ) {
+  if( this.count >> 4 )
+    this.others.push( value );
+  else
+    this.first16[ this.count ] = value;
+  ++this.count;
+}
+
+function String LocalL16ScalarArray.getString() {
+  String str = "[";
+  for( UInt32 i = 0; i != this.count; ++i ) {
+    if( i != 0 )
+      str += ", ";
+    str += this.get(i);
+  }
+  str += "]";
+  return str;
+}
+
+///////////////////////////////////////////////////////////
+
+struct LocalL64ScalarArray {
+  Scalar first64[64];
+  Scalar others[];
+  UInt32 count;
+};
+
+function LocalL64ScalarArray.=( LocalL64ScalarArray other ) {
+  if( other.count <= 64 ) {
+    for( Size i = 0; i < other.count; ++i )
+      this.first64[i] = other.first64[i];
+    UInt32 end = this.count;
+    if( end > 64 )
+      end = 64;
+    for( Size i = other.count; i < end; ++i )
+      this.first64[i] = 0;
+  } else {
+    this.first64 = other.first64;
+    this.others = other.others.clone();
+  }
+  this.count = other.count;
+}
+
+inline LocalL64ScalarArray( LocalL64ScalarArray other ) {
+  this = other;
+}
+
+function Size LocalL64ScalarArray.getMemUsage?() {
+  return 64*4 + 8 + 4 + this.others.size()*4;
+}
+
+function swap( io LocalL64ScalarArray first, io LocalL64ScalarArray second ) {
+  Scalar tempFirst64[64] = first.first64;
+  first.first64 = second.first64;
+  second.first64 = tempFirst64;
+  swap( first.others, second.others );
+  swap( first.count, second.count );
+}
+
+inline UInt32 LocalL64ScalarArray.size() {
+  return this.count;
+}
+
+inline LocalL64ScalarArray.resize!( UInt32 size ) {
+  if( size >> 6 )
+    this.others.resize( size-64 );
+  else
+  {
+    this.others.resize( 0 );
+    if( size < this.count ) {
+      //Initialize mem (could be an option...)
+      UInt32 end = this.count;
+      if( end > 64 )
+        end = 64;
+      for( UInt32 i = size; i != end; ++i )
+        this.first64[i] = 0;
+    }
+  }
+  this.count = size;
+}
+
+inline Scalar LocalL64ScalarArray.get( UInt32 index ) {
+  if( index >> 6 )
+    return this.others[ index-64 ];
+  else
+    return this.first64[ index ];
+}
+
+inline LocalL64ScalarArray.set!( UInt32 index, Scalar value ) {
+  if( index >> 6 )
+    this.others[ index-64 ] = value;
+  else
+    this.first64[ index ] = value;
+}
+
+inline LocalL64ScalarArray.set!( UInt32 nb, UInt32 valuesOffset, Scalar values[] ) {
+  this.resize( nb );
+  for( UInt32 i = 0; i < nb; ++i )
+    this.set( i, values[ valuesOffset + i ] );
+}
+
+inline LocalL64ScalarArray.push!( Scalar value ) {
+  if( this.count >> 6 )
+    this.others.push( value );
+  else
+    this.first64[ this.count ] = value;
+  ++this.count;
+}
+
+function String LocalL64ScalarArray.getString() {
+  String str = "[";
+  for( UInt32 i = 0; i != this.count; ++i ) {
+    if( i != 0 )
+      str += ", ";
+    str += this.get(i);
+  }
+  str += "]";
+  return str;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+inline Boolean getBit( UInt32 val, UInt32 bit ) {
+  return (val & (1 << bit )) != 0;
+}
+
+inline setBit( io UInt32 val, UInt32 bit ) {
+  val = val | (1 << bit );
+}
+
+inline atomicSetBit( io UInt32 val, UInt32 bit ) {
+  val.atomicOr( 1 << bit );
+}
+
+inline Boolean getThenSetBit( io UInt32 val, UInt32 bit ) {
+  Boolean prevVal = getBit(val, bit);
+  if( !prevVal )
+    setBit( val, bit );
+  return prevVal;
+}
+
+inline clearBit( io UInt32 val, UInt32 bit ) {
+  val = val & ~( 1 << bit );
+}
+
+inline atomicClearBit( io UInt32 val, UInt32 bit ) {
+  val.atomicAnd( ~( 1 << bit ) );
+}
+
+inline Boolean getThenClearBit( io UInt32 val, UInt32 bit ) {
+  Boolean prevVal = getBit(val, bit);
+  if( prevVal )
+    clearBit( val, bit );
+  return prevVal;
+}
+
+inline setBit( io UInt32 val, UInt32 bit, Boolean value ) {
+  if( value )
+    setBit( val, bit );
+  else
+    clearBit( val, bit );
+}
+
+inline atomicSetBit( io UInt32 val, UInt32 bit, Boolean value ) {
+  if( value )
+    atomicSetBit( val, bit );
+  else
+    atomicClearBit( val, bit );
+}
+
+inline Boolean getThenSetBit( io UInt32 val, UInt32 bit, Boolean value ) {
+  Boolean prevVal = getBit(val, bit);
+  if( prevVal != value ) {
+    setBit( val, bit, value );
+  }
+  return prevVal;
+}
+
+function String getSetBitsString( UInt32 val ) {
+  String s = '[';
+  Boolean first = true;
+  for( Size i = 0; i < 32; ++i ) {
+    if( getBit( val, i ) ) {
+      if( first ) {
+        s += i;
+        first = false;
+      } else
+        s += ', '+i;
+    }
+  }
+  return s+']';
+}
+
+
+inline UInt32 SubBitVectorArray_getNbRequiredUInt32( UInt32 size ) {
+  UInt32 nb = size >> 5;
+  return ( size >> 5 ) + ( (size & 31) != 0 ? 1 : 0 );
+}
+
+inline Boolean SubBitVectorArray_getBit( UInt32 data[], UInt32 dataOffset, UInt32 bit ) {
+  return getBit( data[ dataOffset + (bit >> 5) ], bit & 31 );
+}
+
+inline SubBitVectorArray_setBit( io UInt32 data[], UInt32 dataOffset, UInt32 bit, Boolean value ) {
+  setBit( data[ dataOffset + (bit >> 5) ], bit & 31, value );
+}
+
+inline SubBitVectorArray_atomicSetBit( io UInt32 data[], UInt32 dataOffset, UInt32 bit, Boolean value ) {
+  atomicSetBit( data[ dataOffset + (bit >> 5) ], bit & 31, value );
+}
+
+inline SubBitVectorArray_setBit( io UInt32 data[], UInt32 dataOffset, UInt32 bit ) {
+  setBit( data[ dataOffset + (bit >> 5) ], bit & 31 );
+}
+
+inline SubBitVectorArray_atomicSetBit( io UInt32 data[], UInt32 dataOffset, UInt32 bit ) {
+  atomicSetBit( data[ dataOffset + (bit >> 5) ], bit & 31 );
+}
+
+inline SubBitVectorArray_clearBit( io UInt32 data[], UInt32 dataOffset, UInt32 bit ) {
+  clearBit( data[ dataOffset + (bit >> 5) ], bit & 31 );
+}
+
+inline SubBitVectorArray_atomicClearBit( io UInt32 data[], UInt32 dataOffset, UInt32 bit ) {
+  atomicClearBit( data[ dataOffset + (bit >> 5) ], bit & 31 );
+}
+
+inline Boolean SubBitVectorArray_getThenSetBit( io UInt32 data[], UInt32 dataOffset, UInt32 bit ) {
+  return getThenSetBit( data[ dataOffset + (bit >> 5) ], bit & 31 );
+}
+
+inline Boolean SubBitVectorArray_getThenClearBit( io UInt32 data[], UInt32 dataOffset, UInt32 bit ) {
+  return getThenClearBit( data[ dataOffset + (bit >> 5) ], bit & 31 );
+}
+
+inline Boolean SubBitVectorArray_getThenSetBit( io UInt32 data[], UInt32 dataOffset, UInt32 bit, Boolean value ) {
+  return getThenSetBit( data[ dataOffset + (bit >> 5) ], bit & 31, value );
+}
+
+//////////////////////////////////////////////////////////////////////
+
+struct BitVector {
+  UInt32 data[];
+  UInt32 size;
+};
+
+inline UInt32 BitVector.size() {
+  return this.size;
+}
+
+function BitVector.resize!( UInt32 size ) {
+
+  Size nbRequiredUInt32 = SubBitVectorArray_getNbRequiredUInt32( size );
+  if( size < this.size ) {
+    //clear last entry's upper bits if we resize down
+    UInt32 lastBit = size & 31;
+    if( lastBit ) {
+      UInt32 mask = (1 << lastBit)-1;
+      this.data[nbRequiredUInt32-1] &= mask;
+    }
+  }
+
+  this.size = size;
+  this.data.resize( nbRequiredUInt32 );
+}
+
+inline Boolean BitVector.get?( UInt32 index ) {
+  return SubBitVectorArray_getBit( this.data, 0, index );
+}
+
+inline BitVector.set!( UInt32 index, Boolean value ) {
+  SubBitVectorArray_setBit( this.data, 0, index, value );
+}
+
+inline BitVector.atomicSet!( UInt32 index, Boolean value ) {
+  SubBitVectorArray_atomicSetBit( this.data, 0, index, value );
+}
+
+inline BitVector.set!( UInt32 index ) {
+  SubBitVectorArray_setBit( this.data, 0, index );
+}
+
+inline BitVector.atomicSet!( UInt32 index ) {
+  SubBitVectorArray_atomicSetBit( this.data, 0, index );
+}
+
+inline BitVector.clear!( UInt32 index ) {
+  SubBitVectorArray_clearBit( this.data, 0, index );
+}
+
+inline BitVector.atomicClear!( UInt32 index ) {
+  SubBitVectorArray_atomicClearBit( this.data, 0, index );
+}
+
+inline Boolean BitVector.getThenSet!( UInt32 index ) {
+  return SubBitVectorArray_getThenSetBit( this.data, 0, index );
+}
+
+inline Boolean BitVector.getThenClear!( UInt32 index ) {
+  return SubBitVectorArray_getThenClearBit( this.data, 0, index );
+}
+
+inline Boolean BitVector.getThenSet!( UInt32 index, Boolean value ) {
+  return SubBitVectorArray_getThenSetBit( this.data, 0, index, value );
+}
+
+function BitVector.clearAll!() {
+  for( UInt32 i = 0; i < this.data.size(); ++i )
+    this.data[i] = 0;
+}
+
+function BitVector.setAll!() {
+  for( UInt32 i = 0; i < this.data.size(); ++i )
+    this.data[i] = -UInt32(1);
+}
+
+// appends another bit vector to this one
+function BitVector. += (BitVector other) {
+
+  Size prevSize = this.size;
+  this.resize( this.size + other.size );
+
+  for( Size i = 0; i < other.size; ++i )
+    this.set( i + prevSize, other.get(i) );
+}
+
+function String BitVector.getString() {
+  String str = "[";
+  for( UInt32 i = 0; i < this.size; ++i ) {
+    if(i)
+      str += ",";
+    str += this.get(i) ? "1" : "0";
+  }
+  str += "]";
+  return str;
+}
+
+function Size BitVector.memUsage() {
+  return 4 * this.data.size() + 4;
+}
+
+struct BitVectorIterator {
+  Integer index;
+};
+
+
+//begin() + getNext(): fast iteration over set bits, even if sparse
+
+inline BitVectorIterator BitVector.begin() {
+  BitVectorIterator iter;
+  iter.index = -1;
+  return iter;
+}
+
+inline Boolean BitVector.getNext( io BitVectorIterator iter ) {
+  Integer size = this.size;
+  ++iter.index;
+
+  while( iter.index < size ) {
+
+    UInt32 bit = iter.index & 31;
+
+    UInt32 index = iter.index >> 5;
+    UInt32 data = this.data[index] >> bit;
+
+    if( data & 1 )//First test for bit set (frequent)
+      return true;
+
+    if( data == 0 ) {//Then test for no bit set (sparse)
+      iter.index = (index+1) << 5;
+      continue;
+    }
+
+    if( (data & 65535) == 0 ) {
+      iter.index += 16;
+      data = data >> 16;
+    }
+    if( (data & 255) == 0 ) {
+      iter.index += 8;
+      data = data >> 8;
+    }
+    if( (data & 15) == 0 ) {
+      iter.index += 4;
+      data = data >> 4;
+    }
+    if( (data & 3) == 0 ) {
+      iter.index += 2;
+      data = data >> 2;
+    }
+    if( (data & 1) == 0 ) {
+      iter.index += 1;
+      //(not required)data = data >> 1;
+    }
+    return true;
+  }
+  return false;
+}
+
+function Size BitVector.getMemUsage?() {
+  return this.data.size()*4 + 4;
+}
+
+//////////////////////////////////////////////////////////
+
+inline Boolean getBit( UInt64 val, UInt64 bit ) {
+  return (val & (1 << bit )) != 0;
+}
+
+inline setBit( io UInt64 val, UInt64 bit ) {
+  val = val | (1 << bit );
+}
+
+inline Boolean getThenSetBit( io UInt64 val, UInt64 bit ) {
+  Boolean prevVal = getBit(val, bit);
+  if( !prevVal )
+    setBit( val, bit );
+  return prevVal;
+}
+
+inline clearBit( io UInt64 val, UInt64 bit ) {
+  val = val & ~( 1 << bit );
+}
+
+inline setBit( io UInt64 val, UInt64 bit, Boolean value ) {
+  if( value )
+    setBit( val, bit );
+  else
+    clearBit( val, bit );
+}
+
+inline Boolean getThenSetBit( io UInt64 val, UInt64 bit, Boolean value ) {
+  Boolean prevVal = getBit(val, bit);
+  if( prevVal != value ) {
+    setBit( val, bit, value );
+  }
+  return prevVal;
+}
+
+function String getSetBitsString( UInt64 val ) {
+  String s = '[';
+  Boolean first = true;
+  for( Size i = 0; i < 64; ++i ) {
+    if( getBit( val, i ) ) {
+      if( first ) {
+        s += i;
+        first = false;
+      } else
+        s += ', '+i;
+    }
+  }
+  return s+']';
+}
+
+//////////////////////////////////////////////////////////
+
+inline UInt32 SubByteArray_getNbRequiredUInt32( UInt32 size ) {
+  return (size+3)>>2;
+}
+
+inline Byte SubByteArray_getByte( UInt32 data[], UInt32 dataOffset, UInt32 byteIndex ) {
+  UInt32 intIndex = byteIndex >> 2;
+  UInt32 subByteIndex = byteIndex & 3;
+  UInt32 value = data[dataOffset + intIndex];
+  return Byte((value >> (subByteIndex*8) ) & 0xFF);
+}
+
+inline SubByteArray_setByte(io UInt32 data[], UInt32 dataOffset, UInt32 byteIndex, Byte value ) {
+  UInt32 intIndex = byteIndex >> 2;
+  UInt32 subByteIndex = byteIndex & 3;
+  UInt32 intValue = data[dataOffset + intIndex];
+  UInt32 shift = subByteIndex*8;
+  data[dataOffset + intIndex] = (intValue & ~(0xFF << shift)) | (value << shift);
+}
+
+//////////////////////////////////////////////////////////
+
+struct UInt32ArrayNoFree {
+  UInt32 data[];
+  Size used;
+};
+
+function Size UInt32ArrayNoFree.size() {
+  return this.used;
+}
+
+function UInt32ArrayNoFree.resize!( Size newSize ) {
+  if( newSize > this.data.size() )
+    this.data.resize(newSize);
+  this.used = newSize;
+}
+
+function UInt32ArrayNoFree.push!( UInt32 value ) {
+  if( this.used == this.data.size() )
+    this.data.resize(this.used+1);
+  this.data[ this.used++ ] = value;
+}
+
+function UInt32ArrayNoFree.reset!() {
+  this.data.resize(0);
+  this.used = 0;
+}
+
+//////////////////////////////////////////////////////////
+
+inline Boolean indexArrayPop( io UInt32 array[], io UInt32 element ) {
+  UInt32 size = array.size();
+  if( size ) {
+    UInt32 newSize = size-1;
+    element = array[newSize];
+    array.resize(newSize);
+    return true;
+  } else
+    return false;
+}
+
+//////////////////////////////////////////////////////////
+
+//Note: SimpleAllocatorHelper only helps to allocate/reuse data cells (indices),
+//      however it doesn't hold the stored data per say (woud need C++ -like templates to do that).
+struct IndexPool {
+  UInt32 indexEnd;//data array size...
+  UInt32 freeIndices[];
+};
+
+function IndexPool.reset!() {
+  this.indexEnd = 0;
+  this.freeIndices.resize(0);
+}
+
+inline Boolean IndexPool.allAllocated() {
+  return this.indexEnd == this.freeIndices.size();
+}
+
+inline Boolean IndexPool.allFree() {
+  return this.freeIndices.size() == 0;
+}
+
+//getIndex: returns 'true' if a new index had to be created (data container needs to be expanded)
+inline Boolean IndexPool.getFreeIndex!( io UInt32 index ) {
+  if( !indexArrayPop( this.freeIndices, index ) ) {
+    index = this.indexEnd++;
+    return true;
+  }
+  return false;
+}
+
+inline UInt32 IndexPool.getIndexEnd() {
+  return this.indexEnd;
+}
+
+inline IndexPool.unusedIndex!( UInt32 index ) {
+  this.freeIndices.push( index );
+}
+
+function IndexPool.setAllAsUnused!( Boolean entry0IsReserved ) {
+  if( entry0IsReserved ) {
+    if( this.freeIndices.size() + 1 < this.indexEnd ) {
+      this.freeIndices.resize( this.indexEnd - 1 );
+      for( Size i = this.indexEnd - 1; i--; )
+        this.freeIndices[i] = i + 1;
+    }
+  } else {
+    if( this.freeIndices.size() < this.indexEnd ) {
+      this.freeIndices.resize( this.indexEnd );
+      for( Size i = this.indexEnd; i--; )
+        this.freeIndices[i] = i;
+    }
+  }
+}
+
+inline IndexPool.reset!() {
+  this.indexEnd = 0;
+  this.freeIndices.resize(0);
+}
+
+inline Size IndexPool.getNumUsed() {
+  return this.indexEnd - this.freeIndices.size();
+}
+
+
+function Size IndexPool.getMemUsage?() {
+  return this.freeIndices.size()*4 + 4;
+}
+
+
+///////////////////////////////
+
+alias UInt32 PackedIndexListElementKey;
+alias UInt32 PackedIndexListKey;
+
+struct PackedIndexListElement {
+  UInt32 index;
+  UInt32 prev;//0 -> none
+  UInt32 next;//0 -> none
+};
+
+struct PackedIndexLists {
+  PackedIndexListElement packedLists[];
+  IndexPool packedListsIndexPool;
+};
+
+function PackedIndexLists() {
+  //Reserve entry 0 as NULL
+  UInt32 dummy;
+  this.packedLists.resize(1);
+  this.packedLists[0].index = InvalidIndex;
+  this.packedListsIndexPool.getFreeIndex(dummy);
+}
+
+function PackedIndexLists.clearAll!( Boolean deallocate ) {
+  if( deallocate ) {
+    this.packedLists.resize(1);
+    this.packedListsIndexPool.reset();
+  }
+  else {
+    this.packedListsIndexPool.setAllAsUnused(true);
+  }
+}
+
+inline PackedIndexListElementKey PackedIndexLists._createNewListElement!() {
+  UInt32 key;
+  if( this.packedListsIndexPool.getFreeIndex( key ) )
+    this.packedLists.resize( key+1 );
+  return key;
+}
+
+inline PackedIndexListKey PackedIndexLists.createList!() {
+  UInt32 key = this._createNewListElement();
+  this.packedLists[key].index = InvalidIndex;
+  this.packedLists[key].prev = 0;
+  this.packedLists[key].next = 0;
+  return key;
+}
+
+inline Boolean PackedIndexLists.listIsEmpty?( PackedIndexListKey listKey ) {
+  //should assert that prev==0 else wrong listKey
+  return this.packedLists[listKey].next == 0 && this.packedLists[listKey].index == InvalidIndex;
+}
+
+inline PackedIndexListElementKey PackedIndexLists.listAddIndex!( PackedIndexListKey listKey, UInt32 index ) {
+  UInt32 key;
+  if( this.packedLists[listKey].index == InvalidIndex ) {
+    if( listKey == 0 )
+      report( "Error: PackedIndexLists.listAddIndex: adding to NULL reserved list");//assert
+    else {
+      this.packedLists[listKey].index = index;
+      key = listKey;
+    }
+  } else {
+    //Insert after the head (head must remain valid and its contained index must not change)
+    key = this._createNewListElement();
+    UInt32 next = this.packedLists[listKey].next;
+    this.packedLists[key].index = index;
+    this.packedLists[key].next = next;
+    this.packedLists[key].prev = listKey;
+    this.packedLists[listKey].next = key;
+    if( next )
+      this.packedLists[next].prev = key;
+  }
+  return key;
+}
+
+inline PackedIndexLists.removeListElement!( PackedIndexListElementKey elementKey ) {
+  if( elementKey != 0 )
+  {
+    UInt32 prev = this.packedLists[elementKey].prev;
+    if( prev == 0 ) // head of the list: clear the element, but don't free the list item
+      this.packedLists[elementKey].index = InvalidIndex;
+    else {
+      UInt32 next = this.packedLists[elementKey].next;
+      this.packedLists[prev].next = next;
+      this.packedLists[next].prev = prev;
+      this.packedListsIndexPool.unusedIndex( elementKey );
+    }
+  }
+}
+
+inline Boolean PackedIndexLists.getNextIndexAndIncrement?( io PackedIndexListElementKey elementKey, io UInt32 index ) {
+  if( elementKey == 0 )
+    return false;
+  index = this.packedLists[elementKey].index;
+  elementKey = this.packedLists[elementKey].next;
+  if( index == InvalidIndex )
+    return this.getNextIndexAndIncrement( elementKey, index );
+  else
+    return true;
+}
+
+inline PackedIndexLists.deleteList!( PackedIndexListKey listKey ) {
+  //TODO: if debug -> set the index = InvalidIndex, and prev & next to 0
+  PackedIndexListKey listKeyIter = listKey;
+  while( listKeyIter != 0 ) {
+    this.packedListsIndexPool.unusedIndex( listKeyIter );
+    listKeyIter = this.packedLists[listKeyIter].next;
+  }
+}
+
+inline PackedIndexLists.clearList!( PackedIndexListKey listKey ) {
+  //TODO: if debug -> set the index = InvalidIndex, and prev & next to 0
+  PackedIndexListKey listKeyIter = listKey;
+  while( listKeyIter != 0 ) {
+    if( listKeyIter == listKey ) {
+      this.packedLists[listKeyIter].index = InvalidIndex;
+      this.packedLists[listKeyIter].next = 0;
+    } else
+      this.packedListsIndexPool.unusedIndex( listKeyIter );
+    listKeyIter = this.packedLists[listKeyIter].next;
+  }
+}
+
+inline PackedIndexListElementKey PackedIndexLists.moveElementToList!( PackedIndexListElementKey elementKey, PackedIndexListKey targetListKey ) {
+  if( elementKey == 0 )
+    return 0;
+  UInt32 prev = this.packedLists[elementKey].prev;
+  if( prev == 0 ) { // head of the list: clear the element, but don't free the list item
+    Size index = this.packedLists[elementKey].index;
+    this.packedLists[elementKey].index = InvalidIndex;
+    return this.listAddIndex( targetListKey, index );
+  } else {
+    //Else we can reuse the element key
+    UInt32 next = this.packedLists[elementKey].next;
+    this.packedLists[prev].next = next;
+    if( next )
+      this.packedLists[next].prev = prev;
+    this.packedLists[elementKey].next = this.packedLists[targetListKey].next;
+    this.packedLists[elementKey].prev = targetListKey;
+
+    UInt32 listNext = this.packedLists[targetListKey].next;
+    this.packedLists[targetListKey].next = elementKey;
+    if( listNext )
+      this.packedLists[listNext].prev = elementKey;
+    return elementKey;
+  }
+}
+
+function Size PackedIndexLists.getListSize_slow?( PackedIndexListKey listKey ) {
+  //Note: use this only for debugging!
+  if( listKey == 0 )
+    return 0;
+
+  if( this.packedLists[listKey].prev != 0 )
+    report("Error: PackedIndexLists.getListSize_slow: invalid list key");
+
+  Size dummy, count;
+  PackedIndexListKey key = listKey;
+  while( this.getNextIndexAndIncrement( key, dummy ) )
+    ++count;
+  return count;
+}
+
+function String PackedIndexLists.getListDesc?( PackedIndexListKey listKey ) {
+  Size count = this.getListSize_slow( listKey );
+  String s = "list: count=" + count + " [";
+  Size index;
+  PackedIndexListKey key = listKey;
+  while( this.getNextIndexAndIncrement( key, index ) )
+    s += index + ",";
+  return s + "]";
+}
+
+function Size PackedIndexLists.getMemUsage?() {
+  return this.packedLists.size()*4*3 + this.packedListsIndexPool.getMemUsage();
+}
+
+///////////////////////////////////////////////////////////
+
+struct IndexSet {
+  BitVector memberBits;
+  UInt32 indices[];
+  UInt32 indicesSize;//Avoid reallocating too much
+};
+
+inline Size IndexSet.size() {
+  return this.indicesSize;
+}
+
+inline Size IndexSet.potentialIndexRange() {
+  return this.memberBits.size();
+}
+
+inline IndexSet.clear!() {
+  if( this.indicesSize < ( this.memberBits.size() / 128 ) ) {// 1/4th if UInt32s used
+    for( Size i = 0; i < this.indicesSize; ++i )
+      this.memberBits.clear(this.indices[i]);
+  } else
+    this.memberBits.clearAll();
+  this.indicesSize = 0;
+}
+
+inline IndexSet.free!() {
+  this.memberBits.resize(0);
+  this.indices.resize(0);
+  this.indicesSize = 0;
+}
+
+inline Boolean IndexSet.add!( UInt32 index ) {
+  if( index >= this.memberBits.size() )
+    this.memberBits.resize( index + 1 );
+  if( !this.memberBits.getThenSet(index) ) {
+    if( this.indicesSize == this.indices.size() )
+      this.indices.push( index );
+    else
+      this.indices[this.indicesSize] = index;
+    ++this.indicesSize;
+    return true;
+  }
+  return false;
+}
+
+function IndexSet.add!( IndexSet other ) {
+  if( this.memberBits.size() < other.memberBits.size() )
+    this.memberBits.resize( other.memberBits.size() );
+
+  for( Size i = 0; i < other.indices.size(); ++i ) {
+    UInt32 index = other.indices[i];
+    if( !this.memberBits.getThenSet( index ) ) {
+      if( this.indicesSize == this.indices.size() )
+        this.indices.push( index );
+      else
+        this.indices[this.indicesSize] = index;
+      ++this.indicesSize;
+    }
+  }
+}
+
+inline Boolean IndexSet.has?( UInt32 index ) {
+  if( index >= this.memberBits.size() )
+    return false;
+  return this.memberBits.get(index);
+}
+
+function Size IndexSet.getMemUsage?() {
+  return this.indices.size()*4 + this.memberBits.getMemUsage();
+}
+
+//////////////////////////////////////////////
+//TODO: move these synchronization-related function to another RT
+
+inline Boolean synchronizeVersion( UInt32 source, io UInt32 observer ) {
+  if( observer != source ) {
+    observer = source;
+    return true;
+  }
+  return false;
+}
+
+struct Versions {
+  UInt32 value;
+  UInt32 topo;
+};
+
+inline Versions.incTopo!() {
+  ++this.topo;
+  ++this.value;
+}
+
+inline Versions.incValue!() {
+  ++this.value;
+}
+
+inline Boolean Versions.synchronize!( Versions source ) {
+  Boolean changed = false;
+  if( synchronizeVersion( source.topo, this.topo ) )
+    changed = true;
+
+  if( synchronizeVersion( source.value, this.value ) )
+    changed = true;
+
+  return changed;
+}
+
+inline Boolean Versions.synchronize!( Versions source, io Versions parent ) {
+  Boolean changed = false;
+  if( this.topo != source.topo ) {
+    this.topo = source.topo;
+    parent.incTopo();
+    changed = true;
+  }
+  if( this.value != source.value ) {
+    this.value = source.value;
+    parent.incValue();
+    changed = true;
+  }
+  return changed;
+}
+
+inline GetBatchSizeAndCountForParallel( Size numIndices, Size workloadMultiplier, Size minBatchSize, io Size numBatches, io Size batchSize ) {
+  batchSize = numIndices/(4*workloadMultiplier);
+  if( batchSize < minBatchSize )
+    batchSize = minBatchSize;
+
+  numBatches = (numIndices / batchSize);
+  if( numBatches == 0 ) {
+    numBatches = 1;
+    batchSize = numIndices;
+  } else if( numBatches * batchSize < numIndices )
+    batchSize = (numIndices / numBatches)+1;
+}

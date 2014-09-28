@@ -1,0 +1,620 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`oglinlineshader` implements the :ref:`inlineshader` interface for OpenGL direct rendering. It allows the user to specify the GLSL vertex as well as fragment shader code directly in KL. This means also that you can pipe the GLSL shader code from an external editor, a string port etc directly for iterative shader development.
+
+Example
+---------
+
+.. code-block:: kl
+
+    InlineShader shader = OGLInlineShader(
+      "flat",
+      "
+        #version 150 //required for OSX support
+
+        uniform mat4 u_viewMatrix;
+        uniform mat4 u_projection;
+        uniform mat4 u_modelMatrix;
+        
+        in vec4 positions;
+
+        void main(){
+          gl_Position = u_projection * (u_viewMatrix * (u_modelMatrix * positions));
+        }
+      ", "
+        #version 150 //required for OSX support
+        
+        uniform vec4 u_materialColor;
+        uniform float u_time;
+        out vec4 out_fragColor;
+        
+        void main(){
+          out_fragColor = u_materialColor * u_time;
+        }
+      ");
+
+    shader.defineUniform(InlineUniform("u_viewMatrix", Mat44());
+    shader.defineUniform(InlineUniform("u_projection", Mat44());
+    shader.defineUniform(InlineUniform("u_modelMatrix", Mat44());
+    shader.defineUniform(InlineUniform("u_materialColor", Color(1.0, 0.0, 0.0));
+    shader.defineUniform(InlineUniform("u_time", 0.0);
+    shader.defineAttribute('positions', "Vec3");
+
+*/
+
+require Math;
+require Util;
+require FabricOGL;
+require FileIO;
+require RTR;
+require FabricSynchronization;
+
+object OGLInlineShader : InlineShader {
+  String _name;
+  OGLShaderProgram _shaderProgram;
+
+  String _shaderCode[String];
+  String _preprocessorStatements[String];
+
+  InlineMaterial _materials[];
+  Size _materialOffsets[String];
+
+  InlineUniform _uniforms[];
+  Integer _uniformIDs[];
+  Integer _textureIDs[];
+  Size _nbTextures;
+  Size _uniformOffsets[String];
+  
+  String _attributeNames[];
+  String _attributeTypes[];
+  Integer _attributeIDs[];
+  Size _attributeOffsets[String];
+
+  Integer _shaderVersion;
+  Integer _changeVersion;
+  
+  Mat33 _tmpMat33[];
+  Mat44 _tmpMat44[];
+
+  Integer _u_viewMatrixOffset;
+  Integer _u_projectionOffset;
+  Integer _u_modelMatrixOffset;
+  Integer _u_normalMatrixOffset;
+
+  SimpleLock lock;
+};
+
+// default constructor taking a name for the shader as well as vertex and fragment code
+function OGLInlineShader(String name, String vertexCode, String fragmentCode) {
+  this.lock = SimpleLock("OGLInlineShader");
+  this._name = name;
+  this._shaderProgram = null;
+
+  this._shaderCode['Vertex'] = vertexCode;
+  this._shaderCode['Fragment'] = fragmentCode;
+
+  this._tmpMat33.resize(1);
+  this._tmpMat44.resize(1);
+
+  this._shaderVersion = 0;
+  this._changeVersion = 1;
+
+  this._u_viewMatrixOffset = -1;
+  this._u_projectionOffset = -1;
+  this._u_modelMatrixOffset = -1;
+  this._u_normalMatrixOffset = -1;
+}
+
+// constructor using just the name
+function OGLInlineShader(String name) {
+  this = OGLInlineShader(name, '', '');
+}
+
+// default destructor will try to delete the GLSL program
+function ~OGLInlineShader() {
+  this._shaderProgram = null;
+}
+
+// empties all materials of this shader
+function OGLInlineShader.reset!() {
+  // Note: here we kill the backpointers from the Material back to the Shader
+  // The Material is referenced by the Instance, so if the instance is not also 
+  // destoryed, the material is kept alive, and has a garbage pointer. 
+  for(Size i=0; i<this._materials.size(); i++)
+    this._materials[i]._shader = null;
+  this._materials.resize(0);
+  this._materialOffsets.clear();
+}
+
+// returns the name of this shader
+function String OGLInlineShader.getName() {
+  return this._name;
+}
+
+// returns all preprocessor statements
+function String[String] OGLInlineShader.getPreprocessorStatements() {
+  return this._preprocessorStatements.clone();
+}
+
+// sets a single preprocessor statement
+function OGLInlineShader.setPreprocessorStatement!(String name, String value) {
+  if(this._preprocessorStatements.has(name)) {
+    if(this._preprocessorStatements[name] == value)
+      return;
+  }
+  this._preprocessorStatements[name] = value;
+  this._changeVersion++;
+}
+
+// removes a single preprocessor statement
+function OGLInlineShader.removePreprocessorStatement!(String name) {
+  if(this._preprocessorStatements.has(name)) {
+    this._preprocessorStatements.delete(name);
+    this._changeVersion++;
+  }
+}
+
+// returns the vertex GLSL code
+function String OGLInlineShader.getVertexCode() {
+  return this._shaderCode.get('Vertex', '');
+}
+
+// update the vertex GLSL code
+function OGLInlineShader.setVertexCode!(String vertexCode) {
+  this._shaderCode['Vertex'] = vertexCode;
+  this._changeVersion++;
+}
+
+// returns the fragment GLSL code
+function String OGLInlineShader.getFragmentCode() {
+  return this._shaderCode.get('Fragment', '');
+}
+
+// update the fragment GLSL code
+function OGLInlineShader.setFragmentCode!(String fragmentCode) {
+  this._shaderCode['Fragment'] = fragmentCode;
+  this._changeVersion++;
+}
+
+// returns the geometry GLSL code
+function String OGLInlineShader.getGeometryCode() {
+  return this._shaderCode.get('Geometry', '');
+}
+
+// update the geometry GLSL code
+function OGLInlineShader.setGeometryCode!(String geometryCode) {
+  this._shaderCode['Geometry'] = geometryCode;
+  this._changeVersion++;
+}
+
+// returns the tesselation control GLSL code
+function String OGLInlineShader.getTesselationControlCode() {
+  return this._shaderCode.get('TesselationControl', '');
+}
+
+// returns the tesselation evaluate GLSL code
+function String OGLInlineShader.getTesselationEvaluateCode() {
+  return this._shaderCode.get('TesselationEvaluate', '');
+}
+
+// update the geometry GLSL code
+function OGLInlineShader.setTesselationCode!(String controlCode, String evaluateCode) {
+  this._shaderCode['TesselationControl'] = controlCode;
+  this._shaderCode['TesselationEvaluate'] = evaluateCode;
+  this._changeVersion++;
+}
+
+// set one of the shaders code from file
+function OGLInlineShader.setCodeFromFile!(String shaderName, String filePath) {
+  if(shaderName != 'Vertex' &&
+    shaderName != 'Fragment' &&
+    shaderName != 'Geometry' &&
+    shaderName != 'TesselationControl' &&
+    shaderName != 'TesselationEvaluate') {
+    setError('OGLInlineShader.setCodeFromFile: Invalid shaderName. May be "Vertex", "Fragment", "Geometry", "TesselationControl" or "TesselationEvaluate".');    
+    return;
+  }
+  TextReader reader = TextReader();
+  if(!reader.open(filePath)) {
+    setError('OGLInlineShader.setCodeFromFile: filePath "'+filePath+'" is not valid.');
+    return;
+  }
+  String code = reader.readAll();
+  this._shaderCode[shaderName] = code;
+  this._changeVersion++;
+  reader.close();
+}
+
+// Load the shader specific uniforms. 
+function Boolean OGLInlineShader._drawUniforms!(io DrawContext context) {
+  for(Size i=0;i<this._uniforms.size();i++) {
+    if(i == this._u_viewMatrixOffset ||
+      i == this._u_projectionOffset ||
+      i == this._u_modelMatrixOffset ||
+      i == this._u_normalMatrixOffset)
+      continue;
+
+    if(!this._drawUniformAtLocation(context, this._uniforms[i], this._uniformIDs[i], this._textureIDs[i]))
+      return false;
+  }
+  return true;
+}
+
+// Traverse the tree drawing each element as it is visited. 
+function Boolean OGLInlineShader._traverseTree!(io DrawContext context) {
+  for(Size i=0;i<this._materials.size();i++) {
+    if(!this._materials[i]._draw(context))
+      return false;
+  }
+  return true;
+}
+
+//  disable all the vertex data for the next shader to run...
+function OGLInlineShader._disableVertexAttribs(io DrawContext context) {
+  for(Size i=0;i<this._attributeIDs.size();i++) {
+    if(this._attributeIDs[i] > 0)
+      glDisableVertexAttribArray(this._attributeIDs[i]);
+  }
+}
+
+// called by the InlineDrawing, should not be called manually
+function Boolean OGLInlineShader._draw!(io DrawContext context) {
+  if(this._materials.size() == 0)
+    return true;
+
+  if(!this._compileProgram(context))
+    return false;
+
+  if(this._shaderProgram.programId == 0)
+    return false;
+
+  glUseProgram(this._shaderProgram.programId);
+  context.storeObject('currentShader', this);
+
+  if(this._u_viewMatrixOffset != -1) {
+    this._tmpMat44[0] = context.viewMat;
+    glUniformMatrix4fv( this._uniformIDs[this._u_viewMatrixOffset], 1, true, this._tmpMat44 );
+  }
+  if(this._u_projectionOffset != -1) {
+    this._tmpMat44[0] = context.projectionMat;
+    glUniformMatrix4fv( this._uniformIDs[this._u_projectionOffset], 1, true, this._tmpMat44 );
+  }
+
+  if(!this._drawUniforms(context))
+    return false;
+
+  if(!this._traverseTree(context))
+    return false;
+
+  this._disableVertexAttribs(context);
+
+  return true;
+}
+
+// _compilePrograms the whole GLSL program.
+// this should not be called manually.
+function Boolean OGLInlineShader._compileProgram!(io DrawContext context) {
+  if(this._shaderVersion == this._changeVersion)
+    return true;
+  this._shaderVersion = this._changeVersion;
+
+  this._shaderProgram = OGLShaderProgram(this._name);
+
+  // update the shader source code
+  for(name in this._shaderCode) {
+    Integer shaderType;
+    switch(name) {
+      case 'Vertex': { shaderType = GL_VERTEX_SHADER; break; }
+      case 'Fragment': { shaderType = GL_FRAGMENT_SHADER; break; }
+      case 'Geometry': { shaderType = GL_GEOMETRY_SHADER; break; }
+      case 'TesselationControl': { shaderType = GL_TESS_CONTROL_SHADER; break; }
+      case 'TesselationEvaluate': { shaderType = GL_TESS_EVALUATION_SHADER; break; }
+      default: {
+        setError('OGLInlineShader unknown shadertype "'+name+'".');
+        return false;
+      }
+    }
+
+    OGLShaderSource source;
+    source.name = name;
+    source.code = this._shaderCode[name];
+    source.type = shaderType;
+    this._shaderProgram.addShaderSource(source);
+  }
+
+  // update all shader uniforms
+  for(Size i=0;i<this._uniforms.size();i++) {
+    if(this._uniforms[i].getKLTypeName() == 'InlineTexture') {
+      OGLShaderProgramTexture texture = OGLShaderProgramTexture();
+      texture.name = this._uniforms[i].getName();
+      texture.paramName = texture.name;
+      texture.optional = this._uniforms[i].isOptional();
+      this._shaderProgram.addTexture(texture);
+    } else {
+      OGLShaderProgramUniform uniform = OGLShaderProgramUniform();
+      uniform.name = this._uniforms[i].getName();
+      uniform.paramName = uniform.name;
+      uniform.sourceType = OGLShaderProgram_uniformSource_uniform;
+      uniform.optional = this._uniforms[i].isOptional();
+      uniform.klType = this._uniforms[i].getKLTypeName();
+      this._shaderProgram.addUniform(uniform);
+    }
+  }
+
+  // update all shader attributes
+  for(Size i=0;i<this._attributeNames.size();i++) {
+    OGLShaderProgramAttribute attribute = OGLShaderProgramAttribute();
+    attribute.name = this._attributeNames[i];
+    attribute.paramName = attribute.name;
+    attribute.klType = this._attributeTypes[i];
+    this._shaderProgram.addAttribute(attribute);
+  }
+
+  // build it
+  this._shaderProgram.createProgramFromShaders();
+  if(this._shaderProgram.programId == 0){
+    return false;
+  }
+
+  this._u_viewMatrixOffset = -1;
+  this._u_projectionOffset = -1;
+  this._u_modelMatrixOffset = -1;
+  this._u_normalMatrixOffset = -1;
+
+  // pull out all uniform locations
+  for(Size i=0;i<this._shaderProgram.uniforms.size();i++) {
+    Integer offset = this._uniformOffsets.get(this._shaderProgram.uniforms[i].paramName, -1);
+    if(offset == -1)
+      continue;
+    this._uniformIDs[offset] = this._shaderProgram.uniforms[i].programLocation;
+
+    // store the ids of special uniforms which we need all the time
+    if(this._uniforms[offset].getName() == 'u_viewMatrix')
+      this._u_viewMatrixOffset = offset;
+    else if(this._uniforms[offset].getName() == 'u_projection')
+      this._u_projectionOffset = offset;
+    else if(this._uniforms[offset].getName() == 'u_modelMatrix')
+      this._u_modelMatrixOffset = offset;
+    else if(this._uniforms[offset].getName() == 'u_normalMatrix')
+      this._u_normalMatrixOffset = offset;
+  }
+
+  // pull out all texture locations
+  for(Size i=0;i<this._shaderProgram.textures.size();i++) {
+    Integer offset = this._uniformOffsets.get(this._shaderProgram.textures[i].paramName, -1);
+    if(offset == -1)
+      continue;
+    this._uniformIDs[offset] = this._shaderProgram.textures[i].programLocation;
+  }
+  
+  // pull out all attributes
+  for(Size i=0;i<this._attributeIDs.size();i++)
+    this._attributeIDs[i] = this._shaderProgram.attributes[i].programLocation;
+  
+  return true;
+}
+
+// returns true if this shader has a material with a given name
+function Boolean OGLInlineShader.hasMaterial(String name) {
+  AutoLock AL(this.lock);
+  return this._materialOffsets.has(name);
+}
+
+// returns (and eventually creates) a new matching material with a given name
+function InlineMaterial OGLInlineShader.getOrCreateMaterial!(String name) {
+  AutoLock AL(this.lock);
+
+  Size offset = this._materialOffsets.get(name, this._materials.size());
+  if(offset < this._materials.size())
+    return this._materials[offset];
+
+  InlineMaterial mat = InlineMaterial(Object(this), name);
+  this._materialOffsets[name] = offset;
+  this._materials.push(mat);
+  return mat;
+}
+
+// returns the number of materials in this shader
+function Size OGLInlineShader.getMaterialCount() {
+  return this._materials.size();  
+}
+
+// returns an existing material by index
+function InlineMaterial OGLInlineShader.getMaterial(Index index) {
+  return this._materials[index];
+}
+
+// define a new uniform on the shader. the uniformType is
+// auxiliary and can be used within the shader later if required.
+function OGLInlineShader.defineUniform!(InlineUniform uniform) {
+  AutoLock AL(this.lock);
+  Size offset = this._uniformOffsets.get(uniform.getName(), this._uniforms.size());
+  if(offset == this._uniforms.size()) {
+    this._uniformOffsets[uniform.getName()] = offset;
+    this._uniforms.push(uniform);
+    this._uniformIDs.push(-1);
+    this._textureIDs.push(-1);
+    if(uniform.getType() == InlineUniform_Type_InlineTexture) {
+      this._textureIDs[offset] = this._nbTextures;
+      this._nbTextures++;
+    }
+  } else
+    this._uniforms[offset] = uniform;
+}
+
+// returns true if this shader has a uniform with a given name
+function Boolean OGLInlineShader.hasUniform(String name) {
+  AutoLock AL(this.lock);
+  return this._uniformOffsets.has(name);
+}
+
+// sets the global value of a uniform
+// this can be changed per material, per instance or even per transform
+function OGLInlineShader.setUniform!(InlineUniform uniform) {
+  AutoLock AL(this.lock);
+  Size offset = this._uniformOffsets.get(uniform.getName(), this._uniforms.size());
+  if(offset < this._uniforms.size())
+    this._uniforms[offset] = uniform;
+  else
+    setError('Shader "'+this.getName()+'"" does not support uniform "'+uniform.getName()+'".');
+}
+
+object _OGLTexture2DAdaptorMetaData {
+  Ref<InlineTextureAdaptor> _adaptor;
+  OGLTexture2D _texture;
+  Integer _textureVersion;
+  Integer _textureUnit;
+};
+
+// draws a uniform for the shader, applies the value essentially.
+// this particular method avoid the lookup of the location by name
+// and draws the uniform directly
+function Boolean OGLInlineShader._drawUniformAtLocation!(io DrawContext context, InlineUniform uniform, Integer location, Integer textureUnit) {
+
+  switch(uniform.getType()) {
+    case InlineUniform_Type_Integer:
+    {
+      glUniform1i( location, uniform.getInteger() );
+      break;
+    }
+    case InlineUniform_Type_Float32:
+    {
+      glUniform1f( location, uniform.getFloat32() );
+      break;
+    }
+    case InlineUniform_Type_Vec2:
+    {
+      Vec2 temp = uniform.getVec2();
+      glUniform2f( location, temp.x, temp.y );
+      break;
+    }
+    case InlineUniform_Type_Vec3:
+    {
+      Vec3 temp = uniform.getVec3();
+      glUniform3f( location, temp.x, temp.y, temp.z );
+      break;
+    }
+    case InlineUniform_Type_Vec4:
+    {
+      Vec4 temp = uniform.getVec4();
+      glUniform4f( location, temp.x, temp.y, temp.z, temp.t );
+      break;
+    }
+    case InlineUniform_Type_Mat33:
+    {
+      this._tmpMat33[0] = uniform.getMat33();
+      glUniformMatrix3fv( location, 1, true, this._tmpMat33 );
+      break;
+    }
+    case InlineUniform_Type_Mat44:
+    {
+      this._tmpMat44[0] = uniform.getMat44();
+      glUniformMatrix4fv( location, 1, true, this._tmpMat44 );
+      break;
+    }
+    case InlineUniform_Type_InlineTexture:
+    {
+      if(textureUnit >= 0) {
+        InlineTexture texture = uniform.getInlineTexture();
+        if(texture != null) {
+          _OGLTexture2DAdaptorMetaData adaptor = texture.getMetaData('adaptor');
+          if(adaptor == null) {
+            InlineDrawing drawing = context.getObject('drawing');
+            adaptor = _OGLTexture2DAdaptorMetaData();
+            adaptor._adaptor = drawing.getTextureAdaptor(texture.type());
+            texture.setMetaData('adaptor', Object(adaptor));
+          }
+          adaptor._textureUnit = textureUnit;
+          if(!adaptor._adaptor._draw(context, texture, adaptor))
+            return false;
+          glUniform1i( location, textureUnit );
+        }
+      }
+      break;
+    }
+    default:
+    {
+      setError("InlineUniform type "+uniform.getType()+" unknown.");
+      break;
+    }
+  }
+
+  return true;
+}
+
+// draws a uniform for the shader, applies the value essentially. 
+// this should be used from within the InlineMaterial's _draw or 
+// the InlineInstance's _draw.
+function Boolean OGLInlineShader._drawUniform!(io DrawContext context, InlineUniform uniform) {
+  String uniformName = uniform.getName();
+  Size offset = this._uniformOffsets.get(uniformName, this._uniforms.size());
+  if(offset == this._uniforms.size()) {
+
+    // We need to support multipe materials per instance to handle weght-map
+    // overlays. This means that an instance might have uniforms that are relevant
+    // to only one of the applied shaders.
+    // if(!uniform.isOptional()) {
+    //   setError('Shader "'+this.getName()+'"" does not support uniform "'+uniformName+'".');
+    //   return false;
+    // }
+    return true;
+  }
+
+  Integer location = this._uniformIDs[offset];
+  Integer textureUnit = this._textureIDs[offset];
+  return this._drawUniformAtLocation(context, uniform, location, textureUnit);
+}
+
+// define a surface attribute with a given name and type
+function OGLInlineShader.defineAttribute!(String name, String attributeType) {
+  AutoLock AL(this.lock);
+  Size offset = this._attributeOffsets.get(name, this._attributeNames.size());
+  if(offset == this._attributeNames.size()) {
+    this._attributeOffsets[name] = offset;
+    this._attributeNames.push(name);
+    this._attributeTypes.push(attributeType);
+    this._attributeIDs.push(-1);
+  } else {
+    this._attributeNames[offset] = name;
+    this._attributeTypes[offset] = attributeType;
+    this._attributeIDs[offset] = -1;
+  }
+}
+
+// returns the number of attributes
+function Size OGLInlineShader.getAttributeCount() {
+  AutoLock AL(this.lock);
+  return this._attributeNames.size();
+}
+
+// returns the name of an attribute
+function String OGLInlineShader.getAttributeName(Index index) {
+  AutoLock AL(this.lock);
+  return this._attributeNames[index];
+}
+
+// returns the type of an attribute
+function String OGLInlineShader.getAttributeType(Index index) {
+  AutoLock AL(this.lock);
+  return this._attributeTypes[index];
+}
+
+// returns true if this shader has an attribute with a given name
+function Integer OGLInlineShader.getAttributeID(String name) {
+  AutoLock AL(this.lock);
+  Size offset = this._attributeOffsets.get(name, this._attributeIDs.size());
+  if(offset == this._attributeIDs.size())
+    return -1;
+  return this._attributeIDs[offset];
+}
+
+// returns the ID / location of a given attribute inside the shader.
+function Boolean OGLInlineShader.hasAttribute(String name) {
+  AutoLock AL(this.lock);
+  return this._attributeOffsets.has(name);
+}

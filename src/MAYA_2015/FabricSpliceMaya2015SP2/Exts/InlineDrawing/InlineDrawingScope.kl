@@ -1,0 +1,21 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlinedrawingscope` to perform drawing on an inlinedrawing singleton. This uses the :ref:`singletons` extension to query a singleton called "InlineDrawing".
+    
+*/
+
+require Singletons;
+
+object InlineDrawingScope {};
+
+function Boolean InlineDrawingScope._draw(io DrawContext context) {
+  InlineDrawing draw = Singleton_get('InlineDrawing');
+  if(draw != null) 
+    return draw._draw(context);
+  return false;
+}

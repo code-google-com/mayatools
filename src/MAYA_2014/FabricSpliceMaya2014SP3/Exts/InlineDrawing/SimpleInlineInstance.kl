@@ -1,0 +1,307 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`simpleinlineinstance` implements the :ref:`inlineinstance` interface for OpenGL direct rendering. Please see the :ref:`oglinlinedrawing` for a code example.
+*/
+require FabricSynchronization;
+
+alias InlineUniform InlineUniformMap[String];
+
+object SimpleInlineInstance : InlineInstance {
+  String _name;
+  Ref<InlineTransform> _transform;
+  InlineShape _shape;
+  InlineMaterial _materials[];
+  Boolean _mActive;
+
+  Object _metaData[String];
+  InlineUniformMap _uniforms[Integer];
+  SimpleLock lock;
+};
+
+// default constructor given a transform and a shape
+inline SimpleInlineInstance(String name, InlineTransform transform, InlineShape shape) {
+  this.lock = SimpleLock("SimpleInlineInstance");
+  this.setName(name);
+  this.setTransform(transform);
+  this.setShape(shape);
+  this._mActive = true;
+}
+
+// default constructor given a transform and a shape
+inline SimpleInlineInstance(String name, InlineTransform transform, InlineShape shape, io InlineMaterial material) {
+  this.lock = SimpleLock("SimpleInlineInstance");
+  this.setName(name);
+  this.setTransform(transform);
+  this.setShape(shape);
+  this.addMaterial(material);
+  this._mActive = true;
+}
+
+// standard destructor
+inline ~SimpleInlineInstance() {
+  AutoLock AL(this.lock);
+  Ref<InlineInstance> this_InlineInstance = this;
+  for(Integer i=this._materials.size-1; i>=0; i--){
+    if(this._materials[i] == null)
+      continue;
+    InlineMaterial mat = this._materials[i];
+    this._materials[i] = null;
+    if(mat.hasInstance(this_InlineInstance))
+      mat.removeInstance(this_InlineInstance);
+  }
+  this._materials.resize(0);
+}
+
+// sets the name of the transform
+inline SimpleInlineInstance.setName!(String name) {
+  this._name = name;
+}
+
+
+// returns the name of the transform
+inline String SimpleInlineInstance.getName() {
+  return this._name;
+}
+
+// returns the path, encoding the hierarchy joined by '/'
+inline String SimpleInlineInstance.getPath() {
+  return this._transform.getPath() + '/' + this.getName();
+}
+
+///////////////////////////
+// Shape
+
+// returns the shape of this instance
+inline InlineShape SimpleInlineInstance.getShape() {
+  AutoLock AL(this.lock);
+  return this._shape;
+}
+
+// sets the shape used by this instance
+inline SimpleInlineInstance.setShape!(InlineShape shape) {
+  AutoLock AL(this.lock);
+  this._shape = shape;
+}
+
+///////////////////////////
+// Transform
+
+// returns the shape of this instance
+function InlineTransform SimpleInlineInstance.getTransform() {
+  AutoLock AL(this.lock);
+  return this._transform;
+}
+
+// sets the transform used by this instance
+function SimpleInlineInstance.setTransform!(InlineTransform transform) {
+  AutoLock AL(this.lock);
+  this._transform = transform;
+  if(this._transform)
+    this._transform.addChild(this);
+}
+
+///////////////////////////
+// Materials
+
+// returns true if the instance has the material
+function Boolean SimpleInlineInstance.hasMaterial(InlineMaterial material) {
+  AutoLock AL(this.lock);
+  Ref<InlineMaterial> materialRef = material;
+  for(Size i=0;i<this._materials.size();i++) {
+    if(this._materials[i] === material) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// returns the material of this instance
+function InlineMaterial SimpleInlineInstance.getMaterial(Index index) {
+  AutoLock AL(this.lock);
+  if(index >= this._materials.size){
+    setError("Invalid index for getMaterial:" + index + ". Material count:" + this._materials.size);
+    InlineMaterial nullMaterial = null;
+    return nullMaterial;
+  }
+  return this._materials[index];
+}
+
+// adds a new material to this instance
+function SimpleInlineInstance.addMaterial!(io InlineMaterial material) {
+  AutoLock AL(this.lock);
+  this._materials.push(material);
+  Ref<InlineInstance> this_InlineInstance = this;
+  if(!material.hasInstance(this_InlineInstance)){
+    material.addInstance(this_InlineInstance);
+  }
+}
+
+// removes a material from this instance
+function SimpleInlineInstance.removeMaterial!(io InlineMaterial material) {
+  AutoLock AL(this.lock);
+  Ref<InlineMaterial> materialRef = material;
+  for(Size i=0;i<this._materials.size();i++) {
+    if(this._materials[i] === material) {
+      for(Size j=i+1;j<this._materials.size();j++) {
+        this._materials[j-1] = this._materials[j];
+      }
+      this._materials.resize(this._materials.size()-1);
+
+      Ref<InlineInstance> this_InlineInstance = this;
+      if(material != null && material.hasInstance(this_InlineInstance)) {
+        material.removeInstance(this_InlineInstance);
+      }
+      break;
+    }
+  }
+}
+
+
+// returns the number of materials applied to this instance
+function Size SimpleInlineInstance.getNumMaterials(){
+  AutoLock AL(this.lock);
+  return this._materials.size();
+}
+
+///////////////////////////
+// Toggles
+
+// enables or disables this instance
+function SimpleInlineInstance.setActive!(Boolean active) {
+  this._mActive = active;
+}
+
+// returns true if this instance is currently active
+function Boolean SimpleInlineInstance.isActive() {
+  return this._mActive;
+}
+
+///////////////////////////
+// MetaData
+
+// sets the meta data on this instance
+function SimpleInlineInstance.setMetaData!(String key, Object metaData) {
+  this._metaData[key] = metaData;
+}
+
+// returns the metadata on this instance
+function Object SimpleInlineInstance.getMetaData(String key) {
+  Object nullObj = null;
+  return this._metaData.get(key, nullObj);
+}
+
+///////////////////////////
+// Uniforms
+
+// returns true if this instance specializes any of the material values
+function Boolean SimpleInlineInstance.containsUniforms() {
+  AutoLock AL(this.lock);
+  return this._uniforms.size() > 0;
+}
+
+// sets an uniform specializing a material value for the whole instance
+function SimpleInlineInstance.setInstanceUniform!(InlineUniform uniform) {
+  AutoLock AL(this.lock);
+  if(!this._uniforms.has(-1))
+    this._uniforms[-1] = InlineUniformMap();
+  this._uniforms[-1][uniform.getName()] = uniform;
+}
+
+// sets a uniform specializing a material value for a single transform of the instance.
+function SimpleInlineInstance.setTransformUniform!(InlineUniform uniform, Index index) {
+  AutoLock AL(this.lock);
+  if(!this._uniforms.has(index))
+    this._uniforms[index] = InlineUniformMap();
+  this._uniforms[index][uniform.getName()] = uniform;
+}
+
+///////////////////////////
+// Drawing
+
+// draws the instance on screen. this is used by the 
+// material and should not be called manually.
+function Boolean SimpleInlineInstance._draw!(io DrawContext context) {
+
+  if(!this._mActive)
+    return true;
+
+  Size transformCount = this._transform._nonLocking_getGlobalCount();
+  InlineShader shader = context.getObject('currentShader');
+
+  // draw instance specific uniforms
+  if(this._uniforms.has(-1)) {
+    InlineUniformMap uniforms = this._uniforms[-1];
+    for(name, uniform in uniforms) {
+      if(!shader._drawUniform(context, uniform)) {
+        return false;
+      }
+    }
+  }
+
+  InlineTransform transform = this._transform;
+  for(Size i=0; i<transformCount; i++) {
+
+    if(!transform._draw(context, i, transformCount)) {
+      return false;
+    }
+
+    // draw transform specific uniforms
+    if(this._uniforms.has(i)) {
+      InlineUniformMap uniforms = this._uniforms[i];
+      for(name, uniform in uniforms) {
+        if(!shader._drawUniform(context, uniform)) {
+          return false;
+        }
+      }
+    }
+
+    if(!this._shape._draw(context, i, transformCount)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+
+
+function GeometryLocation[] SimpleInlineInstance.raycast(Ray ray, Boolean closest, Boolean doubleSided, Scalar coneThreshold, Scalar maxDistance){
+
+  AutoLock AL(this.lock);
+  
+  Scalar distance = BIGSCALAR_POSITIVE;
+  GeometryLocation locations[];
+  InlineTransform transform = this.getTransform();
+  InlineShape shape = this.getShape();
+  SpatialQueryable queryable = shape.getGeometry();
+  if(queryable != null){
+    for(Integer i=0; i<transform.getGlobalCount(); i++){
+      Xfo xfo = transform.getGlobalXfo(i);
+      Xfo invXfo = xfo.inverse();
+      Ray objRay = invXfo.transformRay(ray);
+      GeometryLocation location = queryable.raycast(objRay, doubleSided, coneThreshold, maxDistance);
+      if(location.isValid()){
+        if(closest){
+          Geometry geometry = shape.getGeometry();
+          Vec3 objectSpacePoint = geometry.getPositionAtLocation(location);
+          Vec3 worldSpacePoint = xfo.transformVector(objectSpacePoint);
+          Scalar dist = (worldSpacePoint - ray.start).length();
+          if(dist < distance){
+            if(locations.size == 0)
+              locations.push(location);
+            else
+              locations[0] = location;
+            distance = dist;
+          }
+        }
+        else
+          locations.push(location);
+      }
+    }
+  }
+  return locations;
+}

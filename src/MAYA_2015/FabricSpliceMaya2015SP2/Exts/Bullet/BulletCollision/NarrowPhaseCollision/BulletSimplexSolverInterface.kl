@@ -1,0 +1,41 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+require Math;
+
+
+/// BulletSimplexSolverInterface can incrementally calculate distance between origin and up to 4 vertices
+/// Used by GJK or Linear Casting. Can be implemented by the Johnson-algorithm or alternative approaches based on
+/// voronoi regions or barycentric coordinates
+interface BulletSimplexSolverInterface
+{
+	Data getPointer();
+	
+	// reset();
+
+	// addVertex(in Vec3 w, in Vec3 p, in Vec3 q);
+	
+	// Boolean closest(io Vec3 v);
+
+	// Scalar maxVertex();
+
+	// Boolean fullSimplex();
+
+	// Integer getSimplex?(io Vec3 pBuf, io Vec3 qBuf, io Vec3 yBuf);
+
+	// Boolean inSimplex(in Vec3 w);
+	
+	// backup_closest(io Vec3 v);
+
+	// Boolean emptySimplex();
+
+	// compute_points(io Vec3 p1, io Vec3 p2);
+
+	// Integer numVertices();
+
+};
+
+

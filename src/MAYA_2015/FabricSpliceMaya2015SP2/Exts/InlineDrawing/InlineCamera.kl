@@ -1,0 +1,53 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`InlineCamera` object is used to send Camera information from the host application to the InlineDrawing system and the Manipulation system. 
+
+The interface 'camera' is implemented in case we require different kinds of camera objects to support the same interface. Currenly only InlineCamera implements the Camera interface. 
+
+
+*/
+
+interface Camera {
+    Mat44 getMat44();
+    Scalar getFovY();
+    Boolean isOrthographic();
+    Scalar getOrthographicFrustumHeight();
+};
+
+object InlineCamera : Camera {
+    Mat44 mat44;
+
+    Scalar fovY;
+    Scalar nearDistance;
+    Scalar farDistance;
+    Boolean isOrthographic;
+    Scalar orthographicFrustumH;
+};
+
+function InlineCamera(Scalar fovY, Scalar nearDistance, Scalar farDistance, Boolean isOrthographic){
+    this.fovY = fovY;
+    this.nearDistance = nearDistance;
+    this.farDistance = farDistance;
+    this.isOrthographic = isOrthographic;
+}
+
+function Mat44 InlineCamera.getMat44(){
+    return this.mat44;
+}
+
+function Scalar InlineCamera.getFovY(){
+    return this.fovY;
+}
+
+function Boolean InlineCamera.isOrthographic(){
+    return this.isOrthographic;
+}
+
+function Scalar InlineCamera.getOrthographicFrustumHeight(){
+    return this.orthographicFrustumH;
+}

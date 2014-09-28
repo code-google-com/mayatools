@@ -1,0 +1,182 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+/// The BulletCylinderShape class implements a cylinder shape primitive, centered around the origin. Its central axis aligned with the Y axis. BulletCylinderShapeX is aligned with the X axis and BulletCylinderShapeZ around the Z axis.
+object BulletCylinderShape : BulletConvexInternalShape, BulletConvexShape, BulletCollisionShape
+{
+	Data pointer;
+};
+
+function Data BulletCylinderShape.getPointer(){
+	return this.pointer;
+}
+
+function BulletCylinderShape(Vec3 halfExtents) = "BulletCylinderShape_construct";
+function ~BulletCylinderShape() = "BulletCylinderShape_destroy";
+
+
+function Vec3 BulletCylinderShape.getHalfExtentsWithMargin() = 'BulletCylinderShape_getHalfExtentsWithMargin';
+	
+function Vec3 BulletCylinderShape.getHalfExtentsWithoutMargin() = 'BulletCylinderShape_getHalfExtentsWithoutMargin';
+
+	
+function BulletCylinderShape.getAabb(Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletCylinderShape_getAabb';
+
+
+function Vec3 BulletCylinderShape.localGetSupportingVertexWithoutMargin(Vec3 vec)= 'BulletCylinderShape_localGetSupportingVertexWithoutMargin';
+
+function BulletCylinderShape.batchedUnitVectorGetSupportingVertexWithoutMargin?(Vec3 vectors[], io Vec3 supportVerticesOut[]) = 'BulletCylinderShape_batchedUnitVectorGetSupportingVertexWithoutMargin';
+
+function BulletCylinderShape.setMargin!(Scalar collisionMargin) = 'BulletCylinderShape_setMargin';
+
+function Vec3 BulletCylinderShape.localGetSupportingVertex?(Vec3 vec) = 'BulletCylinderShape_localGetSupportingVertex';
+
+ //use box inertia
+ //function  calculateLocalInertia?(Scalar mass, io Vec3 inertia) const;
+
+
+function Integer BulletCylinderShape.getUpAxis() = 'BulletCylinderShape_getUpAxis';
+
+function Scalar BulletCylinderShape.getRadius() = 'BulletCylinderShape_getRadius';
+
+function BulletCylinderShape.setLocalScaling!(Vec3 scaling) = 'BulletCylinderShape_setLocalScaling';
+
+//  //debugging
+// function String BulletCylinderShape.getName();
+
+// function Integer BulletCylinderShape.calculateSerializeBufferSize();
+
+// 	///fills the dataBuffer and returns the struct name (and 0 on failure)
+// function String	serialize(Object dataBuffer, BulletSerializer* serializer);
+
+
+////////////////////////////////////////////////
+// From BulletCollisionShape
+
+function BulletCylinderShape.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = "BulletCylinderShape_calculateLocalInertia";
+
+function BulletCylinderShape.setMargin!(Scalar margin) = 'BulletCylinderShape_setMargin';
+function Scalar	BulletCylinderShape.getMargin() = 'BulletCylinderShape_getMargin';
+
+
+/////////////////////////////
+// BulletCylinderShapeX
+
+object BulletCylinderShapeX : BulletConvexInternalShape, BulletConvexShape, BulletCollisionShape
+{
+	Data pointer;
+};
+
+function Data BulletCylinderShapeX.getPointer(){
+	return this.pointer;
+}
+
+function BulletCylinderShapeX(Vec3 halfExtents) = "BulletCylinderShapeX_construct";
+function ~BulletCylinderShapeX() = "BulletCylinderShapeX_destroy";
+
+
+function Vec3 BulletCylinderShapeX.getHalfExtentsWithMargin() = 'BulletCylinderShapeX_getHalfExtentsWithMargin';
+	
+function Vec3 BulletCylinderShapeX.getHalfExtentsWithoutMargin() = 'BulletCylinderShapeX_getHalfExtentsWithoutMargin';
+
+	
+function BulletCylinderShapeX.getAabb(Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletCylinderShapeX_getAabb';
+
+
+function Vec3 BulletCylinderShapeX.localGetSupportingVertexWithoutMargin(Vec3 vec)= 'BulletCylinderShapeX_localGetSupportingVertexWithoutMargin';
+
+function BulletCylinderShapeX.batchedUnitVectorGetSupportingVertexWithoutMargin?(Vec3 vectors[], io Vec3 supportVerticesOut[]) = 'BulletCylinderShapeX_batchedUnitVectorGetSupportingVertexWithoutMargin';
+
+function BulletCylinderShapeX.setMargin!(Scalar collisionMargin) = 'BulletCylinderShapeX_setMargin';
+
+function Vec3 BulletCylinderShapeX.localGetSupportingVertex?(Vec3 vec) = 'BulletCylinderShapeX_localGetSupportingVertex';
+
+ //use box inertia
+ //function  calculateLocalInertia?(Scalar mass, io Vec3 inertia) const;
+
+
+function Integer BulletCylinderShapeX.getUpAxis() = 'BulletCylinderShapeX_getUpAxis';
+
+function Scalar BulletCylinderShapeX.getRadius() = 'BulletCylinderShapeX_getRadius';
+
+function BulletCylinderShapeX.setLocalScaling!(Vec3 scaling) = 'BulletCylinderShapeX_setLocalScaling';
+
+//  //debugging
+// function String BulletCylinderShapeX.getName();
+
+// function Integer BulletCylinderShapeX.calculateSerializeBufferSize();
+
+// 	///fills the dataBuffer and returns the struct name (and 0 on failure)
+// function String	serialize(Object dataBuffer, BulletSerializer* serializer);
+
+
+////////////////////////////////////////////////
+// From BulletCollisionShape
+
+function BulletCylinderShapeX.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = "BulletCylinderShapeX_calculateLocalInertia";
+
+function BulletCylinderShapeX.setMargin!(Scalar margin) = 'BulletCylinderShapeX_setMargin';
+function Scalar	BulletCylinderShapeX.getMargin() = 'BulletCylinderShapeX_getMargin';
+
+
+/////////////////////////////
+// BulletCylinderShapeZ
+
+object BulletCylinderShapeZ : BulletConvexInternalShape, BulletConvexShape, BulletCollisionShape
+{
+	Data pointer;
+};
+
+function Data BulletCylinderShapeZ.getPointer(){
+	return this.pointer;
+}
+
+function BulletCylinderShapeZ(Vec3 halfExtents) = "BulletCylinderShapeZ_construct";
+function ~BulletCylinderShapeZ() = "BulletCylinderShapeZ_destroy";
+
+
+function Vec3 BulletCylinderShapeZ.getHalfExtentsWithMargin() = 'BulletCylinderShapeZ_getHalfExtentsWithMargin';
+	
+function Vec3 BulletCylinderShapeZ.getHalfExtentsWithoutMargin() = 'BulletCylinderShapeZ_getHalfExtentsWithoutMargin';
+
+	
+function BulletCylinderShapeZ.getAabb(Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletCylinderShapeZ_getAabb';
+
+
+function Vec3 BulletCylinderShapeZ.localGetSupportingVertexWithoutMargin(Vec3 vec)= 'BulletCylinderShapeZ_localGetSupportingVertexWithoutMargin';
+
+function BulletCylinderShapeZ.batchedUnitVectorGetSupportingVertexWithoutMargin?(Vec3 vectors[], io Vec3 supportVerticesOut[]) = 'BulletCylinderShapeZ_batchedUnitVectorGetSupportingVertexWithoutMargin';
+
+function BulletCylinderShapeZ.setMargin!(Scalar collisionMargin) = 'BulletCylinderShapeZ_setMargin';
+
+function Vec3 BulletCylinderShapeZ.localGetSupportingVertex?(Vec3 vec) = 'BulletCylinderShapeZ_localGetSupportingVertex';
+
+ //use box inertia
+ //function  calculateLocalInertia?(Scalar mass, io Vec3 inertia) const;
+
+
+function Integer BulletCylinderShapeZ.getUpAxis() = 'BulletCylinderShapeZ_getUpAxis';
+
+function Scalar BulletCylinderShapeZ.getRadius() = 'BulletCylinderShapeZ_getRadius';
+
+function BulletCylinderShapeZ.setLocalScaling!(Vec3 scaling) = 'BulletCylinderShapeZ_setLocalScaling';
+
+//  //debugging
+// function String BulletCylinderShapeZ.getName();
+
+// function Integer BulletCylinderShapeZ.calculateSerializeBufferSize();
+
+// 	///fills the dataBuffer and returns the struct name (and 0 on failure)
+// function String	serialize(Object dataBuffer, BulletSerializer* serializer);
+
+
+////////////////////////////////////////////////
+// From BulletCollisionShape
+
+function BulletCylinderShapeZ.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = "BulletCylinderShapeZ_calculateLocalInertia";
+
+function BulletCylinderShapeZ.setMargin!(Scalar margin) = 'BulletCylinderShapeZ_setMargin';
+function Scalar	BulletCylinderShapeZ.getMargin() = 'BulletCylinderShapeZ_getMargin';

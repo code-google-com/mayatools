@@ -1,0 +1,39 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`Manipulator` interface for all manipulators. A custom manipulator supporting the Manipulator must implement the functions defined in the interface. How a manipulator interprets and processed the events from the host application is completely down to the implementation of the onEvent function.
+
+A wide range of custom manipulators are possible with this design, and there are a collection of example manipulators provided to show how they can be implemented.
+
+Example
+---------
+
+.. code-block:: kl
+
+    EventDispatcher dispatcher = EventDispatcher_GetInstance();
+    Manipulator manipulator = MyCustomManipulator();
+
+    // draw a couple of points
+    dispatcher.registerManipulator("MoveTool", manipulator);
+
+
+*/
+
+interface Manipulator {
+    //  Called when this manipulator is enabled. It should prepare for action. 
+    // Some manipulators might start drawing online gizmos to indicate that they are active. 
+    onEnable!();
+
+    // Called when this manipulator is disabled.The manipulator can peform cleanpup, such as 
+    // removeing onscreen icons, paint brushes etc...
+    onDisable!();
+
+    // event propagation to the active manipulator
+    onEvent!(io Event event);
+};
+
+

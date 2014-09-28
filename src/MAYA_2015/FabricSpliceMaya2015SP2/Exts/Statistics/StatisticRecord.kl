@@ -1,0 +1,94 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+
+A ``StatisticRecord`` embeds a name-value statistic pair (eg: Memory=156). See :ref:`FabricStatistics` for more information about ``StatisticRecord``.
+
+*/
+
+//Standard statistic columns
+const String Statistic_Name = "Name";
+const String Statistic_Category = "Category";
+const String Statistic_SubCategory = "SubCategory";
+const String Statistic_Comments = "Comments";
+const String Statistic_Type = "Type";
+
+const String Statistic_MemoryUsage = "Memory";
+const String Statistic_GPUMemoryUsage = "GPUMemory";
+
+//Used temporarely until kl2edk Type bug is fixed.
+const Size _StatisticRecordType_None = 0;
+const Size _StatisticRecordType_SInt64 = 1;
+const Size _StatisticRecordType_Float64 = 2;
+const Size _StatisticRecordType_String = 3;
+
+//Represents a statistics name-value pair. The value can be a ``String``, a ``SInt64`` or a ``Float64``.
+struct StatisticRecord {
+  Size valueType;//NOTE: this should be Type but hits a bug in kl2edk
+  String name;
+
+  SInt64 intValue;
+  Float64 floatValue;
+  String stringValue;
+};
+
+//Construct as a ``SInt64`` value
+function StatisticRecord( String name, SInt64 value ) {
+  this.valueType = _StatisticRecordType_SInt64;
+  this.name = name;
+  this.intValue = value;
+}
+
+//Construct as a ``Float64`` value
+function StatisticRecord( String name, Float64 value ) {
+  this.name = name;
+  if( Float64(SInt64(value)) == value ) {
+    this.valueType = _StatisticRecordType_SInt64;
+    this.intValue = value;
+  } else {
+    this.valueType = _StatisticRecordType_Float64;
+    this.floatValue = value;
+  }
+}
+
+//Construct as a ``String`` value
+function StatisticRecord( String name, String value ) {
+  this.valueType = _StatisticRecordType_String;
+  this.name = name;
+  this.stringValue = value;
+}
+
+//Writes the value-pair as a single ``String``.
+function String StatisticRecord.toString( Boolean includeName ) {
+  String result;
+  if( includeName )
+    result = this.name+"=";
+  if(this.valueType == _StatisticRecordType_SInt64)
+    result += this.intValue;
+  else if(this.valueType == _StatisticRecordType_Float64)
+    result += Scalar(this.floatValue);//Limit printing to Scalar for now; Float64 has too many numbers!
+  else if(this.valueType == _StatisticRecordType_String)
+    result += '"'+this.stringValue+'"';
+  else
+    result += "?";
+  return result;
+}
+
+//Adds two ``StatisticRecord``, if the types are compatible (``SInt64`` or ``Float64``, ``None`` types absorb the other value). This is used for computing statistic sums.
+function StatisticRecord.add!( StatisticRecord other ) {
+  if( this.valueType == _StatisticRecordType_None && (other.valueType == _StatisticRecordType_SInt64 || other.valueType == _StatisticRecordType_Float64) ) {
+    this.valueType = other.valueType;
+    this.intValue = other.intValue;
+    this.floatValue = other.floatValue;
+  } else if( this.valueType == _StatisticRecordType_SInt64 && other.valueType == _StatisticRecordType_SInt64 )
+    this.intValue += other.intValue;
+  else if( this.valueType == _StatisticRecordType_Float64 && other.valueType == _StatisticRecordType_Float64 )
+    this.floatValue += other.floatValue;
+  else if( this.valueType == _StatisticRecordType_Float64 && other.valueType == _StatisticRecordType_SInt64 )
+    this.floatValue += other.intValue;
+  else if( this.valueType == _StatisticRecordType_SInt64 && other.valueType == _StatisticRecordType_Float64 ) {
+    this.floatValue = this.intValue + other.floatValue;
+    this.valueType = _StatisticRecordType_Float64;
+  }
+}

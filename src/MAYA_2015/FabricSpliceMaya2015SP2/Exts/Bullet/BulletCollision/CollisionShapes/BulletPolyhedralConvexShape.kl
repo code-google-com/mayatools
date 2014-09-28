@@ -1,0 +1,56 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+///The BulletPolyhedralConvexShape is an internal interface class for polyhedral convex shapes.
+interface BulletPolyhedralConvexShape //: public BulletConvexInternalShape
+{
+	// BulleConvexPolyhedron polyhedron;
+
+// 	///optional method mainly used to generate multiple contact points by clipping polyhedral features (faces/edges)
+// 	Boolean	initializePolyhedralFeatures();
+
+// 	const BulletConvexPolyhedron	getConvexPolyhedron()
+
+// 	//brute force implementations
+
+// 	Vec3	localGetSupportingVertexWithoutMargin(Vec3 vec)const;
+// 	batchedUnitVectorGetSupportingVertexWithoutMargin?( Vec3* vectors,Vec3* supportVerticesOut,Integer numVectors) const;
+	
+// 	calculateLocalInertia?(Scalar mass, io Vec3 inertia) const;
+	
+	
+// 	Integer	getNumVertices();
+// 	Integer getNumEdges() ;
+// 	getEdge(Integer i,Vec3& pa,Vec3& pb);
+// 	getVertex(Integer i,Vec3& vtx);
+// 	Integer	getNumPlanes();
+// 	getPlane(Vec3& planeNormal,Vec3& planeSupport,Integer i );
+// //	Integer getIndex(Integer i); 
+
+// 	Boolean isInside(Vec3 pt, Scalar tolerance) = 0;
+	
+};
+
+
+
+///The BulletPolyhedralConvexAabbCachingShape adds aabb caching to the BulletPolyhedralConvexShape
+interface BulletPolyhedralConvexAabbCachingShape //: BulletPolyhedralConvexShape
+{
+
+
+	// BulletPolyhedralConvexAabbCachingShape();
+	
+	// getNonvirtualAabb?( Xfo trans, io Vec3 aabbMin, io Vec3 aabbMax, Scalar margin);
+
+	// setLocalScaling(Vec3 scaling);
+
+	// getAabb?( Xfo t, io Vec3 aabbMin, io Vec3 aabbMax);
+
+	// recalcLocalAabb();
+
+};
+
+

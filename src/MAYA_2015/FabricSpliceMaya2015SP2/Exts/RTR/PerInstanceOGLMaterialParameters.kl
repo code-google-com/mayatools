@@ -1,0 +1,205 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+require Geometry;
+
+struct PerInstanceMaterialParameterInfo {
+  Object defaultValue;
+  Boolean asTexture;
+  Integer transformSpace;
+  Boolean genericParam;
+  RenderValueKey materialExposedParamsKey;
+  Ref<GeometryAttribute> attribute;
+};
+
+object PerInstanceMaterialParameters {
+
+  Ref<OGLMaterial> material;
+  UInt32 materialVersion;
+
+  GeometryAttributes perInstanceValues;
+  PerInstanceMaterialParameterInfo paramInfos[]; 
+
+  UInt32 version;
+};
+
+function PerInstanceMaterialParameters.updateMaterialDefinition!( Ref<OGLMaterial> material ) {
+  if( Boolean(this.perInstanceValues) && this.material === material && this.materialVersion == material.version )
+    return;
+
+  ++this.version;
+  this.material = material;
+  this.materialVersion = material.version;
+
+  this.paramInfos.resize(0);
+  this.perInstanceValues = GeometryAttributes();
+
+  //Initialize from material info
+  //NOTE: we prepare attributes for ALL textured/generic params, not only the exposed ones.
+  //So the list of parameters might not be the same as material's exposed params.
+  for( Size i = 0; i < material.variantShaderParams.size(); ++i ) {
+    Ref<OGLShaderProgram> shader = material.variantShaderParams[i].shader;
+    for( Size j = 0; j < shader.uniforms.size(); ++j ) {
+      if( shader.uniforms[j].sourceType == OGLShaderProgram_uniformSource_genericVertex ||
+          shader.uniforms[j].sourceType == OGLShaderProgram_uniformSource_genericFragment ||
+          shader.uniforms[j].sourceType == OGLShaderProgram_uniformSource_instancesTexture ||
+          shader.uniforms[j].sourceType == OGLShaderProgram_uniformSource_instancesAttribute ) {
+
+        if( !this.perInstanceValues.has(shader.uniforms[j].name) ) {
+          //Check if a texture is already set as the default, in which case, don't override it.
+          //NOTE: we should check this not only at initialization time...
+          PerInstanceMaterialParameterInfo info;
+
+          info.materialExposedParamsKey = material.exposedParamValues.getKeyFromName(shader.uniforms[j].name);
+          Ref<OGLTexture2D> noTextureRef = material.shaderLibrary.noTexture;
+
+          if(    info.materialExposedParamsKey.isValid() 
+              && material.exposedParamValues.isOGLTexture2D(info.materialExposedParamsKey)
+              && material.exposedParamValues.getOGLTexture2D(info.materialExposedParamsKey) !== noTextureRef )
+            continue;
+
+          info.asTexture = shader.uniforms[j].sourceType != OGLShaderProgram_uniformSource_instancesAttribute;
+          info.genericParam = shader.uniforms[j].sourceType == OGLShaderProgram_uniformSource_genericVertex
+                           || shader.uniforms[j].sourceType == OGLShaderProgram_uniformSource_genericFragment;
+
+          if( info.materialExposedParamsKey.isValid() )
+            info.defaultValue = material.exposedParamValues.get(info.materialExposedParamsKey);
+
+          if( !info.defaultValue )
+            info.defaultValue = shader.uniforms[j].defaultValue;
+
+          if( !info.defaultValue )
+            info.defaultValue = SimpleRenderParam_createDefaultFromKLTypeString( shader.uniforms[j].klType );
+
+          Type paramType = info.defaultValue.type();
+          if( paramType == BooleanRenderParam || paramType == IntegerRenderParam )
+            info.attribute = this.perInstanceValues.getOrCreateIntegerAttribute( shader.uniforms[j].name );
+          else if( paramType == ScalarRenderParam )
+            info.attribute = this.perInstanceValues.getOrCreateScalarAttribute( shader.uniforms[j].name );
+          else if( paramType == Vec2RenderParam )
+            info.attribute = this.perInstanceValues.getOrCreateVec2Attribute( shader.uniforms[j].name );
+          else if( paramType == Vec3RenderParam )
+            info.attribute = this.perInstanceValues.getOrCreateVec3Attribute( shader.uniforms[j].name );
+          else if( paramType == Vec4RenderParam )
+            info.attribute = this.perInstanceValues.getOrCreateVec4Attribute( shader.uniforms[j].name );
+          else if( paramType == ColorRenderParam )
+            info.attribute = this.perInstanceValues.getOrCreateColorAttribute( shader.uniforms[j].name );
+          else if( paramType == Mat33RenderParam )
+            info.attribute = this.perInstanceValues.getOrCreateMat33Attribute( shader.uniforms[j].name );
+          else if( paramType == Mat44RenderParam )
+            info.attribute = this.perInstanceValues.getOrCreateMat44Attribute( shader.uniforms[j].name );
+          if( info.attribute )
+            this.paramInfos.push(info);
+        }
+      }
+    }
+  }
+}
+
+function PerInstanceMaterialParameters.setTransformSpace!( Ref<GeometryAttribute> attribute, Integer transformSpace ) {
+  for( Size i = 0; i < this.paramInfos.size(); ++i ) {
+    if( this.paramInfos[i].attribute === attribute ) {
+      this.paramInfos[i].transformSpace = transformSpace;
+      return;
+    }
+  }
+  throw("PerInstanceMaterialParameters.setTransformSpace: attribute not found");
+}
+
+function PerInstanceMaterialParameters.setInstanceCount!( Size count ) {
+  Size prevCount = this.perInstanceValues.size();
+  this.perInstanceValues.resize(count);
+
+  if( count <= prevCount )
+    return;
+
+  //Initialize values from material preset defaults
+  for( Size i = 0; i < this.paramInfos.size(); ++i ) {
+    Type attribType = this.paramInfos[i].attribute.type();
+
+    if( attribType == IntegerAttribute ) {
+      Ref<IntegerAttribute> attribute = this.paramInfos[i].attribute;
+      Integer defaultValue;
+      if( this.paramInfos[i].defaultValue.type == BooleanRenderParam ) {
+        Ref<BooleanRenderParam> defaultParam = this.paramInfos[i].defaultValue;
+        Boolean defaultBool;
+        defaultParam.get(defaultBool);
+        defaultValue = defaultBool ? 1 : 0;
+      } else {
+        Ref<IntegerRenderParam> defaultParam = this.paramInfos[i].defaultValue;
+        defaultParam.get(defaultValue);
+      }
+      for( Size j = prevCount; j < count; ++j )
+        attribute.values[j] = defaultValue;
+
+    } else if( attribType == ScalarAttribute ) {
+      Ref<ScalarAttribute> attribute = this.paramInfos[i].attribute;
+      Scalar defaultValue;
+      Ref<ScalarRenderParam> defaultParam = this.paramInfos[i].defaultValue;
+      defaultParam.get(defaultValue);
+      for( Size j = prevCount; j < count; ++j )
+        attribute.values[j] = defaultValue;
+
+    } else if( attribType == Vec2Attribute ) {
+      Ref<Vec2Attribute> attribute = this.paramInfos[i].attribute;
+      Vec2 defaultValue;
+      Ref<Vec2RenderParam> defaultParam = this.paramInfos[i].defaultValue;
+      defaultParam.get(defaultValue);
+      for( Size j = prevCount; j < count; ++j )
+        attribute.values[j] = defaultValue;
+
+    } else if( attribType == Vec3Attribute ) {
+      Ref<Vec3Attribute> attribute = this.paramInfos[i].attribute;
+      Vec3 defaultValue;
+      Ref<Vec3RenderParam> defaultParam = this.paramInfos[i].defaultValue;
+      defaultParam.get(defaultValue);
+      for( Size j = prevCount; j < count; ++j )
+        attribute.values[j] = defaultValue;
+
+    } else if( attribType == Vec4Attribute ) {
+      Ref<Vec4Attribute> attribute = this.paramInfos[i].attribute;
+      Vec4 defaultValue;
+      Ref<Vec4RenderParam> defaultParam = this.paramInfos[i].defaultValue;
+      defaultParam.get(defaultValue);
+      for( Size j = prevCount; j < count; ++j )
+        attribute.values[j] = defaultValue;
+
+    } else if( attribType == ColorAttribute ) {
+      Ref<ColorAttribute> attribute = this.paramInfos[i].attribute;
+      Color defaultValue;
+      Ref<ColorRenderParam> defaultParam = this.paramInfos[i].defaultValue;
+      defaultParam.get(defaultValue);
+      for( Size j = prevCount; j < count; ++j )
+        attribute.values[j] = defaultValue;
+
+    } else if( attribType == Mat33Attribute ) {
+      Ref<Mat33Attribute> attribute = this.paramInfos[i].attribute;
+      Mat33 defaultValue;
+      Ref<Mat33RenderParam> defaultParam = this.paramInfos[i].defaultValue;
+      defaultParam.get(defaultValue);
+      for( Size j = prevCount; j < count; ++j )
+        attribute.values[j] = defaultValue;
+
+    } else if( attribType == Mat44Attribute ) {
+      Ref<Mat44Attribute> attribute = this.paramInfos[i].attribute;
+      Mat44 defaultValue;
+      Ref<Mat44RenderParam> defaultParam = this.paramInfos[i].defaultValue;
+      defaultParam.get(defaultValue);
+      for( Size j = prevCount; j < count; ++j )
+        attribute.values[j] = defaultValue;
+    }
+  }
+}
+
+function PerInstanceMaterialParameters.updateRenderParams!( io Ref<RenderParamValues> params ) {
+  for( Size i = 0; i < this.paramInfos.size(); ++i ) {
+    params.storeAsPerInstanceOGLParam(
+      this.paramInfos[i].attribute.getName(),
+      this.paramInfos[i].genericParam,
+      this.paramInfos[i].asTexture,
+      this.paramInfos[i].attribute,
+      this.paramInfos[i].transformSpace );
+  }
+}
+

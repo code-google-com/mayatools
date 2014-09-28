@@ -1,0 +1,75 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`KeyEvent` object used to propagate keyboard events into the Manipulation system. 
+
+*/
+
+
+object KeyEvent : Event {
+
+    Host host;
+    Viewport viewport;
+
+    EventType eventType;
+    Boolean accepted;
+
+    // The keyboard modifier flags that existed immediately before the event occurred.
+    ModiferKey modifiers;
+
+    // The number of keys involved in this event.
+    UInt32 count;
+
+    // True if this event comes from an auto-repeating key; returns false if it comes from an initial key press.
+    Boolean isAutoRepeat;
+
+    // The code of the key that was pressed or released.
+    Key key;
+};
+
+function KeyEvent(EventType eventType, ModiferKey modifiers, UInt32 count, Boolean isAutoRepeat, Key key){
+    this.eventType = eventType;
+    this.modifiers = modifiers;
+    this.count = count;
+    this.isAutoRepeat = isAutoRepeat;
+    this.key = key;
+}
+
+
+function Host KeyEvent.getHost(){
+    return this.host;
+}
+
+function Viewport KeyEvent.getViewport(){
+    return this.viewport;
+}
+
+// Sets the accept flag of the event object, the equivalent of calling setAccepted(true).
+function KeyEvent.accept!(){
+    this.accepted = true;
+}
+
+// Clears the accept flag parameter of the event object, the equivalent of calling setAccepted(false).
+function KeyEvent.ignore!(){
+    this.accepted = false;
+}
+  
+// Returns true if the event has been accepted by the active manipulator. The host application should then
+function Boolean KeyEvent.isAccepted(){
+    return this.accepted;
+}
+
+// when a manipulator processes and event, it should call either 'accept', or 'setAccepted(true)' to indicate that it has processed the event.
+function KeyEvent.setAccepted!(Boolean accepted){
+    this.accepted = accepted;
+}
+
+// Returns the event type id. The list of supported Ids are defined in ManipulationConstants.kl.
+function EventType KeyEvent.eventType(){
+    return this.eventType;
+}
+

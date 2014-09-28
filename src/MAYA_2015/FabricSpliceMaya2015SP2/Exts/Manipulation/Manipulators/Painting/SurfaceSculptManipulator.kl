@@ -1,0 +1,281 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`SurfaceSculptManipulator `
+
+*/
+
+
+require Singletons;
+require InlineDrawing;
+
+
+//////////////////////////////////////
+// SurfaceSculptManipulator_SculptData
+//
+
+struct SurfaceSculptManipulator_SculptData {
+    PolygonMesh mesh;
+    Integer pointIds[];
+    Vec3 oldValues[];
+    Vec3 newValues[];
+    Boolean recomputePointNormals;
+};
+
+function SurfaceSculptManipulator_SculptData(PolygonMesh mesh){
+    this.mesh = mesh;
+}
+
+// Merge the new patin data into the existing paint data to create one set that can be undone/redone
+function SurfaceSculptManipulator_SculptData.mergeIn!(SurfaceSculptManipulator_SculptData sculptData){
+    for (Integer i = 0; i < sculptData.pointIds.size(); i++) {
+        Integer id = -1;
+        for (Integer j = 0; j < this.pointIds.size(); j++) {
+            if(sculptData.pointIds[i] == this.pointIds[j]){
+                id = j;
+                break;
+            }
+        }
+        if(id != -1){
+            this.newValues[id] = sculptData.newValues[i];
+        }
+        else{
+            this.pointIds.push(sculptData.pointIds[i]);
+            this.oldValues.push(sculptData.oldValues[i]);
+            this.newValues.push(sculptData.newValues[i]);
+        }
+    }
+}
+
+function SurfaceSculptManipulator_SculptData.doAction!(){
+    for (Integer i = 0; i < this.pointIds.size(); i++) {
+        this.mesh.setPointPosition(this.pointIds[i], this.newValues[i]);
+    }
+    this.mesh.incrementPointPositionsVersion();
+    if(this.recomputePointNormals)
+      this.mesh.recomputePointNormals();
+}
+
+
+function SurfaceSculptManipulator_SculptData.undoAction!(){
+    for (Integer i = 0; i < this.pointIds.size(); i++) {
+        this.mesh.setPointPosition(this.pointIds[i], this.oldValues[i]);
+    }
+    this.mesh.incrementPointPositionsVersion();
+    if(this.recomputePointNormals)
+      this.mesh.recomputePointNormals();
+}
+
+//////////////////////////////////////
+// SurfaceSculptCommand
+// The SurfaceSculptCommand contains a dictionary of
+// SurfaceSculptManipulator_SculptData object. One for
+// each geometry. As a paint stoke moves from one geometry to another
+// the data is added to the relevant container in the 
+// SurfaceSculptCommand
+object SurfaceSculptCommand : UndoRedoCommand {
+    SurfaceSculptManipulator_SculptData sculptData[PolygonMesh];
+};
+
+function SurfaceSculptCommand(){
+}
+
+function SurfaceSculptCommand.doAction!(){
+    for(mesh in this.sculptData){
+        this.sculptData[mesh].doAction();
+    }
+}
+
+function SurfaceSculptCommand.undoAction!(){
+    for(mesh in this.sculptData){
+        this.sculptData[mesh].undoAction();
+    }
+}
+
+function SurfaceSculptCommand.addsculptData!(SurfaceSculptManipulator_SculptData sculptData){
+    if(this.sculptData.has(sculptData.mesh)){
+        this.sculptData[sculptData.mesh].mergeIn(sculptData); 
+    }
+    else{
+        this.sculptData[sculptData.mesh] = sculptData;
+    }
+}
+
+//////////////////////////////////////
+// Smooth Points
+operator smoothMesh<<<index>>>(
+  PolygonMesh mesh,
+  SurfacePaintManipulator_PointCollection collectedPoints,
+  io Vec3 results[]
+ ) {
+
+  //Pseudo-gaussian: center weight = 0.5, neighbor weights sum = 0.5
+  Index pointId = collectedPoints.pointIds[index];
+  Scalar weight = collectedPoints.weights[index];
+  Vec3 value = mesh.getPointPosition(pointId);
+
+  LocalL16UInt32Array surroundingPoints;
+  mesh.getPointSurroundingPoints(pointId, false, surroundingPoints);
+  UInt32 nbNei = surroundingPoints.size();
+  
+  if( nbNei ) {
+    Vec3 neiSum;
+    for( UInt32 i = 0; i < nbNei; ++i ) {
+      UInt32 neiPt = surroundingPoints.get(i);
+      neiSum += mesh.getPointPosition(neiPt);
+    }
+    neiSum /= Scalar(nbNei);
+    value = value.linearInterpolate((value + neiSum) * 0.5, weight);
+  }
+  results[index] = value;
+}
+
+// TODO: maybe using map-reduce would be faster to compute the
+// average normal.
+function Vec3 averageNormal(
+  PolygonMesh mesh,
+  SurfacePaintManipulator_PointCollection collectedPoints
+){
+  Vec3 value;
+  for( UInt32 i = 0; i < collectedPoints.pointIds.size; i++ ) {
+    value += mesh.getPointNormal(collectedPoints.pointIds[i]);
+  }
+  return value.unit();
+}
+
+
+///////////////////////////////////////////////
+// SurfaceSculptManipulator_Callback
+
+object SurfaceSculptManipulator_Callback : SurfacePaintManipulator_Callback {
+    Integer paintMode;
+    Scalar sculptStrength;
+    SurfaceSculptCommand command;
+    Boolean recomputePointNormals;
+};
+
+function SurfaceSculptManipulator_Callback.onStrokeBegin!(io MouseEvent mouseEvent){
+
+    // On MouseMove/Mousedown.
+    if(mouseEvent.button == MouseButton_LeftButton)
+        this.paintMode = 0; // Paint
+    else if(mouseEvent.button == MouseButton_RightButton)
+        this.paintMode = 1; // Erase
+    else if(mouseEvent.button == MouseButton_MiddleButton)
+        this.paintMode = 2; // Smooth
+
+    this.command = SurfaceSculptCommand();
+    mouseEvent.accept();
+}
+
+function SurfaceSculptManipulator_Callback.onStrokeEnd!(io MouseEvent mouseEvent){
+    mouseEvent.getHost().addUndoRedoCommand(this.command);
+}
+
+
+function SurfaceSculptManipulator_Callback.onPaint!(SurfacePaintManipulator_PointCollection collectedPoints){
+    PolygonMesh mesh = collectedPoints.mesh;
+    SurfaceSculptManipulator_SculptData sculptData(collectedPoints.mesh);
+    sculptData.pointIds = collectedPoints.pointIds;
+    sculptData.oldValues.resize(collectedPoints.pointIds.size);
+    sculptData.newValues.resize(collectedPoints.pointIds.size);
+    sculptData.recomputePointNormals = this.recomputePointNormals;
+
+    switch(this.paintMode){
+    case 0: // Paint
+        Vec3 displacementDir = averageNormal(mesh, collectedPoints);
+        for (Integer i = 0; i < collectedPoints.pointIds.size(); i++) {
+            Scalar weight = collectedPoints.weights[i];
+            Integer pointId = collectedPoints.pointIds[i];
+            Vec3 oldPos = mesh.getPointPosition(pointId);
+            Vec3 newPos = oldPos + displacementDir * weight * this.sculptStrength;
+
+            sculptData.oldValues[i] = oldPos;
+            sculptData.newValues[i] = newPos;
+        }
+        break;
+    case 1: // Erase
+        Vec3 displacementDir = averageNormal(mesh, collectedPoints);
+        for (Integer i = 0; i < collectedPoints.pointIds.size(); i++) {
+            Scalar weight = collectedPoints.weights[i];
+            Integer pointId = collectedPoints.pointIds[i];
+            Vec3 oldPos = mesh.getPointPosition(pointId);
+            Vec3 newPos = oldPos + displacementDir * -weight * this.sculptStrength;
+
+            sculptData.oldValues[i] = oldPos;
+            sculptData.newValues[i] = newPos;
+        }
+        break;
+    case 2: // Smooth
+        UInt32 nbPoints = collectedPoints.pointIds.size();
+        for(Integer i = 0; i < nbPoints; ++i ) {
+            sculptData.oldValues[i] = mesh.getPointPosition(collectedPoints.pointIds[i]);
+        }
+        smoothMesh<<<nbPoints>>>(
+            collectedPoints.mesh,
+            collectedPoints,
+            sculptData.newValues
+        );
+
+        break;
+    }
+    // do the command immedietly...
+    sculptData.doAction();
+    // Merge this sculptData with the command so that we only generate one undo command 
+    // for the entire paint stroke, even if we cross multiple geometries. 
+    this.command.addsculptData(sculptData);
+}
+
+///////////////////////////////////////////////
+// SurfaceSculptManipulator
+
+object SurfaceSculptManipulator : Manipulator {
+
+    SurfacePaintManipulator surfacePaintManipulator;
+    Scalar sculptStrength;
+    Boolean recomputePointNormals;
+
+    SurfaceSculptManipulator_Callback callback;
+};
+
+
+function SurfaceSculptManipulator(){
+
+    this.surfacePaintManipulator = SurfacePaintManipulator();
+    this.callback = SurfaceSculptManipulator_Callback();
+    this.sculptStrength = 0.1;
+    this.recomputePointNormals = true;
+
+    this.surfacePaintManipulator.setCallbackObj(this.callback);
+}
+
+function SurfaceSculptManipulator.setSculptStrength!(Scalar sculptStrength){
+    this.sculptStrength = sculptStrength;
+}
+
+
+function SurfaceSculptManipulator.onEnable!(){
+    this.surfacePaintManipulator.onEnable();
+    this.callback.sculptStrength = this.sculptStrength;
+}
+
+function SurfaceSculptManipulator.onDisable!(){
+    this.surfacePaintManipulator.onDisable();
+}
+
+function SurfaceSculptManipulator.addTargetGeometry!(InlineInstance instance){
+    this.surfacePaintManipulator.addTargetGeometry(instance);
+}
+
+function SurfaceSculptManipulator.setTargetGeometries!(InlineInstance instances[]){
+    this.surfacePaintManipulator.setTargetGeometries(instances);
+}
+
+function SurfaceSculptManipulator.onEvent!(io Event event){
+    this.callback.recomputePointNormals = this.recomputePointNormals;
+    this.surfacePaintManipulator.onEvent(event);
+}

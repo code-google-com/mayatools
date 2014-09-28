@@ -1,0 +1,558 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+struct IdxOff {
+  UInt32 index;
+  UInt32 offset;
+};
+
+struct IdxOffBit {
+  UInt32 index;
+  UInt32 offset;
+  Boolean bit;
+};
+
+alias IdxOff IterOff;//DataIter=index + offset
+
+inline IdxOff( UInt32 index ) {
+  this.index = index;
+  this.offset = 0;
+}
+
+inline IdxOff( UInt32 index, UInt32 offset ) {
+  this.index = index;
+  this.offset = offset;
+}
+
+alias UInt32 DataIter;
+
+struct ArrayOffsetAllocator {
+  ContiguousUInt32Allocator data;
+
+  DataIter startIters[];
+  BitVector freeIters;
+  UInt32 freeItersCount;
+};
+
+function ArrayOffsetAllocator.=( ArrayOffsetAllocator other ) {
+  this.data = other.data.clone();
+  this.startIters = other.startIters.clone();
+  this.freeIters = other.freeIters.clone();
+  this.freeItersCount = other.freeItersCount;
+}
+
+function ArrayOffsetAllocator.clear!() {
+  this.data.clear();
+  this.startIters.resize(0);
+  this.freeIters.resize(0);
+  this.freeItersCount = 0;
+}
+
+function Size ArrayOffsetAllocator.memUsage() {
+  return this.data.memUsage() + this.startIters.size()*4 + this.freeIters.memUsage();
+}
+
+inline UInt32 ArrayOffsetAllocator.itemCount() {
+  return this.startIters.size();
+}
+
+inline UInt32 ArrayOffsetAllocator.freeItemCount() {
+  return this.freeItersCount;
+}
+
+inline Boolean ArrayOffsetAllocator.isItemValid( UInt32 itemIndex ) {
+  return !this.freeIters.get(itemIndex);
+}
+
+//////////////// IDX OFFSET DATA
+
+function Size ArrayOffsetAllocator.memUsage() {
+  return this.data.size() * 4 + this.startIters.size() * 4;
+}
+
+//IdxOff encoding:
+//  - If lower 3 bits are not all set, then these 3 bits contain the Offset, and 29 higher bits contain the index
+//  - If lower 3 bits are set, then 29 higher bits is an iter to an extended entryIdx, which contains
+//    a UInt32 index followed by a UInt32 offset
+
+inline UInt32 IdxOff_GetOffset( UInt32 entryIdx ) {
+  return entryIdx & 7;
+}
+
+inline UInt32 IdxOff_GetIndex( UInt32 entryIdx ) {
+  return entryIdx >> 3;
+}
+
+inline Boolean IdxOff_GetBit( UInt32 entryIdx ) {
+  return (entryIdx & UInt32HighBit) != 0;
+}
+
+inline UInt32 IdxOff_GetIndexAndBit( UInt32 entryIdx, io Boolean bit ) {
+  bit = (entryIdx & UInt32HighBit) != 0;
+  return (entryIdx & UInt32NoHighBitMask) >> 3;
+}
+
+inline UInt32 IdxOff_GetIndexFromIdxOffBit( UInt32 entryIdx ) {
+  return (entryIdx & UInt32NoHighBitMask) >> 3;
+}
+
+inline UInt32 IdxOff_GetIndex( UInt32 entryIdx, io Boolean hasHighBit ) {
+  if( hasHighBit )
+    return (entryIdx & UInt32NoHighBitMask) >> 3;
+  else
+    return entryIdx >> 3;
+}
+
+//extractOffset: works with headerBit or not
+inline UInt32 ArrayOffsetAllocator.getOffset?( DataIter idxOffIter ) {
+  UInt32 entryIdx = this.data.data[ idxOffIter ];
+  UInt32 offset = IdxOff_GetOffset( entryIdx );
+  if( offset != 7 )
+    return offset;
+  UInt32 extendedDataIter = IdxOff_GetIndex( entryIdx );
+  return this.data.data[ extendedDataIter + 1 ];
+}
+
+inline UInt32 ArrayOffsetAllocator.getOffsetAndBit?( DataIter idxOffIter, io Boolean headerBit ) {
+  UInt32 entryIdx = this.data.data[ idxOffIter ];
+  UInt32 offset = IdxOff_GetOffset( entryIdx );
+  if( offset != 7 ) {
+    headerBit = IdxOff_GetBit(entryIdx);
+    return offset;
+  }
+  UInt32 extendedDataIter = IdxOff_GetIndex( entryIdx );
+  headerBit = IdxOff_GetBit(this.data.data[ extendedDataIter ]);
+  return this.data.data[ extendedDataIter + 1 ];
+}
+
+inline UInt32 ArrayOffsetAllocator.getIndex?( DataIter idxOffIter ) {
+  UInt32 entryIdx = this.data.data[ idxOffIter ];
+  UInt32 offset = IdxOff_GetOffset( entryIdx );
+  UInt32 index = IdxOff_GetIndex(entryIdx);
+  if( offset != 7 )
+    return index;
+  return this.data.data[ index ];
+}
+
+inline UInt32 ArrayOffsetAllocator.getIndexFromIdxOffBit?( DataIter idxOffIter ) {
+  UInt32 entryIdx = this.data.data[ idxOffIter ];
+  UInt32 offset = IdxOff_GetOffset( entryIdx );
+  if( offset != 7 )
+    return IdxOff_GetIndexFromIdxOffBit(entryIdx);
+
+  UInt32 extendedDataIter = IdxOff_GetIndex( entryIdx );
+  return this.data.data[ extendedDataIter ] & UInt32NoHighBitMask;
+}
+
+inline UInt32 ArrayOffsetAllocator.getIndexFromDataIter( DataIter itemDataIter ) {
+  return this.getIndexFromIdxOffBit(itemDataIter);
+}
+
+inline IdxOff ArrayOffsetAllocator.getIdxOff?( DataIter idxOffIter ) {
+  UInt32 entryIdx = this.data.data[ idxOffIter ];
+  IdxOff result;
+  result.offset = IdxOff_GetOffset( entryIdx );
+  result.index = IdxOff_GetIndex( entryIdx );
+  if( result.offset == 7 ) {
+    result.offset = this.data.data[ result.index + 1 ];
+    result.index = this.data.data[ result.index ];
+  }
+  return result;
+}
+
+inline IdxOffBit ArrayOffsetAllocator.getIdxOffBit?( DataIter idxOffIter ) {
+  UInt32 entryIdx = this.data.data[ idxOffIter ];
+  IdxOffBit result;
+  result.offset = IdxOff_GetOffset( entryIdx );
+  if( result.offset == 7 ) {
+    result.index = IdxOff_GetIndex( entryIdx );
+    result.offset = this.data.data[ result.index + 1 ];
+    UInt32 indexAndBit = this.data.data[ result.index ];
+    result.index = indexAndBit & UInt32NoHighBitMask;
+    result.bit = IdxOff_GetBit(indexAndBit);
+  } else
+    result.index = IdxOff_GetIndexAndBit( entryIdx, result.bit );
+
+  return result;
+}
+
+inline ArrayOffsetAllocator.initIdxOff!( DataIter iter, UInt32 index, UInt32 offset ) {
+  if( offset < 7 )
+    this.data.data[ iter ] = (index << 3) | offset;
+  else {
+    UInt32 extendedIndex = this.data.allocate(2,0);
+    this.data.data[ iter ] = (extendedIndex << 3) | 7;
+    this.data.data[ extendedIndex ] = index;
+    this.data.data[ extendedIndex+1 ] = offset;
+  }
+}
+
+inline ArrayOffsetAllocator.updateIdxOff!( DataIter iter, UInt32 index, UInt32 offset ) {
+  UInt32 currValue = this.data.data[ iter ];
+  UInt32 currOffset = IdxOff_GetOffset(currValue);
+  if( currOffset == 7 ) {
+    UInt32 extendedIndex = IdxOff_GetIndex(currValue);
+    if( offset >= 7 ) {//Still extended
+      this.data.data[ extendedIndex ] = index;
+      this.data.data[ extendedIndex+1 ] = offset;
+      return;
+    } else //Deallocate
+      this.data.free(extendedIndex,2);
+  }
+  this.initIdxOff(iter, index, offset);
+}
+
+inline ArrayOffsetAllocator.initIdxOff!( DataIter iter, UInt32 index, UInt32 offset, Boolean headerBit ) {
+  UInt32 headerBitData = headerBit ? UInt32HighBit : 0;
+  if( offset < 7 )
+    this.data.data[ iter ] = (index << 3) | offset | headerBitData;
+  else {
+    UInt32 extendedIndex = this.data.allocate(2,0);
+    this.data.data[ iter ] = (extendedIndex << 3) | 7;
+    this.data.data[ extendedIndex ] = index | headerBitData;
+    this.data.data[ extendedIndex+1 ] = offset;
+  }
+}
+
+inline ArrayOffsetAllocator.updateIdxOff!( DataIter iter, UInt32 index, UInt32 offset, Boolean headerBit ) {
+  UInt32 currValue = this.data.data[ iter ];
+  UInt32 currOffset = IdxOff_GetOffset(currValue);
+  if( currOffset == 7 ) {
+    UInt32 extendedIndex = IdxOff_GetIndex(currValue);
+    if( offset >= 7 ) {//Still extended
+      UInt32 headerBitData = headerBit ? UInt32HighBit : 0;
+      this.data.data[ extendedIndex ] = index | headerBitData;
+      this.data.data[ extendedIndex+1 ] = offset;
+      return;
+    } else //Deallocate
+      this.data.free(extendedIndex,2);
+  }
+  this.initIdxOff(iter, index, offset, headerBit);
+}
+
+inline ArrayOffsetAllocator.updateHeaderBit!( DataIter iter, Boolean headerBit ) {
+  UInt32 currValue = this.data.data[ iter ];
+  UInt32 currOffset = IdxOff_GetOffset(currValue);
+  if( currOffset == 7 ) {
+    UInt32 extendedIndex = IdxOff_GetIndex(currValue);
+    this.data.data[ extendedIndex ] = (this.data.data[ extendedIndex ] & UInt32NoHighBitMask) | (headerBit ? UInt32HighBit : 0);
+  } else
+    this.data.data[ iter ] = (currValue & UInt32NoHighBitMask) | (headerBit ? UInt32HighBit : 0);
+}
+
+inline UInt32 ArrayOffsetAllocator.itemCount() {
+  return this.startIters.size();
+}
+
+inline UInt32 ArrayOffsetAllocator.createItem!() {
+  Size currSize = this.startIters.size();
+  this.startIters.resize(currSize+1);
+  this.freeIters.resize(currSize+1);
+  return currSize;
+}
+
+inline UInt32 ArrayOffsetAllocator.createItems!( Size count ) {
+  Size currSize = this.startIters.size();
+  this.startIters.resize(currSize+count);
+  this.freeIters.resize(currSize+count);
+  return currSize;
+}
+
+inline DataIter ArrayOffsetAllocator.getItemIter( UInt32 itemIndex ) {
+  return this.startIters[ itemIndex ];
+}
+
+inline UInt32 ArrayOffsetAllocator.getItemIndexFromArrayDataIter?( DataIter arrayIter ) {
+  return this.getIndexFromIdxOffBit( arrayIter );
+}
+
+inline UInt32 ArrayOffsetAllocator.arrayDataIterSize( DataIter arrayDataIter ) {
+  return this.getOffset(arrayDataIter);
+}
+
+inline UInt32 ArrayOffsetAllocator.arrayDataIterSizeAndBit( DataIter arrayDataIter, io Boolean bit ) {
+  return this.getOffsetAndBit(arrayDataIter, bit);
+}
+
+inline UInt32 ArrayOffsetAllocator.arraySize( UInt32 itemIndex ) {
+  return this.getOffset(this.startIters[ itemIndex ]);
+}
+
+inline DataIter ArrayOffsetAllocator.getArrayItemIter?( DataIter arrayIter, UInt32 itemIndex ) {
+  return arrayIter + 1 + itemIndex;
+}
+
+inline DataIter ArrayOffsetAllocator.getArrayItemIter?( IdxOff idxOff ) {
+  return idxOff.index + 1 + idxOff.offset;
+}
+
+inline DataIter ArrayOffsetAllocator.getArrayItemIndex?( DataIter arrayIter, UInt32 itemIndex ) {
+  DataIter itemIter = this.getArrayItemIter(arrayIter, itemIndex);
+  return this.getIndex(itemIter);
+}
+
+inline DataIter ArrayOffsetAllocator.getArrayItemOffset?( DataIter arrayIter, UInt32 itemIndex ) {
+  DataIter itemIter = this.getArrayItemIter(arrayIter, itemIndex);
+  return this.getOffset(itemIter);
+}
+
+inline IdxOff ArrayOffsetAllocator.getArrayItemIdxOff?( DataIter arrayIter, UInt32 itemIndex ) {
+  DataIter itemIter = this.getArrayItemIter(arrayIter, itemIndex);
+  return this.getIdxOff(itemIter);
+}
+
+inline DataIter ArrayOffsetAllocator.getArrayExtraUInt32Iter?( DataIter arrayIter, UInt32 arraySize, UInt32 extraUInt32Index ) {
+  return arrayIter + arraySize + 1 + extraUInt32Index;
+}
+
+inline UInt32 ArrayOffsetAllocator.getArrayExtraUInt32?( DataIter arrayIter, UInt32 arraySize, UInt32 extraUInt32Index ) {
+  return this.data.data[arrayIter + arraySize + 1 + extraUInt32Index];
+}
+
+inline DataIter ArrayOffsetAllocator.allocateArray!( UInt32 itemIndex, UInt32 arraySize, UInt32 nbExtraUInt32s, UInt32 tempReservedSpaceForGrowth, Boolean headerBit ) {
+
+  if(ContiguousUInt32Allocator_enableChecks && this.startIters[ itemIndex ] != 0)
+    throw("ArrayOffsetAllocator.allocateNewArray: existing array");
+
+  UInt32 header = this.data.allocate(arraySize+nbExtraUInt32s+1, tempReservedSpaceForGrowth);
+
+  this.startIters[ itemIndex ] = header;
+
+  //Set array header
+  this.initIdxOff( header, itemIndex, arraySize, headerBit );
+  return header;
+}
+
+//Note: reallocateArray: prevNbExtraUInt32s are preserved (up to nbExtraUInt32s)
+function DataIter ArrayOffsetAllocator.resizeArray!( UInt32 itemIndex, UInt32 prevNbExtraUInt32s, UInt32 arraySize, UInt32 nbExtraUInt32s, UInt32 tempReservedSpaceForGrowth ) {
+  UInt32 header = this.startIters[ itemIndex ];
+
+  if(ContiguousUInt32Allocator_enableChecks && header == 0)
+    throw("ArrayOffsetAllocator.resizeArray: already free array");
+
+  Boolean headerBit;
+  UInt32 prevSize = this.getOffsetAndBit( header, headerBit );
+  UInt32 nbExtraUInt32sToCopy = prevNbExtraUInt32s > nbExtraUInt32s ? nbExtraUInt32s : prevNbExtraUInt32s;
+
+  if( arraySize < prevSize ){
+
+    if( nbExtraUInt32sToCopy != 0 ) {
+      for( Size i = 0; i < nbExtraUInt32sToCopy; ++i )
+        this.data.data[header+arraySize+i+1] = this.data.data[header+prevSize+i+1];
+    }
+  }
+  UInt32 newHeader = this.data.reallocate( header, prevSize+prevNbExtraUInt32s+1, arraySize+nbExtraUInt32s+1, tempReservedSpaceForGrowth );
+  if( nbExtraUInt32sToCopy != 0 && arraySize > prevSize ) {
+    for( Size i = nbExtraUInt32sToCopy; i--; )//reverse since can overlap
+      this.data.data[newHeader+arraySize+i+1] = this.data.data[newHeader+prevSize+i+1];
+  }
+  this.updateIdxOff( newHeader, itemIndex, arraySize, headerBit );
+  if( newHeader != header )
+    this.startIters[ itemIndex ] = newHeader;
+
+  return newHeader;
+}
+
+function ArrayOffsetAllocator.freeArray!( UInt32 itemIndex, UInt32 nbExtraUInt32s ) {
+
+  UInt32 header = this.startIters[ itemIndex ];
+  if( header ) {
+    //free potential extended header data
+    UInt32 headerData = this.data.data[ header ];
+    UInt32 size = IdxOff_GetOffset(headerData);
+    if( size == 7 ) {
+      UInt32 extendedIndex = IdxOff_GetIndexFromIdxOffBit(headerData);
+      size = this.data.data[ extendedIndex+1 ];
+      this.data.free(extendedIndex,2);
+    }
+    this.data.free( header, size+nbExtraUInt32s+1 );
+    this.startIters[ itemIndex ] = 0;
+  }
+}
+
+inline ArrayOffsetAllocator.deleteItem!( UInt32 itemIndex ) {
+
+  if( ContiguousUInt32Allocator_enableChecks ) {
+    if( this.freeIters.get(itemIndex) )
+      throw("ArrayOffsetAllocator.deleteItem: already free item");
+    if( this.startIters[ itemIndex ] != 0 )
+      throw("ArrayOffsetAllocator.deleteItem: array data not free");
+  }
+  this.freeIters.set(itemIndex);
+  ++this.freeItersCount;
+}
+
+//Recompact methods
+struct ArrayOffsetAllocatorRecompactData {
+  UInt32 prevItemIndex;
+  UInt32 newItemIndex;
+};
+
+inline ArrayOffsetAllocator.updateIndexOfIdxOff!(DataIter entryIdx, UInt32 newIndex) {
+  UInt32 currValue = this.data.data[ entryIdx ];
+  UInt32 currOffset = IdxOff_GetOffset(currValue);
+  if( currOffset == 7 ) {
+    UInt32 extendedIndex = IdxOff_GetIndex(currValue);
+    this.data.data[ extendedIndex ] = newIndex;
+  } else
+    this.data.data[ entryIdx ] = currOffset | (newIndex << 3);
+}
+
+inline ArrayOffsetAllocator.updateIndexOfIdxOffBit!(DataIter entryIdx, UInt32 newIndex) {
+  UInt32 currValue = this.data.data[ entryIdx ];
+  UInt32 currOffset = IdxOff_GetOffset(currValue);
+  if( currOffset == 7 ) {
+    UInt32 extendedIndex = IdxOff_GetIndex(currValue);
+    UInt32 headerBitData = this.data.data[ extendedIndex ] & UInt32HighBit;
+    this.data.data[ extendedIndex ] = newIndex | headerBitData;
+  } else {
+    UInt32 headerBitData = currValue & UInt32HighBit;
+    this.data.data[ entryIdx ] = currOffset | (newIndex << 3) | headerBitData;
+  }
+}
+
+function ArrayOffsetAllocatorRecompactData[] ArrayOffsetAllocator.recompactItemIndices!() {
+  ArrayOffsetAllocatorRecompactData mapping[];
+  if( this.freeItersCount ) {
+
+    BitVectorIterator iter = this.freeIters.begin();
+    UInt32 end = this.freeIters.size();
+    while( true ) {
+      while( end-- != 0 && this.freeIters.get(end) ){}
+
+      if( this.freeIters.getNext(iter) && iter.index < end ) {//Shuffle down for minimal changes
+        ArrayOffsetAllocatorRecompactData mapData;
+        mapData.prevItemIndex = end;
+        mapData.newItemIndex = iter.index;
+        mapping.push(mapData);
+        this.freeIters.clear(iter.index);
+
+        UInt32 head = this.startIters[mapData.prevItemIndex];
+        this.startIters[mapData.newItemIndex] = head;
+        this.updateIndexOfIdxOffBit(head, mapData.newItemIndex);
+      } else
+        break;
+    }
+    Size newSize = this.freeIters.size() - this.freeItersCount;
+    this.freeIters.resize(newSize);
+    this.startIters.resize(newSize);
+    this.freeItersCount = 0;
+  }
+  return mapping;
+}
+
+inline ArrayOffsetAllocator.remapIdxOff!( UInt32 entryIdx, UInt32 oldIndexToNewDataIndex[] ) {
+  //Remap dataIter if extended entryIdx. Works for "bit" and "non-bit" versions.
+  UInt32 currValue = this.data.data[ entryIdx ];
+  UInt32 currOffset = IdxOff_GetOffset(currValue);
+  if( currOffset == 7 ) {
+    UInt32 extendedIndex = IdxOff_GetIndex(currValue);
+    this.data.data[ entryIdx ] = (oldIndexToNewDataIndex[extendedIndex] << 3) | 7;
+  }
+}
+
+inline ArrayOffsetAllocator.remapIdxOff!( UInt32 entryIdx, Integer deltaData ) {
+  //Remap dataIter if extended entryIdx. Works for "bit" and "non-bit" versions.
+  UInt32 currValue = this.data.data[ entryIdx ];
+  UInt32 currOffset = IdxOff_GetOffset(currValue);
+  if( currOffset == 7 ) {
+    UInt32 extendedIndex = IdxOff_GetIndex(currValue);
+    this.data.data[ entryIdx ] = ((extendedIndex+deltaData) << 3) | 7;
+  }
+}
+
+//recompact: caller needs to remap its data based on the returned index mapping (oldIndexToNewIndex)
+//NOTE: only call if there is a significant portion to be recompacted, for example "this.data.thirdUnused()"
+function ArrayOffsetAllocator.recompactData!( io UInt32 oldIndexToNewDataIndex[] ) {
+  this.data.recompact(oldIndexToNewDataIndex);
+  if( oldIndexToNewDataIndex.size() ) {
+    //Remap our header data ptrs
+    for( Size i = 0; i < this.startIters.size(); ++i ) {
+      UInt32 dataIter = this.startIters[i];
+      UInt32 newDataIter = oldIndexToNewDataIndex[dataIter];
+      if( dataIter != newDataIter )
+        this.startIters[i] = newDataIter;
+      this.remapIdxOff( newDataIter, oldIndexToNewDataIndex );
+    }
+  }
+}
+
+function ArrayOffsetAllocator.append!( ArrayOffsetAllocator other, io Size firstOtherItem, io Size firstOtherData ) {
+  this.data.append( other.data, firstOtherData );
+
+  firstOtherItem = this.startIters.size();
+  Size otherItemCount = other.startIters.size();
+
+  this.startIters.resize( firstOtherItem + otherItemCount );
+
+  //Remap our header data ptrs
+  for( Size i = 0; i < otherItemCount; ++i ) {
+    UInt32 dataIter = other.startIters[i];
+    if( dataIter ) {
+      UInt32 newDataIter = dataIter + firstOtherData;
+      this.remapIdxOff( newDataIter, firstOtherData );
+
+      this.startIters[firstOtherItem + i] = newDataIter;
+      this.updateIndexOfIdxOffBit(newDataIter, firstOtherItem + i);
+    }
+  }
+  this.freeIters += other.freeIters;
+  this.freeItersCount += other.freeItersCount;
+}
+
+// Basic helpers
+
+inline UInt32 NextOff( UInt32 offset, UInt32 count ) {
+  UInt32 nextOff = offset+1;
+  if( nextOff == count )
+    nextOff = 0;
+  return nextOff;
+}
+
+inline UInt32 NextOff( UInt32 offset, UInt32 start, UInt32 end ) {
+  UInt32 nextOff = offset+1;
+  if( nextOff == end )
+    nextOff = start;
+  return nextOff;
+}
+
+inline IncOff( io UInt32 offset, UInt32 count ) {
+  ++offset;
+  if( offset == count )
+    offset = 0;
+}
+
+inline IncOff( io UInt32 offset, UInt32 start, UInt32 end ) {
+  ++offset;
+  if( offset == end )
+    offset = start;
+}
+
+inline UInt32 PrevOff( UInt32 offset, UInt32 count ) {
+  UInt32 prevOff = offset;
+  if( prevOff == 0 )
+    return count - 1;
+  return prevOff - 1;
+}
+
+inline UInt32 PrevOff( UInt32 offset, UInt32 start, UInt32 end ) {
+  UInt32 prevOff = offset;
+  if( prevOff == start )
+    return end - 1;
+  return prevOff - 1;
+}
+
+inline DecOff( io UInt32 offset, UInt32 count ) {
+  if( offset == 0 )
+    offset = count - 1;
+  else
+    --offset;
+}
+
+inline DecOff( io UInt32 offset, UInt32 start, UInt32 end ) {
+  if( offset == start )
+    offset = end - 1;
+  else
+    --offset;
+}

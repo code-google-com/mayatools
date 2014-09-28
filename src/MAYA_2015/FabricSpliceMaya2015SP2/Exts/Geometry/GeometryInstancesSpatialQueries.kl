@@ -1,0 +1,486 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+
+The ``GeometryInstancesSpatialQueries`` object enables to issue spatial queries (raycast, getClosest) to a group of many geometry instances (Geometry - transform pairs) while ensuring scalability.
+
+Adding a new geometry instance is done in two steps. First, the ``createInstance()`` function will return a new key associated to the geometry instance to be added. Then, that key needs to be passed back to the ``updateInstance()`` function when updating geometry instance's information. Changes will be detected and an incremental update will be performed when calling ``prepareForSpatialQueries()``.
+
+The geometry instance key is used to identify a geometry instance for all the methods, like knowing which one was hit by a raycast.
+
+Example
+---------
+
+.. code-block:: js
+
+    GeometryInstancesSpatialQueries instancesSpatialQueries = GeometryInstancesSpatialQueries();
+
+    Points points = Points();
+    Lines lines = Lines();
+    PolygonMesh mesh = PolygonMesh();
+
+    ... fill the mesh, points and lines ...
+
+    Xfo mesh1Xfo, mesh2Xfo, linesXfo, pointsXfo;
+
+    ... set some transform values ...
+
+    //Create instances and set their initial values
+
+    Size mesh1Key = instancesSpatialQueries.createInstance();
+    Size mesh2Key = instancesSpatialQueries.createInstance();
+    Size linesKey = instancesSpatialQueries.createInstance();
+    Size pointsKey = instancesSpatialQueries.createInstance();
+
+    instancesSpatialQueries.updateInstance( mesh1Key, mesh, mesh1Xfo );
+    instancesSpatialQueries.updateInstance( mesh2Key, mesh, mesh2Xfo );
+    instancesSpatialQueries.updateInstance( pointsKey, points, pointsXfo );
+    instancesSpatialQueries.updateInstance( linesKey, lines, linesXfo );
+
+    //Prepare for issueing 10 queries
+    instances.prepareForSpatialQueries( 10, true, null );
+
+    GeometryLocation location;
+    Size geometryKey;
+    instances.raycast( Ray( Vec3(12.0, 10.0, 2.0), Vec3(0.0, -1.0, 0.0) ), true, 0, SCALARINFINITE, geometryKey, location );
+
+    if( location.isValid() ) {
+      Vec3 worldPosition = instancesSpatialQueries.getWorldPositionAtLocation(geometryKey, location);
+
+      if( geometryKey == mesh1Key )
+        report( "Mesh 1 hit at " + worldPosition);
+      else if( geometryKey == mesh2Key )
+        report( "Mesh 2 hit at " + worldPosition);
+      else if( geometryKey == linesKey )
+        report( "Lines hit at " + worldPosition );
+      else if( geometryKey == pointsKey )
+        report( "Points hit at " + worldPosition");
+    }
+
+*/
+
+struct _GeometryInstanceSpatialQueriesData {
+  Mat44 transform;
+  Mat44 invTransform;
+  Vec3 scaling;
+  Boolean hasScaling;
+  Scalar invMinScaling;
+  LocalBoundingVolume bVol;
+  Boolean changed;
+
+  Geometry geometry;
+  Ref<SpatialQueryable> spatialQueryableGeometry;
+};
+
+struct _GeometrySpatialQueryData {
+  Size refCount;
+};
+
+//Spatial acceleration services for a group of Geometry instances (Geometry - transform pairs).
+//This object manages an Octree containing the individual Geometry instances, and relays
+//the requests to the individual geometries when appropriate, by taking care of transform space conversions.
+object GeometryInstancesSpatialQueries : StatisticSourceWithAutoRegisterMember {
+  _GeometryInstanceSpatialQueriesData data[];
+  IndexPool dataPoolIndices;
+
+  _GeometrySpatialQueryData geometryData[Geometry];
+
+  SpatialAccelerationChooser acceleration;
+  Boolean dirtyAcceleration;
+
+  FewObjectsRecyclingAllocator queryAllocator;//GeometryInstancesSpatialQuery objects
+
+  StatisticsAutoRegisterMember autoStats;
+};
+
+//Returns a 'geometryKey' to be used for a new Geometry instance. This 'geometryKey' needs to be passed to  various functions 
+//such as ``updateInstance()`` or ``removeInstance()`` in order to identify the Geometry instance.
+//Functions such as ``raycast()`` and ``getClosest()`` will return the 'geometryKey' as a reference. 
+function Size GeometryInstancesSpatialQueries.createInstance!() {
+  Size index;
+  if( this.dataPoolIndices.getFreeIndex(index) ) {
+    this.data.resize( this.dataPoolIndices.getIndexEnd() );
+    this.acceleration.setObjectCount( this.data.size(), false );
+    this.dirtyAcceleration = true;
+  }
+  this.data[index].transform = Mat44(Vec4(), Vec4(), Vec4(), Vec4());
+  this.data[index].changed = true;
+  return index;
+}
+
+function GeometryInstancesSpatialQueries._updateGeometry!( Geometry prev, Geometry new ) {
+  if( prev != new ) {
+    if( prev ) {
+      _GeometrySpatialQueryData data = this.geometryData[prev];
+      if( data.refCount <= 1 )
+        this.geometryData.delete( prev );
+      else {
+        data.refCount -= 1;
+        this.geometryData[ prev ] = data;
+      }
+    }
+    if( new ) {
+      if( this.geometryData.has(new) ) {
+        _GeometrySpatialQueryData data = this.geometryData[new];
+        data.refCount += 1;
+        this.geometryData[ new ] = data;
+      } else {
+        _GeometrySpatialQueryData data;
+        data.refCount = 1;
+        this.geometryData[ new ] = data;
+      }
+    }
+  }
+}
+
+//Removes an instance from the geometry instances group. The same 'geometryKey' might be reassigned to future ``createInstance()`` calls.
+function GeometryInstancesSpatialQueries.removeInstance!( Size geometryKey ) {
+  this._updateGeometry( this.data[geometryKey].geometry, null );
+  this.data[geometryKey].geometry = null;
+  Ref<SpatialQueryable> nullSQ = null;
+  this.data[geometryKey].spatialQueryableGeometry = nullSQ;
+  this.data[geometryKey].changed = true;
+  this.dataPoolIndices.unusedIndex(geometryKey);
+}
+
+function GeometryInstancesSpatialQueries._updateInstance!( Size geometryKey, Ref<Geometry> geometry, Mat44 transform, Vec3 scaling ) {
+  Boolean changed;
+  if( this.data[geometryKey].geometry != geometry ) {
+    this._updateGeometry( this.data[geometryKey].geometry, geometry );
+    this.data[geometryKey].geometry = geometry;
+    this.data[geometryKey].spatialQueryableGeometry = geometry;
+    if( !this.data[geometryKey].spatialQueryableGeometry )
+      throw("GeometryInstancesSpatialQueries.updateInstance: geometry doesn't support the SpatialQueryable interface");
+    changed = true;
+  }
+  
+  if( this.data[geometryKey].transform != transform ) {
+    this.data[geometryKey].transform = transform;
+    this.data[geometryKey].invTransform = transform.inverse();
+    this.data[geometryKey].scaling = scaling;//required for getClosest
+    this.data[geometryKey].hasScaling = abs(scaling.x-1.0)>1.0e-5 || abs(scaling.y-1.0)>1.0e-5 || abs(scaling.z-1.0)>1.0e-5;
+
+    //Inverse of the minimum scaling will be used to modulate the 'coneThresold'
+    Scalar minScaling = abs(scaling.x);
+    Scalar absScale = abs(scaling.y);
+    if( absScale < minScaling )
+      minScaling = absScale;
+    absScale = abs(scaling.z);
+    if( absScale < minScaling )
+      minScaling = absScale;
+    if( absScale < 1e-4 )
+      absScale = 1e-4;
+    this.data[geometryKey].invMinScaling = 1.0/absScale;
+
+    changed = true;
+  }
+
+  LocalBoundingVolume bVol = geometry.getBoundingVolume();
+  if( this.data[geometryKey].bVol != bVol ) {
+    this.data[geometryKey].bVol = bVol;
+    this.data[geometryKey].changed = true;
+    changed = true;
+  }
+
+  if( changed ) {
+    this.data[geometryKey].changed = true;
+    this.dirtyAcceleration = true;
+  }
+}
+
+//Updates information for a given geometry instance. It is safe to change the 'geometry' value.
+//This function is currently not thread-safe.
+function GeometryInstancesSpatialQueries.updateInstance!( Size geometryKey, Ref<Geometry> geometry, Mat44 transform ) {
+  //Extract the scaling
+  Vec3 col0(transform.row0.x, transform.row1.x, transform.row2.x);
+  Vec3 col1(transform.row0.y, transform.row1.y, transform.row2.y);
+  Vec3 col2(transform.row0.z, transform.row1.z, transform.row2.z);
+  Vec3 scaling = Vec3( col0.length(), col1.length(), col2.length() );
+
+  this._updateInstance( geometryKey, geometry, transform, scaling );
+}
+
+//Updates information for a given geometry instance. It is safe to change the 'geometry' value. This function is currently not thread-safe.
+inline GeometryInstancesSpatialQueries.updateInstance!( Size geometryKey, Ref<Geometry> geometry, Xfo transform ) {
+  Mat44 mat44 = transform.toMat44();
+  this._updateInstance( geometryKey, geometry, mat44, transform.sc );
+}
+
+//Returns the 'geometry' associated with the key (as last submitted through ``updateInstance()``)
+inline Ref<Geometry> GeometryInstancesSpatialQueries.getInstanceGeometry( Size geometryKey ) {
+  if( geometryKey < this.data.size() )
+    return this.data[geometryKey].geometry;
+  Ref<Geometry> nullGeometry = null;
+  return nullGeometry;
+}
+
+//Returns the 'transform' associated with the key (as last submitted through ``updateInstance()``)
+inline Mat44 GeometryInstancesSpatialQueries.getInstanceTransform( Size geometryKey ) {
+  if( geometryKey < this.data.size() )
+    return this.data[geometryKey].transform;
+  return Mat44();
+}
+
+//Returns geometry instance's position, in world space, associated to a GeometryLocation (must be valid and related to that geometry).
+//In particular, the geometryKey - location might have been returned by a call to ``raycast()`` or ``getClosest()``.
+inline Vec3 GeometryInstancesSpatialQueries.getWorldPositionAtLocation( Size geometryKey, GeometryLocation location ) {
+  return this.data[geometryKey].transform * this.data[geometryKey].geometry.getPositionAtLocation(location);
+}
+
+function GeometryInstancesSpatialQueries.updateAcceleration!( Size approximateNumberOfQueries, GenericValueContainer options ) {
+  Boolean accelerationChanged = this.acceleration.synchronizeOptions( options );
+
+  if( accelerationChanged || this.dirtyAcceleration ) {
+    Size objectCount = this.data.size();
+    this.acceleration.setObjectCount( objectCount, true );
+    for( Size i = 0; i < objectCount; ++i ) {
+      if( accelerationChanged || this.data[i].changed ) {
+        this.data[i].changed = false;
+        if( this.data[i].spatialQueryableGeometry ) {
+          Vec3 min, max;
+          localBVolGetBBox( this.data[i].transform, this.data[i].bVol, min, max );
+          this.acceleration.updateObjectVolume( i, min, max );
+        } else
+          this.acceleration.removeObject(i);
+      }
+    }
+    this.dirtyAcceleration = false;
+  }
+  this.acceleration.prepare( approximateNumberOfQueries );
+}
+
+operator PrepareGeometryInstance<<<index>>>( Geometry geometries[], io Ref<GeometryInstancesSpatialQueries> queryData, Size approximateNumberOfQueries, GenericValueContainer options ) {
+  if( index == 0 )
+    queryData.updateAcceleration( approximateNumberOfQueries, options );
+  else {
+    Size geomIndex = index-1;
+    Ref<SpatialQueryable> spatialQueryableGeometry = geometries[geomIndex];
+    spatialQueryableGeometry.prepareForSpatialQueries( approximateNumberOfQueries, options );
+  }
+}
+
+//Similar to SpatialQueryable interface's 'prepareForSpatialQueries()' method.
+//If 'prepareIndividualGeometries', the preparation step will be relayed to individual geometries (and multithreaded among these).
+//The 'approximateNumberOfQueries' should contain an approximation of the total number of queries to be issued ('raycast()' or 'getClosest()').
+//This function must be call after all instances have been updated with 'updateInstance()'.
+//See SpatialQueryable's prepareForSpatialQueries for a description of the 'options' parameter.
+//Options are applied to all octrees (including instances').
+//This function is not thread-safe.
+function GeometryInstancesSpatialQueries.prepareForSpatialQueries!( Size approximateNumberOfQueries, Boolean prepareIndividualGeometries, GenericValueContainer options ) {
+
+  if( prepareIndividualGeometries ) {
+    //This implementation is sub-optimal, since it over-prepares the geometries; most won't get many raycasts.
+    //Ideally, the octrees would just refine while raycasting happens, lazily; no need to predict the number of queries.
+
+    //At least prepare in parallel!
+    Geometry geometries[];
+    geometries.resize( this.geometryData.size() );
+
+    Size i;
+    for( key in this.geometryData )
+      geometries[i++] = key;
+
+    //Index 0 is our octree
+    PrepareGeometryInstance<<<geometries.size()+1>>>(geometries, this, approximateNumberOfQueries, options);
+  } else
+    this.updateAcceleration( approximateNumberOfQueries, options );
+}
+
+object _GeometryInstancesRaycastResult : RaycastResult {
+  Vec3 start;
+  Vec3 unitDir;
+  Vec3 dirPoint;
+  Boolean doubleSided;
+
+  Scalar coneThreshold;
+  GeometryLocation location;
+  Size geometryKey;
+  Ref<GeometryInstancesSpatialQueries> queryCache;
+};
+
+function _GeometryInstancesRaycastResult(Ref<GeometryInstancesSpatialQueries> queryCache) {
+  this.queryCache = queryCache;
+}
+
+function _GeometryInstancesRaycastResult.reset!( Vec3 start, Vec3 unitDir, Boolean doubleSided, Scalar coneThreshold ) {
+  this.start = start;
+  this.unitDir = unitDir;
+  this.dirPoint = start+unitDir;
+  this.doubleSided = doubleSided;
+  this.coneThreshold = coneThreshold;
+  this.geometryKey = InvalidIndex;
+  this.location = GeometryLocation();//Invalidate
+}
+
+function Boolean _GeometryInstancesRaycastResult.compareAndUpdate!( Size objectIndex, _GeometryInstanceSpatialQueriesData geometryData, io Scalar maxDistance ) {
+  if( !geometryData.spatialQueryableGeometry )
+    return false;
+
+  Ray ray;
+  ray.start = geometryData.invTransform * this.start;
+  ray.direction = geometryData.invTransform * this.dirPoint - ray.start;
+
+  Scalar geometryMaxDistance = maxDistance;
+  if( maxDistance != SCALARINFINITE && geometryData.hasScaling )
+    geometryMaxDistance *= ray.direction.length();//Convert to local scaling
+
+  //Scale the cone relatively to the scaling of the instance.
+  //This is not perfect, since for non-uniform scaling the cone should become non-uniformly scaled too...
+  GeometryLocation location = geometryData.spatialQueryableGeometry.raycast( ray, this.doubleSided, this.coneThreshold * geometryData.invMinScaling, geometryMaxDistance );
+  if( !location.isValid() )
+    return false;
+
+  Vec3 position = geometryData.transform * geometryData.geometry.getPositionAtLocation(location);
+  Scalar distance = ( position - this.start ).dot( this.unitDir );
+  if( distance < maxDistance ) {
+    maxDistance = distance;
+    this.location = location;
+    this.geometryKey = objectIndex;
+    return true;
+  }
+  return false;
+}
+
+function Boolean _GeometryInstancesRaycastResult.compareAndUpdate!( Size objectIndex, io Scalar maxDistance ) {
+  return this.compareAndUpdate( objectIndex, this.queryCache.data[objectIndex], maxDistance );
+}
+
+function _GeometryInstancesRaycastResult.copyResultFrom!( Ref<RaycastResult> other ) {
+  Ref<_GeometryInstancesRaycastResult> otherResult = other;
+  this.location = otherResult.location;
+  this.geometryKey = otherResult.geometryKey;
+}
+
+object _GeometryInstancesClosestResult : ClosestResult {
+  Vec3 position;
+  GeometryLocation location;
+  Size geometryKey;
+  Ref<GeometryInstancesSpatialQueries> queryCache;
+};
+
+function _GeometryInstancesClosestResult(Ref<GeometryInstancesSpatialQueries> queryCache) {
+  this.queryCache = queryCache;
+}
+
+function _GeometryInstancesClosestResult.reset!( Vec3 position, Vec3 scaling, Boolean hasScaling ) {
+  this.position = position;
+  this.geometryKey = InvalidIndex;
+  this.location = GeometryLocation();//Invalidate
+}
+
+function Boolean _GeometryInstancesClosestResult.compareAndUpdate!( Size objectIndex, _GeometryInstanceSpatialQueriesData geometryData, io Scalar maxScaledSquaredDistance ) {
+  if( !geometryData.spatialQueryableGeometry )
+    return false;
+
+  Scalar geometryMaxDistance = maxScaledSquaredDistance;
+  if( geometryMaxDistance != SCALARINFINITE )
+    geometryMaxDistance = sqrt(geometryMaxDistance);
+
+  Vec3 position = geometryData.invTransform * this.position;
+  GeometryLocation location = geometryData.spatialQueryableGeometry.getClosest( position, geometryData.scaling, geometryMaxDistance );
+  if( !location.isValid() )
+    return false;
+
+  Vec3 closestPosition = geometryData.transform * geometryData.geometry.getPositionAtLocation(location);
+  Scalar squaredDistance = (closestPosition - this.position).lengthSquared();
+  if( squaredDistance < maxScaledSquaredDistance ) {
+    maxScaledSquaredDistance = squaredDistance;
+    this.location = location;
+    this.geometryKey = objectIndex;
+    return true;
+  }
+  return false;
+}
+
+function Boolean _GeometryInstancesClosestResult.compareAndUpdate!( Size objectIndex, io Scalar maxScaledSquaredDistance ) {
+  return this.compareAndUpdate( objectIndex, this.queryCache.data[objectIndex], maxScaledSquaredDistance );
+}
+
+function _GeometryInstancesClosestResult.copyResultFrom!( Ref<ClosestResult> other ) {
+  Ref<_GeometryInstancesClosestResult> otherResult = other;
+  this.location = otherResult.location;
+  this.geometryKey = otherResult.geometryKey;
+}
+
+object GeometryInstancesSpatialQuery {
+  _StatialQueryData data;
+  _GeometryInstancesRaycastResult raycastResult;
+  _GeometryInstancesClosestResult closestResult;
+  Ref<GeometryInstancesSpatialQueries> queryCache;
+};
+
+function GeometryInstancesSpatialQuery( Ref<GeometryInstancesSpatialQueries> queryCache ) {
+  this.queryCache = queryCache;
+  this.raycastResult = _GeometryInstancesRaycastResult(queryCache);
+  this.closestResult = _GeometryInstancesClosestResult(queryCache);
+}
+
+function GeometryInstancesSpatialQueries() {
+  this.autoStats = StatisticsAutoRegisterMember(this);
+  this.acceleration = SpatialAccelerationChooser( this.autoStats );
+  this.queryAllocator = FewObjectsRecyclingAllocator(GeometryInstancesSpatialQuery(this), 1000, "Warning: GeometryInstancesSpatialQueries.beginSpatialQuery: called more than 1000 times, intentional or missing a matching 'endSpatialQuery'?");
+
+  UInt32 maxCountBeforeWarning;
+  String maxCountWarning;
+
+}
+
+inline Ref<GeometryInstancesSpatialQuery> GeometryInstancesSpatialQueries.beginSpatialQuery() {
+  Ref<FewObjectsRecyclingAllocator> mutableAllocator = this.queryAllocator;
+  return mutableAllocator.allocate();
+}
+
+//See SpatialQueryable interface.
+inline GeometryInstancesSpatialQueries.endSpatialQuery( Ref<GeometryInstancesSpatialQuery> query ) {
+  if( query.queryCache !== this )
+    throw("GeometryInstancesSpatialQueries.endSpatialQuery: invalid query object for this");
+  Ref<FewObjectsRecyclingAllocator> mutableAllocator = this.queryAllocator;
+  mutableAllocator.free(query);
+}
+
+//Similar to SpatialQuery interface's 'raycast()' method, but returns a 'geometryKey' identifying the instance that was hit (if any).
+//If none was hit, 'location' will be invalid, and 'geometryKey' will be 'InvalidIndex'.
+inline GeometryInstancesSpatialQuery.raycast!( Ray ray, Boolean doubleSided, Scalar coneThreshold, Scalar maxDistance, io Size geometryKey, io GeometryLocation location ) {
+  Ref<RaycastResult> result = this.raycastResult;
+  this.queryCache.acceleration.raycast( !this.queryCache.dirtyAcceleration, ray, doubleSided, coneThreshold, maxDistance, this.data, result );
+  location = this.raycastResult.location;
+  geometryKey = this.raycastResult.geometryKey;
+}
+
+//See GeometryInstancesSpatialQuery.raycast
+inline GeometryInstancesSpatialQueries.raycast( Ray ray, Boolean doubleSided, Scalar coneThreshold, Scalar maxDistance, io Size geometryKey, io GeometryLocation location ) {
+  Ref<GeometryInstancesSpatialQuery> query = this.beginSpatialQuery();
+  query.raycast( ray, doubleSided, coneThreshold, maxDistance, geometryKey, location );
+  this.endSpatialQuery(query);
+}
+
+//Similar to SpatialQuery interface's 'getClosest()' method, but returns a 'geometryKey' identifying the instance that was hit (if any).
+//If none was hit, 'location' will be invalid, and 'geometryKey' will be 'InvalidIndex'.
+inline GeometryInstancesSpatialQuery.getClosest!( Vec3 position, Scalar maxUnscaledDistance, io Size geometryKey, io GeometryLocation location ) {
+  Ref<ClosestResult> result = this.closestResult;
+  this.queryCache.acceleration.getClosest( !this.queryCache.dirtyAcceleration, position, Vec3(1,1,1), maxUnscaledDistance, this.data, result );
+  location = this.closestResult.location;
+  geometryKey = this.closestResult.geometryKey;
+}
+
+//See PolygonMeshSpatialQuery.getClosest
+inline GeometryInstancesSpatialQueries.getClosest( Vec3 position, Scalar maxUnscaledDistance, io Size geometryKey, io GeometryLocation location ) {
+  Ref<GeometryInstancesSpatialQuery> query = this.beginSpatialQuery();
+  query.getClosest( position, maxUnscaledDistance, geometryKey, location );
+  this.endSpatialQuery(query);
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] GeometryInstancesSpatialQueries.getStatistics() {
+  Size geometryInstanceSpatialQueriesDataSize = (16+16+3+10)*4 + 2*2;
+  Size memUsage = geometryInstanceSpatialQueriesDataSize * this.data.size() 
+                + this.dataPoolIndices.getMemUsage()
+                + this.geometryData.size()*12;
+
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Category, "Geometry" ) );
+  stats.push( StatisticRecord( "InstancesCount", this.data.size() ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, memUsage ) );
+  return stats;
+}

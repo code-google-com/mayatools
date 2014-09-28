@@ -1,0 +1,62 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`vec3arrayparam` implements the :ref:`param` interface for Vec3 array values.
+*/
+
+require Math;
+
+object Vec3ArrayParam : Param {
+  String name;
+  Vec3 values[];
+  Param options[String];
+};
+
+// default constructor
+function Vec3ArrayParam(String name) {
+  this.name = name;
+}
+
+// returns the size of the values
+function Size Vec3ArrayParam.size() {
+  return this.values.size();
+}
+
+// resizes the values to a certain count
+function Vec3ArrayParam.resize!(Size size) {
+  this.values.resize(size);
+}
+
+// returns the name of this parameter
+function String Vec3ArrayParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String Vec3ArrayParam.getValueType() {
+  return "Vec3[]";
+}
+
+// getting an option on this param
+function Param Vec3ArrayParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function Vec3ArrayParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function Vec3 Vec3ArrayParam.getValue(Index index) {
+  return this.values[index];
+}
+
+// sets the param's value
+function Vec3ArrayParam.setValue!(Index index, Vec3 value) {
+  this.values[index] = value;
+}

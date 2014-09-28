@@ -1,0 +1,197 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+require Geometry;
+
+object AlembicPolyMeshWriter : AlembicObjectWriter{
+  AlembicOPolyMesh _polyMesh;
+  AlembicOPolyMeshSchema _schema;
+  AlembicOPolyMeshSample _sample;
+  SInt32 _faceCounts[];
+  SInt32 _faceIndices[];
+  Vec3 _positions[];
+  Vec3 _velocities[];
+  Vec3 _normals[];
+  Vec2 _uvs[];
+  AlembicOVec3NfGeomParamSample _normalsSample;
+  AlembicOVec2VfGeomParamSample _uvsSample;
+  UInt32 _numSamples;
+  UInt32 _storedSamples;
+  SInt32 _timeSamplingIndex;
+  UInt32 _versions[String];
+  AlembicGeometryAttributesWriter _attributeWriter;
+};
+
+function AlembicPolyMeshWriter(AlembicOObject parent, String name, SInt32 timeSampling) {
+  this._polyMesh = AlembicOPolyMesh(parent, name, timeSampling);
+  this._schema = this._polyMesh.getSchema();
+  this._sample = AlembicOPolyMeshSample();
+  this._normalsSample = AlembicOVec3NfGeomParamSample(this._normals, Alembic_kFacevaryingScope);
+  this._uvsSample = AlembicOVec2VfGeomParamSample(this._uvs, Alembic_kFacevaryingScope);
+  this._numSamples = this._schema.getTimeSampling().getNumStoredTimes();
+  if(this._numSamples == 0)
+    this._numSamples = 1;
+  this._storedSamples = 0;
+  this._timeSamplingIndex = timeSampling;
+  this._attributeWriter = AlembicGeometryAttributesWriter();
+}
+
+function String AlembicPolyMeshWriter.getPath() {
+  return this._polyMesh.asOObject().getFullName();
+}
+
+function Boolean AlembicPolyMeshWriter.valid() {
+  return this._polyMesh.valid();
+}
+
+function AlembicPolyMeshWriter.reset!() {
+  this._polyMesh.reset();
+  this._schema.reset();
+  this._sample = null;
+  this._normalsSample = null;
+  this._uvsSample = null;
+  this._attributeWriter.reset();
+}
+
+function AlembicOObject AlembicPolyMeshWriter.getOObject() {
+  return this._polyMesh.asOObject();
+}
+
+function Ref<AlembicGeometryAttributesWriter> AlembicPolyMeshWriter.getGeometryAttributesWriter() {
+  return this._attributeWriter;
+}
+
+function Boolean AlembicPolyMeshWriter.writeSample!(Ref<PolygonMesh> mesh) {
+  if(this._storedSamples == this._numSamples) {
+    setError('AlembicPolyMeshWriter: Max number of samples reached.');
+    return false;
+  }
+
+  // init on first frame
+  if(this._storedSamples == 0) {
+
+    if(!mesh.has('positions')) {
+      setError('AlembicPolyMeshWriter: Provided PolygonMesh does not contain positions.');
+      return false;
+    }
+
+    AlembicOCompoundProperty props = this._schema.getArbGeomParams();
+
+    // vertexColors
+    if(mesh.has('vertexColors')) {
+      ColorAttribute attr = mesh.getAttribute('vertexColors', ColorAttribute);
+      AlembicGeometryParamWriter writer = AlembicGeometryParamWriter(props, 'vertexColors', Alembic_kVertexScope, this._timeSamplingIndex, attr);
+      this._attributeWriter.addParamWriter(writer);
+    }
+  }
+
+  Vec3Attribute positionsAttr = mesh.getAttribute('positions', Vec3Attribute);
+  if(positionsAttr.getVersion() != this._versions.get('positions', 0)) {
+    Box3 bounds;
+    this._positions.resize(mesh.pointCount());
+    for(Size i=0;i<this._positions.size();i++) {
+      this._positions[i] = positionsAttr.values[i];
+      bounds.merge(positionsAttr.values[i]);
+    }
+    this._sample.setSelfBounds(bounds);
+    this._sample.setPositions(this._positions);
+    this._versions['positions'] = positionsAttr.getVersion();
+  }
+
+  if(mesh.has('velocities')) {
+    Vec3Attribute attr = mesh.getAttribute('velocities', Vec3Attribute);
+    if(attr.getVersion() != this._versions.get('velocities', 0)) {
+      this._velocities.resize(mesh.pointCount());
+      for(Size i=0;i<this._velocities.size();i++)
+        this._velocities[i] = attr.values[i];
+      this._sample.setVelocities(this._velocities);
+      this._versions['velocities'] = attr.getVersion();
+    }
+  }
+
+  if(mesh.has('normals')) {
+    Vec3Attribute attr = mesh.getAttribute('normals', Vec3Attribute);
+    if(attr.getVersion() != this._versions.get('normals', 0)) {
+      if(attr.values.size() == mesh.pointCount()) {
+        this._normalsSample.setScope(Alembic_kVertexScope);
+        this._normals.resize(mesh.pointCount());
+        for(Size i=0;i<this._normals.size();i++)
+          this._normals[i] = attr.values[i];
+      } else {
+        this._normalsSample.setScope(Alembic_kFacevaryingScope);
+        this._normals.resize(mesh.polygonPointsCount());
+        Size offset = 0;
+        for(Size i=0;i<mesh.polygonCount();i++) {
+          Size count = mesh.getPolygonSize(i);
+          for(Size j=0;j<count;j++) {
+            Size attrIndex = mesh.getPolygonAttributeIndex(i, count - 1 - j);
+            this._normals[offset++] = attr.values[attrIndex];
+          }
+        }
+      }
+
+      this._normalsSample.setVals(this._normals);
+      this._sample.setNormals(this._normalsSample);
+      this._versions['normals'] = attr.getVersion();
+    }
+  }
+
+  if(mesh.has('uvs0')) {
+    Vec2Attribute attr = mesh.getAttribute('uvs0', Vec2Attribute);
+    if(attr.getVersion() != this._versions.get('uvs0', 0)) {
+      if(attr.values.size() == mesh.pointCount()) {
+        this._uvsSample.setScope(Alembic_kVertexScope);
+        this._uvs.resize(mesh.pointCount());
+        for(Size i=0;i<this._uvs.size();i++)
+          this._uvs[i] = attr.values[i];
+      } else {
+        this._uvsSample.setScope(Alembic_kFacevaryingScope);
+        this._uvs.resize(mesh.polygonPointsCount());
+        Size offset = 0;
+        for(Size i=0;i<mesh.polygonCount();i++) {
+          Size count = mesh.getPolygonSize(i);
+          for(Size j=0;j<count;j++) {
+            Size attrIndex = mesh.getPolygonAttributeIndex(i, count - 1 - j);
+            this._uvs[offset++] = attr.values[attrIndex];
+          }
+        }
+      }
+
+      this._uvsSample.setVals(this._uvs);
+      this._sample.setUVs(this._uvsSample);
+      this._versions['uvs0'] = attr.getVersion();
+    }
+  }
+
+  // topology
+  if(this._faceCounts.size() != mesh.polygonCount() || this._faceIndices.size() != mesh.polygonPointsCount()) {
+    this._faceCounts.resize(0);
+    this._faceIndices.resize(0);
+    this._faceCounts.resize(mesh.polygonCount());
+    this._faceIndices.resize(mesh.polygonPointsCount());
+
+    Size countOffset = 0;
+    Size indexOffset = 0;
+
+    LocalIndexArray vertices;
+    for(Size i=0;i<mesh.polygonCount();i++) {
+      mesh.getPolygonPoints(i, vertices);
+      this._faceCounts[countOffset++] = vertices.size();
+      Size count = vertices.size();
+      for(UInt32 j=0;j<count;j++) {
+        this._faceIndices[indexOffset+count-1-j] = vertices.get(j);
+      }
+      indexOffset += count;
+    }
+    this._sample.setFaceCounts(this._faceCounts);
+    this._sample.setFaceIndices(this._faceIndices);
+  }
+  
+  this._schema.set(this._sample);
+  this._attributeWriter.writeSample(mesh.getAttributes());
+
+  this._storedSamples++;
+  return true;
+}

@@ -1,0 +1,77 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+///The BulletBoxShape is a box primitive around the origin, its sides axis aligned with length specified by half extents, in local shape coordinates. When used as part of a BulletICollisionObject or BulletRigidBody it will be an oriented box in world space.
+object BulletBoxShape : BulletPolyhedralConvexShape, BulletConvexInternalShape, BulletConvexShape, BulletCollisionShape
+{
+	Data pointer;
+};
+
+function Data BulletBoxShape.getPointer(){ 
+	return this.pointer; 
+}
+
+function BulletBoxShape (Vec3 boxHalfExtents){
+	this.__construct(boxHalfExtents);
+}
+function BulletBoxShape.__construct!(Vec3 boxHalfExtents) = 'BulletBoxShape_construct';
+
+function ~BulletBoxShape(){
+	this.__destroy();
+}
+function BulletBoxShape.__destroy!() = 'BulletBoxShape_destroy';
+
+
+function Vec3 BulletBoxShape.getHalfExtentsWithMargin() = 'BulletBoxShape_getHalfExtentsWithMargin';
+	
+function Vec3 BulletBoxShape.getHalfExtentsWithoutMargin() = 'BulletBoxShape_getHalfExtentsWithoutMargin';
+	
+function Vec3 BulletBoxShape.localGetSupportingVertex(Vec3 vec) = 'BulletBoxShape_localGetSupportingVertex';
+
+function Vec3 BulletBoxShape.localGetSupportingVertexWithoutMargin(Vec3 vec) = 'BulletBoxShape_localGetSupportingVertexWithoutMargin';
+
+function BulletBoxShape.batchedUnitVectorGetSupportingVertexWithoutMargin?(Vec3 vectors[], io Vec3 supportVerticesOut[]) = 'BulletBoxShape_batchedUnitVectorGetSupportingVertexWithoutMargin';
+
+function BulletBoxShape.setMargin!(Scalar collisionMargin) = 'BulletBoxShape_setMargin';
+
+function BulletBoxShape.setLocalScaling!(Vec3 scaling) = 'BulletBoxShape_setLocalScaling';
+
+function BulletBoxShape.getAabb(Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletBoxShape_getAabb';
+
+function BulletBoxShape.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = 'BulletBoxShape_calculateLocalInertia';
+
+function BulletBoxShape.getPlane(Vec3 planeNormal, Vec3 planeSupport,Integer i ) = 'BulletBoxShape_getPlane';
+
+function Integer BulletBoxShape.getNumPlanes() = 'BulletBoxShape_getNumPlanes';
+
+function Integer BulletBoxShape.getNumVertices() = 'BulletBoxShape_getNumVertices';
+
+function Integer BulletBoxShape.getNumEdges() = 'BulletBoxShape_getNumEdges';
+
+function BulletBoxShape.getVertex(Integer i, Vec3 vtx) = 'BulletBoxShape_getVertex';
+
+function BulletBoxShape.getPlaneEquation(io Vec4 plane, Integer i) = 'BulletBoxShape_getPlaneEquation';
+
+function BulletBoxShape.getEdge(Integer i, Vec3 pa, Vec3 pb) = 'BulletBoxShape_getEdge';
+
+
+function Boolean BulletBoxShape.isInside(Vec3 pt, Scalar tolerance) = 'BulletBoxShape_isInside';
+
+//debugging
+function String	BulletBoxShape.getName() = 'BulletBoxShape_getName';
+
+// function Integer BulletBoxShape.getNumPreferredPenetrationDirections();
+	
+// function BulletBoxShape.getPreferredPenetrationDirection(Integer index, Vec3 penetrationVector);
+
+
+
+////////////////////////////////////////////////
+// From BulletCollisionShape
+
+function BulletBoxShape.setMargin!(Scalar margin) = 'BulletBoxShape_setMargin';
+function Scalar	BulletBoxShape.getMargin() = 'BulletBoxShape_getMargin';
+

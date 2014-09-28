@@ -1,0 +1,62 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`colorarrayparam` implements the :ref:`param` interface for Color array values.
+*/
+
+require Math;
+
+object ColorArrayParam : Param {
+  String name;
+  Color values[];
+  Param options[String];
+};
+
+// default constructor
+function ColorArrayParam(String name) {
+  this.name = name;
+}
+
+// returns the size of the values
+function Size ColorArrayParam.size() {
+  return this.values.size();
+}
+
+// resizes the values to a certain count
+function ColorArrayParam.resize!(Size size) {
+  this.values.resize(size);
+}
+
+// returns the name of this parameter
+function String ColorArrayParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String ColorArrayParam.getValueType() {
+  return "Color[]";
+}
+
+// getting an option on this param
+function Param ColorArrayParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function ColorArrayParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function Color ColorArrayParam.getValue(Index index) {
+  return this.values[index];
+}
+
+// sets the param's value
+function ColorArrayParam.setValue!(Index index, Color value) {
+  this.values[index] = value;
+}

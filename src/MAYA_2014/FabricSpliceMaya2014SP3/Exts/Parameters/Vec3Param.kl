@@ -1,0 +1,58 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`vec3param` implements the :ref:`param` interface for Vec3 values.
+*/
+
+require Math;
+
+object Vec3Param : Param {
+  String name;
+  Vec3 value;
+  Param options[String];
+};
+
+// default constructor
+function Vec3Param(String name) {
+  this.name = name;
+}
+
+// constructor taking input value
+function Vec3Param(String name, Vec3 value) {
+  this.name = name;
+  this.value = value;
+}
+
+// returns the name of this parameter
+function String Vec3Param.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String Vec3Param.getValueType() {
+  return "Vec3";
+}
+
+// getting an option on this param
+function Param Vec3Param.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function Vec3Param.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function Vec3 Vec3Param.getValue() {
+  return this.value;
+}
+
+// sets the param's value
+function Vec3Param.setValue!(Vec3 value) {
+  this.value = value;
+}

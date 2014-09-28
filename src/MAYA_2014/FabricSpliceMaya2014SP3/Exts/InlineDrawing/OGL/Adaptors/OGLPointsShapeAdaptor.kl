@@ -1,0 +1,86 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`oglpointsshapeadaptor` implements the :ref:`inlineshapeadaptor` interface. It is used to draw a :ref:`inlinepointsshape` within an OpenGL viewport.
+*/
+
+require RTR;
+
+object OGLPointsShapeAdaptor : InlineShapeAdaptor {
+};
+
+// default constructor
+function OGLPointsShapeAdaptor() {}
+
+// returns the types this adaptor is capable of drawing
+function String[] OGLPointsShapeAdaptor.getShapeTypes() {
+  String result[];
+  result.push('InlinePointsShape');
+  return result;
+}
+
+// draws the points to the screen. this is used by the 
+// InlineInstance, and should not be called manually.
+function Boolean OGLPointsShapeAdaptor._draw!(io DrawContext context, io Ref<InlineShape> shape, Index index, Size count) {
+
+  // access the points shape
+  InlinePointsShape pointsShape = shape;
+  Points points = pointsShape.getPoints();
+  OGLBufferDictionary buffers = pointsShape.getMetaData('buffers');
+  if(buffers == null) {
+    buffers = OGLBufferDictionary();
+    pointsShape.setMetaData('buffers', buffers);
+  }
+
+  if(points.size() == 0)
+    return true;
+  
+  if(index == 0) {
+    InlineShader shader = context.getObject('currentShader');
+    _OGLShape_updateGeometryAttributeBuffers(context, buffers, points.getAttributes());
+
+    if(buffers.getVersion('topology') != points.size()) {
+      OGLBuffer buffer = buffers.get('topology');
+      if(buffer == null) {
+        buffer = OGLBuffer();
+        buffer.bufferType = GL_ARRAY_BUFFER;
+        buffer.bufferUsage = GL_STATIC_DRAW;
+        buffers.set('topology', buffer);
+      }
+      if( buffer.bufferID )
+        buffer.bufferUsage = GL_DYNAMIC_DRAW;//Loaded at least 2 times: lazily upgrade to "dynamic"
+
+      UInt32 indices[];
+      indices.resize(points.size());
+      for(Size i=0;i<indices.size();i++)
+        indices[i] = i;
+
+      buffer.bufferElementComponentType = GL_UNSIGNED_INT;
+
+      buffer.genBuffer(indices.data(), indices.dataSize(), indices.size());
+
+      buffers.setVersion('topology', points.size());
+    }
+  }
+
+  OGLBuffer buffer = buffers.get('topology');
+  if(buffer == null)
+    return false;
+
+  if(index == 0)
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.bufferID);
+
+  glPointSize(pointsShape.getPointSize());
+
+  Data NULL;
+  glDrawElements(GL_POINTS, buffer.elementCount, buffer.bufferElementComponentType, NULL);
+
+  if(index == count - 1)
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+  return true;
+}

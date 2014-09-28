@@ -1,0 +1,132 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+struct ImporterIdentifier {
+  String name;
+  Integer index;
+  Integer version;
+  String path;
+  String type;
+  String filePath;
+  Integer fileIndex;
+  ImporterOptions data;
+};
+  
+
+function ImporterIdentifier(String name, String path, String type) {
+  this.name = name;
+  this.path = path;
+  this.type = type;
+}
+
+function Boolean ImporterIdentifier.hasBoolData(String key) {
+  return this.data.hasBoolOption(key);
+}
+
+function Boolean ImporterIdentifier.getBoolData(String key, Boolean defaultValue) {
+  return this.data.getBoolOption(key, defaultValue);
+}
+
+function Boolean ImporterIdentifier.getBoolData(String key) {
+  return this.data.getBoolOption(key);
+}
+
+function ImporterIdentifier.setBoolData!(String key, Boolean value) {
+  this.data.setBoolOption(key, value);
+}
+
+function Boolean ImporterIdentifier.hasScalarData(String key) {
+  return this.data.hasScalarOption(key);
+}
+
+function Scalar ImporterIdentifier.getScalarData(String key, Scalar defaultValue) {
+  return this.data.getScalarOption(key, defaultValue);
+}
+
+function Scalar ImporterIdentifier.getScalarData(String key) {
+  return this.data.getScalarOption(key);
+}
+
+function ImporterIdentifier.setScalarData!(String key, Scalar value) {
+  this.data.setScalarOption(key, value);
+}
+
+function Boolean ImporterIdentifier.hasIntData(String key) {
+  return this.data.hasIntOption(key);
+}
+
+function Integer ImporterIdentifier.getIntData(String key, Integer defaultValue) {
+  return this.data.getIntOption(key, defaultValue);
+}
+
+function Integer ImporterIdentifier.getIntData(String key) {
+  return this.data.getIntOption(key);
+}
+
+function ImporterIdentifier.setIntData!(String key, Integer value) {
+  this.data.setIntOption(key, value);
+}
+
+function Boolean ImporterIdentifier.hasStringData(String key) {
+  return this.data.hasStringOption(key);
+}
+
+function String ImporterIdentifier.getStringData(String key, String defaultValue) {
+  return this.data.getStringOption(key, defaultValue);
+}
+
+function String ImporterIdentifier.getStringData(String key) {
+  return this.data.getStringOption(key);
+}
+
+function ImporterIdentifier.setStringData!(String key, String value) {
+  this.data.setStringOption(key, value);
+}
+
+function Boolean ImporterIdentifier.equals(ImporterIdentifier other) {
+  if(this.name != other.name) {
+    // report('not equal due to name!');
+    return false;
+  }
+  if(this.index != other.index) {
+    // report('not equal due to index!');
+    return false;
+  }
+  if(this.version != other.version) {
+    // report('not equal due to version!');
+     return false;
+  }
+  if(this.path != other.path) {
+    // report('not equal due to path!');
+    return false;
+  }
+  if(this.type != other.type) {
+    // report('not equal due to type!');
+    return false;
+  }
+  if(this.filePath != other.filePath) {
+    // report('not equal due to filePath!');
+    return false;
+  }
+  if(this.fileIndex != other.fileIndex) {
+    // report('not equal due to fileIndex!');
+    return false;
+  }
+  return true;
+}
+
+
+function ImporterIdentifier ImporterIdentifier.clone() {
+  ImporterIdentifier cloned;
+  cloned.name = this.name;
+  cloned.index = this.index;
+  cloned.version = this.version;
+  cloned.type = this.type;
+  cloned.path = this.path.clone();
+  cloned.filePath = this.filePath.clone();
+  cloned.fileIndex = this.fileIndex;
+  cloned.data = this.data.clone();
+  return cloned;
+}

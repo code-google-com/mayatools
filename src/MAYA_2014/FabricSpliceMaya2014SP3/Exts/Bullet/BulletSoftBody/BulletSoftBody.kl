@@ -1,0 +1,1292 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+/* BulletSoftBodyWorldInfo	*/ 
+object	BulletSoftBodyWorldInfo : BulletTypedObject
+{
+	Data pointer;
+
+	BulletBroadphaseInterface	__broadphase;
+	BulletDispatcher			__dispatcher;
+	BulletSparseSdf				__sparsesdf;
+};
+
+function Data BulletSoftBodyWorldInfo.getPointer(){
+	return this.pointer;
+}
+
+
+function BulletSoftBodyWorldInfo(){
+	this.__construct();
+	// The sparce sdf is a member(not a pointer) of the btSoftBodyWorldInfo struct. 
+	// We need to retrieve the pointer here and construct the sparce SDF.
+	this.__sparsesdf = BulletSparseSdf(this.__getSparsesdfData());
+}
+
+function BulletSoftBodyWorldInfo.__construct!() = "BulletSoftBodyWorldInfo_construct";
+function ~BulletSoftBodyWorldInfo() = "BulletSoftBodyWorldInfo_destroy";
+
+function Scalar BulletSoftBodyWorldInfo.getAirDensity() = 'BulletSoftBodyWorldInfo_getAirDensity';
+function BulletSoftBodyWorldInfo.setAirDensity!(Scalar value) = 'BulletSoftBodyWorldInfo_setAirDensity';
+function Scalar BulletSoftBodyWorldInfo.getWaterDensity() = 'BulletSoftBodyWorldInfo_getWaterDensity';
+function BulletSoftBodyWorldInfo.setWaterDensity!(Scalar value) = 'BulletSoftBodyWorldInfo_setWaterDensity';
+function Scalar BulletSoftBodyWorldInfo.getWaterOffset() = 'BulletSoftBodyWorldInfo_getWaterOffset';
+function BulletSoftBodyWorldInfo.setWaterOffset!(Scalar value) = 'BulletSoftBodyWorldInfo_setWaterOffset';
+// function Scalar BulletSoftBodyWorldInfo.getMaxDisplacement() = 'BulletSoftBodyWorldInfo_getMaxDisplacement';
+// function BulletSoftBodyWorldInfo.setMaxDisplacement!(Scalar value) = 'BulletSoftBodyWorldInfo_setMaxDisplacement';
+function Vec3 BulletSoftBodyWorldInfo.getWaterNormal() = 'BulletSoftBodyWorldInfo_getWaterNormal';
+function BulletSoftBodyWorldInfo.setWaterNormal!(Vec3 value) = 'BulletSoftBodyWorldInfo_setWaterNormal';
+function Vec3 BulletSoftBodyWorldInfo.getGravity() = 'BulletSoftBodyWorldInfo_getGravity';
+function BulletSoftBodyWorldInfo.setGravity!(Vec3 value) = 'BulletSoftBodyWorldInfo_setGravity';
+
+function BulletBroadphaseInterface BulletSoftBodyWorldInfo.getBroadphase(){
+	return this.__broadphase;
+}
+function BulletSoftBodyWorldInfo.setBroadphase!(BulletBroadphaseInterface broadphase){
+	this.__broadphase = broadphase;
+	this.__setBroadphase(broadphase);
+}
+function BulletSoftBodyWorldInfo.__setBroadphase!(BulletBroadphaseInterface broadphase) = 'BulletSoftBodyWorldInfo_setBroadphase';
+
+function BulletDispatcher BulletSoftBodyWorldInfo.getDispatcher(){
+	return this.__dispatcher;
+}
+function BulletSoftBodyWorldInfo.setDispatcher!(BulletDispatcher dispatcher){
+	this.__dispatcher = dispatcher;
+	this.__setDispatcher(dispatcher);
+}
+function BulletSoftBodyWorldInfo.__setDispatcher!(BulletDispatcher dispatcher) = 'BulletSoftBodyWorldInfo_setDispatcher';
+
+function BulletSparseSdf BulletSoftBodyWorldInfo.getSparsesdf(){
+	return this.__sparsesdf;
+}
+function Data BulletSoftBodyWorldInfo.__getSparsesdfData() = 'BulletSoftBodyWorldInfo_getSparsesdfData';
+// function BulletSoftBodyWorldInfo.setSparsesdf!(BulletSparseSdf sparsesdf){
+// 	this.sparsesdf = sparsesdf;
+// 	this.__setSparsesdf(sparsesdf);
+// }
+// function BulletSoftBodyWorldInfo.__setSparsesdf(BulletSparseSdf sparsesdf) = 'BulletSoftBodyWorldInfo_setSparsesdf';
+
+
+//
+// Enumerations
+//
+
+///eAeroModel 	
+const UInt32 BulletSoftBody_eAeroModel_V_Point = 0;	///Vertex normals are oriented toward velocity
+const UInt32 BulletSoftBody_eAeroModel_V_TwoSided = 1;	///Vertex normals are fliped to match velocity	
+const UInt32 BulletSoftBody_eAeroModel_V_OneSided = 2;	///Vertex normals are taken as it is	
+const UInt32 BulletSoftBody_eAeroModel_F_TwoSided = 3;	///Face normals are fliped to match velocity
+const UInt32 BulletSoftBody_eAeroModel_F_OneSided = 4;	///Face normals are taken as it is
+
+///eVSolver : velocities solvers
+const UInt32 BulletSoftBody_eVSolver_Linear = 0;		///Linear solver
+
+///ePSolver : positions solvers
+const UInt32 BulletSoftBody_ePSolver_Linear = 0;	///Linear solver
+const UInt32 BulletSoftBody_ePSolver_Anchors = 1;	///Anchor solver
+const UInt32 BulletSoftBody_ePSolver_RContacts = 2;	///Rigid contacts solver
+const UInt32 BulletSoftBody_ePSolver_SContacts = 3;	///Soft contacts solver
+
+///eSolverPresets
+const UInt32 BulletSoftBody_eSolverPresets_Positions = 0;
+const UInt32 BulletSoftBody_eSolverPresets_Velocities = 1;
+const UInt32 BulletSoftBody_eSolverPresets_Default 	=BulletSoftBody_eSolverPresets_Positions;
+
+///eFeature
+const UInt32 BulletSoftBody_eFeature_None = 0;
+const UInt32 BulletSoftBody_eFeature_Node = 1;
+const UInt32 BulletSoftBody_eFeature_Link = 2;
+const UInt32 BulletSoftBody_eFeature_Face = 3;
+
+	// typedef BulletAlignedObjectArray<eVSolver::_>	tVSolverArray;
+	// typedef BulletAlignedObjectArray<ePSolver::_>	tPSolverArray;
+
+//
+// Flags
+//
+
+///fCollision
+const UInt32 BulletSoftBody_fCollision_RVSmask	=	0x000f;	///Rigid versus soft mask
+const UInt32 BulletSoftBody_fCollision_SDF_RS	=	0x0001;	///SDF based rigid vs soft
+const UInt32 BulletSoftBody_fCollision_CL_RS	=	0x0002; ///Cluster vs convex rigid vs soft
+
+const UInt32 BulletSoftBody_fCollision_SVSmask	=	0x0030;	///Rigid versus soft mask		
+const UInt32 BulletSoftBody_fCollision_VF_SS	=	0x0010;	///Vertex vs face soft vs soft handling
+const UInt32 BulletSoftBody_fCollision_CL_SS	=	0x0020; ///Cluster vs cluster soft vs soft handling
+const UInt32 BulletSoftBody_fCollision_CL_SELF =	0x0040; ///Cluster soft body self collision
+/* presets	*/ 
+const UInt32 BulletSoftBody_fCollision_Default	=	BulletSoftBody_fCollision_SDF_RS;
+
+
+///fMaterial
+const UInt32 BulletSoftBody_fMaterial_DebugDraw	=	0x0001;	/// Enable debug draw
+/* presets	*/ 
+const UInt32 BulletSoftBody_fMaterial_Default	=	BulletSoftBody_fMaterial_DebugDraw;
+
+
+
+// 	//
+// 	// API Types
+// 	//
+
+// 	/* sRayCast		*/ 
+// 	struct sRayCast
+// 	{
+// 		BulletSoftBody*	body;		/// soft body
+// 		eFeature::_	feature;	/// feature type
+// 		Integer			index;		/// feature index
+// 		Scalar	fraction;		/// time of impact fraction (rayorg+(rayto-rayfrom)*fraction)
+// 	};
+
+// 	/* ImplicitFn	*/ 
+// 	struct	ImplicitFn
+// 	{
+// 		virtual Scalar	Eval(in Vec3 x)=0;
+// 	};
+
+// 	//
+// 	// Internal types
+// 	//
+
+// 	typedef BulletAlignedObjectArray<Scalar>	tScalarArray;
+// 	typedef BulletAlignedObjectArray<Vec3>	tVector3Array;
+
+// 	/* sCti is Softbody contact info	*/ 
+// 	struct	sCti
+// 	{
+// 		BulletICollisionObject*	m_colObj;		/* Rigid body			*/ 
+// 		Vec3		m_normal;	/* Outward normal		*/ 
+// 		Scalar		m_offset;	/* Offset from origin	*/ 
+// 	};	
+
+// 	/* sMedium		*/ 
+// 	struct	sMedium
+// 	{
+// 		Vec3		m_velocity;	/* Velocity				*/ 
+// 		Scalar		m_pressure;	/* Pressure				*/ 
+// 		Scalar		m_density;	/* Density				*/ 
+// 	};
+
+// 	/* Base type	*/ 
+// 	struct	BulletSoftBodyElement
+// 	{
+// 		void*			m_tag;			// User data
+// 		Element() : m_tag(0) {}
+// 	};
+// // 	/* BulletSoftBodyMaterial		*/ 
+
+// The following is a hack to work around a bug in KLTOEDK. 
+// Methods are not generated for the generated C++ if they do not exist in an interface.
+interface IBulletSoftBodyMaterial {
+	Data getPointer();
+	Scalar getLST();		// Linear stiffness coefficient [0,1]
+	setLST!(Scalar value);		// Linear stiffness coefficient [0,1]
+	Scalar getAST();		// Area/Angular stiffness coefficient [0,1]
+	setAST!(Scalar value);		// Area/Angular stiffness coefficient [0,1]
+	Scalar getVST();		// Volume stiffness coefficient [0,1]
+	setVST!(Scalar value);		// Volume stiffness coefficient [0,1]
+	Integer getFlags();		// Flags
+	setFlags!(Integer value);		// Flags
+};
+
+
+object BulletSoftBodyMaterial : IBulletSoftBodyMaterial
+{
+	Data pointer;
+	Boolean __klManagedMemory;
+};
+
+function Data BulletSoftBodyMaterial.getPointer(){
+	return this.pointer;
+}
+function BulletSoftBodyMaterial (Data pointer){
+	this.pointer = pointer;
+	// flag this memory as unmanaged(KL is not responsible for freeing it)
+	this.__klManagedMemory = false;
+}
+
+function BulletSoftBodyMaterial (){
+	this.__construct();
+	this.__klManagedMemory = true;
+}
+function BulletSoftBodyMaterial.__construct!() = 'BulletSoftBodyMaterial_construct';
+
+function ~BulletSoftBodyMaterial(){
+	if(this.__klManagedMemory)
+		this.__destroy();
+}
+function BulletSoftBodyMaterial.__destroy!() = 'BulletSoftBodyMaterial_destroy';
+
+
+function Scalar BulletSoftBodyMaterial.getLST() = 'BulletSoftBodyMaterial_getLST';		// Linear stiffness coefficient [0,1]
+function BulletSoftBodyMaterial.setLST!(Scalar value) = 'BulletSoftBodyMaterial_setLST';		// Linear stiffness coefficient [0,1]
+function Scalar BulletSoftBodyMaterial.getAST() = 'BulletSoftBodyMaterial_getAST';		// Area/Angular stiffness coefficient [0,1]
+function BulletSoftBodyMaterial.setAST!(Scalar value) = 'BulletSoftBodyMaterial_setAST';		// Area/Angular stiffness coefficient [0,1]
+function Scalar BulletSoftBodyMaterial.getVST() = 'BulletSoftBodyMaterial_getVST';		// Volume stiffness coefficient [0,1]
+function BulletSoftBodyMaterial.setVST!(Scalar value) = 'BulletSoftBodyMaterial_setVST';		// Volume stiffness coefficient [0,1]
+function Integer BulletSoftBodyMaterial.getFlags() = 'BulletSoftBodyMaterial_getFlags';		// Flags
+function BulletSoftBodyMaterial.setFlags!(Integer value) = 'BulletSoftBodyMaterial_setFlags';		// Flags
+
+// /* Feature		*/ 
+// struct	BulletSoftBodyFeature //: BulletSoftBodyElement
+// {
+// 	BulletSoftBodyMaterial				m_material;		// BulletSoftBodyMaterial
+// };
+/* Node			*/ 
+struct	BulletSoftBodyNode //: Feature
+{
+	BulletSoftBodyMaterial				material;		// BulletSoftBodyMaterial
+
+	Vec3				x;			// Position
+	Vec3				q;			// Previous step position
+	Vec3				v;			// Velocity
+	Vec3				f;			// Force accumulator
+	Vec3				n;			// Normal
+	Scalar				im;			// 1/mass
+	Scalar				area;		// Area
+	// BulletDbvtNode*				leaf;			// Leaf data
+	// Integer						battach:1;	// Attached
+};
+// 	/* Link			*/ 
+// 	struct	Link : Feature
+// 	{
+	// BulletSoftBodyMaterial				material;		// BulletSoftBodyMaterial
+// 		Node*				m_n[2];			// Node pointers
+// 		Scalar				m_rl;			// Rest length		
+// 		Integer				m_bbending:1;	// Bending link
+// 		Scalar				m_c0;			// (ima+imb)*LST
+// 		Scalar				m_c1;			// rl^2
+// 		Scalar				m_c2;			// |gradient|^2/c0
+// 		Vec3				m_c3;			// gradient
+// 	};
+// 	/* Face			*/ 
+// 	struct	Face : Feature
+// 	{
+// 		Node*					m_n[3];			// Node pointers
+// 		Vec3				m_normal;		// Normal
+// 		Scalar				m_ra;			// Rest area
+// 		BulletDbvtNode*				m_leaf;			// Leaf data
+// 	};
+// 	/* Tetra		*/ 
+// 	struct	Tetra : Feature
+// 	{
+// 		Node*				m_n[4];			// Node pointers		
+// 		Scalar				m_rv;			// Rest volume
+// 		BulletDbvtNode*		m_leaf;			// Leaf data
+// 		Vec3				m_c0[4];		// gradients
+// 		Scalar				m_c1;			// (4*kVST)/(im0+im1+im2+im3)
+// 		Scalar				m_c2;			// m_c1/sum(|g0..3|^2)
+// 	};
+// 	/* RContact		*/ 
+// 	struct	RContact
+// 	{
+// 		sCti		m_cti;			// Contact infos
+// 		Node*					m_node;			// Owner node
+// 		Mat33				m_c0;			// Impulse matrix
+// 		Vec3				m_c1;			// Relative anchor
+// 		Scalar				m_c2;			// ima*dt
+// 		Scalar				m_c3;			// Friction
+// 		Scalar				m_c4;			// Hardness
+// 	};
+// 	/* SContact		*/ 
+// 	struct	SContact
+// 	{
+// 		Node*					m_node;			// Node
+// 		Face*					m_face;			// Face
+// 		Vec3				m_weights;		// Weigths
+// 		Vec3				m_normal;		// Normal
+// 		Scalar				m_margin;		// Margin
+// 		Scalar				m_friction;		// Friction
+// 		Scalar				m_cfm[2];		// Constraint force mixing
+// 	};
+// 	/* Anchor		*/ 
+// 	struct	Anchor
+// 	{
+// 		Node*					m_node;			// Node pointer
+// 		Vec3				m_local;		// Anchor position in body space
+// 		BulletRigidBody*			m_body;			// Body
+// 		Scalar				m_influence;
+// 		Mat33				m_c0;			// Impulse matrix
+// 		Vec3				m_c1;			// Relative anchor
+// 		Scalar				m_c2;			// ima*dt
+// 	};
+// 	/* Note			*/ 
+// 	struct	Note : Element
+// 	{
+// 		const char*				m_text;			// Text
+// 		Vec3				m_offset;		// Offset
+// 		Integer						m_rank;			// Rank
+// 		Node*					m_nodes[4];		// Nodes
+// 		Scalar				m_coords[4];	// Coordinates
+// 	};	
+// 	/* Pose			*/ 
+// 	struct	Pose
+// 	{
+// 		Boolean					m_bvolume;		// Is valid
+// 		Boolean					m_bframe;		// Is frame
+// 		Scalar				m_volume;		// Rest volume
+// 		tVector3Array			m_pos;			// Reference positions
+// 		tScalarArray			m_wgh;			// Weights
+// 		Vec3				m_com;			// COM
+// 		Mat33				m_rot;			// Rotation
+// 		Mat33				m_scl;			// Scale
+// 		Mat33				m_aqq;			// Base scaling
+// 	};
+/* Cluster		*/ 
+object BulletSoftBodyCluster : BulletTypedObject
+{
+	Data pointer;
+};
+
+function Data BulletSoftBodyCluster.getPointer (){
+	return this.pointer;
+}
+
+function BulletSoftBodyCluster (Data pointer){
+	this.pointer = pointer;
+}
+
+function Scalar[] BulletSoftBodyCluster.getMasses() = 'BulletSoftBodyCluster_getMasses';
+function BulletSoftBodyCluster.setMasses!(Scalar value[]) = 'BulletSoftBodyCluster_setMasses';
+// function SoftbodyNode[] BulletSoftBodyCluster.getNodes() = 'BulletSoftBodyCluster_getNodes';
+// function NodeBulletSoftBodyCluster.setNodes!(SoftbodyNode nodes[]) = 'BulletSoftBodyCluster_setNodes';
+function Vec3[] BulletSoftBodyCluster.getFramerefs() = 'BulletSoftBodyCluster_getFramerefs';
+function BulletSoftBodyCluster.setFramerefs!(Vec3 value[]) = 'BulletSoftBodyCluster_setFramerefs';
+function Xfo BulletSoftBodyCluster.getFramexform() = 'BulletSoftBodyCluster_getFramexform';
+function BulletSoftBodyCluster.setFramexform!(Xfo value) = 'BulletSoftBodyCluster_setFramexform';
+function Scalar BulletSoftBodyCluster.getIdmass() = 'BulletSoftBodyCluster_getIdmass';
+function BulletSoftBodyCluster.setIdmass!(Scalar value) = 'BulletSoftBodyCluster_setIdmass';
+function Scalar BulletSoftBodyCluster.getImass() = 'BulletSoftBodyCluster_getImass';
+function BulletSoftBodyCluster.setImass!(Scalar value) = 'BulletSoftBodyCluster_setImass';
+function Mat33 BulletSoftBodyCluster.getLocii() = 'BulletSoftBodyCluster_getLocii';
+function BulletSoftBodyCluster.setLocii!(Mat33 value) = 'BulletSoftBodyCluster_setLocii';
+function Mat33 BulletSoftBodyCluster.getInvwi() = 'BulletSoftBodyCluster_getInvwi';
+function BulletSoftBodyCluster.setInvwi!(Mat33 value) = 'BulletSoftBodyCluster_setInvwi';
+function Vec3 BulletSoftBodyCluster.getCom() = 'BulletSoftBodyCluster_getCom';
+function BulletSoftBodyCluster.setCom!(Vec3 value) = 'BulletSoftBodyCluster_setCom';
+function Vec3[2] BulletSoftBodyCluster.getVimpulses() = 'BulletSoftBodyCluster_getVimpulses';
+function BulletSoftBodyCluster.setVimpulses!(Vec3 value[2]) = 'BulletSoftBodyCluster_setVimpulses';
+function Vec3[2] BulletSoftBodyCluster.getDimpulses() = 'BulletSoftBodyCluster_getDimpulses';
+function BulletSoftBodyCluster.setDimpulses!(Vec3 value[2]) = 'BulletSoftBodyCluster_setDimpulses';
+function Integer BulletSoftBodyCluster.getNvimpulses() = 'BulletSoftBodyCluster_getNvimpulses';
+function BulletSoftBodyCluster.setNvimpulses!(Integer value) = 'BulletSoftBodyCluster_setNvimpulses';
+function Integer BulletSoftBodyCluster.getNdimpulses() = 'BulletSoftBodyCluster_getNdimpulses';
+function BulletSoftBodyCluster.setNdimpulses!(Integer value) = 'BulletSoftBodyCluster_setNdimpulses';
+function Vec3 BulletSoftBodyCluster.getLv() = 'BulletSoftBodyCluster_getLv';
+function BulletSoftBodyCluster.setLv!(Vec3 value) = 'BulletSoftBodyCluster_setLv';
+function Vec3 BulletSoftBodyCluster.getAv() = 'BulletSoftBodyCluster_getAv';
+function BulletSoftBodyCluster.setAv!(Vec3 value) = 'BulletSoftBodyCluster_setAv';
+// function BulletDbvtNode BulletSoftBodyCluster.get_leaf() = 'BulletSoftBodyCluster_get_leaf';
+// function  BulletSoftBodyCluster.set_leaf!(BulletDbvtNode value) = 'BulletSoftBodyCluster_set_leaf';
+function Scalar BulletSoftBodyCluster.getNdamping() = 'BulletSoftBodyCluster_getNdamping';	// Node damping	
+function BulletSoftBodyCluster.setNdamping!(Scalar value) = 'BulletSoftBodyCluster_setNdamping';	// Node damping	
+function Scalar BulletSoftBodyCluster.getLdamping() = 'BulletSoftBodyCluster_getLdamping';	// Linear damping
+function BulletSoftBodyCluster.setLdamping!(Scalar value) = 'BulletSoftBodyCluster_setLdamping';	// Linear damping
+function Scalar BulletSoftBodyCluster.getAdamping() = 'BulletSoftBodyCluster_getAdamping';	// Angular damping
+function BulletSoftBodyCluster.setAdamping!(Scalar value) = 'BulletSoftBodyCluster_setAdamping';	// Angular damping
+function Scalar BulletSoftBodyCluster.getMatching() = 'BulletSoftBodyCluster_getMatching';
+function BulletSoftBodyCluster.setMatching!(Scalar value) = 'BulletSoftBodyCluster_setMatching';
+function Scalar BulletSoftBodyCluster.getMaxSelfCollisionImpulse() = 'BulletSoftBodyCluster_getMaxSelfCollisionImpulse';
+function BulletSoftBodyCluster.setMaxSelfCollisionImpulse!(Scalar value) = 'BulletSoftBodyCluster_setMaxSelfCollisionImpulse';
+function Scalar BulletSoftBodyCluster.getSelfCollisionImpulseFactor() = 'BulletSoftBodyCluster_getSelfCollisionImpulseFactor';
+function BulletSoftBodyCluster.setSelfCollisionImpulseFactor!(Scalar value) = 'BulletSoftBodyCluster_setSelfCollisionImpulseFactor';
+function Boolean BulletSoftBodyCluster.getContainsAnchor() = 'BulletSoftBodyCluster_getContainsAnchor';
+function BulletSoftBodyCluster.setContainsAnchor!(Boolean value) = 'BulletSoftBodyCluster_setContainsAnchor';
+function Boolean BulletSoftBodyCluster.getCollide() = 'BulletSoftBodyCluster_getCollide';
+function BulletSoftBodyCluster.setCollide!(Boolean value) = 'BulletSoftBodyCluster_setCollide';
+function Integer BulletSoftBodyCluster.getClusterIndex() = 'BulletSoftBodyCluster_getClusterIndex';
+function BulletSoftBodyCluster.setClusterIndex!(Integer value) = 'BulletSoftBodyCluster_setClusterIndex';
+
+
+// 	/* Impulse		*/ 
+// 	struct	Impulse
+// 	{
+// 		Vec3					m_velocity;
+// 		Vec3					m_drift;
+// 		Integer							m_asVelocity:1;
+// 		Integer							m_asDrift:1;
+// 		Impulse() : m_velocity(0,0,0),m_drift(0,0,0),m_asVelocity(0),m_asDrift(0)	{}
+// 		Impulse						operator -() const
+// 		{
+// 			Impulse i=*this;
+// 			i.m_velocity=-i.m_velocity;
+// 			i.m_drift=-i.m_drift;
+// 			return(i);
+// 		}
+// 		Impulse						operator*(Scalar x) const
+// 		{
+// 			Impulse i=*this;
+// 			i.m_velocity*=x;
+// 			i.m_drift*=x;
+// 			return(i);
+// 		}
+// 	};
+// 	/* Body			*/ 
+// 	struct	Body
+// 	{
+// 		Cluster*			m_soft;
+// 		BulletRigidBody*		m_rigid;
+// 		BulletICollisionObject*	m_collisionObject;
+
+// 		Body() : m_soft(0),m_rigid(0),m_collisionObject(0)				{}
+// 		Body(Cluster* p) : m_soft(p),m_rigid(0),m_collisionObject(0)	{}
+// 		Body(BulletICollisionObject* colObj) : m_soft(0),m_collisionObject(colObj)
+// 		{
+// 			m_rigid = BulletRigidBody::upcast(m_collisionObject);
+// 		}
+
+// 		void						activate() const
+// 		{
+// 			if(m_rigid) 
+// 				m_rigid->activate();
+// 			if (m_collisionObject)
+// 				m_collisionObject->activate();
+
+// 		}
+// 		const Mat33&			invWorldInertia() const
+// 		{
+// 			static const Mat33	iwi(0,0,0,0,0,0,0,0,0);
+// 			if(m_rigid) return(m_rigid->getInvInertiaTensorWorld());
+// 			if(m_soft)	return(m_soft->m_invwi);
+// 			return(iwi);
+// 		}
+// 		Scalar					invMass() const
+// 		{
+// 			if(m_rigid) return(m_rigid->getInvMass());
+// 			if(m_soft)	return(m_soft->m_imass);
+// 			return(0);
+// 		}
+// 		const Xfo&			xform() const
+// 		{
+// 			static const Xfo	identity=Xfo::getIdentity();		
+// 			if(m_collisionObject) return(m_collisionObject->getWorldTransform());
+// 			if(m_soft)	return(m_soft->m_framexform);
+// 			return(identity);
+// 		}
+// 		Vec3					linearVelocity() const
+// 		{
+// 			if(m_rigid) return(m_rigid->getLinearVelocity());
+// 			if(m_soft)	return(m_soft->m_lv);
+// 			return(Vec3(0,0,0));
+// 		}
+// 		Vec3					angularVelocity(in Vec3 rpos) const
+// 		{			
+// 			if(m_rigid) return(BulletCross(m_rigid->getAngularVelocity(),rpos));
+// 			if(m_soft)	return(BulletCross(m_soft->m_av,rpos));
+// 			return(Vec3(0,0,0));
+// 		}
+// 		Vec3					angularVelocity() const
+// 		{			
+// 			if(m_rigid) return(m_rigid->getAngularVelocity());
+// 			if(m_soft)	return(m_soft->m_av);
+// 			return(Vec3(0,0,0));
+// 		}
+// 		Vec3					velocity(in Vec3 rpos) const
+// 		{
+// 			return(linearVelocity()+angularVelocity(rpos));
+// 		}
+// 		void						applyVImpulse(in Vec3 impulse,in Vec3 rpos) const
+// 		{
+// 			if(m_rigid)	m_rigid->applyImpulse(impulse,rpos);
+// 			if(m_soft)	BulletSoftBody::clusterVImpulse(m_soft,rpos,impulse);
+// 		}
+// 		void						applyDImpulse(in Vec3 impulse,in Vec3 rpos) const
+// 		{
+// 			if(m_rigid)	m_rigid->applyImpulse(impulse,rpos);
+// 			if(m_soft)	BulletSoftBody::clusterDImpulse(m_soft,rpos,impulse);
+// 		}		
+// 		void						applyImpulse(const Impulse& impulse,in Vec3 rpos) const
+// 		{
+// 			if(impulse.m_asVelocity)	
+// 			{
+// //				printf("impulse.m_velocity = %f,%f,%f\n",impulse.m_velocity.getX(),impulse.m_velocity.getY(),impulse.m_velocity.getZ());
+// 				applyVImpulse(impulse.m_velocity,rpos);
+// 			}
+// 			if(impulse.m_asDrift)		
+// 			{
+// //				printf("impulse.m_drift = %f,%f,%f\n",impulse.m_drift.getX(),impulse.m_drift.getY(),impulse.m_drift.getZ());
+// 				applyDImpulse(impulse.m_drift,rpos);
+// 			}
+// 		}
+// 		void						applyVAImpulse(in Vec3 impulse) const
+// 		{
+// 			if(m_rigid)	m_rigid->applyTorqueImpulse(impulse);
+// 			if(m_soft)	BulletSoftBody::clusterVAImpulse(m_soft,impulse);
+// 		}
+// 		void						applyDAImpulse(in Vec3 impulse) const
+// 		{
+// 			if(m_rigid)	m_rigid->applyTorqueImpulse(impulse);
+// 			if(m_soft)	BulletSoftBody::clusterDAImpulse(m_soft,impulse);
+// 		}
+// 		void						applyAImpulse(const Impulse& impulse) const
+// 		{
+// 			if(impulse.m_asVelocity)	applyVAImpulse(impulse.m_velocity);
+// 			if(impulse.m_asDrift)		applyDAImpulse(impulse.m_drift);
+// 		}
+// 		void						applyDCImpulse(in Vec3 impulse) const
+// 		{
+// 			if(m_rigid)	m_rigid->applyCentralImpulse(impulse);
+// 			if(m_soft)	BulletSoftBody::clusterDCImpulse(m_soft,impulse);
+// 		}
+// 	};
+// 	/* Joint		*/ 
+// 	struct	Joint
+// 	{
+// 		struct eType { enum _ {
+// 			Linear=0,
+// 			Angular,
+// 			Contact
+// 		};};
+// 		struct Specs
+// 		{
+// 			Specs() : erp(1),cfm(1),split(1) {}
+// 			Scalar	erp;
+// 			Scalar	cfm;
+// 			Scalar	split;
+// 		};
+// 		Body						m_bodies[2];
+// 		Vec3					m_refs[2];
+// 		Scalar					m_cfm;
+// 		Scalar					m_erp;
+// 		Scalar					m_split;
+// 		Vec3					m_drift;
+// 		Vec3					m_sdrift;
+// 		Mat33					m_massmatrix;
+// 		Boolean						m_delete;
+// 		virtual						~Joint() {}
+// 		Joint() : m_delete(false) {}
+// 		virtual void				Prepare(Scalar dt,Integer iterations);
+// 		virtual void				Solve(Scalar dt,Scalar sor)=0;
+// 		virtual void				Terminate(Scalar dt)=0;
+// 		virtual eType::_			Type() const=0;
+// 	};
+// 	/* LJoint		*/ 
+// 	struct	LJoint : Joint
+// 	{
+// 		struct Specs : Joint::Specs
+// 		{
+// 			Vec3	position;
+// 		};		
+// 		Vec3					m_rpos[2];
+// 		void						Prepare(Scalar dt,Integer iterations);
+// 		void						Solve(Scalar dt,Scalar sor);
+// 		void						Terminate(Scalar dt);
+// 		eType::_					Type() const { return(eType::Linear); }
+// 	};
+// 	/* AJoint		*/ 
+// 	struct	AJoint : Joint
+// 	{
+// 		struct IControl
+// 		{
+// 			virtual void			Prepare(AJoint*)				{}
+// 			virtual Scalar		Speed(AJoint*,Scalar current) { return(current); }
+// 			static IControl*		Default()						{ static IControl def;return(&def); }
+// 		};
+// 		struct Specs : Joint::Specs
+// 		{
+// 			Specs() : icontrol(IControl::Default()) {}
+// 			Vec3	axis;
+// 			IControl*	icontrol;
+// 		};		
+// 		Vec3					m_axis[2];
+// 		IControl*					m_icontrol;
+// 		void						Prepare(Scalar dt,Integer iterations);
+// 		void						Solve(Scalar dt,Scalar sor);
+// 		void						Terminate(Scalar dt);
+// 		eType::_					Type() const { return(eType::Angular); }
+// 	};
+// 	/* CJoint		*/ 
+// 	struct	CJoint : Joint
+// 	{		
+// 		Integer							m_life;
+// 		Integer							m_maxlife;
+// 		Vec3					m_rpos[2];
+// 		Vec3					m_normal;
+// 		Scalar					m_friction;
+// 		void						Prepare(Scalar dt,Integer iterations);
+// 		void						Solve(Scalar dt,Scalar sor);
+// 		void						Terminate(Scalar dt);
+// 		eType::_					Type() const { return(eType::Contact); }
+// 	};
+/* Config		*/ 
+object BulletSoftBodyConfig : BulletTypedObject
+{
+	Data pointer;
+};
+
+function  BulletSoftBodyConfig(Data pointer){
+	this.pointer = pointer;
+}
+
+function Data BulletSoftBodyConfig.getPointer(){
+	return this.pointer;
+}
+
+function UInt32	BulletSoftBodyConfig.getAeromodel() = 'BulletSoftBodyConfig_getAeromodel';		// Aerodynamic model (default: V_Point)
+function BulletSoftBodyConfig.setAeromodel!(UInt32	value) = 'BulletSoftBodyConfig_setAeromodel';		// Aerodynamic model (default: V_Point)
+function Scalar BulletSoftBodyConfig.getVCF() = 'BulletSoftBodyConfig_getVCF';			// Velocities correction factor (Baumgarte)
+function BulletSoftBodyConfig.setVCF!(Scalar value) = 'BulletSoftBodyConfig_setVCF';			// Velocities correction factor (Baumgarte)
+function Scalar BulletSoftBodyConfig.getDP() = 'BulletSoftBodyConfig_getDP';			// Damping coefficient [0,1]
+function BulletSoftBodyConfig.setDP!(Scalar value) = 'BulletSoftBodyConfig_setDP';			// Damping coefficient [0,1]
+function Scalar BulletSoftBodyConfig.getDG() = 'BulletSoftBodyConfig_getDG';			// Drag coefficient [0,+inf]
+function BulletSoftBodyConfig.setDG!(Scalar value) = 'BulletSoftBodyConfig_setDG';			// Drag coefficient [0,+inf]
+function Scalar BulletSoftBodyConfig.getLF() = 'BulletSoftBodyConfig_getLF';			// Lift coefficient [0,+inf]
+function BulletSoftBodyConfig.setLF!(Scalar value) = 'BulletSoftBodyConfig_setLF';			// Lift coefficient [0,+inf]
+function Scalar BulletSoftBodyConfig.getPR() = 'BulletSoftBodyConfig_getPR';			// Pressure coefficient [-inf,+inf]
+function BulletSoftBodyConfig.setPR!(Scalar value) = 'BulletSoftBodyConfig_setPR';			// Pressure coefficient [-inf,+inf]
+function Scalar BulletSoftBodyConfig.getVC() = 'BulletSoftBodyConfig_getVC';			// Volume conversation coefficient [0,+inf]
+function BulletSoftBodyConfig.setVC!(Scalar value) = 'BulletSoftBodyConfig_setVC';			// Volume conversation coefficient [0,+inf]
+function Scalar BulletSoftBodyConfig.getDF() = 'BulletSoftBodyConfig_getDF';			// Dynamic friction coefficient [0,1]
+function BulletSoftBodyConfig.setDF!(Scalar value) = 'BulletSoftBodyConfig_setDF';			// Dynamic friction coefficient [0,1]
+function Scalar BulletSoftBodyConfig.getMT() = 'BulletSoftBodyConfig_getMT';			// Pose matching coefficient [0,1]		
+function BulletSoftBodyConfig.setMT!(Scalar value) = 'BulletSoftBodyConfig_setMT';			// Pose matching coefficient [0,1]		
+function Scalar BulletSoftBodyConfig.getCHR() = 'BulletSoftBodyConfig_getCHR';			// Rigid contacts hardness [0,1]
+function BulletSoftBodyConfig.setCHR!(Scalar value) = 'BulletSoftBodyConfig_setCHR';			// Rigid contacts hardness [0,1]
+function Scalar BulletSoftBodyConfig.getKHR() = 'BulletSoftBodyConfig_getKHR';			// Kinetic contacts hardness [0,1]
+function BulletSoftBodyConfig.setKHR!(Scalar value) = 'BulletSoftBodyConfig_setKHR';			// Kinetic contacts hardness [0,1]
+function Scalar BulletSoftBodyConfig.getSHR() = 'BulletSoftBodyConfig_getSHR';			// Soft contacts hardness [0,1]
+function BulletSoftBodyConfig.setSHR!(Scalar value) = 'BulletSoftBodyConfig_setSHR';			// Soft contacts hardness [0,1]
+function Scalar BulletSoftBodyConfig.getAHR() = 'BulletSoftBodyConfig_getAHR';			// Anchors hardness [0,1]
+function BulletSoftBodyConfig.setAHR!(Scalar value) = 'BulletSoftBodyConfig_setAHR';			// Anchors hardness [0,1]
+function Scalar BulletSoftBodyConfig.getSRHR_CL() = 'BulletSoftBodyConfig_getSRHR_CL';		// Soft vs rigid hardness [0,1] (cluster only)
+function BulletSoftBodyConfig.setSRHR_CL!(Scalar value) = 'BulletSoftBodyConfig_setSRHR_CL';		// Soft vs rigid hardness [0,1] (cluster only)
+function Scalar BulletSoftBodyConfig.getSKHR_CL() = 'BulletSoftBodyConfig_getSKHR_CL';		// Soft vs kinetic hardness [0,1] (cluster only)
+function BulletSoftBodyConfig.setSKHR_CL!(Scalar value) = 'BulletSoftBodyConfig_setSKHR_CL';		// Soft vs kinetic hardness [0,1] (cluster only)
+function Scalar BulletSoftBodyConfig.getSSHR_CL() = 'BulletSoftBodyConfig_getSSHR_CL';		// Soft vs soft hardness [0,1] (cluster only)
+function BulletSoftBodyConfig.setSSHR_CL!(Scalar value) = 'BulletSoftBodyConfig_setSSHR_CL';		// Soft vs soft hardness [0,1] (cluster only)
+function Scalar BulletSoftBodyConfig.getSR_SPLT_CL() = 'BulletSoftBodyConfig_getSR_SPLT_CL';	// Soft vs rigid impulse split [0,1] (cluster only)
+function BulletSoftBodyConfig.setSR_SPLT_CL!(Scalar value) = 'BulletSoftBodyConfig_setSR_SPLT_CL';	// Soft vs rigid impulse split [0,1] (cluster only)
+function Scalar BulletSoftBodyConfig.getSK_SPLT_CL() = 'BulletSoftBodyConfig_getSK_SPLT_CL';	// Soft vs rigid impulse split [0,1] (cluster only)
+function BulletSoftBodyConfig.setSK_SPLT_CL!(Scalar value) = 'BulletSoftBodyConfig_setSK_SPLT_CL';	// Soft vs rigid impulse split [0,1] (cluster only)
+function Scalar BulletSoftBodyConfig.getSS_SPLT_CL() = 'BulletSoftBodyConfig_getSS_SPLT_CL';	// Soft vs rigid impulse split [0,1] (cluster only)
+function BulletSoftBodyConfig.setSS_SPLT_CL!(Scalar value) = 'BulletSoftBodyConfig_setSS_SPLT_CL';	// Soft vs rigid impulse split [0,1] (cluster only)
+function Scalar BulletSoftBodyConfig.getMaxvolume() = 'BulletSoftBodyConfig_getMaxvolume';		// Maximum volume ratio for pose
+function BulletSoftBodyConfig.setMaxvolume!(Scalar value) = 'BulletSoftBodyConfig_setMaxvolume';		// Maximum volume ratio for pose
+function Scalar BulletSoftBodyConfig.getTimescale() = 'BulletSoftBodyConfig_getTimescale';		// Time scale
+function BulletSoftBodyConfig.setTimescale!(Scalar value) = 'BulletSoftBodyConfig_setTimescale';		// Time scale
+function Integer BulletSoftBodyConfig.getViterations() = 'BulletSoftBodyConfig_getViterations';	// Velocities solver iterations
+function BulletSoftBodyConfig.setViterations!(Integer value) = 'BulletSoftBodyConfig_setViterations';	// Velocities solver iterations
+function Integer BulletSoftBodyConfig.getPiterations() = 'BulletSoftBodyConfig_getPiterations';	// Positions solver iterations
+function BulletSoftBodyConfig.setPiterations!(Integer value) = 'BulletSoftBodyConfig_setPiterations';	// Positions solver iterations
+function Integer BulletSoftBodyConfig.getDiterations() = 'BulletSoftBodyConfig_getDiterations';	// Drift solver iterations
+function BulletSoftBodyConfig.setDiterations!(Integer value) = 'BulletSoftBodyConfig_setDiterations';	// Drift solver iterations
+function Integer BulletSoftBodyConfig.getCiterations() = 'BulletSoftBodyConfig_getCiterations';	// Cluster solver iterations
+function BulletSoftBodyConfig.setCiterations!(Integer value) = 'BulletSoftBodyConfig_setCiterations';	// Cluster solver iterations
+function Integer BulletSoftBodyConfig.getCollisions() = 'BulletSoftBodyConfig_getCollisions';		// Collisions flags
+function BulletSoftBodyConfig.setCollisions!(Integer value) = 'BulletSoftBodyConfig_setCollisions';		// Collisions flags
+// 	tVSolverArray			m_vsequence;	// Velocity solvers sequence
+// 	tPSolverArray			m_psequence;	// Position solvers sequence
+// 	tPSolverArray			m_dsequence;	// Drift solvers sequence
+// };
+// 	/* SolverState	*/ 
+// 	struct	SolverState
+// 	{
+// 		Scalar				sdt;			// dt*timescale
+// 		Scalar				isdt;			// 1/sdt
+// 		Scalar				velmrg;			// velocity margin
+// 		Scalar				radmrg;			// radial margin
+// 		Scalar				updmrg;			// Update margin
+// 	};	
+// 	/// RayFromToCaster takes a ray from, ray to (instead of direction!)
+// 	struct	RayFromToCaster : BulletDbvt::ICollide
+// 	{
+// 		Vec3			m_rayFrom;
+// 		Vec3			m_rayTo;
+// 		Vec3			m_rayNormalizedDirection;
+// 		Scalar			m_mint;
+// 		Face*				m_face;
+// 		Integer					m_tests;
+// 		RayFromToCaster(in Vec3 rayFrom,in Vec3 rayTo,Scalar mxt);
+// 		void					Process(const BulletDbvtNode* leaf);
+
+// 		static inline Scalar	rayFromToTriangle(in Vec3 rayFrom,
+// 			in Vec3 rayTo,
+// 			in Vec3 rayNormalizedDirection,
+// 			in Vec3 a,
+// 			in Vec3 b,
+// 			in Vec3 c,
+// 			Scalar maxt=SIMD_INFINITY);
+// 	};
+
+// 	//
+// 	// Typedefs
+// 	//
+
+// 	typedef void								(*psolver_t)(BulletSoftBody*,Scalar,Scalar);
+// 	typedef void								(*vsolver_t)(BulletSoftBody*,Scalar);
+// 	typedef BulletAlignedObjectArray<Cluster*>		tClusterArray;
+// 	typedef BulletAlignedObjectArray<Note>			tNoteArray;
+// 	typedef BulletAlignedObjectArray<Node>			tNodeArray;
+// 	typedef BulletAlignedObjectArray<BulletDbvtNode*>	tLeafArray;
+// 	typedef BulletAlignedObjectArray<Link>			tLinkArray;
+// 	typedef BulletAlignedObjectArray<Face>			tFaceArray;
+// 	typedef BulletAlignedObjectArray<Tetra>			tTetraArray;
+// 	typedef BulletAlignedObjectArray<Anchor>		tAnchorArray;
+// 	typedef BulletAlignedObjectArray<RContact>		tRContactArray;
+// 	typedef BulletAlignedObjectArray<SContact>		tSContactArray;
+// 	typedef BulletAlignedObjectArray<BulletSoftBodyMaterial*>		tMaterialArray;
+// 	typedef BulletAlignedObjectArray<Joint*>		tJointArray;
+// 	typedef BulletAlignedObjectArray<BulletSoftBody*>	tSoftBodyArray;	
+
+// 	//
+// 	// Fields
+// 	//
+
+// 	Config					m_cfg;			// Configuration
+// 	SolverState				m_sst;			// Solver state
+// 	Pose					m_pose;			// Pose
+// 	void*					m_tag;			// User data
+// 	BulletSoftBodyWorldInfo*	m_worldInfo;	// World info
+// 	tNoteArray				m_notes;		// Notes
+// 	tNodeArray				m_nodes;		// Nodes
+// 	tLinkArray				m_links;		// Links
+// 	tFaceArray				m_faces;		// Faces
+// 	tTetraArray				m_tetras;		// Tetras
+// 	tAnchorArray			m_anchors;		// Anchors
+// 	tRContactArray			m_rcontacts;	// Rigid contacts
+// 	tSContactArray			m_scontacts;	// Soft contacts
+// 	tJointArray				m_joints;		// Joints
+// 	tMaterialArray			m_materials;	// Materials
+// 	Scalar				m_timeacc;		// Time accumulator
+// 	Vec3				m_bounds[2];	// Spatial bounds	
+// 	Boolean					m_bUpdateRtCst;	// Update runtime constants
+// 	BulletDbvt					m_ndbvt;		// Nodes tree
+// 	BulletDbvt					m_fdbvt;		// Faces tree
+// 	BulletDbvt					m_cdbvt;		// Clusters tree
+// 	tClusterArray			m_clusters;		// Clusters
+
+// 	BulletAlignedObjectArray<Boolean>m_clusterConnectivity;//cluster connectivity, for self-collision
+
+// 	Xfo			m_initialWorldTransform;
+
+// 	Vec3			m_windVelocity;
+	//
+	// Api
+	//
+
+
+///The BulletSoftBody is an class to simulate cloth and volumetric soft bodies. 
+///There is two-way interaction between BulletSoftBody and BulletRigidBody/BulletICollisionObject.
+object	BulletSoftBody : BulletICollisionObject
+{
+	Data pointer;
+
+	BulletSoftBodyWorldInfo __worldInfo;
+	// BulletICollisionObject m_collisionDisabledObjects[];
+	BulletCollisionShape __collisionShape;
+	BulletSoftBodySolver __softBodySolver; // The solver object that handles this soft body
+	Object __userPointer;
+};
+
+
+
+function Object BulletSoftBody.getObject(){
+	return this;
+}
+function Data BulletSoftBody.getPointer(){
+	return this.pointer;
+}
+
+	/* ctor																			*/ 
+function BulletSoftBody(){
+}														 
+function BulletSoftBody(BulletSoftBodyWorldInfo worldInfo, in Vec3 x[]){
+	this.__worldInfo = worldInfo;
+	Scalar m[];
+	this.__construct(worldInfo, x, m);
+}
+function BulletSoftBody(BulletSoftBodyWorldInfo worldInfo, in Vec3 x[],	in Scalar m[]){
+	this.__worldInfo = worldInfo;
+	this.__construct(worldInfo, x, m);
+}
+function BulletSoftBody.__construct!(BulletSoftBodyWorldInfo worldInfo, in Vec3 x[], in Scalar m[]) = 'BulletSoftBody_constructWorldInfo1';
+
+function BulletSoftBody(BulletSoftBodyWorldInfo worldInfo){
+	this.__worldInfo = worldInfo;
+	this.__construct(worldInfo);
+}
+function BulletSoftBody.__construct!(BulletSoftBodyWorldInfo worldInfo) = 'BulletSoftBody_constructWorldInfo2';
+
+function ~BulletSoftBody(){
+	this.__destroy();
+}
+function BulletSoftBody.__destroy!() = 'BulletSoftBody_destroy';
+
+// void	initDefaults();
+
+// /* dtor																	*/ 
+// virtual ~BulletSoftBody();
+// /* Check for existing link												*/ 
+
+// BulletAlignedObjectArray<Integer>	m_userIndexMapping;
+
+function BulletSoftBodyConfig BulletSoftBody.getConfig(){
+	return BulletSoftBodyConfig(this.__getConfigData());
+}
+// function BulletSoftBodyConfig BulletSoftBody.getConfig() = 'BulletSoftBody_getConfig';
+function Data BulletSoftBody.__getConfigData() = 'BulletSoftBody_getConfigData';
+
+function BulletSoftBodyMaterial[] BulletSoftBody.getMaterials(){
+	Data materialDatas[] = this.getMaterialDatas();
+	BulletSoftBodyMaterial materials[];
+	for(Integer i=0; i<materialDatas.size; i++){
+		materials.push(BulletSoftBodyMaterial(materialDatas[i]));
+	}
+	return materials;
+}
+function Data[] BulletSoftBody.getMaterialDatas() = 'BulletSoftBody_getMaterials';
+
+function BulletSoftBodyWorldInfo BulletSoftBody.getWorldInfo()
+{
+	return this.__worldInfo;
+}
+
+// ///@todo: avoid internal softbody shape hack and move collision code to collision library
+function BulletSoftBody.setCollisionShape!(BulletCollisionShape collisionShape)
+{
+	this.__setCollisionShape(collisionShape);
+	this.__collisionShape = collisionShape;
+}
+function BulletSoftBody.__setCollisionShape!(BulletCollisionShape collisionShape) = "BulletSoftBody_setCollisionShape";
+
+function BulletCollisionShape BulletSoftBody.getCollisionShape!(){
+	this.__collisionShape = this.__getCollisionShape();
+	return this.__collisionShape;
+}
+function BulletSoftBodyCollisionShape BulletSoftBody.__getCollisionShape() = "BulletSoftBody_getCollisionShape";
+
+	// Boolean				checkLink(	Integer node0,
+	// 	Integer node1) const;
+	// Boolean				checkLink(	const Node* node0,
+	// 	const Node* node1) const;
+	// /* Check for existring face												*/ 
+	// Boolean				checkFace(	Integer node0,
+	// 	Integer node1,
+	// 	Integer node2) const;
+/* Append material														*/ 
+function BulletSoftBodyMaterial BulletSoftBody.appendMaterial!(){
+	return BulletSoftBodyMaterial(this.__appendMaterial());
+}
+function Data BulletSoftBody.__appendMaterial!() = "BulletSoftBody_appendMaterial";
+	// /* Append note															*/ 
+	// void				appendNote(	const char* text,
+	// 	in Vec3 o,
+	// 	const BulletVector4& c=BulletVector4(1,0,0,0),
+	// 	Node* n0=0,
+	// 	Node* n1=0,
+	// 	Node* n2=0,
+	// 	Node* n3=0);
+	// void				appendNote(	const char* text,
+	// 	in Vec3 o,
+	// 	Node* feature);
+	// void				appendNote(	const char* text,
+	// 	in Vec3 o,
+	// 	Link* feature);
+	// void				appendNote(	const char* text,
+	// 	in Vec3 o,
+	// 	Face* feature);
+	// /* Append node															*/ 
+	// void				appendNode(	in Vec3 x,Scalar m);
+
+
+function UInt32 BulletSoftBody.getNumNodes() = 'BulletSoftBody_getNumNodes';
+function BulletSoftBodyNode BulletSoftBody.getNode(Integer nodeIndex) = 'BulletSoftBody_getNode';
+function BulletSoftBody.setNode!(Integer nodeIndex, BulletSoftBodyNode node) = 'BulletSoftBody_setNode';
+
+/* Append link															*/ 
+
+function BulletSoftBody.appendLink!(){
+	this.appendLink(-1, null);
+}
+function BulletSoftBody.appendLink!(Integer model){
+	this.appendLink(model, null);
+}
+function BulletSoftBody.appendLink!(Integer model, BulletSoftBodyMaterial mat) = "BulletSoftBody_appendLink1";
+function BulletSoftBody.appendLink!(Integer node0, Integer node1){
+	this.appendLink(node0, node1, null, false);
+}
+function BulletSoftBody.appendLink!(Integer node0, Integer node1, BulletSoftBodyMaterial mat){
+	this.appendLink(node0, node1, mat, false);
+}
+function BulletSoftBody.appendLink!(Integer node0, Integer node1, BulletSoftBodyMaterial mat, Boolean bcheckexist) = "BulletSoftBody_appendLink2";
+// function BulletSoftBody.appendLink(Node node0, Node node1){
+// 	this.appendLink(node0, node1, null, false);
+// }
+// function BulletSoftBody.appendLink(Node node0, Node node1, BulletSoftBodyMaterial mat){
+// 	this.appendLink(node0, node1, mat, false);
+// }
+// function BulletSoftBody.appendLink(Node node0, Node node1, BulletSoftBodyMaterial mat, Boolean bcheckexist) = "BulletSoftBody_appendLink3";
+
+/* Append face															*/ 
+
+function BulletSoftBody.appendFace!(){
+	this.appendFace(-1, null);
+}
+function BulletSoftBody.appendFace!(Integer model){
+	this.appendFace(model, null);
+}
+function BulletSoftBody.appendFace!(Integer model, BulletSoftBodyMaterial mat) = "BulletSoftBody_appendFace1";
+function BulletSoftBody.appendFace!(Integer node0, Integer node1, Integer node2){
+	this.appendFace(node0, node1, node2, null);
+}
+function BulletSoftBody.appendFace!(Integer node0, Integer node1, Integer node2, BulletSoftBodyMaterial mat) = "BulletSoftBody_appendFace2";
+
+	// void			appendTetra(Integer model,BulletSoftBodyMaterial* mat);
+	// //
+	// void			appendTetra(Integer node0,
+	// 									Integer node1,
+	// 									Integer node2,
+	// 									Integer node3,
+	// 									BulletSoftBodyMaterial* mat=0);
+
+
+/* Append anchor														*/ 
+function BulletSoftBody.appendAnchor!(Integer node, BulletRigidBody body, Boolean disableCollisionBetweenLinkedBodies,Scalar influence) = 'BulletSoftBody_appendAnchor';
+function BulletSoftBody.appendAnchor!(Integer node, BulletRigidBody body) = 'BulletSoftBody_appendAnchor2';
+function BulletSoftBody.appendAnchor!(Integer node, BulletRigidBody body, in Vec3 localPivot) = 'BulletSoftBody_appendAnchor3';
+function BulletSoftBody.appendAnchor!(Integer node, BulletRigidBody body, in Vec3 localPivot, Boolean disableCollisionBetweenLinkedBodies,Scalar influence) = 'BulletSoftBody_appendAnchor4';
+	
+
+	// /* Append linear joint													*/ 
+	// void				appendLinearJoint(const LJoint::Specs& specs,Cluster* body0,Body body1);
+	// void				appendLinearJoint(const LJoint::Specs& specs,Body body=Body());
+	// void				appendLinearJoint(const LJoint::Specs& specs,BulletSoftBody* body);
+	// /* Append linear joint													*/ 
+	// void				appendAngularJoint(const AJoint::Specs& specs,Cluster* body0,Body body1);
+	// void				appendAngularJoint(const AJoint::Specs& specs,Body body=Body());
+	// void				appendAngularJoint(const AJoint::Specs& specs,BulletSoftBody* body);
+/* Add force (or gravity) to the entire body							*/ 
+function BulletSoftBody.addForce!(Vec3 force) = 'BulletSoftBody_addForce';
+/* Add force (or gravity) to a node of the body							*/ 
+function BulletSoftBody.addForce!(Vec3 force,	Integer node) = 'BulletSoftBody_addForce';
+/* Add velocity to the entire body										*/ 
+function BulletSoftBody.addVelocity!(Vec3 velocity) = 'BulletSoftBody_addVelocity';
+
+/* Set velocity for the entire body										*/ 
+function BulletSoftBody.setVelocity!(Vec3 velocity) = 'BulletSoftBody_setVelocity';
+
+/* Add velocity to a node of the body									*/ 
+function BulletSoftBody.addVelocity!(Vec3 velocity, Integer node) = 'BulletSoftBody_addVelocity';
+/* Set mass																*/ 
+function BulletSoftBody.setMass!(Integer node, Scalar mass) = "BulletSoftBody_setMass";
+/* Get mass																*/ 
+function Scalar BulletSoftBody.getMass(Integer node) = "BulletSoftBody_getMass";
+
+/* Get total mass														*/ 
+function Scalar	BulletSoftBody.getTotalMass() = 'BulletSoftBody_getTotalMass';
+/* Set total mass (weighted by previous masses)							*/ 
+function BulletSoftBody.setTotalMass!(Scalar mas) = 'BulletSoftBody_setTotalMass1';
+function BulletSoftBody.setTotalMass!(Scalar mass,Boolean fromfaces) = 'BulletSoftBody_setTotalMass2';
+/* Set total density													*/ 
+function BulletSoftBody.setTotalDensity!(Scalar density) = 'BulletSoftBody_setTotalDensity';
+/* Set volume mass (using tetrahedrons)									*/
+function BulletSoftBody.setVolumeMass!(Scalar mass) = 'BulletSoftBody_setVolumeMass';
+/* Set volume density (using tetrahedrons)								*/
+function BulletSoftBody.setVolumeDensity!(Scalar density) = 'BulletSoftBody_setVolumeDensity';
+/* Transform															*/ 
+function BulletSoftBody.transform!(Xfo trs) = 'BulletSoftBody_transform';
+/* Translate															*/ 
+function BulletSoftBody.translate!(in Vec3 trs) = 'BulletSoftBody_translate';
+/* Rotate															*/ 
+function BulletSoftBody.rotate!(Quat rot) = 'BulletSoftBody_rotate';
+/* Scale																*/ 
+function BulletSoftBody.scale!(in Vec3 scl) = 'BulletSoftBody_scale';
+function Xfo BulletSoftBody.getInitialWorldTransform() = 'BulletSoftBody_getInitialWorldTransform';
+
+/* Set current state as pose											*/ 
+function BulletSoftBody.setPose!(Boolean bvolume, Boolean bframe) = 'BulletSoftBody_setPose';
+/* Return the volume													*/ 
+function Scalar BulletSoftBody.getVolume() = 'BulletSoftBody_getVolume';
+	// /* Cluster count														*/ 
+	// Integer					clusterCount() const;
+	// /* Cluster center of mass												*/ 
+	// static Vec3	clusterCom(const Cluster* cluster);
+	// Vec3			clusterCom(Integer cluster) const;
+	// /* Cluster velocity at rpos												*/ 
+	// static Vec3	clusterVelocity(const Cluster* cluster,in Vec3 rpos);
+	// /* Cluster impulse														*/ 
+	// static void			clusterVImpulse(Cluster* cluster,in Vec3 rpos,in Vec3 impulse);
+	// static void			clusterDImpulse(Cluster* cluster,in Vec3 rpos,in Vec3 impulse);
+	// static void			clusterImpulse(Cluster* cluster,in Vec3 rpos,const Impulse& impulse);
+	// static void			clusterVAImpulse(Cluster* cluster,in Vec3 impulse);
+	// static void			clusterDAImpulse(Cluster* cluster,in Vec3 impulse);
+	// static void			clusterAImpulse(Cluster* cluster,const Impulse& impulse);
+	// static void			clusterDCImpulse(Cluster* cluster,in Vec3 impulse);
+/* Generate bending constraints based on distance in the adjency graph	*/ 
+function Integer BulletSoftBody.generateBendingConstraints(	Integer distance){
+	return this.generateBendingConstraints(distance, null);
+}
+function Integer BulletSoftBody.generateBendingConstraints(	Integer distance, BulletSoftBodyMaterial mat) =  "BulletSoftBody_generateBendingConstraints";
+
+/* Randomize constraints to reduce solver bias							*/ 
+function  BulletSoftBody.randomizeConstraints!() = 'BulletSoftBody_randomizeConstraints';
+	// /* Release clusters														*/ 
+	// void				releaseCluster(Integer index);
+	// void				releaseClusters();
+	// /* Generate clusters (K-mean)											*/ 
+	///generateClusters with k=0 will create a convex cluster for each tetrahedron or triangle
+	///otherwise an approximation will be used (better performance)
+function Integer	BulletSoftBody.generateClusters(Integer k){
+	return this.__generateClusters(k, 8192);
+}
+function Integer	BulletSoftBody.__generateClusters(Integer k,Integer maxiterations) = "BulletSoftBody_generateClusters";
+	// /* Refine																*/ 
+	// void				refine(ImplicitFn* ifn,Scalar accurary,Boolean cut);
+	// /* CutLink																*/ 
+	// Boolean				cutLink(Integer node0,Integer node1,Scalar position);
+	// Boolean				cutLink(const Node* node0,const Node* node1,Scalar position);
+
+	// ///Ray casting using rayFrom and rayTo in worldspace, (not direction!)
+	// Boolean				rayTest(in Vec3 rayFrom,
+	// 	in Vec3 rayTo,
+	// 	sRayCast& results);
+	// /* Solver presets														*/ 
+	// void				setSolver(eSolverPresets::_ preset);
+	// /* predictMotion														*/ 
+	// void				predictMotion(Scalar dt);
+	// /* solveConstraints														*/ 
+	// void				solveConstraints();
+	// /* staticSolve															*/ 
+	// void				staticSolve(Integer iterations);
+	// /* solveCommonConstraints												*/ 
+	// static void			solveCommonConstraints(BulletSoftBody** bodies,Integer count,Integer iterations);
+	// /* solveClusters														*/ 
+	// static void			solveClusters(const BulletAlignedObjectArray<BulletSoftBody*>& bodies);
+	// /* integrateMotion														*/ 
+	// void				integrateMotion();
+	// /* defaultCollisionHandlers												*/ 
+	// void				defaultCollisionHandler(BulletICollisionObject* pco);
+	// void				defaultCollisionHandler(BulletSoftBody* psb);
+
+
+
+	// //
+	// // Functionality to deal with new accelerated solvers.
+	// //
+
+	// /**
+	//  * Set a wind velocity for interaction with the air.
+	//  */
+	// void setWindVelocity( const Vec3 &velocity );
+
+
+	// /**
+	//  * Return the wind velocity for interaction with the air.
+	//  */
+	// in Vec3 getWindVelocity();
+
+//
+// Set the solver that handles this soft body
+// Should not be allowed to get out of sync with reality
+// Currently called internally on addition to the world
+function BulletSoftBody.setSoftBodySolver!( BulletSoftBodySolver softBodySolver )
+{
+	this.__softBodySolver = softBodySolver;
+	this.__setSoftBodySolver(softBodySolver);
+}
+function BulletSoftBody.__setSoftBodySolver!( BulletSoftBodySolver softBodySolver ) = "BulletSoftBody_setSoftBodySolver";
+
+//
+// Return the solver that handles this soft body
+// 
+function BulletSoftBodySolver BulletSoftBody.getSoftBodySolver()
+{
+	return this.__softBodySolver;
+}
+
+
+
+	// //
+	// // Cast
+	// //
+
+	// static const BulletSoftBody*	upcast(const BulletICollisionObject* colObj)
+	// {
+	// 	if (colObj->getInternalType()==CO_SOFT_BODY)
+	// 		return (const BulletSoftBody*)colObj;
+	// 	return 0;
+	// }
+	// static BulletSoftBody*			upcast(BulletICollisionObject* colObj)
+	// {
+	// 	if (colObj->getInternalType()==CO_SOFT_BODY)
+	// 		return (BulletSoftBody*)colObj;
+	// 	return 0;
+	// }
+
+	// //
+	// // ::BulletICollisionObject
+	// //
+
+	// virtual void getAabb(io Vec3 aabbMin, io Vec3 aabbMax) const
+	// {
+	// 	aabbMin = m_bounds[0];
+	// 	aabbMax = m_bounds[1];
+	// }
+	// //
+	// // Private
+	// //
+	// void				pointersToIndices();
+	// void				indicesToPointers(const Integer* map=0);
+
+	// Integer					rayTest(in Vec3 rayFrom,in Vec3 rayTo,
+	// 	Scalar& mint,eFeature::_& feature,Integer& index,Boolean bcountonly) const;
+	// void				initializeFaceTree();
+	// Vec3			evaluateCom() const;
+	// Boolean				checkContact(BulletICollisionObject* colObj,in Vec3 x,Scalar margin,BulletSoftBody::sCti& cti) const;
+	// void				updateNormals();
+	// void				updateBounds();
+	// void				updatePose();
+	// void				updateConstants();
+	// void				initializeClusters();
+	// void				updateClusters();
+	// void				cleanupClusters();
+	// void				prepareClusters(Integer iterations);
+	// void				solveClusters(Scalar sor);
+	// void				applyClusters(Boolean drift);
+	// void				dampClusters();
+	// void				applyForces();	
+	// static void			PSolve_Anchors(BulletSoftBody* psb,Scalar kst,Scalar ti);
+	// static void			PSolve_RContacts(BulletSoftBody* psb,Scalar kst,Scalar ti);
+	// static void			PSolve_SContacts(BulletSoftBody* psb,Scalar,Scalar ti);
+	// static void			PSolve_Links(BulletSoftBody* psb,Scalar kst,Scalar ti);
+	// static void			VSolve_Links(BulletSoftBody* psb,Scalar kst);
+	// static psolver_t	getSolver(ePSolver::_ solver);
+	// static vsolver_t	getSolver(eVSolver::_ solver);
+
+
+	// virtual	Integer	calculateSerializeBufferSize()	const;
+
+	// ///fills the dataBuffer and returns the struct name (and 0 on failure)
+	// virtual	const char*	serialize(void* dataBuffer,  class BulletSerializer* serializer) const;
+
+	//virtual void serializeSingleObject(class BulletSerializer* serializer) const;
+
+////////////////////////////////////////////////////////
+// From BulletICollisionObject
+
+function Boolean BulletSoftBody.mergesSimulationIslands() = 'BulletSoftBody_mergesSimulationIslands';
+
+function Vec3 BulletSoftBody.getAnisotropicFriction() = 'BulletSoftBody_getAnisotropicFriction';
+function BulletSoftBody.setAnisotropicFriction!(Vec3 anisotropicFriction) = 'BulletSoftBody_setAnisotropicFriction';
+function Boolean	BulletSoftBody.hasAnisotropicFriction() = 'BulletSoftBody_hasAnisotropicFriction';
+
+///the constraint solver can discard solving contacts, if the distance is above this threshold. 0 by default.
+///Note that using contacts with positive distance can improve stability. It increases, however, the chance of colliding with degerate contacts, such as 'interior' triangle edges
+function BulletSoftBody.setContactProcessingThreshold!( Scalar contactProcessingThreshold) = 'BulletSoftBody_setContactProcessingThreshold';
+function Scalar	BulletSoftBody.getContactProcessingThreshold() = 'BulletSoftBody_getContactProcessingThreshold';
+
+function Boolean BulletSoftBody.isStaticObject() = 'BulletSoftBody_isStaticObject';
+
+function Boolean BulletSoftBody.isKinematicObject() = 'BulletSoftBody_isKinematicObject';
+
+function Boolean BulletSoftBody.isStaticOrKinematicObject() = 'BulletSoftBody_isStaticOrKinematicObject';
+
+function Boolean BulletSoftBody.hasContactResponse() = 'BulletSoftBody_hasContactResponse';
+
+function BulletSoftBody.setCollisionShape!(BulletCollisionShape collisionShape){
+	this.__collisionShape = collisionShape;
+	this.__setCollisionShape(collisionShape);
+}
+function BulletSoftBody.__setCollisionShape!(BulletCollisionShape collisionShape) = 'BulletSoftBody_setCollisionShape';
+
+function BulletCollisionShape BulletSoftBody.getCollisionShape(){
+	return this.__collisionShape;
+}
+
+
+// BulletCollisionShape	getRootCollisionShape();
+
+function Integer	BulletSoftBody.getActivationState() = 'BulletSoftBody_getActivationState';
+
+function BulletSoftBody.setActivationState!(Integer newState) = 'BulletSoftBody_setActivationState';
+
+function BulletSoftBody.setDeactivationTime!(Scalar time) = 'BulletSoftBody_setDeactivationTime';
+function Scalar	BulletSoftBody.getDeactivationTime() = 'BulletSoftBody_getDeactivationTime';
+
+function BulletSoftBody.forceActivationState!(Integer newState) = 'BulletSoftBody_forceActivationState';
+
+// activate();
+
+function BulletSoftBody.activate!(){
+	this.activate(false);
+}
+function BulletSoftBody.activate!(Boolean forceActivation) = 'BulletSoftBody_activate';
+
+function Boolean BulletSoftBody.isActive() = 'BulletSoftBody_isActive';
+
+function BulletSoftBody.setRestitution!(Scalar rest) = 'BulletSoftBody_setRestitution';
+function Scalar	BulletSoftBody.getRestitution() = 'BulletSoftBody_getRestitution';
+function BulletSoftBody.setFriction!(Scalar frict) = 'BulletSoftBody_setFriction';
+function Scalar	BulletSoftBody.getFriction() = 'BulletSoftBody_getFriction';
+
+function Xfo	BulletSoftBody.getWorldTransform() = 'BulletSoftBody_getWorldTransform';
+
+function BulletSoftBody.setWorldTransform!(Xfo worldTrans) = 'BulletSoftBody_setWorldTransform';
+
+
+function BulletBroadphaseProxy BulletSoftBody.getBroadphaseHandle() = 'BulletSoftBody_getBroadphaseHandle';
+
+// setBroadphaseHandle(BulletBroadphaseProxy handle);
+
+function Xfo	BulletSoftBody.getInterpolationWorldTransform() = 'BulletSoftBody_getInterpolationWorldTransform';
+
+function BulletSoftBody.setInterpolationWorldTransform!(Xfo trans) = 'BulletSoftBody_setInterpolationWorldTransform';
+
+function BulletSoftBody.setInterpolationLinearVelocity!(Vec3 linvel) = 'BulletSoftBody_setInterpolationLinearVelocity';
+
+function BulletSoftBody.setInterpolationAngularVelocity!(Vec3 angvel) = 'BulletSoftBody_setInterpolationAngularVelocity';
+
+function Vec3	BulletSoftBody.getInterpolationLinearVelocity() = 'BulletSoftBody_getInterpolationLinearVelocity';
+
+function Vec3	BulletSoftBody.getInterpolationAngularVelocity() = 'BulletSoftBody_getInterpolationAngularVelocity';
+
+function Integer BulletSoftBody.getIslandTag() = 'BulletSoftBody_getIslandTag';
+
+function BulletSoftBody.setIslandTag!(Integer tag) = 'BulletSoftBody_setIslandTag';
+
+function Integer BulletSoftBody.getCompanionId() = 'BulletSoftBody_getCompanionId';
+
+function BulletSoftBody.setCompanionId!(Integer id) = 'BulletSoftBody_setCompanionId';
+
+function Scalar	BulletSoftBody.getHitFraction() = 'BulletSoftBody_getHitFraction';
+
+function BulletSoftBody.setHitFraction!(Scalar hitFraction) = 'BulletSoftBody_setHitFraction';
+
+function Integer	BulletSoftBody.getCollisionFlags() = 'BulletSoftBody_getCollisionFlags';
+
+function BulletSoftBody.setCollisionFlags!(Integer flags) = 'BulletSoftBody_setCollisionFlags';
+
+///Swept sphere radius (0.0 by default), see BulletConvexConvexAlgorithm::
+function Scalar	BulletSoftBody.getCcdSweptSphereRadius() = 'BulletSoftBody_getCcdSweptSphereRadius';
+
+///Swept sphere radius (0.0 by default), see BulletConvexConvexAlgorithm::
+function BulletSoftBody.setCcdSweptSphereRadius!(Scalar radius) = 'BulletSoftBody_setCcdSweptSphereRadius';
+
+function Scalar 	BulletSoftBody.getCcdMotionThreshold() = 'BulletSoftBody_getCcdMotionThreshold';
+
+function Scalar 	BulletSoftBody.getCcdSquareMotionThreshold() = 'BulletSoftBody_getCcdSquareMotionThreshold';
+
+/// Don't do continuous collision detection if the motion (in one step) is less then m_ccdMotionThreshold
+function BulletSoftBody.setCcdMotionThreshold!(Scalar ccdMotionThreshold) = 'BulletSoftBody_setCcdMotionThreshold';
+
+///users can point to their objects, userPointer is not used by Bullet
+function Object	BulletSoftBody.getUserPointer(){
+	return this.__userPointer;
+}
+	
+///users can point to their objects, userPointer is not used by Bullet
+function BulletSoftBody.setUserPointer!(Object userPointer){
+	this.__userPointer = userPointer;
+}
+
+// function Boolean checkCollideWith(BulletICollisionObject co);
+
+// function Integer	calculateSerializeBufferSize();
+
+// ///fills the dataBuffer and returns the struct name (and 0 on failure)
+// function String	serialize(Object dataBuffer, class BulletSerializer serializer);
+
+// function serializeSingleObject(class BulletSerializer serializer);

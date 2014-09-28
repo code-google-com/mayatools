@@ -1,0 +1,103 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlinelinesshape` implements the :ref:`inlineshape` interface. It provides a shape type for :ref:`lines` objects. The :ref:`inlinelinesshape` keeps a reference to the lines, so if the lines change (being deformed etc) the shape will updates its buffers automatically.
+
+Example
+---------
+
+.. code-block:: kl
+
+    //Create a XYZ cross
+    Lines lines = Lines();
+    lines.addPoints( 6 );
+
+    lines.setPosition( 0, Vec3(1,0,0) );
+    lines.setPosition( 1, Vec3(-1,0,0) );
+    lines.addSegment( 0, 1 );
+
+    lines.setPosition( 2, Vec3(0,1,0) );
+    lines.setPosition( 3, Vec3(0,-1,0) );
+    lines.addSegment( 2, 3 );
+
+    lines.setPosition( 4, Vec3(0,0,1) );
+    lines.setPosition( 5, Vec3(0,0,-1) );
+    lines.addSegment( 4, 5 );
+
+    // create a shape
+    InlineShape shape = InlineLinesShape('lines', lines);
+*/
+
+require Geometry;
+
+object InlineLinesShape : InlineShape {
+  String _name;
+  Lines _lines;
+  Scalar _lineWidth;
+  Object _metaData[String];
+  Ref<InlineShapeAdaptor> _shapeAdaptor;
+};
+
+// returns the name of the shape
+function String InlineLinesShape.getName() {
+  return this._name;
+}
+
+// default constructor, taking a name and a Lines
+function InlineLinesShape(String name, Lines lines) {
+  this._name = name;
+  this._lines = lines;
+  this._lineWidth = 1.0;
+}
+
+  // Returns the geometry associated with this shape. 
+function Geometry InlineLinesShape.getGeometry() {
+  return this._lines;
+}
+
+// returns the Lines used by this shape
+function Lines InlineLinesShape.getLines() {
+  return this._lines;
+}
+
+// returns the point size used for rendering
+function Scalar InlineLinesShape.getLineWidth() {
+  return this._lineWidth;
+}
+
+// sets the point size used for rendering
+function InlineLinesShape.setLineWidth!(Scalar lineWidth) {
+  this._lineWidth = lineWidth;
+}
+
+// stores an arbitrary meta data object on the Shape
+function InlineLinesShape.setMetaData!(String key, Object metaData){
+  this._metaData[key] = metaData;
+}
+
+// retrieves meta data from the Shape
+function Object InlineLinesShape.getMetaData(String key){
+  Object nullObj = null;
+  return this._metaData.get(key, nullObj);
+}
+
+
+// draws the instance on screen. this is used by the 
+// material and should not be called manually.
+function Boolean InlineLinesShape._draw!(io DrawContext context, Index index, Size count) {
+
+  if(!this._shapeAdaptor) {
+    InlineDrawing drawing = context.getObject('drawing');
+    this._shapeAdaptor = drawing.getShapeAdaptor(this.type());
+  }
+  Ref<InlineShape> thisShape = this;
+  if(!this._shapeAdaptor || !this._shapeAdaptor._draw(context, thisShape, index, count))
+    return false;
+
+  return true;
+}
+

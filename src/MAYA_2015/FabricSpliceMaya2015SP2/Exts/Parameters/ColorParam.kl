@@ -1,0 +1,58 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`colorparam` implements the :ref:`param` interface for Color values.
+*/
+
+require Math;
+
+object ColorParam : Param {
+  String name;
+  Color value;
+  Param options[String];
+};
+
+// default constructor
+function ColorParam(String name) {
+  this.name = name;
+}
+
+// constructor taking input value
+function ColorParam(String name, Color value) {
+  this.name = name;
+  this.value = value;
+}
+
+// returns the name of this parameter
+function String ColorParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String ColorParam.getValueType() {
+  return "Color";
+}
+
+// getting an option on this param
+function Param ColorParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function ColorParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function Color ColorParam.getValue() {
+  return this.value;
+}
+
+// sets the param's value
+function ColorParam.setValue!(Color value) {
+  this.value = value;
+}

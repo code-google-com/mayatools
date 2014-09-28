@@ -1,0 +1,10 @@
+{
+  "code": [
+    "AnimationInterfaces.kl",
+    "Keyframe.kl",
+    "KeyframeTrack.kl",
+    "KeyframeTrackSet.kl",
+    "ClipValues.kl",
+    "Clip.kl"
+  ]
+}

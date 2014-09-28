@@ -1,0 +1,613 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+object OGLShaderRenderParam {
+  OGLShaderProgram shader;
+  OGLShaderProgram shaderPreprocessorVariants[String];//Variants based on preprocessor defines (as params): shared for all shader instances
+  RenderParamValues shaderDefaults;//Aligned with shader param index (uniforms then attributes then textures then outputFragments)
+  UInt32 lastShaderVersion;//Empty variants + update shader defaults with shared common values
+};
+
+struct TypeCommonConstants {
+  Type type;
+  Object values[];
+};
+
+object OGLShaderLibrary {
+  OGLShaderRenderParam shaders[];
+
+  Size indexByName[String];
+  Size indexByFilename[String];
+
+  TypeCommonConstants commonConstants[];
+  OGLBuffer noBuffer;
+  OGLTexture2D noTexture;
+
+  UInt32 version;
+};
+
+function OGLShaderLibrary() {
+  //Add common type values: sharing these in material parameters will minimize OGL calls
+  BooleanRenderParam boolTrue = BooleanRenderParam();
+  boolTrue.set(true);
+  this.storeCommonConstant(boolTrue);
+  BooleanRenderParam boolFalse = BooleanRenderParam();
+  boolFalse.set(true);
+  this.storeCommonConstant(boolFalse);
+
+  IntegerRenderParam int1 = IntegerRenderParam();
+  int1.set(1);
+  this.storeCommonConstant(int1);
+  IntegerRenderParam int0 = IntegerRenderParam();
+  int0.set(0);
+  this.storeCommonConstant(int0);
+  IntegerRenderParam intM1 = IntegerRenderParam();
+  intM1.set(-1);
+  this.storeCommonConstant(intM1);
+
+  ScalarRenderParam sc1 = ScalarRenderParam();
+  sc1.set(1.0);
+  this.storeCommonConstant(sc1);
+  ScalarRenderParam sc0 = ScalarRenderParam();
+  sc0.set(0.0);
+  this.storeCommonConstant(sc0);
+  ScalarRenderParam scM1 = ScalarRenderParam();
+  scM1.set(-1.0);
+  this.storeCommonConstant(scM1);
+
+  StringRenderParam str = StringRenderParam();
+  this.storeCommonConstant(str);
+
+  Vec2RenderParam v2_0 = Vec2RenderParam();
+  this.storeCommonConstant(v2_0);
+
+  Vec3RenderParam v3_0 = Vec3RenderParam();
+  this.storeCommonConstant(v3_0);
+
+  Vec4RenderParam v4_0 = Vec4RenderParam();
+  this.storeCommonConstant(v4_0);
+
+  Vec4RenderParam v4_01 = Vec4RenderParam();
+  v4_01.set(Vec4(0.0,0.0,0.0,1.0));
+  this.storeCommonConstant(v4_01);
+
+  ColorRenderParam col0 = ColorRenderParam();
+  this.storeCommonConstant(col0);
+
+  ColorRenderParam col01 = ColorRenderParam();
+  col01.set(Color(0.0,0.0,0.0,1.0));
+  this.storeCommonConstant(col01);
+
+  ColorRenderParam col1 = ColorRenderParam();
+  col01.set(Color(1.0,1.0,1.0,1.0));
+  this.storeCommonConstant(col1);
+
+  Mat33RenderParam m33_0 = Mat33RenderParam();
+  this.storeCommonConstant(m33_0);
+
+  Mat33RenderParam m33_i = Mat33RenderParam();
+  Mat33 m33;
+  m33_i.set(m33);
+  this.storeCommonConstant(m33_i);
+
+  Mat44RenderParam m44_0 = Mat44RenderParam();
+  this.storeCommonConstant(m44_0);
+
+  Mat44RenderParam m44_i = Mat44RenderParam();
+  Mat44 m44;
+  m44_i.set(m44);
+  this.storeCommonConstant(m44_i);
+
+  this.noBuffer = OGLBuffer();
+  this.noBuffer.numBufferElementComponents = 1;
+  this.noBuffer.bufferType = GL_ELEMENT_ARRAY_BUFFER;
+  this.noBuffer.bufferUsage = GL_STATIC_DRAW;
+  this.noBuffer.bufferElementComponentType = GL_UNSIGNED_BYTE;
+
+  this.noTexture = OGLTexture2D();
+  this.noTexture.name = "noTexture";
+  this.noTexture.glTextureType=GL_TEXTURE_2D;
+}
+
+function OGLShaderLibrary.storeCommonConstant!( Object param ) {
+  Type type = param.type;
+  for( Size i = 0; i < this.commonConstants.size(); ++i ) {
+    if( type == this.commonConstants[i].type ) {
+      this.commonConstants[i].values.push(param);
+      return;
+    }
+  }
+  Size index = this.commonConstants.size();
+  this.commonConstants.resize(index+1);
+  this.commonConstants[index].type = type;
+  this.commonConstants[index].values.push(param);
+}
+
+function Boolean OGLShaderLibrary.getSharedConstantIfPossible?( io Object param ) {
+  Type type = param.type;
+  for( Size i = 0; i < this.commonConstants.size(); ++i ) {
+    if( type == this.commonConstants[i].type ) {
+      for( Size j = 0; j < this.commonConstants[i].values.size(); ++j ) {
+        if( SimpleRenderParam_equals( param, this.commonConstants[i].values[j] ) ) {
+          param = this.commonConstants[i].values[j];
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+inline Size OGLShaderLibrary.getUniqueIDForFilename( String name ) {
+  return this.indexByFilename.get(name, InvalidIndex);
+}
+
+inline OGLShaderProgram OGLShaderLibrary.getShaderByFilename( String name ) {
+  Size index = this.indexByFilename.get(name, InvalidIndex);
+  if( index == InvalidIndex )
+    return null;
+  return this.shaders[index].shader;
+}
+
+inline Ref<OGLShaderRenderParam> OGLShaderLibrary.getByName( String name ) {
+  Size index = this.indexByName.get(name, InvalidIndex);
+  if( index == InvalidIndex ) {
+    report("OGLShaderLibrary.getByName: not found: "+name);
+    return null;
+  }
+  return this.shaders[index];
+}
+
+function Boolean OGLShaderLibrary.hasShaderFilename( String filename ) {
+  return this.indexByFilename.has(filename);
+}
+
+inline Ref<OGLShaderRenderParam> OGLShaderLibrary.getByID( UInt32 ID ) {
+  if( ID >= this.shaders.size() ) {
+    report("OGLShaderLibrary.getByID: invalid index");
+    return null;
+  }
+  return this.shaders[ID];
+}
+
+function OGLShaderRenderParam.initDefaults!( Ref<OGLShaderLibrary> shaderLibrary ) {
+  //Build shader-aligned maps
+  if( !this.shaderDefaults )
+    this.shaderDefaults = RenderParamValues();
+  RenderValueKey key;
+  for( Size j = 0; j < this.shader.defines.size(); ++j ) {
+    key = this.shaderDefaults.createKeyFromName_allowDuplicate(this.shader.defines[j].name);
+    if( this.shader.defines[j].defaultValue != null && this.shader.defines[j].glType != OGLShaderProgram_glType_flag ) {
+      shaderLibrary.getSharedConstantIfPossible(this.shader.defines[j].defaultValue);
+      this.shaderDefaults.setFromSimpleRenderParam(key, this.shader.defines[j].defaultValue, 0);
+    }
+  }
+  for( Size j = 0; j < this.shader.uniforms.size(); ++j ) {
+    key = this.shaderDefaults.createKeyFromName_allowDuplicate(this.shader.uniforms[j].name);
+    if( this.shader.uniforms[j].defaultValue != null && this.shader.uniforms[j].glType != OGLShaderProgram_glType_flag ) {
+      shaderLibrary.getSharedConstantIfPossible(this.shader.uniforms[j].defaultValue);
+      this.shaderDefaults.setFromSimpleRenderParam(key, this.shader.uniforms[j].defaultValue, 0);
+    }
+  }
+  for( Size j = 0; j < this.shader.attributes.size(); ++j ) {
+    key = this.shaderDefaults.createKeyFromName_allowDuplicate(this.shader.attributes[j].name);
+    if( this.shader.attributes[j].optional )
+      this.shaderDefaults.set(key, shaderLibrary.noBuffer);
+  }
+  for( Size j = 0; j < this.shader.textures.size(); ++j ) {
+    key = this.shaderDefaults.createKeyFromName_allowDuplicate(this.shader.textures[j].name);
+    if( this.shader.textures[j].optional )
+      this.shaderDefaults.set(key, shaderLibrary.noTexture);
+  }
+}
+
+
+function OGLShaderLibrary.setShader!(io OGLShaderProgram shader) {
+  if( shader.uniqueId >= this.shaders.size() )
+    this.shaders.resize( shader.uniqueId+1 );
+
+  Size prevVersion;
+  if( !this.shaders[shader.uniqueId] )
+    this.shaders[shader.uniqueId] = OGLShaderRenderParam();
+  else if( this.shaders[shader.uniqueId].shader ) {
+    //Should we ensure it's the same shader name?
+    prevVersion = this.shaders[shader.uniqueId].shader.version;
+    this.shaders[shader.uniqueId] = OGLShaderRenderParam();//clear
+  }
+
+  shader.version = prevVersion + 1;
+  this.shaders[shader.uniqueId].shader = shader;
+  this.shaders[shader.uniqueId].lastShaderVersion = shader.version;
+
+  // Add a default to the dictionary: ensures it is created and later shared
+  this.shaders[shader.uniqueId].shaderPreprocessorVariants[''] = shader;
+  this.shaders[shader.uniqueId].initDefaults( this );
+
+  this.indexByName[shader.name] = shader.uniqueId;
+  this.indexByFilename[shader.filename] = shader.uniqueId;
+
+  ++this.version;
+}
+
+
+struct OGLMaterialVariant {
+  OGLShaderProgram shader;//To remove later
+  Size shaderLibraryIndex;
+  String category;
+  String shaderFilename;
+};
+
+object OGLMaterialData {
+  String name;
+  String flags[];
+
+  String exposeCategories[];
+
+  OGLMaterialVariant variants[];
+  Size variantIndicesByCat[String][];
+
+  OGLShaderLibrary shaderLibrary;
+  UInt32 version;
+};
+
+function OGLMaterialData.addVariant!( String category, String shaderFilename ) {
+  OGLMaterialVariant variant;
+  variant.shaderFilename = shaderFilename;
+  variant.category = category;
+  //variant.shader will be set by an operator
+
+  Size variantIndex = this.variants.size();
+  this.variants.push(variant);
+  this.variantIndicesByCat[category].push(variantIndex);
+}
+
+function OGLMaterialData.addFlag!( String flag ) {
+  this.flags.push(flag);
+}
+
+function OGLMaterialData.addExposedCategory!( String cat ) {
+  this.exposeCategories.push(cat);
+}
+
+function OGLMaterialData.setShaderReferences!( OGLShaderLibrary shaderLibrary ) {
+  this.shaderLibrary = shaderLibrary;
+  for( Size i = 0; i < this.variants.size(); ++i ) {
+    if( !shaderLibrary.indexByFilename.has(this.variants[i].shaderFilename) )
+      throw("OGLMaterialData.setShaderReferences: unexpected error: shader " + this.variants[i].shaderFilename + " not found, required for material "+ this.name);
+    Size index = shaderLibrary.indexByFilename[this.variants[i].shaderFilename];
+    this.variants[i].shader = shaderLibrary.shaders[index].shader;//To remove
+    this.variants[i].shaderLibraryIndex = index;
+  }
+}
+
+/*
+Shader defaults:
+
+ >> ends up as shader-aligned flat array of 'default' values
+   >> optimization / baking phasis. Compare 'original' default values, preserve pointers.
+
+>> getParamValue: from exposed categories' defaults.
+  >> update/synchronize versions from shaders' and materials' definitions.
+  >> shader: reloaded -> version updated.
+*/
+
+inline Ref<OGLShaderRenderParam> RenderParamValues.getOGLShaderRenderParam(RenderValueKey key) {
+  Ref<OGLShaderRenderParam> shader = this.paramsData[key.index].param.data;
+  return shader;
+}
+
+inline RenderParams.get?(RenderParamKey key, io Ref<OGLShaderRenderParam> value) {
+  value = this.layers[key.layerIndex].params.getOGLShaderRenderParam(key.valueKey);
+}
+
+function RenderValueKey RenderParamValues.setOGLShaderRenderParam!(String name, Ref<OGLShaderRenderParam> value) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setType(key, OGLShaderRenderParam, RenderParamCategory_material, 0);
+  this.paramsData[key.index].param.data = value;
+  return key;
+}
+
+struct ShaderVariantAndParamIndex {
+  Size variantIndex;
+  RenderValueKey key;
+};
+
+object OGLMaterial {
+  String name;
+
+  OGLShaderRenderParam variantShaderParams[];
+  ShaderVariantAndParamIndex paramToShader[String][];
+
+  RenderParamValues defaultExposedParamValues;//UI-exposed render params
+
+  RenderParamValues exposedParamValues;//UI-exposed render params
+  RenderValueKey exposedSimpleParamKeys[];
+  RenderValueKey exposedTextureKeys[];
+  RenderValueKey exposedGenericParamKeys[];
+
+  Ref<RenderParamValues> materialParamValues;//oglMaterial + flags. NOTE: Ref<> since owning it would lead to a circular reference (owned by external data)
+
+  OGLShaderLibrary shaderLibrary;
+  OGLMaterialData materialData;
+
+  UInt32 lastMaterialDataVersion;//Empty variants + update shader defaults with shared common values
+  Versions lastParamVersions;
+  UInt32 lastShaderLibraryVersion;
+  UInt32 version;
+};
+
+function OGLMaterial() {
+  this.lastMaterialDataVersion = InvalidIndex;
+  this.lastShaderLibraryVersion = InvalidIndex;
+}
+
+function RenderValueKey RenderParamValues.setOGLMaterial!(String name, Ref<OGLMaterial> value) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setType(key, OGLMaterial, RenderParamCategory_material, 0);
+  this.paramsData[key.index].param.data = value;
+  return key;
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Ref<OGLMaterial> value) {
+  value = this.paramsData[key.index].param.data;
+}
+
+inline RenderParams.get?(RenderParamKey key, io Ref<OGLMaterial> value) {
+  this.layers[key.layerIndex].params.get(key.valueKey, value);
+}
+
+inline Ref<OGLMaterial> RenderParamValues.getOGLMaterial(RenderValueKey key) {
+  Ref<OGLMaterial> material = this.paramsData[key.index].param.data;
+  return material;
+}
+
+inline Boolean RenderParamValues.isOGLMaterial(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == OGLMaterial;
+}
+
+function String OGLMaterial.getDesc?() {
+  return "OGLMaterial: name=" + this.name;
+}
+
+function OGLMaterial.update!( String name, OGLMaterialData materialData ) {
+  Boolean materialDataChanged = this.materialData !== materialData || synchronizeVersion( materialData.version, this.lastMaterialDataVersion );
+  this.materialData = materialData;
+  this.shaderLibrary = materialData.shaderLibrary;
+  Boolean shaderLibraryChanged = synchronizeVersion( this.shaderLibrary.version, this.lastShaderLibraryVersion );
+  Boolean someShaderChanged;
+
+  if( materialDataChanged || shaderLibraryChanged ) {
+    this.variantShaderParams.resize(materialData.variants.size());
+
+    for( Size i = 0; i < materialData.variants.size(); ++i ) {
+      if( this.variantShaderParams[i] == null )
+        this.variantShaderParams[i] = OGLShaderRenderParam();
+      // Synchronize shaders
+      Boolean shaderChanged;
+      OGLShaderRenderParam sourceShaderData = this.shaderLibrary.shaders[materialData.variants[i].shaderLibraryIndex];
+      if( sourceShaderData.shader !== this.variantShaderParams[i].shader ) {
+        this.variantShaderParams[i].shader = sourceShaderData.shader;
+        //Ensure we share preprocessor variants
+        this.variantShaderParams[i].shaderPreprocessorVariants = sourceShaderData.shaderPreprocessorVariants;
+        shaderChanged = true;
+      }
+      if( synchronizeVersion( sourceShaderData.shader.version, this.variantShaderParams[i].lastShaderVersion ) )
+        shaderChanged = true;
+
+      if( shaderChanged ) {
+        //Reset parameters but increment versions
+        Versions prevDefaultsVersions;
+        if( this.variantShaderParams[i].shaderDefaults )
+          prevDefaultsVersions = this.variantShaderParams[i].shaderDefaults.versions;
+        prevDefaultsVersions.incTopo();
+
+        this.variantShaderParams[i].shaderDefaults = RenderParamValues();
+        this.variantShaderParams[i].shaderDefaults.versions = prevDefaultsVersions;
+        this.variantShaderParams[i].initDefaults( this.shaderLibrary );
+
+        someShaderChanged = true;
+      }
+    }
+
+    if( someShaderChanged || materialDataChanged ) {
+
+      // Save prev values
+      RenderParamValues prevValues = this.exposedParamValues;
+      this.exposedParamValues = RenderParamValues();
+
+      this.exposedSimpleParamKeys.resize(0);
+      this.exposedTextureKeys.resize(0);
+      this.exposedGenericParamKeys.resize(0);
+
+      ShaderVariantAndParamIndex emptyParamToShader[String][];
+      this.paramToShader = emptyParamToShader;
+      for( Size i = 0; i < materialData.variants.size(); ++i ) {
+
+        Ref<OGLShaderRenderParam> shaderParam = this.variantShaderParams[i];
+        Ref<OGLShaderProgram> shader = shaderParam.shader;
+
+        // Gather exposed params
+        String cat = materialData.variants[i].category;
+
+        for( Size j = 0; j < materialData.exposeCategories.size(); ++j ) {
+          if( cat == materialData.exposeCategories[j] ) {
+            // exposed
+            for( Size defineOrUnif = 0; defineOrUnif < 2; ++defineOrUnif ) {
+              OGLShaderProgramUniform params[];
+              params = defineOrUnif == 0 ? shader.defines : shader.uniforms;
+
+              for( Size k = 0; k < params.size(); ++k ) {
+                if( params[k].expose ) {
+                  Object prevValue;
+                  RenderValueKey prevKey = this.exposedParamValues.getKeyFromName(params[k].name);
+                  if( prevKey.isValid() )
+                    prevValue = this.exposedParamValues.get(prevKey);
+                  RenderValueKey key = this.exposedParamValues.setFromSimpleRenderParam( params[k].name, params[k].defaultValue, 0 );
+                  if( !prevKey.isValid() ) {
+                    this.exposedSimpleParamKeys.push(key);
+                    if( params[k].sourceType == OGLShaderProgram_uniformSource_genericVertex || params[k].sourceType == OGLShaderProgram_uniformSource_genericFragment )
+                      this.exposedGenericParamKeys.push(key);
+                  }
+                
+                  if( prevValue != null && !SimpleRenderParam_equals( prevValue, this.exposedParamValues.get(key) ) )
+                    report("OGLMaterial.update: warning: default values for exposed parameter " + params[k].name + " of material " + materialData.name + " differ through shader variations");
+                }
+              }
+            }
+            for( Size k = 0; k < shader.textures.size(); ++k ) {
+              RenderValueKey key = this.exposedParamValues.getKeyFromName(shader.textures[k].name);
+              if( !key.isValid() ) {
+                key = this.exposedParamValues.setAsOGLTexture2D(shader.textures[k].name);
+                this.exposedParamValues.set( key, this.shaderLibrary.noTexture );
+                this.exposedTextureKeys.push(key);
+              }
+            }
+          }
+        }
+
+        //Build shader-aligned maps
+        ShaderVariantAndParamIndex paramToShader;
+        paramToShader.variantIndex = i;
+
+        for( Size j = 0; j < shaderParam.shaderDefaults.paramsData.size(); ++j ) {
+          paramToShader.key = RenderValueKey(j);
+          this.paramToShader[shaderParam.shaderDefaults.getName(paramToShader.key)].push(paramToShader);
+        }
+      }
+      if( prevValues ) {
+        // Put back saved values when applicable (same type)
+        String paramName;
+        RenderValueKey prevParamKey;
+
+        for(paramName, prevParamKey in prevValues.nameToKey) {
+          RenderValueKey newKey = this.exposedParamValues.getKeyFromName(paramName);
+
+          if( newKey.isValid() ) {
+            Object prevValue = prevValues.get(prevParamKey);
+            Object newValue = this.exposedParamValues.get(newKey);
+            if( prevValue.type == newValue.type ) {
+              Integer renderParamCat = prevValues.getCategory(prevParamKey);
+              if( renderParamCat == RenderParamCategory_baseType || renderParamCat == RenderParamCategory_math )
+                this.exposedParamValues.setFromSimpleRenderParam( newKey, prevValue, 0 );
+              else
+                this.exposedParamValues.setFrom( prevValues, prevParamKey, newKey );
+            }
+          }
+        }
+      }
+      this.defaultExposedParamValues = this.exposedParamValues.clone();
+    }
+
+    if( materialDataChanged ) {
+
+      if( name )
+        this.name = name;
+      else
+        this.name = materialData.name;
+
+      // Build the material parameter set
+      // Note: this is owned by outside data, we must work in-place
+      if( this.materialParamValues ) {
+        this.materialParamValues.reset();
+        this.materialParamValues.ownerName = this.name;
+        this.materialParamValues.ownerType = OwnerType_material;
+
+        RenderValueKey key = this.materialParamValues.setOGLMaterial("oglMaterial", this);//Note: we take as granted that param #0 is the material
+        if( key.index != 0 )
+          throw("Unexpected material key");
+
+        if( this.variantShaderParams.size() == 1 )//Only one shader: set shader param directly
+          this.materialParamValues.setOGLShaderRenderParam("oglShader", this.variantShaderParams[0]);
+
+        for( Size i = 0; i < materialData.flags.size(); ++i )
+          this.materialParamValues.setFlag(materialData.flags[i]);
+      }
+    }
+  }
+  if( materialDataChanged || someShaderChanged )
+    ++this.version;
+
+  this.updateValues();
+}
+
+function OGLMaterial.updateValues!() {
+
+  if( this.lastParamVersions.synchronize( this.exposedParamValues.versions ) ) {
+    String name;
+    RenderValueKey key;
+    Versions prevVersions = this.exposedParamValues.versions;
+    for(name, key in this.exposedParamValues.nameToKey) {
+      Object value = this.exposedParamValues.get(key);
+
+      //If noTexture, don't set shader's default value; we want it to be NULL if undefined, unless optional, in which case it's already noTexture.
+      Boolean noTexture = value === this.shaderLibrary.noTexture;
+
+      //Share common constants to reduce OGL calls (compare by pointer)
+      Boolean sharedConstant = this.shaderLibrary.getSharedConstantIfPossible( value );
+
+      ShaderVariantAndParamIndex paramToShader[];
+      paramToShader = this.paramToShader.get(name, paramToShader );
+      for( Size j = 0; j < paramToShader.size(); ++j ) {
+        OGLShaderRenderParam shaderParam = this.variantShaderParams[paramToShader[j].variantIndex];
+        Ref<OGLShaderProgram> shader = shaderParam.shader;
+
+        Boolean isFlag;
+        Ref<Object> shaderDefaultValue;
+        Size index = paramToShader[j].key.index;
+        if( index < shader.defines.size() ) {
+          shaderDefaultValue = shader.defines[index].defaultValue;
+          isFlag = shader.defines[index].glType == OGLShaderProgram_glType_flag;
+        } else {
+          index -= shader.defines.size();
+          if( index < shader.uniforms.size() ) {
+            shaderDefaultValue = shader.uniforms[index].defaultValue;
+            isFlag = shader.uniforms[index].glType == OGLShaderProgram_glType_flag;
+          }
+        }
+
+        if( !sharedConstant ) {
+          if( SimpleRenderParam_equals( value, shaderDefaultValue ) )
+            value = shaderDefaultValue;
+        }
+        Integer renderParamCat = this.exposedParamValues.getCategory(key);
+        if( isFlag && value.type == BooleanRenderParam ) { //If not BooleanRenderParam, keep the value as is
+          //If not BooleanRenderParam, keep the value as is
+          BooleanRenderParam boolParam = value;
+          if( boolParam.value )
+            shaderParam.shaderDefaults.set( paramToShader[j].key, boolParam );
+          else
+            shaderParam.shaderDefaults.set( paramToShader[j].key, null );
+        } else if( isFlag && noTexture ) { //If not BooleanRenderParam, keep the value as is
+          //If not BooleanRenderParam, keep the value as is
+          shaderParam.shaderDefaults.set( paramToShader[j].key, null);
+        } else if( renderParamCat == RenderParamCategory_baseType || renderParamCat == RenderParamCategory_math )
+          shaderParam.shaderDefaults.setFromSimpleRenderParam(paramToShader[j].key, value, 0);
+        else //texture or other: setFrom will preserve generator if any..
+          shaderParam.shaderDefaults.setFrom(this.exposedParamValues, key, paramToShader[j].key);
+      }
+    }
+    if( prevVersions.synchronize(this.exposedParamValues.versions) )
+      this.materialParamValues.incrementValueVersion(RenderValueKey(0), 0);
+  }
+}
+
+function String[] OGLMaterial.getExposedTextureParamNames() {
+  String names[];
+  for( Size i = 0; i < this.exposedTextureKeys.size(); ++i )
+    names.push(this.exposedParamValues.getName(this.exposedTextureKeys[i]));
+  return names;
+}
+
+function String[] OGLMaterial.getExposedGenericParamNames() {
+  String names[];
+  for( Size i = 0; i < this.exposedGenericParamKeys.size(); ++i )
+    names.push(this.exposedParamValues.getName(this.exposedGenericParamKeys[i]));
+  return names;
+}
+
+function String OGLMaterial.getDesc?() {
+  return "OGLMaterial: name=" + this.name;
+}

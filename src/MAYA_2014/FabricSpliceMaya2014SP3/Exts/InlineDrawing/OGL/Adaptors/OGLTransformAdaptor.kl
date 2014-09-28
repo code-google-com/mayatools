@@ -1,0 +1,43 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`OGLTransformAdaptor` implements the :ref:`InlineTransformAdaptor` interface. It is used to integrate :ref:`StaticInlineTransform` within the OpenGL pipeline.
+*/
+
+require RTR;
+
+object OGLTransformAdaptor : InlineTransformAdaptor {
+};
+
+// default constructor
+function OGLTransformAdaptor() {}
+
+// returns the types this adaptor is capable of drawing
+function String[] OGLTransformAdaptor.getTransformTypes() {
+  String result[];
+  result.push('StaticInlineTransform');
+  return result;
+}
+
+// draws the lines to the screen. this is used by the 
+// InlineInstance, and should not be called manually.
+function Boolean OGLTransformAdaptor._draw!(io DrawContext context, io Ref<InlineTransform> transform, Index index, Size count) {
+
+  InlineShader shader = context.getObject('currentShader');
+  Mat44 modelMatrix = transform._nonLocking_getGlobalXfo(index).toMat44();
+
+  if(!shader._drawUniform(context, InlineUniform("u_modelMatrix", modelMatrix))) {
+    return false;
+  }
+  
+  if(!shader._drawUniform(context, InlineUniform("u_normalMatrix", context.invViewMat * modelMatrix.upperLeft()))) {
+    return false;
+  }
+
+  return true;
+}
+

@@ -1,0 +1,105 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+const Size NoOGLFunction = 4294967295;
+
+struct OGLRenderValueOrFunction {
+  String functionName;
+  Size functionID;
+  Boolean functionNeedsDebugContext;
+
+  Boolean argIsRenderFlag[];
+  Object valueOrFunctionArgs[];
+};
+
+function OGLRenderValueOrFunction() {
+  this.functionID = NoOGLFunction;
+}
+
+// Helpers used by PassesImpl.py
+
+function String OGLRenderValueOrFunction.getDesc() {
+  String s = '';
+  if(this.functionName)
+    s += this.functionName+'(';
+  for( Size i = 0; i < this.valueOrFunctionArgs.size(); ++i ) {
+    if(i)
+      s += ', ';
+    if(this.argIsRenderFlag[i])
+      s += 'flag(';
+    s += SimpleRenderParam_getDesc(this.valueOrFunctionArgs[i], 0, 0);
+    if(this.argIsRenderFlag[i])
+      s += ')';
+  }
+  if(this.functionName)
+    s += ')';
+  return s;
+}
+
+function String OGLRenderValueOrFunction.getDesc_() {
+  //getDesc_: avoid a name conflict with RTVal service
+  return this.getDesc();
+}
+
+
+function Boolean OGLRenderValueOrFunction.isEmpty() {
+  return this.functionID == NoOGLFunction && this.valueOrFunctionArgs.size() == 0;
+}
+
+function Boolean OGLRenderValueOrFunction.isFunction() {
+  return this.functionID != NoOGLFunction;
+}
+
+function BindingRenderParam OGLRenderValueOrFunction.getSimpleBinding() {
+  if( this.functionID == NoOGLFunction && this.valueOrFunctionArgs.size() == 1 && this.valueOrFunctionArgs[0].type == BindingRenderParam )
+    return this.valueOrFunctionArgs[0];
+  return null;
+}
+
+function Boolean OGLRenderValueOrFunction.isSimpleBinding() {
+  return this.functionID == NoOGLFunction && this.valueOrFunctionArgs.size() == 1 && this.valueOrFunctionArgs[0].type == BindingRenderParam;
+}
+
+function Boolean OGLRenderValueOrFunction.equals( OGLRenderValueOrFunction other ) {
+  if( this.functionName != other.functionName 
+    || this.functionID != other.functionID 
+    || this.argIsRenderFlag.size() != other.argIsRenderFlag.size() )
+    return false;
+
+  for( Size i = 0; i < this.valueOrFunctionArgs.size(); ++i ) {
+    if( this.argIsRenderFlag[i] != other.argIsRenderFlag[i] )
+      return false;
+    if( !SimpleRenderParam_equals( this.valueOrFunctionArgs[i], other.valueOrFunctionArgs[i] ) )
+      return false;
+  }
+  return true;
+}
+
+function Size OGLRenderValueOrFunction.getArgCount() {
+  return this.valueOrFunctionArgs.size();
+}
+
+function Boolean OGLRenderValueOrFunction.isBinding( Size i ) {
+  return this.valueOrFunctionArgs[i].type == BindingRenderParam;
+}
+
+function BindingRenderParam OGLRenderValueOrFunction.getBinding( Size i ) {
+  return this.valueOrFunctionArgs[i];
+}
+
+function OGLRenderValueOrFunction.pushArg!( Object arg, Boolean isFlag ) {
+  this.valueOrFunctionArgs.push(arg);
+  this.argIsRenderFlag.push(isFlag);
+}
+
+function Boolean OGLRenderValueOrFunction.hasMemberScopes() {
+  for( Size i = 0; i < this.valueOrFunctionArgs.size(); ++i ) {
+    if( this.valueOrFunctionArgs[i].type == BindingRenderParam ) {
+      BindingRenderParam binding = this.valueOrFunctionArgs[i];
+      if( binding.scope == BindingRenderParam_noScope || binding.scope == BindingRenderParam_memberScope || binding.scope == BindingRenderParam_initializing)
+        return true;
+    }
+  }
+  return false;
+}

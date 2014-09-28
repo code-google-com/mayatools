@@ -1,0 +1,37 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+require FabricSynchronization;
+
+object ThreadsafeMetaDataContainer {
+  Object dict[String]; //eg: raycast cache
+  SimpleLock lock;
+};
+
+function ThreadsafeMetaDataContainer() {
+  this.lock = SimpleLock("ThreadsafeMetaDataContainer");
+}
+
+function Ref<Object> ThreadsafeMetaDataContainer.get( String name ) {
+  AutoLock AL(this.lock);
+  return this.dict.get( name, null );
+}
+
+function Ref<Object> ThreadsafeMetaDataContainer.lockedGet( String name ) {
+  if( !this.lock.locked() )
+    throw("ThreadsafeMetaDataContainer.lockedGet: this.lock needs to be locked externally when calling");
+  return this.dict.get( name, null );
+}
+
+//When setting the data container value, it needs to be locked externally, so the value creation is protected too under that same lock.
+//Preferred method is to build a local AutoLock AL(metaData.lock);
+function ThreadsafeMetaDataContainer.lockedSet!( String name, Object value ) {
+  if( !this.lock.locked() )
+    throw("ThreadsafeMetaDataContainer.lockedSet: this.lock needs to be locked externally when calling");
+  this.dict[name] = value;
+}
+
+function ThreadsafeMetaDataContainer.remove!( String name ) {
+  AutoLock AL(this.lock);
+  this.dict.delete( name );
+}

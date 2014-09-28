@@ -1,0 +1,83 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+/*
+
+///The convex2dConvex2dAlgorithm collision algorithm support 2d collision detection for BulletConvex2dShape
+///Currently it requires the BulletMinkowskiPenetrationDepthSolver, it has support for 2d penetration depth computation
+object BulletConvex2dConvex2dAlgorithm : BulletActivatingCollisionAlgorithm
+{
+	Data pointer;
+	// BulletSimplexSolverInterface*		m_simplexSolver;
+	// BulletConvexPenetrationDepthSolver* m_pdSolver;
+
+	
+	// Boolean	m_ownManifold;
+	// BulletPersistentManifold*	m_manifoldPtr;
+	// Boolean			m_lowLevelOfDetail;
+	
+	// Integer m_numPerturbationIterations;
+	// Integer m_minimumPointsPerturbationThreshold;
+}
+
+
+function BulletConvex2dConvex2dAlgorithm : BulletCollisionAlgorithm(
+	BulletPersistentManifold mf,
+	BulletCollisionAlgorithmConstructionInfo ci, 
+	io BulletICollisionObject body0, 
+	io BulletICollisionObject body1, 
+	BulletSimplexSolverInterface simplexSolver, 
+	BulletConvexPenetrationDepthSolver pdSolver, 
+	Integer numPerturbationIterations, 
+	Integer minimumPointsPerturbationThreshold
+){
+
+}
+
+
+
+function ~BulletConvex2dConvex2dAlgorithm();
+
+function BulletConvex2dConvex2dAlgorithm.processCollision (BulletICollisionObject* body0,BulletICollisionObject* body1,const BulletDispatcherInfo& dispatchInfo,BulletManifoldResult* resultOut);
+
+function Scalar BulletConvex2dConvex2dAlgorithm.calculateTimeOfImpact(BulletICollisionObject* body0,BulletICollisionObject* body1,const BulletDispatcherInfo& dispatchInfo,BulletManifoldResult* resultOut);
+
+function BulletConvex2dConvex2dAlgorithm.getAllContactManifolds(io BulletManifold	manifoldArray[])
+
+
+function BulletConvex2dConvex2dAlgorithm.setLowLevelOfDetail(Boolean useLowLevel);
+
+function BulletPersistentManifold	BulletConvex2dConvex2dAlgorithm.getManifold();
+
+*/
+
+object BulletConvex2dConvex2dAlgorithm_CreateFunc : BulletCollisionAlgorithmCreateFunc
+{
+	Data pointer;
+	BulletConvexPenetrationDepthSolver		pdSolver;
+	BulletSimplexSolverInterface			simplexSolver;
+	// Integer numPerturbationIterations;
+	// Integer minimumPointsPerturbationThreshold;
+};
+
+function Data BulletConvex2dConvex2dAlgorithm_CreateFunc.getPointer(){
+	return this.pointer;
+}
+
+function BulletConvex2dConvex2dAlgorithm_CreateFunc(BulletSimplexSolverInterface simplexSolver, BulletConvexPenetrationDepthSolver pdSolver){
+	this.__construct(simplexSolver, pdSolver);
+	this.pdSolver = pdSolver;
+	this.simplexSolver = simplexSolver;
+}
+function BulletConvex2dConvex2dAlgorithm_CreateFunc.__construct!(BulletSimplexSolverInterface simplexSolver, BulletConvexPenetrationDepthSolver pdSolver) = "BulletConvex2dConvex2dAlgorithm_CreateFunc_construct";
+
+function ~BulletConvex2dConvex2dAlgorithm_CreateFunc() = "BulletConvex2dConvex2dAlgorithm_CreateFunc_destroy";
+
+
+// function BulletCollisionAlgorithm* BulletConvex2dConvex2dAlgorithm_CreateFunc.CreateCollisionAlgorithm(BulletCollisionAlgorithmConstructionInfo& ci, BulletICollisionObject* body0,BulletICollisionObject* body1)
+// {
+// 	void* mem = ci.m_dispatcher1->allocateCollisionAlgorithm(sizeof(BulletConvex2dConvex2dAlgorithm));
+// 	return new(mem) BulletConvex2dConvex2dAlgorithm(ci.m_manifold,ci,body0,body1,m_simplexSolver,m_pdSolver,m_numPerturbationIterations,m_minimumPointsPerturbationThreshold);
+// }

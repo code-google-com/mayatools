@@ -1,0 +1,70 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`PositionManipulator` combines 3 PositionAxisManipulator to support translation in 3d.
+
+*/
+
+
+
+object  PositionManipulator {
+
+  PositionAxisManipulator xAxisManipulator;
+  PositionAxisManipulator yAxisManipulator;
+	PositionAxisManipulator zAxisManipulator;
+
+};
+
+function PositionManipulator(io InlineTransform parent, GizmoManipulationCallback callback){
+  Xfo offset;
+
+  offset.ori.setFromAxisAndAngle(Vec3(0.0, 0.0, 1.0), HALF_PI);
+  this.xAxisManipulator = PositionAxisManipulator( parent, offset, Color(1.0, 0.0, 0.0), callback);
+
+  offset.ori.setIdentity();
+  this.yAxisManipulator = PositionAxisManipulator( parent, offset, Color(0.0, 1.0, 0.0), callback);
+
+  offset.ori.setFromAxisAndAngle(Vec3(1.0, 0.0, 0.0), HALF_PI);
+  this.zAxisManipulator = PositionAxisManipulator( parent, offset, Color(0.0, 0.0, 1.0), callback);
+}
+
+function PositionManipulator.hide!(){
+    this.xAxisManipulator.hide();
+    this.yAxisManipulator.hide();
+    this.zAxisManipulator.hide();
+}
+
+function PositionManipulator.show!(){
+    this.xAxisManipulator.show();
+    this.yAxisManipulator.show();
+    this.zAxisManipulator.show();
+}
+
+function PositionManipulator.setManpulationMode!(ManipulationMode mode){
+  if(mode&ManipulationMode_Position_X)
+    this.xAxisManipulator.show();
+  else
+    this.xAxisManipulator.hide();
+
+  if(mode&ManipulationMode_Position_Y)
+    this.yAxisManipulator.show();
+  else
+    this.yAxisManipulator.hide();
+
+  if(mode&ManipulationMode_Position_Z)
+    this.zAxisManipulator.show();
+  else
+    this.zAxisManipulator.hide();
+}
+
+function InlineInstance[] PositionManipulator.getGizmos(){
+    InlineInstance gizmos[];
+    gizmos = gizmos + this.xAxisManipulator.getGizmos();
+    gizmos = gizmos + this.yAxisManipulator.getGizmos();
+    gizmos = gizmos + this.zAxisManipulator.getGizmos();
+    return gizmos;
+}

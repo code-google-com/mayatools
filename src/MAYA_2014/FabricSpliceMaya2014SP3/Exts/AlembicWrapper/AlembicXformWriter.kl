@@ -1,0 +1,56 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+
+object AlembicXformWriter : AlembicObjectWriter{
+  AlembicOXform _xform;
+  AlembicOXformSchema _schema;
+  AlembicXformSample _sample;
+  UInt32 _numSamples;
+  UInt32 _storedSamples;
+};
+
+function AlembicXformWriter(AlembicOObject parent, String name, SInt32 timeSampling) {
+  this._xform = AlembicOXform(parent, name, timeSampling);
+  this._schema = this._xform.getSchema();
+  this._numSamples = this._schema.getTimeSampling().getNumStoredTimes();
+  if(this._numSamples == 0)
+    this._numSamples = 1;
+  this._storedSamples = 0;
+  this._sample = AlembicXformSample();
+  this._sample.setInheritsXforms(true);
+}
+
+function String AlembicXformWriter.getPath() {
+  return this._xform.asOObject().getFullName();
+}
+
+function Boolean AlembicXformWriter.valid() {
+  return this._xform.valid();
+}
+
+function AlembicXformWriter.reset!() {
+  this._xform.reset();
+  this._schema.reset();
+}
+
+function AlembicOObject AlembicXformWriter.getOObject() {
+  return this._xform.asOObject();
+}
+
+function Boolean AlembicXformWriter.writeSample!(Mat44 mat) {
+  if(this._storedSamples == this._numSamples) {
+    setError('AlembicXformWriter: Max number of samples reached.');
+    return false;
+  }
+  this._sample.setMatrix(mat.transpose());
+  this._schema.set(this._sample);
+  this._storedSamples++;
+  return true;
+}
+
+function Boolean AlembicXformWriter.writeSample!(Xfo xfo) {
+  return this.writeSample(xfo.toMat44());
+}

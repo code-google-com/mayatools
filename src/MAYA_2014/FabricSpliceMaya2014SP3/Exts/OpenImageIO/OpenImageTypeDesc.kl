@@ -1,0 +1,97 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+object OpenImageTypeDesc {
+  Data handle;
+};
+
+const SInt64 OpenImage_AutoStride = 0;
+
+alias UInt32 OpenImage_BASETYPE;
+const OpenImage_BASETYPE OpenImage_BASETYPE_UNKNOWN = 0;
+const OpenImage_BASETYPE OpenImage_BASETYPE_NONE = 1;
+const OpenImage_BASETYPE OpenImage_BASETYPE_UCHAR = 2;
+const OpenImage_BASETYPE OpenImage_BASETYPE_UINT8= 2;
+const OpenImage_BASETYPE OpenImage_BASETYPE_CHAR = 3;
+const OpenImage_BASETYPE OpenImage_BASETYPE_INT8= 3;
+const OpenImage_BASETYPE OpenImage_BASETYPE_USHORT = 4;
+const OpenImage_BASETYPE OpenImage_BASETYPE_UINT16= 4;
+const OpenImage_BASETYPE OpenImage_BASETYPE_SHORT = 5;
+const OpenImage_BASETYPE OpenImage_BASETYPE_INT16= 5;
+const OpenImage_BASETYPE OpenImage_BASETYPE_UINT = 6;
+const OpenImage_BASETYPE OpenImage_BASETYPE_UINT32= 6;
+const OpenImage_BASETYPE OpenImage_BASETYPE_INT = 7;
+const OpenImage_BASETYPE OpenImage_BASETYPE_INT32= 7;
+const OpenImage_BASETYPE OpenImage_BASETYPE_ULONGLONG = 8;
+const OpenImage_BASETYPE OpenImage_BASETYPE_UINT64= 8;
+const OpenImage_BASETYPE OpenImage_BASETYPE_LONGLONG = 9;
+const OpenImage_BASETYPE OpenImage_BASETYPE_INT64= 9;
+const OpenImage_BASETYPE OpenImage_BASETYPE_HALF = 10;
+const OpenImage_BASETYPE OpenImage_BASETYPE_FLOAT = 11;
+const OpenImage_BASETYPE OpenImage_BASETYPE_DOUBLE = 12;
+const OpenImage_BASETYPE OpenImage_BASETYPE_STRING = 13;
+const OpenImage_BASETYPE OpenImage_BASETYPE_PTR = 14;
+const OpenImage_BASETYPE OpenImage_BASETYPE_LASTBASE = 15;
+
+alias UInt32 OpenImage_AGGREGATE;
+const OpenImage_AGGREGATE OpenImage_AGGREGATE_SCALAR = 1;
+const OpenImage_AGGREGATE OpenImage_AGGREGATE_VEC2 = 2;
+const OpenImage_AGGREGATE OpenImage_AGGREGATE_VEC3 = 3;
+const OpenImage_AGGREGATE OpenImage_AGGREGATE_VEC4 = 4;
+const OpenImage_AGGREGATE OpenImage_AGGREGATE_MATRIX44 = 16;
+
+alias UInt32 OpenImage_VECSEMANTICS;
+const OpenImage_VECSEMANTICS OpenImage_VECSEMANTICS_NOXFORM = 0;
+const OpenImage_VECSEMANTICS OpenImage_VECSEMANTICS_NOSEMANTICS = 0;
+const OpenImage_VECSEMANTICS OpenImage_VECSEMANTICS_COLOR = 1;
+const OpenImage_VECSEMANTICS OpenImage_VECSEMANTICS_POINT = 2;
+const OpenImage_VECSEMANTICS OpenImage_VECSEMANTICS_VECTOR = 3;
+const OpenImage_VECSEMANTICS OpenImage_VECSEMANTICS_NORMAL = 4;
+const OpenImage_VECSEMANTICS OpenImage_VECSEMANTICS_TIMECODE = 5;
+const OpenImage_VECSEMANTICS OpenImage_VECSEMANTICS_KEYCODE = 6;
+
+function OpenImageTypeDesc() = "OpenImageTypeDesc_construct";
+function ~OpenImageTypeDesc() = "OpenImageTypeDesc_free";
+function OpenImageTypeDesc.reset() = "OpenImageTypeDesc_free";
+
+function OpenImageTypeDesc(OpenImage_BASETYPE btype, OpenImage_AGGREGATE agg, OpenImage_VECSEMANTICS xform) = "OpenImageTypeDesc_construct_variant1";
+function OpenImageTypeDesc(OpenImage_BASETYPE btype, SInt32 arraylength) = "OpenImageTypeDesc_construct_variant2";
+function OpenImageTypeDesc(OpenImage_BASETYPE btype, OpenImage_AGGREGATE agg, SInt32 arraylength) = "OpenImageTypeDesc_construct_variant3";
+function OpenImageTypeDesc(OpenImage_BASETYPE btype, OpenImage_AGGREGATE agg, OpenImage_VECSEMANTICS xform, SInt32 arraylength) = "OpenImageTypeDesc_construct_variant4";
+function OpenImageTypeDesc(String typestring) = "OpenImageTypeDesc_construct_variant5";
+
+function UInt16 OpenImageTypeDesc.get_basetype() = "OpenImageTypeDesc_get_basetype";
+function OpenImageTypeDesc.set_basetype(UInt16 value) = "OpenImageTypeDesc_set_basetype";
+function UInt16 OpenImageTypeDesc.get_aggregate() = "OpenImageTypeDesc_get_aggregate";
+function OpenImageTypeDesc.set_aggregate(UInt16 value) = "OpenImageTypeDesc_set_aggregate";
+function UInt16 OpenImageTypeDesc.get_vecsemantics() = "OpenImageTypeDesc_get_vecsemantics";
+function OpenImageTypeDesc.set_vecsemantics(UInt16 value) = "OpenImageTypeDesc_set_vecsemantics";
+function UInt16 OpenImageTypeDesc.get_reserved() = "OpenImageTypeDesc_get_reserved";
+function OpenImageTypeDesc.set_reserved(UInt16 value) = "OpenImageTypeDesc_set_reserved";
+function SInt32 OpenImageTypeDesc.get_arraylen() = "OpenImageTypeDesc_get_arraylen";
+function OpenImageTypeDesc.set_arraylen(SInt32 value) = "OpenImageTypeDesc_set_arraylen";
+
+function String OpenImageTypeDesc.c_str() = "OpenImageTypeDesc_c_str";
+function UInt64 OpenImageTypeDesc.numelements() = "OpenImageTypeDesc_numelements";
+function UInt64 OpenImageTypeDesc.size() = "OpenImageTypeDesc_size";
+function OpenImageTypeDesc OpenImageTypeDesc.elementtype() = "OpenImageTypeDesc_elementtype";
+function UInt64 OpenImageTypeDesc.elementsize() = "OpenImageTypeDesc_elementsize";
+function UInt64 OpenImageTypeDesc.basesize() = "OpenImageTypeDesc_basesize";
+function UInt64 OpenImageTypeDesc.fromstring!(String typestring) = "OpenImageTypeDesc_fromstring";
+function Boolean == (OpenImageTypeDesc a, OpenImageTypeDesc b) = "OpenImageTypeDesc_equals_op";
+function Boolean != (OpenImageTypeDesc a, OpenImageTypeDesc b) = "OpenImageTypeDesc_notequals_op";
+function Boolean OpenImageTypeDesc.equivalent(OpenImageTypeDesc b) = "OpenImageTypeDesc_equivalent";
+function OpenImageTypeDesc.unarray() = "OpenImageTypeDesc_unarray";
+
+function OpenImageTypeDesc OpenImageTypeDescTypeFloat() = "OpenImageTypeDescTypeFloat";
+function OpenImageTypeDesc OpenImageTypeDescTypeColor() = "OpenImageTypeDescTypeColor";
+function OpenImageTypeDesc OpenImageTypeDescTypeString() = "OpenImageTypeDescTypeString";
+function OpenImageTypeDesc OpenImageTypeDescTypeInt() = "OpenImageTypeDescTypeInt";
+function OpenImageTypeDesc OpenImageTypeDescTypePoint() = "OpenImageTypeDescTypePoint";
+function OpenImageTypeDesc OpenImageTypeDescTypeVector() = "OpenImageTypeDescTypeVector";
+function OpenImageTypeDesc OpenImageTypeDescTypeNormal() = "OpenImageTypeDescTypeNormal";
+function OpenImageTypeDesc OpenImageTypeDescTypeMatrix() = "OpenImageTypeDescTypeMatrix";
+function OpenImageTypeDesc OpenImageTypeDescTypeTimeCode() = "OpenImageTypeDescTypeTimeCode";
+function OpenImageTypeDesc OpenImageTypeDescTypeKeyCode() = "OpenImageTypeDescTypeKeyCode";

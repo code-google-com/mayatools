@@ -1,0 +1,164 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`EventDispatcher` dispatches events to registered manipulators
+
+Example
+---------
+
+.. code-block:: kl
+
+    EventDispatcher dispatcher = EventDispatcher_GetInstance();
+    Manipulator manipulator = MyCustomManipulator();
+
+    // draw a couple of points
+    dispatcher.registerManipulator("MoveTool", manipulator);
+
+
+*/
+
+require Singletons;
+
+object EventDispatcher {
+
+    // The library of registered manipulators.
+    Manipulator manipulators[String];
+
+    // The stack of active manipulators. 
+    Manipulator stack[];
+
+    Boolean active;
+};
+
+
+// Get the EventDispatcher singleton, or construct 
+// it if it didn't already exist.
+function EventDispatcher EventDispatcher_GetInstance() {
+    // check if we can get the singleton
+    Object eventDispatcher = Singleton_get('EventDispatcher');
+    if(eventDispatcher == null) {
+        eventDispatcher = EventDispatcher();
+        Singleton_set('EventDispatcher', eventDispatcher);
+    }
+    return eventDispatcher;
+}
+
+// Get the EventDispatcher singleton, but through a method
+function EventDispatcher EventDispatcher.getInstance() {
+  return EventDispatcher_GetInstance();
+}
+
+function EventDispatcher.registerManipulator!(String name, Manipulator manipulator){
+    this.manipulators[name] = manipulator;
+}
+
+function EventDispatcher.registerManipulator!(Manipulator manipulator){
+    String name = String(manipulator.type());
+    this.registerManipulator(name, manipulator);
+}
+
+// Reactivate the manipulation, but do not modify the stack. 
+// This method should be called by the DCC when the custom manipulator is disabled. 
+function EventDispatcher.activateManipulation!(){
+    this.active = true;
+    if(this.stack.size > 0){
+        Manipulator manipulator = this.stack[this.stack.size-1];
+        manipulator.onEnable();
+    }
+}
+
+
+// Temporarily deactivate the manipulation, but do not modify the stack. 
+// This method should be called by the DCC when the custom manipulator is disabled to
+// suspend manipulation, but not alter the stack. 
+// e.g. If a paint manipulator is active, but the user activates a different tool in Maya, 
+// then we simply deactivate the manipulation system, but leave the paint manipulator
+// at the top of the stack.
+function EventDispatcher.deactivateManipulation!(){
+    this.active = false;
+    if(this.stack.size > 0){
+        Manipulator manipulator = this.stack[this.stack.size-1];
+        manipulator.onDisable();
+    }
+}
+
+// Returns true if a given manipulator exists
+function Boolean EventDispatcher.hasManipulator(String name) {
+  return this.manipulators.has(name);
+}
+
+// Returns the manipulator regiostered under with the given type name. 
+function Manipulator EventDispatcher.getManipulator(String name){
+    if(this.manipulators.has(name))
+        return this.manipulators[name];
+    else{
+        Manipulator nullManipulator = null;
+        return nullManipulator;
+    }
+}
+
+// Returns the name of the currently active manipulator
+function String EventDispatcher.activeManipulator(){
+    String result = '';
+    if(this.stack.size > 0){
+        Manipulator manipulator = this.stack[this.stack.size-1];
+        result = manipulator.type();
+    }
+    return result;
+}
+
+
+
+// Push the manipulator onto the stack by name. This makes it the 
+// new active manipulator that will recieve events. 
+function EventDispatcher.pushManipulator!(String name){
+    if(!this.manipulators.has(name))
+        setError("Error in EventDispatcher.pushManipulator: EventDispatcher does not have the requested manipulator:" + name);
+    Manipulator manipulator = this.manipulators[name];
+    if(this.active){
+        if(this.stack.size > 0){
+            // Disable the previous manipulator on the stack. 
+            Manipulator prevManipulator = this.stack[this.stack.size-1];
+            prevManipulator.onDisable();
+        }
+        manipulator.onEnable();
+    }
+    this.stack.push(manipulator);
+}
+
+// Pop the current manipulator off the stack. This reverts the active manipulator
+// to the one that was active befor the current one was active.
+function EventDispatcher.popManipulator!(){
+    Manipulator manipulator = this.stack[this.stack.size-1];
+    manipulator.onDisable();
+    this.stack.pop();
+    if(this.active){
+        if(this.stack.size > 0){
+            // Re-enable the previous manipulator on the stack. 
+            Manipulator prevManipulator = this.stack[this.stack.size-1];
+            prevManipulator.onEnable();
+        }
+    }
+}
+
+
+// Invoke the event on the Manipulator at the top of the stack.
+function EventDispatcher.onEvent!(io Event event){
+    if(!this.active){
+        report("Warning in EventDispatcher.onEvent: Plase activate the EventDispatcher by calling activateManipulation prior to sending events.");
+        return;
+    }
+    if(this.stack.size > 0){
+        Manipulator manipulator = this.stack[this.stack.size-1];
+        manipulator.onEvent(event);
+    }
+    else{
+        report("Warning in EventDispatcher.onEvent: No active manipulators");
+    }
+}
+
+

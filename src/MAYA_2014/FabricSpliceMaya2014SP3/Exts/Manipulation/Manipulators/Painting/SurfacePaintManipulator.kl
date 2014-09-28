@@ -1,0 +1,402 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`SurfacePaintManipulator `
+
+*/
+
+
+require Singletons;
+require InlineDrawing;
+
+
+alias UInt32 SurfacePaintManipulator_State;
+const SurfacePaintManipulator_State SurfacePaintManipulator_State_Active =  0;
+const SurfacePaintManipulator_State SurfacePaintManipulator_State_Painting = 1;
+const SurfacePaintManipulator_State SurfacePaintManipulator_State_Suspended = 2;
+const SurfacePaintManipulator_State SurfacePaintManipulator_State_ResizingBrush = 3;
+
+object SurfacePaintManipulator_StrokePoint {
+    InlineInstance instance;
+    GeometryLocation location;
+    Vec3 objectSpacePoint;
+    Vec3 worldSpacePoint;
+};
+
+function SurfacePaintManipulator_StrokePoint(InlineInstance instance, GeometryLocation location, Vec3 objectSpacePoint, Vec3 worldSpacePoint){
+    this.instance = instance;
+    this.location = location;
+    this.objectSpacePoint = objectSpacePoint;
+    this.worldSpacePoint = worldSpacePoint;
+}
+
+
+struct SurfacePaintManipulator_PointCollection {
+    PolygonMesh mesh;
+    Ray ray;
+    Integer pointIds[];
+    Scalar distances[];
+    Scalar weights[];
+};
+
+interface SurfacePaintManipulator_Callback {
+
+    // Invoked by the SurfacePaintManipulator when the paint stroke is beginning
+    // The event passed in is the mouse down event.  
+    onStrokeBegin!(io MouseEvent event);
+    
+    // Invoked by the SurfacePaintManipulator when the paint stroke is beginning
+    // The event passed in is the mouse up event.  
+    onStrokeEnd!(io MouseEvent event);
+
+    // Invoked by the SurfacePaintManipulator duringpainting.
+    // the collectedPoints struct contains the points, distances and wieghts
+    // of the points inthe geometry that are within the volume of the paint brush.
+    onPaint!(SurfacePaintManipulator_PointCollection collectedPoints);
+};
+
+object SurfacePaintManipulator : Manipulator {
+
+    InlineInstance targetGeometries[];
+
+    SurfacePaintManipulator_StrokePoint strokePath[];
+
+    SurfacePaintManipulator_State state;
+
+    Scalar brushSize;
+    Scalar brushStrength;
+    Scalar brushScaleSpeed;
+    Scalar mouseDownBrushSize;
+    Vec2 mouseDownScreenPos;
+
+    InlineMaterial paintBrushMaterial;
+    InlineInstance paintBrush;
+
+    SurfacePaintManipulator_Callback callbackObj;
+};
+
+
+function SurfacePaintManipulator(){
+    this.brushSize = 0.025;
+    this.brushStrength = 1.0;
+    this.brushScaleSpeed = 1.0;
+
+    // this is a singleton
+    InlineDrawing drawing = OGLInlineDrawing_GetInstance();
+
+    InlineShader hudShader = drawing.registerShader(OGLHUDShader('OGLHUDShader'));
+
+    this.paintBrushMaterial = hudShader.getOrCreateMaterial("SurfacePaintManipulator_PaintBrush");
+    this.paintBrushMaterial.setUniform(InlineUniform('u_color', Color(1.0, 0.0, 0.0)));
+
+    Lines lines();
+    lines.addCircle(Xfo(Quat(Vec3(1,0,0), HALF_PI)), 1.0, 24);
+
+    InlineShape shape = InlineLinesShape('SurfacePaintManipulator_PaintBrush', lines);
+    drawing.registerShape(shape);
+
+    InlineTransform transform = StaticInlineTransform('SurfacePaintManipulator_PaintBrush_Transform', Xfo());
+    drawing.getRoot().addChild(transform);
+
+    this.paintBrush = SimpleInlineInstance('SurfacePaintManipulator', transform, shape);
+
+}
+function SurfacePaintManipulator.setCallbackObj!(SurfacePaintManipulator_Callback callbackObj){
+    this.callbackObj = callbackObj;
+}
+
+function SurfacePaintManipulator.onEnable!(){
+    // Enable the rendering of the brush by adding it to the material.
+    if(!this.paintBrush.hasMaterial(this.paintBrushMaterial))
+        this.paintBrush.addMaterial(this.paintBrushMaterial);
+}
+
+function SurfacePaintManipulator.onDisable!(){
+    // Disable the rendering of the brush by removing it from the material.
+    if(this.paintBrush.hasMaterial(this.paintBrushMaterial))
+        this.paintBrush.removeMaterial(this.paintBrushMaterial);
+}
+
+
+function SurfacePaintManipulator.addTargetGeometry!(InlineInstance instance){
+
+    InlineShape shape = instance.getShape();
+    PolygonMesh mesh = shape.getGeometry();
+    if(mesh == null){
+        report("WARNING: Geometry is not a PolygonMesh:" + instance.getName() );
+        return;
+    }
+    SpatialQueryable queryable = shape.getGeometry();
+    if(queryable == null){
+        report("WARNING: Geometry cannot be raycast.");
+        return;
+    }
+    this.targetGeometries.push(instance);
+}
+
+function SurfacePaintManipulator.setTargetGeometries!(InlineInstance instances[]){
+    this.targetGeometries.resize(0);
+    for(Integer i=0; i<this.targetGeometries.size; i++){
+        this.addTargetGeometry(instances[0]);
+    }
+}
+
+function SurfacePaintManipulator.updateBrush!(io Event event, Vec2 mousePos){
+    Vec2 viewportDim = event.getViewport().getDimensions();
+    Scalar viewportAspectRatio = viewportDim.x / viewportDim.y;
+    Xfo brushXfo(
+      Vec3(
+        ((mousePos.x / viewportDim.x) - 0.5) * 2.0, 
+        ((mousePos.y / viewportDim.y) - 0.5) * -2.0, 
+        0), 
+      Quat(), 
+      Vec3(this.brushSize / viewportAspectRatio, this.brushSize, this.brushSize)
+    );
+    this.paintBrush.getTransform().setLocalXfo(0, brushXfo);
+}
+
+
+function SurfacePaintManipulator.raycastInstance!(Ray ray, InlineInstance instance, io Scalar distance, io SurfacePaintManipulator_StrokePoint strokePoint){
+
+    GeometryLocation locations[] = instance.raycast(ray, true, false, 0.0, SCALARINFINITE);
+    if(locations.size() == 1){
+        Xfo xfo = instance.getTransform().getGlobalXfo(0);
+        Geometry geometry = instance.getShape().getGeometry();
+        Vec3 objectSpacePoint = geometry.getPositionAtLocation(locations[0]);
+        Vec3 worldSpacePoint = xfo.transformVector(objectSpacePoint);
+        Scalar dist = (worldSpacePoint - ray.start).length();
+        if(dist < distance){
+            strokePoint = SurfacePaintManipulator_StrokePoint(instance, locations[0], objectSpacePoint, worldSpacePoint);
+            distance = dist;
+        }
+    }
+}
+
+
+function Boolean SurfacePaintManipulator.paintGeom!(io MouseEvent mouseEvent){
+
+    if(!this.callbackObj){
+        setError("Error in SurfacePaintManipulator.paintGeom. callbackObj not set");
+        return false;
+    }
+
+    Ray ray = mouseEvent.getViewport().calcRayFromScreenPos(mouseEvent.pos);
+    Scalar distance = BIGSCALAR_POSITIVE;
+
+    SurfacePaintManipulator_StrokePoint strokePoint = null;
+    for(Integer i=0; i< this.targetGeometries.size(); i++){
+        this.raycastInstance(ray, this.targetGeometries[i], distance, strokePoint);
+    }
+
+    if(strokePoint != null){
+        this.strokePath.push(strokePoint);
+        this.updateGeometry(ray, mouseEvent.getViewport().getCamera().getFovY());
+        return true;
+    }
+    return false;
+}
+//////////////////////////////////////
+//
+
+struct CollectPointsSharedData {
+    PolygonMesh mesh;
+    Ref<Vec3Attribute> srcPosAttr;
+    Vec3 brushPos;
+    Scalar brushSize;
+    Scalar brushStrength;
+    SurfacePaintManipulator_StrokePoint strokePath[];
+};
+
+struct CollectPointsMapOutput {
+    Boolean collected;
+    Integer pointIndex;
+    Scalar distance;
+    Scalar weight;
+};
+
+
+operator collectPointsProduce(io CollectPointsMapOutput result, Index index, Size count, CollectPointsSharedData sharedData) {
+  Vec3 pos = sharedData.mesh.getPointPosition(index); 
+  if(sharedData.strokePath.size==1){
+    Scalar dist = pos.distanceTo(sharedData.strokePath[0].objectSpacePoint);
+    if(dist < sharedData.brushSize){
+      result.collected = true;
+      result.pointIndex = index;
+      result.distance = dist;
+      result.weight = ((cos(PI * (dist / sharedData.brushSize)) * 0.5) + 0.5) * sharedData.brushStrength;
+      return;
+    }
+  }
+  else {
+    Vec3 p1 = sharedData.strokePath[sharedData.strokePath.size-2].objectSpacePoint;
+    Vec3 p2 = sharedData.strokePath[sharedData.strokePath.size-1].objectSpacePoint;
+    Scalar dist = distFromPointToSegment(pos, p1, p2);
+    if(dist < sharedData.brushSize){
+      result.collected = true;
+      result.pointIndex = index;
+      result.distance = dist;
+      result.weight = ((cos(PI * (dist / sharedData.brushSize)) * 0.5) + 0.5) * sharedData.brushStrength;
+      return;
+    }
+  }
+  result.collected = false;
+}
+
+operator collectPointsReduce(CollectPointsMapOutput input, io SurfacePaintManipulator_PointCollection output, Index index, Size count) {
+  if(input.collected){
+    output.pointIds.push(input.pointIndex);
+    output.distances.push(input.distance);
+    output.weights.push(input.weight);
+  }
+}
+
+
+function SurfacePaintManipulator.updateGeometry!(Ray ray, Scalar fovY){
+
+    InlineInstance instance = this.strokePath[this.strokePath.size-1].instance;
+    InlineTransform transform = instance.getTransform();
+    InlineShape shape = instance.getShape();
+    PolygonMesh mesh = shape.getGeometry();
+    if(!mesh)
+        return;
+
+    Scalar dist = this.strokePath[this.strokePath.size-1].worldSpacePoint.distanceTo(ray.start);
+
+    CollectPointsSharedData collectPointsSharedData;
+    collectPointsSharedData.mesh = mesh;
+    collectPointsSharedData.brushSize = 2.0 * this.brushSize * dist * fovY;
+    collectPointsSharedData.brushStrength = this.brushStrength;
+    collectPointsSharedData.strokePath = this.strokePath;
+
+    ValueProducer<SurfacePaintManipulator_PointCollection> reducer = createReduce( 
+        createArrayGenerator(
+            createConstValue( mesh.pointCount() ),
+            collectPointsProduce,
+            createConstValue( collectPointsSharedData )
+        ),
+        collectPointsReduce
+    );
+    SurfacePaintManipulator_PointCollection collectedPoints = reducer.produce();
+    
+    collectedPoints.mesh = mesh;
+    collectedPoints.ray = ray;
+    this.callbackObj.onPaint(collectedPoints);
+}
+
+function SurfacePaintManipulator.onEvent!(io Event event){
+    if(event.eventType() == Event_MouseButtonPress){
+        MouseEvent mouseEvent = event;
+        switch(this.state){
+        case SurfacePaintManipulator_State_Active:
+            // Avoid disabling camera manipulation in Maya
+            // Note: testing the host name is casing a crash that doesn't make sense. 
+            if(mouseEvent.host.hostName == "Maya" && (mouseEvent.modifiers & ModiferKey_Alt) != 0){
+                // While the camera manipulation is occuring, hide the
+                // paint brush and do not accept the events. 
+                this.state = SurfacePaintManipulator_State_Suspended;
+                this.onDisable();
+            }
+            else if(mouseEvent.host.hostName == "Softimage" && (mouseEvent.modifiers & ModiferKey_Ctrl) != 0){
+                // While the camera manipulation is occuring, hide the
+                // paint brush and do not accept the events. 
+                this.state = SurfacePaintManipulator_State_ResizingBrush;
+                this.mouseDownBrushSize = this.brushSize;
+                this.mouseDownScreenPos = mouseEvent.pos;
+                event.accept();
+            }
+            else{
+                this.strokePath.resize(0);
+                this.callbackObj.onStrokeBegin(mouseEvent);
+                this.state = SurfacePaintManipulator_State_Painting;
+                if(this.paintGeom(mouseEvent)){
+                    event.getHost().requestRedraw();
+                }
+                event.accept();
+            }
+            break;
+        }
+    }
+    else if(event.eventType() == Event_MouseMove){
+        // suspend event handling while manipulating the camera. 
+        MouseEvent mouseEvent = event;
+        switch(this.state){
+            case SurfacePaintManipulator_State_Suspended: return;
+            case SurfacePaintManipulator_State_Active:
+                this.updateBrush(event, mouseEvent.pos);
+                event.getHost().requestRedraw();
+                event.accept();
+                break;
+            case SurfacePaintManipulator_State_Painting:
+                // On drag
+                this.updateBrush(event, mouseEvent.pos);
+                this.paintGeom(mouseEvent);
+                event.getHost().requestRedraw();
+                event.accept();
+                break;
+            case SurfacePaintManipulator_State_ResizingBrush:
+                Scalar drag = this.mouseDownScreenPos.x - mouseEvent.pos.x;
+                this.brushSize = this.mouseDownBrushSize + drag * Scalar(0.0001) * this.brushScaleSpeed;
+                if(this.brushSize < 0.001)
+                  this.brushSize = 0.001;
+                this.updateBrush(event, mouseEvent.pos);
+                event.getHost().requestRedraw();
+                event.accept();
+                break;
+        }
+    }
+    else if(event.eventType() == Event_MouseButtonRelease){
+        MouseEvent mouseEvent = event;
+        switch(this.state){
+        case SurfacePaintManipulator_State_Suspended:
+            // reenable event handling now that camera manipulation is over. 
+            this.state = SurfacePaintManipulator_State_Active;
+            this.onEnable();
+            event.getHost().requestRedraw();
+            break;
+        case SurfacePaintManipulator_State_Active:
+            event.accept();
+            break;
+        case SurfacePaintManipulator_State_Painting:
+            // On release, end the stroke(which should cause an undo to be generated in the callback)
+            this.state = SurfacePaintManipulator_State_Active;
+            this.callbackObj.onStrokeEnd(mouseEvent);
+            event.getHost().requestRedraw();
+            event.accept();
+            break;
+        case SurfacePaintManipulator_State_ResizingBrush:
+            this.state = SurfacePaintManipulator_State_Active;
+            event.accept();
+            break;
+        }
+    }
+    else if(event.eventType() == Event_Wheel){
+        // Use the mouse wheel to reize the brush. 
+        if(this.state != SurfacePaintManipulator_State_Suspended){
+            MouseWheelEvent mouseWheelEvent = event;
+            this.brushSize = this.brushSize + mouseWheelEvent.delta * Scalar(0.0001) * this.brushScaleSpeed;
+            if(this.brushSize < 0.001)
+              this.brushSize = 0.001;
+            this.updateBrush(event, mouseWheelEvent.pos);
+            event.getHost().requestRedraw();
+            event.accept();
+        }
+    }
+    else if(event.eventType() == Event_Leave){
+        if(this.state != SurfacePaintManipulator_State_Suspended){
+            // When the mouse leaves the viewport, hide the brush. 
+            this.onDisable();
+            event.getHost().requestRedraw();
+        }
+    }
+    else if(event.eventType() == Event_Enter){
+        if(this.state != SurfacePaintManipulator_State_Suspended){
+            // When the mouse enters the viewport, show the brush. 
+            this.onEnable();
+            event.getHost().requestRedraw();
+        }
+    }
+}

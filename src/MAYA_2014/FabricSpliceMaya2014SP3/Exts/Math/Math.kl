@@ -1,0 +1,331 @@
+
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+/*SPHINX-description
+The :ref:`math` kl type provides a list of constants and helper functions to be used for mathematical computation.
+
+Example
+---------
+
+.. code-block:: js
+
+    // generate 100 random Integers
+    Integer intValues[100];
+    for(Size i=0;i<100;i++)
+      intValues[i] = mathRandomInteger(17, i);
+
+    // generate 100 random Scalars
+    Scalar scalarValues[100];
+    for(Size i=0;i<100;i++)
+      scalarValues[i] = mathRandomScalar(18, i);
+*/
+const Scalar PI = 3.141592653589793;
+const Scalar TWO_PI = PI * 2.0;
+const Scalar HALF_PI = PI * 0.5;
+const Scalar QUATER_PI = PI * 0.25;
+const Scalar DEG_TO_RAD = 0.017453292519943295;
+const Scalar RAD_TO_DEG = 57.29577951308232;
+const Scalar DIVIDEPRECISION = 10e-20;
+const Scalar DIVIDEDOUBLEPRECISION = 10e-200;
+const Scalar PRECISION = 10e-6;
+const Scalar DOUBLEPRECISION = 10e-13;
+const Scalar BIGSCALAR_POSITIVE = 10e6;
+const Scalar BIGSCALAR_NEGATIVE = -10e6;
+const Scalar SCALARINFINITE = 1e100;//Compiler will convert this to +Inf
+
+/*
+** [pzion 20110714] Order of 300772 (mod 2^31=2147483648) is 1073741824
+*/
+
+const Integer mathRandomBase = 300773;
+const Size mathRandomOffsetsPerID = 1048576;
+
+inline Integer mathRandomPower(Size exp) {
+  Integer result = 1;
+  Integer mult = mathRandomBase;
+  for (Size mask=1; mask; mask<<=1 ) {
+    if ( exp & mask )
+      result *= mult;
+    mult *= mult;
+  }
+  return result;
+}
+
+// provides a random number as an Integer
+inline Integer mathRandomInteger(Size id, Size offset) {
+  return mathRandomPower(mathRandomOffsetsPerID*id + offset) & 0x7FFFFFFF;    
+}
+
+// provides a random number as a Float64 between 0.0 and 1.0
+inline Float64 mathRandomFloat64(Size id, Size offset) {
+  return Float64(mathRandomInteger(id, offset)) / 2147483648.0;
+}
+
+// provides a random number as a Float32 between 0.0 and 1.0
+inline Float32 mathRandomFloat32(Size id, Size offset) {
+  return Float32(mathRandomFloat64(id, offset));
+}
+
+// provides a random number as a Scalar between 0.0 and 1.0
+inline Scalar mathRandomScalar(Size id, Size offset) {
+  return mathRandomFloat32(id, offset);
+}
+
+// converts radians to degrees
+inline Scalar Math_radToDeg(in Scalar val){
+  return val * RAD_TO_DEG;
+}
+
+// converts degrees to radians
+inline Scalar Math_degToRad(in Scalar val){
+  return val * DEG_TO_RAD;
+}
+
+// clamps a scalar value by min and max
+inline Scalar Math_clamp(in Scalar val, in Scalar minval, in Scalar maxval){
+  return (val < minval ? minval : (val > maxval ? maxval : val));
+}
+
+// clamps a scalar value by min and max
+inline Scalar Scalar.clamp(in Scalar minval, in Scalar maxval){
+  return (this < minval ? minval : (this > maxval ? maxval : this));
+}
+
+// clamps a Float64 value by min and max
+inline Float64 Math_clamp(in Float64 val, in Float64 minval, in Float64 maxval){
+  return (val < minval ? minval : (val > maxval ? maxval : val));
+}
+
+// clamps a Float64 value by min and max
+inline Float64 Float64.clamp(in Float64 minval, in Float64 maxval){
+  return (this < minval ? minval : (this > maxval ? maxval : this));
+}
+
+// linearly interpolates a scalar value with another based on a blend (0.0 to 1.0)
+inline Scalar Math_linearInterpolate(in Scalar val1, in Scalar val2, in Scalar t){
+  return val1 + ((val2 - val1) * t);
+}
+
+// linearly interpolates a Float64 value with another based on a blend (0.0 to 1.0)
+inline Float64 Math_linearInterpolate(in Float64 val1, in Float64 val2, in Float64 t){
+  return val1 + ((val2 - val1) * t);
+}
+
+// linearly interpolates a scalar value with another based on a blend (0.0 to 1.0)
+inline Scalar Scalar.linearInterpolate(in Scalar val2, in Scalar t){
+  return this + ((val2 - this) * t);
+}
+
+// linearly interpolates a Float64 value with another based on a blend (0.0 to 1.0)
+inline Float64 Float64.linearInterpolate(in Float64 val2, in Float64 t){
+  return this + ((val2 - this) * t);
+}
+
+// returns the maximum of two scalar values
+inline Scalar Math_max(in Scalar val1, in Scalar val2){
+  return val1 < val2 ? val2 : val1;
+}
+
+// returns the maximum of two Float64 values
+inline Float64 Math_max(in Float64 val1, in Float64 val2){
+  return val1 < val2 ? val2 : val1;
+}
+
+// returns the minimum of two scalar values
+inline Scalar Math_min(in Scalar val1, in Scalar val2){
+  return val1 > val2 ? val2 : val1;
+}
+
+// returns the minimum of two Float64 values
+inline Float64 Math_min(in Float64 val1, in Float64 val2){
+  return val1 > val2 ? val2 : val1;
+}
+
+// returns the law of cosine result
+inline Scalar Math_lawOfCosine(Scalar a, Scalar b, Scalar c)
+{
+  return acos((a * a + c * c - b * b) / (2 * a * c));
+}
+
+// reports a mathmatical warning
+inline Math_reportWarning(in String desc){
+  report("Math.Warning: " + desc);
+}
+
+// returns true if a divisor is bad (will result in bad computation)
+inline Boolean Math_badDivisor(in Scalar s){
+  return s < DIVIDEPRECISION && s > -DIVIDEPRECISION;
+}
+
+inline Boolean Math_badDivisor(in Float64 s){
+  return s < DIVIDEDOUBLEPRECISION && s > -DIVIDEDOUBLEPRECISION;
+}
+
+// reports a bad divisor
+inline Math_reportBadDivisor(in Scalar s, in String contextDesc){
+  Math_reportWarning( contextDesc + ": bad divisor: " + s );
+}
+
+inline Math_reportBadDivisor(in Float64 s, in String contextDesc){
+  Math_reportWarning( contextDesc + ": bad divisor: " + s );
+}
+
+// computes the aspect ratio based on two field
+// of view angles in radians
+inline Scalar Math_aspectFromFov(Scalar fovX, Scalar fovY) {
+  return tan(fovX * 0.5) / tan(0.5 * fovY);
+}
+
+// computes the vertical field of view angle in radians
+// given a horizontal field of view in radians and an aspect
+inline Scalar Math_fovXtoY(Scalar fovX, Scalar aspect) {
+  return atan( tan(fovX * 0.5) / aspect ) * 2.0;
+}
+
+// computes the horizontal field of view angle in radians
+// given a vertical field of view in radians and an aspect
+inline Scalar Math_fovYtoX(Scalar fovY, Scalar aspect) {
+  return atan( tan(fovY * 0.5) * aspect ) * 2.0;
+}
+
+
+// http://www.worldserver.com/turk/opensource/FindQuadraticRoots.c.txt
+// Copyright (C) 1997-2001 Ken Turkowski. <turk@computer.org>
+//
+// All rights reserved.
+//
+// Warranty Information
+//  Even though I have reviewed this software, I make no warranty
+//  or representation, either express or implied, with respect to this
+//  software, its quality, accuracy, merchantability, or fitness for a
+//  particular purpose.  As a result, this software is provided "as is,"
+//  and you, its user, are assuming the entire risk as to its quality
+//  and accuracy.
+//
+// This code may be used and freely distributed as long as it includes
+// this copyright notice and the above warranty information.
+///
+//******************************************************************************
+// FindQuadraticRoots
+//
+//      return(2): 2 real roots
+//      return(1): 1 real, Scalar root
+//      return(0): 2 complex roots
+//
+//  The imaginary component may be NULL if not desired.
+//******************************************************************************
+function Integer findQuadraticRoots(
+  Float64 coeff[3],
+  io Float64 re[2]
+){
+  Float64 a = coeff[2];    // Quadratic coefficient 
+  Float64 b = coeff[1];    // Linear coefficient 
+  Float64 c = coeff[0];    // Constant coefficient
+
+  if( abs( a ) < 0.001 ){
+    // If the quadratic coefficient(a) is close to 0.0 then this equation
+    // converges to becomes linear
+    re[0] = -c/b;
+    return 1;
+  }
+
+  Float64 d = b * b - (4.0 * a * c);
+  // Two real, distinct roots 
+  if (d > 0.0) {
+    Float64 q;
+    d = sqrt(d);
+    q = (-b + ((b < 0.0) ? -d : d)) * 0.5;
+    re[0] = q / a;
+    re[1] = c / q;
+    return 2;
+  }
+  
+  // One real Scalar root 
+  else if (d == 0.0) {
+    re[0] = re[1] = -b / (2.0 * a);
+    return 1;
+  }
+  // Two complex conjugate roots 
+  return 0;
+}
+
+
+// http://www.worldserver.com/turk/opensource/FindCubicRoots.c.txt
+// Copyright (C) 1997-2001 Ken Turkowski. <turk@computer.org>
+//
+// All rights reserved.
+//
+// Warranty Information
+//  Even though I have reviewed this software, I make no warranty
+//  or representation, either express or implied, with respect to this
+//  software, its quality, accuracy, merchantability, or fitness for a
+//  particular purpose.  As a result, this software is provided "as is,"
+//  and you, its user, are assuming the entire risk as to its quality
+//  and accuracy.
+//
+// This code may be used and freely distributed as long as it includes
+// this copyright notice and the above warranty information.
+///
+//******************************************************************************
+// FindCubicRoots
+//
+//  Solve:
+//      coeff[3] * x^3 + coeff[2] * x^2 + coeff[1] * x + coeff[0] = 0
+//
+//  returns:
+//      3 - 3 real roots
+//      1 - 1 real root (2 complex conjugate)
+//******************************************************************************
+function Integer findCubicRoots(
+  in Float64 coeff[4],
+  io Float64 roots[3]
+){
+  // Note on this fuzziness value. The root finding becomes highly unstable as the
+  // equations converge from cubic to quadratic to linear. By using fairly course
+  // fuzzy values, the function gets downgraded quickly, therby increacing stability. 
+  if( abs( coeff[3] ) < 0.001 ){
+    // If the cubic coefficient(A) is 0.0 then this equation becomes a quadratic
+    Float64 quadraticCoeff[3];
+    quadraticCoeff[0] = coeff[0];
+    quadraticCoeff[1] = coeff[1];
+    quadraticCoeff[2] = coeff[2];
+    Float64 quadraticroots[2];
+    Integer result = findQuadraticRoots( quadraticCoeff, quadraticroots );
+    roots[0] = quadraticroots[0];
+    roots[1] = quadraticroots[1];
+    return result;
+  }
+
+  Float64 a1 = coeff[2] / coeff[3];
+  Float64 a2 = coeff[1] / coeff[3];
+  Float64 a3 = coeff[0] / coeff[3];
+  
+  Float64 Q = (a1 * a1 - 3.0 * a2) / 9.0;
+  Float64 R = (2.0 * a1 * a1 * a1 - 9.0 * a1 * a2 + 27.0 * a3) / 54.0;
+  Float64 Qcubed = Q * Q * Q;
+  Float64 d = Qcubed - R * R;
+  
+  if (Q == 0.0) {
+    // No roots: [phtaylor 22/03/2013] this issue was highlighted by the Alembic exporter. 
+    // This fix needs to be validated by Peter. 
+    return 0;
+  }
+  if (d >= 0.0) {
+    // Three real roots 
+    Float64 theta = acos( R / sqrt( Qcubed ));
+    Float64 sqrtQ = sqrt( Q );
+    roots[0] =  -2.0 * sqrtQ * cos( theta             / 3.0) - a1 / 3.0;
+    roots[1] =  -2.0 * sqrtQ * cos((theta + 2.0 * PI) / 3.0) - a1 / 3.0;
+    roots[2] =  -2.0 * sqrtQ * cos((theta + 4.0 * PI) / 3.0) - a1 / 3.0;
+    return 3;
+  }
+
+  // One real root 
+  Float64 e = pow( sqrt( -d ) + abs( R ), 1.0 / 3.0);
+  if (R > 0.0){
+    e = -e;
+  }
+  roots[0] = (e + Q / e) - a1 / 3.0;
+  return 1;
+}

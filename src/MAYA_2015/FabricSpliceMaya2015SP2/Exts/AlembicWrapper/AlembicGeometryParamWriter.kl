@@ -1,0 +1,157 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+require Geometry;
+
+object AlembicGeometryParamWriter {
+  String _name;
+  String _paramType;
+  AlembicGeometryScope _scope;
+  SInt32 _lastVersion;
+  AlembicOFloat32GeomParam _Float32Param;
+  AlembicOUInt32GeomParam _UInt32Param;
+  AlembicOVec2VfGeomParam _Vec2VfParam;
+  AlembicOVec3VfGeomParam _Vec3VfParam;
+  AlembicOQuatfGeomParam _QuatfParam;
+  AlembicOColorfGeomParam _ColorfParam;
+};
+
+function AlembicGeometryParamWriter(AlembicOCompoundProperty parent, String name, AlembicGeometryScope scope, SInt32 timeSampling, Ref<ScalarAttribute> attribute) {
+  this._name = name;
+  this._paramType = "Float32";
+  this._scope = scope;
+  this._Float32Param = AlembicOFloat32GeomParam(parent, name, false, scope, 1);
+  this._Float32Param.setTimeSampling(timeSampling);
+}
+
+function AlembicGeometryParamWriter(AlembicOCompoundProperty parent, String name, AlembicGeometryScope scope, SInt32 timeSampling, Ref<UInt32Attribute> attribute) {
+  this._name = name;
+  this._paramType = "UInt32";
+  this._scope = scope;
+  this._UInt32Param = AlembicOUInt32GeomParam(parent, name, false, scope, 1);
+  this._UInt32Param.setTimeSampling(timeSampling);
+}
+
+function AlembicGeometryParamWriter(AlembicOCompoundProperty parent, String name, AlembicGeometryScope scope, SInt32 timeSampling, Ref<Vec2Attribute> attribute) {
+  this._name = name;
+  this._paramType = "Vec2Vf";
+  this._scope = scope;
+  this._Vec2VfParam = AlembicOVec2VfGeomParam(parent, name, false, scope, 1);
+  this._Vec2VfParam.setTimeSampling(timeSampling);
+}
+
+function AlembicGeometryParamWriter(AlembicOCompoundProperty parent, String name, AlembicGeometryScope scope, SInt32 timeSampling, Ref<Vec3Attribute> attribute) {
+  this._name = name;
+  this._scope = scope;
+  this._Vec3VfParam = AlembicOVec3VfGeomParam(parent, name, false, scope, 1);
+  this._Vec3VfParam.setTimeSampling(timeSampling);
+  this._paramType = "Vec3Vf";
+}
+
+function AlembicGeometryParamWriter(AlembicOCompoundProperty parent, String name, AlembicGeometryScope scope, SInt32 timeSampling, Ref<QuatAttribute> attribute) {
+  this._name = name;
+  this._paramType = "Quatf";
+  this._scope = scope;
+  this._QuatfParam = AlembicOQuatfGeomParam(parent, name, false, scope, 1);
+  this._QuatfParam.setTimeSampling(timeSampling);
+}
+
+function AlembicGeometryParamWriter(AlembicOCompoundProperty parent, String name, AlembicGeometryScope scope, SInt32 timeSampling, Ref<ColorAttribute> attribute) {
+  this._name = name;
+  this._paramType = "Colorf";
+  this._scope = scope;
+  this._ColorfParam = AlembicOColorfGeomParam(parent, name, false, scope, 1);
+  this._ColorfParam.setTimeSampling(timeSampling);
+}
+
+function String AlembicGeometryParamWriter.getName() {
+  return this._name;
+}
+
+function String AlembicGeometryParamWriter.getParamType() {
+  return this._paramType;
+}
+
+function AlembicGeometryScope AlembicGeometryParamWriter.getScope() {
+  return this._scope;
+}
+
+function Boolean AlembicGeometryParamWriter.writeSample!(Ref<GeometryAttribute> attribute) {
+
+  if(this._lastVersion == attribute.getVersion())
+    return true;
+  this._lastVersion = attribute.getVersion();
+
+  switch(this._paramType)
+  {
+    case 'Float32':
+    {
+      ScalarAttribute castAttribute = attribute;
+      if(castAttribute == null) {
+        setError('AlembicGeometryParamWriter: Attribute "'+this._name+'",  type and paramType "'+this._paramType+'" not matching.');
+        break;
+      }
+      this._Float32Param.set(AlembicOFloat32GeomParamSample(castAttribute.values, this._scope));
+      return true;
+    }
+    case 'UInt32':
+    {
+      UInt32Attribute castAttribute = attribute;
+      if(castAttribute == null) {
+        setError('AlembicGeometryParamWriter: Attribute "'+this._name+'",  type and paramType "'+this._paramType+'" not matching.');
+        break;
+      }
+      this._UInt32Param.set(AlembicOUInt32GeomParamSample(castAttribute.values, this._scope));
+      return true;
+    }
+    case 'Vec2Vf':
+    {
+      Vec2Attribute castAttribute = attribute;
+      if(castAttribute == null) {
+        setError('AlembicGeometryParamWriter: Attribute "'+this._name+'",  type and paramType "'+this._paramType+'" not matching.');
+        break;
+      }
+      this._Vec2VfParam.set(AlembicOVec2VfGeomParamSample(castAttribute.values, this._scope));
+      return true;
+    }
+    case 'Vec3Vf':
+    {
+      Vec3Attribute castAttribute = attribute;
+      if(castAttribute == null) {
+        setError('AlembicGeometryParamWriter: Attribute "'+this._name+'",  type and paramType "'+this._paramType+'" not matching.');
+        break;
+      }
+      this._Vec3VfParam.set(AlembicOVec3VfGeomParamSample(castAttribute.values, this._scope));
+      return true;
+    }
+    case 'Quatf':
+    {
+      QuatAttribute castAttribute = attribute;
+      if(castAttribute == null) {
+        setError('AlembicGeometryParamWriter: Attribute "'+this._name+'",  type and paramType "'+this._paramType+'" not matching.');
+        break;
+      }
+      this._QuatfParam.set(AlembicOQuatfGeomParamSample(castAttribute.values, this._scope));
+      return true;
+    }
+    case 'Colorf':
+    {
+      ColorAttribute castAttribute = attribute;
+      if(castAttribute == null) {
+        setError('AlembicGeometryParamWriter: Attribute "'+this._name+'",  type and paramType "'+this._paramType+'" not matching.');
+        break;
+      }
+      this._ColorfParam.set(AlembicOColorfGeomParamSample(castAttribute.values, this._scope));
+      return true;
+    }
+    default:
+    {
+      setError('AlembicGeometryParamWriter: Unsupported paramType "'+this._paramType+'".');
+      break;
+    }
+  }
+
+  return false;
+}

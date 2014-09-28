@@ -1,0 +1,272 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`ogllinesshader` implements the :ref:`inlineshader` interface for OpenGL direct rendering. It encapsulates the :ref:`oglinlineshader` for shading with a specialized lines shading model..
+
+Uniforms
+----------
+==================== ============ =============================================== ==================================
+Name                 Type         Description                                     Default
+==================== ============ =============================================== ==================================
+u_light0Position     Vec3         Position of the first light                     Position of the camera
+u_light0Color        Color        Color of the first light                        Color(1.0, 1.0, 1.0)
+u_ambientColor       Color        Ambient color component                         Color(0.05, 0.05, 0.05)
+u_rootColor          Color        Color at the start of each line (ratio == 0.0)  Color(0.1, 0.1, 0.1)
+u_tipColor           Color        Color at the end of each line (ratio == 1.0)    Color(1.0, 1.0, 1.0)
+u_specularColor      Color        Specular color component                        Color(0.2, 0.2, 0.2)
+u_specularFactor     Color        Specular distribution factor                    16.0
+u_normalIsTangent    Integer      Flag defining normal type                       0
+u_shadingAmount      Scalar       0.0 to 1.0 defining how much shading to apply   1.0
+u_vertexColorAmount  Scalar       0.0 to 1.0 defining how much to use vertexcolor 1.0
+==================== ============ =============================================== ==================================
+
+Attributes
+----------
+=============== ============ =====================================
+Name            Type         Description
+=============== ============ =====================================
+positions       Vec3         Geometry positions
+normals         Vec3         Geometry normals
+vertexColors    Color        Color per vertex
+ratios          Scalar       0.0 to 1.0 along each line
+=============== ============ =====================================
+
+Example
+---------
+
+.. code-block:: kl
+
+    InlineShader shader = draw.registerShader(OGLLinesShader());
+    InlineMaterial mat = shader.getOrCreateMaterial('blueLines');
+    mat.setUniform('u_rootColor', Color(0.0, 1.0, 0.0));
+    mat.setUniform('u_tipColor', Color(0.6, 1.0, 0.6));
+*/
+
+require Math;
+require FabricOGL;
+
+object OGLLinesShader: InlineShader {
+  OGLInlineShader _shader;
+};
+
+// default constructor without a name
+function OGLLinesShader() {
+  this = OGLLinesShader(this.type());
+}
+
+// default constructor taking a name
+function OGLLinesShader(String name) {
+  this._shader = OGLInlineShader(
+    name,
+    "
+      #version 150 //required for OSX support
+      
+      uniform mat4 u_viewMatrix;
+      uniform mat4 u_projection;
+      uniform mat4 u_modelMatrix;
+      uniform mat3 u_normalMatrix;
+
+      uniform vec3 u_light0Position;
+      uniform vec4 u_light0Color;
+
+      in vec4 positions;
+      in vec3 normals;
+      in vec4 vertexColors;
+      in float ratios;
+
+      out vec3 v_normal;
+      out vec4 v_position;
+      out vec3 v_lightDir;
+      out vec4 v_lightColor;
+      out vec3 v_eyeVec;
+      out vec4 vertexColor;
+      out float ratio;
+
+      void main(){
+        v_normal = u_normalMatrix * normals;
+        v_position = u_modelMatrix * positions;
+        vec4 v_positionInv = (u_viewMatrix * vec4(v_position.xyz, 1.0));
+        gl_Position = u_projection * v_positionInv;
+  
+        v_lightDir = (u_viewMatrix * vec4(u_light0Position, 1.0)).xyz - v_positionInv.xyz;
+        v_lightColor = u_light0Color;
+        v_eyeVec = -v_positionInv.xyz;
+        vertexColor = vertexColors;
+        ratio = ratios;
+      }
+    ", "
+      #version 150 //required for OSX support
+      
+      uniform vec4 u_ambientColor;
+      uniform vec4 u_rootColor;
+      uniform vec4 u_tipColor;
+      uniform vec4 u_specularColor;
+      uniform float u_specularFactor;
+      uniform int u_normalIsTangent;
+      uniform float u_shadingAmount;
+      uniform float u_vertexColorAmount;
+
+      in vec3 v_normal;
+      in vec4 v_position;
+      in vec3 v_lightDir;
+      in vec4 v_lightColor;
+      in vec3 v_eyeVec;
+      in vec4 vertexColor;
+      in float ratio;
+
+      out vec4 out_fragColor;
+
+      void main() {
+        vec4 color1 = mix(vec4(1.0, 1.0, 1.0, 1.0), vertexColor, u_vertexColorAmount);
+        color1 *= mix(u_rootColor, u_tipColor, ratio);
+        vec4 color2 = u_ambientColor * color1;
+
+        vec3 N;
+        if(u_normalIsTangent == 0)
+          N = normalize(v_normal);
+        else
+        {
+          N = normalize(cross(v_normal, cross(v_normal, v_eyeVec)));
+          if(dot(N, v_eyeVec) < 0.0)
+            N = -N;
+        }
+        vec3 L = normalize(v_lightDir);
+        
+        float lambertTerm = dot(N,L);
+        
+        if(lambertTerm > 0.0)
+        {
+          color2 += v_lightColor * color1 * lambertTerm; 
+          vec3 E = normalize(v_eyeVec);
+          vec3 R = reflect(-L, N);
+          float specular = pow( max(dot(R, E), 0.0), u_specularFactor );
+          color2 += u_specularColor * specular;  
+        }
+
+        out_fragColor = mix(color1, color2, u_shadingAmount);
+      }
+    ");  
+  this._shader.defineUniform(InlineUniform("u_viewMatrix", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_projection", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_modelMatrix", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_normalMatrix", Mat33()));
+
+  this._shader.defineUniform(InlineUniform("u_light0Position", Vec3(100, 100, 100)));
+  this._shader.defineUniform(InlineUniform("u_light0Color", Color(1.0, 1.0, 1.0)));
+
+  this._shader.defineUniform(InlineUniform("u_ambientColor", Color(0.05, 0.05, 0.05)));
+  this._shader.defineUniform(InlineUniform("u_rootColor", Color(0.1, 0.1, 0.1)));
+  this._shader.defineUniform(InlineUniform("u_tipColor", Color(1.0, 1.0, 1.0)));
+  this._shader.defineUniform(InlineUniform("u_specularColor", Color(0.2, 0.2, 0.2)));
+  this._shader.defineUniform(InlineUniform("u_specularFactor", 16.0));
+  this._shader.defineUniform(InlineUniform("u_normalIsTangent", Integer(1)));
+
+  this._shader.defineUniform(InlineUniform("u_shadingAmount", 1.0));
+  this._shader.defineUniform(InlineUniform("u_vertexColorAmount", 1.0));
+
+  this._shader.defineAttribute('positions', "Vec3");
+  this._shader.defineAttribute('normals', "Vec3");
+  this._shader.defineAttribute('vertexColors', "Vec4");
+  this._shader.defineAttribute('ratios', "Float32");
+}
+
+// empties all materials of this shader
+function OGLLinesShader.reset!() {
+  this._shader.reset();
+}
+
+// returns the name of this shader
+function String OGLLinesShader.getName() {
+  return this._shader.getName();
+}
+
+// update the geometry GLSL code
+function OGLLinesShader.setTesselationCode!(String controlCode, String evaluateCode) {
+  this._shader.setTesselationCode(controlCode, evaluateCode);
+}
+
+// called by the InlineDrawing, should not be called manually
+function Boolean OGLLinesShader._draw!(io DrawContext context) {
+
+  if(context.lightPositions.size() > 0)
+    this.setUniform(InlineUniform('u_light0Position', context.lightPositions[0]));
+  else
+    this.setUniform(InlineUniform('u_light0Position', context.viewport.getCamera().getMat44().translation()));
+
+  if(context.lightColors.size() > 0)
+    this.setUniform(InlineUniform('u_light0Color', context.lightColors[0]));
+
+  return this._shader._draw(context);
+}
+
+// returns true if this shader has a material with a given name
+function Boolean OGLLinesShader.hasMaterial(String name) {
+  return this._shader.hasMaterial(name);
+}
+
+// returns (and eventually creates) a new matching material with a given name
+function InlineMaterial OGLLinesShader.getOrCreateMaterial!(String name) {
+  return this._shader.getOrCreateMaterial(name);
+}
+
+// returns the number of materials in this shader
+function Size OGLLinesShader.getMaterialCount() {
+  return this._shader.getMaterialCount();
+}
+
+// returns an existing material by index
+function InlineMaterial OGLLinesShader.getMaterial(Index index) {
+  return this._shader.getMaterial(index);
+}
+
+// define a new uniform on the shader.
+function OGLLinesShader.defineUniform!(InlineUniform uniform) {
+  return;
+}
+
+// returns true if this shader has a uniform with a given name
+function Boolean OGLLinesShader.hasUniform(String name) {
+  return this._shader.hasUniform(name);
+}
+
+// sets the global value of a uniform
+// this can be changed per material, per instance or even per transform
+function OGLLinesShader.setUniform!(InlineUniform uniform) {
+  this._shader.setUniform(uniform);
+}
+
+// draws a uniform for the shader, applies the value essentially. 
+// this should be used from within the InlineMaterial's _draw or 
+// the InlineInstance's _draw.
+function Boolean OGLLinesShader._drawUniform!(io DrawContext context, InlineUniform uniform) {
+  return this._shader._drawUniform(context, uniform);
+}
+
+// define a surface attribute with a given name and type
+function OGLLinesShader.defineAttribute!(String name, String attributeType) {
+  return;
+}
+
+// returns the number of attributes
+function Size OGLLinesShader.getAttributeCount() {
+  return this._shader.getAttributeCount();
+}
+
+// returns the name of an attribute
+function String OGLLinesShader.getAttributeName(Index index) {
+  return this._shader.getAttributeName(index);
+}
+
+// returns true if this shader has an attribute with a given name
+function Integer OGLLinesShader.getAttributeID(String name) {
+  return this._shader.getAttributeID(name);
+}
+
+// returns the ID / location of a given attribute inside the shader.
+function Boolean OGLLinesShader.hasAttribute(String name) {
+  return this._shader.hasAttribute(name);
+}

@@ -1,0 +1,209 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+
+const Scalar SLIDER_CONSTRAINT_DEF_SOFTNESS =		1.0;
+const Scalar SLIDER_CONSTRAINT_DEF_DAMPING =		1.0;
+const Scalar SLIDER_CONSTRAINT_DEF_RESTITUTION =	0.7;
+const Scalar SLIDER_CONSTRAINT_DEF_CFM =			0.0;
+
+const UInt32 BT_SLIDER_FLAGS_CFM_DIRLIN = (1 << 0);
+const UInt32 BT_SLIDER_FLAGS_ERP_DIRLIN = (1 << 1);
+const UInt32 BT_SLIDER_FLAGS_CFM_DIRANG = (1 << 2);
+const UInt32 BT_SLIDER_FLAGS_ERP_DIRANG = (1 << 3);
+const UInt32 BT_SLIDER_FLAGS_CFM_ORTLIN = (1 << 4);
+const UInt32 BT_SLIDER_FLAGS_ERP_ORTLIN = (1 << 5);
+const UInt32 BT_SLIDER_FLAGS_CFM_ORTANG = (1 << 6);
+const UInt32 BT_SLIDER_FLAGS_ERP_ORTANG = (1 << 7);
+const UInt32 BT_SLIDER_FLAGS_CFM_LIMLIN = (1 << 8);
+const UInt32 BT_SLIDER_FLAGS_ERP_LIMLIN = (1 << 9);
+const UInt32 BT_SLIDER_FLAGS_CFM_LIMANG = (1 << 10);
+const UInt32 BT_SLIDER_FLAGS_ERP_LIMANG = (1 << 11);
+
+
+object BulletSliderConstraint : BulletTypedConstraint
+{
+	Data pointer;
+	BulletRigidBody	rbA;
+	BulletRigidBody	rbB;
+	// ///for backwards compatibility during the transition to 'BulletSliderConstraint.getInfo/BulletSliderConstraint.getInfo2'
+	// Boolean		m_useSolveConstraintObsolete;
+
+	// BulletConstraintSetting	m_setting;
+};
+
+function Data BulletSliderConstraint.getPointer(){
+	return this.pointer;
+}
+
+	// constructors
+function BulletSliderConstraint(BulletRigidBody rbA, BulletRigidBody rbB, in Xfo frameInA, in Xfo frameInB ,Boolean useLinearReferenceFrameA){
+	this.rbA = rbA;
+	this.rbB = rbB;
+	this.__construct(rbA,rbB, frameInA, frameInB , useLinearReferenceFrameA);
+}
+function BulletSliderConstraint.__construct!(BulletRigidBody rbA, BulletRigidBody rbB, in Xfo frameInA, in Xfo frameInB ,Boolean useLinearReferenceFrameA) = "BulletSliderConstraint_construct1";
+
+
+function BulletSliderConstraint(BulletRigidBody rbA, in Xfo frameInB, Boolean useLinearReferenceFrameA){
+	this.rbA = rbA;
+	this.__construct( rbA, frameInB, useLinearReferenceFrameA);
+}
+
+function BulletSliderConstraint.__construct!(BulletRigidBody rbA,in Xfo frameInB, Boolean useLinearReferenceFrameA) = "BulletSliderConstraint_construct2";
+
+function ~BulletSliderConstraint() = "BulletSliderConstraint_destroy";
+
+
+	// overrides
+
+ //function virtual void BulletSliderConstraint.getInfo1 (BulletConstraintInfo1* info);
+
+	// void BulletSliderConstraint.getInfo1NonVirtual(BulletConstraintInfo1* info);
+	
+	// virtual void BulletSliderConstraint.getInfo2 (BulletConstraintInfo2* info);
+
+	// void BulletSliderConstraint.getInfo2NonVirtual(BulletConstraintInfo2* info, in Xfo transA, in Xfo transB,in Vec3 linVelA,in Vec3 linVelB, Scalar rbAinvMass,Scalar rbBinvMass);
+
+
+
+	// access
+function BulletRigidBody BulletSliderConstraint.getRigidBodyA()
+{
+	return this.rbA;
+}
+function BulletRigidBody BulletSliderConstraint.getRigidBodyB()
+{
+	return this.rbB;
+}
+
+function Xfo BulletSliderConstraint.getCalculatedTransformA() = 'BulletSliderConstraint_getCalculatedTransformA';
+function Xfo BulletSliderConstraint.getCalculatedTransformB() = 'BulletSliderConstraint_getCalculatedTransformB';
+function Xfo BulletSliderConstraint.getFrameOffsetA() = 'BulletSliderConstraint_getFrameOffsetA';
+function Xfo BulletSliderConstraint.getFrameOffsetB() = 'BulletSliderConstraint_getFrameOffsetB';
+function Xfo BulletSliderConstraint.getFrameOffsetA() = 'BulletSliderConstraint_getFrameOffsetA';
+function Xfo BulletSliderConstraint.getFrameOffsetB() = 'BulletSliderConstraint_getFrameOffsetB';
+function Scalar BulletSliderConstraint.getLowerLinLimit() = 'BulletSliderConstraint_getLowerLinLimit';
+function BulletSliderConstraint.setLowerLinLimit!(Scalar lowerLimit) = 'BulletSliderConstraint_setLowerLinLimit';
+function Scalar BulletSliderConstraint.getUpperLinLimit() = 'BulletSliderConstraint_getUpperLinLimit';
+function BulletSliderConstraint.setUpperLinLimit!(Scalar upperLimit) = 'BulletSliderConstraint_setUpperLinLimit';
+function Scalar BulletSliderConstraint.getLowerAngLimit() = 'BulletSliderConstraint_getLowerAngLimit';
+function BulletSliderConstraint.setLowerAngLimit!(Scalar lowerLimit) = 'BulletSliderConstraint_setLowerAngLimit';
+function Scalar BulletSliderConstraint.getUpperAngLimit() = 'BulletSliderConstraint_getUpperAngLimit';
+function BulletSliderConstraint.setUpperAngLimit!(Scalar upperLimit) = 'BulletSliderConstraint_setUpperAngLimit';
+function Boolean BulletSliderConstraint.getUseLinearReferenceFrameA() = 'BulletSliderConstraint_getUseLinearReferenceFrameA';
+function Scalar BulletSliderConstraint.getSoftnessDirLin() = 'BulletSliderConstraint_getSoftnessDirLin';
+function Scalar BulletSliderConstraint.getRestitutionDirLin() = 'BulletSliderConstraint_getRestitutionDirLin';
+function Scalar BulletSliderConstraint.getDampingDirLin() = 'BulletSliderConstraint_getDampingDirLin';
+function Scalar BulletSliderConstraint.getSoftnessDirAng() = 'BulletSliderConstraint_getSoftnessDirAng';
+function Scalar BulletSliderConstraint.getRestitutionDirAng() = 'BulletSliderConstraint_getRestitutionDirAng';
+function Scalar BulletSliderConstraint.getDampingDirAng() = 'BulletSliderConstraint_getDampingDirAng';
+function Scalar BulletSliderConstraint.getSoftnessLimLin() = 'BulletSliderConstraint_getSoftnessLimLin';
+function Scalar BulletSliderConstraint.getRestitutionLimLin() = 'BulletSliderConstraint_getRestitutionLimLin';
+function Scalar BulletSliderConstraint.getDampingLimLin() = 'BulletSliderConstraint_getDampingLimLin';
+function Scalar BulletSliderConstraint.getSoftnessLimAng() = 'BulletSliderConstraint_getSoftnessLimAng';
+function Scalar BulletSliderConstraint.getRestitutionLimAng() = 'BulletSliderConstraint_getRestitutionLimAng';
+function Scalar BulletSliderConstraint.getDampingLimAng() = 'BulletSliderConstraint_getDampingLimAng';
+function Scalar BulletSliderConstraint.getSoftnessOrthoLin() = 'BulletSliderConstraint_getSoftnessOrthoLin';
+function Scalar BulletSliderConstraint.getRestitutionOrthoLin() = 'BulletSliderConstraint_getRestitutionOrthoLin';
+function Scalar BulletSliderConstraint.getDampingOrthoLin() = 'BulletSliderConstraint_getDampingOrthoLin';
+function Scalar BulletSliderConstraint.getSoftnessOrthoAng() = 'BulletSliderConstraint_getSoftnessOrthoAng';
+function Scalar BulletSliderConstraint.getRestitutionOrthoAng() = 'BulletSliderConstraint_getRestitutionOrthoAng';
+function Scalar BulletSliderConstraint.getDampingOrthoAng() = 'BulletSliderConstraint_getDampingOrthoAng';
+function BulletSliderConstraint.setSoftnessDirLin!(Scalar softnessDirLin) = 'BulletSliderConstraint_setSoftnessDirLin';
+function BulletSliderConstraint.setRestitutionDirLin!(Scalar restitutionDirLin) = 'BulletSliderConstraint_setRestitutionDirLin';
+function BulletSliderConstraint.setDampingDirLin!(Scalar dampingDirLin) = 'BulletSliderConstraint_setDampingDirLin';
+function BulletSliderConstraint.setSoftnessDirAng!(Scalar softnessDirAng) = 'BulletSliderConstraint_setSoftnessDirAng';
+function BulletSliderConstraint.setRestitutionDirAng!(Scalar restitutionDirAng) = 'BulletSliderConstraint_setRestitutionDirAng';
+function BulletSliderConstraint.setDampingDirAng!(Scalar dampingDirAng) = 'BulletSliderConstraint_setDampingDirAng';
+function BulletSliderConstraint.setSoftnessLimLin!(Scalar softnessLimLin) = 'BulletSliderConstraint_setSoftnessLimLin';
+function BulletSliderConstraint.setRestitutionLimLin!(Scalar restitutionLimLin) = 'BulletSliderConstraint_setRestitutionLimLin';
+function BulletSliderConstraint.setDampingLimLin!(Scalar dampingLimLin) = 'BulletSliderConstraint_setDampingLimLin';
+function BulletSliderConstraint.setSoftnessLimAng!(Scalar softnessLimAng) = 'BulletSliderConstraint_setSoftnessLimAng';
+function BulletSliderConstraint.setRestitutionLimAng!(Scalar restitutionLimAng) = 'BulletSliderConstraint_setRestitutionLimAng';
+function BulletSliderConstraint.setDampingLimAng!(Scalar dampingLimAng) = 'BulletSliderConstraint_setDampingLimAng';
+function BulletSliderConstraint.setSoftnessOrthoLin!(Scalar softnessOrthoLin) = 'BulletSliderConstraint_setSoftnessOrthoLin';
+function BulletSliderConstraint.setRestitutionOrthoLin!(Scalar restitutionOrthoLin) = 'BulletSliderConstraint_setRestitutionOrthoLin';
+function BulletSliderConstraint.setDampingOrthoLin!(Scalar dampingOrthoLin) = 'BulletSliderConstraint_setDampingOrthoLin';
+function BulletSliderConstraint.setSoftnessOrthoAng!(Scalar softnessOrthoAng) = 'BulletSliderConstraint_setSoftnessOrthoAng';
+function BulletSliderConstraint.setRestitutionOrthoAng!(Scalar restitutionOrthoAng) = 'BulletSliderConstraint_setRestitutionOrthoAng';
+function BulletSliderConstraint.setDampingOrthoAng!(Scalar dampingOrthoAng) = 'BulletSliderConstraint_setDampingOrthoAng';
+function BulletSliderConstraint.setPoweredLinMotor!(Boolean onOff) = 'BulletSliderConstraint_setPoweredLinMotor';
+function Boolean BulletSliderConstraint.getPoweredLinMotor() = 'BulletSliderConstraint_getPoweredLinMotor';
+function BulletSliderConstraint.setTargetLinMotorVelocity!(Scalar targetLinMotorVelocity) = 'BulletSliderConstraint_setTargetLinMotorVelocity';
+function Scalar BulletSliderConstraint.getTargetLinMotorVelocity() = 'BulletSliderConstraint_getTargetLinMotorVelocity';
+function BulletSliderConstraint.setMaxLinMotorForce!(Scalar maxLinMotorForce) = 'BulletSliderConstraint_setMaxLinMotorForce';
+function Scalar BulletSliderConstraint.getMaxLinMotorForce() = 'BulletSliderConstraint_getMaxLinMotorForce';
+function BulletSliderConstraint.setPoweredAngMotor!(Boolean onOff) = 'BulletSliderConstraint_setPoweredAngMotor';
+function Boolean BulletSliderConstraint.getPoweredAngMotor() = 'BulletSliderConstraint_getPoweredAngMotor';
+function BulletSliderConstraint.setTargetAngMotorVelocity!(Scalar targetAngMotorVelocity) = 'BulletSliderConstraint_setTargetAngMotorVelocity';
+function Scalar BulletSliderConstraint.getTargetAngMotorVelocity() = 'BulletSliderConstraint_getTargetAngMotorVelocity';
+function BulletSliderConstraint.setMaxAngMotorForce!(Scalar maxAngMotorForce) = 'BulletSliderConstraint_setMaxAngMotorForce';
+function Scalar BulletSliderConstraint.getMaxAngMotorForce() = 'BulletSliderConstraint_getMaxAngMotorForce';
+
+function Scalar BulletSliderConstraint.getLinearPos() = 'BulletSliderConstraint_getLinearPos';
+function Scalar BulletSliderConstraint.getAngularPos() = 'BulletSliderConstraint_getAngularPos';
+	
+	
+
+	// access for ODE solver
+function Boolean BulletSliderConstraint.getSolveLinLimit() = 'BulletSliderConstraint_getSolveLinLimit';
+function Scalar BulletSliderConstraint.getLinDepth() = 'BulletSliderConstraint_getLinDepth';
+function Boolean BulletSliderConstraint.getSolveAngLimit() = 'BulletSliderConstraint_getSolveAngLimit';
+function Scalar BulletSliderConstraint.getAngDepth() = 'BulletSliderConstraint_getAngDepth';
+	// shared code used by ODE solver
+function BulletSliderConstraint.calculateTransforms!(in Xfo transA,in Xfo transB) = 'BulletSliderConstraint_calculateTransforms';
+function BulletSliderConstraint.testLinLimits!() = 'BulletSliderConstraint_testLinLimits';
+function BulletSliderConstraint.testAngLimits!() = 'BulletSliderConstraint_testAngLimits';
+	// access for PE Solver
+function Vec3 BulletSliderConstraint.getAncorInA() = 'BulletSliderConstraint_getAncorInA';
+function Vec3 BulletSliderConstraint.getAncorInB() = 'BulletSliderConstraint_getAncorInB';
+	// access for UseFrameOffset
+function Boolean BulletSliderConstraint.getUseFrameOffset() = 'BulletSliderConstraint_getUseFrameOffset';
+function BulletSliderConstraint.setUseFrameOffset!(Boolean frameOffsetOnOff) = 'BulletSliderConstraint_setUseFrameOffset';
+
+function BulletSliderConstraint.setFrames!(in Xfo frameA, in Xfo frameB) = 'BulletSliderConstraint_setFrames';
+
+
+	///override the default global value of a parameter (such as ERP or CFM), optionally provide the axis (0..5). 
+	///If no axis is provided, it uses the default axis for this constraint.
+function BulletSliderConstraint.setParam!(Integer num, Scalar value) = 'BulletSliderConstraint_setParam';
+function BulletSliderConstraint.setParam!(Integer num, Scalar value, Integer axis) = 'BulletSliderConstraint_setParam';
+	///return the local value of parameter
+function Scalar BulletSliderConstraint.getParam(Integer num) = 'BulletSliderConstraint_getParam';
+function Scalar BulletSliderConstraint.getParam(Integer num, Integer axis) = 'BulletSliderConstraint_getParam';
+
+// function Integer	calculateSerializeBufferSize();
+
+// 	///fills the dataBuffer and returns the struct name (and 0 on failure)
+// function const char*	serialize(void* dataBuffer, BulletSerializer* serializer);
+
+
+
+
+///////////////////////////////////////////////////////
+// From BulletTypedConstraint
+
+
+function Scalar BulletSliderConstraint.getBreakingImpulseThreshold() = 'BulletSliderConstraint_getBreakingImpulseThreshold';
+
+function BulletSliderConstraint.setBreakingImpulseThreshold!(Scalar threshold) = 'BulletSliderConstraint_setBreakingImpulseThreshold';
+
+function Boolean BulletSliderConstraint.isEnabled() = 'BulletSliderConstraint_isEnabled';
+
+function BulletSliderConstraint.setEnabled!(Boolean enabled) = 'BulletSliderConstraint_setEnabled';
+
+function Boolean BulletSliderConstraint.needsFeedback() = 'BulletSliderConstraint_needsFeedback';
+
+///enableFeedback will allow to read the applied linear and angular impulse
+///use getAppliedImpulse, getAppliedLinearImpulse and getAppliedAngularImpulse to read feedback information
+function BulletSliderConstraint.enableFeedback!(Boolean needsFeedback) = 'BulletSliderConstraint_enableFeedback';
+
+///getAppliedImpulse is an estimated total applied impulse. 
+///This feedback could be used to determine breaking constraints or playing sounds.
+function Scalar	BulletSliderConstraint.getAppliedImpulse() = 'BulletSliderConstraint_getAppliedImpulse';
+
+function UInt32 BulletSliderConstraint.getConstraintType() = 'BulletSliderConstraint_getConstraintType';

@@ -1,0 +1,717 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+//To keep the mesh structure compact, simpler and fast, edges are not explicitely stored, and are rather represented as a pair of polygon and point index.
+//Using point and polygon indices should be favored over PolygonMeshEdge when performance is a priority.
+//The point is the first point in polygon point order, and is a global point index (not an polygonPointIndex or offset). If shared by 2 polygons, the polygon index is the index of the 
+//polygon with the lowest index, which garantees to have a unique representation of an edge.
+struct PolygonMeshEdge {
+  UInt32 polygon;
+  UInt32 firstPoint;//First edge point in polygon point index order
+};
+
+inline PolygonMeshEdge() {
+  this.polygon = InvalidIndex;
+}
+
+inline PolygonMeshEdge( Size polygon, Size firstPoint ) {
+  this.polygon = polygon;
+  this.firstPoint = firstPoint;
+}
+
+//Returns true if the edge is valid. Some functions can return an invalid edge when specified. Note that if isValid() is false, the edge might still not be valid relatively to a PolygonMesh if the point or polygon don't exist, or the point is not connected to the polygon.
+inline Boolean PolygonMeshEdge.isValid() {
+  return this.polygon != InvalidIndex;
+}
+
+inline Boolean == (PolygonMeshEdge a, PolygonMeshEdge b) {
+  return a.polygon == b.polygon && a.firstPoint == b.firstPoint;
+}
+
+//Returns an edge passing through point1 and point2. An arbitrary one will be returned if ambiguous.
+function PolygonMeshEdge PolygonMesh.getEdgeFromPoints( Size point1, Size point2 ) {
+
+  if( PolygonMesh_enableChecks ) {
+    this._assertPointPolygonsAreOrdered( point1 );
+    this._assertPointPolygonsAreOrdered( point2 );
+  }
+
+  DataIter point1Iter = this._getPointIter(point1);
+  DataIter point2Iter = this._getPointIter(point2);
+
+  Boolean extendedBit;
+  UInt32 count = this.pointData.getOffsetAndBit( point1Iter, extendedBit );
+  DataIter borderDataIter = this._getBorderDataIter(point1Iter, extendedBit, count);
+
+  for( Size i = 0; i < count; ++i ) {
+
+    IdxOff polIterOff = this._getPointIterPolyIterOff( point1Iter, i );
+    UInt32 size = this._getPolyIterSize( polIterOff.index );
+
+    Boolean precededByBorder, atClosedWingStart;
+    this._getBorderInfo(borderDataIter, i, precededByBorder, atClosedWingStart);
+
+    DataIter pointIter;
+    if( precededByBorder ) {
+      pointIter = this._getPolyIterPointIter( polIterOff.index, NextOff( polIterOff.offset, size ) );
+      if( pointIter == point2Iter )
+        return PolygonMeshEdge( this._getPolyIterIndex( polIterOff.index), point1 );
+    }
+    IdxOff pointIterOff = this._getPolyIterPointIterOff( polIterOff.index, PrevOff( polIterOff.offset, size ) );
+    if( pointIterOff.index == point2Iter ) {
+      //Found, but need to find the adjacent polygon with lowest index.
+      IdxOff iterOff = this._getPointIterNextPolyIterOffInWing( point1Iter, i, count, borderDataIter );
+      Size polygon1 = this._getPolyIterIndex( polIterOff.index );
+      Size polygon2 = this._getPolyIterIndex( iterOff.index );
+      if( iterOff.index == 0 || polygon1 < polygon2 )
+        return PolygonMeshEdge( polygon1, point2 );
+      else
+        return PolygonMeshEdge( polygon2, point1 );
+    }
+  }
+  return PolygonMeshEdge();
+}
+
+//Returns the number of edges around a point.
+function Size PolygonMesh.getPointEdgeCount( Size point ) {
+  if( PolygonMesh_enableChecks )
+    this._assertPointPolygonsAreOrdered( point );
+
+  DataIter pointIter = this._getPointIter(point);
+  Boolean extendedBit;
+  UInt32 count = this.pointData.getOffsetAndBit( pointIter, extendedBit );
+  DataIter borderDataIter = this._getBorderDataIter(pointIter, extendedBit, count);
+
+  if( borderDataIter == 0 )
+    return count;
+
+  Size borderCount;
+  for( Size i = 0; i < count; ++i ) {
+    if( this._getPrecededByBorder(borderDataIter, i) )
+      ++borderCount;
+  }
+  return count + borderCount;
+}
+
+//Returns a point edge at a specific index ( 0..getPointEdgeCount()-1 )
+function PolygonMeshEdge PolygonMesh.getPointEdge( Size point, Size pointEdgeIndex ) {
+  if( PolygonMesh_enableChecks )
+    this._assertPointPolygonsAreOrdered( point );
+
+  DataIter pointIter = this._getPointIter(point);
+
+  Boolean extendedBit;
+  UInt32 count = this.pointData.getOffsetAndBit( pointIter, extendedBit );
+  DataIter borderDataIter = this._getBorderDataIter(pointIter, extendedBit, count);
+
+  if( borderDataIter == 0 ) {
+    //Optimize for this case..
+    IdxOff prevPolIterOff = this._getPointIterPolyIterOff( pointIter, PrevOff( pointEdgeIndex, count ) );
+    IdxOff nextPolIterOff = this._getPointIterPolyIterOff( pointIter, pointEdgeIndex );
+    Size prevPol = this._getPolyIterIndex(prevPolIterOff.index);
+    Size nextPol = this._getPolyIterIndex(nextPolIterOff.index);
+    if( nextPol < prevPol )
+      return PolygonMeshEdge( nextPol, point );
+
+    Size adjPolSize = this._getPolyIterSize(prevPolIterOff.index);
+    return PolygonMeshEdge( prevPol, this._getPolyIterPoint(prevPolIterOff.index, PrevOff(prevPolIterOff.offset, adjPolSize) ) );
+  }
+
+  Size currEdgeIndex;
+  Boolean wingHasBorders;
+  Size i;
+  while( true ) {
+    Boolean atEnd = i == count;
+    Boolean precededByBorder, atClosedWingStart;
+    if(!atEnd)
+      this._getBorderInfo(borderDataIter, i, precededByBorder, atClosedWingStart);
+    if( precededByBorder || atClosedWingStart || atEnd ) {
+      if( wingHasBorders ) {
+        if( pointEdgeIndex == currEdgeIndex ) {
+          IdxOff prevPolIterOff = this._getPointIterPolyIterOff( pointIter, i-1 );
+          Size adjPolSize = this._getPolyIterSize(prevPolIterOff.index);
+          return PolygonMeshEdge( this._getPolyIterIndex(prevPolIterOff.index), this._getPolyIterPoint(prevPolIterOff.index, PrevOff(prevPolIterOff.offset, adjPolSize) ) );
+        }
+        ++currEdgeIndex;
+      }
+      if( PolygonMesh_enableChecks && atEnd )
+        throw("PolygonMesh.getPointEdge: out of range pointEdgeIndex: "+currEdgeIndex);
+      wingHasBorders = precededByBorder;
+    }
+
+    if( pointEdgeIndex == currEdgeIndex ) {
+      if( precededByBorder )
+        return PolygonMeshEdge( this._getPointIterPolygon(pointIter, i), point );
+
+      IdxOff prevPolIterOff;
+      if( atClosedWingStart ) {
+        prevPolIterOff = this._getPointIterPrevPolyIterOffInWing( pointIter, i, count, borderDataIter );
+      } else
+        prevPolIterOff = this._getPointIterPolyIterOff( pointIter, PrevOff( i, count ) );
+
+      IdxOff nextPolIterOff = this._getPointIterPolyIterOff( pointIter, i );
+      Size prevPol = this._getPolyIterIndex(prevPolIterOff.index);
+      Size nextPol = this._getPolyIterIndex(nextPolIterOff.index);
+      if( nextPol < prevPol )
+        return PolygonMeshEdge( nextPol, point );
+
+      Size adjPolSize = this._getPolyIterSize(prevPolIterOff.index);
+      return PolygonMeshEdge( prevPol, this._getPolyIterPoint(prevPolIterOff.index, PrevOff(prevPolIterOff.offset, adjPolSize) ) );
+    }
+    ++currEdgeIndex;
+    ++i;
+  }
+  return PolygonMeshEdge();
+}
+
+//Returns polygon's edge connecting polygon's point at index polygonPointIndex and the next polygon point.
+inline PolygonMeshEdge PolygonMesh.getPolygonEdge( Size polygon, Size polygonPointIndex ) {
+  DataIter polyIter = this._getPolygonIter(polygon);
+  IdxOff adjPolyIdxOff = this._getPolyIterAdjacentPolyIterOff( polyIter, polygonPointIndex );
+  if( adjPolyIdxOff.index ) {
+    Size adjacentPolygon = this._getPolyIterIndex(adjPolyIdxOff.index);
+    if( adjacentPolygon < polygon )
+      return PolygonMeshEdge( adjacentPolygon, this._getPolyIterPoint(adjPolyIdxOff.index, adjPolyIdxOff.offset ) );
+  }
+  return PolygonMeshEdge( polygon, this._getPolyIterPoint(polyIter, polygonPointIndex) );
+}
+
+inline Size PolygonMesh.getEdgeFirstPoint( PolygonMeshEdge edge ) {
+  return edge.firstPoint;
+}
+
+inline Size PolygonMesh.getEdgeSecondPoint( PolygonMeshEdge edge ) {
+  DataIter polyIter = this._getPolygonIter(edge.polygon);
+  DataIter pointIter = this._getPointIter(edge.firstPoint);
+
+  Size polSize;
+  if(PolygonMesh_enableChecks)
+    polSize = this._getPolyIterSize(polyIter);
+
+  Size i;
+  while(true) {
+    if( this._getPolyIterPointIter( polyIter, i ) == pointIter )
+      return this._getPolyIterPoint( polyIter, NextOff( i, polSize ) );
+    ++i;
+    if(PolygonMesh_enableChecks && i >= polSize)
+      throw("PolygonMesh.getEdgeSecondPoint: invalid edge: "+edge);
+  }
+  return InvalidIndex;
+}
+
+inline Size PolygonMesh.getEdgeLeftPolygon( PolygonMeshEdge edge ) {
+  return edge.polygon;
+}
+
+inline Size PolygonMesh.getEdgeRightPolygon( PolygonMeshEdge edge ) {
+  DataIter polyIter = this._getPolygonIter(edge.polygon);
+  DataIter pointIter = this._getPointIter(edge.firstPoint);
+
+  Size polSize;
+  if(PolygonMesh_enableChecks) {
+    polSize = this._getPolyIterSize(polyIter);
+    this._assertPointPolygonsAreOrdered( edge.firstPoint );
+  }
+
+  Size i;
+  while(true) {
+    IdxOff idxOff = this._getPolyIterPointIterOff( polyIter, i );
+    if( idxOff.index == pointIter ) {
+      Boolean extendedBit;
+      UInt32 polCount = this.pointData.getOffsetAndBit( idxOff.index, extendedBit );
+      DataIter borderDataIter = this._getBorderDataIter(idxOff.index, extendedBit, polCount);
+      DataIter adjPolIter = this._getPointIterPrevPolyIterOffInWing( idxOff.index, idxOff.offset, polCount, borderDataIter ).index;
+      if(adjPolIter)
+        return this._getPolyIterIndex(adjPolIter);
+      else
+        return InvalidIndex;
+    }
+    ++i;
+    if(PolygonMesh_enableChecks && i >= polSize)
+      throw("PolygonMesh.getEdgeSecondPoint: invalid edge: "+edge);
+  }
+  return InvalidIndex;
+}
+
+
+//Merge multiple polygon meshes to this one, including attributes.
+//Source meshes attributes will be created if they don't exist in this mesh.
+//Returns the first point and polygon index of each added source mesh.
+function PolygonMesh.mergeMeshes!( PolygonMesh sources[], io Size firstPoints[], io Size firstPolygons[] ) {
+
+  this.beginStructureChanges();
+  this._incrementStructureVersion();
+
+  Size prevPointDataSize = this.pointData.data.data.size();
+  Size prevPolyDataSize = this.polyData.data.data.size();
+  Size prevPointCount = this.pointCount();
+  Size prevPolyCount = this.polygonCount();
+
+  Size count = sources.size();
+  firstPoints.resize(count);
+  firstPolygons.resize(count);
+
+  Size totalAddedPoints;
+  for( Size i = 0; i < count; ++i ) {
+    totalAddedPoints += sources[i].pointCount();
+    this.totalPolygonPoints += sources[i].totalPolygonPoints;
+  }
+
+  this._insertPointAttributes( prevPointCount, totalAddedPoints );
+
+  Size sourceAttrIndices[];
+  Size targetAttrIndices[];
+
+  for( Size i = 0; i < count; ++i ) {
+    Ref<PolygonMesh> source = sources[i];
+
+    Size otherPointCount = source.pointCount();
+    Size otherPolyCount = source.polygonCount();
+    Size otherUnsharedAttributesCount = source.base.attributes.size() - source.pointCount();
+
+    Size firstPointData, firstPolygonData, firstPoint, firstPolygon;
+    this.pointData.append(source.pointData, firstPoint, firstPointData);
+    firstPoints[i] = firstPoint;
+    this.polyData.append(source.polyData, firstPolygon, firstPolygonData);
+    firstPolygons[i] = firstPolygon;
+
+    this._remapAppendedIterData( this.pointData, firstPoint, firstPointData, this.polyData, firstPolygon, firstPolygonData );
+    this._remapAppendedIterData( this.polyData, firstPolygon, firstPolygonData, this.pointData, firstPoint, firstPointData );
+
+    this.unorderedPointsCount += source.unorderedPointsCount;
+    this.unorderedPoints += source.unorderedPoints;
+
+    //Attribute data: update sharing indices
+    Size prevAttrSize = this.base.attributes.size();
+    this._resizeAttributes( prevAttrSize + otherUnsharedAttributesCount );
+
+    for( Size j = 0; j < otherUnsharedAttributesCount; ++j )
+      this.unsharedAttrToPointSlidingArray.push( source.unsharedAttrToPointSlidingArray[source.unsharedAttrToPointSlidingArrayBegin+j] + firstPoint );
+
+    for( Size j = 0; j < otherPointCount; ++j ) {
+      DataIter otherPointIter = this._getPointIter( firstPoint + j );
+
+      Boolean headerBit;
+      UInt32 size = this.pointData.arrayDataIterSizeAndBit( otherPointIter, headerBit );
+      DataIter unsharedAttributeDataIter = this._getUnsharedAttributeDataIter(otherPointIter, headerBit, size);
+      if( unsharedAttributeDataIter ) {
+        for( Size k = 0; k < size; ++k ) {
+          UInt32 attrIndex = _GetUnsharedAttributeIndex(this.pointData.data.data[unsharedAttributeDataIter+k]);
+          if( attrIndex < otherPointCount )
+            attrIndex += firstPoint;
+          else
+            attrIndex = (attrIndex-otherPointCount) + prevAttrSize;
+          _SetUnsharedAttributeIndex( this.pointData.data.data[unsharedAttributeDataIter+k], attrIndex );
+        }
+      }
+      //Avoid position precision conversion if possible
+      if( source.hasFloat64Positions() )
+        this.setPointPosition( firstPoint + j, source.getPointPosition_d( j ) );
+      else
+        this.setPointPosition( firstPoint + j, source.getPointPosition( j ) );
+    }
+
+    //Set attribute values (other than position)
+    Ref<GeometryAttribute> srcPosAttr = source.base.attributes.getPositions();
+    Ref<GeometryAttribute> srcPos_dAttr = source.base.attributes.getPositions_d();
+
+    for( Size j = 0; j < source.base.attributes.attributes.size(); ++j ) {
+      Ref<GeometryAttribute> sourceAttr = source.base.attributes.attributes[j];
+      if( Boolean(sourceAttr) && sourceAttr != srcPosAttr && sourceAttr != srcPos_dAttr ) {
+        Size sourceContainerIndex = sourceAttr.getContainerIndex();
+        GeometryAttribute attr = this.getAttribute( sourceAttr.getName() );
+        if( !attr ) {
+          GeometryAttribute sourceAttrNoRef = sourceAttr;//Must be a non-Ref<> to clone()
+          attr = sourceAttrNoRef.clone();
+          this.attachNewAttribute(attr);
+        }
+
+        Size targetContainerIndex = attr.getContainerIndex();
+        //Copy values, update associated attr uninitialized bits if any
+        for( Size k = 0; k < otherPointCount; ++k ) {
+          attr.copyValue( sourceAttr, k, k + firstPoint );
+          this.attrInitializedBits[targetContainerIndex].vertexAttrInitialized.set( k + firstPoint, source.attrInitializedBits[sourceContainerIndex].vertexAttrInitialized.get(k) );
+        }
+        
+        for( Size k = 0; k < otherUnsharedAttributesCount; ++k ) {
+          attr.copyValue( sourceAttr, k + otherPointCount, k + prevAttrSize );
+          this.attrInitializedBits[targetContainerIndex].vertexAttrInitialized.set( k + prevAttrSize, source.attrInitializedBits[sourceContainerIndex].vertexAttrInitialized.get(k + otherPointCount) );
+        }
+      }
+    }
+  }
+  this.endStructureChanges();
+}
+
+//Delete the polygon.
+//If 'deleteUnusedPoints', points that were only adjacent to this polygon will be deleted too.
+//If 'reorderPoints', point ordering will be updated for the adjacent points.
+//Must be called within a begin/endStructureChanges.
+function PolygonMesh.deletePolygon!( Size polygonIndex, Boolean deleteUnusedPoints, Boolean reorderPoints ) {
+  if( this.topoChangesBracket == 0)
+    throw("PolygonMesh.deletePolygon: : must be called within a begin/endStructureChanges() bracket");
+
+  //First, remove polygon from points
+  DataIter polyDataIter = this.polyData.getItemIter(polygonIndex);
+  UInt32 size = this.polyData.arrayDataIterSize( polyDataIter );
+  this.totalPolygonPoints -= size;
+
+  for( Size i = 0; i < size; ++i ) {
+    IdxOff ptIdxOff = this.polyData.getArrayItemIdxOff( polyDataIter, i );
+
+    //Remove from point
+    this._pointRemovePoly( ptIdxOff, false, deleteUnusedPoints, reorderPoints );
+  }
+  this.polyData.freeArray( polygonIndex, 0 );
+  this.polyData.deleteItem( polygonIndex );
+  this._incrementStructureVersion();
+}
+
+//Splits a polygon by adding an edge.
+//Returns the new polygon index, plus the polygon point indices correspodning to the edge start.
+//New polygon will have points from pointIndex1 to pointIndex2 (relatively to the source polygon)
+//Attribute values will be propagated.
+function PolygonMesh.splitPolygon!( Size polygon, Size polygonPointIndex1, Size polygonPointIndex2, io Size newPolygon, io Size newPolygonEdgeStartPointIndex ) {
+  if( this.topoChangesBracket == 0)
+    throw("PolygonMesh.splitPolygon: must be called within a begin/endStructureChanges() bracket");
+
+  if( PolygonMesh_enableChecks ) {
+    if( polygonPointIndex1 == polygonPointIndex2 )
+      throw("PolygonMesh.splitPolygon: identical split point indices");
+    this._validatePolygonOffset( polygon, polygonPointIndex1, "splitPolygon" );
+    this._validatePolygonOffset( polygon, polygonPointIndex2, "splitPolygon" );
+  }
+
+  DataIter polyIter = this._getPolygonIter( polygon );
+  Size size = this._getPolyIterSize( polyIter );
+
+  Size newPolSize = polygonPointIndex1 < polygonPointIndex2 ? (polygonPointIndex2 - polygonPointIndex1 + 1) : (size - (polygonPointIndex1 - polygonPointIndex2) + 1);
+  Size oldPolSize = size - newPolSize + 2;
+  if( newPolSize < 3 || oldPolSize < 3 )
+    throw("PolygonMesh.splitPolygon: would create polygon of size < 3");
+
+  this.totalPolygonPoints += 2;
+
+  newPolygon = this.polyData.createItem();
+  UInt32 newPolyIter = this.polyData.allocateArray(newPolygon, newPolSize, 0, 0, false);
+  newPolygonEdgeStartPointIndex = newPolSize-1;
+  
+  Size sourcePolOffset = polygonPointIndex1;
+  for( Size i = 0; i < newPolSize; ++i ) {
+    if( i == 0 || i == newPolSize-1 ) {
+      //Start & end: new pointPolys
+      IdxOff ptIdxOff = this._getPolyIterPointIterOff( polyIter, sourcePolOffset );
+      Size insOffset = i==0 ? ptIdxOff.offset : ptIdxOff.offset+1;
+      ptIdxOff.index = this._pointIterInsertPolyIter( ptIdxOff.index, insOffset, newPolyIter, i, i==0 ? ptIdxOff.offset+1 : ptIdxOff.offset, i==0 );
+      this.polyData.initIdxOff( this.polyData.getArrayItemIter( newPolyIter, i ), ptIdxOff.index, insOffset );
+    } else {
+      //Just copy entry, avoids deallocate/reallocate extended data
+      this.polyData.data.data[this.polyData.getArrayItemIter(newPolyIter, i)] = this.polyData.data.data[this.polyData.getArrayItemIter(polyIter, sourcePolOffset)];
+      this._updateOtherItemIdxOff( this.polyData, newPolyIter, i, this.pointData );
+    }
+    IncOff( sourcePolOffset, size );
+  }
+
+  //Remove points from poly
+  Size target = polygonPointIndex2 < polygonPointIndex1 ? 0 : polygonPointIndex1+1;
+  Size end = polygonPointIndex2 < polygonPointIndex1 ? polygonPointIndex1+1 : size;
+  DataIter sourceDataIter = this.polyData.getArrayItemIter(polyIter, polygonPointIndex2);
+  DataIter targetDataIter = this.polyData.getArrayItemIter(polyIter, target);
+  DataIter endDataIter = this.polyData.getArrayItemIter(polyIter, end);
+
+  while( sourceDataIter != endDataIter ) {
+      //Just copy entry, avoids deallocate/reallocate extended data
+    this.polyData.data.data[targetDataIter++] = this.polyData.data.data[sourceDataIter++];
+    this._updateOtherItemIdxOff( this.polyData, polyIter, target, this.pointData );
+    ++target;
+  }
+  this.polyData.resizeArray( polygon, 0, oldPolSize, 0, 0 );
+}
+
+//Splits a polygon by adding an edge.
+//Returns the created edge and the new polygon index.
+//New polygon will have points from point1 to point2 (relatively to the source polygon).
+//Attribute values will be propagated.
+function PolygonMesh.splitPolygon!( Size polygonIndex, Size point1, Size point2, io Size newPolygonIndex, io PolygonMeshEdge newEdge ) {
+  DataIter point1Iter = this._getPointIter(point1);
+  DataIter point2Iter = this._getPointIter(point2);
+  DataIter polyIter = this._getPolygonIter( polygonIndex );
+
+  Size pointIndex1 = InvalidIndex;
+  Size pointIndex2 = InvalidIndex;
+
+  Size size = this._getPolyIterSize( polyIter );
+  for( Size i = 0; i < size; ++i ) {
+    DataIter pointIter = this.polyData.getArrayItemIndex( polyIter, i );
+    if( pointIter == point1Iter )
+      pointIndex1 = i;
+    if( pointIter == point2Iter )
+      pointIndex2 = i;
+  }
+  if( PolygonMesh_enableChecks ) {
+    if( pointIndex1 == InvalidIndex || pointIndex2 == InvalidIndex )
+      throw("PolygonMesh.splitPolygon: point not in polygon: "+(pointIndex1 == InvalidIndex ? point1 : point2));
+  }
+  Size newEdgeStartIndex;
+  this.splitPolygon( polygonIndex, pointIndex1, pointIndex2, newPolygonIndex, newEdgeStartIndex );
+  //Buid edge with highest poly index: new polygon index.
+  newEdge.polygon = newPolygonIndex;
+  newEdge.firstPoint = point2;
+}
+
+//Splits a polygon edge by adding a point. Returns the created second edge and the new point index. 
+//The new point is inserted at polygon index polygonPointIndex+1.
+//Attribute values will be propagated.
+function PolygonMesh.splitEdge!( Size polygon, Size polygonPointIndex, Scalar attributeSplitRatio, io Size newPointIndex ) {
+  IdxOff polyIterOff[2];
+  Size polyIndex[2];
+
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "splitEdge" );
+
+  polyIndex[0] = polygon;
+  polyIterOff[0].index = this._getPolygonIter( polygon );
+  polyIterOff[0].offset = polygonPointIndex;
+
+  polyIterOff[1] = this._getPolyIterAdjacentPolyIterOff( polyIterOff[0].index, polyIterOff[0].offset );
+  Boolean hasBorder = polyIterOff[1].index == 0;
+  Size pointPolys = hasBorder ? 1 : 2;
+  newPointIndex = this.createPoints(1);//Create point before attr; changes shared attr indices
+  this.totalPolygonPoints += pointPolys;
+
+  //Process attributes now, since unshared attributes have an influence on point allocated size
+  Size attrIndex[2][2];
+  Size polySize[2];
+
+  for( Size i = 0; i < pointPolys; ++i ) {
+    polySize[i] = this._getPolyIterSize( polyIterOff[i].index );
+    attrIndex[i][0] = this._getPolyIterAttributeIndex( polyIterOff[i].index, polyIterOff[i].offset );
+    attrIndex[i][1] = this._getPolyIterAttributeIndex( polyIterOff[i].index, NextOff( polyIterOff[i].offset, polySize[i] ) );
+  }
+  Boolean hasUnsharedAttributes = !hasBorder && (attrIndex[0][0] != attrIndex[1][1] || attrIndex[1][0] != attrIndex[0][1]);
+
+  Size unsharedAttributeIndex;
+  DataIter pointIter =  this.pointData.allocateArray( newPointIndex, pointPolys, (hasBorder ? _getNumBorderDataUInt32(1):0) + (hasUnsharedAttributes ? 2:0), 0, hasBorder || hasUnsharedAttributes );
+  if( hasBorder || hasUnsharedAttributes ) {
+    //Set related data & bits
+    DataIter extendedDataIter = this.pointData.getArrayExtraUInt32Iter( pointIter, pointPolys, 0 );
+    UInt32 extendedData = (hasBorder ? _PolygonMesh_borderDataBit : 0) | (hasUnsharedAttributes ? _PolygonMesh_unsharedAttributesBit : 0);
+    if( hasUnsharedAttributes ) {
+      unsharedAttributeIndex = this._createUnsharedAttributeIndexForPoint( newPointIndex );
+      _SetUnsharedAttributeIndex( extendedData, newPointIndex );
+      _SetUnsharedAttributeIndex( this.pointData.data.data[extendedDataIter+1], unsharedAttributeIndex );
+    }
+    this.pointData.data.data[extendedDataIter] = extendedData;
+
+    if(hasBorder) {
+      DataIter borderDataIter = hasUnsharedAttributes ? extendedDataIter+2 : extendedDataIter;
+      this.pointData.data.data[borderDataIter] |= 1<<_PolygonMesh_numExtendedBits;//Border for neighbor 0
+    }
+  }
+
+  //Set attribute values
+  LocalL16UInt32Array sourceIndices;
+  LocalL16ScalarArray sourceWeights;
+  sourceWeights.push( 1.0 - attributeSplitRatio );
+  sourceWeights.push( attributeSplitRatio );
+  sourceIndices.push( attrIndex[0][0] );
+  sourceIndices.push( attrIndex[0][1] );
+  this.base.attributes.linearCombine( sourceIndices, sourceWeights, newPointIndex );
+
+  if( hasUnsharedAttributes ) {
+    sourceIndices.set( 0, attrIndex[1][1] );
+    sourceIndices.set( 1, attrIndex[1][0] );
+    this.base.attributes.linearCombine( sourceIndices, sourceWeights, unsharedAttributeIndex );
+  }
+
+  //Set poly / point indices
+  if( !hasBorder )
+    polyIndex[1] = this._getPolyIterIndex(polyIterOff[1].index);
+
+  for( Size i = 0; i < pointPolys; ++i ) {
+    DataIter newPolyIter = this.polyData.resizeArray( polyIndex[i], 0, polySize[i]+1, 0, polySize[i]>>2 );//Reserve 25%, likely to split again
+    if( newPolyIter != polyIterOff[i].index) {
+      polyIterOff[i].index = newPolyIter;
+      for( Size j = 0; j <= polyIterOff[i].offset; ++j )
+        this._updateOtherItemIndex( this.polyData, polyIterOff[i].index, j, this.pointData );
+    }
+
+    DataIter iter = this.polyData.getArrayItemIter(newPolyIter, polySize[i]);
+    for( Size j = polySize[i]; j > polyIterOff[i].offset+1; --j ) {
+      //Just copy entry, avoids deallocate/reallocate extended data
+      this.polyData.data.data[iter] = this.polyData.data.data[iter-1];
+      this._updateOtherItemIdxOff( this.polyData, polyIterOff[i].index, j, this.pointData );
+      --iter;
+    }
+    //Set new neighbor info
+    this.polyData.initIdxOff( this.polyData.getArrayItemIter( newPolyIter, polyIterOff[i].offset+1 ), pointIter, i );
+    this.pointData.initIdxOff( this.pointData.getArrayItemIter( pointIter, i ), newPolyIter, polyIterOff[i].offset+1 );
+  }
+}
+
+//Splits an edge by adding a point. Returns the created second edge and the new point index. Attribute values will be propagated.
+inline PolygonMesh.splitEdge!( PolygonMeshEdge edge, Scalar attributeSplitRatio, io Size newPointIndex ) {
+  if( PolygonMesh_enableChecks && !edge.isValid() )
+    throw("PolygonMesh.splitEdge: invalid edge");
+
+  Size offset = this.getPolygonPointIndex( edge.polygon, edge.firstPoint );
+  if( PolygonMesh_enableChecks && offset == InvalidIndex )
+    throw("PolygonMesh.splitEdge: invalid edge: edge point not adjacent to polygon point");
+
+  this.splitEdge( edge.polygon, offset, attributeSplitRatio, newPointIndex );
+}
+
+//TODO: add more, such as splitPoint, copyPolygon, collapseEdge(factor)..
+
+inline PolygonMesh._deleteEmptyPoint!( UInt32 index ) {
+  //TODO: array should be already free..
+  if( this.unorderedPoints.getThenClear(index) )
+    --this.unorderedPointsCount;
+  this.pointData.deleteItem( index );
+}
+
+function PolygonMesh._pointRemovePoly!( IdxOff ptIdxOff, Boolean removePointFromPoly, Boolean deleteIfNoPoly, Boolean reorderPoints ) {
+
+  UInt32 ptItemIndex = this.pointData.getIndexFromDataIter( ptIdxOff.index );
+
+  Boolean headerBit;
+  UInt32 size = this.pointData.arrayDataIterSizeAndBit( ptIdxOff.index, headerBit );
+  //Shuffle down next polygons, adjust double indirections
+  for( Size i = ptIdxOff.offset+1; i < size; ++i ) {
+    DataIter pointPolyIter = this.pointData.getArrayItemIter( ptIdxOff.index, i );
+    IdxOff polyIdxOff = this.pointData.getIdxOff( pointPolyIter );
+    DataIter polyPointDataIter = this.polyData.getArrayItemIter(polyIdxOff);
+    this.polyData.updateIdxOff( polyPointDataIter, ptIdxOff.index, i-1 );//potentially free extended data
+
+    this.pointData.data.data[pointPolyIter-1] = this.pointData.data.data[pointPolyIter];
+  }
+
+  //Update shared attributes if applicable
+  UInt32 unsharedAttrIndexToRemove = InvalidIndex;
+  DataIter unsharedAttributeDataIter = this._getUnsharedAttributeDataIter(ptIdxOff.index, headerBit, size);
+  if( unsharedAttributeDataIter ) {
+    UInt32 unsharedAttrIndex = _GetUnsharedAttributeIndex(this.pointData.data.data[unsharedAttributeDataIter+ptIdxOff.offset]);
+    for( Size i = ptIdxOff.offset+1; i < size; ++i )
+      _SetUnsharedAttributeIndex( this.pointData.data.data[unsharedAttributeDataIter+i-1], _GetUnsharedAttributeIndex( this.pointData.data.data[unsharedAttributeDataIter+i] ) );
+
+    UInt32 anotherUnsharedAttrIndex = InvalidIndex;
+    unsharedAttrIndexToRemove = unsharedAttrIndex;
+    for( Size i = 0; i < size-1; ++i ) {
+      UInt32 otherAttrIndex = _GetUnsharedAttributeIndex( this.pointData.data.data[unsharedAttributeDataIter+i] );
+      if( otherAttrIndex == unsharedAttrIndexToRemove ) {
+        unsharedAttrIndexToRemove = InvalidIndex;//Still in use
+        break;
+      } else
+        anotherUnsharedAttrIndex = otherAttrIndex;
+    }
+    if( unsharedAttrIndexToRemove == ptItemIndex ) {
+      //We need to preserve the point entry; swap it!
+      this._updateAttributeIndex(ptItemIndex, anotherUnsharedAttrIndex, ptItemIndex, this.pointCount(), true);
+      unsharedAttrIndexToRemove = anotherUnsharedAttrIndex;
+    }
+  }
+
+  if( size == 1 ) {
+    this.pointData.freeArray(ptItemIndex, this._getNumExtraUInt32(ptIdxOff.index, size, headerBit));
+    if( deleteIfNoPoly )
+      this._deleteEmptyPoint(ptItemIndex);
+  } else {
+    UInt32 prevNumExtraUInt32, numExtraUInt32;
+    this._prepareBorderDataRemoval(ptIdxOff.index, size, headerBit, prevNumExtraUInt32, numExtraUInt32);
+    if( unsharedAttributeDataIter )
+      --numExtraUInt32;//We removed one entry
+    DataIter newPointIter = this.pointData.resizeArray( ptItemIndex, prevNumExtraUInt32-1, size-1, numExtraUInt32, 0 );
+    this._markUnorderedPoint(ptItemIndex);
+
+    if( unsharedAttrIndexToRemove != InvalidIndex ) {
+      this._freeUnsharedAttributeIndexAndRecompact(unsharedAttrIndexToRemove);
+      unsharedAttributeDataIter = this._getUnsharedAttributeDataIter(newPointIter, true, size-1);//Refresh; "resize" has changed it
+      newPointIter = this._removeUnsharedAttributeDataIfApplicable( ptItemIndex, newPointIter, size-1, unsharedAttributeDataIter );
+    }
+    if( reorderPoints )
+      this.updatePointPolygonOrder(ptItemIndex);
+  }
+
+  if( removePointFromPoly ) {
+    //TODO!
+  }
+}
+
+inline PolygonMesh._copyBorderBits!( DataIter borderDataIter, UInt32 src, UInt32 dst ) {
+  UInt32 bit = src*2+_PolygonMesh_numExtendedBits;
+  Boolean precededByBorder = SubBitVectorArray_getBit( this.pointData.data.data, borderDataIter, bit );
+  Boolean atClosedWingStart = SubBitVectorArray_getBit( this.pointData.data.data, borderDataIter, bit+1 );
+  bit = dst*2+_PolygonMesh_numExtendedBits;
+  SubBitVectorArray_setBit( this.pointData.data.data, borderDataIter, bit, precededByBorder );
+  SubBitVectorArray_setBit( this.pointData.data.data, borderDataIter, bit+1, atClosedWingStart );
+}
+
+//Returns new point iter
+function DataIter PolygonMesh._pointIterInsertPolyIter!( DataIter pointIter, UInt32 offset, DataIter polyIter, UInt32 polyOffset, Index postSourceIndexToCopy, Boolean moveBorderFromSource ) {
+  //Collect general data
+  Boolean extendedBit;
+  Size count = this.pointData.arrayDataIterSizeAndBit(pointIter, extendedBit);
+  Boolean hasBorderData, hasUnsharedAttr;
+  DataIter extendedDataIter;
+  UInt32 prevNumExtraUInt32, numExtraUInt32;
+  if(extendedBit) {
+    extendedDataIter = this.pointData.getArrayExtraUInt32Iter(pointIter, count, 0);
+    UInt32 extendedData = this.pointData.data.data[extendedDataIter];
+
+    hasBorderData = (extendedData & _PolygonMesh_borderDataBit) != 0;
+    hasUnsharedAttr = ( extendedData & _PolygonMesh_unsharedAttributesBit ) != 0;
+
+    prevNumExtraUInt32 = (hasBorderData ? _getNumBorderDataUInt32(count) : 0) + (hasUnsharedAttr ? count : 0);
+    numExtraUInt32 = (hasBorderData ? _getNumBorderDataUInt32(count+1) : 0) + (hasUnsharedAttr ? count+1 : 0);
+  }
+
+  //Resize array
+  DataIter newPointDataIter = this._resizePointArrayAndRemapPolygons( this._getPointIterIndex(pointIter), pointIter, count, prevNumExtraUInt32, count+1, numExtraUInt32, count>>3 );
+
+  //Move unshared attr data
+  if( hasUnsharedAttr ) {
+    //Move up extra data (border + shared)
+    DataIter extraIter = this.pointData.getArrayExtraUInt32Iter( newPointDataIter, count+1, numExtraUInt32-1 );
+    DataIter endIter = this.pointData.getArrayExtraUInt32Iter( newPointDataIter, count+1, offset );
+    while( extraIter > endIter ) {
+      this.pointData.data.data[extraIter] = this.pointData.data.data[extraIter-1];
+      --extraIter;
+    }
+    //Copy reference. Note: header bits were preserved in all cases.
+    extraIter = this.pointData.getArrayExtraUInt32Iter( newPointDataIter, count+1, postSourceIndexToCopy );
+    _SetUnsharedAttributeIndex( this.pointData.data.data[ endIter ], _GetUnsharedAttributeIndex( this.pointData.data.data[ extraIter ] ) );
+  }
+
+  //Move border data
+  if( hasBorderData ) {
+    DataIter borderDataIter = this._getBorderDataIter(newPointDataIter, true, count+1);
+    for( Size i = count; i > offset; --i )
+      this._copyBorderBits( borderDataIter, i-1, i );
+    Size bitsToClear = offset;
+    if( moveBorderFromSource ) {
+      this._copyBorderBits( borderDataIter, postSourceIndexToCopy, offset );
+      bitsToClear = postSourceIndexToCopy;
+    }
+    UInt32 bit = bitsToClear*2+_PolygonMesh_numExtendedBits;
+    SubBitVectorArray_clearBit( this.pointData.data.data, borderDataIter, bit );
+    SubBitVectorArray_clearBit( this.pointData.data.data, borderDataIter, bit+1 );
+  }
+
+  //Move polygon data
+  DataIter iter = this.pointData.getArrayItemIter(newPointDataIter, count);
+  for( Size i = count; i > offset; --i ) {
+    this.pointData.data.data[iter] = this.pointData.data.data[iter-1];
+    this._updateOtherItemIdxOff( this.pointData, newPointDataIter, i, this.polyData );
+    --iter;
+  }
+  this.pointData.initIdxOff( iter, polyIter, polyOffset );
+  return newPointDataIter;
+}
+
+inline Size PolygonMesh._createUnsharedAttributeIndexForPoint!( Size pointIndex ) {
+  Size attrIndex = this.base.attributes.size();
+  this._resizeAttributes( attrIndex + 1 );
+  this.unsharedAttrToPointSlidingArray.push(pointIndex);
+  return attrIndex;
+}

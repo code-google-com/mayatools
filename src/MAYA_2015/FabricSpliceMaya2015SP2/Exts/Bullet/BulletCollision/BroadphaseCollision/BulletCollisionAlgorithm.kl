@@ -1,0 +1,37 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+struct BulletCollisionAlgorithmConstructionInfo
+{
+	BulletDispatcher			__dispatcher1;
+	BulletPersistentManifold	__manifold;
+};
+
+// function BulletCollisionAlgorithmConstructionInfo()
+// {
+// 	this.__dispatcher1 = null;
+// 	this.__manifold = null;
+// }
+// BulletCollisionAlgorithmConstructionInfo(BulletDispatcher dispatcher,Integer temp)
+// {
+// 	this.__dispatcher1 = dispatcher;
+// 	this.__manifold = null;
+// }
+
+///BulletCollisionAlgorithm is an collision interface that is compatible with the Broadphase and BulletDispatcher.
+///It is persistent over frames
+interface BulletCollisionAlgorithm
+{
+	Data getPointer();
+
+	// processCollision (BulletICollisionObject body0, BulletICollisionObject body1, BulletDispatcherInfo dispatchInfo, BulletManifoldResult resultOut);
+
+	// Scalar calculateTimeOfImpact(BulletICollisionObject body0, BulletICollisionObject body1, BulletDispatcherInfo dispatchInfo, BulletManifoldResult resultOut);
+
+	// getAllContactManifolds(io BulletManifold	manifoldArray[]);
+};
+
+

@@ -1,0 +1,269 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+The ``Octree`` type implements an octree spatial partition structure, which is equivalent of a "3D sort" of objects enabling fast searches among multiple objects in space.
+
+The ``Octree`` subdivides the space in a sparse hierarchy of cells, in order to quickly isolate empty space. This then enables to perform queries such as raycast by testing only a portion of the objects.
+
+This ``Octree`` implementation tries to provide a good balance between speed, memory usage and the ability to update incrementally. The ability to update incrementally implies that the octree has the ability to update only objects that changed. Additionally, octree's construction can be done only partially while maintaining its valid state, which allows for a balance between construction and query time.
+
+For examples of Octree specialization using the RaycastResult and ClosestResult interfaces, see Lines or Points implementation of raycast() and getClosest().
+
+*/
+
+object Octree : StatisticSourceWithAutoRegisterMember {
+  _OctreeStruct data;//We wrap as one struct to minimize unguarded overhead
+  Size objectCount;
+
+  //Statistics
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function Octree() {
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+//Constructs an Octree.
+//
+//  maxDepth: maximum subdivision depth (<= 14).
+//
+//  keepSubCellObjectList: if we want that leaves maintain a full list of their recursive childrens' objects.
+//    This will accelerate volume queries such as 'localBVolQuery()', but will increase memory usage by 35%.
+//
+//  smallestWorldCellSize: will limit the maximum subdivision depth based on a certain size (world units).
+//
+function Octree( 
+    UInt8 maxDepth, 
+    Boolean keepSubCellObjectList, 
+    Scalar smallestWorldCellSize ) {
+  if(FabricStatisticsEnabled()) {
+    this.autoStats = StatisticsAutoRegisterMember(this);
+  }
+  this.data.init( maxDepth, keepSubCellObjectList, smallestWorldCellSize );
+}
+
+//Constructs an Octree. See previous constructors for more details about the parameters.
+inline Octree( UInt8 maxDepth, Boolean keepSubCellObjectList, Scalar smallestWorldCellSize ) {
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+  this.data.init( maxDepth, keepSubCellObjectList, smallestWorldCellSize );
+}
+
+function UInt8 Octree.getMaxDepth() {
+  return this.data.maxDepth;
+}
+
+//Updates the object count. If existing objects get truncated, these will be automatically removed from the tree, incrementally (no need to call 'removeObject()' first).
+//New created objects will have no effect until their volume is specified by 'updateObjectVolume()'.
+function Octree.incrementalUpdateObjectCount!( Size objectCount ) {
+  Size prevObjectCount = this.data.objectData.size();
+
+  for( Size i = prevObjectCount; i < objectCount; ++i )
+    this.removeObject(i);//checks if 'isUsed()'
+
+  if( objectCount < prevObjectCount )
+    this.data.objectData.resize(objectCount);
+  this.objectCount = objectCount;
+}
+
+function Size Octree.getMemUsage() {
+  return this.data.getMemUsage();
+}
+
+//Returns the bounding box the Octree, which encloses loosely all its objects, 
+//but excluding those with an infinite bounding volume.
+//This bounding box might be bigger than the union of objects' bounding volumes
+//if these have been varying during updates.
+inline Octree.GetWorldBBox!(io Vec3 min, io Vec3 max) {
+  this.update(0);
+  if(this.data.min.x == 1.0e+20) {
+    min = Vec3(-1.0e-6, -1.0e-6, -1.0e-6);
+    max = Vec3(1.0e-6, 1.0e-6, 1.0e-6);
+  } else {
+    min = this.data.min-Vec3(1.0e-6, 1.0e-6, 1.0e-6);
+    max = this.data.max+Vec3(1.0e-6, 1.0e-6, 1.0e-6);
+  }
+}
+
+//Updates the bounding box of an object. If index >= Octree.getObjectCount(), object count will be increased automatically.
+//This only schedules a change to the Octree: Octree.update( >= 0 ) must be called in order to reflect this change by performing an incremental update.
+//Note: this method is not thread-safe.
+inline Octree.updateObjectVolume!( UInt32 index, Vec3 min, Vec3 max ) {
+  this.data.updateObjectVolume( index, min, max );
+}
+
+//Updates the sphere box of an object. If index >= Octree.getObjectCount(), object count will be increased automatically.
+//This should only be used if object's bounding sphere has less volume than object's bounding box.
+//This only schedules a change to the Octree: Octree.update( >= 0 ) must be called in order to reflect this change by performing an incremental update.
+//Note: this method is not thread-safe.
+inline Boolean Octree.updateObjectVolume!( UInt32 index, Vec3 center, Scalar squaredRadius ) {
+  return this.data.updateObjectVolume( index, center, squaredRadius );
+}
+
+//Updates the bounding volume of a object, based on a local bounding volume and a transform.
+//For axis-aligned bounding volumes, other variations of 'updateObjectVolume()' might be more efficient.
+//This only schedules a change to the Octree: Octree.update( >= 0 ) must be called in order to reflect this change by performing an incremental update.
+//Note: this method is not thread-safe.
+inline Octree.updateObjectVolume!( UInt32 index, Mat44 transform, LocalBoundingVolume localBVol ) {
+  this.data.updateObjectVolume( index, transform, localBVol );
+}
+
+//Removes an object from the octree, while maintaining its validity (no need to call Octree.update() afterward).
+inline Octree.removeObject!( UInt32 index ) {
+  this.data.removeObject( index );
+}
+
+//Incrementally updates the Octree after 'updateObjectVolume()' calls.
+//For better performance, wait until all the 'updateObjectVolume()' calls are done before calling 'update'.
+//Since updating the Octree can be computationally expensive, the amount of update can be limited by the
+//'numAllowedCellUpdates' parameter. In particular, the cost of fully updating the Octree can be higher than the
+//cost of the following spatial requests, which is why that balance can be important.
+//
+//After 'updateObjectVolume()' calls, the minimal requirement to ensure validity of the octree
+//is to call update( numAllowedCellUpdates = 0 ).
+//
+//  numAllowedCellUpdates: number of objects and octree cells allowed to be updated.
+//    More precisely, this is the cumlative number of object added to cells during the subdivision process.
+//    Note that the Octree will always proceed by depth order when updating the cells:
+//      root (level 0) 'dirty' cells, then level 'dirty' 1 cells, then level 'dirty' 2 cells...
+//
+//  returns: number of objects and octree cells actually updated.
+//
+//Note: this method is not thread-safe.
+inline Size Octree.update!( Integer numAllowedCellUpdates ) {
+  return this.data.update( numAllowedCellUpdates );
+}
+
+//Returns the object index range. Note this will not reflect 'sparse' usage of the indices (eg: if only index 1 and 10 is used).
+inline Size Octree.getObjectCount() {
+  return this.data.objectData.size();
+}
+
+//Queries the Octree for any object intersecting the bounding volume, based on either their bounding box or bounding sphere.
+//The queried bounding volume is defined by a local bounding volume (box, sphere, pyramid, cone) and its transform.
+//The resulting object indices will be added to the 'result' index set.
+//
+//If 'objectMask' is an empty BitVector (size = 0), it will be ignored. Else, it is expected to be 
+//of size Octree.objectCount(), and object indices corresponding to bits that are not set (false) will be ignored.
+function Octree.localBVolQuery?( Mat44 transform, LocalBoundingVolume localBVol, io IndexSet result, BitVector objectMask ) {
+  _OctreeQueryTraverseData traverseData;
+  if( localBVol.type == LocalBoundingVolume_bCone ) {
+    Vec3 origin, unitDir;
+    Scalar length, tanHalfAngle, cosHalfAngle;
+    transformedBConeComputeVectors( transform, localBVol, 
+      origin, unitDir, length, tanHalfAngle, cosHalfAngle );
+    if( length < 0.0 )
+      length = 1e100;//We use -1 as infinite... should be changed..
+    this.data.bConeQuery( origin, unitDir, length, tanHalfAngle, cosHalfAngle, traverseData, result, objectMask );
+  } else if( localBVol.type == LocalBoundingVolume_bPyramid ) {
+    Vec3 origin, unitDir, nearRightVec, nearUpVec;
+    Scalar near, far;
+    transformedBPyramidComputeVectors( transform, localBVol, origin, unitDir, near, far, nearRightVec, nearUpVec );
+    //report("bPyramidQuery lobalBVol: "+localBVol+" origin "+origin+" unitDir "+unitDir+" near "+near+" far "+far+" nearRightVec "+nearRightVec+" nearUpVec "+nearUpVec);
+    this.data.bPyramidQuery( origin, unitDir, near, far, nearRightVec, nearUpVec, traverseData, result, objectMask );
+  } else if( localBVol.type == LocalBoundingVolume_bBox ) {
+    this.data.bBoxQuery( transform, localBVol, traverseData, result, objectMask );
+  } else if( localBVol.type == LocalBoundingVolume_bSphere ) {
+    this.data.bSphereQuery( transform, localBVol, traverseData, result, objectMask );
+   } else
+    report("Octree.localBVolQuery: unsupported LocalBoundingVolume type: " + localBVol.getDesc() );
+}
+
+//Queries the Octree for any object intersecting the bounding volume, based on either their bounding box or bounding sphere.
+//The queried bounding volume is defined by a local bounding volume (box, sphere, pyramid, cone) and its transform.
+//The resulting object indices will be added to the 'result' index set.
+inline Octree.localBVolQuery?( Mat44 transform, LocalBoundingVolume localBVol, io IndexSet result ) {
+  BitVector objectMask;
+  this.localBVolQuery( transform, localBVol, result, objectMask );
+}
+
+object _OctreeQueryUserData {
+  _OctreeQueryTraverseData traverseData;
+};
+
+inline Ref<_OctreeQueryUserData> _OctreePrepareStatialQueryData( io _StatialQueryData data ) {
+  if( data.userData == null || data.userData.type() != _OctreeQueryUserData )
+    data.userData = _OctreeQueryUserData();
+  return data.userData;
+}
+
+//Objects within the local bounding box will be added to data.visitedItems
+function Octree.getObjectsInBBox( Vec3 min, Vec3 max, io _StatialQueryData data ) {
+  Ref<_OctreeQueryUserData> octreeQueryUserData = _OctreePrepareStatialQueryData(data);
+  BitVector objectMask;
+  this.data.localBBoxQuery( min, max, octreeQueryUserData.traverseData, data.visitedItems, objectMask );
+}
+
+//Objects within the local bounding sphere will be added to data.visitedItems
+function Octree.getObjectsInBSphere( Vec3 center, Scalar radius, io _StatialQueryData data ) {
+  Ref<_OctreeQueryUserData> octreeQueryUserData = _OctreePrepareStatialQueryData(data);
+  BitVector objectMask;
+  LocalBoundingVolume bSphere;
+  bSphere.bSphereInit( center, radius );
+  this.data.localBSphereQuery( bSphere, octreeQueryUserData.traverseData, data.visitedItems, objectMask );
+}
+
+//Prepares the Octree for N queries (raycast, getClosest).
+//The Octree will be updated in order to approximately minimize the combined 
+//cost of the update and the queries. This balance can only be an approximation,
+//however it has been tuned by testing on various assets.
+//
+//Note: this method is not thread-safe.
+function Octree.prepare!( Size approximateNumberOfQueries ) {
+
+  //TODO: mutex? Would need read-write lock!!!
+
+  //Update spatial paritionning, with splits proportional to incoming queries (avoid too big update costs).
+  //Complex heuristic: make sure that the structure update cost is giving overall gain
+  Size iteration = 0;
+  Scalar prevQueryCost;
+  Scalar valuableGain = approximateNumberOfQueries*15.0f;//15.0 constant: from tests on typical case (10K, 100K, 400K polygon mesh)
+
+  while( true ) {
+    Scalar avgObjPerCell = this.data.getAverageObjectsPerCell();
+    Scalar queryCost = avgObjPerCell * approximateNumberOfQueries;
+    Scalar projectedQueryCostAfterUpdate = (avgObjPerCell*0.75f) * approximateNumberOfQueries;
+
+    //Only run at least 1 iteration, since the tree is lazily unfolded upon positional changes,
+    //and the state cannot be properly interpreted if there is pending unfolding.
+    if( iteration > 1 ) {
+      //If last round we didn't make as many gains as expected; stop here, avoid refining too deep.
+      //Note: > 1: iteration #0: both unsplits + splits, so not a trusty stats
+      Scalar actualGain = prevQueryCost - queryCost;
+      if( actualGain < valuableGain )
+        break;
+    }
+    if( iteration == 0 || projectedQueryCostAfterUpdate > valuableGain ) {
+      Size numUpdates = this.update( approximateNumberOfQueries*1.5f+1.0f );//1.5: from tests on typical case (10K, 100K, 400K polygon mesh)
+      if( !numUpdates )
+        break;//Fully subdivided
+    } else
+      break;//Not worth subdividing
+    prevQueryCost = queryCost;
+    ++iteration;
+  }
+}
+
+//Raycasts the Octree and returns the resulting 'RaycastResult' reference.
+//See SpatialQueryable interface for description of other options.
+inline Octree.raycast( Ray ray, Boolean doubleSided, Scalar maxDistance, io _StatialQueryData data, io Ref<RaycastResult> result ) {
+  this.data.raycast( ray, doubleSided, maxDistance, data, result );
+}
+
+//Raycasts the Octree and returns the resulting 'RaycastResult' reference.
+//See SpatialQueryable interface for description of other options.
+inline Octree.getClosest( Vec3 position, Vec3 scaling, Scalar maxUnscaledDistance, io _StatialQueryData data, io Ref<ClosestResult> result ) {
+  this.data.getClosest( position, scaling, maxUnscaledDistance, data, result );
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] Octree.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, "Octree" ) );
+  stats.push( StatisticRecord( Statistic_Category, "Geometry" ) );
+  stats.push( StatisticRecord( "ObjectCount", this.getObjectCount() ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, this.getMemUsage() ) );
+  return stats;
+}

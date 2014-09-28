@@ -1,0 +1,729 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+//Get a reference to the attribute container owned by the PolygonMesh. The container can be safely used for reading the attribute values or
+//enumerating attributes. However, the GeometryAttributes.getOrCreateAttribute() and GeometryAttributes.resize() functions should not 
+//be called directly, as this is managed by the owner PolygonMesh. In most case, attribute values should be set through 
+//PolygonMesh's setPointAttribute() or setPolygonAttribute() functions, since values are shared around points and the PolygonMesh 
+//maintains the associated sharing information.
+inline Ref<GeometryAttributes> PolygonMesh.getAttributes() {
+  return this.base.attributes;
+}
+
+//Returns the normals attribute, and creates it if it didn't exist.
+inline Ref<Vec3Attribute> PolygonMesh.getOrCreateNormals!() {
+  return this._getOrCreateNormals();
+}
+
+//Returns the normals attribute, if it exists.
+inline Ref<Vec3Attribute> PolygonMesh.getNormals() {
+  return this.base.attributes.getNormals();
+}
+
+//Creates an attribute of the given type and name. This function should be called instead of
+//GeometryAttributes.getOrCreateAttribute(), because the PolygonMesh maintains its own
+//private data for each attribute.
+//NOTE: this function is mostly used for backward compatibility. use getOrCreateXXXXAttribute() instead.
+inline Ref<GeometryAttribute> PolygonMesh.getOrCreateAttribute!(String name, Type attributeType) {
+  Ref<GeometryAttribute> attribute = this.base.attributes.getOrCreateAttribute(name, attributeType);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+function PolygonMesh.attachNewAttribute!(Ref<GeometryAttribute> attribute) {
+  this.base.attributes.attachNewAttribute(attribute);
+  this._synchronizeGeometryAttributes();
+}
+
+inline Ref<ScalarAttribute> PolygonMesh.getOrCreateScalarAttribute!(String name) {
+  Ref<ScalarAttribute> attribute = this.base.attributes.getOrCreateScalarAttribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+inline Ref<ScalarConstantArrayAttribute> PolygonMesh.getOrCreateScalarConstantArrayAttribute!(String name) {
+  Ref<ScalarConstantArrayAttribute> attribute = this.base.attributes.getOrCreateScalarConstantArrayAttribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+inline Ref<UInt32Attribute> PolygonMesh.getOrCreateUInt32Attribute!(String name) {
+  Ref<UInt32Attribute> attribute = this.base.attributes.getOrCreateUInt32Attribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+inline Ref<UInt16ConstantArrayAttribute> PolygonMesh.getOrCreateUInt16ConstantArrayAttribute!(String name) {
+  Ref<UInt16ConstantArrayAttribute> attribute = this.base.attributes.getOrCreateUInt16ConstantArrayAttribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+inline Ref<Vec2Attribute> PolygonMesh.getOrCreateVec2Attribute!(String name) {
+  Ref<Vec2Attribute> attribute = this.base.attributes.getOrCreateVec2Attribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+inline Ref<Vec3Attribute> PolygonMesh.getOrCreateVec3Attribute!(String name) {
+  Ref<Vec3Attribute> attribute = this.base.attributes.getOrCreateVec3Attribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+inline Ref<Vec3_dAttribute> PolygonMesh.getOrCreateVec3_dAttribute!(String name) {
+  Ref<Vec3_dAttribute> attribute = this.base.attributes.getOrCreateVec3_dAttribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+inline Ref<Vec4Attribute> PolygonMesh.getOrCreateVec4Attribute!(String name) {
+  Ref<Vec4Attribute> attribute = this.base.attributes.getOrCreateVec4Attribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+inline Ref<QuatAttribute> PolygonMesh.getOrCreateQuatAttribute!(String name) {
+  Ref<QuatAttribute> attribute = this.base.attributes.getOrCreateQuatAttribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+inline Ref<ColorAttribute> PolygonMesh.getOrCreateColorAttribute!(String name) {
+  Ref<ColorAttribute> attribute = this.base.attributes.getOrCreateColorAttribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+inline Ref<RGBAttribute> PolygonMesh.getOrCreateRGBAttribute!(String name) {
+  Ref<RGBAttribute> attribute = this.base.attributes.getOrCreateRGBAttribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+inline Ref<RGBAAttribute> PolygonMesh.getOrCreateRGBAAttribute!(String name) {
+  Ref<RGBAAttribute> attribute = this.base.attributes.getOrCreateRGBAAttribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+inline Ref<Mat33Attribute> PolygonMesh.getOrCreateMat33Attribute!(String name) {
+  Ref<Mat33Attribute> attribute = this.base.attributes.getOrCreateMat33Attribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+inline Ref<Mat44Attribute> PolygonMesh.getOrCreateMat44Attribute!(String name) {
+  Ref<Mat44Attribute> attribute = this.base.attributes.getOrCreateMat44Attribute(name);
+  this._synchronizeGeometryAttributes();
+  return attribute;
+}
+
+//Returns true if an attribute with this name exists.
+inline Boolean PolygonMesh.has?(String name) {
+  return this.base.attributes.has(name);
+}
+
+//Removes an existing attribute from the attributes container.
+function PolygonMesh.removeAttribute!(String name) {
+  this.base.attributes.removeAttribute(name);
+  this._synchronizeGeometryAttributes();
+}
+
+//Returns an existing attribute from its name, or null if not found.
+inline Ref<GeometryAttribute> PolygonMesh.getAttribute(String name) {
+  return this.base.attributes.getAttribute(name);
+}
+
+//Returns an existing attribute from its name and type, or null if not found.
+inline Ref<GeometryAttribute> PolygonMesh.getAttribute(String name, Type attributeType) {
+  return this.base.attributes.getAttribute(name, attributeType);
+}
+
+//Performance hint for the polygon mesh when, for a given attribute, all values will be set again
+//and values' vertex shared / unshared layout won't change much. In such a situation,
+//avoiding to unshare and then reshare the values will help performance and provide a more stable
+//attribute indices during playback (which can help for effects such as motionBlur).
+function PolygonMesh.resetAttributeAndAvoidSharingChanges!(Ref<GeometryAttribute> attribute) {
+  this.attrInitializedBits[attribute.getContainerIndex()].vertexAttrInitialized.clearAll();
+}
+
+//Returns a valid attribute index for the point. This index can be used to read the value of any attribute
+//in mesh's attribute container (see .getAttributes() ).
+//Attributes values may be unshared around a point (discontinuous), in which case
+//the returned attribute index will correspond to one of these values (arbitrary).
+inline Size PolygonMesh.getPointAttributeIndex?( Size point ) {
+  return point;
+}
+
+//Returns true if values are the same for all point polygon neighbors, for any attribute (no discontinuity).
+inline Boolean PolygonMesh.arePointAttributesUniform?( Size point ) {
+  DataIter pointIter = this._getPointIter( point );
+  Boolean extendedBit;
+  UInt32 count = this.pointData.getOffsetAndBit( pointIter, extendedBit );
+  DataIter unsharedAttributeDataIter = this._getUnsharedAttributeDataIter(pointIter, extendedBit, count);
+  return unsharedAttributeDataIter == 0;
+}
+
+//Returns true if values are the same for all point polygon neighbors for this attribute (no discontinuity).
+inline Boolean PolygonMesh.isPointAttributeUniform?( Size point, Ref<GeometryAttribute> attribute ) {
+  return this._isPointIterAttributeUniform( this._getPointIter( point ), attribute );
+}
+
+//Returns the attribute index for the point, at a specific neighbor index. This index can be used to read the value of any attribute
+//in mesh's attribute container (see .getAttributes() ).
+inline Size PolygonMesh.getPointAttributeIndex?( Size point, Size neighborPolygonIndex ) {
+  return this._getPointIterAttributeIndex( this._getPointIter( point ), neighborPolygonIndex );
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<ScalarAttribute> attribute, Scalar value ) {
+  DataIter pointIter = this._getPointIter( point );
+  if( pointIter )
+    this._setPointIterAttribute( pointIter, attribute, value );
+  else
+    attribute.values[point] = value;
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<ScalarConstantArrayAttribute> attribute, LocalL16ScalarArray value ) {
+  DataIter pointIter = this._getPointIter( point );
+  if( pointIter )
+    this._setPointIterAttribute( pointIter, attribute, value );
+  else
+    attribute.setValue( point, value );
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<UInt32Attribute> attribute, UInt32 value ) {
+  DataIter pointIter = this._getPointIter( point );
+  if( pointIter )
+    this._setPointIterAttribute( pointIter, attribute, value );
+  else
+    attribute.values[point] = value;
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<UInt16ConstantArrayAttribute> attribute, LocalL16UInt32Array value ) {
+  DataIter pointIter = this._getPointIter( point );
+  if( pointIter )
+    this._setPointIterAttribute( pointIter, attribute, value );
+  else
+    attribute.setValue( point, value );
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<RGBAttribute> attribute, RGB value ) {
+  DataIter pointIter = this._getPointIter( point );
+  if( pointIter )
+    this._setPointIterAttribute( pointIter, attribute, value );
+  else
+    attribute.values[point] = value;
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<RGBAAttribute> attribute, RGBA value ) {
+  DataIter pointIter = this._getPointIter( point );
+  if( pointIter )
+    this._setPointIterAttribute( pointIter, attribute, value );
+  else
+    attribute.values[point] = value;
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<Vec2Attribute> attribute, Vec2 value ) {
+  DataIter pointIter = this._getPointIter( point );
+  if( pointIter )
+    this._setPointIterAttribute( pointIter, attribute, value );
+  else
+    attribute.values[point] = value;
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<Vec3Attribute> attribute, Vec3 value ) {
+  this._setPointAttribute( point, attribute, value );
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<Vec3_dAttribute> attribute, Vec3_d value ) {
+  this._setPointAttribute( point, attribute, value );
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<Vec4Attribute> attribute, Vec4 value ) {
+  DataIter pointIter = this._getPointIter( point );
+  if( pointIter )
+    this._setPointIterAttribute( pointIter, attribute, value );
+  else
+    attribute.values[point] = value;
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<QuatAttribute> attribute, Quat value ) {
+  DataIter pointIter = this._getPointIter( point );
+  if( pointIter )
+    this._setPointIterAttribute( pointIter, attribute, value );
+  else
+    attribute.values[point] = value;
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<ColorAttribute> attribute, Color value ) {
+  DataIter pointIter = this._getPointIter( point );
+  if( pointIter )
+    this._setPointIterAttribute( pointIter, attribute, value );
+  else
+    attribute.values[point] = value;
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<Mat33Attribute> attribute, Mat33 value ) {
+  DataIter pointIter = this._getPointIter( point );
+  if( pointIter )
+    this._setPointIterAttribute( pointIter, attribute, value );
+  else
+    attribute.values[point] = value;
+}
+
+//Sets an attribute's value for all neighbors around the point (uniform value).
+inline PolygonMesh.setPointAttribute!( Size point, io Ref<Mat44Attribute> attribute, Mat44 value ) {
+  DataIter pointIter = this._getPointIter( point );
+  if( pointIter )
+    this._setPointIterAttribute( pointIter, attribute, value );
+  else
+    attribute.values[point] = value;
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+inline PolygonMesh.setPointAttribute!( Size point, Size neighborPolygonIndex, io Ref<ScalarConstantArrayAttribute> attribute, LocalL16ScalarArray value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePointOffset( point, neighborPolygonIndex, "setPointAttribute" );
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+inline PolygonMesh.setPointAttribute!( Size point, Size neighborPolygonIndex, io Ref<UInt32Attribute> attribute, UInt32 value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePointOffset( point, neighborPolygonIndex, "setPointAttribute" );
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+inline PolygonMesh.setPointAttribute!( Size point, Size neighborPolygonIndex, io Ref<UInt16ConstantArrayAttribute> attribute, LocalL16UInt32Array value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePointOffset( point, neighborPolygonIndex, "setPointAttribute" );
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+inline PolygonMesh.setPointAttribute!( Size point, Size neighborPolygonIndex, io Ref<RGBAttribute> attribute, RGB value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePointOffset( point, neighborPolygonIndex, "setPointAttribute" );
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+inline PolygonMesh.setPointAttribute!( Size point, Size neighborPolygonIndex, io Ref<RGBAAttribute> attribute, RGBA value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePointOffset( point, neighborPolygonIndex, "setPointAttribute" );
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+inline PolygonMesh.setPointAttribute!( Size point, Size neighborPolygonIndex, io Ref<Vec2Attribute> attribute, Vec2 value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePointOffset( point, neighborPolygonIndex, "setPointAttribute" );
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+inline PolygonMesh.setPointAttribute!( Size point, Size neighborPolygonIndex, io Ref<Vec3Attribute> attribute, Vec3 value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePointOffset( point, neighborPolygonIndex, "setPointAttribute" );
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+inline PolygonMesh.setPointAttribute!( Size point, Size neighborPolygonIndex, io Ref<Vec3_dAttribute> attribute, Vec3_d value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePointOffset( point, neighborPolygonIndex, "setPointAttribute" );
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+inline PolygonMesh.setPointAttribute!( Size point, Size neighborPolygonIndex, io Ref<Vec4Attribute> attribute, Vec4 value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePointOffset( point, neighborPolygonIndex, "setPointAttribute" );
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+inline PolygonMesh.setPointAttribute!( Size point, Size neighborPolygonIndex, io Ref<QuatAttribute> attribute, Quat value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePointOffset( point, neighborPolygonIndex, "setPointAttribute" );
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+inline PolygonMesh.setPointAttribute!( Size point, Size neighborPolygonIndex, io Ref<ColorAttribute> attribute, Color value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePointOffset( point, neighborPolygonIndex, "setPointAttribute" );
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+inline PolygonMesh.setPointAttribute!( Size point, Size neighborPolygonIndex, io Ref<Mat33Attribute> attribute, Mat33 value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePointOffset( point, neighborPolygonIndex, "setPointAttribute" );
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+inline PolygonMesh.setPointAttribute!( Size point, Size neighborPolygonIndex, io Ref<Mat44Attribute> attribute, Mat44 value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePointOffset( point, neighborPolygonIndex, "setPointAttribute" );
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, attribute, value );
+}
+
+//Get polygon's attribute index for a specific point index,
+inline Size PolygonMesh.getPolygonAttributeIndex?( Size polygon, Size polygonPointIndex ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "getPolygonAttributeIndex" );
+  return this._getPolyIterAttributeIndex( this._getPolygonIter( polygon ), polygonPointIndex );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<ScalarAttribute> attribute, Scalar value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<ScalarConstantArrayAttribute> attribute, LocalL16ScalarArray value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<UInt32Attribute> attribute, UInt32 value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<UInt16ConstantArrayAttribute> attribute, LocalL16UInt32Array value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<RGBAttribute> attribute, RGB value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<RGBAAttribute> attribute, RGBA value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<Vec2Attribute> attribute, Vec2 value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<Vec3Attribute> attribute, Vec3 value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<Vec3_dAttribute> attribute, Vec3_d value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<Vec4Attribute> attribute, Vec4 value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<QuatAttribute> attribute, Quat value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<ColorAttribute> attribute, Color value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<Mat33Attribute> attribute, Mat33 value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+
+//Sets an attribute's value for a specific neighbors around the point. If same values are set for different neighbors, these will be shared when possible
+//(sharing will be possible only when all attributes are shared: normals, uvs, etc).
+function PolygonMesh.setPolygonAttribute!( Size polygon, Size polygonPointIndex, io Ref<Mat44Attribute> attribute, Mat44 value ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonAttribute" );
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, attribute, value );
+}
+
+//Sets all attribute values from an array containing polygon packed data with an optional index table:
+//[polygon0.point0 = values[optionalValuesIndices[0]], [polygon0.point1 = values[optionalValuesIndices[1]], ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, Scalar values<>, Size optionalValuesIndices[] ) {
+  if( PolygonMesh_enableChecks && values.size() != this.totalPolygonPoints && optionalValuesIndices.size() != this.totalPolygonPoints )
+    throw("PolygonMesh.setAttributeFromPolygonPackedData: values size != polygon points sum");
+  Ref<ScalarAttribute> attr = this.getOrCreateScalarAttribute( name );
+  Size polygonCount = this.polygonCount();
+  Size pointCount = this.pointCount();
+  Size current;
+  for( Size i = 0; i < polygonCount; ++i ) {
+    DataIter polyIter = this._getPolygonIter( i );
+    Size polySize = this._getPolyIterSize(polyIter);
+    for( Size j = 0; j < polySize; ++j ) {
+      Size sourceIndex = optionalValuesIndices ? optionalValuesIndices[current] : current;
+      IterOff ptIterOff = this._getPolyIterPointIterOff( polyIter, j );
+      this._setPointIterAttribute( ptIterOff.index, ptIterOff.offset, attr, values[sourceIndex] );
+      ++current;
+    }
+  }
+  attr.incrementVersion();
+}
+
+//Sets all attribute values from an array containing polygon packed data: [polygon0.point0, polygon0.point1, ..., polygon1.point0, polygon1.point1, ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, Scalar values<> ) {
+  Size optionalValuesIndices[];
+  this.setAttributeFromPolygonPackedData( name, values, optionalValuesIndices );
+}
+
+//Sets all attribute values from an array containing polygon packed data with an optional index table:
+//[polygon0.point0 = values[optionalValuesIndices[0]], [polygon0.point1 = values[optionalValuesIndices[1]], ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, RGB values<>, Size optionalValuesIndices[] ) {
+  if( PolygonMesh_enableChecks && values.size() != this.totalPolygonPoints && optionalValuesIndices.size() != this.totalPolygonPoints )
+    throw("PolygonMesh.setAttributeFromPolygonPackedData: values size != polygon points sum");
+  Ref<RGBAttribute> attr = this.getOrCreateRGBAttribute( name );
+  Size polygonCount = this.polygonCount();
+  Size pointCount = this.pointCount();
+  Size current;
+  for( Size i = 0; i < polygonCount; ++i ) {
+    DataIter polyIter = this._getPolygonIter( i );
+    Size polySize = this._getPolyIterSize(polyIter);
+    for( Size j = 0; j < polySize; ++j ) {
+      Size sourceIndex = optionalValuesIndices ? optionalValuesIndices[current] : current;
+      IterOff ptIterOff = this._getPolyIterPointIterOff( polyIter, j );
+      this._setPointIterAttribute( ptIterOff.index, ptIterOff.offset, attr, values[sourceIndex] );
+      ++current;
+    }
+  }
+  attr.incrementVersion();
+}
+
+//Sets all attribute values from an array containing polygon packed data: [polygon0.point0, polygon0.point1, ..., polygon1.point0, polygon1.point1, ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, RGB values<> ) {
+  Size optionalValuesIndices[];
+  this.setAttributeFromPolygonPackedData( name, values, optionalValuesIndices );
+}
+
+//Sets all attribute values from an array containing polygon packed data with an optional index table:
+//[polygon0.point0 = values[optionalValuesIndices[0]], [polygon0.point1 = values[optionalValuesIndices[1]], ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, RGBA values<>, Size optionalValuesIndices[] ) {
+  if( PolygonMesh_enableChecks && values.size() != this.totalPolygonPoints && optionalValuesIndices.size() != this.totalPolygonPoints )
+    throw("PolygonMesh.setAttributeFromPolygonPackedData: values size != polygon points sum");
+  Ref<RGBAAttribute> attr = this.getOrCreateRGBAAttribute( name );
+  Size polygonCount = this.polygonCount();
+  Size pointCount = this.pointCount();
+  Size current;
+  for( Size i = 0; i < polygonCount; ++i ) {
+    DataIter polyIter = this._getPolygonIter( i );
+    Size polySize = this._getPolyIterSize(polyIter);
+    for( Size j = 0; j < polySize; ++j ) {
+      Size sourceIndex = optionalValuesIndices ? optionalValuesIndices[current] : current;
+      IterOff ptIterOff = this._getPolyIterPointIterOff( polyIter, j );
+      this._setPointIterAttribute( ptIterOff.index, ptIterOff.offset, attr, values[sourceIndex] );
+      ++current;
+    }
+  }
+  attr.incrementVersion();
+}
+
+//Sets all attribute values from an array containing polygon packed data: [polygon0.point0, polygon0.point1, ..., polygon1.point0, polygon1.point1, ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, RGBA values<> ) {
+  Size optionalValuesIndices[];
+  this.setAttributeFromPolygonPackedData( name, values, optionalValuesIndices );
+}
+
+//Sets all attribute values from an array containing polygon packed data with an optional index table:
+//[polygon0.point0 = values[optionalValuesIndices[0]], [polygon0.point1 = values[optionalValuesIndices[1]], ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, Color values<>, Size optionalValuesIndices[] ) {
+  if( PolygonMesh_enableChecks && values.size() != this.totalPolygonPoints && optionalValuesIndices.size() != this.totalPolygonPoints )
+    throw("PolygonMesh.setAttributeFromPolygonPackedData: values size != polygon points sum");
+  Ref<ColorAttribute> attr = this.getOrCreateColorAttribute( name );
+  Size polygonCount = this.polygonCount();
+  Size pointCount = this.pointCount();
+  Size current;
+  for( Size i = 0; i < polygonCount; ++i ) {
+    DataIter polyIter = this._getPolygonIter( i );
+    Size polySize = this._getPolyIterSize(polyIter);
+    for( Size j = 0; j < polySize; ++j ) {
+      Size sourceIndex = optionalValuesIndices ? optionalValuesIndices[current] : current;
+      IterOff ptIterOff = this._getPolyIterPointIterOff( polyIter, j );
+      this._setPointIterAttribute( ptIterOff.index, ptIterOff.offset, attr, values[sourceIndex] );
+      ++current;
+    }
+  }
+  attr.incrementVersion();
+}
+
+//Sets all attribute values from an array containing polygon packed data: [polygon0.point0, polygon0.point1, ..., polygon1.point0, polygon1.point1, ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, Color values<> ) {
+  Size optionalValuesIndices[];
+  this.setAttributeFromPolygonPackedData( name, values, optionalValuesIndices );
+}
+
+//Sets all attribute values from an array containing polygon packed data with an optional index table:
+//[polygon0.point0 = values[optionalValuesIndices[0]], [polygon0.point1 = values[optionalValuesIndices[1]], ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, Vec2 values<>, Size optionalValuesIndices[] ) {
+  if( PolygonMesh_enableChecks && values.size() != this.totalPolygonPoints && optionalValuesIndices.size() != this.totalPolygonPoints )
+    throw("PolygonMesh.setAttributeFromPolygonPackedData: values size != polygon points sum");
+  Ref<Vec2Attribute> attr = this.getOrCreateVec2Attribute( name );
+  Size polygonCount = this.polygonCount();
+  Size pointCount = this.pointCount();
+  Size current;
+  for( Size i = 0; i < polygonCount; ++i ) {
+    DataIter polyIter = this._getPolygonIter( i );
+    Size polySize = this._getPolyIterSize(polyIter);
+    for( Size j = 0; j < polySize; ++j ) {
+      Size sourceIndex = optionalValuesIndices ? optionalValuesIndices[current] : current;
+      IterOff ptIterOff = this._getPolyIterPointIterOff( polyIter, j );
+      this._setPointIterAttribute( ptIterOff.index, ptIterOff.offset, attr, values[sourceIndex] );
+      ++current;
+    }
+  }
+  attr.incrementVersion();
+}
+
+//Sets all attribute values from an array containing polygon packed data: [polygon0.point0, polygon0.point1, ..., polygon1.point0, polygon1.point1, ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, Vec2 values<> ) {
+  Size optionalValuesIndices[];
+  this.setAttributeFromPolygonPackedData( name, values, optionalValuesIndices );
+}
+
+//Sets all attribute values from an array containing polygon packed data with an optional index table:
+//[polygon0.point0 = values[optionalValuesIndices[0]], [polygon0.point1 = values[optionalValuesIndices[1]], ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, Vec3 values<>, Size optionalValuesIndices[] ) {
+  if( PolygonMesh_enableChecks && values.size() != this.totalPolygonPoints && optionalValuesIndices.size() != this.totalPolygonPoints )
+    throw("PolygonMesh.setAttributeFromPolygonPackedData: values size != polygon points sum");
+  Ref<Vec3Attribute> attr = this.getOrCreateVec3Attribute( name );
+  Size polygonCount = this.polygonCount();
+  Size pointCount = this.pointCount();
+  Size current;
+  for( Size i = 0; i < polygonCount; ++i ) {
+    DataIter polyIter = this._getPolygonIter( i );
+    Size polySize = this._getPolyIterSize(polyIter);
+    for( Size j = 0; j < polySize; ++j ) {
+      Size sourceIndex = optionalValuesIndices ? optionalValuesIndices[current] : current;
+      IterOff ptIterOff = this._getPolyIterPointIterOff( polyIter, j );
+      this._setPointIterAttribute( ptIterOff.index, ptIterOff.offset, attr, values[sourceIndex] );
+      ++current;
+    }
+  }
+  attr.incrementVersion();
+}
+
+//Sets all attribute values from an array containing polygon packed data: [polygon0.point0, polygon0.point1, ..., polygon1.point0, polygon1.point1, ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, Vec3 values<> ) {
+  Size optionalValuesIndices[];
+  this.setAttributeFromPolygonPackedData( name, values, optionalValuesIndices );
+}
+
+//Sets all attribute values from an array containing polygon packed data with an optional index table:
+//[polygon0.point0 = values[optionalValuesIndices[0]], [polygon0.point1 = values[optionalValuesIndices[1]], ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, Vec4 values<>, Size optionalValuesIndices[] ) {
+  if( PolygonMesh_enableChecks && values.size() != this.totalPolygonPoints && optionalValuesIndices.size() != this.totalPolygonPoints )
+    throw("PolygonMesh.setAttributeFromPolygonPackedData: values size != polygon points sum");
+  Ref<Vec4Attribute> attr = this.getOrCreateVec4Attribute( name );
+  Size polygonCount = this.polygonCount();
+  Size pointCount = this.pointCount();
+  Size current;
+  for( Size i = 0; i < polygonCount; ++i ) {
+    DataIter polyIter = this._getPolygonIter( i );
+    Size polySize = this._getPolyIterSize(polyIter);
+    for( Size j = 0; j < polySize; ++j ) {
+      Size sourceIndex = optionalValuesIndices ? optionalValuesIndices[current] : current;
+      IterOff ptIterOff = this._getPolyIterPointIterOff( polyIter, j );
+      this._setPointIterAttribute( ptIterOff.index, ptIterOff.offset, attr, values[sourceIndex] );
+      ++current;
+    }
+  }
+  attr.incrementVersion();
+}
+
+//Sets all attribute values from an array containing polygon packed data: [polygon0.point0, polygon0.point1, ..., polygon1.point0, polygon1.point1, ...]
+//This is more efficient than calling individual setPolygonAttribute().
+function PolygonMesh.setAttributeFromPolygonPackedData!( String name, Vec4 values<> ) {
+  Size optionalValuesIndices[];
+  this.setAttributeFromPolygonPackedData( name, values, optionalValuesIndices );
+}

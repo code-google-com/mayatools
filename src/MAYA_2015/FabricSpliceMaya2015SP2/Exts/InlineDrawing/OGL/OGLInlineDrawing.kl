@@ -1,0 +1,478 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`oglinlinedrawing` implements the :ref:`inlinedrawing` interface for OpenGL direct rendering. 
+
+Example
+---------
+
+.. code-block:: kl
+
+    InlineDrawing drawing = OGLInlineDrawing_GetInstance();
+
+    // create a shape    
+    PolygonMesh myMesh = PolygonMesh();    
+    InlineShape shape = InlineMeshShape('myMesh', myMesh);
+    drawing.registerShape(shape);
+
+    // create a shader
+    InlineShader shader = OGLInlineShader(
+      "myFlatShader",
+      "
+        #version 150 //required for OSX support
+
+        uniform mat4 u_viewMatrix;
+        uniform mat4 u_projection;
+        uniform mat4 u_modelMatrix;
+        
+        in vec4 positions;
+
+        void main(){
+          gl_Position = u_projection * (u_viewMatrix * (u_modelMatrix * positions));
+        }
+      ", "
+        #version 150 //required for OSX support
+        
+        uniform vec4 u_materialColor;
+        uniform float u_time;
+        out vec4 out_fragColor;
+        
+        void main(){
+          out_fragColor = u_materialColor * u_time;
+        }
+      ");
+
+    shader.defineUniform(InlineUniform("u_viewMatrix", Mat44());
+    shader.defineUniform(InlineUniform("u_projection", Mat44());
+    shader.defineUniform(InlineUniform("u_modelMatrix", Mat44());
+    shader.defineUniform(InlineUniform("u_materialColor", Color(1.0, 0.0, 0.0));
+    shader.defineUniform(InlineUniform("u_time", 0.0);
+    shader.defineAttribute('positions', "Vec3");
+
+    // add the shader to the drawing
+    drawing.registerShader(shader);
+
+    // create a material
+    InlineMaterial red = shader.getOrCreateMaterial('red');
+    red.setUniform('u_color', Color(1.0, 0.0, 0.0));
+
+    // create an instance and add it to the red material
+    InlineInstance instance = SimpleInlineInstance(drawing.getRoot(), shape);
+    instance.addMaterial(red);
+*/
+
+require Math;
+require Singletons;
+require FabricSynchronization;
+
+object OGLInlineDrawing : InlineDrawing {
+  InlineTransform _root;
+
+  InlineShader _shaders[];
+  Size _shaderOffsets[String];
+
+  InlineTransformAdaptor _transformAdaptors[];
+  Size _transformAdaptorOffsets[String];
+
+  InlineShapeAdaptor _shapeAdaptors[];
+  Size _shapeAdaptorOffsets[String];
+
+  InlineShape _shapes[];
+  Size _shapeOffsets[String];
+
+  InlineTextureAdaptor _textureAdaptors[];
+  Size _textureAdaptorOffsets[String];
+
+  InlineTexture _textures[];
+  Size _textureOffsets[String];
+
+  InlineInstance _instances[];
+  SimpleLock lock;
+};
+
+// Get the OGLInlineDrawing singleton, or construct 
+// it if it didn't already exist.
+function OGLInlineDrawing OGLInlineDrawing_GetInstance() {
+  SimpleLock lock = SimpleLock("OGLInlineDrawing_GetInstance_Lock");
+  AutoLock AL(lock);
+  // check if we can get the singleton
+  Object drawing = Singleton_get('InlineDrawing');
+  if(drawing == null) {
+    drawing = OGLInlineDrawing();
+    Singleton_set('InlineDrawing', drawing);
+  } else{
+    // We can only have one drawing system constructed(using the 'InlineDrawing' key).
+    if(drawing.type != OGLInlineDrawing){
+      setError("Error getting OGLInlineDrawing instance. A drawing system of a different type has already been constructed :" + drawing.type );
+      return null;
+    }
+  }
+  return drawing;
+}
+
+// Get the OGLInlineDrawing singleton, but through a method
+function OGLInlineDrawing OGLInlineDrawing.getInstance() {
+  return OGLInlineDrawing_GetInstance();
+}
+
+// default constructor given a name
+function OGLInlineDrawing(String name) {
+  this.lock = SimpleLock("OGLInlineDrawing");
+  this._root = StaticInlineTransform(name, Xfo());
+
+  // all standard transform adaptors
+  this.registerTransformAdaptor(OGLTransformAdaptor());
+  this.registerTransformAdaptor(OGLConstantScreenSizeTransformAdaptor());
+
+  // all standard shape adaptors
+  this.registerShapeAdaptor(OGLPointsShapeAdaptor());
+  this.registerShapeAdaptor(OGLLinesShapeAdaptor());
+  this.registerShapeAdaptor(OGLMeshShapeAdaptor());
+  this.registerShapeAdaptor(OGLDebugShapeAdaptor());
+
+  // all standard texture adaptors
+  this.registerTextureAdaptor(OGLColorTextureAdaptor());
+  this.registerTextureAdaptor(OGLMatrixArrayTextureAdaptor());
+}
+
+// default constructor
+function OGLInlineDrawing() {
+  this = OGLInlineDrawing('InlineDrawing');
+}
+
+// removes all children from the root transform
+// and clears all materials / instances
+function OGLInlineDrawing.reset!() {
+  AutoLock AL(this.lock);
+  for(Size i=0;i<this._shaders.size();i++)
+    this._shaders[i].reset();
+  this._root.removeAllChildren();
+}
+
+// returns the name of this drawing
+function String OGLInlineDrawing.getName() {
+  return this._root.getName();
+}
+
+// returns the root transform of this drawing
+function InlineTransform OGLInlineDrawing.getRoot() {
+  return this._root;
+}
+
+//////////////////////////////////////////
+// Shaders
+
+// returns the number of registered shaders
+function Size OGLInlineDrawing.getShaderCount() {
+  AutoLock AL(this.lock);
+  return this._shaders.size();
+}
+
+// returns true if a shader with a given name has been registered
+function Boolean OGLInlineDrawing.hasShader(String name) {
+  AutoLock AL(this.lock);
+  return this._shaderOffsets.has(name);
+}
+
+// registers a new shader into this drawing
+function InlineShader OGLInlineDrawing.registerShader!(InlineShader shader) {
+  AutoLock AL(this.lock);
+  if(this.hasShader(shader.getName())){
+    InlineShader existingShader = this.getShader(shader.getName());
+    if(existingShader.type() != shader.type())
+      setError('OGLInlineDrawing::registerShader: There is already a shader "'+shader.getName()+'" with a different type ("'+existingShader.type()+'").');
+    return existingShader;
+  }
+  else{
+    this._shaderOffsets[shader.getName()] = this._shaders.size();
+    this._shaders.push(shader);
+    return shader;
+  }
+}
+
+
+// returns the index of a shader in the drawing
+function Integer OGLInlineDrawing.getShaderIndex(String name) {
+  AutoLock AL(this.lock);
+  return this._shaderOffsets.get(name, -1);
+}
+
+// returns a shader given an index
+function InlineShader OGLInlineDrawing.getShader(Index index) {
+  AutoLock AL(this.lock);
+  return this._shaders[index];
+}
+
+// returns a shader given a name, or null
+function InlineShader OGLInlineDrawing.getShader(String name) {
+  AutoLock AL(this.lock);
+  Size offset = this._shaderOffsets.get(name, this._shaders.size());
+  if(offset == this._shaders.size())
+    return null;
+  return this._shaders[offset];
+}
+
+
+//////////////////////////////////////////
+// Transforms
+
+// registers a new adaptor for shape drawing
+function OGLInlineDrawing.registerTransformAdaptor!(InlineTransformAdaptor adaptor) {
+  AutoLock AL(this.lock);
+  String types[] = adaptor.getTransformTypes();
+  for(Size i=0; i<types.size(); i++) {
+    Size offset = this._transformAdaptorOffsets.get(types[i], this._transformAdaptors.size());
+    if(offset == this._transformAdaptors.size()) {
+      this._transformAdaptorOffsets[types[i]] = offset;
+      this._transformAdaptors.push(adaptor);
+    }
+  }
+}
+
+// returns the index of a transform adaptor
+function Integer OGLInlineDrawing.getTransformAdaptorIndex(String transformType) {
+  AutoLock AL(this.lock);
+  return this._transformAdaptorOffsets.get(transformType, -1);
+}
+
+// returns the transform adaptor of a given index
+function InlineTransformAdaptor OGLInlineDrawing.getTransformAdaptor(Index index) {
+  AutoLock AL(this.lock);
+  return this._transformAdaptors[index];
+}
+
+// returns the transform adaptor for a given type
+function InlineTransformAdaptor OGLInlineDrawing.getTransformAdaptor(String transformType) {
+  AutoLock AL(this.lock);
+  Size offset = this._transformAdaptorOffsets.get(transformType, this._transformAdaptors.size());
+  if(offset == this._transformAdaptors.size())
+    return null;
+  return this._transformAdaptors[offset];
+}
+
+
+//////////////////////////////////////////
+// Shapes
+
+// registers a new adaptor for shape drawing
+function OGLInlineDrawing.registerShapeAdaptor!(InlineShapeAdaptor adaptor) {
+  AutoLock AL(this.lock);
+  String types[] = adaptor.getShapeTypes();
+  for(Size i=0; i<types.size(); i++) {
+    Size offset = this._shapeAdaptorOffsets.get(types[i], this._shapeAdaptors.size());
+    if(offset == this._shapeAdaptors.size()) {
+      this._shapeAdaptorOffsets[types[i]] = offset;
+      this._shapeAdaptors.push(adaptor);
+    }
+  }
+}
+
+// returns the index of a shape adaptor
+function Integer OGLInlineDrawing.getShapeAdaptorIndex(String shapeType) {
+  AutoLock AL(this.lock);
+  return this._shapeAdaptorOffsets.get(shapeType, -1);
+}
+
+// returns the shape adaptor of a given index
+function InlineShapeAdaptor OGLInlineDrawing.getShapeAdaptor(Index index) {
+  AutoLock AL(this.lock);
+  return this._shapeAdaptors[index];
+}
+
+// returns the shape adaptor for a given type
+function InlineShapeAdaptor OGLInlineDrawing.getShapeAdaptor(String shapeType) {
+  AutoLock AL(this.lock);
+  Size offset = this._shapeAdaptorOffsets.get(shapeType, this._shapeAdaptors.size());
+  if(offset == this._shapeAdaptors.size())
+    return null;
+  return this._shapeAdaptors[offset];
+}
+
+
+// returns true if a shape with a given name has been registered
+function Boolean OGLInlineDrawing.hasShape(String name) {
+  AutoLock AL(this.lock);
+  return this._shapeOffsets.has(name);
+}
+
+// registers a new shape into this drawing
+function InlineShape OGLInlineDrawing.registerShape!(InlineShape shape) {
+  AutoLock AL(this.lock);
+  Size offset = this._shapeOffsets.get(shape.getName(), this._shapes.size());
+  if(offset < this._shapes.size()) {
+    InlineShape existingShape = this._shapes[offset];
+    if(existingShape.type() != shape.type())
+      setError('OGLInlineDrawing::registerShape: There is already a shape "'+shape.getName()+'" with a different type ("'+existingShape.type()+'").');
+    return existingShape;
+  }
+  this._shapeOffsets[shape.getName()] = offset;
+  this._shapes.push(shape);
+  return shape;
+}
+
+// returns the number of shapes registered
+function Size OGLInlineDrawing.getShapeCount() {
+  AutoLock AL(this.lock);
+  return this._shapes.size();
+}
+
+// returns the index of a shape in the drawing
+function Integer OGLInlineDrawing.getShapeIndex(String name) {
+  AutoLock AL(this.lock);
+  return this._shapeOffsets.get(name, -1);
+}
+
+// returns a shape with a given index, or null
+function InlineShape OGLInlineDrawing.getShape(Index index) {
+  AutoLock AL(this.lock);
+  return this._shapes[index];
+}
+
+// returns a shape with a given name, or null
+function InlineShape OGLInlineDrawing.getShape(String name) {
+  AutoLock AL(this.lock);
+  Size offset = this._shapeOffsets.get(name, this._shapes.size());
+  if(offset == this._shapes.size())
+    return null;
+  return this._shapes[offset];
+}
+
+//////////////////////////////////////////
+// Textures
+  
+
+// registers a new adaptor for texture drawing
+function OGLInlineDrawing.registerTextureAdaptor!(InlineTextureAdaptor adaptor) {
+  AutoLock AL(this.lock);
+  String types[] = adaptor.getTextureTypes();
+  for(Size i=0; i<types.size(); i++) {
+    Size offset = this._textureAdaptorOffsets.get(types[i], this._textureAdaptors.size());
+    if(offset == this._textureAdaptors.size()) {
+      this._textureAdaptorOffsets[types[i]] = offset;
+      this._textureAdaptors.push(adaptor);
+    }
+  }
+}
+
+// returns the index of a texture adaptor
+function Integer OGLInlineDrawing.getTextureAdaptorIndex(String textureType) {
+  AutoLock AL(this.lock);
+  return this._textureAdaptorOffsets.get(textureType, -1);
+}
+
+// returns the texture adaptor of a given index
+function InlineTextureAdaptor OGLInlineDrawing.getTextureAdaptor(Index index) {
+  AutoLock AL(this.lock);
+  return this._textureAdaptors[index];
+}
+
+// returns the texture adaptor for a given type
+function InlineTextureAdaptor OGLInlineDrawing.getTextureAdaptor(String textureType) {
+  AutoLock AL(this.lock);
+  Size offset = this._textureAdaptorOffsets.get(textureType, this._textureAdaptors.size());
+  if(offset == this._textureAdaptors.size())
+    return null;
+  return this._textureAdaptors[offset];
+}
+
+// returns true if a given texture has been registered
+function Boolean OGLInlineDrawing.hasTexture(String name) {
+  AutoLock AL(this.lock);
+  return this._textureOffsets.has(name);
+}
+
+// registers a new texture into this drawing.
+// the texture should replace an existing texture if name
+// unique is relevant.
+function InlineTexture OGLInlineDrawing.registerTexture!(InlineTexture texture) {
+  AutoLock AL(this.lock);
+  Size offset = this._textureOffsets.get(texture.getName(), this._textures.size());
+  if(offset < this._textures.size())
+    return this._textures[offset];
+  this._textureOffsets[texture.getName()] = offset;
+  this._textures.push(texture);
+  return texture;
+}
+
+// returns the number of textures registered
+function Size OGLInlineDrawing.getTextureCount() {
+  AutoLock AL(this.lock);
+  return this._textures.size();
+}
+
+// returns the index of a texture in the drawing
+function Integer OGLInlineDrawing.getTextureIndex(String name) {
+  AutoLock AL(this.lock);
+  return this._textureOffsets.get(name, -1);
+}
+
+// returns a texture with a given index, or null
+function InlineTexture OGLInlineDrawing.getTexture(Index index) {
+  AutoLock AL(this.lock);
+  return this._textures[index];
+}
+
+// returns a texture with a given name, or null
+function InlineTexture OGLInlineDrawing.getTexture(String name) {
+  AutoLock AL(this.lock);
+  Size offset = this._textureOffsets.get(name, this._textures.size());
+  if(offset == this._textures.size())
+    return null;
+  return this._textures[offset];
+}
+
+//////////////////////////////////////////
+// Drawing
+
+// draws the content of the drawing on the screen.
+// this is called automatically by the DCC integrations and should
+// not be called manually.
+function Boolean OGLInlineDrawing._draw!(io DrawContext context) {
+   
+  if(!cpglHaveContext()){
+    setError("ERROR: OGLInlineDrawing._draw. OpenGL context not bound");
+    return false;
+  }
+
+  context.storeObject('drawing', this);
+
+  Boolean result = true;
+
+  Integer prevProgramValues[];
+  prevProgramValues.resize(1); 
+  glGetIntegerv(GL_CURRENT_PROGRAM, prevProgramValues);
+
+  glPushAttrib(GL_ALL_ATTRIB_BITS);
+  glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
+
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  
+  context.projectionMat = context.viewport.getProjectionMat();
+  context.viewMat = context.viewport.getViewMat();
+  context.invViewMat = context.viewMat.upperLeft();
+
+  for(Size i=0; i<this._shaders.size(); i++) {
+    // Push/pop the state info so that each shader can modify the state
+    // without effecting other shaders. 
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    result = this._shaders[i]._draw(context);
+    glPopAttrib();
+
+    if(!result){
+      report("WARNING: Error running shader:" + this._shaders[i].getName());
+    }
+  }
+
+  glPopMatrix();
+  glPopClientAttrib();
+  glPopAttrib();
+
+  glUseProgram(prevProgramValues[0]);
+
+  return result;
+}

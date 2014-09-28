@@ -1,0 +1,15 @@
+{
+  "code": [
+    "GenericValue.kl",
+    "GenericValueContainer.kl",
+    "Regex.kl",
+    "StringMethods.kl",
+    "NumberMethods.kl",
+    "ImporterOptions.kl",
+    "ImporterIdentifier.kl",
+    "FilePathMethods.kl"
+  ],
+  "libs": [
+    "Util"
+  ]
+}

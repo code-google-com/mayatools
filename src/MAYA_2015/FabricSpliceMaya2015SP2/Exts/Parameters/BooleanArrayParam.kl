@@ -1,0 +1,72 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`booleanarrayparam` implements the :ref:`param` interface for Boolean array values.
+
+Example
+---------
+
+.. code-block:: kl
+
+    BooleanArrayParam param = BooleanArrayParam('flag');
+    param.resize(3);
+    param.setValue(0, true);
+    param.setValue(1, false);
+    param.setValue(2, true);
+    report(param.getValue(2));
+*/
+
+object BooleanArrayParam : Param {
+  String name;
+  Boolean values[];
+  Param options[String];
+};
+
+// default constructor
+function BooleanArrayParam(String name) {
+  this.name = name;
+}
+
+// returns the size of the values
+function Size BooleanArrayParam.size() {
+  return this.values.size();
+}
+
+// resizes the values to a certain count
+function BooleanArrayParam.resize!(Size size) {
+  this.values.resize(size);
+}
+
+// returns the name of this parameter
+function String BooleanArrayParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String BooleanArrayParam.getValueType() {
+  return "Boolean[]";
+}
+
+// getting an option on this param
+function Param BooleanArrayParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function BooleanArrayParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function Boolean BooleanArrayParam.getValue(Index index) {
+  return this.values[index];
+}
+
+// sets the param's value
+function BooleanArrayParam.setValue!(Index index, Boolean value) {
+  this.values[index] = value;
+}

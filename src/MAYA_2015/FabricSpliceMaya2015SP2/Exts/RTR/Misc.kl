@@ -1,0 +1,216 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+/////////////////// GENERIC METHODS that would require KL virtual functions...
+
+function Boolean RenderParamValues.setFrom!(RenderParamValues sourceValues, RenderValueKey sourceKey, Size sourceElementIndex, io RenderValueKey resultKey) {
+  if( sourceElementIndex != 0 && sourceValues.isPerElement(sourceKey) ) {
+    //We need to copy the value, so it becomes per element.
+    Type sourceType = sourceValues.paramsData[sourceKey.index].param.data.type;
+    if( this.paramsData[resultKey.index].param.data == null ) {
+      if( sourceType == IntegerRenderParam )
+        this.setAsInteger(resultKey, 1);
+      else if( sourceType == Mat44RenderParam )
+        this.setAsMat44(resultKey, 1);
+    }
+    if( sourceType == IntegerRenderParam ) {
+      Integer value;
+      sourceValues.get(sourceKey, value, sourceElementIndex);
+      return this.set(resultKey, value);
+    }
+    else if( sourceType == Mat44RenderParam ) {
+      Mat44 value;
+      sourceValues.get(sourceKey, value, sourceElementIndex);
+      return this.set(resultKey, value);
+    }
+  }
+  return this.setFrom(sourceValues, sourceKey, resultKey);
+}
+
+/////////////////// DEBUG PRINT
+
+function String RenderParamValues.getDesc(RenderValueKey key, Boolean printVersions, Integer specificInstance) {
+  String desc = this.paramsData[key.index].name + ": ";
+
+  Type type = this.paramsData[key.index].param.data.type;
+  if(type == LocalBoundingVolumeRenderParam) {
+    LocalBoundingVolumeRenderParam value = this.paramsData[key.index].param.data;
+    desc += value.getDesc();
+  } else if(this.paramsData[key.index].param.category == RenderParamCategory_baseType || this.paramsData[key.index].param.category == RenderParamCategory_math)
+    desc += SimpleRenderParam_getDesc(this.paramsData[key.index].param.data, specificInstance, this.getSpace(key));
+  else {
+    if(type == OGLBuffer) {
+      OGLBuffer value = this.paramsData[key.index].param.data;
+      desc += value.getDesc();
+    } else if(type == OGLTexture2D) {
+      OGLTexture2D value = this.paramsData[key.index].param.data;
+      desc += value.getDesc();
+    } else if(type == OGLMaterial) {
+      OGLMaterial value = this.paramsData[key.index].param.data;
+      desc += value.getDesc();
+    } else if(type == None)
+      desc += "flag";
+    else
+      desc += type;
+  }
+
+  if(printVersions) {
+    if(specificInstance != -1 && this.paramsData[key.index].perElementVersions.size() != 0)
+      desc += " version="+this.paramsData[key.index].perElementVersions[specificInstance];
+    else
+      desc += " version="+this.paramsData[key.index].versions.value;
+  }
+  return desc;
+}
+
+function String RenderParamValues.getDesc(RenderValueKey key, Boolean printVersions) {
+  return this.getDesc(key, printVersions, -1);
+}
+
+function String RenderParamValues.getDesc(RenderValueKey key) {
+  return this.getDesc(key, false, -1);
+}
+
+function String RenderParamValues.getDesc?(String indent, Boolean printValues, Boolean printVersions, Integer specificInstance, Boolean printHeader) {
+  String desc;
+  if(printHeader)
+    desc = indent + 'owner=' + this.ownerName + (this.ownerType ? ' type='+ownerTypeToString(this.ownerType) : '') + (this.ownerRef ? ' ownerRefType='+this.ownerRef.type : '');
+  if(printVersions)
+    desc += " valueVer=" + this.versions.value + " topoVer=" + this.versions.topo;
+  if(printVersions || printHeader)
+    desc += ":\n";
+  RenderValueKey key;
+  for(Size i = 0; i < this.paramsData.size(); ++i) {
+    Boolean unused;
+    for(Size j = 0; j < this.paramsDataIndexPool.freeIndices.size(); ++j) {
+      if( i == this.paramsDataIndexPool.freeIndices[j] ) {
+        unused = true;
+        break;
+      }
+    }
+    if( unused )
+      continue;
+
+    key.index = i;
+
+    if(printValues)
+      desc += indent + "  " + i + ": " + this.getDesc(key, printVersions, specificInstance) + "\n";
+    else
+      desc += indent + "  " + i + ": " + this.paramsData[i].name + "\n";
+  }
+  return desc;
+}
+
+function String RenderParamValues.getDesc?(String indent, Boolean printValues, Boolean printVersions, Integer specificInstance) {
+  return this.getDesc(indent, printValues, printVersions, specificInstance, true);
+}
+
+function String RenderParamValues.getDesc(Boolean printValues, Boolean printVersions) {
+  return this.getDesc("", printValues, printVersions, -1);
+}
+
+function String RenderParamValues.getDesc() {
+  return this.getDesc(true, true);
+}
+
+function String RenderParams.getDesc( String indent, Boolean printValues, Boolean printVersions, Integer specificInstance ) {
+  String desc = indent+'NumLayers=' + this.getNumLayers();
+  if( printVersions )
+    desc += " valueVer=" + this.versions.value + " topoPlusLayoutVer=" + (this.versions.topo + this.layoutOrderVersion);
+  desc += ":\n";
+  for( Size i = 0; i < this.layers.size(); ++i ) {
+    if( this.layers[i].params )
+      desc += indent+"  Layer " + i + ":\n" + this.layers[i].params.getDesc(indent+"    ", printValues, printVersions, specificInstance);
+    else
+      desc += indent+"  Layer " + i + ": (error: uninitialized layer)\n";
+  }
+  return desc;
+}
+
+function String RenderParams.getDesc(Boolean printValues, Boolean printVersions) {
+  return this.getDesc("", printValues, printVersions, -1);
+}
+
+function String RenderParams.getDesc(Boolean printValues) {
+  return this.getDesc("", printValues, false, -1);
+}
+
+function String RenderParams.getDesc() {
+  return this.getDesc(true, false);
+}
+
+//DebugContext: contains information about the current RTR pass evaluation.
+object DebugContext {
+  String callStack[];//Contains the passes call stack
+  RenderParams params;//Contains the current parameter stack
+  String paramPass[];//For every parameterSet in params, contains the pass that added that parameter set
+  String paramCreator[];//For every parameterSet in params, contains the owner that created and filled that parameter set
+};
+
+//Prints the passes' context call stack.
+function String DebugContext.getCallStackDesc( String indent ) {
+  String desc;
+  for( Size i = 0; i < this.callStack.size(); ++i )
+    desc += indent+i+': '+this.callStack[i]+'\n';
+  return desc;
+}
+
+//Prints the passes' values
+function String DebugContext.getParamsDesc( String indent, Boolean printValues ) {
+  //NOTE: level 0 is just static data args; skip.
+  String desc = indent+"Layer 1:\n" + this.params.layers[1].params.getDesc(indent+"  ", printValues, false, -1, false);
+  for( Size i = 2; i < this.params.getNumLayers(); ++i ) {
+    if( this.params.layers[i].params ) {
+      desc += indent+"Layer " + i + ":\n";
+      if( this.paramPass[i] )
+        desc += indent+"  Pass: " + this.paramPass[i] + ":\n";
+      if( this.paramCreator[i] != '' && this.paramCreator[i] != this.paramPass[i] )
+        desc += indent+"  Owner: " + this.paramCreator[i] + ":\n";
+      if( !this.paramPass[i] && !this.paramCreator[i] && this.params.layers[i].params.ownerName != '' )
+        desc += indent+"  Owner: " + this.params.layers[i].params.ownerName + ":\n";
+      desc += this.params.layers[i].params.getDesc(indent+"  ", printValues, false, -1, false);
+    }
+  }
+  return desc;
+}
+
+
+////////// GeometryInstancePrevFrameData: just declaring it here to avoid requiring yet another registered type...
+
+object GeometryInstancePrevFrameData{
+  RenderValueKey prevFrameTransformsKey;
+
+  Boolean specializedLocalBVol;
+  LocalBoundingVolume originalLocalBVol;
+  LocalBoundingVolume prevOriginalLocalBVol;
+
+  RenderParamVersionedKey geometryLocalBVolKey;
+  RenderParamVersionedKey geometryPrevLocalBVolKey;
+
+  RenderValueKey localBVolOverrideTransformsKey;
+
+  //For validation purposes:
+  Ref<RenderParamValues> prevGeometryParams;
+  Integer prevTransformIndex;
+};
+
+//////////////////////////////////// RTR interfaces
+
+//_RTRUserCallbackFunctions: internal interface to interface with KL user callback decorators
+interface _RTRUserCallbackFunctions {
+  Boolean callOGLRenderPassUserFunction( Size funcId, RenderParams inParams, DebugContext debugContext, LocalL16RenderParamVersionedKeyArray inArgKeys, io RenderParamValues targetValues, RenderValueKey targetKey, Boolean initialize );
+  callOGLRenderPassUservoidFunction?( Size condFuncId, RenderParams inParams, DebugContext debugContext, LocalL16RenderParamVersionedKeyArray argKeys, Boolean initialize );
+
+  Boolean callOGLRenderPassUserBooleanFunction( Size condFuncId, RenderParams inParams, DebugContext debugContext, LocalL16RenderParamVersionedKeyArray argKeys, Boolean initialize );
+  Integer callOGLRenderPassUserIntegerFunction( Size condFuncId, RenderParams inParams, DebugContext debugContext, LocalL16RenderParamVersionedKeyArray argKeys, Boolean initialize );
+  Scalar callOGLRenderPassUserScalarFunction( Size condFuncId, RenderParams inParams, DebugContext debugContext, LocalL16RenderParamVersionedKeyArray argKeys, Boolean initialize );
+  String callOGLRenderPassUserStringFunction( Size condFuncId, RenderParams inParams, DebugContext debugContext, LocalL16RenderParamVersionedKeyArray argKeys, Boolean initialize );
+  Vec2 callOGLRenderPassUserVec2Function( Size condFuncId, RenderParams inParams, DebugContext debugContext, LocalL16RenderParamVersionedKeyArray argKeys, Boolean initialize );
+  Vec3 callOGLRenderPassUserVec3Function( Size condFuncId, RenderParams inParams, DebugContext debugContext, LocalL16RenderParamVersionedKeyArray argKeys, Boolean initialize );
+  Vec4 callOGLRenderPassUserVec4Function( Size condFuncId, RenderParams inParams, DebugContext debugContext, LocalL16RenderParamVersionedKeyArray argKeys, Boolean initialize );
+  Color callOGLRenderPassUserColorFunction( Size condFuncId, RenderParams inParams, DebugContext debugContext, LocalL16RenderParamVersionedKeyArray argKeys, Boolean initialize );
+  Mat33 callOGLRenderPassUserMat33Function( Size condFuncId, RenderParams inParams, DebugContext debugContext, LocalL16RenderParamVersionedKeyArray argKeys, Boolean initialize );
+  Mat44 callOGLRenderPassUserMat44Function( Size condFuncId, RenderParams inParams, DebugContext debugContext, LocalL16RenderParamVersionedKeyArray argKeys, Boolean initialize );
+  LocalBoundingVolume callOGLRenderPassUserLocalBoundingVolumeFunction( Size condFuncId, RenderParams inParams, DebugContext debugContext, LocalL16RenderParamVersionedKeyArray argKeys, Boolean initialize );
+};

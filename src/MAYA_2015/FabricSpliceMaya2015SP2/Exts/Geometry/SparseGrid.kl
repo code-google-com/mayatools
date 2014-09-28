@@ -1,0 +1,131 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+
+The SparseGrid is a spatial acceleration structure that subdivides the 3D space as a regular grid of cubic cells. The grid is sparse because, similarly to a hash table, only cells that contain some objects are allocated. The SparseGrid can contain points, bounding boxes or bounding spheres. By default, the cell size will be adjusted automatically based on the number of objects, their sizes and the total bounding box. However it is possible to adjust the cell size using a multiplication factor or an explicit size.
+
+In order to offer a good performance, the SparseGrid offers:
+
+- Compact memory: all data is managed into a few arrays, reducing global memory consumption and improving speed due to memory locality
+
+- Auto-adjusting cell size: allows the grid to adjust relatively optimally to various object sizes and placement. The SparseGrid tracks the various parameters and will update the cell size if conditions change too much.
+
+- Incremental update: only objects that move between cells will cause changes.
+
+After object modifications (updatePointObject, updateBBoxObject, updateBSphereObject, removeObject), the 'updateGrid' method must be called before issuing queries.
+
+*/
+
+object SparseGrid : StatisticSourceWithAutoRegisterMember {
+  _SparseGridStruct data;//We wrap as one struct to minimize unguarded overhead
+
+  //Statistics
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function SparseGrid() {
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+function Boolean SparseGrid.isValid() {
+  return this.data.initialized;
+}
+
+//Forces a specific cell size. Disables 'auto-cell-size' mode.
+function SparseGrid.setExplicitCellSize!( Scalar cellSize ) {
+  this.data.setCellSize(cellSize);
+}
+
+//Enables auto-cell-size mode, and the cell size determined by the SparseGrid heuristic will then be multiplied by 'autoCellSizeMultiplierHint'.
+function SparseGrid.setAutoCellSize!( Scalar autoCellSizeMultiplierHint ) {
+  this.data.setAutoCellSize( autoCellSizeMultiplierHint );
+}
+
+//Enables auto-cell-size mode.
+function SparseGrid.setAutoCellSize!() {
+  this.data.setAutoCellSize( 1.0 );
+}
+
+//updateGrid must be called after all changes are done, including:
+// - setExplicitCellSize or setAutoCellSize
+// - updatePointObject or updateBBoxObject or updateBSphereObject
+// - removeObject
+//Otherwise, results are unpredictable. This function is not thread-safe.
+inline SparseGrid.updateGrid!() {
+  this.data.updateGrid();
+}
+
+//Adds or updates a point object.
+inline SparseGrid.updatePointObject!( UInt32 objectIndex, Vec3 position ) {
+  this.data.updatePointObject( objectIndex, position );
+}
+
+//Adds or updates a bounding box object.
+inline SparseGrid.updateBBoxObject!( UInt32 objectIndex, Vec3 min, Vec3 max ) {
+  this.data.updateBBoxObject( objectIndex, min, max );
+}
+
+//Adds or updates a bounding sphere object.
+inline SparseGrid.updateBSphereObject!( UInt32 objectIndex, Vec3 center, Scalar radius ) {
+  this.data.updateBSphereObject( objectIndex, center, radius );
+}
+
+//Removes an object.
+inline SparseGrid.removeObject!( UInt32 objectIndex ) {
+  this.data.removeObject( objectIndex );
+}
+
+//Updates the object count. If existing objects get truncated, these will be automatically removed from the tree, incrementally (no need to call 'removeObject()' first).
+//New created objects will have no effect until their volume is specified by 'updateObjectVolume()'.
+function SparseGrid.incrementalUpdateObjectCount!( Size objectCount ) {
+  Size prevObjectCount = this.data.objects.size();
+
+  for( Size i = prevObjectCount; i < objectCount; ++i )
+    this.removeObject(i);//checks if 'isUsed()'
+
+  if( objectCount < prevObjectCount )
+    this.data.objects.resize(objectCount);
+}
+
+//Raycasts the Octree and returns the resulting 'RaycastResult' reference.
+//See SpatialQueryable interface for description of other options.
+inline SparseGrid.raycast( Ray ray, Boolean doubleSided, Scalar maxDistance, io _StatialQueryData data, io Ref<RaycastResult> result ) {
+  this.data.raycast( ray, doubleSided, maxDistance, data, result );
+}
+
+//Raycasts the Octree and returns the resulting 'RaycastResult' reference.
+//See SpatialQueryable interface for description of other options.
+inline SparseGrid.getClosest( Vec3 position, Vec3 scaling, Scalar maxUnscaledDistance, io _StatialQueryData data, io Ref<ClosestResult> result ) {
+  this.data.getClosest( position, scaling, maxUnscaledDistance, data, result );
+}
+
+//Objects within the local bounding box will be added to data.visitedItems
+inline SparseGrid.bBoxQuery( Vec3 min, Vec3 max, io IndexSet result ) {
+  this.data.bBoxQuery( min, max, result );
+}
+
+//Objects within the local bounding sphere will be added to data.visitedItems
+inline SparseGrid.bSphereQuery( Vec3 center, Scalar radius, io IndexSet result ) {
+  this.data.bSphereQuery( center, radius, result );
+}
+
+//Returns the object index range. Note this will not reflect 'sparse' usage of the indices (eg: if only index 1 and 10 is used).
+inline Size SparseGrid.getObjectCount() {
+  return this.data.objects.size();
+}
+
+function Size SparseGrid.getMemUsage() {
+  return this.data.getMemUsage();
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] SparseGrid.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, "SparseGrid" ) );
+  stats.push( StatisticRecord( Statistic_Category, "Geometry" ) );
+  stats.push( StatisticRecord( "ObjectCount", this.getObjectCount() ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, this.getMemUsage() ) );
+  return stats;
+}

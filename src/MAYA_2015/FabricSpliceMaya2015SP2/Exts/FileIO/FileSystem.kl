@@ -1,0 +1,74 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`filesystem` maps closely to the boost::filesystem static methods. Please see the boost documentation for each of the methods.
+
+http://www.boost.org/doc/libs/1_33_1/libs/filesystem/doc/operations.htm
+*/
+
+struct FileSystem {
+  Data handle;
+};
+
+// returns the absolute path of the given path
+function FilePath FileSystem.absolute(FilePath p) = "FileSystem_absolute";
+
+// returns the canonical path of the given path
+function FilePath FileSystem.canonical(FilePath p) = "FileSystem_canonical";
+
+// copies a file from the given path to another one
+function FileSystem.copyFile(FilePath a, FilePath b) = "FileSystem_copyFile";
+
+// creates the leaf directory specified by the path
+function Boolean FileSystem.createDirectory(FilePath p) = "FileSystem_createDirectory";
+
+// create all missing directories as specified by the path
+function Boolean FileSystem.createDirectories(FilePath p) = "FileSystem_createDirectories";
+
+// creates a file symlink
+function FileSystem.createFileSymlink(FilePath file, FilePath symlink) = "FileSystem_createFileSymlink";
+
+// creates a directory symlink
+function FileSystem.createDirectorySymlink(FilePath directory, FilePath symlink) = "FileSystem_createDirectorySymlink";
+
+// returns the current path of the filesystem
+function FilePath FileSystem.currentPath() = "FileSystem_currentPath";
+
+// returns true if a given path exists
+function Boolean FileSystem.exists(FilePath p) = "FileSystem_exists";
+
+// returns true if two paths resolve to the same file / directory
+function Boolean FileSystem.equivalent(FilePath a, FilePath b) = "FileSystem_equivalent";
+
+// returns the size of a file
+function Size FileSystem.fileSize(FilePath p) = "FileSystem_fileSize";
+
+// returns true if a path is a directory
+function Boolean FileSystem.isDirectory(FilePath p) = "FileSystem_isDirectory";
+
+// returns true if a path is a regular file
+function Boolean FileSystem.isRegularFile(FilePath p) = "FileSystem_isRegularFile";
+
+// returns true if a path is a symbolic link
+function Boolean FileSystem.isSymlink(FilePath p) = "FileSystem_isSymlink";
+
+// returns the real value of a symlink
+function FilePath FileSystem.readSymlink(FilePath p) = "FileSystem_readSymlink";
+
+// removes an existing file / directory
+function Boolean FileSystem.remove(FilePath p) = "FileSystem_remove";
+
+// removes all contents of an existing file / directory
+function Boolean FileSystem.removeAll(FilePath p) = "FileSystem_removeAll";
+
+// renames a path to another one (moves a file as well)
+function FileSystem.rename(FilePath a, FilePath b) = "FileSystem_rename";
+
+// returns the path of the temp directory
+function FilePath FileSystem.tempDirectoryPath() = "FileSystem_tempDirectoryPath";
+
+// returns a new, unique path in the temp directory
+function FilePath FileSystem.uniquePath() = "FileSystem_uniquePath";

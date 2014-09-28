@@ -1,0 +1,42 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+object OpenImageOutput {
+  Data handle;
+};
+
+alias UInt32 OpenImageOutput_OpenMode;
+const OpenImageOutput_OpenMode OpenImageOutput_OpenMode_Create = 0;
+const OpenImageOutput_OpenMode OpenImageOutput_OpenMode_AppendSubimage = 1;
+const OpenImageOutput_OpenMode OpenImageOutput_OpenMode_AppendMIPLevel = 2;
+
+function OpenImageOutput() = "OpenImageOutput_construct";
+function ~OpenImageOutput() = "OpenImageOutput_free";
+function OpenImageOutput.reset() = "OpenImageOutput_free";
+inline Boolean OpenImageOutput.valid() {
+  Data nil;
+  return this.handle != nil;
+}
+
+function OpenImageOutput.create!(String fileName, String pluginSearchPath) = "OpenImageOutput_create";
+inline OpenImageOutput.create!(String fileName) {
+  this.create(fileName, "");
+}
+function Boolean OpenImageOutput.open!(String fileName, OpenImageSpec spec) = "OpenImageOutput_open";
+function OpenImageSpec OpenImageOutput.spec() = "OpenImageOutput_spec";
+function Boolean OpenImageOutput.supports(String feature) = "OpenImageOutput_supports";
+function Boolean OpenImageOutput.close!() = "OpenImageOutput_close";
+
+function Boolean OpenImageOutput.write_scanline (SInt32 y, SInt32 z, OpenImageTypeDesc format, Data data, SInt64 xstride) = "OpenImageOutput_write_scanline";
+function Boolean OpenImageOutput.write_scanlines (SInt32 ybegin, SInt32 yend, SInt32 z, OpenImageTypeDesc format, Data data, SInt64 xstride, SInt64 ystride) = "OpenImageOutput_write_scanlines";
+function Boolean OpenImageOutput.write_tile (SInt32 x, SInt32 y, SInt32 z, OpenImageTypeDesc format, Data data, SInt64 xstride, SInt64 ystride, SInt64 zstride) = "OpenImageOutput_write_tile";
+function Boolean OpenImageOutput.write_tiles (SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend, SInt32 zbegin, SInt32 zend, OpenImageTypeDesc format, Data data, SInt64 xstride, SInt64 ystride, SInt64 zstride) = "OpenImageOutput_write_tiles";
+function Boolean OpenImageOutput.write_rectangle (SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend, SInt32 zbegin, SInt32 zend, OpenImageTypeDesc format, Data data, SInt64 xstride, SInt64 ystride, SInt64 zstride) = "OpenImageOutput_write_rectangle";
+function Boolean OpenImageOutput.write_image (OpenImageTypeDesc format, Data data, SInt64 xstride, SInt64 ystride, SInt64 zstride) = "OpenImageOutput_write_image";
+function Boolean OpenImageOutput.write_deep_scanlines (SInt32 ybegin, SInt32 yend, SInt32 z, OpenImageDeepData deepdata) = "OpenImageOutput_write_deep_scanlines";
+function Boolean OpenImageOutput.write_deep_tiles (SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend, SInt32 zbegin, SInt32 zend, OpenImageDeepData deepdata) = "OpenImageOutput_write_deep_tiles";
+function Boolean OpenImageOutput.write_deep_image (OpenImageDeepData deepdata) = "OpenImageOutput_write_deep_image";
+function Boolean OpenImageOutput.copy_image(OpenImageInput input) = "OpenImageOutput_copy_image";
+function String OpenImageOutput.geterror() = "OpenImageOutput_geterror";

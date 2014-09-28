@@ -1,0 +1,1123 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+//////////////////////////////////////////////////////////////////
+/// POINTS
+
+//Returns the number of points. If within a begin/endStructureChanges() bracket, 
+//and some points were deleted, this returns the highest possible point index, including deleted points.
+inline Size PolygonMesh.pointCount() {
+  return this.pointData.itemCount();
+}
+
+//If true, the mesh stores its positions in Float64 (double precision), else in Float32 (single precision).
+inline Boolean PolygonMesh.hasFloat64Positions() {
+  return Boolean(this.positionsAttribute_d);
+}
+
+//Get the position of the point. If stored as Float64, a conversion will be applied.
+inline Vec3 PolygonMesh.getPointPosition( Size point ) {
+  if( PolygonMesh_enableChecks && point >= this.pointCount() )
+    throw("PolygonMesh.getPointPosition: out of range: "+point);
+
+  //NOTE: we don't use GeometryAttributes' getPosition, since it's less efficient (checks type + casts)
+  if( this.positionsAttribute )
+    return this.positionsAttribute.values[point];
+  else
+    return this.positionsAttribute_d.values[point].toVec3();
+}
+
+//Get the position of the point. If stored as Float32, a conversion will be applied.
+inline Vec3_d PolygonMesh.getPointPosition_d( Size point ) {
+  if( PolygonMesh_enableChecks && point >= this.pointCount() )
+    throw("PolygonMesh.getPointPosition: out of range: "+point);
+
+  //NOTE: we don't use GeometryAttributes' getPosition, since it's less efficient (checks type + casts)
+  if( this.positionsAttribute ) {
+    Vec3_d vec;
+    vec.set(this.positionsAttribute.values[point]);
+    return vec;
+  } else
+    return this.positionsAttribute_d.values[point];
+}
+
+//Sets the position of the point. If stored as Float64, a conversion will be applied.
+inline PolygonMesh.setPointPosition!( Size point, Vec3 value ) {
+  if( PolygonMesh_enableChecks && point >= this.pointCount() )
+    throw("PolygonMesh.setPointPosition: out of range: "+point);
+  
+  if( this.positionsAttribute_d ) {
+    Vec3_d vec;
+    vec.set(value);
+    this.setPointAttribute( point, this.positionsAttribute_d, vec );
+  } else {
+    this.setPointAttribute( point, this.positionsAttribute, value );
+  }
+}
+
+//Sets the position of the point. If stored as Float32, a conversion will be applied.
+inline PolygonMesh.setPointPosition!( Size point, Vec3_d value ) {
+  if( PolygonMesh_enableChecks && point >= this.pointCount() )
+    throw("PolygonMesh.setPointPosition: out of range: "+point);
+
+  if( this.positionsAttribute_d ) {
+    this.setPointAttribute( point, this.positionsAttribute_d, value );
+  } else {
+    this.setPointAttribute( point, this.positionsAttribute, value.toVec3() );
+  }
+}
+
+//Make sure to call this method after position changes are finished, 
+//so caches (such as drawing data) know that they need to be regenerated.
+function PolygonMesh.incrementPointPositionsVersion!() {
+  if( this.positionsAttribute_d ) {
+    Ref<Vec3_dAttribute> pos = this.base.attributes.getPositions_d();
+    pos.incrementVersion();
+  } else {
+    Ref<Vec3Attribute> pos = this.base.attributes.getPositions();
+    pos.incrementVersion();
+  }
+}
+
+//Returns the stored normal of the point, at an arbirary neighbor index if non-uniform.
+inline Vec3 PolygonMesh.getPointNormal( Size point ) {
+  Ref<Vec3Attribute> normals = this.base.attributes.getNormals();
+  if( normals )
+    return normals.values[point];
+  else
+    return Vec3(0,1,0);
+}
+
+//Returns the stored normal of the point, at a specific neighbor index (can vary by polygon).
+inline Vec3 PolygonMesh.getPointNormal( Size point, Size neighborPolygonIndex ) {
+  UInt32 index = this._getPointIterAttributeIndex( this._getPointIter( point ), neighborPolygonIndex );
+  Ref<Vec3Attribute> normals = this.base.attributes.getNormals();
+  if( normals )
+    return normals.values[index];
+  else
+    return Vec3(0,1,0);
+}
+
+//Set a uniform normal for all polygon corners around the point.
+inline PolygonMesh.setPointNormal!( Size point, Vec3 normal ) {
+  Ref<Vec3Attribute> normals = this._getOrCreateNormals();
+  this.setPointAttribute( point, normals, normal );
+}
+
+//Set the stored normal for a point, at a specific neighbor index. Attribute values 
+//will be shared around the point if all identical (same normals, uvs, etc)
+inline PolygonMesh.setPointNormal!( Size point, Size neighborPolygonIndex, Vec3 normal ) {
+  Ref<Vec3Attribute> normals = this._getOrCreateNormals();
+  this._setPointIterAttribute( this._getPointIter( point ), neighborPolygonIndex, normals, normal );
+}
+
+//Returns point's number of adjacent polygons.
+inline Size PolygonMesh.getPointPolygonCount?( Size point ) {
+  return this._getPointIterPolygonCount( this._getPointIter( point ) );
+}
+
+//Returns the adjacent polygon of a point at a specific neighbor index.
+inline Size PolygonMesh.getPointPolygon?( Size point, Size neighborPolygonIndex ) {
+  if( PolygonMesh_enableChecks ) {
+    this._assertPointPolygonsAreOrdered( point );
+    this._validatePointOffset( point, neighborPolygonIndex, "getPointPolygon" );
+  }
+  return this._getPointIterPolygon( this._getPointIter( point ), neighborPolygonIndex );
+}
+
+//For a point and a specific neighbor index, returns the polygon and associated polygonPoint index (0..polygonSize-1).
+inline PolygonMesh.getPointPolygonAndIndex?( Size point, Size neighborPolygonIndex, io Size polygon, io Size polygonPointIndex ) {
+  if( PolygonMesh_enableChecks ) {
+    this._assertPointPolygonsAreOrdered( point );
+    this._validatePointOffset( point, neighborPolygonIndex, "getPointPolygonAndIndex" );
+  }
+  IterOff iterOff = this.pointData.getArrayItemIdxOff( this._getPointIter( point ), neighborPolygonIndex );
+  polygon = this._getPolyIterIndex(iterOff.index);
+  polygonPointIndex = iterOff.offset;
+}
+
+//For a point, returns the adjacent polygons, by neighbor order.
+function PolygonMesh.getPointPolygons?( Size point, io LocalIndexArray polygons ) {
+  if( PolygonMesh_enableChecks )
+    this._assertPointPolygonsAreOrdered( point );
+
+  DataIter ptIter = this._getPointIter(point);
+  UInt32 size = this._getPointIterPolygonCount(ptIter);
+  polygons.resize(size);
+  for( Size i = 0; i < size; ++i )
+    polygons.set(i, this._getPolyIterIndex(this.pointData.getArrayItemIndex(ptIter, i)));
+}
+
+//For a point, returns the adjacent polygons and associated polygonPoint index (0..polygonSize-1), by point neighbor order.
+function PolygonMesh.getPointPolygonsAndIndices?( Size point, io LocalIndexArray polygons, io LocalIndexArray indices ) {
+  if( PolygonMesh_enableChecks )
+    this._assertPointPolygonsAreOrdered( point );
+
+  DataIter ptIter = this._getPointIter(point);
+  UInt32 size = this._getPointIterPolygonCount(ptIter);
+  polygons.resize(size);
+  indices.resize(size);
+  for( Size i = 0; i < size; ++i ) {
+    IterOff iterOff = this.pointData.getArrayItemIdxOff( ptIter, i );
+    polygons.set(i, this._getPolyIterIndex(iterOff.index));
+    indices.set(i, iterOff.offset);
+  }
+}
+
+//Returns true if the point has been deleted by a stucture change. 
+//This can only happen between begin/endStructureChanges brackets, 
+//after which point indices are changed to fill the gaps.
+inline Boolean PolygonMesh.isPointDeleted?( Size point ) {
+  return !this.pointData.isItemValid(point);
+}
+
+//For a point and a specific neighbor index, returns border information.
+//If 'precededByBorder' is true, the neighbor polygon is preceded by a border (no previousadjacent neighbor polygon). 
+//If 'atClosedWingStart', the neighbor polygon is the first polygon of a group of adjacent polygons around 
+//this point, and this group form a loop (no border). Consequently, it has a preceding adjacent polygon, 
+//but that polygon is not at index 'neighborPolygonIndex-1', but rather at the end of the group of adjacent polygons.
+inline PolygonMesh.getPointBorderInfo?( Size point, Size neighborPolygonIndex, io Boolean precededByBorder, io Boolean atClosedWingStart ) {
+  if( PolygonMesh_enableChecks )
+    this._assertPointPolygonsAreOrdered( point );
+
+  this._getPointIterBorderInfo( this._getPointIter(point), neighborPolygonIndex, precededByBorder, atClosedWingStart );
+}
+
+
+//For a point and a specific neighbor index, returns information about the group of adjacent polygons that 
+//include this neighbor ("wing"). The group of adjacent polygons include neighbors wingOffsetBegin to 
+//wingOffsetEnd-1, with wingOffsetBegin <= neighborPolygonIndex < wingOffsetEnd. //If 'isClosedWing', 
+//the polygons of this group form a closed loop (no border).
+inline PolygonMesh.getPointPolygonFullBorderInfo?( Size point, Size neighborPolygonIndex, io Size wingOffsetBegin, io Size wingOffsetEnd, io Boolean isClosedWing ) {
+  if( PolygonMesh_enableChecks )
+    this._assertPointPolygonsAreOrdered( point );
+
+  this._getPointIterPolygonFullBorderInfo( this._getPointIter(point), neighborPolygonIndex, wingOffsetBegin, wingOffsetEnd, isClosedWing );
+}
+
+
+const UInt32 PolygonMesh_precededByBorder = 1;
+const UInt32 PolygonMesh_atClosedWingStart = 2;
+
+//For a point, returns information about the groups of adjacent polygons ("wings"). 
+//For each neighbor 'i', neighborPolygonsInfo.get('i') will have the PolygonMesh_precededByBorder 
+//bit set if the neighbor polygon is preceded by a border (no previous adjacent polygon). 
+//Else, if the neighbor polygon is the first of a loop of connected adjacent polygons 
+//around this point (no border), neighborPolygonsInfo.get('i') will have the PolygonMesh_atClosedWingStart bit set.
+inline PolygonMesh.getPointPolygonsBorderInfo!( Size point, io LocalIndexArray neighborPolygonsInfo ) {
+  if( PolygonMesh_enableChecks )
+    this._assertPointPolygonsAreOrdered( point );
+
+  this._getPointIterPolygonsBorderInfo( this._getPointIter(point), neighborPolygonsInfo );
+}
+
+//Returns all points that are adjacent to the point, in neighbor order. If 'includeNonConnectedPts', it will return all points
+//surrounding the adjacent polygons, including polygon points that are not directly adjacent to this point, in order (counter-clockwise).
+function PolygonMesh.getPointSurroundingPoints?( Size point, Boolean includeNonConnectedPts, io LocalL16UInt32Array surroundingPoints ) {
+  this._getPointIterSurroundingPointIters( this._getPointIter(point), includeNonConnectedPts, surroundingPoints );
+  for( Size i = 0; i < surroundingPoints.size(); ++i )
+    surroundingPoints.set(i, this._getPointIterIndex( surroundingPoints.get(i) ) );
+}
+
+//////////////////////////////////////////////////////////////////
+/// POLYGONS
+
+//Returns the number of polygons.
+//If within a begin/endStructureChanges() bracket, and some polygons were deleted, 
+//this returns the highest possible polygon index, but including deleted polygons.
+inline Size PolygonMesh.polygonCount() {
+  return this.polyData.itemCount();
+}
+
+//Returns the total number of polygon points.
+inline Size PolygonMesh.polygonPointsCount() {
+  return this.totalPolygonPoints;
+}
+
+//Returns the number of polygon points.
+inline Size PolygonMesh.getPolygonSize?( Size polygon ) {
+  return this._getPolyIterSize( this._getPolygonIter( polygon ) );
+}
+
+//Computes and returns the polygon normal. This is a geometric computation that doesn't 
+//take into account normals that were set explicitely. 
+//Note: the polygon normal is not cached, and will be computed each time.
+function Vec3 PolygonMesh.generatePolygonNormal?( Size polygon ) {
+  DataIter polyIter = this._getPolygonIter( polygon );
+  UInt32 count = this._getPolyIterSize( polyIter );
+
+  if( count > 2 ) {
+    if( this.positionsAttribute_d ) {
+      if( count == 4 ) {//Optimization for quads
+        Vec3_d seg0 = this.base.attributes.getPosition_d( this._getPolyIterAttributeIndex( polyIter, 2 ) ) - this.base.attributes.getPosition_d( this._getPolyIterAttributeIndex( polyIter, 0 ) );
+        Vec3_d seg1 = this.base.attributes.getPosition_d( this._getPolyIterAttributeIndex( polyIter, 3 ) ) - this.base.attributes.getPosition_d( this._getPolyIterAttributeIndex( polyIter, 1 ) );
+        return seg0.cross( seg1 ).toVec3().unit_safe();
+      } else {
+        Vec3_d pos0 = this.base.attributes.getPosition_d( this._getPolyIterAttributeIndex( polyIter, 0 ) );
+        Vec3_d prevSeg = this.base.attributes.getPosition_d( this._getPolyIterAttributeIndex( polyIter, 1 ) ) - pos0;
+        Vec3_d sum(0, 0, 0);
+        for( Size i = 2; i < count; ++i ) {
+          Vec3_d seg = this.base.attributes.getPosition_d( this._getPolyIterAttributeIndex( polyIter, i ) ) - pos0;
+          sum += prevSeg.cross( seg );
+          prevSeg = seg;
+        }
+        return sum.toVec3().unit_safe();
+      }
+    } else {
+      if( count == 4 ) {//Optimization for quads
+        Vec3 seg0 = this.base.attributes.getPosition( this._getPolyIterAttributeIndex( polyIter, 2 ) ) - this.base.attributes.getPosition( this._getPolyIterAttributeIndex( polyIter, 0 ) );
+        Vec3 seg1 = this.base.attributes.getPosition( this._getPolyIterAttributeIndex( polyIter, 3 ) ) - this.base.attributes.getPosition( this._getPolyIterAttributeIndex( polyIter, 1 ) );
+        return seg0.cross( seg1 ).unit_safe();
+      } else {
+        Vec3 pos0 = this.base.attributes.getPosition( this._getPolyIterAttributeIndex( polyIter, 0 ) );
+        Vec3 prevSeg = this.base.attributes.getPosition( this._getPolyIterAttributeIndex( polyIter, 1 ) ) - pos0;
+        Vec3 sum(0, 0, 0);
+        for( Size i = 2; i < count; ++i ) {
+          Vec3 seg = this.base.attributes.getPosition( this._getPolyIterAttributeIndex( polyIter, i ) ) - pos0;
+          sum += prevSeg.cross( seg );
+          prevSeg = seg;
+        }
+        return sum.unit_safe();
+      }
+    }
+  }
+  else
+    return Vec3( 0, 1, 0 );
+}
+
+operator _generatePolygonNormals<<<index>>>(io Ref<PolygonMesh> mesh, io Vec3 results[]) {
+  results[index] = mesh.generatePolygonNormal( index );
+}
+
+//Sets an the polygon normal for a specific polygon point.
+inline PolygonMesh.setPolygonPointNormal!( Size polygon, Size polygonPointIndex, Vec3 normal ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "setPolygonPointNormal" );
+  Ref<Vec3Attribute> normals = this._getOrCreateNormals();
+  this._setPolyIterAttribute( this._getPolygonIter( polygon ), polygonPointIndex, normals, normal );
+}
+
+//Gets the polygon normal at a specific polygon point.
+function Vec3 PolygonMesh.getPolygonPointNormal( Size polygon, Size polygonPointIndex ) {
+  Size attrIndex = this.getPolygonAttributeIndex( polygon, polygonPointIndex );
+  Ref<Vec3Attribute> normals = this.base.attributes.getNormals();
+  if( normals )
+    return normals.values[attrIndex];
+  else
+    return Vec3(0,1,0);
+}
+
+//Returns polygon's point at a specific index.
+inline Size PolygonMesh.getPolygonPoint?( Size polygon, Size polygonPointIndex ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "getPolygonPoint" );
+  return this._getPolyIterPoint( this._getPolygonIter( polygon ), polygonPointIndex );
+}
+
+//Returns the index of a point within a polygon, or InvalidIndex if not found.
+inline Size PolygonMesh.getPolygonPointIndex?( Size polygon, Size point ) {
+  return this._getPolyIterPointIndex( this._getPolygonIter( polygon ), point );
+}
+
+//Returns polygon's point at a specific index, along with polygons's index among the point neighbors.
+inline PolygonMesh.getPolygonPointAndNeighborIndex?( Size polygon, Size polygonPointIndex, io Size point, io Size pointNeighborIndex ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "getPolygonPointAndNeighborIndex" );
+  IterOff iterOff = this.polyData.getArrayItemIdxOff( this._getPolygonIter( polygon ), polygonPointIndex );
+  point = this._getPointIterIndex(iterOff.index);
+  pointNeighborIndex = iterOff.offset;
+}
+
+//Returns polygon's points.
+inline PolygonMesh.getPolygonPoints?( Size polygon, io LocalIndexArray points ) {
+  DataIter polIter = this._getPolygonIter(polygon);
+  UInt32 size = this._getPolyIterSize(polIter);
+  points.resize(size);
+  for( Size i = 0; i < size; ++i )
+    points.set(i, this._getPointIterIndex(this.polyData.getArrayItemIndex(polIter, i)));
+}
+
+//Returns polygon's points, along with polygons's index among the points' neighbors.
+function PolygonMesh.getPolygonPointsAndNeighborIndices?( Size polygon, io LocalIndexArray points, io LocalIndexArray polygonPointIndices ) {
+  DataIter polIter = this._getPolygonIter(polygon);
+  UInt32 size = this._getPolyIterSize(polIter);
+  points.resize(size);
+  polygonPointIndices.resize(size);
+  for( Size i = 0; i < size; ++i ) {
+    IterOff iterOff = this.polyData.getArrayItemIdxOff( polIter, i );
+    points.set(i, this._getPointIterIndex(iterOff.index));
+    polygonPointIndices.set(i, iterOff.offset);
+  }
+}
+
+//Returns polygon's adjacent polygon, for edge between points 'polygonPointIndex' and 'polygonPointIndex+1'.
+//If none (mesh border), InvalidIndex will be returned.
+function Size PolygonMesh.getPolygonAdjacentPolygon?( Size polygon, Size polygonPointIndex ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "getPolygonPoint" );
+  Size adjPolyIter = this._getPolyIterAdjacentPolyIter( this._getPolygonIter( polygon ), polygonPointIndex );
+  if( adjPolyIter == 0 )
+    return InvalidIndex;
+  else
+    return this._getPolyIterIndex( adjPolyIter );
+}
+
+//For a polygon and point index (0..polygonSize()-1), returns the adjacent polygon and point index (0..adjacentPolygonSize()-1).
+function PolygonMesh.getPolygonAdjacentPolygonAndIndex?( Size polygon, Size polygonPointIndex, io Size adjacentPolygon, io Size adjacentPolygonPointIndex ) {
+  if( PolygonMesh_enableChecks )
+    this._validatePolygonOffset( polygon, polygonPointIndex, "getPolygonPoint" );
+  IdxOff adjPolyIdxOff = this._getPolyIterAdjacentPolyIterOff( this._getPolygonIter( polygon ), polygonPointIndex );
+  adjacentPolygonPointIndex = adjPolyIdxOff.offset;
+  if( adjPolyIdxOff.index == 0 )
+    adjacentPolygon = InvalidIndex;
+  else
+    adjacentPolygon = this._getPolyIterIndex( adjPolyIdxOff.index );
+}
+
+//Returns true if the polygon has no adjacent polygon (mesh border), for edge between 
+//points 'polygonPointIndex' and 'polygonPointIndex+1'.
+inline Boolean PolygonMesh.isPolygonBorder?( Size polygon, Size polygonPointIndex ) {
+  return this._isPolyIterBorder( this._getPolygonIter(polygon), polygonPointIndex );
+}
+
+//Returns true if the polygon has been deleted by a stucture change. This can only happen between begin/endStructureChanges brackets, 
+//after which polygon indices are changed to fill the gaps.
+inline Boolean PolygonMesh.isPolygonDeleted?( Size polygon ) {
+  return !this.polyData.isItemValid(polygon);
+}
+
+//Returns the bounding volume (BBox) of a polygon
+function LocalBoundingVolume PolygonMesh.computePolygonBBox(Size polygon) {
+  LocalIndexArray polyPoints;
+  this.getPolygonPoints( polygon, polyPoints );
+  LocalBoundingVolume bbox;
+  bbox.bBoxInit();
+  for( Size i = 0; i < polyPoints.size(); ++i )
+    bbox.bBoxAdd( this.getPointPosition( polyPoints.get(i) ) );
+  return bbox;
+}
+
+//Geometry interface implementation: redirects to polygonCount
+function Size PolygonMesh.elementCount() {
+  return this.polygonCount();
+}
+
+//Geometry interface implementation: redirects to computePolygonBBox
+function LocalBoundingVolume PolygonMesh.getElementBoundingVolume(Size index) {
+  return this.computePolygonBBox(index);
+}
+
+//////////////////////////////////////////////////////////////////
+/// Mesh structure changes
+
+//Enables mesh structural modifications, such as adding or removing points or polygons.
+//These modifications must be applied between begin/endStructureChanges() brackets. These
+//brackets can be nested safely. Within these change brackets, deleted point and polygon indices will
+//not be replaced, and their 'deleted' states can be queried using 'isPointDeleted()' and 'isPolygonDeleted()'.
+//When the outer endStructureChanges() is called, point and polygon indices will be changed in 
+//order to fill the gaps and provide contiguous 0..N-1 valid indices.
+//Between these change brackets, point neighbor polygons can be unordered (adjacent polygons are not consecutive), 
+//for performance reasons. In order to force an update of point neighbor polygons' order, 
+//method .updatePointsPolygonOrder() or updatePointPolygonOrder() can be called. Else, the order will 
+//be updated once the outer endStructureChanges() is called. In cases where this point ordering is
+//not required (including polygon border or polygon adjacency information), it can be disabled by 
+//setting PolygonMesh.maintainOrderedPointPolygons to false.
+
+inline PolygonMesh.beginStructureChanges!() {
+  ++this.topoChangesBracket;
+}
+
+function PolygonMesh.updatePointsPolygonOrder!() {
+  if( this.unorderedPointsCount == 0 )
+    return;
+
+  if( this.unorderedPointsCount > _PolygonMesh_minUnorderedPointCountPerThreadBatch*2 ) {
+    UInt32 pointsToProcess[];
+    pointsToProcess.resize(this.unorderedPointsCount);
+    UInt32 index = 0;
+    BitVectorIterator ptBitIter = this.unorderedPoints.begin();
+    while( this.unorderedPoints.getNext(ptBitIter) )
+      pointsToProcess[index++] = ptBitIter.index;
+
+    Size numBatches, batchSize;
+    GetBatchSizeAndCountForParallel(this.unorderedPointsCount, 1, _PolygonMesh_minUnorderedPointCountPerThreadBatch, numBatches, batchSize);
+    UInt32 remainingWork[][];
+    remainingWork.resize(numBatches);
+
+    _ParallelOrderMeshPoints<<<numBatches>>>(this, batchSize, pointsToProcess, remainingWork );
+    //Process remaining work (postponed because not threadsafe)
+    for( Size i = 0; i < numBatches; ++i ) {
+      Size iter = 0;
+      while( iter < remainingWork[i].size() ) {
+        //See _ParallelOrderMeshPoints for data protocol used here
+        UInt32 ptIndex = remainingWork[i][iter++];
+        UInt32 count = remainingWork[i][iter++];
+
+        if( count == InvalidIndex )
+          this._reorderPoint(ptIndex);
+        else {
+          LocalIndexArray newBorderWingDataBits;
+          Boolean removeBorderWingDataBits;
+          if( count == 0 )
+            removeBorderWingDataBits = true;
+          for( Size j = 0; j < count; ++j )
+            newBorderWingDataBits.push( remainingWork[i][iter++] );
+
+          this._updatePointBorderData( ptIndex, newBorderWingDataBits, removeBorderWingDataBits );
+        }
+      }
+    }
+    this.unorderedPoints.clearAll();
+  } else {
+    BitVectorIterator iter = this.unorderedPoints.begin();
+    while( this.unorderedPoints.getNext(iter) ) {
+      this._reorderPoint(iter.index);
+      this.unorderedPoints.clear(iter.index);
+    }
+  }
+  this.unorderedPointsCount = 0;
+}
+
+inline PolygonMesh.updatePointPolygonOrder!( Size point ) {
+  if( this.unorderedPointsCount == 0 || !this.unorderedPoints.getThenClear(point) )
+    return;
+
+  this._reorderPoint(point);
+  --this.unorderedPointsCount;
+}
+
+//Marks the ends of mesh structural changes, and might change the point and polygon indices if some were deleted. 
+//See beginStructureChanges() for more details.
+inline PolygonMesh.endStructureChanges!() {
+  if( PolygonMesh_enableChecks && this.topoChangesBracket == 0 )
+    throw("PolygonMesh.endStructureChanges: no corresponding Begin");
+  --this.topoChangesBracket;
+  if( this.topoChangesBracket == 0 ) {
+    if( this.maintainOrderedPointPolygons )
+      this.updatePointsPolygonOrder();
+
+    //Replace deleted components if applicable
+    this._recompactItemIndices( this.polyData, this.pointData, false );
+    this._recompactItemIndices( this.pointData, this.polyData, true );
+
+    this._recompactDataIfRequired( this.polyData, this.pointData, false );
+    this._recompactDataIfRequired( this.pointData, this.polyData, true );
+  }
+}
+
+//Create new points and returns the index of the first point (consecutive indices).
+//Note that the position and attributes for these new points might not be 0 
+//(will happen when there is some unshared point values).
+inline Size PolygonMesh.createPoints!( Size nb ) {
+  UInt32 first = this.pointData.createItems(nb);
+  this._incrementStructureVersion();
+
+  this.unorderedPoints.resize( first + nb );
+  this._insertPointAttributes( first, nb );
+
+  return first;
+}
+
+//Creates a new polygon connecting the points in the specified order, and return polygon's index.
+//The points must be existing, valid point indices.
+//Must be called within a begin/endStructureChanges.
+//By default, points ordering is not updated until endStructureChanges; call updatePointPolygonOrder() 
+//for each point if needed.
+function Size PolygonMesh.addPolygon!( LocalIndexArray points ) {
+  if( this.topoChangesBracket == 0)
+    throw("PolygonMesh.addPolygon: must be called within a begin/endStructureChanges() bracket");
+
+  Size size = points.size();
+  if( PolygonMesh_enableChecks ) {
+    if( size < 3 )
+      throw("PolygonMesh.addPolygon: not enough points: "+size);//Note: we enforce this but there is not intrinsic limitation
+    for( Size i = 0; i < size; ++i ) {
+      UInt32 pt = points.get(i);
+      if(pt > this.pointCount())
+        throw("PolygonMesh.addPolygon: point out of range: "+i);
+      if( this.isPointDeleted(i) )
+        throw("PolygonMesh.addPolygon: deleted point: "+i);
+    }
+    //TODO: check if some points are repeated?
+  }
+
+  UInt32 index = this.polyData.createItem();
+  UInt32 polyDataIter = this.polyData.allocateArray(index, size, 0, 0, false );
+  this.totalPolygonPoints += size;
+
+  for( Size i = 0; i < size; ++i ) {
+    UInt32 ptIndex = points.get(i);
+    DataIter pointDataIter = this.pointData.getItemIter(ptIndex);
+    UInt32 ptPolCount;
+    if( pointDataIter == 0 )//Create, reserve 4 extra UInt32s.
+      pointDataIter = this.pointData.allocateArray( ptIndex, 1, 0, 4, false );
+    else {
+      Boolean extendedData;
+      ptPolCount = this.pointData.arrayDataIterSizeAndBit(pointDataIter, extendedData);
+      UInt32 extraUInt32;
+
+      UInt32 prevNumExtraUInt32, numExtraUInt32;
+      this._prepareBorderDataRemoval(pointDataIter, ptPolCount, extendedData, prevNumExtraUInt32, numExtraUInt32);
+      if( numExtraUInt32 )//There is unsharedAttributeData
+        ++numExtraUInt32;//New unsharedAttributeData entry
+
+      //Just reserve 1/8th of potential growth, so it kicks-in for degenerate cases (points with tens of neighbors)
+      pointDataIter = this._resizePointArrayAndRemapPolygons( ptIndex, pointDataIter, ptPolCount, prevNumExtraUInt32, ptPolCount+1, numExtraUInt32, (ptPolCount>>3) );
+
+      if(numExtraUInt32) {
+        //Initialize last unshared attribute index as the point attribute value
+        DataIter unsharedAttributeIter = this.pointData.getArrayExtraUInt32Iter(pointDataIter, ptPolCount+1, ptPolCount);
+        _SetUnsharedAttributeIndex( this.pointData.data.data[unsharedAttributeIter], ptIndex );
+      }
+    }
+    UInt32 pointPolyIter = this.pointData.getArrayItemIter( pointDataIter, ptPolCount );
+    this.pointData.initIdxOff( pointPolyIter, polyDataIter, i );
+    
+    UInt32 polyPointIter = this.polyData.getArrayItemIter( polyDataIter, i );
+    this.polyData.initIdxOff( polyPointIter, pointDataIter, ptPolCount );
+    this._markUnorderedPoint(ptIndex);
+  }
+  this._incrementStructureVersion();
+  return index;
+}
+
+//Creates a new triangle connecting the points in the specified order, and return polygon's index.
+//The points must be existing, valid point indices.
+//Must be called within a begin/endStructureChanges.
+//By default, points ordering is not updated until endStructureChanges; call updatePointPolygonOrder() for each point if needed.
+inline Size PolygonMesh.addPolygon!( Size ptIdx1, Size ptIdx2, Size ptIdx3 ) {
+  LocalIndexArray indexArray;
+  indexArray.push(ptIdx1);
+  indexArray.push(ptIdx2);
+  indexArray.push(ptIdx3);
+  return this.addPolygon(indexArray);
+}
+
+//Creates a new quadrilateral connecting the points in the specified order, and return polygon's index.
+//The points must be existing, valid point indices.
+//Must be called within a begin/endStructureChanges.
+//By default, points ordering is not updated until endStructureChanges; call updatePointPolygonOrder() for each point if needed.
+inline Size PolygonMesh.addPolygon!( Size ptIdx1, Size ptIdx2, Size ptIdx3, Size ptIdx4 ) {
+  LocalIndexArray indexArray;
+  indexArray.push(ptIdx1);
+  indexArray.push(ptIdx2);
+  indexArray.push(ptIdx3);
+  indexArray.push(ptIdx4);
+  return this.addPolygon(indexArray);
+}
+
+//Adds multiple polygons of varying size. The point packed indices are ordered by polygons.
+//The points must be existing, valid point indices.
+function PolygonMesh.addPolygons!( Size polygonSizes<>, Size packedPolygonPointIndices<> ) {
+  this.beginStructureChanges();
+
+  LocalIndexArray indexArray;
+  UInt32 ptIndexIter = 0;
+
+  for( Size i = 0; i < polygonSizes.size(); ++i ) {
+    UInt32 polSize = polygonSizes[i];
+    indexArray.resize(0);
+    for( Size j = 0; j < polSize; ++j )
+      indexArray.push( packedPolygonPointIndices[ptIndexIter++] );
+    this.addPolygon( indexArray );
+  }
+
+  this.endStructureChanges();
+}
+
+//Recomputes all point normals, based on the averaging of neighbor polygon geometric normals.
+//All previously stored point normals will be overwritten.
+function PolygonMesh.recomputePointNormals!() {
+  this.updatePointsPolygonOrder();
+  Ref<Vec3Attribute> normals = this._getOrCreateNormals();
+  normals.incrementVersion();
+
+  UInt32 pointCount = this.pointCount();
+  UInt32 polygonCount = this.polygonCount();
+  
+  Vec3 polyNormals[];
+  polyNormals.resize(polygonCount);
+  _generatePolygonNormals<<<polygonCount>>>(this, polyNormals);
+
+  //Set all normals as initialized; we are mixing 'uniform' and per polygon point values...
+  this.attrInitializedBits[normals.getContainerIndex()].vertexAttrInitialized.setAll();
+
+  UInt8 multiWingPolys[];
+  multiWingPolys.resize(pointCount);
+  Boolean hasMultiWingPolys;
+  _generatePointNormals<<<pointCount>>>(this, polyNormals, multiWingPolys, hasMultiWingPolys);
+
+  if( hasMultiWingPolys ) {
+    for( Size i = 0; i < pointCount; ++i ) {
+      if( !multiWingPolys[i] )
+        continue;
+      //Compute normals that had splits because of multiple wings (not thread safe)
+      DataIter pointIter = this._getPointIter(i);
+      Boolean extendedBit;
+      UInt32 count = this.pointData.getOffsetAndBit( pointIter, extendedBit );
+
+      DataIter borderDataIter = this._getBorderDataIter(pointIter, extendedBit, count);
+      Size j = 1;
+      while( true ) {//1st wing has been set already: skip
+        Boolean precededByBorder, atClosedWingStart;
+        this._getBorderInfo( borderDataIter, j, precededByBorder, atClosedWingStart );
+        if( precededByBorder || atClosedWingStart )
+          break;
+        ++j;
+      }
+      while(j < count) {
+        Size start = j;
+        Vec3 sum(0, 0, 0);
+        for( ; j < count; ++j ) {
+          UInt32 poly = this._getPointIterPolygon( pointIter, j );
+          sum += polyNormals[ poly ];
+
+          if(j != start) {
+            Boolean precededByBorder, atClosedWingStart;
+            this._getBorderInfo( borderDataIter, j, precededByBorder, atClosedWingStart );
+            if( precededByBorder || atClosedWingStart )
+              break;
+          }
+        }
+        sum.unit_safe();
+        while( start != j )
+          this._setPointIterAttribute( this._getPointIter( i ), start++, normals, sum );
+      }
+    }
+  }
+}
+
+//Recomputes all point normals, based on the averaging of neighbor polygon geometric normals,
+//and splitting normals based on a hard angle (in radians).
+//All previously stored point normals will be overwritten.
+function PolygonMesh.recomputePointNormals!( Scalar hardAngleRadians ) {
+  Ref<Vec3Attribute> normals = this._getOrCreateNormals();
+  normals.incrementVersion();
+//  this.updatePointsPolygonOrder();
+
+  UInt32 pointCount = this.pointCount();
+  UInt32 polygonCount = this.polygonCount();
+  Vec3 polyNormals[];
+  polyNormals.resize(polygonCount);
+  _generatePolygonNormals<<<polygonCount>>>(this, polyNormals);
+
+  //Set all normals as initialized; we are mixing 'uniform' and per polygon point values...
+  this.attrInitializedBits[normals.getContainerIndex()].vertexAttrInitialized.setAll();
+
+  UInt16 splitBitsOrMaxIfNonTrivial[];
+  splitBitsOrMaxIfNonTrivial.resize(pointCount);
+  _generateMeshPointNormalOrSplits<<<pointCount>>>( this, polyNormals, hardAngleRadians, false, splitBitsOrMaxIfNonTrivial );
+
+  //Compute normals that had splits (not thread safe)
+  for( Size i = 0; i < pointCount; ++i ) {
+    UInt16 splitBits = splitBitsOrMaxIfNonTrivial[i];
+    if( !splitBits )
+      continue;
+    if( splitBits == 65535 ) {
+      _generateMeshPointNormalOrSplits( i, this, polyNormals, hardAngleRadians, true, splitBitsOrMaxIfNonTrivial );
+    } else {
+      DataIter pointIter = this._getPointIter(i);
+      Size count = this._getPointIterPolygonCount(pointIter);
+
+      //First wing value has already been set: goto 2nd
+      Size start;
+      Size nbToSet = count;
+      while( (splitBits & (1<<start)) == 0 ) {
+        ++start;
+        --nbToSet;
+      }
+
+      if( (splitBits & (1<<count)) == 0 ) {
+        //Wing wraps: goto next (1st wrapping portion will be set later)
+        nbToSet = count;
+        while( (splitBits & (1<<start)) == 0 ) {
+          ++start;
+          --nbToSet;
+        }
+      }
+      Vec3 sum;
+      Size curr = start;
+      Boolean first = true;
+      for( Size j = 0; j < nbToSet; ++j ) {
+        sum += polyNormals[this._getPointIterPolygon(pointIter, curr)];
+        ++curr;
+        if( (splitBits & (1<<curr)) ) {
+          //wing end
+          if(!first)//optimize for faceted polys, important since single threaded here.
+            sum = sum.unit_safe();
+          Size normCurr = start;
+          while( normCurr != curr ) {
+            if( normCurr == count )
+              normCurr = 0;
+            this.setPointAttribute( i, normCurr, normals, sum );
+            pointIter = this._getPointIter(i);//Refresh iterator
+            ++normCurr;
+          }
+          sum.set(0,0,0);
+          start = curr;
+          first = true;
+        } else
+          first = false;
+
+        if( curr == count )
+          curr = 0;
+      }
+    }
+  }
+}
+
+operator _polygonMesh_recomputeTangents_ComputeBiNormTask<<<index>>>(
+  UInt32 polyOffsets[],
+  UInt32 polyCounts[],
+  io Vec3 polyTanS[],
+  io Vec3 polyTanT[],
+  io Vec3 pointTanS[],
+  io Vec3 pointTanT[],
+  PolygonMesh mesh,
+  Vec3 pos[],
+  Vec2 uvs[]
+) {
+  UInt32 polyIter = mesh._getPolygonIter( index );
+  UInt32 offset = polyOffsets[index];
+  UInt32 count = polyCounts[index];
+    
+  Integer i0, i1, i2;
+  i0 = mesh._getPolyIterAttributeIndex( polyIter, 0 );
+  i1 = mesh._getPolyIterAttributeIndex( polyIter, 1 );
+  
+  Vec3 p0 = pos[ i0 ];
+  Vec3 p1 = pos[ i1 ];
+  
+  Vec2 t0 = uvs[ i0 ];
+  Vec2 t1 = uvs[ i1 ];
+
+  Vec3 pe10 = p1 - p0;
+  Vec2 te10 = t1 - t0;
+  for( Size i = 2; i < count; ++i ) {
+    i2 = mesh._getPolyIterAttributeIndex( polyIter, i );
+    Vec3 p2 = pos[ i2 ];
+    Vec2 t2 = uvs[ i2 ];
+    
+    Vec3 pe20 = p2 - p0;
+    Vec2 te20 = t2 - t0;
+    
+    Scalar r = 1.0 / te10.cross(te20);
+    
+    Vec3 sdir((te20.y * pe10.x - te10.y * pe20.x) * r, (te20.y * pe10.y - te10.y * pe20.y) * r, (te20.y * pe10.z - te10.y * pe20.z) * r);
+    polyTanS[offset+i-2] += sdir;
+    polyTanS[offset+i-1] += sdir;
+    polyTanS[offset+i] += sdir;
+    
+    Vec3 tdir((te10.x * pe20.x - te20.x * pe10.x) * r, (te10.x * pe20.y - te20.x * pe10.y) * r, (te10.x * pe20.z - te20.x * pe10.z) * r);
+    polyTanT[offset+i-2] += tdir;
+    polyTanT[offset+i-1] += tdir;
+    polyTanT[offset+i] += tdir;
+
+    pointTanS[i2] += polyTanS[offset+i];
+    pointTanT[i2] += polyTanT[offset+i];
+    
+    pe10 = pe20;
+    te10 = te20;
+  }
+
+  pointTanS[i0] += polyTanS[offset+0];
+  pointTanS[i1] += polyTanS[offset+1];
+  pointTanT[i0] += polyTanT[offset+0];
+  pointTanT[i1] += polyTanT[offset+1];
+}
+
+operator _polygonMesh_recomputeTangents_computeVertexTanTask<<<index>>>(
+  io Vec4 result[],
+  Vec3 tanS[],
+  Vec3 tanT[],
+  Vec3 nrmAttr[]
+) {
+  Vec3 n = nrmAttr[index];
+  Vec3 t = tanS[index];
+  Vec3 tangent;
+  Boolean handedness;
+
+  tangent = (t - n * n.dot(t));
+  Scalar length = tangent.length();
+  if(length > DIVIDEPRECISION) //To check: we are getting many zero-length tangents...
+    tangent /= length;
+  handedness = (tanT[index].dot(n.cross(t)) < 0.0);
+
+  result[index].set(tangent.x, tangent.y, tangent.z, (handedness ? - 1.0 : 1.0));
+}
+
+//Compute tangents for normal shading
+function PolygonMesh.recomputeTangents!() {
+  Ref<Vec3Attribute> positions = this.getAttributes().getPositions();
+  Ref<Vec3Attribute> normals = this.getNormals();
+  if( normals == null ){
+    this.recomputePointNormals();
+    normals = this.getNormals();
+  }
+
+  if(positions.size() == 0)
+    return;
+
+  Ref<Vec2Attribute> uvs = this.getAttribute( "uvs0" );
+  if( uvs == null ){
+    // We often need to compute tangents on a geometry library, where some geometries
+    // will not have UVs. This warning can be disabled. 
+    //report("ERROR: mesh does not have uvs");
+    return;
+  }
+
+  Ref<Vec4Attribute> tangents = this.getOrCreateVec4Attribute("tangents");
+  if(tangents.version == normals.version)
+    return;
+  
+  UInt32 nbPoints = this.pointCount();
+  UInt32 nbPolys = this.polygonCount();
+  UInt32 nbAttributes = positions.size();
+
+  // compute the offset for each polygon
+  UInt32 polyOffsets[];
+  UInt32 polyCounts[];
+  polyOffsets.resize(nbPolys);
+  polyCounts.resize(nbPolys);
+  Size polyOffset = 0;
+  for(Size i=0;i<nbPolys;i++) {
+    polyOffsets[i] = polyOffset;
+    polyCounts[i] = this.getPolygonSize(i);
+    polyOffset += polyCounts[i];
+  }
+
+  // allocate the data to store the binormals
+  Vec3 polyTanS[];
+  Vec3 polyTanT[];
+  polyTanS.resize(polyOffset);
+  polyTanT.resize(polyOffset);
+  Vec3 pointTanS[];
+  Vec3 pointTanT[];
+  pointTanS.resize(nbAttributes);
+  pointTanT.resize(nbAttributes);
+  Vec4 tangentsData[];
+  tangentsData.resize(nbPoints);
+
+  // Iterate over the polygons and generate vertex tangent values
+  _polygonMesh_recomputeTangents_ComputeBiNormTask<<<nbPolys>>>(
+    polyOffsets,
+    polyCounts,
+    polyTanS,
+    polyTanT,
+    pointTanS,
+    pointTanT,
+    this,
+    positions.values,
+    uvs.values
+  );
+
+  // Iterate over the points and generate vertex tangent values
+  _polygonMesh_recomputeTangents_computeVertexTanTask<<<nbPoints>>>(
+    tangentsData,
+    pointTanS,
+    pointTanT,
+    normals.values
+  );
+
+  for(UInt32 i = 0; i < nbPoints; ++i )
+    this.setPointAttribute( i, tangents, tangentsData[i] );
+
+  tangents.incrementVersion();
+}
+
+//Generates a packed list of triangle attribute index triplets:
+//  [
+//    Triangle0_attributeIndex0, Triangle0_attributeIndex1, Triangle0_attributeIndex2, 
+//    Triangle1_attributeIndex0, Triangle1_attributeIndex1, Triangle1_attributeIndex2...
+//  ]
+function UInt32[] PolygonMesh.generateAttributesTriangleList?() {
+  UInt32 triangles[];
+  UInt32 polygonCount = this.polygonCount();
+
+  //TODO: Use proper triangulation algo for concave polygons (and use MR since it will be more costly)
+  //      Until then we don't use the positions
+  for( UInt32 i = 0; i < polygonCount; ++i ) {
+    DataIter polyIter = this._getPolygonIter( i );
+    UInt32 count = this._getPolyIterSize( polyIter );
+    if( count >= 3 ) {
+      UInt32 start = this._getPolyIterAttributeIndex( polyIter, 0 );
+      UInt32 prev = this._getPolyIterAttributeIndex( polyIter, 1 );
+      for( UInt32 j = 2; j < count; ++j ) {
+        UInt32 next = this._getPolyIterAttributeIndex( polyIter, j );
+        triangles.push( start );
+        triangles.push( prev );
+        triangles.push( next );
+        prev = next;
+      }
+    }
+  }
+  return triangles;
+}
+
+//Generates a packed list of triangle point index triplets:
+//  [
+//    Triangle0_point0, Triangle0_point1, Triangle0_point2, 
+//    Triangle1_point0, Triangle1_point1, Triangle1_point2...
+//  ]
+function UInt32[] PolygonMesh.generateTriangleList?() {
+  UInt32 triangles[];
+  UInt32 polygonCount = this.polygonCount();
+
+  //TODO: Use proper triangulation algo for concave polygons (and use MR since it will be more costly)
+  //      Until then we don't use the positions
+  for( UInt32 i = 0; i < polygonCount; ++i ) {
+    DataIter polyIter = this._getPolygonIter( i );
+    UInt32 count = this._getPolyIterSize( polyIter );
+    if( count >= 3 ) {
+      UInt32 start = this._getPolyIterPoint( polyIter, 0 );
+      UInt32 prev = this._getPolyIterPoint( polyIter, 1 );
+      for( UInt32 j = 2; j < count; ++j ) {
+        UInt32 next = this._getPolyIterPoint( polyIter, j );
+        triangles.push( start );
+        triangles.push( prev );
+        triangles.push( next );
+        prev = next;
+      }
+    }
+  }
+  return triangles;
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] PolygonMesh.getStatistics() {
+  StatisticRecord stats[];
+  this.base.addStatistics(stats);
+  stats.push( StatisticRecord( "Polygons", this.polygonCount() ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, this.memUsage() ) );
+  return stats;
+}
+
+//////////// Debugging
+
+//Returns a String description of the mesh structure. 
+// withAttributes: include the attribute values and indices in the desc.
+// useUnitTestPrint: use the unitTestPrint method to ensure that the values are consistent accross platforms(used in unit testing).
+function String PolygonMesh.getDesc?( Boolean withAttributes, Boolean useUnitTestPrint ) {
+  String desc;
+  desc += "Mesh: pointCount: " + this.pointCount() + " polygonCount: " + this.polygonCount() + " nbAttributeVectors: " + this.base.attributes.size() + '\n';
+  desc += "  Points:\n";
+  UInt32 i, j, k;
+  for( i = 0; i < this.pointCount(); ++i ) {
+    String str;
+    if( this.isPointDeleted(i) )
+      str = "    " + i + ": (deleted)";
+    else {
+      UInt32 count = this.getPointPolygonCount(i);
+      str = "    " + i + ": "+count+" Adj Poly.Offset: ";
+      for( j = 0; j < count; ++j ) {
+        if( j != 0 )
+          str += ", ";
+
+        Boolean border, closedWingStart;
+        this.getPointBorderInfo( i, j, border, closedWingStart );
+        if( border )
+          str+=" |";
+        if( closedWingStart )
+          str+=" <<";
+
+        UInt32 poly, offset;
+        this.getPointPolygonAndIndex( i, j, poly, offset);
+        str += poly + "." + offset;
+      }
+      desc += str + '\n';
+      if( withAttributes ) {
+        //Check "uninitialized" bit?
+        for( j = 0; j < this.base.attributes.attributes.size(); ++j ) {
+          Ref<GeometryAttribute> attr = this.base.attributes.attributes[j];
+          if( attr ) {
+            Boolean shared = this.isPointAttributeUniform( i, attr );
+            str = "      Attr " + attr.getName() + ":";
+            if( !shared ) {
+              for( k = 0; k < count; ++k ) {
+                UInt32 attrIndex = this.getPointAttributeIndex( i, k );
+                if(useUnitTestPrint)
+                  str += attr.unitTestPrint( attrIndex );
+                else
+                  str += attr.valueDesc( attrIndex );
+                str+="@"+attrIndex+" ";
+              }
+            } else {
+              UInt32 attrIndex = this.getPointAttributeIndex( i );
+              if(useUnitTestPrint)
+                str += attr.unitTestPrint( attrIndex );
+              else
+                str += attr.valueDesc( attrIndex );
+            }
+            desc += str + '\n';
+          }
+        }
+      }
+    }
+  }
+  desc += "  Polygons:\n";
+  for( i = 0; i < this.polygonCount(); ++i ) {
+    String str;
+    if( this.isPolygonDeleted(i) )
+      str = "    " + i + ": (deleted)";
+    else {
+      UInt32 count = this.getPolygonSize(i);
+      str = "    " + i + ": "+count+" Points.Offset: ";
+      for( j = 0; j < count; ++j ) {
+        if( j != 0 )
+          str += ", ";
+        UInt32 point, offset;
+        this.getPolygonPointAndNeighborIndex( i, j, point, offset);
+        str += point + "." + offset;
+
+        if( this.isPolygonBorder( i, j ) )
+          str += " |";
+      }
+    }
+    desc += str + '\n';
+  }
+  return desc;
+}
+
+function String PolygonMesh.getDesc?( Boolean withAttributes ) {
+  return this.getDesc(withAttributes, false);
+}
+
+function PolygonMesh._validate!() {
+  for(Size i = 0; i < this.polygonCount(); ++i) {
+    for(Size j = 0; j < this.getPolygonSize(i); ++j) {
+      UInt32 point, ptOffset;
+      this.getPolygonPointAndNeighborIndex(i,j,point,ptOffset);
+      UInt32 poly, polOffset;
+      this.getPointPolygonAndIndex(point,ptOffset,poly,polOffset);
+      if( poly != i || polOffset != j )
+        throw("PolygonMesh.validate: corrupt structure");
+    }
+  }
+  BitVector usedUnsharedAttributes;
+  Size attrCount = this.base.attributes.size();
+  usedUnsharedAttributes.resize(attrCount);
+
+  for(Size i = 0; i < this.pointCount(); ++i) {
+    for(Size j = 0; j < this.getPointPolygonCount(i); ++j) {
+      UInt32 poly, polOffset;
+      this.getPointPolygonAndIndex(i,j,poly,polOffset);
+      UInt32 point, ptOffset;
+      this.getPolygonPointAndNeighborIndex(poly,polOffset,point,ptOffset);
+      if( point != i || ptOffset != j )
+        throw("PolygonMesh.validate: corrupt structure");
+
+      UInt32 attrIndex = this.getPointAttributeIndex( i, j );
+      if( attrIndex >= this.pointCount() ) {
+        usedUnsharedAttributes.set(attrIndex);
+        UInt32 backPointIndex = this.unsharedAttrToPointSlidingArray[this.unsharedAttrToPointSlidingArrayBegin + attrIndex - this.pointCount()];
+        if( backPointIndex != i )
+          throw("PolygonMesh.validate: corrupt unshared attribute indices");
+      }
+    }
+  }
+  for(Size i = this.pointCount(); i < attrCount; ++i) {
+    if( !usedUnsharedAttributes.get(i) )
+      throw("PolygonMesh.validate: unused unshared attribute index: "+i);
+  }
+}

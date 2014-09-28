@@ -1,0 +1,55 @@
+
+/*
+ *  Copyright 2010-2012 Fabric Engine Inc. All rights reserved.
+ */
+
+
+
+function String pathJoin(String base, String part){
+    return base + '/' + part;
+}
+
+
+function String[] pathSplit(String path){
+    String head, tail;
+    Integer pos;
+    pos = path.length()-2;
+    while(pos > 0){
+        String c = path.subString(pos, 1);
+        if(c == '/' || c == '\\'){
+            head = path.subString(0, pos);
+            tail = path.subString(pos+1, path.length()-pos-1);
+            break;
+        }
+        pos--;
+    }
+    if(tail == '')
+        tail = path;
+    String parts[];
+    parts.push(head);
+    parts.push(tail);
+    return parts;
+}
+
+
+function String[] pathSplitExt(String path){
+    String head, tail;
+    Integer pos;
+    pos = path.length()-2;
+    while(pos > 0){
+        String c = path.subString(pos, 1);
+        if(c == '.'){
+            head = path.subString(0, pos);
+            tail = path.subString(pos+1, path.length()-pos-1);
+            break;
+        }
+        pos--;
+    }
+    if(tail == '')
+        tail = path;
+    String parts[];
+    parts.push(head);
+    parts.push(tail);
+    return parts;
+}
+

@@ -1,0 +1,106 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlineinstance` interface represents a drawable instance of an :ref:`inlineshape` using an :ref:`inlinetransform`. :ref:`inlineinstance` objects are stored within an :ref:`inlinematerial`. The :ref:`SimpleInlineInstance` implements this interface for OpenGL direct rendering. For a code example please see the :ref:`SimpleInlineInstance`.
+*/
+
+interface InlineInstance {
+
+  // sets the name of the instance
+  setName!(String name);
+
+  // returns the name of the instance
+  String getName();
+
+  // returns the path of the instance.
+  // the path encodes the hierarchy using a '/' character,
+  // so nested instanceA below transfoA results in a path
+  // like this: 'transfoA/instanceA'
+  String getPath();
+
+  ///////////////////////////
+  // Shape
+
+  // returns the shape used by this instance
+  InlineShape getShape();
+
+  // sets the shape used by this instance
+  setShape!(InlineShape shape);
+
+  ///////////////////////////
+  // Transform
+
+  // returns the transform used by this instance
+  InlineTransform getTransform();
+
+  // sets the transform used by this instance
+  setTransform!(InlineTransform transform);
+
+  ///////////////////////////
+  // Materials
+
+  // returns true if the instance has the material
+  Boolean hasMaterial(InlineMaterial material);
+
+  // returns the material of this instance
+  InlineMaterial getMaterial(Index index);
+
+  // adds a new material to this instance
+  addMaterial!(io InlineMaterial material);
+
+  // removes a material from this instance
+  removeMaterial!(io InlineMaterial material);
+
+  // returns the number of materials applied to this instance
+  Size getNumMaterials();
+
+  ///////////////////////////
+  // Toggles
+
+  // enables or disables this instance
+  setActive!(Boolean active);
+
+  // returns true if this instance is currently active
+  Boolean isActive();
+
+  ///////////////////////////
+  // MetaData
+
+  // sets the meta data on this instance
+  setMetaData!(String key, Object metaData);
+
+  // returns the metadata on this instance
+  Object getMetaData(String key);
+
+  ///////////////////////////
+  // Uniforms
+
+  // returns true if this instance specializes the uniforms
+  // of the material further.
+  Boolean containsUniforms();
+
+  // sets an uniform specializing a material value for
+  // the whole instance
+  setInstanceUniform!(InlineUniform uniform);
+
+  // sets a uniform specializing a material value for 
+  // a single transform of the instance.
+  setTransformUniform!(InlineUniform uniform, Index index);
+
+  ///////////////////////////
+  // Drawing
+
+  // draws the instance on screen. this is used by the 
+  // material and should not be called manually.
+  Boolean _draw!(io DrawContext context);
+
+
+  ///////////////////////////
+  // Raycasting
+  GeometryLocation[] raycast(Ray ray, Boolean closest, Boolean doubleSided, Scalar coneThreshold, Scalar maxDistance);
+};
+

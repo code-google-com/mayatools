@@ -1,0 +1,922 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+//////////////////// OGLBufferFromGeometryAttribute param
+
+require Geometry;
+
+interface RTRAttributeWrapper {
+  loadToOGLBuffer!( io OGLBuffer buffer );
+  loadToOGLTexture2D!( io OGLTexture2D texture );
+  Ref<GeometryAttribute> getAttribute();
+};
+
+function ComputePerInstanceTextureSize( Size elementCount, Size pixelsPerElement, io UInt32 width, io UInt32 height ) {
+  Size totalPixelCount = elementCount * pixelsPerElement;
+  if( totalPixelCount == 0 )
+    totalPixelCount = 1;
+
+  //Just make sure it fits with not too much memory loss
+  width = totalPixelCount;
+  if( width > 4096 ) {
+    if( totalPixelCount < 65536 )
+      width = 256;//ensure not split between rows
+    else
+      width = 4096;//ensure not split between rows
+  }
+  height = (totalPixelCount+ (width-1) ) / width;
+}
+
+function InitPerInstanceOGLTexture( Size elementCount, Size pixelsPerElement, io OGLTexture2D oglTexture ) {
+  ComputePerInstanceTextureSize( elementCount, pixelsPerElement, oglTexture.width, oglTexture.height );
+}
+
+///////////// Scalar attribute
+
+object Scalar_RTRAttributeWrapper : RTRAttributeWrapper {
+  ScalarAttribute a;
+};
+
+function Scalar_RTRAttributeWrapper(Ref<ScalarAttribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> Scalar_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function Scalar_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  buffer.numBufferElementComponents = 1;
+  buffer.bufferElementComponentType = GL_FLOAT;
+  buffer.genBuffer( this.a.values.data(), this.a.values.dataSize(), this.a.values.size() );
+}
+
+function ScalarAttribute.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  Scalar_RTRAttributeWrapper wrapper(this);
+  wrapper.loadToOGLBuffer( buffer );
+}
+
+function Scalar_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  Size prevSize = this.a.values.size();//less or equal to requiredCount
+
+  InitPerInstanceOGLTexture( prevSize, 1, texture );
+  texture.glInternalFormat = GL_R32F;
+  texture.glFormat = GL_RED;
+  texture.glType = GL_FLOAT;
+
+  Size requiredCount = texture.height * texture.width;
+
+  this.a.values.resize(requiredCount);//Temporarely add padding if any
+  texture.configure(texture.width, texture.height, this.a.values.data());
+  this.a.values.resize(prevSize);
+}
+
+///////////// ScalarConstantArray attribute
+
+object ScalarConstantArray_RTRAttributeWrapper : RTRAttributeWrapper {
+  ScalarConstantArrayAttribute a;
+};
+
+function ScalarConstantArray_RTRAttributeWrapper(Ref<ScalarConstantArrayAttribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> ScalarConstantArray_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function ScalarConstantArray_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  if(this.a.arraySize > 4) {
+    setError("ScalarConstantArrayAttribute.loadToOGLBuffer: > 4 arrays cannot be loaded as attribute buffers. TODO: convert to texture instead.");
+    return;
+  }
+  buffer.numBufferElementComponents = this.a.arraySize;
+  buffer.bufferElementComponentType = GL_FLOAT;
+  buffer.genBuffer( this.a.values.data(), this.a.values.dataSize(), this.a.values.size()/this.a.arraySize );
+}
+
+function ScalarConstantArrayAttribute.loadToOGLBuffer( io OGLBuffer buffer ) {
+  ScalarConstantArray_RTRAttributeWrapper wrapper(this);
+  wrapper.loadToOGLBuffer( buffer );
+}
+
+function ScalarConstantArray_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  throw( "ScalarConstantArray_RTRAttributeWrapper.loadToOGLTexture2D: not implemented");
+}
+
+///////////// UInt16ConstantArray attribute
+
+object UInt16ConstantArray_RTRAttributeWrapper : RTRAttributeWrapper {
+  UInt16ConstantArrayAttribute a;
+};
+
+function UInt16ConstantArray_RTRAttributeWrapper(Ref<UInt16ConstantArrayAttribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> UInt16ConstantArray_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function UInt16ConstantArray_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  if(this.a.arraySize > 4) {
+    setError("UInt16ConstantArrayAttribute.loadToOGLBuffer: > 4 arrays cannot be loaded as attribute buffers. TODO: convert to texture instead.");
+    return;
+  }
+  buffer.numBufferElementComponents = this.a.arraySize;
+  buffer.bufferElementComponentType = GL_UNSIGNED_SHORT;
+  buffer.normalize = this.a.normalize;
+  buffer.genBuffer( this.a.values.data(), this.a.values.dataSize(), this.a.values.size()/this.a.arraySize );
+}
+
+function UInt16ConstantArrayAttribute.loadToOGLBuffer( io OGLBuffer buffer ) {
+  UInt16ConstantArray_RTRAttributeWrapper wrapper(this);
+  wrapper.loadToOGLBuffer( buffer );
+}
+
+function UInt16ConstantArray_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  throw( "UInt16ConstantArray_RTRAttributeWrapper.loadToOGLTexture2D: not implemented");
+}
+
+///////////// RGB attribute
+
+object RGB_RTRAttributeWrapper : RTRAttributeWrapper {
+  RGBAttribute a;
+};
+
+function RGB_RTRAttributeWrapper(Ref<RGBAttribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> RGB_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function RGB_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  buffer.numBufferElementComponents = 3;
+  buffer.bufferElementComponentType = GL_UNSIGNED_BYTE;
+  buffer.normalize = true;
+  buffer.genBuffer( this.a.values.data(), this.a.values.dataSize(), this.a.values.size() );
+}
+
+function RGBAttribute.loadToOGLBuffer( io OGLBuffer buffer ) {
+  RGB_RTRAttributeWrapper wrapper(this);
+  wrapper.loadToOGLBuffer( buffer );
+}
+
+function RGB_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  throw( "RGB_RTRAttributeWrapper.loadToOGLTexture2D: not implemented");
+}
+
+///////////// RGBA attribute
+
+object RGBA_RTRAttributeWrapper : RTRAttributeWrapper {
+  RGBAAttribute a;
+};
+
+function RGBA_RTRAttributeWrapper(Ref<RGBAAttribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> RGBA_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function RGBA_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  buffer.numBufferElementComponents = 4;
+  buffer.bufferElementComponentType = GL_UNSIGNED_BYTE;
+  buffer.normalize = true;
+  buffer.genBuffer( this.a.values.data(), this.a.values.dataSize(), this.a.values.size() );
+}
+
+function RGBAAttribute.loadToOGLBuffer( io OGLBuffer buffer ) {
+  RGBA_RTRAttributeWrapper wrapper(this);
+  wrapper.loadToOGLBuffer( buffer );
+}
+
+function RGBA_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  throw( "RGBA_RTRAttributeWrapper.loadToOGLTexture2D: not implemented");
+}
+
+///////////// Integer attribute
+
+object Integer_RTRAttributeWrapper : RTRAttributeWrapper {
+  IntegerAttribute a;
+};
+
+function Integer_RTRAttributeWrapper(Ref<IntegerAttribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> Integer_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function Integer_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  buffer.numBufferElementComponents = 1;
+  buffer.bufferElementComponentType = GL_INT;
+  buffer.genBuffer( this.a.values.data(), this.a.values.dataSize(), this.a.values.size() );
+}
+
+function Integer_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  Size prevSize = this.a.values.size();//less or equal to requiredCount
+
+  InitPerInstanceOGLTexture( prevSize, 1, texture );
+  texture.glInternalFormat = GL_RED_INTEGER;
+  texture.glFormat = GL_RED;
+  texture.glType = GL_INT;
+
+  Size requiredCount = texture.height * texture.width;
+
+  this.a.values.resize(requiredCount);//Temporarely add padding if any
+  texture.configure(texture.width, texture.height, this.a.values.data());
+  this.a.values.resize(prevSize);
+}
+
+///////////// UInt32 attribute
+
+object UInt32_RTRAttributeWrapper : RTRAttributeWrapper {
+  UInt32Attribute a;
+};
+
+function UInt32_RTRAttributeWrapper(Ref<UInt32Attribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> UInt32_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function UInt32_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  buffer.numBufferElementComponents = 1;
+  buffer.bufferElementComponentType = GL_UNSIGNED_INT;
+  buffer.genBuffer( this.a.values.data(), this.a.values.dataSize(), this.a.values.size() );
+}
+
+function UInt32Attribute.loadToOGLBuffer( io OGLBuffer buffer ) {
+  UInt32_RTRAttributeWrapper wrapper(this);
+  wrapper.loadToOGLBuffer( buffer );
+}
+
+function UInt32_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  throw( "UInt32_RTRAttributeWrapper.loadToOGLTexture2D: not implemented");
+}
+
+///////////// Vec2 attribute
+
+object Vec2_RTRAttributeWrapper : RTRAttributeWrapper {
+  Vec2Attribute a;
+};
+
+function Vec2_RTRAttributeWrapper(Ref<Vec2Attribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> Vec2_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function Vec2_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  buffer.numBufferElementComponents = 2;
+  buffer.bufferElementComponentType = GL_FLOAT;
+  buffer.genBuffer( this.a.values.data(), this.a.values.dataSize(), this.a.values.size() );
+}
+
+function Vec2Attribute.loadToOGLBuffer( io OGLBuffer buffer ) {
+  Vec2_RTRAttributeWrapper wrapper(this);
+  wrapper.loadToOGLBuffer( buffer );
+}
+
+function Vec2_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  Size prevSize = this.a.values.size();//less or equal to requiredCount
+
+  InitPerInstanceOGLTexture( prevSize, 1, texture );
+  texture.glInternalFormat = GL_RG32F;
+  texture.glFormat = GL_RG;
+  texture.glType = GL_FLOAT;
+
+  Size requiredCount = texture.height * texture.width;
+
+  this.a.values.resize(requiredCount);//Temporarely add padding if any
+  texture.configure(texture.width, texture.height, this.a.values.data());
+  this.a.values.resize(prevSize);
+}
+
+///////////// Vec3 attribute
+
+object Vec3_RTRAttributeWrapper : RTRAttributeWrapper {
+  Vec3Attribute a;
+};
+
+function Vec3_RTRAttributeWrapper(Ref<Vec3Attribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> Vec3_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function Vec3_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  buffer.numBufferElementComponents = 3;
+  buffer.bufferElementComponentType = GL_FLOAT;
+  buffer.genBuffer( this.a.values.data(), this.a.values.dataSize(), this.a.values.size() );
+}
+
+function Vec3Attribute.loadToOGLBuffer( io OGLBuffer buffer ) {
+  Vec3_RTRAttributeWrapper wrapper(this);
+  wrapper.loadToOGLBuffer( buffer );
+}
+
+function Vec3_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  Size prevSize = this.a.values.size();//less or equal to requiredCount
+
+  InitPerInstanceOGLTexture( prevSize, 1, texture );
+  texture.glInternalFormat = GL_RGB32F;
+  texture.glFormat = GL_RGB;
+  texture.glType = GL_FLOAT;
+
+  Size requiredCount = texture.height * texture.width;
+
+  this.a.values.resize(requiredCount);//Temporarely add padding if any
+  texture.configure(texture.width, texture.height, this.a.values.data());
+  this.a.values.resize(prevSize);
+}
+
+///////////// Vec4 attribute
+
+object Vec4_RTRAttributeWrapper : RTRAttributeWrapper {
+  Vec4Attribute a;
+};
+
+function Vec4_RTRAttributeWrapper(Ref<Vec4Attribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> Vec4_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function Vec4_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  buffer.numBufferElementComponents = 4;
+  buffer.bufferElementComponentType = GL_FLOAT;
+  buffer.genBuffer( this.a.values.data(), this.a.values.dataSize(), this.a.values.size() );
+}
+
+function Vec4Attribute.loadToOGLBuffer( io OGLBuffer buffer ) {
+  Vec4_RTRAttributeWrapper wrapper(this);
+  wrapper.loadToOGLBuffer( buffer );
+}
+
+function Vec4_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  Size prevSize = this.a.values.size();//less or equal to requiredCount
+
+  InitPerInstanceOGLTexture( prevSize, 1, texture );
+  texture.glInternalFormat = GL_RGBA32F;
+  texture.glFormat = GL_RGBA;
+  texture.glType = GL_FLOAT;
+
+  Size requiredCount = texture.height * texture.width;
+
+  this.a.values.resize(requiredCount);//Temporarely add padding if any
+  texture.configure(texture.width, texture.height, this.a.values.data());
+  this.a.values.resize(prevSize);
+}
+
+///////////// Quat attribute
+
+object Quat_RTRAttributeWrapper : RTRAttributeWrapper {
+  QuatAttribute a;
+};
+
+function Quat_RTRAttributeWrapper(Ref<QuatAttribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> Quat_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function Quat_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  buffer.numBufferElementComponents = 4;
+  buffer.bufferElementComponentType = GL_FLOAT;
+  buffer.genBuffer( this.a.values.data(), this.a.values.dataSize(), this.a.values.size() );
+}
+
+function QuatAttribute.loadToOGLBuffer( io OGLBuffer buffer ) {
+  Quat_RTRAttributeWrapper wrapper(this);
+  wrapper.loadToOGLBuffer( buffer );
+}
+
+function Quat_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  Size prevSize = this.a.values.size();//less or equal to requiredCount
+
+  InitPerInstanceOGLTexture( prevSize, 1, texture );
+  texture.glInternalFormat = GL_RGBA32F;
+  texture.glFormat = GL_RGBA;
+  texture.glType = GL_FLOAT;
+
+  Size requiredCount = texture.height * texture.width;
+
+  this.a.values.resize(requiredCount);//Temporarely add padding if any
+  texture.configure(texture.width, texture.height, this.a.values.data());
+  this.a.values.resize(prevSize);
+}
+
+///////////// Color attribute
+
+object Color_RTRAttributeWrapper : RTRAttributeWrapper {
+  ColorAttribute a;
+};
+
+function Color_RTRAttributeWrapper(Ref<ColorAttribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> Color_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function Color_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  buffer.numBufferElementComponents = 4;
+  buffer.bufferElementComponentType = GL_FLOAT;
+  buffer.genBuffer( this.a.values.data(), this.a.values.dataSize(), this.a.values.size() );
+}
+
+function ColorAttribute.loadToOGLBuffer( io OGLBuffer buffer ) {
+  Color_RTRAttributeWrapper wrapper(this);
+  wrapper.loadToOGLBuffer( buffer );
+}
+
+function Color_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  Size prevSize = this.a.values.size();//less or equal to requiredCount
+
+  InitPerInstanceOGLTexture( prevSize, 1, texture );
+  texture.glInternalFormat = GL_RGBA32F;
+  texture.glFormat = GL_RGBA;
+  texture.glType = GL_FLOAT;
+
+  Size requiredCount = texture.height * texture.width;
+
+  this.a.values.resize(requiredCount);//Temporarely add padding if any
+  texture.configure(texture.width, texture.height, this.a.values.data());
+  this.a.values.resize(prevSize);
+}
+
+///////////// Mat33 attribute
+
+object Mat33_RTRAttributeWrapper : RTRAttributeWrapper {
+  Mat33Attribute a;
+};
+
+function Mat33_RTRAttributeWrapper(Ref<Mat33Attribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> Mat33_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function Mat33_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  buffer.numBufferElementComponents = 3;
+  buffer.bufferElementComponentType = GL_FLOAT;
+  Vec3 columnData[];//Transpose for OGL
+  Size count = this.a.values.size();
+  columnData.resize(count);
+
+  for(Size i = 0; i < count; ++i ) {
+    columnData[i].x = this.a.values[i].row0.x;
+    columnData[i].y = this.a.values[i].row1.x;
+    columnData[i].z = this.a.values[i].row2.x;
+  }
+  buffer.genBuffer( columnData.data(), columnData.dataSize(), count, 0 );
+
+  for(Size i = 0; i < count; ++i ) {
+    columnData[i].x = this.a.values[i].row0.y;
+    columnData[i].y = this.a.values[i].row1.y;
+    columnData[i].z = this.a.values[i].row2.y;
+  }
+  buffer.genBuffer( columnData.data(), columnData.dataSize(), count, 1 );
+
+  for(Size i = 0; i < count; ++i ) {
+    columnData[i].x = this.a.values[i].row0.z;
+    columnData[i].y = this.a.values[i].row1.z;
+    columnData[i].z = this.a.values[i].row2.z;
+  }
+  buffer.genBuffer( columnData.data(), columnData.dataSize(), count, 2 );
+}
+
+function Mat33Attribute.loadToOGLBuffer( io OGLBuffer buffer ) {
+  Mat33_RTRAttributeWrapper wrapper(this);
+  wrapper.loadToOGLBuffer( buffer );
+}
+
+function Mat33_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  Size prevSize = this.a.values.size();//less or equal to requiredCount
+
+  InitPerInstanceOGLTexture( prevSize, 3, texture );
+  texture.glInternalFormat = GL_RGB32F;
+  texture.glFormat = GL_RGB;
+  texture.glType = GL_FLOAT;
+
+  Size requiredCount = (texture.height * texture.width)/3;
+
+  this.a.values.resize(requiredCount);//Temporarely add padding if any
+  texture.configure(texture.width, texture.height, this.a.values.data());
+  this.a.values.resize(prevSize);
+}
+
+///////////// Mat44 attribute
+
+object Mat44_RTRAttributeWrapper : RTRAttributeWrapper {
+  Mat44Attribute a;
+};
+
+function Mat44_RTRAttributeWrapper(Ref<Mat44Attribute> a) {
+  this.a = a;
+}
+
+function Ref<GeometryAttribute> Mat44_RTRAttributeWrapper.getAttribute() {
+  return this.a;
+}
+
+function Mat44_RTRAttributeWrapper.loadToOGLBuffer!( io OGLBuffer buffer ) {
+  buffer.numBufferElementComponents = 4;
+  buffer.bufferElementComponentType = GL_FLOAT;
+  Vec4 columnData[];//Transpose for OGL
+  Size count = this.a.values.size();
+  columnData.resize(count);
+
+  for(Size i = 0; i < count; ++i ) {
+    columnData[i].x = this.a.values[i].row0.x;
+    columnData[i].y = this.a.values[i].row1.x;
+    columnData[i].z = this.a.values[i].row2.x;
+    columnData[i].t = this.a.values[i].row3.x;
+  }
+  buffer.genBuffer( columnData.data(), columnData.dataSize(), count, 0 );
+
+  for(Size i = 0; i < count; ++i ) {
+    columnData[i].x = this.a.values[i].row0.y;
+    columnData[i].y = this.a.values[i].row1.y;
+    columnData[i].z = this.a.values[i].row2.y;
+    columnData[i].t = this.a.values[i].row3.y;
+  }
+  buffer.genBuffer( columnData.data(), columnData.dataSize(), count, 1 );
+
+  for(Size i = 0; i < count; ++i ) {
+    columnData[i].x = this.a.values[i].row0.z;
+    columnData[i].y = this.a.values[i].row1.z;
+    columnData[i].z = this.a.values[i].row2.z;
+    columnData[i].t = this.a.values[i].row3.z;
+  }
+  buffer.genBuffer( columnData.data(), columnData.dataSize(), count, 2 );
+
+  for(Size i = 0; i < count; ++i ) {
+    columnData[i].x = this.a.values[i].row0.t;
+    columnData[i].y = this.a.values[i].row1.t;
+    columnData[i].z = this.a.values[i].row2.t;
+    columnData[i].t = this.a.values[i].row3.t;
+  }
+  buffer.genBuffer( columnData.data(), columnData.dataSize(), count, 3 );
+}
+
+function Mat44Attribute.loadToOGLBuffer( io OGLBuffer buffer ) {
+  Mat44_RTRAttributeWrapper wrapper(this);
+  wrapper.loadToOGLBuffer( buffer );
+}
+
+function Mat44_RTRAttributeWrapper.loadToOGLTexture2D!( io OGLTexture2D texture ) {
+  Size prevSize = this.a.values.size();//less or equal to requiredCount
+
+  InitPerInstanceOGLTexture( prevSize, 4, texture );
+  texture.glInternalFormat = GL_RGBA32F;
+  texture.glFormat = GL_RGBA;
+  texture.glType = GL_FLOAT;
+
+  Size requiredCount = (texture.height * texture.width)/4;
+
+  this.a.values.resize(requiredCount);//Temporarely add padding if any
+  texture.configure(texture.width, texture.height, this.a.values.data());
+  this.a.values.resize(prevSize);
+}
+
+///////////// Generators
+
+object OGLBufferFromAttributeGenerator : RTRParamGenerator {
+  RTRAttributeWrapper sourceAttributeWrapper;
+  UInt32 lastVersion;
+  OGLBuffer buffer;
+};
+
+function Type OGLBufferFromAttributeGenerator.getGeneratedParamType() {
+  return OGLBuffer;
+}
+
+function OGLBufferFromAttributeGenerator.generate!( io Object value ) {
+  OGLBuffer buffer = value;
+  if( buffer.bufferID )
+    buffer.bufferUsage = GL_DYNAMIC_DRAW;//Loaded at least 2 times: lazily upgrade to "dynamic"
+  this.sourceAttributeWrapper.loadToOGLBuffer( buffer );
+
+  if(FabricStatisticsEnabled()) {
+    Ref<StatisticSource> attrSource = this.sourceAttributeWrapper.getAttribute().getStatisticsSource();
+    AddStatisticsChild(attrSource, buffer.autoStats);
+  }
+}
+
+function RTRAttributeWrapper CreateGeneratorAttributeWrapper( Ref<GeometryAttribute> attribute ) {
+  //NOTE: this won't work for custom attribute types!!
+  //      We will need a AttributeType -> Wrapper adaptor factory (singleton)
+  //      so that custom attribute types can define how they
+  //      get translated to OGL...
+  Type attributeType = attribute.type;
+  if( attributeType == Vec3Attribute ) {
+    Ref<Vec3Attribute> a = attribute;
+    return Vec3_RTRAttributeWrapper(a);
+  } else if( attributeType == ScalarAttribute ) {
+    Ref<ScalarAttribute> a = attribute;
+    return Scalar_RTRAttributeWrapper(a);
+  } else if( attributeType == Vec2Attribute ) {
+    Ref<Vec2Attribute> a = attribute;
+    return Vec2_RTRAttributeWrapper(a);
+  } else if( attributeType == Vec4Attribute ) {
+    Ref<Vec4Attribute> a = attribute;
+    return Vec4_RTRAttributeWrapper(a);
+  } else if( attributeType == QuatAttribute ) {
+    Ref<QuatAttribute> a = attribute;
+    return Quat_RTRAttributeWrapper(a);
+  } else if( attributeType == ColorAttribute ) {
+    Ref<ColorAttribute> a = attribute;
+    return Color_RTRAttributeWrapper(a);
+  } else if( attributeType == RGBAttribute ) {
+    Ref<RGBAttribute> a = attribute;
+    return RGB_RTRAttributeWrapper(a);
+  } else if( attributeType == RGBAAttribute ) {
+    Ref<RGBAAttribute> a = attribute;
+    return RGBA_RTRAttributeWrapper(a);
+  } else if( attributeType == UInt32Attribute ) {
+    Ref<UInt32Attribute> a = attribute;
+    return UInt32_RTRAttributeWrapper(a);
+  } else if( attributeType == IntegerAttribute ) {
+    Ref<IntegerAttribute> a = attribute;
+    return Integer_RTRAttributeWrapper(a);
+  } else if( attributeType == ScalarConstantArrayAttribute ) {
+    Ref<ScalarConstantArrayAttribute> a = attribute;
+    return ScalarConstantArray_RTRAttributeWrapper(a);
+  } else if( attributeType == UInt16ConstantArrayAttribute ) {
+    Ref<UInt16ConstantArrayAttribute> a = attribute;
+    return UInt16ConstantArray_RTRAttributeWrapper(a);
+  } else if( attributeType == Mat33Attribute ) {
+    Ref<Mat33Attribute> a = attribute;
+    return Mat33_RTRAttributeWrapper(a);
+  } else if( attributeType == Mat44Attribute ) {
+    Ref<Mat44Attribute> a = attribute;
+    return Mat44_RTRAttributeWrapper(a);
+  } else {//See comment above...
+    setError('UpdateOGLGeometryAttribute: limitation: custom(?) attribute type not supported: '+ attributeType );
+    RTRAttributeWrapper nullWrapper = null;
+    return nullWrapper;
+  }
+}
+
+function Boolean UpdateOGLGeometryAttribute( Ref<GeometryAttribute> attribute, io ParamDataGenerator paramDataGenerator, io OGLBuffer oglBuffer ) {
+  Boolean dirty;
+  if( !paramDataGenerator ) {
+    dirty = true;
+    oglBuffer = OGLBuffer();
+    oglBuffer.bufferType = GL_ARRAY_BUFFER;
+    //First set the attribute buffer as "static usage": we will lazily upgrade it to "dynamic usage" if the data changes
+    oglBuffer.bufferUsage = GL_STATIC_DRAW;
+    OGLBufferFromAttributeGenerator generator = OGLBufferFromAttributeGenerator();
+    generator.buffer = oglBuffer;
+    paramDataGenerator = InitParamDataGenerator(generator);
+  }
+  Ref<OGLBufferFromAttributeGenerator> generator = paramDataGenerator.generator;
+  oglBuffer = generator.buffer;
+
+  if( !generator.sourceAttributeWrapper || attribute != generator.sourceAttributeWrapper.getAttribute() ) {
+    RTRAttributeWrapper nullWrapper = null;
+    generator.sourceAttributeWrapper = nullWrapper;
+    generator.lastVersion = 0;
+    oglBuffer.bufferElementComponentType = GL_NONE;
+  }
+  if( !Boolean(generator.sourceAttributeWrapper) ) {
+    dirty = true;
+    generator.sourceAttributeWrapper = CreateGeneratorAttributeWrapper( attribute );
+  }
+
+  if( synchronizeVersion( attribute.getVersion(), generator.lastVersion ) )
+    dirty = true;
+  return dirty;
+}
+
+function Object GetOGLGeometryAttributeWrapper( ParamDataGenerator paramDataGenerator ) {
+  if( paramDataGenerator == null )
+    return null;
+  Ref<OGLBufferFromAttributeGenerator> generator = paramDataGenerator.generator;
+  return generator.sourceAttributeWrapper;
+}
+
+function Boolean RenderParamValues.updateOGLGeometryAttribute!(Ref<GeometryAttribute> attribute, io RenderValueKey key ) {
+  if( !key.isValid() ) {
+    key = this.setAsOGLBuffer( attribute.getName() );
+  }
+  
+  OGLBuffer oglBuffer;
+  Boolean dirty = UpdateOGLGeometryAttribute(attribute, this.paramsData[key.index].generator, oglBuffer );
+  if( dirty ) {
+    this.set( key, oglBuffer );
+    this.incrementValueVersion_preGenerateIfWasRequired(key);
+  }
+  return dirty;
+}
+
+object GeometryAttributeOGLUpdateData {
+  UInt32 lastKeysVersion;
+  RenderValueKey attributeParamKeys[];
+
+  //Used if prevPos requested:
+  Boolean hasPrevPositions;
+  RenderValueKey positionsAttributeKey;
+  RenderValueKey prevPositionsAttributeKey;
+};
+
+function RenderParamValues.updateGeometryAttributesRenderParams!( Ref<GeometryAttributes> attributes, io RenderValueKey geometryAttributeKey ) {
+  if( !geometryAttributeKey.isValid() ) {
+    geometryAttributeKey = this.getOrCreateKeyFromName("geometryAttributes", GeometryAttributes, RenderParamCategory_attribute, 0);
+    this.set( geometryAttributeKey, attributes );
+    GeometryAttributeOGLUpdateData updateData = GeometryAttributeOGLUpdateData();
+    this.setUserData( geometryAttributeKey, updateData );
+  }
+
+  GeometryAttributeOGLUpdateData updateData = this.getUserData( geometryAttributeKey );
+
+  Size numAttributes = attributes.numAttributes();
+  if( synchronizeVersion(attributes.keysVersion, updateData.lastKeysVersion) ) {
+    updateData.attributeParamKeys.resize(0);//Reset keys; they might have different indices
+    updateData.attributeParamKeys.resize(numAttributes);//Reset keys; they might have different indices
+  }
+
+  Boolean prevPosRequested;
+  for(Size i = 0; i < this.renderRequests.size(); ++i ) {
+    if( this.renderRequests[i].name == 'PrevPositions' ) {
+      prevPosRequested = true;
+      break;
+    }
+  }
+  if( prevPosRequested ) {
+    //Save prev frame positions data if animated, simply by swapping buffers
+    if( !updateData.positionsAttributeKey.isValid() )
+      updateData.positionsAttributeKey = this.getKeyFromName('positions');
+
+    if( updateData.positionsAttributeKey.isValid() ) {
+      if( !updateData.prevPositionsAttributeKey.isValid() ) {
+        OGLBuffer buffer;
+        updateData.prevPositionsAttributeKey = this.setAsOGLBuffer('prevPositions', buffer);
+        buffer.bufferType = GL_ARRAY_BUFFER;
+        buffer.bufferUsage = GL_DYNAMIC_DRAW;
+      }
+
+      Ref<Vec3Attribute> positions = attributes.getPositions();
+      OGLBufferFromAttributeGenerator posGen = this.getParamGenerator(updateData.positionsAttributeKey);
+      Boolean setPrevPositions = positions.getVersion() != posGen.lastVersion;
+
+      if( setPrevPositions ) {
+        //Animated: swap buffers
+        OGLBuffer prevPosBuffer = this.getOGLBuffer(updateData.prevPositionsAttributeKey);
+        this.set(updateData.prevPositionsAttributeKey, posGen.buffer);
+        posGen.buffer = prevPosBuffer;
+      }
+      if( setPrevPositions != updateData.hasPrevPositions ) {
+        updateData.hasPrevPositions = setPrevPositions;
+        this.setFlag('hasPrevPositions', setPrevPositions);
+      }
+    }
+  }
+
+  for(Size i = 0; i < numAttributes; ++i)
+    this.updateOGLGeometryAttribute(attributes.attributes[i], updateData.attributeParamKeys[i]);
+}
+
+//////////////////// Instance data packing
+
+object OGLTexture2DFromAttributeGenerator : RTRParamGenerator {
+  RTRAttributeWrapper sourceAttributeWrapper;
+  UInt32 lastVersion;
+};
+
+function Type OGLTexture2DFromAttributeGenerator.getGeneratedParamType() {
+  return OGLTexture2D;
+}
+
+function OGLTexture2DFromAttributeGenerator.generate!( io Object value ) {
+  OGLTexture2D texture = value;
+  this.sourceAttributeWrapper.loadToOGLTexture2D( texture );
+  if(FabricStatisticsEnabled()) {
+    Ref<StatisticSource> attrSource = this.sourceAttributeWrapper.getAttribute().getStatisticsSource();
+    AddStatisticsChild(attrSource, texture.autoStats);
+  }
+}
+
+function Boolean BuildInstanceOGLGenerator( Boolean asTexture, Ref<GeometryAttribute> attribute, io ParamDataGenerator paramDataGenerator, io Object paramValue ) {
+  Boolean dirty;
+  if( !asTexture ) {
+    OGLBuffer oglBuffer = null;
+    dirty = UpdateOGLGeometryAttribute( attribute, paramDataGenerator, oglBuffer );
+    oglBuffer.perInstance = true;
+    paramValue = oglBuffer;
+    return dirty;
+  }
+
+  if( !paramDataGenerator || paramValue.type != OGLTexture2D ) {
+    dirty = true;
+    OGLTexture2D oglTexture = OGLTexture2D();
+    oglTexture.glTextureType = GL_TEXTURE_2D;
+    oglTexture.wrapS = GL_CLAMP_TO_EDGE;
+    oglTexture.wrapT = GL_CLAMP_TO_EDGE;
+    oglTexture.textureMinFilter = GL_NEAREST;
+    oglTexture.textureMagFilter = GL_NEAREST;
+    paramValue = oglTexture;
+    OGLTexture2DFromAttributeGenerator generator = OGLTexture2DFromAttributeGenerator();
+    paramDataGenerator = InitParamDataGenerator(generator);
+  }
+  Ref<OGLTexture2DFromAttributeGenerator> generator = paramDataGenerator.generator;
+
+  if( !generator.sourceAttributeWrapper || attribute != generator.sourceAttributeWrapper.getAttribute() ) {
+    RTRAttributeWrapper nullWrapper = null;
+    generator.sourceAttributeWrapper = nullWrapper;
+    generator.lastVersion = 0;
+  }
+  if( !Boolean(generator.sourceAttributeWrapper) ) {
+    dirty = true;
+    generator.sourceAttributeWrapper = CreateGeneratorAttributeWrapper( attribute );
+  }
+
+  if( synchronizeVersion( attribute.getVersion(), generator.lastVersion ) )
+    dirty = true;
+  return dirty;
+}
+
+function RenderParamValues.storeAsPerInstanceOGLParam!( String name, Boolean genericParam, Boolean asTexture, GeometryAttribute attribute, Integer transformSpace ) {
+  Size count = attribute.size();
+  if(count != 0 && genericParam) {//Check if the value is uniform, store as uniform if it is the case
+    Boolean differs;
+    for( Size i = 1; i < count; ++i ) {
+      if( !attribute.equalValues( 0, i ) ) {
+        differs = true;
+        break;
+      }
+    }
+    if( !differs ) {
+      // Convert to single value. TODO: find a way to support custom attributes?
+      Type attrType = attribute.type();
+      RenderValueKey key;
+      if( attrType == IntegerAttribute ) {
+        Ref<IntegerAttribute> a = attribute;
+        key = this.setAsInteger(name);
+        this.set( key, a.values[0] );
+      } else if ( attrType == ScalarAttribute ) {
+        Ref<ScalarAttribute> a = attribute;
+        key = this.setAsScalar(name);
+        this.set( key, a.values[0] );
+      } else if ( attrType == Vec2Attribute ) {
+        Ref<Vec2Attribute> a = attribute;
+        key = this.setAsVec2(name);
+        this.set( key, a.values[0] );
+      } else if ( attrType == Vec3Attribute ) {
+        Ref<Vec3Attribute> a = attribute;
+        key = this.setAsVec3(name);
+        this.set( key, a.values[0] );
+      } else if ( attrType == Vec4Attribute ) {
+        Ref<Vec4Attribute> a = attribute;
+        key = this.setAsVec4(name);
+        this.set( key, a.values[0] );
+      } else if ( attrType == ColorAttribute ) {
+        Ref<ColorAttribute> a = attribute;
+        key = this.setAsColor(name);
+        this.set( key, a.values[0] );
+      } else if ( attrType == Mat33Attribute ) {
+        Ref<Mat33Attribute> a = attribute;
+        key = this.setAsMat33(name);
+        this.set( key, a.values[0] );
+      } else if ( attrType == Mat44Attribute ) {
+        Ref<Mat44Attribute> a = attribute;
+        key = this.setAsMat44(name);
+        this.set( key, a.values[0] );
+      } else
+        throw("RenderParamValues.storeAsPerInstanceOGLParam: unsupported attribute type: "+attrType);
+      this.setSpace( key, transformSpace );
+      return;
+    }
+  }
+
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  if( asTexture )
+    this.setType( key, OGLTexture2D, RenderParamCategory_image, RenderParamFlag_OGLShaderCompatible | RenderParamFlag_OGLPackedInstances );
+  else
+    this.setType( key, OGLBuffer, RenderParamCategory_attribute, RenderParamFlag_OGLShaderCompatible | RenderParamFlag_OGLPackedInstances );
+
+  this.setSpace( key, transformSpace );
+  if( BuildInstanceOGLGenerator( asTexture, attribute, this.paramsData[key.index].generator, this.paramsData[key.index].param.data ) )
+    this.incrementValueVersion_preGenerateIfWasRequired(key);
+}

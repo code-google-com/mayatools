@@ -1,0 +1,141 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+const UInt32 _recycledStatus_available = 0;
+const UInt32 _recycledStatus_used = 1;
+
+object _RecycledObjectEntry {
+  Ref<Object> reference;
+  UInt32 status;
+};
+
+//Simple, lock-free thread-safe allocator that recycles created objects (never released).
+//Objects are all of the same type and the allocator will create new ones
+//as needed by cloning a source object (factory).
+//The total number of allocated objects should be relatively small, eg. one per thread,
+//since it iterates over all entries to find a free one.
+//Since it owns the objects, these are returned as Ref<> to lower 'atomic' ops (ref count).
+//NOTE: this can be improved once KL exposes thread-local storage variables (TLS).
+object FewObjectsRecyclingAllocator {
+  _RecycledObjectEntry recycledObjectEntries[];
+
+  Object allocatedReferences[];
+
+  SimpleLock resizeLock;//only used when stack needs to be enlarged
+  Object cloneableSource;
+  Size cursorHint;
+
+  UInt32 maxCountBeforeWarning;
+  String maxCountWarning;
+};
+
+//cloneableSource: a 'default' instance of the object that will be cloned upon allocation.
+//Note that allocated objects are owned by the allocator to reduce reference count atomic ops.
+//maxCountBeforeWarning: since this allocator should be used to allocate a relatively small number of objects,
+//allocating too many will result in bad performance and can be a symptom of a bad usage (leaks).
+//If this count is reached, the 'maxCountWarning' message will be printed.
+function FewObjectsRecyclingAllocator( Object cloneableSource, UInt32 maxCountBeforeWarning, String maxCountWarning ) {
+  this.cloneableSource = cloneableSource;
+  this.maxCountBeforeWarning = maxCountBeforeWarning;
+  this.maxCountWarning = maxCountWarning;
+  this.allocatedReferences.resize(0);//Make shareable
+  this.recycledObjectEntries.resize(0);//Make shareable
+  this.resizeLock = SimpleLock();
+}
+
+function Ref<Object> FewObjectsRecyclingAllocator.allocate!() {
+  while(true) {
+    _RecycledObjectEntry entries[] = this.recycledObjectEntries;//Take a ref: allow copy-on-write
+    Size count = entries.size();
+
+    for( Size loop = 0; loop < 2; ++loop ) {
+      Size index = this.cursorHint;
+      for( Size i = 0; i < count; ++i ) {
+        Size nextIndex = index+1;
+        if( nextIndex == count )
+          nextIndex = 0;
+
+        //1st loop: iterate without doing 'atomicCAS' on each; try by trusting cache
+        //Gives a 5% speedup in benchmarks
+        Boolean check = loop == 1 || entries[index].status == _recycledStatus_available;
+        if( check ) {
+          Size status = entries[index].status.atomicCAS(_recycledStatus_available, _recycledStatus_used);
+          if( status == 0 ) {
+            this.cursorHint = nextIndex;
+            return entries[index].reference;
+          }
+        }
+        index = nextIndex;
+      }
+    }
+    {
+      //Failed: allocate new.
+      AutoLock AL(this.resizeLock);
+      entries = this.recycledObjectEntries;//Refresh
+      if( entries.size() > count )
+        continue;//Another thread already resized it
+
+      _RecycledObjectEntry newEntries[];
+      Object newReferences[];
+      Size newCount = count + 2 + count/4;
+
+      newEntries.resize(newCount);
+      newReferences.resize(newCount);
+
+      for( Size i = 0; i < count; ++i ) {
+        newEntries[i] = entries[i];
+        newReferences[i] = this.allocatedReferences[i];
+      }
+
+      for( Size i = count; i < newCount; ++i ) {
+        Object newObject = this.cloneableSource.clone();
+        newReferences[i] = newObject;
+        newEntries[i] = _RecycledObjectEntry();
+        newEntries[i].reference = newObject;
+      }
+      if( count < this.maxCountBeforeWarning && newCount >= this.maxCountBeforeWarning && Boolean(this.maxCountWarning) )
+        report( this.maxCountWarning );
+
+      newEntries[count].status = _recycledStatus_used;
+      this.allocatedReferences = newReferences;//Copy on write swap
+      this.recycledObjectEntries = newEntries;//Copy on write swap
+      return newEntries[count].reference;
+    }
+  }
+  return null;
+}
+
+function FewObjectsRecyclingAllocator.free!( Ref<Object> reference ) {
+  _RecycledObjectEntry entries[];//Take a ref: allow copy-on-write
+  Size count;
+  while( count == 0 ) {
+    entries = this.recycledObjectEntries;
+    count = entries.size();
+  }
+  if( !reference )
+    throw("FewObjectsRecyclingAllocator.free: freeing null object");
+  for( Size i = 0; i < count; ++i ) {
+    if( reference == entries[i].reference ) {
+      entries[i].status = _recycledStatus_available;
+      return;
+    }
+  }
+  throw("FewObjectsRecyclingAllocator.free: freeing object that was not allocated");
+}
+
+function Size FewObjectsRecyclingAllocator.allocatedCount() {
+  _RecycledObjectEntry entries[] = this.recycledObjectEntries;//Take a ref: allow copy-on-write
+  Size count = entries.size();
+  Size allocated;
+  for( Size i = 0; i < count; ++i ) {
+    if( entries[i].status == _recycledStatus_used )
+      ++allocated;
+  }
+  return allocated;
+}
+
+function Size FewObjectsRecyclingAllocator.createdCount() {
+  _RecycledObjectEntry entries[] = this.recycledObjectEntries;//Take a ref: allow copy-on-write
+  return entries.size();
+}

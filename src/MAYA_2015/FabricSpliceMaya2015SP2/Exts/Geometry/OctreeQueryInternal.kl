@@ -1,0 +1,1053 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+struct _OctreeQueryCellAndCenter {
+  Vec3 cellCenter;
+  UInt32 cellIndex;
+};
+
+struct _OctreeQueryTraverseData {
+  Size currentSet;
+  Size currentSetSize;
+  Size nextSet;
+  Size nextSetSize;
+  _OctreeQueryCellAndCenter data[2][];
+};
+
+inline _OctreeQueryTraverseData(){
+  this.reset();
+}
+
+inline _OctreeQueryTraverseData.reset!() {
+  this.currentSet = 0;
+  this.currentSetSize = 0;
+  this.nextSet = 1;
+  this.nextSetSize = 0;
+}
+
+inline _OctreeQueryTraverseData.pushToNext!( UInt32 cellIndex, Vec3 cellCenter, io _OctreeQueryCellAndCenter data[] ) {
+  if( data.size() == this.nextSetSize )
+    data.resize( this.nextSetSize+1 );
+  _OctreeQueryCellAndCenter cellData;
+  cellData.cellIndex = cellIndex;
+  cellData.cellCenter = cellCenter;
+  data[this.nextSetSize++] = cellData;
+}
+
+inline _OctreeQueryTraverseData.pushToNext!( UInt32 cellIndex, Vec3 center ) {
+  this.pushToNext( cellIndex, center, this.data[this.nextSet] );
+}
+
+inline Size _OctreeQueryTraverseData.size() {
+  return this.currentSetSize;
+}
+
+inline _OctreeQueryTraverseData.get( Size index, io UInt32 cellIndex, io Vec3 center ) {
+  _OctreeQueryCellAndCenter cellData = this.data[this.currentSet][index];
+  cellIndex = cellData.cellIndex;
+  center = cellData.cellCenter;
+}
+
+inline _OctreeQueryTraverseData.swap!() {
+  this.currentSet = this.nextSet;
+  this.nextSet = (this.nextSet + 1)&1;
+  this.currentSetSize = this.nextSetSize;
+  this.nextSetSize = 0;
+}
+
+function _OctCellBBox _OctreeStruct.getOctBBoxAndMaxSearchDepth?( Vec3 min, Vec3 max, io UInt8 maxSearchDepth ) {
+  _OctCellBBox octBBox;
+  this.getOctBBox( min, max, true, octBBox );
+
+  UInt16 bboxSize[3];
+  bboxSize[0] = octBBox.max.xyz[0] - octBBox.min.xyz[0];
+  bboxSize[1] = octBBox.max.xyz[1] - octBBox.min.xyz[1];
+  bboxSize[2] = octBBox.max.xyz[2] - octBBox.min.xyz[2];
+
+  UInt8 depthSize[3];
+  depthSize[0] = getDepthSize( bboxSize[0] );
+  depthSize[1] = getDepthSize( bboxSize[1] );
+  depthSize[2] = getDepthSize( bboxSize[2] );
+
+  UInt8 minDepthSize = depthSize[0];
+  if( minDepthSize < depthSize[1] )
+    minDepthSize = depthSize[1];
+  if( minDepthSize < depthSize[2] )
+    minDepthSize = depthSize[2];
+
+  maxSearchDepth = minDepthSize + 2;
+  return octBBox;
+}
+
+//NOTE: this is conservative, can return more objects than the 'exact' result
+function _OctreeStruct.localBBoxQuery?( Vec3 min, Vec3 max, io _OctreeQueryTraverseData tempTraverseData, io IndexSet result, BitVector objectMask ) {
+  result.clear();
+  tempTraverseData.reset();
+  Boolean noMask = objectMask.size() == 0;
+
+  //First add infinite results
+  Size nbInfinite = 0;
+  UInt32 infiniteObjectIndex;
+  _OctreeArrayIterator it = this.packedMemberLists.getIterator( this.getInfiniteBVolList() );
+  while( this.packedMemberLists.getNext( it, infiniteObjectIndex ) ) {
+    if(noMask || objectMask.get(infiniteObjectIndex)) {
+      ++nbInfinite;
+      result.add( infiniteObjectIndex );
+    }
+  }
+
+  UInt8 maxSearchDepth;
+  _OctCellBBox octBBox = this.getOctBBoxAndMaxSearchDepth( min, max, maxSearchDepth );
+
+  tempTraverseData.pushToNext( this.rootCellIndex, Vec3() );
+  tempTraverseData.swap();
+
+  UInt8 currDepth = 0;
+  UInt64 currCellVolume = this.packedCellData[this.rootCellIndex].octBBox.getVolume();
+
+  while( tempTraverseData.size() != 0 && currDepth <= maxSearchDepth ) {
+    Size numCells = tempTraverseData.size();
+    for( Size i = 0; i < numCells; ++i ) {
+      Vec3 cellCenter;
+      Size cellIndex;
+      tempTraverseData.get( i, cellIndex, cellCenter );
+      UInt8 intersectionType = octBBox.getIntersectionType( this.packedCellData[cellIndex].octBBox );
+      if( intersectionType == IntersectionNone )
+        continue;
+      else {
+
+        Boolean allCellObjects = !this.packedCellData[cellIndex].isSubdivided() || intersectionType == IntersectionIncludesOther || currDepth == maxSearchDepth;
+        if( !allCellObjects ) {
+          //Depending on the overlap amount, we might decide to get all objects
+          _OctCellBBox intersectionBBox = getBBoxIntersection( octBBox, this.packedCellData[cellIndex].octBBox );
+          UInt64 intersectionVolume = intersectionBBox.getVolume();
+          if( intersectionVolume*2 > currCellVolume )
+            allCellObjects = true;
+        }
+
+        this.addCellObjects( this.packedCellData[cellIndex], objectMask, result, allCellObjects );
+        if( !allCellObjects ) {
+          Boolean keep;
+          if( this.keepSubCellObjectList ) {
+            //First, ensure that there are potential objects that can be discarded by going deeper
+            UInt32 objectIndex;
+            it = this.packedMemberLists.getIterator( this.packedCellData[cellIndex].arrays[_OctreeCellArray_subCellObjects] );
+            while( this.packedMemberLists.getNext( it, objectIndex ) ) {
+              if( (noMask || objectMask.get(objectIndex) ) && !result.has(objectIndex) ) {
+                keep = true;
+                break;
+              }
+            }
+          } else
+            keep = true;
+
+          if(keep) {
+            //Partial: push only intersected subcells
+            _OctCellPath centerPath = this.packedCellData[cellIndex].octBBox.getCenter();
+            Size numDims;
+            UInt8 cellBits = cellBBoxGetIntersectingObjectSubcellBits( centerPath, octBBox, numDims );
+            for( Size bit = 0; bit < 8; ++bit ) {
+              if( (UInt16(1<<bit) & cellBits) != 0 ) {
+                UInt32 subCell = this.packedCellData[cellIndex].subCellIndices[bit];
+                if( subCell )
+                  tempTraverseData.pushToNext( subCell, Vec3() );
+              }
+            }
+          }
+        }
+      }
+    }
+    tempTraverseData.swap();
+    ++currDepth;
+    currCellVolume /= 8;
+  }
+
+  // Now that we have a set containing all potential objects, filter on objects' actual bboxes and bSpheres
+  Size target = nbInfinite;
+  Size numObjects = result.size()-nbInfinite;
+  for( Size i = 0; i < numObjects; ++i ) {
+    UInt32 objectID = result.indices[i+nbInfinite];
+    Boolean keep = this.objectData[objectID].intersectsBBox( min, max );
+    if(keep)
+      result.indices[target++] = objectID;
+    else
+      result.memberBits.clear( objectID );
+  }
+  result.indices.resize(target);
+  result.indicesSize = target;
+}
+
+inline fillSubCellDeltaCenters(io Vec3 subCellDeltaCenters[8], Scalar radius) {
+  subCellDeltaCenters[0] = Vec3( -radius, -radius, -radius );
+  subCellDeltaCenters[1] = Vec3(  radius, -radius, -radius );
+  subCellDeltaCenters[2] = Vec3( -radius,  radius, -radius );
+  subCellDeltaCenters[3] = Vec3(  radius,  radius, -radius );
+  subCellDeltaCenters[4] = Vec3( -radius, -radius,  radius );
+  subCellDeltaCenters[5] = Vec3(  radius, -radius,  radius );
+  subCellDeltaCenters[6] = Vec3( -radius,  radius,  radius );
+  subCellDeltaCenters[7] = Vec3(  radius,  radius,  radius );
+}
+
+function _OctreeStruct.addCellObjects?(
+  _OctCellData cell,
+  BitVector objectMask,
+  io IndexSet result,
+  Boolean includeSubCells
+  ) {
+  Boolean noMask = objectMask.size() == 0;
+
+  //Add cell-exclusive objects
+  _OctreeArrayIterator it = this.packedMemberLists.getIterator( cell.arrays[_OctreeCellArray_cellObjects] );
+  UInt32 objectIndex;
+  while( this.packedMemberLists.getNext( it, objectIndex ) ) {
+    if( noMask || objectMask.get(objectIndex) )
+      result.add( objectIndex );
+  }
+
+  //Important: include non-updated objects
+  it = this.packedMemberLists.getIterator( cell.arrays[_OctreeCellArray_toClassifyObjects] );
+  while( this.packedMemberLists.getNext( it, objectIndex ) ) {
+    if( noMask || objectMask.get(objectIndex) )
+      result.add( objectIndex );
+  }
+
+  if( includeSubCells ) {
+    //Add subcell objects
+    it = this.packedMemberLists.getIterator( cell.arrays[_OctreeCellArray_subCellObjects] );
+    while( this.packedMemberLists.getNext( it, objectIndex ) ) {
+      if( noMask || objectMask.get(objectIndex) )
+      result.add( objectIndex );
+    }
+    if( !this.keepSubCellObjectList && cell.isSubdivided() ) {
+      //We need to traverse all children (slower!)
+      for( Size subIndex = 0; subIndex < 8; ++subIndex ) {
+        UInt32 subCell = cell.subCellIndices[subIndex];
+        if( subCell )
+          this.addCellObjects( this.packedCellData[subCell], objectMask, result, true);
+      }
+    }
+  }
+}
+
+function _OctreeStruct.processQueriedIntersectedCell?(
+  UInt8 intersectionType, _OctCellData cell, Vec3 currCellCenter,
+  UInt8 currDepth, UInt8 maxSearchDepth,
+  _OctCellBBox octBBox,
+  Vec3 subCellDeltaCenters[8],
+  io _OctreeQueryTraverseData tempTraverseData,
+  BitVector objectMask, io IndexSet result
+  ) {
+  Boolean noMask = objectMask.size() == 0;
+  Boolean allCellObjects = !cell.isSubdivided() || intersectionType == IntersectionIncludesOther || currDepth == maxSearchDepth;
+  this.addCellObjects( cell, objectMask, result, allCellObjects );
+ 
+  if( !allCellObjects ) {
+    Boolean keep;
+    if( this.keepSubCellObjectList ) {
+      //First, ensure that there are potential objects that can be discarded by going deeper
+      UInt32 objectIndex;
+      _OctreeArrayIterator it = this.packedMemberLists.getIterator( cell.arrays[_OctreeCellArray_subCellObjects] );
+      while( this.packedMemberLists.getNext( it, objectIndex ) ) {
+        if( (noMask || objectMask.get(objectIndex) ) && !result.has(objectIndex) ) {
+          keep = true;
+          break;
+        }
+      }
+    } else
+      keep = true;
+
+    if(keep) {
+      //Partial: push only intersected subcells
+      _OctCellPath centerPath = cell.octBBox.getCenter();
+      Size numDims;
+      UInt8 cellBits = cellBBoxGetIntersectingObjectSubcellBits( centerPath, octBBox, numDims );
+      for( Size bit = 0; bit < 8; ++bit ) {
+        if( (UInt16(1<<bit) & cellBits) != 0 ) {
+          UInt32 subCell = cell.subCellIndices[bit];
+          if( subCell )
+            tempTraverseData.pushToNext( subCell, currCellCenter + subCellDeltaCenters[bit] );
+        }
+      }
+    }
+  }
+}
+
+operator ParallelComputeBBoxSphereIntersection<<<index>>>(Size batchSize, Size offset, IndexSet indices, LocalBoundingVolume bSphere, _OctObjectData objectData[], io UInt8 keepObjects[] ) {
+  Size start = index*batchSize+offset;
+  Size end = start + batchSize;
+  if( end > indices.size() )
+    end = indices.size();
+  for( Size i = start; i < end; ++i ) {
+    UInt32 objectID = indices.indices[i];
+    if( objectData[objectID].intersectsBSphere( bSphere ) )
+      keepObjects[i-offset] = 1;
+  }
+}
+
+//NOTE: this is conservative, can return more objects than the 'exact' result
+function _OctreeStruct.localBSphereQuery?( LocalBoundingVolume bSphere, io _OctreeQueryTraverseData tempTraverseData, io IndexSet result, BitVector objectMask ) {
+  result.clear();
+  tempTraverseData.reset();
+  Boolean noMask = objectMask.size() == 0;
+
+  //First add infinite results
+  Size nbInfinite = 0;
+  UInt32 infiniteObjectIndex;
+  _OctreeArrayIterator it = this.packedMemberLists.getIterator( this.getInfiniteBVolList() );
+  while( this.packedMemberLists.getNext( it, infiniteObjectIndex ) ) {
+    if(noMask || objectMask.get(infiniteObjectIndex)) {
+      ++nbInfinite;
+      result.add( infiniteObjectIndex );
+    }
+  }
+
+  Scalar bSphereSquaredRadius = bSphere.bSphereGetSquaredRadius();
+  Vec3 bSphereCenter = bSphere.bSphereGetCenter();
+  Scalar bSphereRadius = bSphere.bSphereGetRadius();
+
+  UInt8 maxSearchDepth;
+  _OctCellBBox octBBox = this.getOctBBoxAndMaxSearchDepth( bSphereCenter-Vec3(bSphereRadius, bSphereRadius, bSphereRadius), bSphereCenter+Vec3(bSphereRadius, bSphereRadius, bSphereRadius), maxSearchDepth );
+  Scalar cellRadius = (this.gridMax.x - this.gridMin.x)*0.5;
+  Scalar halfRadius = cellRadius*0.5;
+
+  Vec3 subCellDeltaCenters[8];
+  fillSubCellDeltaCenters(subCellDeltaCenters, halfRadius);
+
+  tempTraverseData.pushToNext( this.rootCellIndex, (this.gridMin + this.gridMax)*0.5 );
+  tempTraverseData.swap();
+
+  UInt8 currDepth = 0;
+
+  while( tempTraverseData.size() != 0 && currDepth <= maxSearchDepth ) {
+    Vec3 cellRadiusVec = Vec3(cellRadius, cellRadius, cellRadius);
+    Size numCells = tempTraverseData.size();
+    for( Size i = 0; i < numCells; ++i ) {
+      Vec3 cellCenter;
+      Size cellIndex;
+      tempTraverseData.get( i, cellIndex, cellCenter );
+      UInt8 intersectionType = bSphereGetBBoxIntersection( bSphereCenter, bSphereRadius, cellCenter-cellRadiusVec, cellCenter+cellRadiusVec );
+      if( intersectionType == IntersectionNone )
+        continue;
+      else {
+        this.processQueriedIntersectedCell( intersectionType, this.packedCellData[cellIndex], cellCenter, currDepth, maxSearchDepth, octBBox,
+          subCellDeltaCenters, tempTraverseData, objectMask, result);
+      }
+    }
+    for( Size i = 0; i < 8; ++i )
+      subCellDeltaCenters[i] *= 0.5;
+    cellRadius *= 0.5;
+    tempTraverseData.swap();
+    ++currDepth;
+  }
+
+  // Now that we have a set containing all potential objects, filter on objects' actual bboxes and bSpheres
+  Size target = nbInfinite;
+  Size numObjects = result.size()-nbInfinite;
+
+  Size batchSize, numBatches;
+  GetBatchSizeAndCountForParallel( numObjects, 1, 500, numBatches, batchSize );
+
+  if( numBatches == 1 ) {
+    for( Size i = 0; i < numObjects; ++i ) {
+      UInt32 objectID = result.indices[i+nbInfinite];
+      Boolean keep = this.objectData[objectID].intersectsBSphere( bSphere );
+      if(keep)
+        result.indices[target++] = objectID;
+      else
+        result.memberBits.clear( objectID );
+    }
+  } else {
+    UInt8 keepObjects[];
+    keepObjects.resize(numObjects);
+    ParallelComputeBBoxSphereIntersection<<<numBatches>>>(batchSize, nbInfinite, result, bSphere, this.objectData, keepObjects );
+
+    for( Size i = 0; i < numObjects; ++i ) {
+      if(keepObjects[i])
+        result.indices[target++] = result.indices[i+nbInfinite];
+      else
+        result.memberBits.clear( result.indices[i+nbInfinite] );
+    }
+  }
+  result.indices.resize(target);
+  result.indicesSize = target;
+}
+
+//NOTE: this is conservative, can return more objects than the 'exact' result
+inline _OctreeStruct.bSphereQuery?( Mat44 transform, LocalBoundingVolume localBSphere, io _OctreeQueryTraverseData tempTraverseData, io IndexSet result, BitVector objectMask ) {
+  Scalar bSphereSquaredRadius;
+  Vec3 bSphereCenter;
+  transformedBSphereGetBSphere( transform, localBSphere.pt1, localBSphere.sc1, bSphereCenter, bSphereSquaredRadius );
+  Scalar bSphereRadius = sqrt(bSphereSquaredRadius);
+
+  LocalBoundingVolume bSphere;
+  bSphere.bSphereInit(bSphereCenter, bSphereRadius);
+  this.localBSphereQuery( bSphere, tempTraverseData, result, objectMask );
+}
+
+struct ConeIntersectData {
+  Vec3 origin;
+  Vec3 unitDir;
+  Scalar length;
+  Scalar tanHalfAngle;
+  Scalar invCosHalfAngle;
+};
+
+operator ParallelComputeBSphereConeIntersection<<<index>>>(Size batchSize, Size offset, IndexSet indices, ConeIntersectData coneIData, _OctCellBBox octBBox, _OctObjectData objectData[], io UInt8 keepObjects[] ) {
+  Size start = index*batchSize+offset;
+  Size end = start + batchSize;
+  if( end > indices.size() )
+    end = indices.size();
+
+  for( Size i = start; i < end; ++i ) {
+    Boolean keep = true;
+    UInt32 objectID = indices.indices[i];
+    UInt8 intersectionType = octBBox.getIntersectionType( objectData[objectID].octBBox );
+    if( intersectionType == IntersectionNone )
+      keep = false;
+    else if( !bConeIntersectsBSphere( coneIData.origin, coneIData.unitDir, coneIData.length, coneIData.tanHalfAngle, coneIData.invCosHalfAngle, objectData[objectID].getCenter(), objectData[objectID].radius ) )
+      keep = false;
+
+    if(keep)
+      keepObjects[i-offset] = 1;
+  }
+}
+
+//NOTE: this is conservative, can return more objects than the 'exact' result
+function _OctreeStruct.bConeQuery?( Vec3 origin, Vec3 unitDir, Scalar length, Scalar tanHalfAngle, Scalar cosHalfAngle, io _OctreeQueryTraverseData tempTraverseData, io IndexSet result, BitVector objectMask ) {
+  result.clear();
+  tempTraverseData.reset();
+  Boolean noMask = objectMask.size() == 0;
+
+  //First add infinite results
+  Size nbInfinite = 0;
+  UInt32 infiniteObjectIndex;
+  _OctreeArrayIterator it = this.packedMemberLists.getIterator( this.getInfiniteBVolList() );
+  while( this.packedMemberLists.getNext( it, infiniteObjectIndex ) ) {
+    if(noMask || objectMask.get(infiniteObjectIndex)) {
+      ++nbInfinite;
+      result.add( infiniteObjectIndex );
+    }
+  }
+
+  Vec3 min, max;
+  coneGetBBox( origin, unitDir, length, tanHalfAngle, min, max );
+
+  UInt8 maxSearchDepth;
+  _OctCellBBox octBBox = this.getOctBBoxAndMaxSearchDepth( min, max, maxSearchDepth );
+  maxSearchDepth += 3;//Because we are a Cone...
+
+  Vec3 subCellDeltaCenters[8];
+  Scalar radius = (this.gridMax.x - this.gridMin.x)*0.5;
+  Scalar cellBSphereRadius = radius*1.733;//1.733 = sqrt(1 * 3)
+
+  ConeIntersectData coneIData;
+  coneIData.origin = origin;
+  coneIData.unitDir = unitDir;
+  coneIData.length = length;
+  coneIData.tanHalfAngle = tanHalfAngle;
+  coneIData.invCosHalfAngle = 1.0 / cosHalfAngle;
+
+  Scalar halfRadius = radius*0.5;
+  fillSubCellDeltaCenters(subCellDeltaCenters, halfRadius);
+
+  tempTraverseData.pushToNext( this.rootCellIndex, (this.gridMin + this.gridMax)*0.5 );
+  tempTraverseData.swap();
+
+  UInt8 currDepth = 0;
+
+  while( tempTraverseData.size() != 0 && currDepth <= maxSearchDepth ) {
+    Size numCells = tempTraverseData.size();
+    for( Size i = 0; i < numCells; ++i ) {
+      Vec3 cellCenter;
+      Size cellIndex;
+      tempTraverseData.get( i, cellIndex, cellCenter );
+      UInt8 intersectionType = bConeGetBSphereIntersection( coneIData.origin, coneIData.unitDir, coneIData.length, coneIData.tanHalfAngle, coneIData.invCosHalfAngle, cellCenter, cellBSphereRadius );
+      if( intersectionType == IntersectionNone )
+        continue;
+      else {
+        this.processQueriedIntersectedCell( intersectionType, this.packedCellData[cellIndex], cellCenter, currDepth, maxSearchDepth, octBBox,
+          subCellDeltaCenters, tempTraverseData, objectMask, result);
+      }
+    }
+    for( Size i = 0; i < 8; ++i )
+      subCellDeltaCenters[i] *= 0.5;
+    radius *= 0.5;
+    cellBSphereRadius *= 0.5;
+    tempTraverseData.swap();
+    ++currDepth;
+  }
+
+  // Now that we have a set containing all potential objects, filter on objects' actual bCones and bSpheres
+  Size target = nbInfinite;
+  Size numObjects = result.size()-nbInfinite;
+
+  Size batchSize, numBatches;
+  GetBatchSizeAndCountForParallel( numObjects, 1, 50, numBatches, batchSize );
+
+  if( numBatches == 1 ) {
+    for( Size i = 0; i < numObjects; ++i ) {
+      Boolean keep = true;
+      UInt32 objectID = result.indices[i+nbInfinite];
+      UInt8 intersectionType = octBBox.getIntersectionType( this.objectData[objectID].octBBox );
+      if( intersectionType == IntersectionNone )
+        keep = false;
+      else if( !bConeIntersectsBSphere( origin, unitDir, length, tanHalfAngle, coneIData.invCosHalfAngle, this.objectData[objectID].getCenter(), this.objectData[objectID].radius ) )
+        keep = false;
+
+      if(keep)
+        result.indices[target++] = objectID;
+      else
+        result.memberBits.clear( objectID );
+    }
+  } else {
+    UInt8 keepObjects[];
+    keepObjects.resize(numObjects);
+    ParallelComputeBSphereConeIntersection<<<numBatches>>>(batchSize, nbInfinite, result, coneIData, octBBox, this.objectData, keepObjects );
+
+    for( Size i = 0; i < numObjects; ++i ) {
+      if(keepObjects[i])
+        result.indices[target++] = result.indices[i+nbInfinite];
+      else
+        result.memberBits.clear( result.indices[i+nbInfinite] );
+    }
+  }
+  result.indices.resize(target);
+  result.indicesSize = target;
+//report("Cone query: "+coneIData+" result: "+result.indices);
+}
+
+struct BoxIntersectData {
+  LocalBoundingVolume noScalingLocalBVol;
+  Mat44 noScalingInvTransform;
+};
+
+operator ParallelComputeBSphereBoxIntersection<<<index>>>( Size batchSize, Size offset, IndexSet indices, BoxIntersectData boxIData, _OctCellBBox octBBox, _OctObjectData objectData[], io UInt8 keepObjects[] ) {
+  Size start = index*batchSize+offset;
+  Size end = start + batchSize;
+  if( end > indices.size() )
+    end = indices.size();
+
+  for( Size i = start; i < end; ++i ) {
+    Boolean keep = true;
+    UInt32 objectID = indices.indices[i];
+    UInt8 intersectionType = octBBox.getIntersectionType( objectData[objectID].octBBox );
+    if( intersectionType == IntersectionNone )
+      keep = false;
+    else if( boxIData.noScalingLocalBVol.bBoxGetBSphereIntersection( boxIData.noScalingInvTransform, objectData[objectID].getCenter(), objectData[objectID].radius ) == IntersectionNone )
+      keep = false;
+
+    if(keep)
+      keepObjects[i-offset] = 1;
+  }
+}
+
+//NOTE: this is conservative, can return more objects than the 'exact' result
+function _OctreeStruct.bBoxQuery?( Mat44 transform, LocalBoundingVolume localBBox, io _OctreeQueryTraverseData tempTraverseData, io IndexSet result, BitVector objectMask ) {
+  result.clear();
+  tempTraverseData.reset();
+  Boolean noMask = objectMask.size() == 0;
+
+  Mat44 noScalingTransform;
+  BoxIntersectData boxIData;
+  transformedBBoxComputeUnscaled(transform, localBBox, noScalingTransform, boxIData.noScalingLocalBVol);
+  boxIData.noScalingInvTransform = noScalingTransform.inverse();
+
+  //First add infinite results
+  Size nbInfinite = 0;
+  UInt32 infiniteObjectIndex;
+  _OctreeArrayIterator it = this.packedMemberLists.getIterator( this.getInfiniteBVolList() );
+  while( this.packedMemberLists.getNext( it, infiniteObjectIndex ) ) {
+    if(noMask || objectMask.get(infiniteObjectIndex)) {
+      ++nbInfinite;
+      result.add( infiniteObjectIndex );
+    }
+  }
+  Vec3 min, max;
+  transformedBBoxGetBBox( noScalingTransform, boxIData.noScalingLocalBVol, min, max );
+
+  UInt8 maxSearchDepth;
+  _OctCellBBox octBBox = this.getOctBBoxAndMaxSearchDepth( min, max, maxSearchDepth );
+  maxSearchDepth += 2;//Because of orientation...
+
+  Vec3 subCellDeltaCenters[8];
+  Scalar radius = (this.gridMax.x - this.gridMin.x)*0.5;
+  Scalar cellBSphereRadius = radius*1.733;//1.733 = sqrt(1 * 3)
+
+  Scalar halfRadius = radius*0.5;
+  fillSubCellDeltaCenters(subCellDeltaCenters, halfRadius);
+
+  tempTraverseData.pushToNext( this.rootCellIndex, (this.gridMin + this.gridMax)*0.5 );
+  tempTraverseData.swap();
+
+  UInt8 currDepth = 0;
+  
+  while( tempTraverseData.size() != 0 && currDepth <= maxSearchDepth ) {
+    Size numCells = tempTraverseData.size();
+    for( Size i = 0; i < numCells; ++i ) {
+      Vec3 cellCenter;
+      Size cellIndex;
+      tempTraverseData.get( i, cellIndex, cellCenter );
+      UInt8 intersectionType = boxIData.noScalingLocalBVol.bBoxGetBSphereIntersection( boxIData.noScalingInvTransform, cellCenter, cellBSphereRadius );
+      if( intersectionType == IntersectionNone )
+        continue;
+      else {
+        this.processQueriedIntersectedCell( intersectionType, this.packedCellData[cellIndex], cellCenter, currDepth, maxSearchDepth, octBBox,
+          subCellDeltaCenters, tempTraverseData, objectMask, result);
+      }
+    }
+    for( Size i = 0; i < 8; ++i )
+      subCellDeltaCenters[i] *= 0.5;
+    radius *= 0.5;
+    cellBSphereRadius *= 0.5;
+    tempTraverseData.swap();
+    ++currDepth;
+  }
+
+  // Now that we have a set containing all potential objects, filter on objects' actual bboxes and bSpheres
+  Size target = nbInfinite;
+  Size numObjects = result.size()-nbInfinite;
+
+  Size batchSize, numBatches;
+  GetBatchSizeAndCountForParallel( numObjects, 1, 75, numBatches, batchSize );
+
+  if( numBatches == 1 ) {
+    for( Size i = 0; i < numObjects; ++i ) {
+      Boolean keep = true;
+      UInt32 objectID = result.indices[i+nbInfinite];
+      UInt8 intersectionType = octBBox.getIntersectionType( this.objectData[objectID].octBBox );
+      if( intersectionType == IntersectionNone )
+        keep = false;
+      else if( boxIData.noScalingLocalBVol.bBoxGetBSphereIntersection( boxIData.noScalingInvTransform, this.objectData[objectID].getCenter(), this.objectData[objectID].radius ) == IntersectionNone )
+        keep = false;
+
+      if(keep)
+        result.indices[target++] = objectID;
+      else
+        result.memberBits.clear( objectID );
+    }
+  } else {
+    UInt8 keepObjects[];
+    keepObjects.resize(numObjects);
+    ParallelComputeBSphereBoxIntersection<<<numBatches>>>(batchSize, nbInfinite, result, boxIData, octBBox, this.objectData, keepObjects );
+
+    for( Size i = 0; i < numObjects; ++i ) {
+      if(keepObjects[i])
+        result.indices[target++] = result.indices[i+nbInfinite];
+      else
+        result.memberBits.clear( result.indices[i+nbInfinite] );
+    }
+  }
+  result.indices.resize(target);
+  result.indicesSize = target;
+//report("box query: "+boxIData+" result: "+result.indices);
+}
+
+
+struct PyramidIntersectData {
+  Vec3 origin;
+  Vec3 unitDir;
+  Scalar near;
+  Scalar far;
+  Vec3 leftPlaneNormal;
+  Vec3 rightPlaneNormal;
+  Vec3 upPlaneNormal;
+  Vec3 downPlaneNormal;
+};
+
+operator ParallelComputeBSpherePyramidIntersection<<<index>>>( Size batchSize, Size offset, IndexSet indices, PyramidIntersectData pyrIData, _OctCellBBox octBBox, _OctObjectData objectData[], io UInt8 keepObjects[] ) {
+  Size start = index*batchSize+offset;
+  Size end = start + batchSize;
+  if( end > indices.size() )
+    end = indices.size();
+
+  for( Size i = start; i < end; ++i ) {
+    Boolean keep = true;
+    UInt32 objectID = indices.indices[i];
+    UInt8 intersectionType = octBBox.getIntersectionType( objectData[objectID].octBBox );
+    if( intersectionType == IntersectionNone )
+      keep = false;
+    else if( !bPyramidIntersectsBSphere( pyrIData.origin, pyrIData.unitDir, pyrIData.near, pyrIData.far, pyrIData.leftPlaneNormal, pyrIData.rightPlaneNormal, pyrIData.upPlaneNormal, pyrIData.downPlaneNormal, objectData[objectID].getCenter(), objectData[objectID].radius ) )
+      keep = false;
+
+    if(keep)
+      keepObjects[i-offset] = 1;
+  }
+}
+
+//NOTE: this is conservative, can return more objects than the 'exact' result
+function _OctreeStruct.bPyramidQuery?( Vec3 origin, Vec3 unitDir, Scalar near, Scalar far, Vec3 nearRightVec, Vec3 nearUpVec, io _OctreeQueryTraverseData tempTraverseData, io IndexSet result, BitVector objectMask ) {
+  result.clear();
+  tempTraverseData.reset();
+  Boolean noMask = objectMask.size() == 0;
+
+  //First add infinite results
+  Size nbInfinite = 0;
+  UInt32 infiniteObjectIndex;
+  _OctreeArrayIterator it = this.packedMemberLists.getIterator( this.getInfiniteBVolList() );
+  while( this.packedMemberLists.getNext( it, infiniteObjectIndex ) ) {
+    if(noMask || objectMask.get(infiniteObjectIndex)) {
+      ++nbInfinite;
+      result.add( infiniteObjectIndex );
+    }
+  }
+
+  PyramidIntersectData pyrIData;
+  pyrIData.origin = origin;
+  pyrIData.unitDir = unitDir;
+  pyrIData.near = near;
+  pyrIData.far = far;
+
+  bPyramidComputePlanes( origin, unitDir, near, far, nearRightVec, nearUpVec, 
+    pyrIData.leftPlaneNormal, pyrIData.rightPlaneNormal, pyrIData.upPlaneNormal, pyrIData.downPlaneNormal );
+  //report("bPyramidComputePlanes leftPlaneNormal "+leftPlaneNormal+" rightPlaneNormal "+rightPlaneNormal+" upPlaneNormal "+upPlaneNormal+" downPlaneNormal "+downPlaneNormal);
+  Vec3 min, max;
+  pyramidGetBBox( origin, unitDir, near, far, nearRightVec, nearUpVec, min, max );
+
+  UInt8 maxSearchDepth;
+  _OctCellBBox octBBox = this.getOctBBoxAndMaxSearchDepth( min, max, maxSearchDepth );
+  maxSearchDepth += 3;//Because we are a Pyramid...
+
+  Vec3 subCellDeltaCenters[8];
+  Scalar radius = (this.gridMax.x - this.gridMin.x)*0.5;
+  Scalar cellBSphereRadius = radius*1.733;//1.733 = sqrt(1 * 3)
+
+  Scalar halfRadius = radius*0.5;
+  fillSubCellDeltaCenters(subCellDeltaCenters, halfRadius);
+
+  tempTraverseData.pushToNext( this.rootCellIndex, (this.gridMin + this.gridMax)*0.5 );
+  tempTraverseData.swap();
+
+  UInt8 currDepth = 0;
+  while( tempTraverseData.size() != 0 && currDepth <= maxSearchDepth ) {
+    Size numCells = tempTraverseData.size();
+    for( Size i = 0; i < numCells; ++i ) {
+      Vec3 cellCenter;
+      Size cellIndex;
+      tempTraverseData.get( i, cellIndex, cellCenter );
+      UInt8 intersectionType = bPyramidGetBSphereIntersection( pyrIData.origin, pyrIData.unitDir, pyrIData.near, pyrIData.far, pyrIData.leftPlaneNormal, pyrIData.rightPlaneNormal, pyrIData.upPlaneNormal, pyrIData.downPlaneNormal, cellCenter, cellBSphereRadius );
+      if( intersectionType == IntersectionNone )
+        continue;
+      else {
+        this.processQueriedIntersectedCell( intersectionType, this.packedCellData[cellIndex], cellCenter, currDepth, maxSearchDepth, octBBox,
+          subCellDeltaCenters, tempTraverseData, objectMask, result);
+      }
+    }
+    for( Size i = 0; i < 8; ++i )
+      subCellDeltaCenters[i] *= 0.5;
+    radius *= 0.5;
+    cellBSphereRadius *= 0.5;
+    tempTraverseData.swap();
+    ++currDepth;
+  }
+  // Now that we have a set containing all potential objects, filter on objects' actual bPyramids and bSpheres
+  Size target = nbInfinite;
+  Size numObjects = result.size()-nbInfinite;
+
+  Size batchSize, numBatches;
+  GetBatchSizeAndCountForParallel( numObjects, 1, 50, numBatches, batchSize );
+
+  if( numBatches == 1 ) {
+    for( Size i = 0; i < numObjects; ++i ) {
+      Boolean keep = true;
+      UInt32 objectID = result.indices[i+nbInfinite];
+      UInt8 intersectionType = octBBox.getIntersectionType( this.objectData[objectID].octBBox );
+      if( intersectionType == IntersectionNone )
+        keep = false;
+      else if( !bPyramidIntersectsBSphere( pyrIData.origin, pyrIData.unitDir, pyrIData.near, pyrIData.far, pyrIData.leftPlaneNormal, pyrIData.rightPlaneNormal, pyrIData.upPlaneNormal, pyrIData.downPlaneNormal, this.objectData[objectID].getCenter(), this.objectData[objectID].radius ) ) {
+        keep = false;
+      }
+
+      if(keep)
+        result.indices[target++] = objectID;
+      else
+        result.memberBits.clear( objectID );
+    }
+  } else {
+    UInt8 keepObjects[];
+    keepObjects.resize(numObjects);
+    ParallelComputeBSpherePyramidIntersection<<<numBatches>>>(batchSize, nbInfinite, result, pyrIData, octBBox, this.objectData, keepObjects );
+
+    for( Size i = 0; i < numObjects; ++i ) {
+      if(keepObjects[i])
+        result.indices[target++] = result.indices[i+nbInfinite];
+      else
+        result.memberBits.clear( result.indices[i+nbInfinite] );
+    }
+  }
+  result.indices.resize(target);
+  result.indicesSize = target;
+//report("pyrCull: "+pyrIData+" result="+result.indices);
+}
+
+inline _raycastTestObjectFromOutside( Size objectIndex, _OctObjectData objectData, io _RayQueryData rayData ) {
+  Scalar dirFactor;
+  if( _intersectBBoxFromOutside( objectData.min, objectData.max, rayData, dirFactor ) && dirFactor >= rayData.startFactor && dirFactor < rayData.distFactor )
+    rayData.bestResult.compareAndUpdate( objectIndex, rayData.distFactor );
+}
+
+inline _raycastTestObject( Size objectIndex, _OctObjectData objectData, Vec3 currPos, io _RayQueryData rayData ) {
+  //First, test if inside
+  if( BBoxContains( objectData.min, objectData.max, currPos ) )
+    rayData.bestResult.compareAndUpdate( objectIndex, rayData.distFactor );
+  else
+    _raycastTestObjectFromOutside( objectIndex, objectData, rayData );
+}
+
+function _OctreeStruct.raycast( Ray ray, Boolean doubleSided, Scalar maxDistance, io _StatialQueryData tempData, io Ref<RaycastResult> result ) {
+  tempData._cleanup(false);
+  _RayQueryData rayData(ray, doubleSided, maxDistance, result);
+
+  Vec3 currPos = rayData.start;
+  if( !_insideBBox( this.gridMin, this.gridMax, rayData.start ) ) {
+    if( !_intersectBBoxFromOutside( this.gridMin, this.gridMax, rayData, rayData.startFactor ) )
+      return;
+    currPos += rayData.startFactor*rayData.unitDir;
+  }
+
+  _OctCellPath currGridPath;
+  this.getOctCoord( currPos, currGridPath);
+  Size cellIndexStack[14];//Oct_MAX_DEPTH
+
+  cellIndexStack[0] = this.rootCellIndex;
+  Size currStackDepth = 0;
+  Size prevStackDepth = 0;
+
+  Boolean firstLoop = true;
+  while(true) {
+
+    //Get down to lowest leaf
+    Size nextDepthBit = 1<<(15-currStackDepth);
+    _OctCellBBox currCellBBox;
+
+    while(true) {
+      Size cellIndex = cellIndexStack[currStackDepth];
+      if( !this.packedCellData[cellIndex].isSubdivided() ) {
+        currCellBBox = this.packedCellData[cellIndex].octBBox;
+        break;
+      }
+      UInt8 subCellPath = (currGridPath.xyz[0]&nextDepthBit?1:0) | ((currGridPath.xyz[1]&nextDepthBit?1:0)<<1) | ((currGridPath.xyz[2]&nextDepthBit?1:0)<<2);
+      Size subCell = this.packedCellData[cellIndex].subCellIndices[subCellPath];
+      cellIndexStack[++currStackDepth] = subCell;
+
+      if( subCell == 0 ) {
+        //Sparse subcell: compute bbox
+        _OctCellBBox parentCellBbox = this.packedCellData[cellIndexStack[currStackDepth-1]].octBBox;
+        currCellBBox = ComputeSubCellBBox( parentCellBbox, parentCellBbox.getCenter(), subCellPath );
+        break;
+      }
+      nextDepthBit >>= 1;
+    }
+
+    //Test objects from new cells, bottom to up (to maximize chances to hit sooner)
+    for( Size i = currStackDepth+1; i-- > prevStackDepth; ) {
+      Size cellIndex = cellIndexStack[i];
+      if( cellIndex ) {//Don't test virtual cells
+
+        Size numListTypes = this.packedCellData[cellIndex].isSubdivided() ? 2 : 3;
+        for( Size listType = 0; listType < numListTypes; ++listType ) {
+          UInt32 objectIndex;
+          _OctreeArrayIterator it = this.packedMemberLists.getIterator( this.packedCellData[cellIndex].arrays[listType] );
+          while( this.packedMemberLists.getNext( it, objectIndex ) ) {
+            if( tempData.visitedItems.add(objectIndex) ) {
+              if( firstLoop )
+                _raycastTestObject( objectIndex, this.objectData[objectIndex], currPos, rayData );
+              else
+                _raycastTestObjectFromOutside( objectIndex, this.objectData[objectIndex], rayData );
+            }
+          }
+        }
+      }
+    }
+
+    //Intersect outside of current cell
+    Vec3 cellMin, cellMax;
+    this.getBBox( currCellBBox, cellMin, cellMax );
+    Scalar cellDistFactor;
+    UInt8 cellIntersSide;
+    _intersectBBoxFromInside( cellMin, cellMax, rayData, cellDistFactor, cellIntersSide );
+
+    if( cellDistFactor >= rayData.distFactor )
+      return;//Done!
+
+    //Goto next cell
+    Boolean hitMin = rayData.dirSign3[cellIntersSide] == -1;
+    currPos = rayData.start + cellDistFactor*rayData.unitDir;
+    this.getOctCoord(currPos, currGridPath);
+
+    //Ensure that the OctCoord is inside the next cell (rounding errors from Scalar to UInt16 to Scalar)
+    for( UInt8 dim = 0; dim < 3; ++dim ) {
+      if( dim == cellIntersSide ) {
+        if( hitMin ) {
+          UInt16 cellPos = currCellBBox.min.xyz[dim];
+          if(cellPos == 0)
+            return;//Done!
+          currGridPath.xyz[dim] = cellPos-1;
+        }
+        else {
+          UInt16 cellPos = currCellBBox.max.xyz[dim];
+          if(cellPos == 65535)
+            return;//Done!
+          currGridPath.xyz[dim] = cellPos+1;
+        }
+      } else {
+        if( currGridPath.xyz[dim] <= currCellBBox.min.xyz[dim] )
+          currGridPath.xyz[dim] = currCellBBox.min.xyz[dim]+1;//Cells have at least a width of 2
+        else if( currGridPath.xyz[dim] >= currCellBBox.max.xyz[dim] )
+          currGridPath.xyz[dim] = currCellBBox.max.xyz[dim]-1;
+      }
+    }
+
+    //Go up in hierarchy until we find the right level on that side
+    UInt16 currHitOctPos = currGridPath.xyz[cellIntersSide];
+    if( hitMin ) {
+      while(true) {
+        if( currStackDepth == 0 )
+          return;//Done!
+        --currStackDepth;
+        Size parentCell = cellIndexStack[currStackDepth];
+        UInt16 parentCellOctPos = this.packedCellData[parentCell].octBBox.min.xyz[cellIntersSide];
+        if( parentCellOctPos < currHitOctPos )
+          break;
+      }
+    } else {
+      while(true) {
+        if( currStackDepth == 0 )
+          return;//Done!
+        --currStackDepth;
+        Size parentCell = cellIndexStack[currStackDepth];
+        UInt16 parentCellOctPos = this.packedCellData[parentCell].octBBox.max.xyz[cellIntersSide];
+        if( parentCellOctPos > currHitOctPos )
+          break;
+      }
+    }
+    prevStackDepth = currStackDepth+1;//Common ancestor has already been tested
+    firstLoop = false;
+  }
+}
+
+inline _closestTestObject( Size objectIndex, io _StatialQueryData tempData, _OctObjectData objectData, io _ClosestQueryData closestData ) {
+  Scalar bboxSqDist = _getBBoxSquaredDistance( objectData.min, objectData.max, closestData );
+  if( bboxSqDist < closestData.maxScaledSquaredDist ) {
+    if( bboxSqDist < 1.0e-10 ) //squared 1e-5 eps
+      closestData.bestResult.compareAndUpdate( objectIndex, closestData.maxScaledSquaredDist );
+    else {
+      _QueryHeapItem heapItem;
+      heapItem.objIndex = objectIndex;
+      heapItem.distFactor = bboxSqDist;
+      tempData._QueryHeapInsert(heapItem);
+    }
+  }
+}
+
+inline _testCellObjectsForClosest( _OctreeStruct octree, Size cellIndex, io _StatialQueryData tempData, io _ClosestQueryData closestData ) {
+  Size numListTypes = octree.packedCellData[cellIndex].isSubdivided() ? 2 : 3;
+  for( Size listType = 0; listType < numListTypes; ++listType ) {
+    UInt32 objectIndex;
+    _OctreeArrayIterator it = octree.packedMemberLists.getIterator( octree.packedCellData[cellIndex].arrays[listType] );
+    while( octree.packedMemberLists.getNext( it, objectIndex ) ) {
+      if( tempData.visitedItems.add(objectIndex) )
+        _closestTestObject( objectIndex, tempData, octree.objectData[objectIndex], closestData );
+    }
+  }
+}
+
+function _OctreeStruct.getClosest( Vec3 position, Vec3 scaling, Scalar maxUnscaledDistance, io _StatialQueryData tempData, io Ref<ClosestResult> result ) {
+  tempData._cleanup(false);
+
+  //Before going recursive on octree's bboxes, first get closest distance bottom to up
+  //of the closest stack to have a good initial cutoff, and minimize the amount of 
+  //elements pushed on the heap.
+
+  _ClosestQueryData closestData;
+  closestData.position = position;
+  closestData.scaling = scaling;
+  closestData.hasScaling = abs(scaling.x-1.0)>1.0e-5 || abs(scaling.y-1.0)>1.0e-5 || abs(scaling.z-1.0)>1.0e-5;
+  closestData.maxScaledSquaredDist = maxUnscaledDistance*maxUnscaledDistance;
+  closestData.bestResult = result;
+  closestData.bestResult.reset( position, scaling, closestData.hasScaling );
+
+  //Fill initial stack
+  Vec3 rootBBoxClosestPos = bBoxGetClosestPoint( this.gridMin, this.gridMax, position );
+  _OctCellPath initialGridPath;
+  this.getOctCoord( rootBBoxClosestPos, initialGridPath);
+
+  Scalar initialSqDist = _getScaledSquaredDistance( rootBBoxClosestPos, closestData );
+
+  //Get down to lowest leaf
+  Size initialStackDepth = 0;
+  Size nextDepthBit = 1<<15;
+
+  Size initialClosestCellStack[15];//Oct_MAX_DEPTH+1
+  initialClosestCellStack[0] = this.rootCellIndex;
+
+  while(true) {
+    Size cellIndex = initialClosestCellStack[initialStackDepth];
+    if( !this.packedCellData[cellIndex].isSubdivided() )
+      break;
+
+    UInt8 subCellPath = (initialGridPath.xyz[0]&nextDepthBit?1:0) | ((initialGridPath.xyz[1]&nextDepthBit?1:0)<<1) | ((initialGridPath.xyz[2]&nextDepthBit?1:0)<<2);
+    Size subCell = this.packedCellData[cellIndex].subCellIndices[subCellPath];
+    if( !subCell )
+      break;
+
+    initialClosestCellStack[++initialStackDepth] = subCell;
+    nextDepthBit >>= 1;
+  }
+
+  //Initial stack path: fill the initial heap with these cells.
+  //They all have the same distance, but higher depth should go first.
+  //So: reverse the order of initialClosestCellStack
+  tempData._ResetHeap();
+  if( tempData.heapItems.size() < 14 )
+    tempData.heapItems.resize(14);
+
+  Size depth = initialStackDepth;
+  for( Size i = 0; i < initialStackDepth+1; ++i ) {
+    _QueryHeapItem heapItem;
+    heapItem.cellIndex = initialClosestCellStack[depth];
+    heapItem.cellDepth = depth;
+    heapItem.distFactor = initialSqDist;
+    tempData.heapItems[i] = heapItem;
+    --depth;
+  }
+  tempData.heapItemsEnd = initialStackDepth+1;
+
+  while( true ) {
+    _QueryHeapItem heapItem;
+
+    if( !tempData._QueryHeapPopMin(heapItem) || heapItem.distFactor > closestData.maxScaledSquaredDist )
+      break;
+
+    if( heapItem.cellIndex == 0 ) //object
+      closestData.bestResult.compareAndUpdate( heapItem.objIndex, closestData.maxScaledSquaredDist );
+    else {
+      _testCellObjectsForClosest( this, heapItem.cellIndex, tempData, closestData );
+
+      //Push subcells
+      if( this.packedCellData[heapItem.cellIndex].isSubdivided() ) {
+        Size initialSubCellForNextDepth = initialClosestCellStack[heapItem.cellDepth+1];
+
+        Vec3 cellMin, cellMax;
+        this.getBBox( this.packedCellData[heapItem.cellIndex].octBBox, cellMin, cellMax );
+        Vec3 cellCenter = (cellMin + cellMax)*0.5;
+
+        for( UInt8 j = 0; j < 8; ++j ) {
+          Size subCell = this.packedCellData[heapItem.cellIndex].subCellIndices[j];
+          if( subCell != 0 && initialSubCellForNextDepth != subCell ) {
+            Vec3 subMin, subMax;
+            ComputeSubCellBBox( cellMin, cellMax, cellCenter, j, subMin, subMax );
+            Scalar subCellSqDist = _getBBoxSquaredDistance( subMin, subMax, closestData );
+            if( subCellSqDist < closestData.maxScaledSquaredDist ) {
+              _QueryHeapItem subHeapItem;
+              subHeapItem.cellIndex = subCell;
+              subHeapItem.distFactor = subCellSqDist;
+              subHeapItem.cellDepth = heapItem.cellDepth+1;
+              tempData._QueryHeapInsert(subHeapItem);
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,455 @@
+
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+/*SPHINX-description
+The :ref:`vec2` type represents a vector with 2 components. The :ref:`vec2` is also used as the row type for the :ref:`mat22`.
+
+Example
+---------
+
+.. code-block:: js
+
+    Vec2 v(0.0, 0.0);
+*/
+
+struct Vec2
+{
+  Scalar x;
+  Scalar y;
+};
+
+// constructor from scalar components
+inline Vec2(Scalar x, Scalar y) {
+  this.set(x, y);
+}
+
+// setter from scalar components
+inline Vec2.set!(Scalar x, Scalar y) {
+  this.x = x;
+  this.y = y;
+}
+
+// setter from (standard/external) float32 array and an offset
+inline Vec2.set!(Float32 v<>, UInt32 o) {
+  if(v.size() >= 2 + o) {
+    this.x = v[o + 0];
+    this.y = v[o + 1];
+  }
+}
+
+// getter as external float32 array and an offset
+inline Vec2.get(io Float32 v<>, UInt32 o) {
+  if(v.size() >= 2 + o) {
+    v[o + 0] = this.x;
+    v[o + 1] = this.y;
+  }
+}
+
+// getter as float32 array and an offset
+inline Vec2.get(io Float32 v[], UInt32 o) {
+  if(v.size() < 2 + o)
+    v.resize(2 + o);
+  v[o + 0] = this.x;
+  v[o + 1] = this.y;
+}
+
+// setter from (standard/external) float64 array and an offset
+inline Vec2.set!(Float64 v<>, UInt32 o) {
+  if(v.size() >= 2 + o) {
+    this.x = Float32(v[o + 0]);
+    this.y = Float32(v[o + 1]);
+  }
+}
+
+// getter as external float64 array and an offset
+inline Vec2.get(io Float64 v<>, UInt32 o) {
+  if(v.size() >= 2 + o) {
+    v[o + 0] = this.x;
+    v[o + 1] = this.y;
+  }
+}
+
+// getter as float64 array and an offset
+inline Vec2.get(io Float64 v[], UInt32 o) {
+  if(v.size() < 2 + o)
+    v.resize(2 + o);
+  v[o + 0] = this.x;
+  v[o + 1] = this.y;
+}
+
+// setter from (standard/external) float32 array
+inline Vec2.set!(Float32 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float32 array
+inline Vec2.get(io Float32 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float32 array
+inline Vec2.get(io Float32 v[]) {
+  this.get(v, 0);
+}
+
+// setter from (standard/external) float64 array
+inline Vec2.set!(Float64 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float64 array
+inline Vec2.get(io Float64 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float64 array
+inline Vec2.get(io Float64 v[]) {
+  this.get(v, 0);
+}
+
+// sets all components of this vec to 0.0
+inline Vec2.setNull!() {
+  this.x = this.y = 0.0;
+}
+
+// returns true if this vector is the same as another one
+inline Boolean Vec2.equal(in Vec2 other) {
+  return this.x == other.x && this.y == other.y;
+}
+
+// returns true if this vector is the same as another one
+// (given a precision)
+inline Boolean Vec2.almostEqual(in Vec2 other, in Scalar precision) {
+  return
+      (abs(this.x - other.x) < precision) &&
+      (abs(this.y - other.y) < precision);
+}
+
+// returns true if this vector is the same as another one
+// (using a default precision)
+inline Boolean Vec2.almostEqual(in Vec2 other) {
+  return this.almostEqual(other, PRECISION);
+}
+
+// returns the component of this vector by index
+inline Scalar Vec2.component( Size i ) {
+  if(i == 0)
+    return this.x;
+  else
+    return this.y;
+}
+
+// sets the component of this vector by index
+inline Vec2.setComponent!( Size i, Scalar v ) {
+  if(i == 0)
+    this.x = v;
+  else
+    this.y = v;
+}
+
+// equals operator
+inline Boolean == (Vec2 a, Vec2 b) {
+  return a.x == b.x && a.y == b.y;
+}
+
+// not equals operator
+inline Boolean != (Vec2 a, Vec2 b) {
+  return a.x != b.x || a.y != b.y;
+}
+
+// unary -
+inline Vec2 -Vec2() {
+  return Vec2(-this.x, -this.y);
+}
+
+// adds to vectors
+inline Vec2 + (Vec2 a, Vec2 b) {
+  return vecAdd(a, b);
+}
+
+// adds a vector to this one
+inline Vec2. += (Vec2 other) {
+  this = this + other;
+}
+
+// subtracts two vectors
+inline Vec2 - (Vec2 a, Vec2 b) {
+  return vecSub(a, b);
+}
+
+// subtracts a vector from this one
+inline Vec2. -= (Vec2 other) {
+  this = this - other;
+}
+
+// multiplies a scalar and a vector
+inline Vec2 * (Scalar a, Vec2 b) {
+  return vecMul(a, b);
+}
+
+// multiplies a vector and a scalar
+inline Vec2 * (Vec2 a, Scalar b) {
+  return vecMul(a, b);
+}
+
+// multiplies two vectors
+inline Vec2 * (Vec2 a, Vec2 b) {
+  return vecMul(a, b);
+}
+
+// multiplies this vector with a scalar
+inline Vec2. *= (Scalar other) {
+  this = this * other;
+}
+
+// multiplies this vector with another one
+inline Vec2. *= (Vec2 other) {
+  this = this * other;
+}
+
+// divides two vectors
+inline Vec2 / (Vec2 a, Vec2 b) {
+  if( Math_badDivisor( b.x ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( b.x, "Vec2.divide: b.x" );
+  if( Math_badDivisor( b.y ) )
+    Math_reportBadDivisor( b.y, "Vec2.divide: b.y" );
+  return vecDiv(a, b);
+}
+
+// divides a vector by a scalar
+inline Vec2 / (Vec2 a, Scalar b) {
+  if( Math_badDivisor( b ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( b, "Vec2.divide" );
+  return vecDiv(a, b);
+}
+
+// divides this vector with a scalar
+inline Vec2. /= (Scalar other) {
+  this = this / other;
+}
+
+// divides this vector with another one
+inline Vec2. /= (Vec2 other) {
+  this = this / other;
+}
+
+// overload method for the add operator
+inline Vec2 Vec2.add(Vec2 other) {
+  return this + other;
+}
+
+// overload method for the subtract operator
+inline Vec2 Vec2.subtract(Vec2 other) {
+  return this - other;
+}
+
+// overload method for the multiply operator
+inline Vec2 Vec2.multiply(Vec2 other) {
+  return this * other;
+}
+
+// overload method for the divide operator
+inline Vec2 Vec2.divide(Vec2 other) {
+  return this / other;
+}
+
+// returns the product of this vector and a scalar
+inline Vec2 Vec2.multiplyScalar(Scalar other) {
+  return this * other;
+}
+
+// returns the division of this vector and a scalar
+inline Vec2 Vec2.divideScalar(Scalar other) {
+  return this / other;
+}
+
+// returns the negated version of this vector
+inline Vec2 Vec2.negate() {
+  return Vec2(-this.x, - this.y);
+}
+
+// returns the inversed version of this vector
+inline Vec2 Vec2.inverse() {
+  if( Math_badDivisor( this.x ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( this.x, "Vec2.inverse: this.x" );
+  if( Math_badDivisor( this.y ) )
+    Math_reportBadDivisor( this.y, "Vec2.inverse: this.y" );
+  return Vec2(1.0/this.x, 1.0/this.y);
+}
+
+// returns the dot product of this vector and another one
+inline Scalar Vec2.dot(Vec2 other) {
+  return this.x * other.x + this.y * other.y;
+}
+
+// returns the cross product of this vector and another one
+inline Scalar Vec2.cross(in Vec2 other) {
+  return this.x * other.y - this.y * other.x;
+}
+
+// returns the squared length of this vector
+inline Scalar Vec2.lengthSquared() {
+  return this.dot(this);
+}
+
+// returns the length of this vector
+inline Scalar Vec2.length() {
+  return sqrt(this.lengthSquared());
+}
+
+// returns the unit vector of this one, throws and exception if almost zero length
+inline Vec2 Vec2.unit() {
+  Scalar n = this.length();
+  if( Math_badDivisor( n ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( n, "Vec2.unit" );
+  return this / n;
+}
+
+// returns the unit vector of this one, with an arbitrary value if almost zero length
+inline Vec2 Vec2.unit_safe() {
+  Scalar n = this.length();
+  if( !Math_badDivisor( n ) )//Perf: check first to avoid building the report string
+    return this / n;
+  else
+    return Vec2(0,1);
+}
+
+// sets this vector to its unit vector
+// and returns its previous length
+inline Scalar Vec2.setUnit!() {
+  Scalar n = this.length();
+  if( Math_badDivisor( n ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( n, "Vec2.setUnit" );
+  this /= n;
+  return n;
+}
+
+// clamps this vector per component by 
+// a min and max vector
+inline Vec2 Vec2.clamp(in Vec2 min, in Vec2 max) {
+  return Vec2(
+    (this.x < min.x ? min.x : (this.x > max.x ? max.x : this.x)),
+    (this.y < min.y ? min.y : (this.y > max.y ? max.y : this.y))
+  );
+}
+
+// returns the angle (in radians) of this vector
+// to another one
+//Note: expects both vectors to be units (else use angleTo)
+inline Scalar Vec2.unitsAngleTo(in Vec2 other) {
+  Scalar acosAngle = Math_clamp(this.dot(other), -1.0, 1.0);
+  return acos(acosAngle);
+}
+
+// returns the angle (in radians) of this vector
+// to another one
+inline Scalar Vec2.angleTo(in Vec2 other) {
+  return this.unit().unitsAngleTo(other.unit());
+}
+
+// returns the distance of this vector to another one
+inline Scalar Vec2.distanceTo(in Vec2 other) {
+  return (this - other).length();
+}
+
+// linearly interpolates this vector with another one
+// based on a scalar blend value (0.0 to 1.0)
+inline Vec2 Vec2.linearInterpolate(in Vec2 other, in Scalar t) {
+  return this + ((other - this) * t);
+}
+
+// returns the distance of this vector to a line defined
+// by two points on the line
+inline Scalar Vec2.distanceToLine(in Vec2 lineP0, in Vec2 lineP1) {
+  Vec2 v, w, Pb;
+  Scalar c1, c2, b;
+  v = lineP1 - lineP0;
+  w = this - lineP0;
+
+  c1 = w.dot(v);
+  c2 = v.dot(v);
+  if(c2 == 0.0){
+    return this.distanceTo(lineP0);
+  }
+  b = c1 / c2;
+
+  Pb = lineP0 + b * v;
+  return this.distanceTo(Pb);
+}
+
+// returns the distance of this vector to a line segment defined
+// by the start and end points of the line segment
+inline Scalar Vec2.distanceToSegment(in Vec2 segmentP0, in Vec2 segmentP1) {
+  Vec2 v, w, Pb;
+  Scalar c1, c2, b;
+  v = segmentP1 - segmentP0;
+  w = this - segmentP0;
+
+  c1 = w.dot(v);
+  if (c1 <= 0) {
+    return this.distanceTo(segmentP0);
+  }
+  c2 = v.dot(v);
+  if (c2 <= c1) {
+    return this.distanceTo(segmentP1);
+  }
+  b = c1 / c2;
+  Pb = segmentP0 + b * v;
+  return this.distanceTo(Pb);
+}
+
+// dist3D_Line_to_Line():
+//    Input:  two 3D lines L1 and L2
+//    Return: the shortest distance between L1 and L2
+inline Scalar distanceFromLineToLine(
+  in Vec2 l1_p0, in Vec2 l1_p1,
+  in Vec2 l2_p0, in Vec2 l2_p1,
+  io Scalar l1_t, io Scalar l2_t
+) {
+  Vec2 u, v, w, dP;
+  Scalar a, b, c, d, e, D;
+  u = l1_p1 - l1_p0;
+  v = l2_p1 - l2_p0;
+  w = l1_p0 - l2_p0;
+  a = u.dot(u); // always >= 0
+  b = u.dot(v);
+  c = v.dot(v); // always >= 0
+  d = u.dot(w);
+  e = v.dot(w);
+  if(a == 0.0 && c == 0.0){
+    return l1_p0.distanceTo(l2_p0);
+  }
+  if(a == 0.0){
+    return l1_p0.distanceToLine(l2_p0, l2_p1);
+  }
+  if(c == 0.0){
+    return l2_p0.distanceToLine(l1_p0, l1_p1);
+  }
+  D = a * c - b * b; // always >= 0
+
+  // com_pute the line _parameters of the two closest Vec2s
+  if (D < 0.001) {
+    // the lines are almost parallel
+    l1_t = 0.0;
+    if (b > c) {
+      // use the largest denominator
+      l2_t = d / b;
+    }else {
+      l2_t = e / c;
+    }
+  }
+  else {
+    l1_t = (b * e - c * d) / D;
+    l2_t = (a * e - b * d) / D;
+  }
+  // get the difference of the two closest Vec2s
+  dP = w + (l1_t * u) - (l2_t * v);
+
+  return dP.length(); // return the closest distance
+}
+
+
+
+
+

@@ -1,0 +1,195 @@
+
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+/*
+Overview:
+
+BulletConeTwistConstraint can be used to simulate ragdoll joints (upper arm, leg etc).
+It is a fixed translation, 3 degree-of-freedom (DOF) rotational "joint".
+It divides the 3 rotational DOFs into swing (movement within a cone) and twist.
+Swing is divided into swing1 and swing2 which can have different limits, giving an elliptical shape.
+(Note: the cone's base isn't flat, so this ellipse is "embedded" on the surface of a sphere.)
+
+In the contraint's frame of reference:
+twist is along the x-axis,
+and swing 1 and 2 are along the z and y axes respectively.
+*/
+
+// #include "LinearMath/Vec3.h"
+// #include "BulletJacobianEntry.h"
+// #include "BulletTypedConstraint.h"
+
+// class BulletRigidBody;
+
+
+const UInt32 BulletConeTwistFlags_BT_CONETWIST_FLAGS_LIN_CFM = 1;
+const UInt32 BulletConeTwistFlags_BT_CONETWIST_FLAGS_LIN_ERP = 2;
+const UInt32 BulletConeTwistFlags_BT_CONETWIST_FLAGS_ANG_CFM = 4;
+
+///BulletConeTwistConstraint can be used to simulate ragdoll joints (upper arm, leg etc)
+object BulletConeTwistConstraint : BulletTypedConstraint
+{
+	Data pointer;
+	BulletRigidBody	rbA;
+	BulletRigidBody	rbB;
+};
+
+function Data BulletConeTwistConstraint.getPointer(){
+	return this.pointer;
+}
+
+function BulletConeTwistConstraint(BulletRigidBody rbA,BulletRigidBody rbB, in Xfo rbAFrame, in Xfo rbBFrame){
+	this.rbA = rbA;
+	this.rbB = rbB;
+	this.__construct(rbA, rbB, rbAFrame, rbBFrame);
+}
+function BulletConeTwistConstraint.__construct!(BulletRigidBody rbA, BulletRigidBody rbB, in Xfo rbAFrame, in Xfo rbBFrame) = "BulletConeTwistConstraint_construct1";
+
+
+function BulletConeTwistConstraint(BulletRigidBody rbA, in Xfo rbAFrame){
+	this.rbA = rbA;
+	this.__construct( rbA, rbAFrame);
+}
+
+function BulletConeTwistConstraint.__construct!(BulletRigidBody rbA, in Xfo rbAFrame) = "BulletConeTwistConstraint_construct2";
+
+	
+function ~BulletConeTwistConstraint() = "BulletConeTwistConstraint_destroy";
+
+
+function BulletConeTwistConstraint.buildJacobian!() = 'BulletConeTwistConstraint_buildJacobian';
+
+// function BulletConeTwistConstraint.getInfo1! (BulletConstraintInfo1 info) = 'BulletConeTwistConstraint_getInfo1';
+
+// function BulletConeTwistConstraint.getInfo1NonVirtual!(BulletConstraintInfo1 info) = 'BulletConeTwistConstraint_getInfo1NonVirtual';
+	
+// function BulletConeTwistConstraint.getInfo2! (BulletConstraintInfo2 info) = 'BulletConeTwistConstraint_getInfo2';
+	
+// function BulletConeTwistConstraint.getInfo2NonVirtual!(BulletConstraintInfo2 info,in Xfo transA,in Xfo transB, in Mat33 invInertiaWorldA, in Mat33 invInertiaWorldB) = 'BulletConeTwistConstraint_getInfo2NonVirtual';
+
+
+function BulletConeTwistConstraint.updateRHS!(Scalar	timeStep) = 'BulletConeTwistConstraint_updateRHS';
+
+
+function BulletRigidBody BulletConeTwistConstraint.getRigidBodyA()
+{
+	return this.rbA;
+}
+function BulletRigidBody BulletConeTwistConstraint.getRigidBodyB()
+{
+	return this.rbB;
+}
+
+function BulletConeTwistConstraint.setAngularOnly!(Boolean angularOnly) = 'BulletConeTwistConstraint_setAngularOnly';
+
+function BulletConeTwistConstraint.setLimit!(Integer limitIndex, Scalar limitValue) = 'BulletConeTwistConstraint_setLimit';
+
+// setLimit(), a few notes:
+// _softness:
+//		0->1, recommend ~0.8->1.
+//		describes % of limits where movement is free.
+//		beyond this softness %, the limit is gradually enforced until the "hard" (1.0) limit is reached.
+// _biasFactor:
+//		0->1?, recommend 0.3 +/-0.3 or so.
+//		strength with which constraint resists zeroth order (angular, not angular velocity) limit violation.
+// __relaxationFactor:
+//		0->1, recommend to stay near 1.
+//		the lower the value, the less the constraint will fight velocities which violate the angular limits.
+function BulletConeTwistConstraint.setLimit!(Scalar _swingSpan1, Scalar _swingSpan2, Scalar _twistSpan){
+	this.setLimit(_swingSpan1, _swingSpan2, _twistSpan, 1.0, 0.3, 1.0);
+}
+function BulletConeTwistConstraint.setLimit!(Scalar _swingSpan1, Scalar _swingSpan2, Scalar _twistSpan, Scalar _softness, Scalar _biasFactor, Scalar _relaxationFactor) = 'BulletConeTwistConstraint_setLimit2';
+
+function Xfo BulletConeTwistConstraint.getAFrame() = 'BulletConeTwistConstraint_getAFrame';
+function Xfo BulletConeTwistConstraint.getBFrame() = 'BulletConeTwistConstraint_getBFrame';
+
+function Integer BulletConeTwistConstraint.getSolveTwistLimit() = 'BulletConeTwistConstraint_getSolveTwistLimit';
+
+function Integer BulletConeTwistConstraint.getSolveSwingLimit() = 'BulletConeTwistConstraint_getSolveSwingLimit';
+
+function Scalar BulletConeTwistConstraint.getTwistLimitSign() = 'BulletConeTwistConstraint_getTwistLimitSign';
+
+function BulletConeTwistConstraint.calcAngleInfo!() = 'BulletConeTwistConstraint_calcAngleInfo';
+function BulletConeTwistConstraint.calcAngleInfo2!(in Xfo transA, in Xfo transB, in Mat33 invInertiaWorldA, in Mat33 invInertiaWorldB) = 'BulletConeTwistConstraint_calcAngleInfo2';
+
+function Scalar BulletConeTwistConstraint.getSwingSpan1() = 'BulletConeTwistConstraint_getSwingSpan1';
+function Scalar BulletConeTwistConstraint.getSwingSpan2() = 'BulletConeTwistConstraint_getSwingSpan2';
+function Scalar BulletConeTwistConstraint.getTwistSpan() = 'BulletConeTwistConstraint_getTwistSpan';
+function Scalar BulletConeTwistConstraint.getTwistAngle() = 'BulletConeTwistConstraint_getTwistAngle';
+function Boolean BulletConeTwistConstraint.isPastSwingLimit() = 'BulletConeTwistConstraint_isPastSwingLimit';
+
+function BulletConeTwistConstraint.setDamping!(Scalar damping) = 'BulletConeTwistConstraint_setDamping';
+
+function BulletConeTwistConstraint.enableMotor!(Boolean b) = 'BulletConeTwistConstraint_enableMotor';
+function BulletConeTwistConstraint.setMaxMotorImpulse!(Scalar maxMotorImpulse) = 'BulletConeTwistConstraint_setMaxMotorImpulse';
+function BulletConeTwistConstraint.setMaxMotorImpulseNormalized!(Scalar maxMotorImpulse) = 'BulletConeTwistConstraint_setMaxMotorImpulseNormalized';
+
+function Scalar BulletConeTwistConstraint.getFixThresh() = 'BulletConeTwistConstraint_getFixThresh';
+function BulletConeTwistConstraint.setFixThresh!(Scalar fixThresh) = 'BulletConeTwistConstraint_setFixThresh';
+
+// setMotorTarget:
+// q: the desired rotation of bodyA wrt bodyB.
+// note: if q violates the joint limits, the internal target is clamped to avoid conflicting impulses (very bad for stability)
+// note: don't forget to enableMotor()
+function BulletConeTwistConstraint.setMotorTarget!(in Quat q) = 'BulletConeTwistConstraint_setMotorTarget';
+
+// same as above, but q is the desired rotation of frameA wrt frameB in constraint space
+function BulletConeTwistConstraint.setMotorTargetInConstraintSpace!(in Quat q) = 'BulletConeTwistConstraint_setMotorTargetInConstraintSpace';
+
+function Vec3 BulletConeTwistConstraint.GetPointForAngle?(Scalar fAngleInRadians, Scalar fLength) = 'BulletConeTwistConstraint_GetPointForAngle';
+
+///override the default global value of a parameter (such as ERP or CFM), optionally provide the axis (0..5). 
+///If no axis is provided, it uses the default axis for this constraint.
+function BulletConeTwistConstraint.setParam!(Integer num, Scalar value){
+	this.setParam(num, value, -1);
+}
+function BulletConeTwistConstraint.setParam!(Integer num, Scalar value, Integer axis) = 'BulletConeTwistConstraint_setParam';
+
+function BulletConeTwistConstraint.setFrames!(in Xfo frameA, in Xfo frameB) = 'BulletConeTwistConstraint_setFrames';
+
+function Xfo BulletConeTwistConstraint.getFrameOffsetA() = 'BulletConeTwistConstraint_getFrameOffsetA';
+
+function Xfo BulletConeTwistConstraint.getFrameOffsetB() = 'BulletConeTwistConstraint_getFrameOffsetB';
+
+
+///return the local value of parameter
+function Scalar BulletConeTwistConstraint.getParam?(Integer num){
+	return this.getParam(num, -1);
+}
+function Scalar BulletConeTwistConstraint.getParam?(Integer num, Integer axis) = 'BulletConeTwistConstraint_getParam';
+
+// virtual	Integer	calculateSerializeBufferSize() const;
+
+// ///fills the dataBuffer and returns the struct name (and 0 on failure)
+// virtual	String	serialize(void* dataBuffer, BulletSerializer* serializer) const;
+
+
+
+
+///////////////////////////////////////////////////////
+// From BulletTypedConstraint
+
+
+function Scalar BulletConeTwistConstraint.getBreakingImpulseThreshold() = 'BulletConeTwistConstraint_getBreakingImpulseThreshold';
+
+function BulletConeTwistConstraint.setBreakingImpulseThreshold!(Scalar threshold) = 'BulletConeTwistConstraint_setBreakingImpulseThreshold';
+
+function Boolean BulletConeTwistConstraint.isEnabled() = 'BulletConeTwistConstraint_isEnabled';
+
+function BulletConeTwistConstraint.setEnabled!(Boolean enabled) = 'BulletConeTwistConstraint_setEnabled';
+
+function Boolean BulletConeTwistConstraint.needsFeedback() = 'BulletConeTwistConstraint_needsFeedback';
+
+///enableFeedback will allow to read the applied linear and angular impulse
+///use getAppliedImpulse, getAppliedLinearImpulse and getAppliedAngularImpulse to read feedback information
+function BulletConeTwistConstraint.enableFeedback!(Boolean needsFeedback) = 'BulletConeTwistConstraint_enableFeedback';
+
+///getAppliedImpulse is an estimated total applied impulse. 
+///This feedback could be used to determine breaking constraints or playing sounds.
+function Scalar	BulletConeTwistConstraint.getAppliedImpulse() = 'BulletConeTwistConstraint_getAppliedImpulse';
+
+function UInt32 BulletConeTwistConstraint.getConstraintType() = 'BulletConeTwistConstraint_getConstraintType';

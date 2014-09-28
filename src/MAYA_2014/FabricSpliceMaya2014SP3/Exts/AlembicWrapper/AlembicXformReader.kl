@@ -1,0 +1,92 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+
+object AlembicXformReader : AlembicObjectReader{
+  AlembicIXform _xform;
+  AlembicIXformSchema _schema;
+  AlembicXformSample _sample;
+  Float64 _times[];
+  Xfo _xfos[];
+  Size _lastXfoIndex;
+};
+
+function AlembicXformReader(AlembicIObject xform) {
+  this._xform = AlembicIXform(xform);
+  this._schema = this._xform.getSchema();
+  this._sample = AlembicXformSample();
+  
+  this._times = this._schema.getTimeSampling().getStoredTimes();
+  if(this._times.size() == 0)
+    this._times.push(0.0);
+
+  this._xfos.resize(this._times.size());
+  for(Size i=0;i<this._xfos.size();i++) {
+    this._schema.get(this._sample, AlembicISampleSelector(i));
+    Mat44 m = this._sample.getMatrix().transpose();
+    m.row3 = Vec4(0,0,0,1);
+    this._xfos[i] = m;
+  }
+
+  this._lastXfoIndex = 0;
+}
+
+function String AlembicXformReader.getPath() {
+  return this._xform.asIObject().getFullName();
+}
+
+function Boolean AlembicXformReader.valid() {
+  return this._xform.valid();
+}
+
+function AlembicXformReader.reset!() {
+  this._xform.reset();
+  this._schema.reset();
+  this._sample = null;
+  this._times.resize(0);
+  this._xfos.resize(0);
+  this._lastXfoIndex = 0;
+}
+
+function AlembicIObject AlembicXformReader.getIObject() {
+  return this._xform.asIObject();
+}
+
+function SInt32 AlembicXformReader.getNumSamples() {
+  return this._times.size();
+}
+
+function Xfo AlembicXformReader.readSample!(Float64 time) {
+  if(this._xfos.size() == 0)
+    return Xfo();
+  if(this._times.size() <= 1)
+    return this._xfos[0];
+
+  while(this._lastXfoIndex > 0 && this._times[this._lastXfoIndex] >= time) {
+    this._lastXfoIndex--;
+  }
+  while(this._lastXfoIndex < (this._times.size() - 2) && this._times[this._lastXfoIndex+1] < time) {
+    this._lastXfoIndex++;
+  }
+
+  for(Integer i=-3;i<4;i++) {
+    Integer j = Math_clamp(Integer(this._lastXfoIndex) + i, 0, this._times.size()-1);
+  }
+
+  if(this._lastXfoIndex == 0) {
+    if(this._times[0] >= time) {
+      return this._xfos[0];
+    }
+  } else if(this._lastXfoIndex == this._times.size() - 2) {
+    if(this._times[this._times.size()-1] <= time) {
+      return this._xfos[this._xfos.size()-1];
+    }
+  }
+
+  Float64 timeStep = this._times[this._lastXfoIndex+1] - this._times[this._lastXfoIndex];
+  Float64 delta = time - this._times[this._lastXfoIndex];
+  Float64 u = delta / timeStep;
+  return this._xfos[this._lastXfoIndex].linearInterpolate(this._xfos[this._lastXfoIndex+1], Float32(u));
+}

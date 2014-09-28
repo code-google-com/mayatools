@@ -1,0 +1,139 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+require Geometry;
+
+object AlembicPointsReader : AlembicObjectReader{
+  AlembicIPoints _points;
+  AlembicIPointsSchema _schema;
+  AlembicTimeSampling _timeSampling;
+  AlembicSampleInfo _info;
+  UInt32 _numSamples;
+  AlembicIPointsSample _sampleA;
+  AlembicIPointsSample _sampleB;
+  AlembicGeometryAttributesReader _attributesReader;
+};
+
+function AlembicPointsReader(AlembicIObject points) {
+  this._points = AlembicIPoints(points);
+  this._schema = this._points.getSchema();
+  this._sampleA = AlembicIPointsSample();
+  this._sampleB = AlembicIPointsSample();
+  this._timeSampling = this._schema.getTimeSampling();
+  this._numSamples = this._schema.getNumSamples();
+  this._attributesReader = AlembicGeometryAttributesReader(this._schema.getArbGeomParams());
+
+  // backwards compatibility
+  // properties might be stored on other props
+  AlembicICompoundProperty mainProps = this._points.getProperties();
+  AlembicICompoundProperty geomProps = AlembicICompoundProperty(mainProps, ".geom");
+  if(geomProps.valid()) {
+    for(Size i=0;i<geomProps.getNumProperties();i++) {
+      AlembicPropertyHeader ph = geomProps.getPropertyHeader(i);
+      if(ph.getName() == '.color') {
+        AlembicGeometryParamReader paramReader = AlembicGeometryParamReader(AlembicIColorfGeomParam(geomProps, ph.getName()));
+        paramReader._name = 'vertexColors';
+        this._attributesReader.addParamReader(paramReader);
+      } else if(ph.getName() == '.scale') {
+        AlembicGeometryParamReader paramReader = AlembicGeometryParamReader(AlembicIVec3VfGeomParam(geomProps, ph.getName()));
+        paramReader._name = 'scales';
+        this._attributesReader.addParamReader(paramReader);
+      } else if(ph.getName() == '.orientation') {
+        AlembicGeometryParamReader paramReader = AlembicGeometryParamReader(AlembicIQuatfGeomParam(geomProps, ph.getName()));
+        paramReader._name = 'orientations';
+        this._attributesReader.addParamReader(paramReader);
+      }
+    }
+  }
+}
+
+function String AlembicPointsReader.getPath() {
+  return this._points.asIObject().getFullName();
+}
+
+function Boolean AlembicPointsReader.valid() {
+  return this._points.valid();
+}
+
+function AlembicPointsReader.reset!() {
+  this._points.reset();
+  this._schema.reset();
+  this._sampleA = null;
+  this._sampleB = null;
+}
+
+function AlembicIObject AlembicPointsReader.getIObject() {
+  return this._points.asIObject();
+}
+
+function SInt32 AlembicPointsReader.getNumSamples() {
+  return this._numSamples;
+}
+
+function AlembicPointsReader.readSample!(Float64 time, io GeometryAttributes attributes) {
+  if(this._info.time == time)
+    return;
+
+  AlembicSampleInfo info(time, this._timeSampling, this._numSamples);
+  if(info == this._info)
+    return;
+  this._info = info;
+
+  this._schema.get(this._sampleA, AlembicISampleSelector(this._info.indexA));
+  if(this._info.requiresInterpolation())
+    this._schema.get(this._sampleB, AlembicISampleSelector(this._info.indexB));
+
+  // resize the container
+  Vec3 positionsValuesA<> = this._sampleA.getPositions();
+  Vec3 positionsValuesB<>;
+  Size nbPoints = positionsValuesA.size();
+
+  if(this._info.requiresInterpolation()) {
+    positionsValuesB = this._sampleB.getPositions();
+    nbPoints = Math_min(positionsValuesA.size(), positionsValuesB.size());
+  }
+  attributes.resize(nbPoints);
+
+  // perform positions
+  Vec3Attribute positionsAttr = attributes.getOrCreateVec3Attribute('positions');
+  if(this._info.requiresInterpolation()) {
+    for(Size i=0;i<nbPoints;i++)
+      positionsAttr.values[i] = positionsValuesA[i].linearInterpolate(positionsValuesB[i], Float32(this._info.fraction));
+  } else {
+    for(Size i=0;i<nbPoints;i++)
+      positionsAttr.values[i] = positionsValuesA[i];
+  }
+  positionsAttr.incrementVersion();
+
+  // ids
+  UInt32Attribute idsAttr = attributes.getOrCreateUInt32Attribute('ids');
+  UInt64 idsValues<>;
+  if(positionsValuesB.size() > positionsValuesA.size())
+    idsValues = this._sampleA.getIds();
+  else
+    idsValues = this._sampleB.getIds();
+  if(idsValues.size() == nbPoints) {
+    for(Size i=0;i<nbPoints;i++)
+      idsAttr.values[i] = UInt32(idsValues[i]);
+    idsAttr.incrementVersion();
+  }
+
+  // perform velocities
+  Vec3 velocitiesValuesA<> = this._sampleA.getVelocities();
+  if(velocitiesValuesA.size() > 0) {
+    Vec3Attribute velocitiesAttr = attributes.getOrCreateVec3Attribute('velocities');
+    if(this._info.requiresInterpolation()) {
+      Vec3 velocitiesValuesB<> = this._sampleB.getVelocities();
+      for(Size i=0;i<nbPoints;i++)
+        velocitiesAttr.values[i] = velocitiesValuesA[i].linearInterpolate(velocitiesValuesB[i], Float32(this._info.fraction));
+    } else {
+      for(Size i=0;i<nbPoints;i++)
+        velocitiesAttr.values[i] = velocitiesValuesA[i];
+    }
+    velocitiesAttr.incrementVersion();
+  }
+
+  this._attributesReader.readSample(time, attributes);
+}

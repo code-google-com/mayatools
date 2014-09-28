@@ -1,0 +1,56 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+///collision detection between two BulletSoftBody shapes
+object BulletSoftSoftCollisionAlgorithm : BulletCollisionAlgorithm
+{
+	Data pointer;
+};
+
+function Data BulletSoftSoftCollisionAlgorithm.getPointer(){
+	return this.pointer;
+}
+
+
+function BulletSoftSoftCollisionAlgorithm(BulletCollisionAlgorithmConstructionInfo ci){
+	this.__construct(ci);
+}	
+
+function BulletSoftSoftCollisionAlgorithm.__construct!(BulletCollisionAlgorithmConstructionInfo ci) = "BulletSoftSoftCollisionAlgorithm_construct1";
+
+function BulletSoftSoftCollisionAlgorithm(BulletPersistentManifold mf, BulletCollisionAlgorithmConstructionInfo ci, BulletICollisionObject body0, BulletICollisionObject body1){
+	this.__construct(mf, ci, body0, body1);
+}
+function BulletSoftSoftCollisionAlgorithm.__construct!(BulletPersistentManifold mf, BulletCollisionAlgorithmConstructionInfo ci, BulletICollisionObject body0, BulletICollisionObject body1) = "BulletSoftSoftCollisionAlgorithm_construct2";
+
+function ~BulletSoftSoftCollisionAlgorithm(){
+	this.__destroy();
+}
+function BulletSoftSoftCollisionAlgorithm.__destroy!() = "etSoftSoftCollisionAlgorithm_destroy";
+
+
+// function BulletSoftSoftCollisionAlgorithm.processCollision(io BulletICollisionObject body0, io BulletICollisionObject body1, in BulletDispatcherInfo dispatchInfo, BulletManifoldResult resultOut);
+
+// function Scalar BulletSoftSoftCollisionAlgorithm.calculateTimeOfImpact(BulletICollisionObject body0,BulletICollisionObject body1,const BulletDispatcherInfo& dispatchInfo,BulletManifoldResult resultOut);
+
+// function BulletSoftSoftCollisionAlgorithm.getAllContactManifolds(BulletManifoldArray&	manifoldArray)
+
+// function BulletSoftSoftCollisionAlgorithm(BulletPersistentManifold mf,const BulletCollisionAlgorithmConstructionInfo& ci,BulletICollisionObject body0,BulletICollisionObject body1){
+// 	this.__construct(mf, ci, body0, body1);
+// }
+
+	// struct CreateFunc :public 	BulletCollisionAlgorithmCreateFunc
+	// {
+	// 	virtual	BulletCollisionAlgorithm CreateCollisionAlgorithm(BulletCollisionAlgorithmConstructionInfo& ci, BulletICollisionObject body0,BulletICollisionObject body1)
+	// 	{
+	// 		Integer bbsize = sizeof(BulletSoftSoftCollisionAlgorithm);
+	// 		void ptr = ci.m_dispatcher1->allocateCollisionAlgorithm(bbsize);
+	// 		return new(ptr) BulletSoftSoftCollisionAlgorithm(0,ci,body0,body1);
+	// 	}
+	// };
+
+
+

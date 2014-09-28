@@ -1,0 +1,120 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`compoundarrayparam` implements the :ref:`param` interface for a nestable data structure. Compound parameters can be used to define a tree of values.
+*/
+
+object CompoundArrayParam : Param {
+  String name;
+  Index paramIDs[String];
+  Param prototype[];
+  Param params[][];
+  Param options[String];
+};
+
+// default constructor
+function CompoundArrayParam(String name) {
+  this.name = name;
+  this.params.resize(0);
+}
+
+// returns the name of this parameter
+function String CompoundArrayParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String CompoundArrayParam.getValueType() {
+  return "Compound[]";
+}
+
+// getting an option on this param
+function Param CompoundArrayParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function CompoundArrayParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the size of the array
+function Size CompoundArrayParam.size() {
+  return this.params.size();
+}
+
+// sets the size of the array
+function CompoundArrayParam.resize!(Size size) {
+  Size oldSize = this.size();
+  this.params.resize(size);
+  for(Size i=oldSize;i<size;i++) {
+    this.params[i].resize(this.prototype.size());
+    for(Size j=0;j<this.prototype.size();j++)
+      this.params[i][j] = this.prototype[j].clone();
+  }
+}
+
+// returns the number of parameters in this compound
+function Size CompoundArrayParam.paramCount() {
+  return this.prototype.size();
+}
+
+// returns a parameter by index
+function Param CompoundArrayParam.getParam(Index arrayIndex, Index index) {
+  return this.params[arrayIndex][index];
+}
+
+// returns true if a parameter with a given name exists
+function Boolean CompoundArrayParam.hasParam(String name) {
+  return this.paramIDs.has(name);
+}
+
+// returns a parameter by name
+function Param CompoundArrayParam.getParam(Index arrayIndex, String name) {
+  return this.params[arrayIndex][this.paramIDs[name]];
+}
+
+// adds a parameter
+function Param CompoundArrayParam.addParam!(Param param) {
+  String name = param.getName();
+  if(this.hasParam(name))
+    throw('Compound "'+this.name+'" already contains a param "'+name+'".');
+  Index id = this.prototype.size();
+  this.paramIDs[name] = id;
+  this.prototype.push(param);
+  for(Size i=0;i<this.size();i++)
+    this.params[i].push(param.clone());
+  return param;
+}
+
+// removes a parameter
+function CompoundArrayParam.removeParam!(String name) {
+  if(!this.hasParam(name))
+    throw('Compound "'+this.name+'" does not contain a param "'+name+'".');
+
+  Param newPrototype[];
+  Param newParams[][];
+  newParams.resize(this.size());
+  for(key in this.paramIDs) {
+    if(key == name)
+      continue;
+    Index index = this.paramIDs[key];
+    this.paramIDs[key] = newPrototype.size();
+    newPrototype.push(this.prototype[index]);
+    for(Size i=0;i<this.size();i++)
+      newParams[i].push(this.params[i][index]);
+  }
+
+  this.paramIDs.delete(name);
+  this.prototype = newPrototype;
+  this.params = newParams;
+}
+
+// removes a parameter
+function CompoundArrayParam.removeParam!(Param param) {
+  this.removeParam(param.getName());
+}

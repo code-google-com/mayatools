@@ -1,0 +1,40 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+function Points.addPoint!(Vec3 pos) {
+  Integer voff = this.size;
+  this.resize(this.size + 1);
+  this.setPosition( voff, pos );
+  this.incrementPositionsVersion();
+}
+
+
+function Points.addPoints!(Vec3 positions[]) {
+  Integer voff = this.size;
+  this.resize(this.size + positions.size);
+
+  for (Integer i = 0; i < positions.size; i++) {
+    this.setPosition( voff, positions[i] );
+    voff++;
+  }
+  this.incrementPositionsVersion();
+}
+
+
+function Points.addPlane!(Xfo xfo, Scalar length, Scalar width, Integer lengthSections, Integer widthSections) {
+  Integer voff = this.size;
+  this.resize(Size(lengthSections * widthSections));
+
+  for (Integer j = 0; j < widthSections; j++) {
+    Scalar x = ((j / Scalar(widthSections-1))-0.5) * width;
+    for (Integer i = 0; i < lengthSections; i++) {
+      Scalar z = ((i / Scalar(lengthSections-1))-0.5) * length;
+      this.setPosition( voff, xfo.transformVector(Vec3( x, 0.0, z )) );
+      voff++;
+    }
+  }
+  this.incrementPositionsVersion();
+}
+
+

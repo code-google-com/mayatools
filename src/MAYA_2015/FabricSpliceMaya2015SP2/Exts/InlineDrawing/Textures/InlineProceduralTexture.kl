@@ -1,0 +1,82 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlineproceduraltexture` represents a texture which is procedurally built in KL. This is useful for noise patterns or images encoding custom data from the runtime.
+
+Example
+---------
+
+.. code-block:: kl
+
+    // register the texture in the drawing
+    InlineProceduralTexture texture = draw.registerTexture(InlineProceduralTexture('customTexture'));
+
+    // update the texture later with new procedural content
+    Size width = 256;
+    Size height = 256;
+    Color pixels[];
+    pixels.resize(width * height);
+    for(Size i=0;i<pixels.size();i++)
+      pixels[i] = Color(1.0, 0.0, 0.0).linearInterpolate(Color(0.0, 1.0, 0.0), mathRandomScalar(17, i));
+    texture.update(width, height, pixels);
+*/
+
+object InlineProceduralTexture : InlineTexture {
+  String _name;
+  Size _width;
+  Size _height;
+  Color _pixels[];
+  Integer _version;
+  Object _metaData[String];
+};
+
+// returns the name of this texture
+function String InlineProceduralTexture.getName() {
+  return this._name;
+}
+
+// returns the version of the texture
+function Integer InlineProceduralTexture.getVersion() {
+  return this._version;
+}
+
+// standard constructor
+function InlineProceduralTexture() {
+  this._version = 1;
+}
+
+// standard constructor with a name only
+function InlineProceduralTexture(String name) {
+  this._name = name;
+  this._version = 1;
+}
+
+// standard constructor with a name and pixel data
+function InlineProceduralTexture(String name, Size width, Size height, Color pixels[]) {
+  this._name = name;
+  this._version = 1;
+  this.update(width, height, pixels);
+}
+
+// updates the texture with the data provided
+function InlineProceduralTexture.update!(Size width, Size height, Color pixels[]) {
+  this._width = width;
+  this._height = height;
+  this._pixels = pixels;
+  this._version++;
+}
+
+// stores an arbitrary meta data object on the Shape
+function InlineProceduralTexture.setMetaData!(String key, Object metaData){
+  this._metaData[key] = metaData;
+}
+
+// retrieves meta data from the Shape
+function Object InlineProceduralTexture.getMetaData(String key){
+  Object nullObj = null;
+  return this._metaData.get(key, nullObj);
+}

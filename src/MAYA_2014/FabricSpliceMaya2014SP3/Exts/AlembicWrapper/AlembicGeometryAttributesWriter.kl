@@ -1,0 +1,33 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+require Geometry;
+
+object AlembicGeometryAttributesWriter {
+  AlembicGeometryParamWriter _paramWriters[String];
+};
+
+function AlembicGeometryAttributesWriter.reset!() {
+  this._paramWriters.clear();
+}
+
+function AlembicGeometryAttributesWriter.addParamWriter!(AlembicGeometryParamWriter writer) {
+  this._paramWriters[writer.getName()] = writer;
+}
+
+function Boolean AlembicGeometryAttributesWriter.writeSample!(Ref<GeometryAttributes> attributes) {
+
+  for(name, writerRef in this._paramWriters) {
+    if(!attributes.has(name)) {
+      setError('AlembicGeometryAttributesWriter: Attribute "'+name+'" does not exist.');
+      return false;
+    }
+    AlembicGeometryParamWriter writer = writerRef;
+    if(!writer.writeSample(attributes.getAttribute(name)))
+      return false;
+  }
+
+  return true;
+}

@@ -1,0 +1,29 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+function BulletRigidBody.addConstraintRef!(BulletTypedConstraint c){
+	this.__addConstraintRef(c);
+	this.__constraints.push(c);
+}
+function BulletRigidBody.__addConstraintRef!(BulletTypedConstraint c) = 'BulletRigidBody_addConstraintRef';
+function BulletRigidBody.removeConstraintRef!(BulletTypedConstraint c){
+	this.__removeConstraintRef(c);
+	for(Integer i=0; i<this.__constraints.size; i++){
+		if(this.__constraints[i] == c){
+			for(Integer j=i; j<this.__constraints.size-1; j++){
+				this.__constraints[j] = this.__constraints[j+1];
+			}
+			this.__constraints.resize(this.__constraints.size-1);
+			break;
+		}
+	}
+}
+function BulletRigidBody.__removeConstraintRef!(BulletTypedConstraint c) = 'BulletRigidBody_removeConstraintRef';
+
+function BulletTypedConstraint BulletRigidBody.getConstraintRef(Integer index){
+	return this.__constraints[index];
+}
+
+function Integer BulletRigidBody.getNumConstraintRefs() = 'BulletRigidBody_getNumConstraintRefs';

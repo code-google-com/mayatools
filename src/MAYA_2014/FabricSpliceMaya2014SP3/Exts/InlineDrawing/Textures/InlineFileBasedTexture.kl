@@ -1,0 +1,68 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlinefilebasedtexture` uses the :ref:`openimageinput` to load a texture from a file. the texture can then be used inside an :ref:`inlineuniform` to drive a :ref:`inlineshader` or :ref:`inlinematerial`.
+
+Example
+---------
+
+.. code-block:: kl
+
+    // load the texture and register it
+    InlineFileBasedTexture texture = draw.registerTexture(InlineFileBasedTexture('diffuse_frame0.png'));
+
+    // reload the texture later from a different frame
+    texture.open('diffuse_frame1.png');
+*/
+
+require OpenImageIO;
+
+object InlineFileBasedTexture : InlineTexture {
+  String _fileName;
+  Object _metaData[String];
+  Integer _version;
+};
+
+// returns the name of this texture
+function String InlineFileBasedTexture.getName() {
+  return this._fileName;
+}
+
+// returns the version of the texture
+function Integer InlineFileBasedTexture.getVersion() {
+  return this._version;
+}
+
+// standard constructor
+function InlineFileBasedTexture() {
+  this._version = 1;
+}
+
+// standard constructor with a filename
+function InlineFileBasedTexture(String fileName) {
+  this._version = 1;
+  this.open(fileName);
+}
+
+// loads the texture from a file
+function InlineFileBasedTexture.open!(String fileName) {
+  this._fileName = fileName;
+  this._version++;
+}
+
+// stores an arbitrary meta data object on the Shape
+function InlineFileBasedTexture.setMetaData!(String key, Object metaData)
+{
+  this._metaData[key] = metaData;
+}
+
+// retrieves meta data from the Shape
+function Object InlineFileBasedTexture.getMetaData(String key)
+{
+  Object nullObj = null;
+  return this._metaData.get(key, nullObj);
+}

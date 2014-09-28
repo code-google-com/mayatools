@@ -1,0 +1,97 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+///The BulletConvexInternalShape is an Integerernal base class, shared by most convex shape implementations.
+interface BulletConvexInternalShape //:  BulletConvexShape
+{
+
+
+	// Vec3 localGetSupportingVertex(in Vec3 vec);
+
+	// Vec3 getImplicitShapeDimensions();
+
+	// ///warning: use setImplicitShapeDimensions with care
+	// ///changing a collision shape while the body is in the world is not recommended,
+	// ///it is best to remove the body from the world, then make the change, and re-add it
+	// ///alternatively flush the contact poIntegers, see documentation for 'cleanProxyFromPairs'
+	// setImplicitShapeDimensions(in Vec3 dimensions);
+
+	// ///getAabb's default implementation is brute force, expected derived classes to implement a fast dedicated version
+	// getAabb(const Xfo& t, io Vec3 aabbMin, io Vec3 aabbMax);
+
+
+	
+	// getAabbSlow(const Xfo& t, io Vec3 aabbMin, io Vec3 aabbMax);
+
+
+	// setLocalScaling(in Vec3 scaling);
+	// Vec3 getLocalScaling();
+
+	// Vec3 getLocalScalingNV();
+
+	// setMargin(Scalar margin);
+	// Scalar getMargin();
+
+	// Scalar getMarginNV();
+
+	// Integer getNumPreferredPenetrationDirections();
+	
+	// getPreferredPenetrationDirection(Integer index, Vec3& penetrationVector);
+
+	// Integer	calculateSerializeBufferSize();
+
+	// ///fills the dataBuffer and returns the struct name (and 0 on failure)
+	// String	serialize(void* dataBuffer, BulletSerializer* serializer);
+
+	
+};
+
+/*
+
+
+///BulletConvexInternalAabbCachingShape adds local aabb caching for convex shapes, to avoid expensive bounding box calculations
+class BulletConvexInternalAabbCachingShape : public BulletConvexInternalShape
+{
+	Vec3	m_localAabbMin;
+	Vec3	m_localAabbMax;
+	Boolean		m_isLocalAabbValid;
+	
+protected:
+					
+	BulletConvexInternalAabbCachingShape();
+	
+	void setCachedLocalAabb (in Vec3 aabbMin, in Vec3 aabbMax)
+	{
+		m_isLocalAabbValid = true;
+		m_localAabbMin = aabbMin;
+		m_localAabbMax = aabbMax;
+	}
+
+	inline void getCachedLocalAabb (Vec3& aabbMin, Vec3& aabbMax) const
+	{
+		BulletAssert(m_isLocalAabbValid);
+		aabbMin = m_localAabbMin;
+		aabbMax = m_localAabbMax;
+	}
+
+	inline void getNonvirtualAabb(const Xfo& trans, io Vec3 aabbMin, io Vec3 aabbMax, Scalar margin) const
+	{
+
+		//lazy evaluation of local aabb
+		BulletAssert(m_isLocalAabbValid);
+		XfoAabb(m_localAabbMin,m_localAabbMax,margin,trans,aabbMin,aabbMax);
+	}
+		
+public:
+		
+	virtual void	setLocalScaling(in Vec3 scaling);
+
+	virtual void getAabb(const Xfo& t, io Vec3 aabbMin, io Vec3 aabbMax) const;
+
+	void	recalcLocalAabb();
+
+};
+
+*/

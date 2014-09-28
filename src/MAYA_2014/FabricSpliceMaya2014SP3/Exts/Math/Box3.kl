@@ -1,0 +1,83 @@
+
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+/*SPHINX-description
+The :ref:`box3` represents a 3 dimensional bounding box. It uses :ref:`vec3` types for each of the 2 elements.
+
+Example
+---------
+
+.. code-block:: js
+
+    // create a box3
+    Vec3 min(0.0, 0.0, 0.0);
+    Vec3 max(1.0, 1.0, 1.0);
+    Box3 box(min, max);
+*/
+
+struct Box3
+{
+  Vec3 min;
+  Vec3 max;
+};
+
+// constructor from vectors
+inline Box3(
+  Vec3 min, Vec3 max
+) {
+  this.min = min;
+  this.max = max;
+}
+
+// returns true if this box has no content
+inline Boolean Box3.isEmpty() {
+  return this.min == Vec3() && this.max == Vec3();
+}
+
+// setting this box to an empty box
+inline Box3.setEmpty!() {
+  this.min = this.max = Vec3();
+}
+
+// merging a vector into this box
+inline Box3.merge!(Vec3 v) {
+  if(this.isEmpty())
+    this.min = this.max = v;
+  else {
+    if(this.min.x > v.x) this.min.x = v.x;
+    if(this.min.y > v.y) this.min.y = v.y;
+    if(this.min.z > v.z) this.min.z = v.z;
+    if(this.max.x < v.x) this.max.x = v.x;
+    if(this.max.y < v.y) this.max.y = v.y;
+    if(this.max.z < v.z) this.max.z = v.z;
+  }
+}
+
+// merging a box into this box
+inline Box3.merge!(Box3 v) {
+  this.merge(v.min);
+  this.merge(v.max);
+}
+
+// returns the merge of two boxes
+inline Box3 + (Box3 a, Box3 b) {
+  Box3 r;
+  r.merge(b);
+  return r;
+}
+
+// merges another box to this one
+inline Box3. += (Box3 other) {
+  this = this + other;
+}
+
+// equals operator
+inline Boolean == (Box3 a, Box3 b) {
+  return a.min == b.min && a.max == b.max;
+}
+
+// not equals operator
+inline Boolean != (Box3 a, Box3 b) {
+  return a.min != b.min || a.max != b.max;
+}

@@ -1,0 +1,71 @@
+{
+  "code": [
+    "InlineCamera.kl",
+    "InlineViewport.kl",
+    "DrawContext.kl",
+
+    "InlineTransform.kl",
+    "InlineShape.kl",
+    "InlineTexture.kl",
+    "InlineUniform.kl",
+    "InlineMaterial.kl",
+    "InlineInstance.kl",
+    "InlineShader.kl",
+    "InlineTransformAdaptor.kl",
+    "InlineShapeAdaptor.kl",
+    "InlineTextureAdaptor.kl",
+    "InlineDrawing.kl",
+    "InlineDrawingScope.kl",
+
+    "StaticInlineTransform.kl",
+    "ConstantScreenSizeTransform.kl",
+    "SimpleInlineInstance.kl",
+    
+    "Shapes/InlinePointsShape.kl",
+    "Shapes/InlineLinesShape.kl",
+    "Shapes/InlineMeshShape.kl",
+    "Shapes/InlineDebugShape.kl",
+
+    "Textures/InlineFileBasedTexture.kl",
+    "Textures/InlineProceduralTexture.kl",
+    "Textures/InlineMatrixArrayTexture.kl",
+
+    "OGL/OGLShapeHelpers.kl",
+    "OGL/OGLBufferDictionary.kl",
+
+    "OGL/Adaptors/OGLTransformAdaptor.kl",
+    "OGL/Adaptors/OGLPointsShapeAdaptor.kl",
+    "OGL/Adaptors/OGLLinesShapeAdaptor.kl",
+    "OGL/Adaptors/OGLMeshShapeAdaptor.kl",
+    "OGL/Adaptors/OGLDebugShapeAdaptor.kl",
+    "OGL/Adaptors/OGLColorTextureAdaptor.kl",
+    "OGL/Adaptors/OGLMatrixArrayTextureAdaptor.kl",
+    "OGL/Adaptors/OGLConstantScreenSizeTransformAdaptor.kl",
+    
+
+    "OGL/Shaders/GLSLHelpers/matricesHelpers.kl",
+    "OGL/Shaders/GLSLHelpers/skinningHelpers.kl",
+    "OGL/Shaders/OGLInlineShader.kl",
+    "OGL/Shaders/OGLFlatShader.kl",
+    "OGL/Shaders/OGLFlatTextureShader.kl",
+    "OGL/Shaders/OGLFlatVertexColorShader.kl",
+    
+    "OGL/Shaders/OGLHUDShader.kl",
+    "OGL/Shaders/OGLSurfaceGizmoShader.kl",
+
+    "OGL/Shaders/OGLLinesShader.kl",
+    "OGL/Shaders/OGLNormalShader.kl",
+    "OGL/Shaders/OGLSurfaceNormalMapShader.kl",
+    "OGL/Shaders/OGLSurfaceOverlayShader.kl",
+    "OGL/Shaders/OGLSurfaceShader.kl",
+    "OGL/Shaders/OGLSurfaceTextureShader.kl",
+    "OGL/Shaders/OGLSurfaceVertexColorShader.kl",
+    "OGL/Shaders/OGLSkinnedSurfaceShader.kl",
+    "OGL/Shaders/OGLVertexColorOverlayShader.kl",
+    "OGL/Shaders/OGLWireFrameShader.kl",
+    
+    "OGL/OGLInlineDrawing.kl",
+
+    "Services/InstanceCollector.kl"
+  ]
+}

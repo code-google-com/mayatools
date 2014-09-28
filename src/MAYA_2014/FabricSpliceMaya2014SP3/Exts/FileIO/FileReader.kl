@@ -1,0 +1,20 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+interface FileReader {
+  // opens a file (eventually closes the previous one)
+  Boolean open!(String filePath);
+  // closes an open file
+  Boolean close!();
+  // returns true if this reader has a valid file open
+  Boolean isOpen();
+  // returns the size of the file being read
+  UInt32 size();
+  // sets the position of the stream
+  seek(UInt32 pos);
+  // tells the position of the stream
+  UInt32 pos();
+  // returns true if the reader is at the end of the file
+  Boolean eof();
+};

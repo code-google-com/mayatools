@@ -1,0 +1,94 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`OrientationAxisGizmoHandler` converts mouse events into rotation around a given axis.
+
+
+*/
+
+require InlineDrawing;
+
+
+object OrientationAxisGizmoHandler : GizmoHandler {
+  Ref<InlineInstance> owner; // The instance that owns the handler. 
+  Vec3 manipulationVector;
+
+  Boolean dragging;
+  Vec3 planePoint;
+  Vec3 planeNormal;
+  Vec3 vec1;
+  Scalar angle;
+
+  GizmoManipulationCallback callback;
+};
+
+function OrientationAxisGizmoHandler(InlineInstance owner, Vec3 manipulationVector, GizmoManipulationCallback callback){
+    this.owner = owner;
+    this.owner.setMetaData('gizmoHandler', this);
+    this.manipulationVector = manipulationVector;
+    this.callback = callback;
+}
+
+
+
+function OrientationAxisGizmoHandler.onEvent!(io MouseEvent event){
+    if(event.eventType() == Event_MouseButtonPress){
+        MouseEvent mouseEvent = event;
+
+        // On MouseMove/Mousedown.
+        if(mouseEvent.button == MouseButton_LeftButton){
+            
+            Ray ray = event.getViewport().calcRayFromScreenPos(event.pos);
+            Xfo xfo = this.owner.getTransform().getGlobalXfo(0);
+            this.planePoint = xfo.tr;
+            this.planeNormal = xfo.ori.rotateVector(this.manipulationVector);
+
+            Scalar dist = ray.intersectPlane(this.planePoint, this.planeNormal);
+            Vec3 hitPointStart = ray.start + (ray.direction * dist);
+
+            this.vec1 = (hitPointStart - this.planePoint).unit();
+            this.angle = 0.0;
+            this.dragging = true;
+            this.callback.onDragBegin(mouseEvent);
+        }
+        event.accept();
+    }
+    else if(event.eventType() == Event_MouseMove){
+        MouseEvent mouseEvent = event;
+        // On drag
+        if(this.dragging){
+            Ray ray = event.getViewport().calcRayFromScreenPos(event.pos);
+            Scalar dist = ray.intersectPlane(this.planePoint, this.planeNormal);
+            Vec3 hitPoint2 = ray.start + (ray.direction * dist);
+
+            Vec3 vec2 = hitPoint2.subtract(this.planePoint).unit();
+            Scalar deltaAngle = this.vec1.angleTo(vec2);
+            if(this.vec1.cross(vec2).dot(this.planeNormal) > 0)
+                this.angle += deltaAngle;
+            else
+                this.angle -= deltaAngle;
+            this.vec1 = vec2;
+
+            Xfo delta;
+            delta.ori.setFromAxisAndAngle(this.planeNormal, this.angle);
+
+            this.callback.onDrag(mouseEvent, Xfo(), delta, ManipulationMode_Orientation);
+            event.accept();
+        }
+    }
+    else if(event.eventType() == Event_MouseButtonRelease){
+        MouseEvent mouseEvent = event;
+        // On release
+        if(this.dragging){
+            this.dragging = false;
+            this.callback.onDragEnd(mouseEvent);
+            event.accept();
+        }
+    }
+}
+
+

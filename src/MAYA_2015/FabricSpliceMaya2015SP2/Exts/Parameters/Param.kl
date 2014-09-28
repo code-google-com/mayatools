@@ -1,0 +1,26 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`param` interface is used to describe values to a DCC. Matching concepts in the DCC (for example Maya's compound attributes) can then be used to express nested data structures.
+
+Example
+---------
+
+.. code-block:: kl
+
+    // create two keys
+    KeyFrame keyA(0.0, 0.0, Vec2(-0.333, 0.0), Vec2(-0.333, 0.0));
+    KeyFrame keyB(100.0, 4.0);
+
+    // interpolate the keys for a given time
+    Scalar value = keyA.interpolate(keyB, 2.0);
+*/
+
+interface Param {
+  String getName();
+  String getValueType();
+  Param getOption(String name);
+  setOption!(Param option);
+};

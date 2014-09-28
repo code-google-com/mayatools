@@ -1,0 +1,170 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+object IntegerAttribute : GeometryAttribute, StatisticSourceWithAutoRegisterMember {
+  UInt32 version;
+  String name;
+  UInt32 containerIndex;
+
+  Integer values[];
+  Boolean canInterpolate;
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function IntegerAttribute() {
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] IntegerAttribute.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, this.name ) );
+  stats.push( StatisticRecord( Statistic_Category, "Attribute" ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, this.values.size()*4 ) );
+  return stats;
+}
+
+inline String IntegerAttribute.getName() {
+  return this.name;
+}
+
+inline UInt32 IntegerAttribute.getVersion() {
+  return this.version;
+}
+
+inline Size IntegerAttribute.getContainerIndex() {
+  return this.containerIndex;
+}
+
+inline IntegerAttribute.setContainerIndex!( Size index ) {
+  this.containerIndex = index;
+}
+
+function IntegerAttribute IntegerAttribute.clone() {
+  //The difference with default clone() is that new.base.autoStat will point to 'new' (from constructor)
+  IntegerAttribute new = IntegerAttribute();
+  new.version = this.version;
+  new.name = this.name.clone();
+  new.containerIndex = this.containerIndex;
+  new.values = this.values.clone();
+  new.canInterpolate = this.canInterpolate;
+  return new;
+}
+
+function Ref<StatisticSource> IntegerAttribute.getStatisticsSource() {
+  return this.autoStats;
+}
+
+inline IntegerAttribute.resize!(Size count) {
+  this.values.resize(count);
+  ++this.version;
+}
+
+inline Size IntegerAttribute.size() {
+  return this.values.size();
+}
+
+inline Data IntegerAttribute.data() {
+  Ref<IntegerAttribute> thisRef = this;
+  return thisRef.values.data();
+}
+
+//Make sure to call this method after value changes are finished, so caches (such as drawing data) know that they need to be regenerated.
+inline IntegerAttribute.incrementVersion!() {
+  ++this.version;
+}
+
+inline IntegerAttribute.copyValue!( Size sourceIndex, Size targetIndex ) {
+  this.values[targetIndex] = this.values[sourceIndex];
+}
+
+inline IntegerAttribute.copyValue!( Ref<Object> sourceAttr, Size sourceIndex, Size targetIndex ) {
+  Ref<IntegerAttribute> source = sourceAttr;
+  this.values[targetIndex] = source.values[sourceIndex];
+}
+
+inline Integer IntegerAttribute.getLinearCombination( LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights ) {
+  if( this.canInterpolate ) {
+    Float64 result;//Minimize rounding errors
+    for( Size i = 0; i < sourceIndices.size(); ++i )
+      result += this.values[sourceIndices.get(i)]*sourceWeights.get(i);
+    return Integer(result+0.5);//rounding
+  } else if(sourceIndices.size())
+    return this.values[sourceIndices.get(0)];
+  return 0;
+}
+
+inline IntegerAttribute.linearCombine!( Ref<Object> sourceAttr, LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights, Size targetIndex ) {
+  Ref<IntegerAttribute> source = sourceAttr;
+  this.values[targetIndex] = source.getLinearCombination( sourceIndices, sourceWeights );
+}
+
+inline IntegerAttribute.copyFrom!( Ref<Object> otherAttr ) {
+  Ref<IntegerAttribute> other = otherAttr;
+  this.incrementVersion();
+
+  // Copy in place to avoid mallocs
+  Size size = other.values.size();
+  this.values.resize( size );
+  for( Size i = 0; i < size; ++i )
+    this.values[i] = other.values[i];
+}
+
+inline IntegerAttribute.setFromScalar!( Size index, LocalL16ScalarArray value ) {
+  this.values[index] = Integer(value.get(0));
+}
+
+inline Size IntegerAttribute.getScalarValueSize() {
+  return 1;
+}
+
+inline Boolean IntegerAttribute.equalValues( Size index1, Size index2 ) {
+  return this.values[index1] == this.values[index2];
+}
+
+function String IntegerAttribute.valueDesc( Size index ) {
+  return String(this.values[index]);
+}
+
+require Util;
+function String IntegerAttribute.unitTestPrint( Size index ) {
+  return this.valueDesc(index);
+}
+
+//Returns a string description of the attribute.
+function String IntegerAttribute.getDesc?( Boolean includeValues) {
+  String desc;
+  desc += "Attribute: " + this.getName() + " nb elements = "+ this.values.size()+'\n';
+  if(includeValues){
+    if(this.values.size > 0){
+      desc += "  values:[ \n";
+      for(Integer i=0; i<this.values.size; i++){
+        desc += '    ' + unitTestPrint(this.values[i]) + " \n";
+      }
+      desc += "  ]\n";
+    }
+    else{
+      desc += "  values:[]\n";
+    }
+  }
+  return desc;
+}
+function String IntegerAttribute.getDesc?() {
+  return this.getDesc(false);
+}
+
+function Ref<IntegerAttribute> GeometryAttributes.getOrCreateIntegerAttribute!( String name ) {
+  Ref<GeometryAttribute> attr = this.getAttribute( name, IntegerAttribute );
+  if( attr )
+    return attr;
+
+  IntegerAttribute newAttr = IntegerAttribute();
+  newAttr.resize(this.elementCount);
+  newAttr.name = name;
+  newAttr.version = this.keysVersion;
+  this.attachNewAttribute(newAttr);
+
+  return newAttr;
+}

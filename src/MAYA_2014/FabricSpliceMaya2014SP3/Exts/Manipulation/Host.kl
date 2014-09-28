@@ -1,0 +1,78 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`Host` object encapsulates data about the host application that the event originated from. It is also used to propagate data back to the host, such as undo/redo commands, and parameter changes. 
+
+*/
+
+
+
+object Host {
+    String hostName;
+    Boolean redrawRequested;
+
+    Scalar scalarParameterChanges[String];
+    Integer integerParameterChanges[String];
+    Vec2 vec2ParameterChanges[String];
+    Vec3 vec3ParameterChanges[String];
+    Quat quatParameterChanges[String];
+    Xfo xfoParameterChanges[String];
+
+    UndoRedoCommand commands[];
+};
+
+function String Host.getHostName(){
+    return this.hostName;
+}
+
+function Host.requestRedraw!(){
+    this.redrawRequested = true;
+}
+
+
+function Host.setParameterChange!(String path, Scalar value){
+    this.scalarParameterChanges[path] = value;
+}
+
+function Host.setParameterChange!(String path, Integer value){
+    this.integerParameterChanges[path] = value;
+}
+
+function Host.setParameterChange!(String path, Vec2 value){
+    this.vec2ParameterChanges[path] = value;
+}
+
+function Host.setParameterChange!(String path, Vec3 value){
+    this.vec3ParameterChanges[path] = value;
+}
+
+function Host.setParameterChange!(String path, Quat value){
+    this.quatParameterChanges[path] = value;
+}
+
+function Host.setParameterChange!(String path, Xfo value){
+    this.xfoParameterChanges[path] = value;
+}
+
+///////////////////////////////////
+// UndoRedo commands
+// The Host object is used to pass commands back to the Host application.
+// 
+
+function Boolean Host.undoRedoCommandsAdded(){
+    return this.commands.size() > 0;
+}
+
+function Host.addUndoRedoCommand!(UndoRedoCommand command){
+    this.commands.push(command);
+}
+
+function UndoRedoCommand[] Host.getUndoRedoCommands(){
+    return this.commands;
+}
+
+

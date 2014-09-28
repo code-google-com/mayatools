@@ -1,0 +1,3633 @@
+//
+// Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+//
+
+require Math;
+
+interface GenericValue {
+  String getValueType();
+  Boolean isArray();
+  Boolean equals(Ref<Object> other);
+};
+
+interface GenericArrayValue {
+  Size size();
+  resize!(Size newSize);
+};
+
+
+object GenericBooleanValue : GenericValue {
+  Boolean _value;
+};
+
+// value constructor
+inline GenericBooleanValue(Boolean value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericBooleanValue.getValueType() {
+  return "Boolean";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericBooleanValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericBooleanValue.equals(Ref<Object> other)
+{
+  GenericBooleanValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Boolean GenericBooleanValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericBooleanValue.set!(Boolean value) {
+  this._value = value;
+}
+
+alias Boolean BooleanArray[];
+
+object GenericBooleanArrayValue : GenericValue, GenericArrayValue {
+  BooleanArray _value;
+};
+
+// value constructor
+inline GenericBooleanArrayValue(BooleanArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericBooleanArrayValue.getValueType() {
+  return "BooleanArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericBooleanArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericBooleanArrayValue.equals(Ref<Object> other)
+{
+  GenericBooleanArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericBooleanArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericBooleanArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline BooleanArray GenericBooleanArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericBooleanArrayValue.setShared!(BooleanArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericBooleanArrayValue.setCopy!(BooleanArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Boolean GenericBooleanArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericBooleanArrayValue.set!(Index index, Boolean value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericBooleanArrayValue.push!(Boolean value) {
+  this._value.push(value);
+}
+
+object GenericStringValue : GenericValue {
+  String _value;
+};
+
+// value constructor
+inline GenericStringValue(String value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericStringValue.getValueType() {
+  return "String";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericStringValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericStringValue.equals(Ref<Object> other)
+{
+  GenericStringValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline String GenericStringValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericStringValue.set!(String value) {
+  this._value = value;
+}
+
+alias String StringArray[];
+
+object GenericStringArrayValue : GenericValue, GenericArrayValue {
+  StringArray _value;
+};
+
+// value constructor
+inline GenericStringArrayValue(StringArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericStringArrayValue.getValueType() {
+  return "StringArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericStringArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericStringArrayValue.equals(Ref<Object> other)
+{
+  GenericStringArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericStringArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericStringArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline StringArray GenericStringArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericStringArrayValue.setShared!(StringArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericStringArrayValue.setCopy!(StringArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline String GenericStringArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericStringArrayValue.set!(Index index, String value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericStringArrayValue.push!(String value) {
+  this._value.push(value);
+}
+
+object GenericDataValue : GenericValue {
+  Data _value;
+};
+
+// value constructor
+inline GenericDataValue(Data value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericDataValue.getValueType() {
+  return "Data";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericDataValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericDataValue.equals(Ref<Object> other)
+{
+  GenericDataValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Data GenericDataValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericDataValue.set!(Data value) {
+  this._value = value;
+}
+
+alias Data DataArray[];
+
+object GenericDataArrayValue : GenericValue, GenericArrayValue {
+  DataArray _value;
+};
+
+// value constructor
+inline GenericDataArrayValue(DataArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericDataArrayValue.getValueType() {
+  return "DataArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericDataArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericDataArrayValue.equals(Ref<Object> other)
+{
+  GenericDataArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericDataArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericDataArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline DataArray GenericDataArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericDataArrayValue.setShared!(DataArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericDataArrayValue.setCopy!(DataArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Data GenericDataArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericDataArrayValue.set!(Index index, Data value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericDataArrayValue.push!(Data value) {
+  this._value.push(value);
+}
+
+object GenericObjectValue : GenericValue {
+  Object _value;
+};
+
+// value constructor
+inline GenericObjectValue(Object value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericObjectValue.getValueType() {
+  return "Object";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericObjectValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericObjectValue.equals(Ref<Object> other)
+{
+  GenericObjectValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Object GenericObjectValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericObjectValue.set!(Object value) {
+  this._value = value;
+}
+
+alias Object ObjectArray[];
+
+object GenericObjectArrayValue : GenericValue, GenericArrayValue {
+  ObjectArray _value;
+};
+
+// value constructor
+inline GenericObjectArrayValue(ObjectArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericObjectArrayValue.getValueType() {
+  return "ObjectArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericObjectArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericObjectArrayValue.equals(Ref<Object> other)
+{
+  GenericObjectArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericObjectArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericObjectArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline ObjectArray GenericObjectArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericObjectArrayValue.setShared!(ObjectArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericObjectArrayValue.setCopy!(ObjectArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Object GenericObjectArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericObjectArrayValue.set!(Index index, Object value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericObjectArrayValue.push!(Object value) {
+  this._value.push(value);
+}
+
+object GenericSInt8Value : GenericValue {
+  SInt8 _value;
+};
+
+// value constructor
+inline GenericSInt8Value(SInt8 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericSInt8Value.getValueType() {
+  return "SInt8";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericSInt8Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericSInt8Value.equals(Ref<Object> other)
+{
+  GenericSInt8Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline SInt8 GenericSInt8Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericSInt8Value.set!(SInt8 value) {
+  this._value = value;
+}
+
+alias SInt8 SInt8Array[];
+
+object GenericSInt8ArrayValue : GenericValue, GenericArrayValue {
+  SInt8Array _value;
+};
+
+// value constructor
+inline GenericSInt8ArrayValue(SInt8Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericSInt8ArrayValue.getValueType() {
+  return "SInt8Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericSInt8ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericSInt8ArrayValue.equals(Ref<Object> other)
+{
+  GenericSInt8ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericSInt8ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericSInt8ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline SInt8Array GenericSInt8ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericSInt8ArrayValue.setShared!(SInt8Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericSInt8ArrayValue.setCopy!(SInt8Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline SInt8 GenericSInt8ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericSInt8ArrayValue.set!(Index index, SInt8 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericSInt8ArrayValue.push!(SInt8 value) {
+  this._value.push(value);
+}
+
+object GenericSInt16Value : GenericValue {
+  SInt16 _value;
+};
+
+// value constructor
+inline GenericSInt16Value(SInt16 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericSInt16Value.getValueType() {
+  return "SInt16";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericSInt16Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericSInt16Value.equals(Ref<Object> other)
+{
+  GenericSInt16Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline SInt16 GenericSInt16Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericSInt16Value.set!(SInt16 value) {
+  this._value = value;
+}
+
+alias SInt16 SInt16Array[];
+
+object GenericSInt16ArrayValue : GenericValue, GenericArrayValue {
+  SInt16Array _value;
+};
+
+// value constructor
+inline GenericSInt16ArrayValue(SInt16Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericSInt16ArrayValue.getValueType() {
+  return "SInt16Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericSInt16ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericSInt16ArrayValue.equals(Ref<Object> other)
+{
+  GenericSInt16ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericSInt16ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericSInt16ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline SInt16Array GenericSInt16ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericSInt16ArrayValue.setShared!(SInt16Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericSInt16ArrayValue.setCopy!(SInt16Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline SInt16 GenericSInt16ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericSInt16ArrayValue.set!(Index index, SInt16 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericSInt16ArrayValue.push!(SInt16 value) {
+  this._value.push(value);
+}
+
+object GenericSInt32Value : GenericValue {
+  SInt32 _value;
+};
+
+// value constructor
+inline GenericSInt32Value(SInt32 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericSInt32Value.getValueType() {
+  return "SInt32";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericSInt32Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericSInt32Value.equals(Ref<Object> other)
+{
+  GenericSInt32Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline SInt32 GenericSInt32Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericSInt32Value.set!(SInt32 value) {
+  this._value = value;
+}
+
+alias SInt32 SInt32Array[];
+
+object GenericSInt32ArrayValue : GenericValue, GenericArrayValue {
+  SInt32Array _value;
+};
+
+// value constructor
+inline GenericSInt32ArrayValue(SInt32Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericSInt32ArrayValue.getValueType() {
+  return "SInt32Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericSInt32ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericSInt32ArrayValue.equals(Ref<Object> other)
+{
+  GenericSInt32ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericSInt32ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericSInt32ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline SInt32Array GenericSInt32ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericSInt32ArrayValue.setShared!(SInt32Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericSInt32ArrayValue.setCopy!(SInt32Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline SInt32 GenericSInt32ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericSInt32ArrayValue.set!(Index index, SInt32 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericSInt32ArrayValue.push!(SInt32 value) {
+  this._value.push(value);
+}
+
+object GenericSInt64Value : GenericValue {
+  SInt64 _value;
+};
+
+// value constructor
+inline GenericSInt64Value(SInt64 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericSInt64Value.getValueType() {
+  return "SInt64";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericSInt64Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericSInt64Value.equals(Ref<Object> other)
+{
+  GenericSInt64Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline SInt64 GenericSInt64Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericSInt64Value.set!(SInt64 value) {
+  this._value = value;
+}
+
+alias SInt64 SInt64Array[];
+
+object GenericSInt64ArrayValue : GenericValue, GenericArrayValue {
+  SInt64Array _value;
+};
+
+// value constructor
+inline GenericSInt64ArrayValue(SInt64Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericSInt64ArrayValue.getValueType() {
+  return "SInt64Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericSInt64ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericSInt64ArrayValue.equals(Ref<Object> other)
+{
+  GenericSInt64ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericSInt64ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericSInt64ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline SInt64Array GenericSInt64ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericSInt64ArrayValue.setShared!(SInt64Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericSInt64ArrayValue.setCopy!(SInt64Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline SInt64 GenericSInt64ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericSInt64ArrayValue.set!(Index index, SInt64 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericSInt64ArrayValue.push!(SInt64 value) {
+  this._value.push(value);
+}
+
+object GenericUInt8Value : GenericValue {
+  UInt8 _value;
+};
+
+// value constructor
+inline GenericUInt8Value(UInt8 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericUInt8Value.getValueType() {
+  return "UInt8";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericUInt8Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericUInt8Value.equals(Ref<Object> other)
+{
+  GenericUInt8Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline UInt8 GenericUInt8Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericUInt8Value.set!(UInt8 value) {
+  this._value = value;
+}
+
+alias UInt8 UInt8Array[];
+
+object GenericUInt8ArrayValue : GenericValue, GenericArrayValue {
+  UInt8Array _value;
+};
+
+// value constructor
+inline GenericUInt8ArrayValue(UInt8Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericUInt8ArrayValue.getValueType() {
+  return "UInt8Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericUInt8ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericUInt8ArrayValue.equals(Ref<Object> other)
+{
+  GenericUInt8ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericUInt8ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericUInt8ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline UInt8Array GenericUInt8ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericUInt8ArrayValue.setShared!(UInt8Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericUInt8ArrayValue.setCopy!(UInt8Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline UInt8 GenericUInt8ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericUInt8ArrayValue.set!(Index index, UInt8 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericUInt8ArrayValue.push!(UInt8 value) {
+  this._value.push(value);
+}
+
+object GenericUInt16Value : GenericValue {
+  UInt16 _value;
+};
+
+// value constructor
+inline GenericUInt16Value(UInt16 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericUInt16Value.getValueType() {
+  return "UInt16";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericUInt16Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericUInt16Value.equals(Ref<Object> other)
+{
+  GenericUInt16Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline UInt16 GenericUInt16Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericUInt16Value.set!(UInt16 value) {
+  this._value = value;
+}
+
+alias UInt16 UInt16Array[];
+
+object GenericUInt16ArrayValue : GenericValue, GenericArrayValue {
+  UInt16Array _value;
+};
+
+// value constructor
+inline GenericUInt16ArrayValue(UInt16Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericUInt16ArrayValue.getValueType() {
+  return "UInt16Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericUInt16ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericUInt16ArrayValue.equals(Ref<Object> other)
+{
+  GenericUInt16ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericUInt16ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericUInt16ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline UInt16Array GenericUInt16ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericUInt16ArrayValue.setShared!(UInt16Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericUInt16ArrayValue.setCopy!(UInt16Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline UInt16 GenericUInt16ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericUInt16ArrayValue.set!(Index index, UInt16 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericUInt16ArrayValue.push!(UInt16 value) {
+  this._value.push(value);
+}
+
+object GenericUInt32Value : GenericValue {
+  UInt32 _value;
+};
+
+// value constructor
+inline GenericUInt32Value(UInt32 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericUInt32Value.getValueType() {
+  return "UInt32";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericUInt32Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericUInt32Value.equals(Ref<Object> other)
+{
+  GenericUInt32Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline UInt32 GenericUInt32Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericUInt32Value.set!(UInt32 value) {
+  this._value = value;
+}
+
+alias UInt32 UInt32Array[];
+
+object GenericUInt32ArrayValue : GenericValue, GenericArrayValue {
+  UInt32Array _value;
+};
+
+// value constructor
+inline GenericUInt32ArrayValue(UInt32Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericUInt32ArrayValue.getValueType() {
+  return "UInt32Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericUInt32ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericUInt32ArrayValue.equals(Ref<Object> other)
+{
+  GenericUInt32ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericUInt32ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericUInt32ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline UInt32Array GenericUInt32ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericUInt32ArrayValue.setShared!(UInt32Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericUInt32ArrayValue.setCopy!(UInt32Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline UInt32 GenericUInt32ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericUInt32ArrayValue.set!(Index index, UInt32 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericUInt32ArrayValue.push!(UInt32 value) {
+  this._value.push(value);
+}
+
+object GenericUInt64Value : GenericValue {
+  UInt64 _value;
+};
+
+// value constructor
+inline GenericUInt64Value(UInt64 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericUInt64Value.getValueType() {
+  return "UInt64";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericUInt64Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericUInt64Value.equals(Ref<Object> other)
+{
+  GenericUInt64Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline UInt64 GenericUInt64Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericUInt64Value.set!(UInt64 value) {
+  this._value = value;
+}
+
+alias UInt64 UInt64Array[];
+
+object GenericUInt64ArrayValue : GenericValue, GenericArrayValue {
+  UInt64Array _value;
+};
+
+// value constructor
+inline GenericUInt64ArrayValue(UInt64Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericUInt64ArrayValue.getValueType() {
+  return "UInt64Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericUInt64ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericUInt64ArrayValue.equals(Ref<Object> other)
+{
+  GenericUInt64ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericUInt64ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericUInt64ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline UInt64Array GenericUInt64ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericUInt64ArrayValue.setShared!(UInt64Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericUInt64ArrayValue.setCopy!(UInt64Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline UInt64 GenericUInt64ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericUInt64ArrayValue.set!(Index index, UInt64 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericUInt64ArrayValue.push!(UInt64 value) {
+  this._value.push(value);
+}
+
+object GenericFloat32Value : GenericValue {
+  Float32 _value;
+};
+
+// value constructor
+inline GenericFloat32Value(Float32 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericFloat32Value.getValueType() {
+  return "Float32";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericFloat32Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericFloat32Value.equals(Ref<Object> other)
+{
+  GenericFloat32Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Float32 GenericFloat32Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericFloat32Value.set!(Float32 value) {
+  this._value = value;
+}
+
+alias Float32 Float32Array[];
+
+object GenericFloat32ArrayValue : GenericValue, GenericArrayValue {
+  Float32Array _value;
+};
+
+// value constructor
+inline GenericFloat32ArrayValue(Float32Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericFloat32ArrayValue.getValueType() {
+  return "Float32Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericFloat32ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericFloat32ArrayValue.equals(Ref<Object> other)
+{
+  GenericFloat32ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericFloat32ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericFloat32ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline Float32Array GenericFloat32ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericFloat32ArrayValue.setShared!(Float32Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericFloat32ArrayValue.setCopy!(Float32Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Float32 GenericFloat32ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericFloat32ArrayValue.set!(Index index, Float32 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericFloat32ArrayValue.push!(Float32 value) {
+  this._value.push(value);
+}
+
+object GenericFloat64Value : GenericValue {
+  Float64 _value;
+};
+
+// value constructor
+inline GenericFloat64Value(Float64 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericFloat64Value.getValueType() {
+  return "Float64";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericFloat64Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericFloat64Value.equals(Ref<Object> other)
+{
+  GenericFloat64Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Float64 GenericFloat64Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericFloat64Value.set!(Float64 value) {
+  this._value = value;
+}
+
+alias Float64 Float64Array[];
+
+object GenericFloat64ArrayValue : GenericValue, GenericArrayValue {
+  Float64Array _value;
+};
+
+// value constructor
+inline GenericFloat64ArrayValue(Float64Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericFloat64ArrayValue.getValueType() {
+  return "Float64Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericFloat64ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericFloat64ArrayValue.equals(Ref<Object> other)
+{
+  GenericFloat64ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericFloat64ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericFloat64ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline Float64Array GenericFloat64ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericFloat64ArrayValue.setShared!(Float64Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericFloat64ArrayValue.setCopy!(Float64Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Float64 GenericFloat64ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericFloat64ArrayValue.set!(Index index, Float64 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericFloat64ArrayValue.push!(Float64 value) {
+  this._value.push(value);
+}
+
+object GenericARGBValue : GenericValue {
+  ARGB _value;
+};
+
+// value constructor
+inline GenericARGBValue(ARGB value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericARGBValue.getValueType() {
+  return "ARGB";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericARGBValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericARGBValue.equals(Ref<Object> other)
+{
+  GenericARGBValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline ARGB GenericARGBValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericARGBValue.set!(ARGB value) {
+  this._value = value;
+}
+
+alias ARGB ARGBArray[];
+
+object GenericARGBArrayValue : GenericValue, GenericArrayValue {
+  ARGBArray _value;
+};
+
+// value constructor
+inline GenericARGBArrayValue(ARGBArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericARGBArrayValue.getValueType() {
+  return "ARGBArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericARGBArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericARGBArrayValue.equals(Ref<Object> other)
+{
+  GenericARGBArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericARGBArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericARGBArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline ARGBArray GenericARGBArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericARGBArrayValue.setShared!(ARGBArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericARGBArrayValue.setCopy!(ARGBArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline ARGB GenericARGBArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericARGBArrayValue.set!(Index index, ARGB value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericARGBArrayValue.push!(ARGB value) {
+  this._value.push(value);
+}
+
+object GenericBox2Value : GenericValue {
+  Box2 _value;
+};
+
+// value constructor
+inline GenericBox2Value(Box2 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericBox2Value.getValueType() {
+  return "Box2";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericBox2Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericBox2Value.equals(Ref<Object> other)
+{
+  GenericBox2Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Box2 GenericBox2Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericBox2Value.set!(Box2 value) {
+  this._value = value;
+}
+
+alias Box2 Box2Array[];
+
+object GenericBox2ArrayValue : GenericValue, GenericArrayValue {
+  Box2Array _value;
+};
+
+// value constructor
+inline GenericBox2ArrayValue(Box2Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericBox2ArrayValue.getValueType() {
+  return "Box2Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericBox2ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericBox2ArrayValue.equals(Ref<Object> other)
+{
+  GenericBox2ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericBox2ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericBox2ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline Box2Array GenericBox2ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericBox2ArrayValue.setShared!(Box2Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericBox2ArrayValue.setCopy!(Box2Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Box2 GenericBox2ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericBox2ArrayValue.set!(Index index, Box2 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericBox2ArrayValue.push!(Box2 value) {
+  this._value.push(value);
+}
+
+object GenericBox3Value : GenericValue {
+  Box3 _value;
+};
+
+// value constructor
+inline GenericBox3Value(Box3 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericBox3Value.getValueType() {
+  return "Box3";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericBox3Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericBox3Value.equals(Ref<Object> other)
+{
+  GenericBox3Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Box3 GenericBox3Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericBox3Value.set!(Box3 value) {
+  this._value = value;
+}
+
+alias Box3 Box3Array[];
+
+object GenericBox3ArrayValue : GenericValue, GenericArrayValue {
+  Box3Array _value;
+};
+
+// value constructor
+inline GenericBox3ArrayValue(Box3Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericBox3ArrayValue.getValueType() {
+  return "Box3Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericBox3ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericBox3ArrayValue.equals(Ref<Object> other)
+{
+  GenericBox3ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericBox3ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericBox3ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline Box3Array GenericBox3ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericBox3ArrayValue.setShared!(Box3Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericBox3ArrayValue.setCopy!(Box3Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Box3 GenericBox3ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericBox3ArrayValue.set!(Index index, Box3 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericBox3ArrayValue.push!(Box3 value) {
+  this._value.push(value);
+}
+
+object GenericColorValue : GenericValue {
+  Color _value;
+};
+
+// value constructor
+inline GenericColorValue(Color value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericColorValue.getValueType() {
+  return "Color";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericColorValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericColorValue.equals(Ref<Object> other)
+{
+  GenericColorValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Color GenericColorValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericColorValue.set!(Color value) {
+  this._value = value;
+}
+
+alias Color ColorArray[];
+
+object GenericColorArrayValue : GenericValue, GenericArrayValue {
+  ColorArray _value;
+};
+
+// value constructor
+inline GenericColorArrayValue(ColorArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericColorArrayValue.getValueType() {
+  return "ColorArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericColorArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericColorArrayValue.equals(Ref<Object> other)
+{
+  GenericColorArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericColorArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericColorArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline ColorArray GenericColorArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericColorArrayValue.setShared!(ColorArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericColorArrayValue.setCopy!(ColorArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Color GenericColorArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericColorArrayValue.set!(Index index, Color value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericColorArrayValue.push!(Color value) {
+  this._value.push(value);
+}
+
+object GenericEulerValue : GenericValue {
+  Euler _value;
+};
+
+// value constructor
+inline GenericEulerValue(Euler value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericEulerValue.getValueType() {
+  return "Euler";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericEulerValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericEulerValue.equals(Ref<Object> other)
+{
+  GenericEulerValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Euler GenericEulerValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericEulerValue.set!(Euler value) {
+  this._value = value;
+}
+
+alias Euler EulerArray[];
+
+object GenericEulerArrayValue : GenericValue, GenericArrayValue {
+  EulerArray _value;
+};
+
+// value constructor
+inline GenericEulerArrayValue(EulerArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericEulerArrayValue.getValueType() {
+  return "EulerArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericEulerArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericEulerArrayValue.equals(Ref<Object> other)
+{
+  GenericEulerArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericEulerArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericEulerArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline EulerArray GenericEulerArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericEulerArrayValue.setShared!(EulerArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericEulerArrayValue.setCopy!(EulerArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Euler GenericEulerArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericEulerArrayValue.set!(Index index, Euler value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericEulerArrayValue.push!(Euler value) {
+  this._value.push(value);
+}
+
+object GenericMat22Value : GenericValue {
+  Mat22 _value;
+};
+
+// value constructor
+inline GenericMat22Value(Mat22 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericMat22Value.getValueType() {
+  return "Mat22";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericMat22Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericMat22Value.equals(Ref<Object> other)
+{
+  GenericMat22Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Mat22 GenericMat22Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericMat22Value.set!(Mat22 value) {
+  this._value = value;
+}
+
+alias Mat22 Mat22Array[];
+
+object GenericMat22ArrayValue : GenericValue, GenericArrayValue {
+  Mat22Array _value;
+};
+
+// value constructor
+inline GenericMat22ArrayValue(Mat22Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericMat22ArrayValue.getValueType() {
+  return "Mat22Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericMat22ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericMat22ArrayValue.equals(Ref<Object> other)
+{
+  GenericMat22ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericMat22ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericMat22ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline Mat22Array GenericMat22ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericMat22ArrayValue.setShared!(Mat22Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericMat22ArrayValue.setCopy!(Mat22Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Mat22 GenericMat22ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericMat22ArrayValue.set!(Index index, Mat22 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericMat22ArrayValue.push!(Mat22 value) {
+  this._value.push(value);
+}
+
+object GenericMat33Value : GenericValue {
+  Mat33 _value;
+};
+
+// value constructor
+inline GenericMat33Value(Mat33 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericMat33Value.getValueType() {
+  return "Mat33";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericMat33Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericMat33Value.equals(Ref<Object> other)
+{
+  GenericMat33Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Mat33 GenericMat33Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericMat33Value.set!(Mat33 value) {
+  this._value = value;
+}
+
+alias Mat33 Mat33Array[];
+
+object GenericMat33ArrayValue : GenericValue, GenericArrayValue {
+  Mat33Array _value;
+};
+
+// value constructor
+inline GenericMat33ArrayValue(Mat33Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericMat33ArrayValue.getValueType() {
+  return "Mat33Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericMat33ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericMat33ArrayValue.equals(Ref<Object> other)
+{
+  GenericMat33ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericMat33ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericMat33ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline Mat33Array GenericMat33ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericMat33ArrayValue.setShared!(Mat33Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericMat33ArrayValue.setCopy!(Mat33Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Mat33 GenericMat33ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericMat33ArrayValue.set!(Index index, Mat33 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericMat33ArrayValue.push!(Mat33 value) {
+  this._value.push(value);
+}
+
+object GenericMat44Value : GenericValue {
+  Mat44 _value;
+};
+
+// value constructor
+inline GenericMat44Value(Mat44 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericMat44Value.getValueType() {
+  return "Mat44";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericMat44Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericMat44Value.equals(Ref<Object> other)
+{
+  GenericMat44Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Mat44 GenericMat44Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericMat44Value.set!(Mat44 value) {
+  this._value = value;
+}
+
+alias Mat44 Mat44Array[];
+
+object GenericMat44ArrayValue : GenericValue, GenericArrayValue {
+  Mat44Array _value;
+};
+
+// value constructor
+inline GenericMat44ArrayValue(Mat44Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericMat44ArrayValue.getValueType() {
+  return "Mat44Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericMat44ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericMat44ArrayValue.equals(Ref<Object> other)
+{
+  GenericMat44ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericMat44ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericMat44ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline Mat44Array GenericMat44ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericMat44ArrayValue.setShared!(Mat44Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericMat44ArrayValue.setCopy!(Mat44Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Mat44 GenericMat44ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericMat44ArrayValue.set!(Index index, Mat44 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericMat44ArrayValue.push!(Mat44 value) {
+  this._value.push(value);
+}
+
+object GenericQuatValue : GenericValue {
+  Quat _value;
+};
+
+// value constructor
+inline GenericQuatValue(Quat value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericQuatValue.getValueType() {
+  return "Quat";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericQuatValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericQuatValue.equals(Ref<Object> other)
+{
+  GenericQuatValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Quat GenericQuatValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericQuatValue.set!(Quat value) {
+  this._value = value;
+}
+
+alias Quat QuatArray[];
+
+object GenericQuatArrayValue : GenericValue, GenericArrayValue {
+  QuatArray _value;
+};
+
+// value constructor
+inline GenericQuatArrayValue(QuatArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericQuatArrayValue.getValueType() {
+  return "QuatArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericQuatArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericQuatArrayValue.equals(Ref<Object> other)
+{
+  GenericQuatArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericQuatArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericQuatArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline QuatArray GenericQuatArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericQuatArrayValue.setShared!(QuatArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericQuatArrayValue.setCopy!(QuatArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Quat GenericQuatArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericQuatArrayValue.set!(Index index, Quat value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericQuatArrayValue.push!(Quat value) {
+  this._value.push(value);
+}
+
+object GenericRGBValue : GenericValue {
+  RGB _value;
+};
+
+// value constructor
+inline GenericRGBValue(RGB value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericRGBValue.getValueType() {
+  return "RGB";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericRGBValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericRGBValue.equals(Ref<Object> other)
+{
+  GenericRGBValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline RGB GenericRGBValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericRGBValue.set!(RGB value) {
+  this._value = value;
+}
+
+alias RGB RGBArray[];
+
+object GenericRGBArrayValue : GenericValue, GenericArrayValue {
+  RGBArray _value;
+};
+
+// value constructor
+inline GenericRGBArrayValue(RGBArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericRGBArrayValue.getValueType() {
+  return "RGBArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericRGBArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericRGBArrayValue.equals(Ref<Object> other)
+{
+  GenericRGBArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericRGBArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericRGBArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline RGBArray GenericRGBArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericRGBArrayValue.setShared!(RGBArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericRGBArrayValue.setCopy!(RGBArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline RGB GenericRGBArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericRGBArrayValue.set!(Index index, RGB value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericRGBArrayValue.push!(RGB value) {
+  this._value.push(value);
+}
+
+object GenericRGBAValue : GenericValue {
+  RGBA _value;
+};
+
+// value constructor
+inline GenericRGBAValue(RGBA value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericRGBAValue.getValueType() {
+  return "RGBA";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericRGBAValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericRGBAValue.equals(Ref<Object> other)
+{
+  GenericRGBAValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline RGBA GenericRGBAValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericRGBAValue.set!(RGBA value) {
+  this._value = value;
+}
+
+alias RGBA RGBAArray[];
+
+object GenericRGBAArrayValue : GenericValue, GenericArrayValue {
+  RGBAArray _value;
+};
+
+// value constructor
+inline GenericRGBAArrayValue(RGBAArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericRGBAArrayValue.getValueType() {
+  return "RGBAArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericRGBAArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericRGBAArrayValue.equals(Ref<Object> other)
+{
+  GenericRGBAArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericRGBAArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericRGBAArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline RGBAArray GenericRGBAArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericRGBAArrayValue.setShared!(RGBAArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericRGBAArrayValue.setCopy!(RGBAArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline RGBA GenericRGBAArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericRGBAArrayValue.set!(Index index, RGBA value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericRGBAArrayValue.push!(RGBA value) {
+  this._value.push(value);
+}
+
+object GenericRayValue : GenericValue {
+  Ray _value;
+};
+
+// value constructor
+inline GenericRayValue(Ray value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericRayValue.getValueType() {
+  return "Ray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericRayValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericRayValue.equals(Ref<Object> other)
+{
+  GenericRayValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Ray GenericRayValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericRayValue.set!(Ray value) {
+  this._value = value;
+}
+
+alias Ray RayArray[];
+
+object GenericRayArrayValue : GenericValue, GenericArrayValue {
+  RayArray _value;
+};
+
+// value constructor
+inline GenericRayArrayValue(RayArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericRayArrayValue.getValueType() {
+  return "RayArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericRayArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericRayArrayValue.equals(Ref<Object> other)
+{
+  GenericRayArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericRayArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericRayArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline RayArray GenericRayArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericRayArrayValue.setShared!(RayArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericRayArrayValue.setCopy!(RayArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Ray GenericRayArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericRayArrayValue.set!(Index index, Ray value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericRayArrayValue.push!(Ray value) {
+  this._value.push(value);
+}
+
+object GenericRotationOrderValue : GenericValue {
+  RotationOrder _value;
+};
+
+// value constructor
+inline GenericRotationOrderValue(RotationOrder value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericRotationOrderValue.getValueType() {
+  return "RotationOrder";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericRotationOrderValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericRotationOrderValue.equals(Ref<Object> other)
+{
+  GenericRotationOrderValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline RotationOrder GenericRotationOrderValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericRotationOrderValue.set!(RotationOrder value) {
+  this._value = value;
+}
+
+alias RotationOrder RotationOrderArray[];
+
+object GenericRotationOrderArrayValue : GenericValue, GenericArrayValue {
+  RotationOrderArray _value;
+};
+
+// value constructor
+inline GenericRotationOrderArrayValue(RotationOrderArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericRotationOrderArrayValue.getValueType() {
+  return "RotationOrderArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericRotationOrderArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericRotationOrderArrayValue.equals(Ref<Object> other)
+{
+  GenericRotationOrderArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericRotationOrderArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericRotationOrderArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline RotationOrderArray GenericRotationOrderArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericRotationOrderArrayValue.setShared!(RotationOrderArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericRotationOrderArrayValue.setCopy!(RotationOrderArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline RotationOrder GenericRotationOrderArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericRotationOrderArrayValue.set!(Index index, RotationOrder value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericRotationOrderArrayValue.push!(RotationOrder value) {
+  this._value.push(value);
+}
+
+object GenericVec2Value : GenericValue {
+  Vec2 _value;
+};
+
+// value constructor
+inline GenericVec2Value(Vec2 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericVec2Value.getValueType() {
+  return "Vec2";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericVec2Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericVec2Value.equals(Ref<Object> other)
+{
+  GenericVec2Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Vec2 GenericVec2Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericVec2Value.set!(Vec2 value) {
+  this._value = value;
+}
+
+alias Vec2 Vec2Array[];
+
+object GenericVec2ArrayValue : GenericValue, GenericArrayValue {
+  Vec2Array _value;
+};
+
+// value constructor
+inline GenericVec2ArrayValue(Vec2Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericVec2ArrayValue.getValueType() {
+  return "Vec2Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericVec2ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericVec2ArrayValue.equals(Ref<Object> other)
+{
+  GenericVec2ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericVec2ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericVec2ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline Vec2Array GenericVec2ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericVec2ArrayValue.setShared!(Vec2Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericVec2ArrayValue.setCopy!(Vec2Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Vec2 GenericVec2ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericVec2ArrayValue.set!(Index index, Vec2 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericVec2ArrayValue.push!(Vec2 value) {
+  this._value.push(value);
+}
+
+object GenericVec3Value : GenericValue {
+  Vec3 _value;
+};
+
+// value constructor
+inline GenericVec3Value(Vec3 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericVec3Value.getValueType() {
+  return "Vec3";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericVec3Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericVec3Value.equals(Ref<Object> other)
+{
+  GenericVec3Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Vec3 GenericVec3Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericVec3Value.set!(Vec3 value) {
+  this._value = value;
+}
+
+alias Vec3 Vec3Array[];
+
+object GenericVec3ArrayValue : GenericValue, GenericArrayValue {
+  Vec3Array _value;
+};
+
+// value constructor
+inline GenericVec3ArrayValue(Vec3Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericVec3ArrayValue.getValueType() {
+  return "Vec3Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericVec3ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericVec3ArrayValue.equals(Ref<Object> other)
+{
+  GenericVec3ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericVec3ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericVec3ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline Vec3Array GenericVec3ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericVec3ArrayValue.setShared!(Vec3Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericVec3ArrayValue.setCopy!(Vec3Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Vec3 GenericVec3ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericVec3ArrayValue.set!(Index index, Vec3 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericVec3ArrayValue.push!(Vec3 value) {
+  this._value.push(value);
+}
+
+object GenericVec3_dValue : GenericValue {
+  Vec3_d _value;
+};
+
+// value constructor
+inline GenericVec3_dValue(Vec3_d value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericVec3_dValue.getValueType() {
+  return "Vec3_d";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericVec3_dValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericVec3_dValue.equals(Ref<Object> other)
+{
+  GenericVec3_dValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Vec3_d GenericVec3_dValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericVec3_dValue.set!(Vec3_d value) {
+  this._value = value;
+}
+
+alias Vec3_d Vec3_dArray[];
+
+object GenericVec3_dArrayValue : GenericValue, GenericArrayValue {
+  Vec3_dArray _value;
+};
+
+// value constructor
+inline GenericVec3_dArrayValue(Vec3_dArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericVec3_dArrayValue.getValueType() {
+  return "Vec3_dArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericVec3_dArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericVec3_dArrayValue.equals(Ref<Object> other)
+{
+  GenericVec3_dArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericVec3_dArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericVec3_dArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline Vec3_dArray GenericVec3_dArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericVec3_dArrayValue.setShared!(Vec3_dArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericVec3_dArrayValue.setCopy!(Vec3_dArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Vec3_d GenericVec3_dArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericVec3_dArrayValue.set!(Index index, Vec3_d value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericVec3_dArrayValue.push!(Vec3_d value) {
+  this._value.push(value);
+}
+
+object GenericVec4Value : GenericValue {
+  Vec4 _value;
+};
+
+// value constructor
+inline GenericVec4Value(Vec4 value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericVec4Value.getValueType() {
+  return "Vec4";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericVec4Value.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericVec4Value.equals(Ref<Object> other)
+{
+  GenericVec4Value otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Vec4 GenericVec4Value.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericVec4Value.set!(Vec4 value) {
+  this._value = value;
+}
+
+alias Vec4 Vec4Array[];
+
+object GenericVec4ArrayValue : GenericValue, GenericArrayValue {
+  Vec4Array _value;
+};
+
+// value constructor
+inline GenericVec4ArrayValue(Vec4Array value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericVec4ArrayValue.getValueType() {
+  return "Vec4Array";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericVec4ArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericVec4ArrayValue.equals(Ref<Object> other)
+{
+  GenericVec4ArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericVec4ArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericVec4ArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline Vec4Array GenericVec4ArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericVec4ArrayValue.setShared!(Vec4Array value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericVec4ArrayValue.setCopy!(Vec4Array value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Vec4 GenericVec4ArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericVec4ArrayValue.set!(Index index, Vec4 value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericVec4ArrayValue.push!(Vec4 value) {
+  this._value.push(value);
+}
+
+object GenericXfoValue : GenericValue {
+  Xfo _value;
+};
+
+// value constructor
+inline GenericXfoValue(Xfo value) {
+  this._value = value;
+}
+
+// returns the type of the value
+inline String GenericXfoValue.getValueType() {
+  return "Xfo";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericXfoValue.isArray() {
+  return false;
+}
+
+// return true if this value matches another one
+inline Boolean GenericXfoValue.equals(Ref<Object> other)
+{
+  GenericXfoValue otherValue(other);
+  return (!!otherValue) && this.get() == otherValue.get();
+}
+
+// returns the contained value
+inline Xfo GenericXfoValue.get() {
+  return this._value;
+}
+
+// sets the contained value
+inline GenericXfoValue.set!(Xfo value) {
+  this._value = value;
+}
+
+alias Xfo XfoArray[];
+
+object GenericXfoArrayValue : GenericValue, GenericArrayValue {
+  XfoArray _value;
+};
+
+// value constructor
+inline GenericXfoArrayValue(XfoArray value) {
+  this.setCopy(value);
+}
+
+// returns the name of the value type
+inline String GenericXfoArrayValue.getValueType() {
+  return "XfoArray";
+}
+
+// returns true if this value contains an array
+inline Boolean GenericXfoArrayValue.isArray() {
+  return true;
+}
+
+// return true if this value array matches another one
+inline Boolean GenericXfoArrayValue.equals(Ref<Object> other)
+{
+  GenericXfoArrayValue otherValue(other);
+  if(!otherValue)
+    return false;
+  if(this.size() != otherValue.size())
+    return false;
+  for(Size i=0;i<this.size();i++)
+  {
+    if(this.get(i) != otherValue.get(i))
+      return false;
+  }
+  return true;
+}
+
+// returns the size of the contained value array
+inline Size GenericXfoArrayValue.size() {
+  return this._value.size();
+}
+
+// resizes the contained value array
+inline GenericXfoArrayValue.resize!(Size newSize) {
+  this._value.resize(newSize);
+}
+
+// returns the contained value array
+inline XfoArray GenericXfoArrayValue.get() {
+  return this._value;
+}
+
+// sets the contained value array (sharing the reference)
+inline GenericXfoArrayValue.setShared!(XfoArray value) {
+  this._value = value;
+}
+
+// sets the contained value array (copying its contents)
+inline GenericXfoArrayValue.setCopy!(XfoArray value) {
+  this._value = value.clone();
+}
+
+// returns an element the contained value array by index
+inline Xfo GenericXfoArrayValue.get(Index index) {
+  return this._value[index];
+}
+
+// sets an element the contained value array by index
+inline GenericXfoArrayValue.set!(Index index, Xfo value) {
+  this._value[index] = value;
+}
+
+// pushed an element to the contained value array
+inline GenericXfoArrayValue.push!(Xfo value) {
+  this._value.push(value);
+}

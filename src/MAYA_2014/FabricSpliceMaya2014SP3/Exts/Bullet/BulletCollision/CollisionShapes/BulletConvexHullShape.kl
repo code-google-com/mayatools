@@ -1,0 +1,101 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+///The BulletConvexHullShape implements an implicit convex hull of an array of vertices.
+///Bullet provides a general and fast collision detector for convex shapes based on GJK and EPA using localGetSupportingVertex.
+object BulletConvexHullShape : BulletPolyhedralConvexAabbCachingShape, BulletPolyhedralConvexShape, BulletConvexInternalShape, BulletConvexShape, BulletCollisionShape
+{
+	Data pointer;
+};
+
+function Data BulletConvexHullShape.getPointer(){
+	return this.pointer;
+}
+
+	
+///this constructor optionally takes in a pointer to points. Each point is assumed to be 3 consecutive Scalar (x,y,z), the striding defines the number of bytes between each point, in memory.
+///It is easier to not pass any points in the constructor, and just add one point at a time, using addPoint.
+///BulletConvexHullShape make an internal copy of the points.
+function BulletConvexHullShape(){
+	this.__construct();
+}
+function BulletConvexHullShape.__construct!() = "BulletConvexHullShape_construct";
+function BulletConvexHullShape(Vec3 points[]){
+	this.__construct(points);
+}
+function BulletConvexHullShape.__construct!(Vec3 points[]) = "BulletConvexHullShape_constructWithPointsArray";
+function ~BulletConvexHullShape() = "BulletConvexHullShape_destroy";
+
+
+function BulletConvexHullShape.addPoint!(Vec3 point) = 'BulletConvexHullShape_addPoint';
+
+	
+function Vec3[] BulletConvexHullShape.getUnscaledPoints() = 'BulletConvexHullShape_getUnscaledPoints';
+
+
+function Vec3 BulletConvexHullShape.getScaledPoint(Integer i) = 'BulletConvexHullShape_getScaledPoint';
+
+function Size BulletConvexHullShape.getNumPoints() = 'BulletConvexHullShape_getNumPoints';
+
+function Vec3 BulletConvexHullShape.localGetSupportingVertex?( Vec3 vec) = 'BulletConvexHullShape_localGetSupportingVertex';
+function Vec3 BulletConvexHullShape.localGetSupportingVertexWithoutMargin(Vec3 vec) = 'BulletConvexHullShape_localGetSupportingVertexWithoutMargin';
+function BulletConvexHullShape.batchedUnitVectorGetSupportingVertexWithoutMargin?(Vec3 vectors[], io Vec3 supportVerticesOut[]) = 'BulletConvexHullShape_batchedUnitVectorGetSupportingVertexWithoutMargin';
+	
+
+
+//debugging
+function String BulletConvexHullShape.getName() = 'BulletConvexHullShape_getName';
+
+
+function Integer BulletConvexHullShape.getNumVertices() = 'BulletConvexHullShape_getNumVertices';
+function Integer BulletConvexHullShape.getNumEdges() = 'BulletConvexHullShape_getNumEdges';
+function BulletConvexHullShape.getEdge?(Integer i, io Vec3 pa, io Vec3 pb) = 'BulletConvexHullShape_getEdge';
+function BulletConvexHullShape.getVertex?(Integer i, io Vec3 vtx) = 'BulletConvexHullShape_getVertex';
+function Integer BulletConvexHullShape.getNumPlanes() = 'BulletConvexHullShape_getNumPlanes';
+function BulletConvexHullShape.getPlane?(io Vec3 planeNormal, io Vec3 planeSupport, Integer i ) = 'BulletConvexHullShape_getPlane';
+function Boolean BulletConvexHullShape.isInside?(Vec3 pt ,Scalar tolerance) = 'BulletConvexHullShape_isInside';
+
+///in case we receive negative scaling
+function BulletConvexHullShape.setLocalScaling!(Vec3 scaling) = 'BulletConvexHullShape_setLocalScaling';
+
+// function Integer BulletConvexHullShape.calculateSerializeBufferSize?() = 'BulletConvexHullShape_calculateSerializeBufferSize';
+
+// 	///fills the dataBuffer and returns the struct name (and 0 on failure)
+// function String	BulletConvexHullShape.serialize?(Object dataBuffer, BulletSerializer serializer) = 'BulletConvexHullShape_serialize';
+
+
+
+// ///do not change those serialization structures, it requires an updated sBulletDNAstr/sBulletDNAstr64
+// struct	BulletConvexHullShapeData
+// {
+// 	BulletConvexInternalShapeData	m_convexInternalShapeData;
+
+// 	BulletVector3FloatData	*m_unscaledPointsFloatPtr;
+// 	BulletVector3DoubleData	*m_unscaledPointsDoublePtr;
+
+// 	Integer		m_numUnscaledPoints;
+// 	char m_padding3[4];
+
+// };
+
+
+// SIMD_FORCE_INLINE	Integer	BulletConvexHullShape::calculateSerializeBufferSize() const
+// {
+// 	return sizeof(BulletConvexHullShapeData);
+// }
+
+
+////////////////////////////////////////////////
+// From BulletCollisionShape
+
+function BulletConvexHullShape.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = "BulletConvexHullShape_calculateLocalInertia";
+
+function BulletConvexHullShape.setMargin!(Scalar margin) = 'BulletConvexHullShape_setMargin';
+function Scalar	BulletConvexHullShape.getMargin() = 'BulletConvexHullShape_getMargin';
+
+
+
+function BulletConvexHullShape.getAabb(Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletConvexHullShape_getAabb';

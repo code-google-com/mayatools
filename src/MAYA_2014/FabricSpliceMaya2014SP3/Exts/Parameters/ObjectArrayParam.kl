@@ -1,0 +1,71 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`objectarrayparam` implements the :ref:`param` interface for Object array values.
+
+Example
+---------
+
+.. code-block:: kl
+
+    ObjectArrayParam param = ObjectArrayParam('shapes');
+    param.resize(2);
+    param.setValue(0, PolygonMesh());
+    param.setValue(1, Lines());
+    report(param.getValue(1));
+*/
+
+object ObjectArrayParam : Param {
+  String name;
+  Object values[];
+  Param options[String];
+};
+
+// default constructor
+function ObjectArrayParam(String name) {
+  this.name = name;
+}
+
+// returns the size of the values
+function Size ObjectArrayParam.size() {
+  return this.values.size();
+}
+
+// resizes the values to a certain count
+function ObjectArrayParam.resize!(Size size) {
+  this.values.resize(size);
+}
+
+// returns the name of this parameter
+function String ObjectArrayParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String ObjectArrayParam.getValueType() {
+  return "Object[]";
+}
+
+// getting an option on this param
+function Param ObjectArrayParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function ObjectArrayParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function Object ObjectArrayParam.getValue(Index index) {
+  return this.values[index];
+}
+
+// sets the param's value
+function ObjectArrayParam.setValue!(Index index, Object value) {
+  this.values[index] = value;
+}

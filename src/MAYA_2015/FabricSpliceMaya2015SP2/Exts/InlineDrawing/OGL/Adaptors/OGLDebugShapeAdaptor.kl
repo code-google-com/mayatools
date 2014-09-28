@@ -1,0 +1,122 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`ogldebugshapeadaptor` implements the :ref:`inlineshapeadaptor` interface. It is used to draw a :ref:`inlinedebugshape` within an OpenGL viewport.
+*/
+
+require RTR;
+
+object OGLDebugShapeAdaptor : InlineShapeAdaptor {
+};
+
+// default constructor
+function OGLDebugShapeAdaptor() {}
+
+// returns the types this adaptor is capable of drawing
+function String[] OGLDebugShapeAdaptor.getShapeTypes() {
+  String result[];
+  result.push('InlineDebugShape');
+  return result;
+}
+
+// draw the shape to the screen.
+// this is called by the InlineInstance,
+// you should not call this manually.
+function Boolean OGLDebugShapeAdaptor._draw!(io DrawContext context, io Ref<InlineShape> shape, Index index, Size count) {
+
+  // access the lines shape
+  InlineDebugShape debugShape = shape;
+  OGLBufferDictionary buffers = debugShape.getMetaData('buffers');
+  if(buffers == null) {
+    buffers = OGLBufferDictionary();
+    debugShape.setMetaData('buffers', buffers);
+  }
+
+  if(index == 0) {
+    InlineShader shader = context.getObject('currentShader');
+    _OGLShape_updateGeometryAttributeBuffers(context, buffers, debugShape._attributes);
+
+    if(debugShape._pointsIndicesOffset > 0 && buffers.getVersion('pointsTopology') != debugShape.getVersion()) {
+      OGLBuffer buffer = buffers.get('pointsTopology');
+      if(buffer == null) {
+        buffer = OGLBuffer();
+        buffer.bufferType = GL_ARRAY_BUFFER;
+        buffer.bufferUsage = GL_STATIC_DRAW;
+        buffer.bufferElementComponentType = GL_UNSIGNED_INT;
+        buffers.set('pointsTopology', buffer);
+      }
+      if( buffer.bufferID )
+        buffer.bufferUsage = GL_DYNAMIC_DRAW;//Loaded at least 2 times: lazily upgrade to "dynamic"
+
+      buffer.genBuffer(debugShape._pointsIndices.data(), debugShape._pointsIndices.dataSize(), debugShape._pointsIndicesOffset);
+      buffers.setVersion('pointsTopology', debugShape.getVersion());
+    }
+
+    if(debugShape._linesIndicesOffset > 0 && buffers.getVersion('linesTopology') != debugShape.getVersion()) {
+      OGLBuffer buffer = buffers.get('linesTopology');
+      if(buffer == null) {
+        buffer = OGLBuffer();
+        buffer.bufferType = GL_ARRAY_BUFFER;
+        buffer.bufferUsage = GL_STATIC_DRAW;
+        buffer.bufferElementComponentType = GL_UNSIGNED_INT;
+        buffers.set('linesTopology', buffer);
+      }
+      if( buffer.bufferID )
+        buffer.bufferUsage = GL_DYNAMIC_DRAW;//Loaded at least 2 times: lazily upgrade to "dynamic"
+
+      buffer.genBuffer(debugShape._linesIndices.data(), debugShape._linesIndices.dataSize(), debugShape._linesIndicesOffset);
+      buffers.setVersion('linesTopology', debugShape.getVersion());
+    }
+
+    if(debugShape._trianglesIndicesOffset > 0 && buffers.getVersion('trianglesTopology') != debugShape.getVersion()) {
+      OGLBuffer buffer = buffers.get('trianglesTopology');
+      if(buffer == null) {
+        buffer = OGLBuffer();
+        buffer.bufferType = GL_ARRAY_BUFFER;
+        buffer.bufferUsage = GL_STATIC_DRAW;
+        buffer.bufferElementComponentType = GL_UNSIGNED_INT;
+        buffers.set('trianglesTopology', buffer);
+      }
+      if( buffer.bufferID )
+        buffer.bufferUsage = GL_DYNAMIC_DRAW;//Loaded at least 2 times: lazily upgrade to "dynamic"
+
+      buffer.genBuffer(debugShape._trianglesIndices.data(), debugShape._trianglesIndices.dataSize(), debugShape._trianglesIndicesOffset);
+      buffers.setVersion('trianglesTopology', debugShape.getVersion());
+    }
+  }
+
+  Data NULL;
+  OGLBuffer buffer = null;
+
+  if(debugShape._pointsIndicesOffset > 0) {
+    buffer = buffers.get('pointsTopology');
+    if(buffer != null) {
+      glPointSize(debugShape.getPointSize());
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.bufferID);
+      glDrawElements(GL_POINTS, buffer.elementCount, buffer.bufferElementComponentType, NULL);
+    }
+  }
+
+  if(debugShape._linesIndicesOffset > 0) {
+    buffer = buffers.get('linesTopology');
+    if(buffer != null) {
+      glLineWidth(debugShape.getLineWidth());
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.bufferID);
+      glDrawElements(GL_LINES, buffer.elementCount, buffer.bufferElementComponentType, NULL);
+    }
+  }
+
+  if(debugShape._trianglesIndicesOffset > 0) {
+    buffer = buffers.get('trianglesTopology');
+    if(buffer != null) {
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.bufferID);
+      glDrawElements(GL_TRIANGLES, buffer.elementCount, buffer.bufferElementComponentType, NULL);
+    }
+  }
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+  return true;
+}

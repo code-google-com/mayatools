@@ -1,0 +1,217 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+The :ref:`keyframetrack` represents an animation curve storing a list of :ref:`keyframe` objects. The :ref:`keyframetrack` is the higher level container which can be used to perform evaluation of the animation data.
+
+Example
+---------
+
+.. code-block:: js
+
+    // create an animation track
+    KeyframeTrack curve('translationX', Color(1.0, 0.0, 0.0));
+
+    // push a keyframe
+    curve.addKey(Keyframe(0.0, 0.0));
+
+    // create two keyframes through the setValue method
+    curve.setValue(50.0, 4.0);
+    curve.setValue(100.0, 4.0, Vec2(-1.0, -0.2), Vec2(1.0, 0.2));
+
+    // interpolate the keys for a given time
+    // providing a keyIndex ensure efficient 
+    // stepping of the curve during consecutive
+    // evaluate calls.
+    Integer keyIndex = 0;
+    Scalar valueA = curve.evaluate(17.5, keyIndex);
+    Scalar valueB = curve.evaluate(45.2, keyIndex);
+*/
+require Math;
+
+object KeyframeTrack : IKeyframeTrack {
+  String name;
+  Color color;
+  Scalar defaultValue;
+  UInt32 defaultInterpolation;
+  Keyframe keys[];
+};
+
+// constructor taking a track name, a color, the default value and the default key frame interpolation
+inline KeyframeTrack(String name, Color color, Scalar defaultValue, UInt32 defaultInterpolation) {
+  this.name = name;
+  this.color = color;
+  this.defaultValue = defaultValue;
+  this.defaultInterpolation = defaultInterpolation;
+}
+
+// constructor taking a track name, a color, the default value. bezier interpolation is used
+inline KeyframeTrack(String name, Color color, Scalar defaultValue) {
+  this.name = name;
+  this.color = color;
+  this.defaultValue = defaultValue;
+  this.defaultInterpolation = Keyframe_Interpolation_Bezier;
+}
+
+// constructor taking a track name, a color. 
+// 0.0 is used as the default value along with bezier interpolation.
+inline KeyframeTrack(String name, Color color) {
+  this.name = name;
+  this.color = color;
+  this.defaultValue = 0.0;
+  this.defaultInterpolation = Keyframe_Interpolation_Bezier;
+}
+
+// default constructor
+inline KeyframeTrack() {
+  this.name = 'track';
+  this.color = Color(1.0, 0.0, 0.0);
+  this.defaultValue = 0.0;
+  this.defaultInterpolation = Keyframe_Interpolation_Bezier;
+}
+
+
+inline String KeyframeTrack.getName() {
+  return this.name;
+}
+
+
+// clears the content of the KeyframeTrack
+inline KeyframeTrack.clear!() {
+  this.keys.resize(0);
+}
+
+// adds a key frame to the track. it's pushed
+// to the end or injected depending on its
+// time setting.
+inline KeyframeTrack.addKey!(Keyframe key) {
+  UInt32 numKeys = this.keys.size;
+  if(numKeys == 0)
+    this.keys.push(key);
+  else if(this.keys[numKeys-1].time <= key.time)
+    this.keys.push(key);
+  else {
+    Integer keyIndex = -1;
+    for (Integer i = 0; i < numKeys; i++) {
+      if (this.keys[i].time >= key.time) {
+        keyIndex = i;
+        break;
+      }
+    }
+    Scalar EQN_EPS = 1e-4;
+    if(abs(this.keys[keyIndex].time - key.time) <= EQN_EPS) {
+      this.keys[keyIndex] = key;
+    } else {
+      this.keys.resize(this.keys.size + 1);
+      for(Integer i=this.keys.size-1; i>keyIndex; i--)
+        this.keys[i-1] = this.keys[i];
+      this.keys[keyIndex] = key;
+    }
+  }
+}
+
+inline KeyframeTrack.addKey!(Scalar time, Scalar value) {
+  this.addKey(Keyframe(time, value));
+}
+
+// evaluate the curve at a given time
+// providing a keyIndex lookup. this index
+// can be used to speed up consecutive calls
+// to the evaluate method.
+inline Scalar KeyframeTrack.evaluate?(Scalar time, io Integer keyIndex) {
+  UInt32 numKeys = this.keys.size();
+  if(numKeys == 0){
+    return this.defaultValue;
+  }
+  else if(numKeys == 1){
+    return this.keys[0].value;
+  }
+  else if (time >= this.keys[numKeys - 1].time) {
+    return this.keys[numKeys - 1].value;
+  }
+  else if (time <= this.keys[0].time) {
+    return this.keys[0].value;
+  }
+  else {
+    if (keyIndex < 0)
+      keyIndex = 0;
+    else if (keyIndex >= numKeys)
+      keyIndex = numKeys-2;
+    if (keyIndex < this.keys.size()-1 && this.keys[keyIndex].time <= time && time <= this.keys[keyIndex + 1].time) {
+      // we are still on the same segment as the previous evaluation.
+    }
+    //else if (keyIndex < this.keys.size()-2 && this.keys[keyIndex + 1].time < time && time < this.keys[keyIndex + 2].time) {
+    else if (keyIndex < this.keys.size()-1 && this.keys[keyIndex].time < time) {
+      while(keyIndex < this.keys.size()-1 && time > this.keys[keyIndex + 1].time) {
+        keyIndex++;
+      }
+    }
+    else {
+      for (UInt32 i = 0; i < numKeys - 1; i++) {
+        if (this.keys[i].time <= time && time <= this.keys[i + 1].time) {
+          keyIndex = i;
+          break;
+        }
+      }
+    }
+    return this.keys[keyIndex].interpolate(this.keys[keyIndex + 1], time);
+  }
+}
+
+// evaluate the curve at a given time without passing the cached keyindex. 
+// This method is much slower, because the keys array must be searched every update
+// for the pair of keys to be interpolated.
+inline Scalar KeyframeTrack.evaluate?(Scalar time) {
+  Integer keyIndex = 0;
+  return this.evaluate(time, keyIndex);
+}
+
+// set the value of the curve at a given time using
+// in and out tangents. this injects a new Keyframe to the track.
+inline KeyframeTrack.setValue!(Scalar time, Scalar value, Vec2 inTangent, Vec2 outTangent) {
+  this.addKey(Keyframe(time, value, inTangent, outTangent, this.defaultInterpolation));
+}
+
+// set the value of the curve at a given time. flat tangent
+// will be used. this injects a new Keyframe to the track.
+inline KeyframeTrack.setValue!(Scalar time, Scalar value) {
+  Vec2 inTangent(-0.333, 0.0);
+  Vec2 outTangent(0.333, 0.0);
+  this.setValue(time, value, inTangent, outTangent);
+}
+
+// // returns a clone of this KeyframeTrack
+// inline KeyframeTrack KeyframeTrack.clone() {
+//   KeyframeTrack cloned;
+//   cloned.name = this.name;
+//   cloned.color = this.color;
+//   cloned.defaultValue = this.defaultValue;
+//   cloned.keys = this.keys.clone();
+//   return cloned;
+// }
+
+
+
+function String KeyframeTrack.getDesc(String indent, Boolean includeKeys) {
+  String desc;
+  desc += indent + "KeyframeTrack { \n";
+  desc += indent + "  name: " + this.name + " \n";
+  desc += indent + "  color: " + this.color + " \n";
+  desc += indent + "  defaultValue: " + this.defaultValue + " \n";
+  if(includeKeys){
+    if(this.keys.size > 0){
+      desc += indent + "  keys:[ \n";
+      for(Integer i=0; i<this.keys.size; i++){
+        desc += this.keys[i].getDesc(indent+"    ") + " \n";
+      }
+      desc += indent + "  ]\n";
+    }
+    else{
+      desc += indent + "  keys:[]\n";
+    }
+  }
+  return desc;
+}
+function String KeyframeTrack.getDesc() {
+  return this.getDesc("", true);
+}

@@ -1,0 +1,64 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+///The btCollisionShape class provides an interface for collision shapes that can be shared among btCollisionObjects.
+interface BulletCollisionShape
+{
+    Data getPointer();
+    
+	///getAabb returns the axis aligned bounding box in the coordinate frame of the given transform t.
+	getAabb(Xfo t, io Vec3 aabbMin, io Vec3 aabbMax);
+
+// 	getBoundingSphere(Vec3 center, Scalar radius);
+
+// 	///getAngularMotionDisc returns the maximus radius needed for Conservative Advancement to handle time-of-impact with rotations.
+// 	Scalar	getAngularMotionDisc();
+
+// 	Scalar	getContactBreakingThreshold(Scalar defaultContactThresholdFactor);
+
+// 	///calculateTemporalAabb calculates the enclosing aabb for the moving object over interval [0..timeStep)
+// 	///result is conservative
+// 	calculateTemporalAabb( Xfo curTrans, Vec3 linvel, Vec3 angvel,Scalar timeStep, Vec3 temporalAabbMin,Vec3 temporalAabbMax);
+
+// 	Boolean	isPolyhedral();
+
+// 	Boolean	isConvex2d();
+
+// 	Boolean	isConvex();
+// 	Boolean	isNonMoving();
+// 	Boolean	isConcave();
+// 	Boolean	isCompound();
+
+// 	Boolean	isSoftBody();
+
+// 	///isInfinite is used to catch simulation error (aabb check)
+// 	Boolean isInfinite();
+
+// 	setLocalScaling(Vec3 scaling);
+// 	Vec3 getLocalScaling();
+	calculateLocalInertia?(Scalar mass, io Vec3 inertia);
+
+// //debugging support
+// 	 char*	getName() =0 ;
+	
+// 	Integer		getShapeType();
+	setMargin!(Scalar margin);
+	Scalar	getMargin();
+
+	
+// 	///optional user data pointer
+// 	void	setUserPointer(Object  userPtr);
+
+// 	Object	getUserPointer();
+
+// 	virtual	Integer	calculateSerializeBufferSize() ;
+
+// 	///fills the dataBuffer and returns the struct name (and 0 on failure)
+// 	// virtual	 char*	serialize(void* dataBuffer, btSerializer* serializer) ;
+
+// 	serializeSingleShape(btSerializer* serializer) ;
+
+};	

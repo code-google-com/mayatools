@@ -1,0 +1,158 @@
+
+
+function String skinPositionsGLSL(){
+  return "
+void skinPositions(
+#ifdef HAS_SKINNING_TEXTURE
+  in sampler2D samplerSkinningMatrices,
+#else
+  in mat4 skinningMatrices[SKINNING_MATRICES_UNIFORM_COUNT],
+#endif
+#ifdef HAS_BIND_SHAPE_TRANSFORM
+  in mat4 bindShapeTransform,
+#endif
+  in vec4 index,
+  in vec4 weight,
+  inout vec4 position
+){
+  vec3 transformedPosition = vec3(0.0,0.0,0.0);
+  
+  vec4 curIndex = index;
+  vec4 curWeight = weight;
+  
+  for (int i = 0; i < 4; i++){
+    float weight = curWeight[i];
+    if(weight > 0.0){
+      int idx = int(curIndex[i]);
+        
+#ifdef HAS_SKINNING_TEXTURE
+      // load the specified bone matrix from the texture
+      mat4x3 m43 = loadMatrix43FromTexture(samplerSkinningMatrices, idx);
+#else
+      mat4x3 m43 = mat4x3(skinningMatrices[idx]);
+#endif
+      
+#ifdef HAS_BIND_SHAPE_TRANSFORM
+      transformedPosition += m43 * (bindShapeTransform * position * weight);
+#else
+      transformedPosition += m43 * position * weight;
+#endif
+    }
+  }
+  position = vec4(transformedPosition,1.0);
+}
+
+";
+}
+
+function String skinPositionsAndNormalsGLSL(){
+  return "
+
+void skinPositionsAndNormals(
+#ifdef HAS_SKINNING_TEXTURE
+  in sampler2D samplerSkinningMatrices,
+#else
+  in mat4 skinningMatrices[SKINNING_MATRICES_UNIFORM_COUNT],
+#endif
+#ifdef HAS_BIND_SHAPE_TRANSFORM
+  in mat4 bindShapeTransform,
+#endif
+  in vec4 index,
+  in vec4 weight,
+  inout vec4 position,
+  inout vec3 normal
+){
+  vec3 transformedPosition = vec3(0.0,0.0,0.0);
+  vec3 transformedNormal = vec3(0.0,0.0,0.0);
+
+  vec4 curIndex = index;
+  vec4 curWeight = weight;
+  
+  for (int i = 0; i < 4; i++){
+    float weight = curWeight[i];
+    if(weight > 0.0){
+      int idx = int(curIndex[i]);
+        
+      // load the specified bone matrix from the texture
+#ifdef HAS_SKINNING_TEXTURE
+      // load the specified bone matrix from the texture
+      mat4x3 m43 = loadMatrix43FromTexture(samplerSkinningMatrices, idx);
+#else
+      mat4x3 m43 = mat4x3(skinningMatrices[idx]);
+#endif
+
+#ifdef HAS_BIND_SHAPE_TRANSFORM
+      m43 = m43*bindShapeTransform;
+#endif
+
+      transformedPosition += m43 * position * weight;
+
+      // transform normal by bone i
+      mat3 m33 = mat3( m43[0], m43[1], m43[2] );
+      transformedNormal += m33 * normal * weight;
+    }
+  }
+  position = vec4(transformedPosition,1.0);
+  normal = transformedNormal;
+}
+
+";
+}
+
+function String skinPositionsAndNormalsAndTangentsGLSL(){
+  return "
+
+void skinPositionsNormalsAndTangents(
+#ifdef HAS_SKINNING_TEXTURE
+  in sampler2D samplerSkinningMatrices,
+#else
+  in mat4 skinningMatrices[SKINNING_MATRICES_UNIFORM_COUNT],
+#endif
+#ifdef HAS_BIND_SHAPE_TRANSFORM
+  in mat4 bindShapeTransform,
+#endif
+  in vec4 index,
+  in vec4 weight,
+  inout vec4 position,
+  inout vec3 normal,
+  inout vec3 tangent
+){
+  vec3 transformedPosition = vec3(0.0,0.0,0.0);
+  vec3 transformedNormal = vec3(0.0,0.0,0.0);
+  vec3 transformedTangent = vec3(0.0,0.0,0.0);
+  
+  vec4 curIndex = index;
+  vec4 curWeight = weight;
+  
+  for (int i = 0; i < 4; i++){
+    float weight = curWeight[i];
+    if(weight > 0.0){
+      int idx = int(curIndex[i]);
+        
+#ifdef HAS_SKINNING_TEXTURE
+      // load the specified bone matrix from the texture
+      mat4x3 m43 = loadMatrix43FromTexture(samplerSkinningMatrices, idx);
+#else
+      mat4x3 m43 = mat4x3(skinningMatrices[idx]);
+#endif
+
+#ifdef HAS_BIND_SHAPE_TRANSFORM
+      m43 = m43*bindShapeTransform;
+#endif
+      
+      transformedPosition += m43 * position * weight;
+
+      // transform normal by bone i
+      mat3 m33 = mat3( m43[0], m43[1], m43[2] );
+      transformedNormal.xyz += m33 * normal * weight;
+      transformedTangent += m33 * tangent * weight;
+    }
+  }
+
+  position = vec4(transformedPosition, 1.0);
+  normal = transformedNormal;
+  tangent = transformedTangent;
+}
+
+";
+}

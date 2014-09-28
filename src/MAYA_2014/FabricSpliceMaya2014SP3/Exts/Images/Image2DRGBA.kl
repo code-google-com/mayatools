@@ -1,0 +1,116 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+ 
+require Math, FabricStatistics;
+
+object Image2DRGBA : StatisticSourceWithAutoRegisterMember {
+  Size width;
+  Size height;
+  RGBA pixels[];
+  UInt32 version;
+  UInt32 flags;
+  String name;
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function Image2DRGBA() {
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+//Make sure to call this method after position changes are finished, so caches (such as drawing data) know that they need to be regenerated.
+inline Image2DRGBA.incrementVersion!()
+{
+  this.version++;
+}
+
+function Image2DRGBA.resize!(
+  in UInt32 width,
+  in UInt32 height,
+){
+  this.pixels.resize(width * height);
+  this.width = width;
+  this.height = height;
+  this.incrementVersion();
+}
+
+// Given pixel integer coordinates in 2D, return the index of the pixel, handling clamping etc..
+function UInt32 Image2DRGBA.getPixelIndex(
+  in Integer uindex,
+  in Integer vindex,
+){
+  UInt32 uindexLocal, vindexLocal;
+  if(uindex < 0) 
+    if(true) // CLAMP
+      uindexLocal = 0;
+    else     // LOOP
+      uindexLocal += this.width;
+  else if(uindex >= this.width)
+    if(true) // CLAMP
+      uindexLocal = this.width - 1;
+    else     // LOOP
+      uindexLocal = uindex % this.width;
+  else
+    uindexLocal = uindex;
+  if(vindex < 0)
+    if(true) // CLAMP
+      vindexLocal = 0;
+    else     // LOOP
+      vindexLocal += this.height;
+  else if(vindex >= this.height)
+    if(true) // CLAMP
+      vindexLocal = this.height - 1;
+    else     // LOOP
+      vindexLocal = vindex % this.height;
+  else
+    vindexLocal = vindex;
+  return (vindexLocal * this.width) + uindexLocal;
+}
+
+function RGBA Image2DRGBA.sample(
+  in Scalar u,
+  in Scalar v
+){
+  Scalar u1, u2, v1, v2;
+  u1 = floor((u * Scalar(this.width)) - 0.5);
+  u2 = floor((u * Scalar(this.width)) + 0.5);
+  v1 = floor((v * Scalar(this.height)) - 0.5);
+  v2 = floor((v * Scalar(this.height)) + 0.5);
+
+  // CLAMP, LOOP
+  UInt32 tl = this.getPixelIndex(u1, v1);
+  UInt32 bl = this.getPixelIndex(u2, v1);
+  UInt32 tr = this.getPixelIndex(u1, v2);
+  UInt32 br = this.getPixelIndex(u2, v2);
+  
+  Scalar uinterp = (u * Scalar(this.width)) - u1;
+  Scalar vinterp = (v * Scalar(this.height)) - v1;
+  
+  RGBA tlClr = this.pixels[tl];
+  RGBA blClr = this.pixels[bl];
+  RGBA trClr = this.pixels[tr];
+  RGBA brClr = this.pixels[br];
+  RGBA uClr = tlClr.linearInterpolate(blClr, uinterp);
+  RGBA vClr = trClr.linearInterpolate(brClr, uinterp);
+  return uClr.linearInterpolate(vClr, vinterp);
+}
+
+inline Image2DRGBA.setPixel!(  in Integer uindex,
+  in Integer vindex,
+  in RGBA pixelValue
+){
+  this.pixels[(vindex * this.width) + uindex] = pixelValue;
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] Image2DRGBA.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, this.name ) );
+  stats.push( StatisticRecord( Statistic_Category, "Image" ) );
+  stats.push( StatisticRecord( "Size", this.pixels.size() ) );
+  stats.push( StatisticRecord( "PixWidth", this.width ) );
+  stats.push( StatisticRecord( "PixHeight", this.height ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, 12*4+this.pixels.size()*4 ) );
+  return stats;
+}

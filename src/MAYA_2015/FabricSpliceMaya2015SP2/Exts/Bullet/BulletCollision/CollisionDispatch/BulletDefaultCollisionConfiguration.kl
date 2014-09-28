@@ -1,0 +1,46 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+// struct	btDefaultCollisionConstructionInfo
+// {
+//   Data pointer;
+// };
+
+// function btDefaultCollisionConstructionInfo() = 'btDefaultCollisionConstructionInfo_construct';
+
+
+object BulletDefaultCollisionConfiguration : BulletCollisionConfiguration
+{
+  Data pointer;
+};
+
+function Data BulletDefaultCollisionConfiguration.getPointer(){ 
+  return this.pointer; 
+}
+
+// Note: we can't directly override the constructor, so we instead call __construct on construction.
+function BulletDefaultCollisionConfiguration( ){
+  this.__construct();
+}
+
+function BulletDefaultCollisionConfiguration.__construct!( ) = 'BulletDefaultCollisionConfiguration_construct';
+
+function ~BulletDefaultCollisionConfiguration(){
+	this.__destroy();
+}
+function BulletDefaultCollisionConfiguration.__destroy!() = 'BulletDefaultCollisionConfiguration_destroy';
+
+// function btPoolAllocator BulletDefaultCollisionConfiguration.getPersistentManifoldPool() = 'BulletDefaultCollisionConfiguration_getPersistentManifoldPool';
+// function btPoolAllocator BulletDefaultCollisionConfiguration.getCollisionAlgorithmPool() = 'BulletDefaultCollisionConfiguration_getCollisionAlgorithmPool';
+// function btStackAlloc	BulletDefaultCollisionConfiguration.getStackAllocator() = 'BulletDefaultCollisionConfiguration_getStackAllocator';
+// function btVoronoiSimplexSolver BulletDefaultCollisionConfiguration.getSimplexSolver() = 'BulletDefaultCollisionConfiguration_getSimplexSolver';
+// function btCollisionAlgorithmCreateFunc BulletDefaultCollisionConfiguration.getCollisionAlgorithmCreateFunc(Integer proxyType0, Integer proxyType1) = 'BulletDefaultCollisionConfiguration_getCollisionAlgorithmCreateFunc';
+// function BulletDefaultCollisionConfiguration.setConvexConvexMultipointIterations() = 'BulletDefaultCollisionConfiguration_setConvexConvexMultipointIterationsDefaultArgs';
+// function BulletDefaultCollisionConfiguration.setConvexConvexMultipointIterations(Integer numPerturbationIterations, Integer minimumPointsPerturbationThreshold) = 'BulletDefaultCollisionConfiguration_setConvexConvexMultipointIterations';
+
+
+

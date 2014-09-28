@@ -1,0 +1,193 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`oglflattextureshader` implements the :ref:`inlineshader` interface for OpenGL direct rendering. It encapsulates the :ref:`oglinlineshader` for shading a texture.
+
+Uniforms
+----------
+=============== ============ ===================================== ==================================
+Name            Type         Description                           Default
+=============== ============ ===================================== ==================================
+u_texture       Texture      Texture used for diffuse color        null
+u_mirrorU       Integer      Flag for flipping the image along U   0
+u_mirrorV       Integer      Flag for flipping the image along V   1
+u_discardAlpha  Integer      Flag to descard 0.0 alpha pixels      0
+=============== ============ ===================================== ==================================
+
+Attributes
+----------
+=============== ============ =====================================
+Name            Type         Description
+=============== ============ =====================================
+positions       Vec3         Geometry positions
+uvs0            Vec2         UV set, encoding U and V in X and Y
+=============== ============ =====================================
+
+Example
+---------
+
+.. code-block:: kl
+
+    InlineShader shader = draw.registerShader(OGLFlatTextureShader());
+    InlineMaterial mat = shader.getOrCreateMaterial('texturedMat');
+    InlineTexture texture = draw.registerTexture(InlineFileBasedTexture('texture.png'));
+    mat.setUniform('u_texture', texture);
+    mat.setUniform('u_mirrorU', 1);
+*/
+
+require Math;
+require FabricOGL;
+
+object OGLFlatTextureShader: InlineShader {
+  OGLInlineShader _shader;
+};
+
+// default constructor without a name
+function OGLFlatTextureShader() {
+  this = OGLFlatTextureShader(this.type());
+}
+
+// default constructor taking a name
+function OGLFlatTextureShader(String name) {
+  this._shader = OGLInlineShader(
+    name,
+    "
+      #version 150 //required for OSX support
+
+      uniform mat4 u_viewMatrix;
+      uniform mat4 u_projection;
+      uniform mat4 u_modelMatrix;
+      
+      in vec4 positions;
+      in vec2 uvs0;
+
+      out vec2 v_uv0;
+
+      void main(){
+        gl_Position = u_projection * (u_viewMatrix * (u_modelMatrix * positions));
+        v_uv0 = uvs0;
+      }
+    ", "
+      #version 150 //required for OSX support
+      
+      uniform sampler2D u_texture;
+      uniform int u_mirrorU;
+      uniform int u_mirrorV;
+      uniform int u_discardAlpha;
+
+      in vec2 v_uv0;
+      out vec4 out_fragColor;
+      
+      void main(){
+        vec2 uv = v_uv0;
+        if(u_mirrorU != 0) uv.x = 1.0 - uv.x;
+        if(u_mirrorV != 0) uv.y = 1.0 - uv.y;
+
+        vec4 texture_color = texture( u_texture, uv );
+        if(u_discardAlpha != 0)
+        {
+          if(texture_color.a < 0.0001)
+            discard;
+        }
+        out_fragColor = texture_color;
+      }
+    ");  
+  this._shader.defineUniform(InlineUniform("u_viewMatrix", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_projection", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_modelMatrix", Mat44()));
+  this._shader.defineUniform(InlineUniform('u_texture', null));
+  this._shader.defineUniform(InlineUniform('u_mirrorU', 0));
+  this._shader.defineUniform(InlineUniform('u_mirrorV', 1));
+  this._shader.defineUniform(InlineUniform('u_discardAlpha', 0));
+  this._shader.defineAttribute('positions', "Vec3");
+  this._shader.defineAttribute('uvs0', "Vec2");
+}
+
+// empties all materials of this shader
+function OGLFlatTextureShader.reset!() {
+  this._shader.reset();
+}
+
+// returns the name of this shader
+function String OGLFlatTextureShader.getName() {
+  return this._shader.getName();
+}
+
+// called by the InlineDrawing, should not be called manually
+function Boolean OGLFlatTextureShader._draw!(io DrawContext context) {
+  return this._shader._draw(context);
+}
+
+// returns true if this shader has a material with a given name
+function Boolean OGLFlatTextureShader.hasMaterial(String name) {
+  return this._shader.hasMaterial(name);
+}
+
+// returns (and eventually creates) a new matching material with a given name
+function InlineMaterial OGLFlatTextureShader.getOrCreateMaterial!(String name) {
+  return this._shader.getOrCreateMaterial(name);
+}
+
+// returns the number of materials in this shader
+function Size OGLFlatTextureShader.getMaterialCount() {
+  return this._shader.getMaterialCount();
+}
+
+// returns an existing material by index
+function InlineMaterial OGLFlatTextureShader.getMaterial(Index index) {
+  return this._shader.getMaterial(index);
+}
+
+// define a new uniform on the shader. the uniformType is
+// auxiliary and can be used within the shader later if required.
+function OGLFlatTextureShader.defineUniform!(InlineUniform uniform) {
+  return;
+}
+
+// returns true if this shader has a uniform with a given name
+function Boolean OGLFlatTextureShader.hasUniform(String name) {
+  return this._shader.hasUniform(name);
+}
+
+// sets the global value of a uniform
+// this can be changed per material, per instance or even per transform
+function OGLFlatTextureShader.setUniform!(InlineUniform uniform) {
+  this._shader.setUniform(uniform);
+}
+
+// draws a uniform for the shader, applies the value essentially. 
+// this should be used from within the InlineMaterial's _draw or 
+// the InlineInstance's _draw.
+function Boolean OGLFlatTextureShader._drawUniform!(io DrawContext context, InlineUniform uniform) {
+  return this._shader._drawUniform(context, uniform);
+}
+
+// define a surface attribute with a given name and type
+function OGLFlatTextureShader.defineAttribute!(String name, String attributeType) {
+  return;
+}
+
+// returns the number of attributes
+function Size OGLFlatTextureShader.getAttributeCount() {
+  return this._shader.getAttributeCount();
+}
+
+// returns the name of an attribute
+function String OGLFlatTextureShader.getAttributeName(Index index) {
+  return this._shader.getAttributeName(index);
+}
+
+// returns true if this shader has an attribute with a given name
+function Integer OGLFlatTextureShader.getAttributeID(String name) {
+  return this._shader.getAttributeID(name);
+}
+
+// returns the ID / location of a given attribute inside the shader.
+function Boolean OGLFlatTextureShader.hasAttribute(String name) {
+  return this._shader.hasAttribute(name);
+}
+

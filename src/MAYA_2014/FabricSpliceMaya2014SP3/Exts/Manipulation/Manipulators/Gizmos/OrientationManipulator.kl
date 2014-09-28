@@ -1,0 +1,83 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`OrientationManipulator` combines 3 :ref:`OrientationAxisManipulator` and a :ref:`OrientationSphericalManipulator` to support rotation in 3d.
+
+*/
+
+
+
+object  OrientationManipulator {
+
+  OrientationAxisManipulator xAxisManipulator;
+  OrientationAxisManipulator yAxisManipulator;
+	OrientationAxisManipulator zAxisManipulator;
+
+  OrientationSphericalManipulator sphericalManipulator;
+};
+
+function OrientationManipulator(io InlineTransform parent, GizmoManipulationCallback callback){
+
+  Xfo offset;
+
+  offset.ori.setFromAxisAndAngle(Vec3(0.0, 0.0, 1.0), HALF_PI);
+  this.xAxisManipulator = OrientationAxisManipulator( parent, offset, Color(1.0, 0.0, 0.0), callback);
+
+  offset.ori.setIdentity();
+  this.yAxisManipulator = OrientationAxisManipulator( parent, offset, Color(0.0, 1.0, 0.0), callback);
+
+  offset.ori.setFromAxisAndAngle(Vec3(1.0, 0.0, 0.0), HALF_PI);
+  this.zAxisManipulator = OrientationAxisManipulator( parent, offset, Color(0.0, 0.0, 1.0), callback);
+
+  this.sphericalManipulator = OrientationSphericalManipulator(parent, Color(1.0, 1.0, 0.0), callback);
+}
+
+function OrientationManipulator.hide!(){
+    this.xAxisManipulator.hide();
+    this.yAxisManipulator.hide();
+    this.zAxisManipulator.hide();
+    this.sphericalManipulator.hide();
+}
+
+function OrientationManipulator.show!(){
+    this.xAxisManipulator.show();
+    this.yAxisManipulator.show();
+    this.zAxisManipulator.show();
+    this.sphericalManipulator.show();
+}
+
+function OrientationManipulator.setManpulationMode!(ManipulationMode mode){
+  if(mode&ManipulationMode_Orientation_X)
+    this.xAxisManipulator.show();
+  else
+    this.xAxisManipulator.hide();
+
+  if(mode&ManipulationMode_Orientation_Y)
+    this.yAxisManipulator.show();
+  else
+    this.yAxisManipulator.hide();
+
+  if(mode&ManipulationMode_Orientation_Z)
+    this.zAxisManipulator.show();
+  else
+    this.zAxisManipulator.hide();
+
+  if(mode&ManipulationMode_Orientation_X && mode&ManipulationMode_Orientation_Y && mode&ManipulationMode_Orientation_Z )
+    this.sphericalManipulator.show();
+  else
+    this.sphericalManipulator.hide();
+}
+
+function InlineInstance[] OrientationManipulator.getGizmos(){
+    InlineInstance gizmos[];
+    gizmos = gizmos + this.xAxisManipulator.getGizmos();
+    gizmos = gizmos + this.yAxisManipulator.getGizmos();
+    gizmos = gizmos + this.zAxisManipulator.getGizmos();
+    gizmos = gizmos + this.sphericalManipulator.getGizmos();
+    return gizmos;
+}
+

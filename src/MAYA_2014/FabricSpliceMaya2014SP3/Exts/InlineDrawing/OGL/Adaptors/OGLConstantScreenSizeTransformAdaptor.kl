@@ -1,0 +1,58 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`OGLConstantScreenSizeTransformAdaptor` is the adaptor for the :ref:`ConstantScreenSizeTransform`. It manages computing a mmodel matrix that scales the geometry according to how far it is from the camera. This maintains the size of the geometry onscreen regardless of its distance to the camera. 
+*/
+
+require RTR;
+
+object OGLConstantScreenSizeTransformAdaptor : InlineTransformAdaptor {
+};
+
+// default constructor
+function OGLConstantScreenSizeTransformAdaptor() {}
+
+// returns the types this adaptor is capable of drawing
+function String[] OGLConstantScreenSizeTransformAdaptor.getTransformTypes() {
+  String result[];
+  result.push('ConstantScreenSizeTransform');
+  return result;
+}
+
+// draws the lines to the screen. this is used by the 
+// InlineInstance, and should not be called manually.
+function Boolean OGLConstantScreenSizeTransformAdaptor._draw!(io DrawContext context, io Ref<InlineTransform> transform, Index index, Size count) {
+
+  InlineShader shader = context.getObject('currentShader');
+  Xfo modelXfo = transform._nonLocking_getGlobalXfo(index);
+
+  Boolean orthographic = context.getViewport().getCamera().isOrthographic();
+  if(orthographic){
+    // this constant value renders the geometry approximately the same size inthe orthographic viewport to the perspective. 
+    Scalar sizeFudge = 0.003;
+    modelXfo.sc *= context.getViewport().getCamera().getOrthographicFrustumHeight() * sizeFudge;
+  }
+  else{
+    Vec3 cameraPos = context.getViewport().getCamera().getMat44().translation();
+    Scalar fovY = context.getViewport().getCamera().getFovY();
+    Scalar dist = cameraPos.distanceTo(modelXfo.tr);
+    Scalar scaleFactor = dist * fovY * (1.0/context.getViewport().getDimensions().y);
+    modelXfo.sc *= scaleFactor;
+  }
+
+  Mat44 modelMatrix = modelXfo.toMat44();
+  if(!shader._drawUniform(context, InlineUniform("u_modelMatrix", modelMatrix))) {
+    return false;
+  }
+  
+  if(!shader._drawUniform(context, InlineUniform("u_normalMatrix", context.invViewMat * modelMatrix.upperLeft()))) {
+    return false;
+  }
+
+  return true;
+}
+

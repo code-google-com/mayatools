@@ -1,0 +1,65 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`booleanparam` implements the :ref:`param` interface for Boolean values.
+
+Example
+---------
+
+.. code-block:: kl
+
+    BooleanParam param = BooleanParam('flag', false);
+    report(param.getValue());
+*/
+
+object BooleanParam : Param {
+  String name;
+  Boolean value;
+  Param options[String];
+};
+
+// default constructor
+function BooleanParam(String name) {
+  this.name = name;
+  this.value = false;
+}
+
+// constructor taking input value
+function BooleanParam(String name, Boolean value) {
+  this.name = name;
+  this.value = value;
+}
+
+// returns the name of this parameter
+function String BooleanParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String BooleanParam.getValueType() {
+  return "Boolean";
+}
+
+// getting an option on this param
+function Param BooleanParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function BooleanParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function Boolean BooleanParam.getValue() {
+  return this.value;
+}
+
+// sets the param's value
+function BooleanParam.setValue!(Boolean value) {
+  this.value = value;
+}

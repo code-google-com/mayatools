@@ -1,0 +1,18 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlinetextureadaptor` interface is used to represent an adaptor capable of drawing an :ref:`inlinetexture` within an :ref:`inlinedrawing`.
+*/
+
+interface InlineTextureAdaptor {
+
+  // returns the types this adaptor is capable of drawing
+  String[] getTextureTypes();
+
+  // prepares the texture for use for the specific renderer
+  Boolean _draw!(io DrawContext context, io InlineTexture texture, Object metaData);
+};

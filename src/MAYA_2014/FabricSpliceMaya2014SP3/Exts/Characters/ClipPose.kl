@@ -1,0 +1,142 @@
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The ClipPose, based on the regular Pose, constructs the pose by retrieving animation data for the joints from the clip. The clip is evaluated, giving a ClipValues data structure, that can then be queried by the pose as it lazily builds the global space transforms. 
+
+*/
+
+require Math;
+require Animation;
+
+object ClipPose : IPose {
+  // The skeleton that this pose is based on.
+  Skeleton skeleton;
+
+  IClip clip;
+  Integer keyIndices[][];
+  Scalar timeCache;
+  Boolean initialized;
+  IClipValues clipValues;
+
+  // The pose of the character.
+  Xfo xfos[];
+  Boolean valid[];
+
+  UInt64 version;
+};
+
+function ClipPose(Skeleton skeleton, IClip clip){
+  this.skeleton = skeleton;
+  this.clip = clip;
+  this.clipValues = ClipValues();
+  this.reset();
+}
+
+function ClipPose.incrementVersion!(){
+  this.version += 1;
+}
+
+function UInt64 ClipPose.getVersion(){
+  return this.version;
+}
+
+// Reset the pose to be recomputed. 
+function ClipPose.reset!(){
+  this.xfos.resize(this.skeleton.getNumBones());
+  this.valid.resize(this.skeleton.getNumBones());
+  this.clipValues = ClipValues();
+  for(Index i = 0; i < this.skeleton.getNumBones(); ++i){
+    this.valid[i] = false;
+  }
+  this.initialized = false;
+  this.incrementVersion();
+}
+
+function IClip ClipPose.getClip(){
+  return this.clip;
+}
+
+function  ClipPose.setClip!(IClip clip){
+  this.clip = clip;
+  this.incrementVersion();
+}
+
+function ClipPose.evaluate!(Scalar time){
+  if(this.timeCache != time || !this.initialized){
+    this.clipValues = this.clip.evaluate(time, this.keyIndices);
+    this.timeCache = time;
+    this.initialized = true;
+    for(Index i = 0; i < this.skeleton.getNumBones(); ++i){
+      this.valid[i] = false;
+    }
+    this.incrementVersion();
+  }
+}
+
+
+function ClipPose._updateXfo!(Index index){
+
+  Xfo local;
+  Bone bone = this.skeleton.getBone(index);
+  String name = bone.name;
+  if(this.clipValues.hasXfoValue(name)){
+    local = this.clipValues.getXfoValue(name);
+  }
+  else{
+    local = this.skeleton.getReferenceLocalPose(index);
+    if(this.clipValues.hasVec3Value(name)){
+      local.tr = this.clipValues.getVec3Value(name);
+    }
+    else if(this.clipValues.hasQuatValue(name)){
+      local.ori = this.clipValues.getQuatValue(name);
+    }
+  }
+
+  Integer parentIndex = bone.parent;
+  if(parentIndex >= 0){
+    if(!this.valid[parentIndex])
+      this._updateXfo(parentIndex);
+    this.xfos[index] = this.xfos[parentIndex] * local;
+  }
+  else
+    this.xfos[index] = local;
+  this.valid[index] = true;
+}
+
+// Get the pose of a bone in the skeleton using its index.
+function Xfo ClipPose.getBoneXfo!(Index index){
+  if(!this.valid[index])
+    this._updateXfo(index);
+  return this.xfos[index];
+}
+
+
+// Set the pose of a bone in the skeleton using its index.
+// This marks the joint as valid. 
+// TODO: invalidate chidren joints...
+function ClipPose.setBoneXfo!(Index index, Xfo xfo){
+  this.xfos[index] = xfo;
+  this.valid[index] = true;
+}
+
+
+function String ClipPose.getDesc(String indent, Boolean includeClip) {
+  String desc;
+  desc += indent + "Pose { \n";
+  if(includeClip)
+    desc += indent + "  clip: " + this.clip.getDesc(indent+'  ') + " \n";
+  desc += indent + "  xfos:[ \n";
+  for(Integer i=0; i<this.xfos.size; i++){
+    desc += indent + "  " + this.skeleton.getBone(i).name + ":" + unitTestPrint(this.xfos[i]) + "\n";
+  }
+  desc += indent + "  ]\n";
+  desc += indent + "}\n";
+  return desc;
+}
+
+function String ClipPose.getDesc() {
+  return this.getDesc("", false);
+}

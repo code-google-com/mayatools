@@ -1,0 +1,83 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+const UInt32 DISPATCH_DISCRETE = 1;
+const UInt32 DISPATCH_CONTINUOUS = 2;
+object BulletDispatcherInfo : BulletTypedObject
+{
+	Data pointer;
+};
+
+function Data BulletDispatcherInfo.getPointer(){
+	return this.pointer;
+}
+
+function Scalar BulletDispatcherInfo.getTimeStep() = 'BulletDispatcherInfo_getTimeStep';
+function BulletDispatcherInfo.setTimeStep!(Scalar value) = 'BulletDispatcherInfo_setTimeStep';
+function Integer BulletDispatcherInfo.getStepCount() = 'BulletDispatcherInfo_getStepCount';
+function BulletDispatcherInfo.setStepCount!(Integer value) = 'BulletDispatcherInfo_setStepCount';
+function Integer BulletDispatcherInfo.getDispatchFunc() = 'BulletDispatcherInfo_getDispatchFunc';
+function BulletDispatcherInfo.setDispatchFunc!(Integer value) = 'BulletDispatcherInfo_setDispatchFunc';
+function Scalar BulletDispatcherInfo.getTimeOfImpact() = 'BulletDispatcherInfo_getTimeOfImpact';
+function BulletDispatcherInfo.setTimeOfImpact!(Scalar value) = 'BulletDispatcherInfo_setTimeOfImpact';
+function Boolean BulletDispatcherInfo.getUseContinuous() = 'BulletDispatcherInfo_getUseContinuous';
+function BulletDispatcherInfo.setUseContinuous!(Boolean value) = 'BulletDispatcherInfo_setUseContinuous';
+// function BulletDispatcherInfo.BulletIDebugDraw!	debugDraw() = 'BulletDispatcherInfo_BulletIDebugDraw';
+// function BulletDispatcherInfo.BulletIDebugDraw!	debugDraw() = 'BulletDispatcherInfo_BulletIDebugDraw';
+function Boolean BulletDispatcherInfo.getEnableSatConvex() = 'BulletDispatcherInfo_getEnableSatConvex';
+function BulletDispatcherInfo.setEnableSatConvex!(Boolean value) = 'BulletDispatcherInfo_setEnableSatConvex';
+function Boolean BulletDispatcherInfo.getEnableSPU() = 'BulletDispatcherInfo_getEnableSPU';
+function BulletDispatcherInfo.setEnableSPU!(Boolean value) = 'BulletDispatcherInfo_setEnableSPU';
+function Boolean BulletDispatcherInfo.getUseEpa() = 'BulletDispatcherInfo_getUseEpa';
+function BulletDispatcherInfo.setUseEpa!(Boolean value) = 'BulletDispatcherInfo_setUseEpa';
+function Scalar BulletDispatcherInfo.getAllowedCcdPenetration() = 'BulletDispatcherInfo_getAllowedCcdPenetration';
+function BulletDispatcherInfo.setAllowedCcdPenetration!(Scalar value) = 'BulletDispatcherInfo_setAllowedCcdPenetration';
+function Boolean BulletDispatcherInfo.getUseConvexConservativeDistanceUtil() = 'BulletDispatcherInfo_getUseConvexConservativeDistanceUtil';
+function BulletDispatcherInfo.setUseConvexConservativeDistanceUtil!(Boolean value) = 'BulletDispatcherInfo_setUseConvexConservativeDistanceUtil';
+function Scalar BulletDispatcherInfo.getConvexConservativeDistanceThreshold() = 'BulletDispatcherInfo_getConvexConservativeDistanceThreshold';
+function BulletDispatcherInfo.setConvexConservativeDistanceThreshold!(Scalar value) = 'BulletDispatcherInfo_setConvexConservativeDistanceThreshold';
+// function BulletStackAlloc BulletDispatcherInfo.getstackAllocator() = 'BulletDispatcherInfo_getstackAllocator';
+// function BulletDispatcherInfo	stackAllocator(BulletStackAlloc value);
+
+
+
+///The BulletDispatcher interface class can be used in combination with broadphase to dispatch calculations for overlapping pairs.
+///For example for pairwise collision detection, calculating contact points stored in BulletPersistentManifold or user callbacks (game logic).
+interface BulletDispatcher
+{
+	Data getPointer();
+  
+// BulletCollisionAlgorithm* BulletDispatcher.findAlgorithm(BulletICollisionObject* body0,BulletICollisionObject* body1,BulletPersistentManifold* sharedManifold=0);
+
+// BulletPersistentManifold*	BulletDispatcher.getNewManifold(void* body0,void* body1);
+
+// void BulletDispatcher.releaseManifold(BulletPersistentManifold* manifold);
+
+// void BulletDispatcher.clearManifold(BulletPersistentManifold* manifold);
+
+// Boolean	BulletDispatcher.needsCollision(BulletICollisionObject* body0,BulletICollisionObject* body1);
+
+// Boolean	BulletDispatcher.needsResponse(BulletICollisionObject* body0,BulletICollisionObject* body1);
+
+// void	BulletDispatcher.dispatchAllCollisionPairs(BulletOverlappingPairCache* pairCache,const BulletDispatcherInfo& dispatchInfo,BulletDispatcher* dispatcher) ;
+
+	Integer getNumManifolds();
+
+	BulletPersistentManifold getManifoldByIndexInternal(Integer index);
+
+// BulletPersistentManifold**	BulletDispatcher.getInternalManifoldPointer();
+
+// BulletPoolAllocator*	BulletDispatcher.getInternalManifoldPool();
+
+// const BulletPoolAllocator*	BulletDispatcher.getInternalManifoldPool() const;
+
+// void* BulletDispatcher.allocateCollisionAlgorithm(Integer size) ;
+
+// void BulletDispatcher.freeCollisionAlgorithm(void* ptr);
+};
+
+

@@ -1,0 +1,91 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`oglbufferdictionary` implements a helper object to manage :ref:`oglbuffer` objects.
+*/
+require Math;
+require FabricOGL;
+require RTR;
+
+object OGLBufferDictionary {
+  OGLBuffer _buffers[];
+  Integer _bufferVersions[];
+  Size _bufferOffsets[String];
+};
+
+// returns true if a given buffer exists
+function Boolean OGLBufferDictionary.has(String name) {
+  return this._bufferOffsets.has(name);
+}
+
+// returns the version of a specific buffer
+function Integer OGLBufferDictionary.getVersion(Size offset) {
+  if(offset < this._bufferVersions.size())
+    return this._bufferVersions[offset];
+  return 0;
+}
+
+// returns the version of a specific buffer
+function Integer OGLBufferDictionary.getVersion(String name) {
+  Size offset = this._bufferOffsets.get(name, this._bufferVersions.size());
+  return this.getVersion(offset);
+}
+
+// sets the vesion of a given buffer
+function OGLBufferDictionary.setVersion!(Size offset, Integer version) {
+  this._bufferVersions[offset] = version;
+}
+
+// sets the vesion of a given buffer
+function OGLBufferDictionary.setVersion!(String name, Integer version) {
+  Size offset = this._bufferOffsets.get(name, this._bufferVersions.size());
+  if(offset == this._bufferVersions.size()) {
+    this._bufferOffsets[name] = offset;
+    this._bufferVersions.push(0);
+    this._buffers.push(null);
+  }
+  this.setVersion(offset, version);
+}
+
+// increment a specific buffer version
+function OGLBufferDictionary.incrementVersion!(String name) {
+  Size offset = this._bufferOffsets.get(name, this._bufferVersions.size());
+  if(offset == this._bufferVersions.size()) {
+    this._bufferOffsets[name] = offset;
+    this._bufferVersions.push(0);
+    this._buffers.push(null);
+  } else {
+    this._bufferVersions[offset]++;
+  }
+}
+
+// returns a specific buffer
+function OGLBuffer OGLBufferDictionary.get(Size offset) {
+  if(offset < this._bufferVersions.size())
+    return this._buffers[offset];
+  return null;
+}
+
+// returns a specific buffer
+function OGLBuffer OGLBufferDictionary.get(String name) {
+  Size offset = this._bufferOffsets.get(name, this._bufferVersions.size());
+  return this.get(offset);
+}
+
+// set a specific buffer
+function OGLBufferDictionary.set!(Size offset, OGLBuffer buffer) {
+  this._buffers[offset] = buffer;
+}
+
+// set a specific buffer
+function OGLBufferDictionary.set!(String name, OGLBuffer buffer) {
+  Size offset = this._bufferOffsets.get(name, this._bufferVersions.size());
+  if(offset == this._bufferVersions.size()) {
+    this._bufferOffsets[name] = offset;
+    this._bufferVersions.push(-1);
+    this._buffers.push(null);
+  }
+  this.set(offset, buffer);
+}

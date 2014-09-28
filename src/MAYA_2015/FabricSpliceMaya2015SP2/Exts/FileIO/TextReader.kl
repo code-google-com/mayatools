@@ -1,0 +1,46 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+object TextReader : FileReader {
+  Data handle;
+};
+
+// standard constructor
+function TextReader() = "TextReader_construct";
+
+// standard destructor
+function ~TextReader() = "TextReader_free";
+
+// constructs a new reader object with a given filePath
+inline TextReader(String filePath) {
+  this = TextReader();
+  this.open(filePath);
+} 
+
+// opens a new readable file, returns true if successful
+function Boolean TextReader.open!(String filePath) = "TextReader_open";
+
+// closes a currently opened file, returns true if successful
+function Boolean TextReader.close!() = "TextReader_close";
+
+// returns true if the file is currently open
+function Boolean TextReader.isOpen() = "TextReader_isOpen";
+
+// returns the size of the opened file
+function UInt32 TextReader.size() = "TextReader_size";
+
+// sets the position of the stream
+function TextReader.seek(UInt32 pos) = "TextReader_seek";
+
+// tells the position of the stream
+function UInt32 TextReader.pos() = "TextReader_pos";
+
+// returns true if the file has reached its end
+function Boolean TextReader.eof() = "TextReader_eof";
+
+// reads a line out of the currently opened file
+function String TextReader.readLine!() = "TextReader_readLine";
+
+// reads the whole content out of the currently opened file
+function String TextReader.readAll!() = "TextReader_readAll";

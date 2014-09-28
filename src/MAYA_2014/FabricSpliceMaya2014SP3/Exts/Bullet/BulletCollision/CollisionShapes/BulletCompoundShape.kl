@@ -1,0 +1,134 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+/// The BulletCompoundShape allows to store multiple other BulletCollisionShapes
+/// This allows for moving concave collision objects. This is more general then the static concave BulletBvhTriangleMeshShape.
+/// It has an (optional) dynamic aabb tree to accelerate early rejection tests. 
+/// @todo: This aabb tree can also be use to speed up ray tests on BulletCompoundShape, see http://code.google.com/p/bullet/issues/detail?id=25
+/// Currently, removal of child shapes is only supported when disabling the aabb tree (pass 'false' in the constructor of BulletCompoundShape)
+object BulletCompoundShape	: BulletCollisionShape
+{
+	Data pointer;
+	BulletCollisionShape 		children[];
+};
+
+function Data BulletCompoundShape.getPointer(){
+	return this.pointer;
+}
+ 
+
+function BulletCompoundShape(){
+	this.__construct(true);
+}
+function BulletCompoundShape(Boolean enableDynamicAabbTree){
+	this.__construct(enableDynamicAabbTree);
+}
+function BulletCompoundShape.__construct!(Boolean enableDynamicAabbTree) = "BulletCompoundShape_construct";
+
+function ~BulletCompoundShape(){
+	this.__destroy();
+}
+function BulletCompoundShape.__destroy!() = "BulletCompoundShape_destroy";
+
+function BulletCompoundShape.addChildShape!(Xfo localTransform, BulletCollisionShape shape){
+	this.__addChildShape(localTransform, shape);
+	this.children.push(shape);
+}
+function BulletCompoundShape.__addChildShape!(Xfo localTransform, BulletCollisionShape shape) = "BulletCompoundShape_addChildShape";
+
+	/// Remove all children shapes that contain the specified shape
+function BulletCompoundShape.removeChildShape!(BulletCollisionShape shape){
+	this.__removeChildShape(shape);
+
+	// find and remove the reference to the child shape;
+	for(Integer i=0; i<this.children.size; i++){
+		if(this.children[i] == shape){
+			for(; i<this.children.size-1; i++){
+				this.children[i] = this.children[i+1];
+			}
+			this.children.resize(this.children.size-1);
+			break;
+		}
+	}
+}
+function BulletCompoundShape.__removeChildShape!(BulletCollisionShape shape) = "BulletCompoundShape_removeChildShape";
+
+function BulletCompoundShape.removeChildShapeByIndex!(Integer childShapeindex){
+	this.__removeChildShapeByIndex(childShapeindex);
+	for(Integer i=childShapeindex; i<this.children.size-1; i++){
+		this.children[i] = this.children[i+1];
+	}
+	this.children.resize(this.children.size-1);
+}
+function BulletCompoundShape.__removeChildShapeByIndex!(Integer childShapeindex) = "BulletCompoundShape_removeChildShapeByIndex";
+
+
+function Integer BulletCompoundShape.getNumChildShapes()
+{
+	return Integer (this.children.size());
+}
+
+function BulletCollisionShape BulletCompoundShape.getChildShape(Integer index)
+{
+	return this.children[index];
+}
+
+
+function Xfo BulletCompoundShape.getChildTransform(Integer index) = "BulletCompoundShape_getChildTransform";
+
+
+///set a new transform for a child, and update internal data structures (local aabb and dynamic tree)
+function BulletCompoundShape.updateChildTransform!(Integer childIndex, Xfo newChildTransform){
+	this.updateChildTransform(childIndex, newChildTransform, true);
+}
+function BulletCompoundShape.updateChildTransform!(Integer childIndex, Xfo newChildTransform, Boolean shouldRecalculateLocalAabb) = "BulletCompoundShape_updateChildTransform";
+
+
+function BulletCollisionShape[] BulletCompoundShape.getChildList()
+{
+	return this.children;
+}
+
+///getAabb's default implementation is brute force, expected derived classes to implement a fast dedicated version
+function	BulletCompoundShape.getAabb(Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) = "BulletCompoundShape_getAabb";
+
+/** Re-calculate the local Aabb. Is called at the end of removeChildShapes. 
+Use this yourself if you modify the children or their transforms. */
+// function BulletCompoundShape.recalculateLocalAabb() = "BulletCompoundShape_recalculateLocalAabb";
+
+function BulletCompoundShape.setLocalScaling!(Vec3 scaling) = "BulletCompoundShape_setLocalScaling";
+
+function Vec3 BulletCompoundShape.getLocalScaling() = "BulletCompoundShape_getLocalScaling"; 
+
+function BulletCompoundShape.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = "BulletCompoundShape_calculateLocalInertia";
+
+function BulletCompoundShape.setMargin!(Scalar margin) = "BulletCompoundShape_setMargin";
+function Scalar	BulletCompoundShape.getMargin() = "BulletCompoundShape_getMargin";
+
+// function String	BulletCompoundShape.getName() = "BulletCompoundShape_getName";
+
+// // function BulletDbvt	BulletCompoundShape.getDynamicAabbTree() = "BulletCompoundShape_getDynamicAabbTree";
+
+
+// function BulletCompoundShape.createAabbTreeFromChildren() = "BulletCompoundShape_createAabbTreeFromChildren";
+
+///computes the exact moment of inertia and the transform from the coordinate system defined by the principal axes of the moment of inertia
+///and the center of mass to the current coordinate system. "masses" points to an array of masses of the children. The resulting transform
+///"principal" has to be applied inversely to all children transforms in order for the local coordinate system of the compound
+///shape to be centered at the center of mass and to coincide with the principal axes. This also necessitates a correction of the world transform
+///of the collision object by the principal transform.
+// function  BulletCompoundShape.calculatePrincipalAxisTransform(Scalar masses[], io Xfo principal, io Vec3 inertia) = "BulletCompoundShape_calculatePrincipalAxisTransform";
+
+// function  Integer	BulletCompoundShape.getUpdateRevision() = "BulletCompoundShape_getUpdateRevision";
+
+// function	Integer	BulletCompoundShape.calculateSerializeBufferSize() = "BulletCompoundShape_calculateSerializeBufferSize";
+
+///fills the dataBuffer and returns the struct name (and 0 on failure)
+// function	String	BulletCompoundShape.serialize(Object dataBuffer, BulletSerializer serializer) = "BulletCompoundShape_gserialize";
+
+
+
+
+

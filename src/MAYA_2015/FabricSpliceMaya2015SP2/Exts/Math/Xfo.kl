@@ -1,0 +1,324 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+/*SPHINX-description
+The :ref:`xfo` type represents a 3D transform. It uses a :ref:`vec3` for translation as scaling as well as a :ref:`quat` for its rotation. The :ref:`xfo` can also be expressed as a :ref:`mat44`, and provides conversion methods for that type.
+
+Example
+---------
+
+.. code-block:: js
+
+    // create a transform
+    Xfo xfo;
+
+    // change the transform
+    xfo.tr.x = 3.0;
+    xfo.ori.setFromAxisAndAngle(Vec3(1.0, 0.0, 0.0), 0.65);
+    xfo.sc *= Vec3(1, 2, 3);
+
+    // project a vector
+    Vec3 pos = xfo.transformVector(Vec3(0, 10, 0));
+*/
+
+struct Xfo
+{
+  Quat ori;
+  Vec3 tr;
+  Vec3 sc;
+};
+
+// default constructor
+// set the transform to the identity
+inline Xfo() {
+  this.setIdentity();
+}
+
+// constructor from just the translation
+inline Xfo(Vec3 tr) {
+  this.set(tr);
+}
+
+// constructor from just the rotation
+inline Xfo(Quat ori) {
+  this.set(ori);
+}
+
+// constructor from the translation and rotation
+inline Xfo(Vec3 tr, Quat ori) {
+  this.set(tr,ori);
+}
+
+// constructor from the translation, rotation and scaling
+inline Xfo(Vec3 tr, Quat ori, Vec3 sc) {
+  this.set(tr,ori,sc);
+}
+
+// constructor from the oritation, translation and scaling
+inline Xfo(Quat ori, Vec3 tr, Vec3 sc) {
+  this.set(tr,ori,sc);
+}
+
+// constructor from Mat44
+inline Xfo(Mat44 mat) {
+  this.setFromMat44(mat);
+}
+
+// setter from just the rotation
+inline Xfo.set!(Quat ori) {
+  this.ori = ori;
+  this.sc = Vec3(1.0, 1.0, 1.0);
+}
+
+// setter from Mat33 (only setting rotation)
+inline Xfo.set!(Mat33 mat) {
+  this.ori.setFromMat33(mat);
+}
+
+// setter from just the translation
+inline Xfo.set!(Vec3 tr) {
+  this.tr = tr;
+  this.sc = Vec3(1.0, 1.0, 1.0);
+}
+
+// setter from the translation and rotation
+inline Xfo.set!(Vec3 tr, Quat ori) {
+  this.tr = tr;
+  this.ori = ori;
+  this.sc = Vec3(1.0, 1.0, 1.0);
+}
+
+// setter from the translation, rotation and scaling
+inline Xfo.set!(Vec3 tr, Quat ori, Vec3 sc) {
+  this.tr = tr;
+  this.ori = ori;
+  this.sc = sc;
+}
+
+// setter from the oritation, translation and scaling
+inline Xfo.set!(Quat ori, Vec3 tr, Vec3 sc) {
+  this.tr = tr;
+  this.ori = ori;
+  this.sc = sc;
+}
+
+// setter from (standard/external) float32 array and an offset
+inline Xfo.set!(Float32 v<>, UInt32 o) {
+  if(v.size() >= 10 + o) {
+    this.sc.set(v, o + 0);
+    this.ori.set(v, o + 3);
+    this.tr.set(v, o + 7);
+  }
+}
+
+// getter as external float32 array and an offset
+inline Xfo.get(io Float32 v<>, UInt32 o) {
+  if(v.size() >= 10 + o) {
+    this.sc.get(v, o + 0);
+    this.ori.get(v, o + 3);
+    this.tr.get(v, o + 7);
+  }
+}
+
+// getter as float32 array and an offset
+inline Xfo.get(io Float32 v[], UInt32 o) {
+  if(v.size() < 10 + o)
+    v.resize(10 + o);
+  this.sc.get(v, o + 0);
+  this.ori.get(v, o + 3);
+  this.tr.get(v, o + 7);
+}
+
+// setter from (standard/external) float64 array and an offset
+inline Xfo.set!(Float64 v<>, UInt32 o) {
+  if(v.size() >= 10 + o) {
+    this.sc.set(v, o + 0);
+    this.ori.set(v, o + 3);
+    this.tr.set(v, o + 7);
+  }
+}
+
+// getter as external float64 array and an offset
+inline Xfo.get(io Float64 v<>, UInt32 o) {
+  if(v.size() >= 10 + o) {
+    this.sc.get(v, o + 0);
+    this.ori.get(v, o + 3);
+    this.tr.get(v, o + 7);
+  }
+}
+
+// getter as float64 array and an offset
+inline Xfo.get(io Float64 v[], UInt32 o) {
+  if(v.size() < 10 + o)
+    v.resize(10 + o);
+  this.sc.get(v, o + 0);
+  this.ori.get(v, o + 3);
+  this.tr.get(v, o + 7);
+}
+
+// setter from (standard/external) float32 array
+inline Xfo.set!(Float32 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float32 array
+inline Xfo.get(io Float32 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float32 array
+inline Xfo.get(io Float32 v[]) {
+  this.get(v, 0);
+}
+
+// setter from (standard/external) float64 array
+inline Xfo.set!(Float64 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float64 array
+inline Xfo.get(io Float64 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float64 array
+inline Xfo.get(io Float64 v[]) {
+  this.get(v, 0);
+}
+
+// sets this transform to the identity
+inline Xfo.setIdentity!() {
+  this.tr.setNull();
+  this.ori.setIdentity();
+  this.sc = Vec3(1.0, 1.0, 1.0);
+}
+
+// sets this transform from a given Mat44
+inline Xfo.setFromMat44!(Mat44 m) {
+  Mat33 rotMat;
+  m.decompose(this.sc, rotMat, this.tr);
+  this.ori.setFromMat33(rotMat);
+}
+
+// returns this xfo as a Mat44
+inline Mat44 Xfo.toMat44() {
+  Mat44 scl, rot, trn;
+
+  scl.setNull();
+  scl.setDiagonal(Vec4(this.sc.x, this.sc.y, this.sc.z, 1.0));
+
+  Quat q = this.ori;
+  rot.setNull();
+  rot.row0.x = 1.0 - 2.0 * (q.v.y * q.v.y + q.v.z * q.v.z);
+  rot.row0.y = 2.0 * (q.v.x * q.v.y - q.v.z * q.w);
+  rot.row0.z = 2.0 * (q.v.x * q.v.z + q.v.y * q.w);
+
+  rot.row1.x = 2.0 * (q.v.x * q.v.y + q.v.z * q.w);
+  rot.row1.y = 1.0 - 2.0 * (q.v.x * q.v.x + q.v.z * q.v.z);
+  rot.row1.z = 2.0 * (q.v.y * q.v.z - q.v.x * q.w);
+
+  rot.row2.x = 2.0 * (q.v.x * q.v.z - q.v.y * q.w);
+  rot.row2.y = 2.0 * (q.v.y * q.v.z + q.v.x * q.w);
+  rot.row2.z = 1.0 - 2.0 * (q.v.x * q.v.x + q.v.y * q.v.y);
+
+  rot.row3.t = 1.0;
+
+  trn.setIdentity();
+  trn.row0.t = this.tr.x;
+  trn.row1.t = this.tr.y;
+  trn.row2.t = this.tr.z;
+
+  return trn * rot * scl;
+}
+
+// equals operator
+inline Boolean == (Xfo a, Xfo b) {
+  return a.ori == b.ori && a.tr == b.tr && a.sc == b.sc;
+}
+
+// not equals operator
+inline Boolean != (Xfo a, Xfo b) {
+  return a.ori != b.ori || a.tr != b.tr || a.sc != b.sc;
+}
+
+
+// multiplies two transforms
+inline Xfo * (in Xfo local, in Xfo global) {
+  //[jcg] We shouldn't need this, and it's not done in JS
+  Quat lcl_ori = local.ori.unit();
+  Quat glb_ori = global.ori.unit();
+
+  if(local.sc.x != local.sc.y || local.sc.x != local.sc.z) {
+    Scalar relativePrecision = abs(local.sc.x)*PRECISION*10.0;
+    if( abs(local.sc.x - local.sc.y) > relativePrecision || abs(local.sc.x - local.sc.z) > relativePrecision ) {
+      Math_reportWarning('Xfo.multiply: Cannot multiply to xfos when having non-uniform scaling without causing shearing. Use Mat44s instead.');
+    }
+  }
+
+  Xfo result;
+  result.tr = local.tr + lcl_ori.rotateVector(local.sc * global.tr);
+  result.ori = lcl_ori * glb_ori;
+  result.ori.setUnit();
+  result.sc = local.sc * global.sc;
+  return result;
+}
+
+// multiplies this transform with another one
+inline Xfo. *= (in Xfo global) {
+  this = this * global;
+}
+
+// overload method for the multiply operator
+inline Xfo Xfo.multiply(in Xfo global) {
+  return this * global;
+}
+
+// transforms a vector with this transform
+inline Vec3 Xfo.transformVector(in Vec3 v) {
+  return this.ori.rotateVector(v * this.sc) + this.tr;
+}
+
+// transforms a vector with this transform
+inline Ray Xfo.transformRay(in Ray ray) {
+  Ray result;
+  result.start = this.ori.rotateVector(ray.start * this.sc) + this.tr;
+  result.direction = this.ori.rotateVector(ray.direction * this.sc);
+  return result;
+}
+
+// returns the inverse transform of this one
+inline Xfo Xfo.inverse() {
+  Xfo result;
+  if(this.sc.x != this.sc.y || this.sc.x != this.sc.z) {
+    Scalar relativePrecision = abs(this.sc.x)*PRECISION*10.0;
+    if( abs(this.sc.x - this.sc.y) > relativePrecision || abs(this.sc.x - this.sc.z) > relativePrecision ) {
+      Math_reportWarning('Mat44.setFromMat44: Cannot invert xfo with non-uniform scaling without causing shearing. Try using inverseTransformVector, use Mat44s instead.');
+    }
+  }
+  result.sc = this.sc.inverse();
+  result.ori = this.ori.inverse();
+  result.tr = result.ori.rotateVector(this.tr.negate()*result.sc);
+  return result;
+}
+
+// transforms a vector with this xfo inversly
+//Note: we have 'inverseTransformVector' because Xfos with non-uniform scaling cannot be inverted as Xfos
+inline Vec3 Xfo.inverseTransformVector(in Vec3 vec) {
+  return this.ori.inverse().rotateVector(vec - this.tr) * this.sc.inverse();
+}
+
+// linearly interpolates this Xfo with another one based on 
+// a scalar blend value (0.0 to 1.0)
+inline Xfo Xfo.linearInterpolate(in Xfo other, in Scalar t) {
+  Xfo result;
+  result.tr = this.tr.linearInterpolate(other.tr, t);
+  result.ori = this.ori.linearInterpolate(other.ori, t);
+  result.sc = this.sc.linearInterpolate(other.sc, t);
+  return result;
+}
+
+
+
+
+
+

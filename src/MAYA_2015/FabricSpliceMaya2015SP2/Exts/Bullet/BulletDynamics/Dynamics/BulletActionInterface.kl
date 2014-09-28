@@ -1,0 +1,16 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+///Basic interface to allow actions such as vehicles and characters to be updated inside a btDynamicsWorld
+interface BulletActionInterface
+{
+	Data getPointer();
+	
+	updateAction( BulletCollisionWorld collisionWorld, Scalar deltaTimeStep);
+
+	// debugDraw(BulletIDebugDraw* debugDrawer);
+};
+

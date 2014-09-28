@@ -1,0 +1,168 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+object Vec3Attribute : GeometryAttribute, StatisticSourceWithAutoRegisterMember {
+  UInt32 version;
+  String name;
+  UInt32 containerIndex;
+
+  Vec3 values[];
+  Boolean normalize;//SetUnit after linearCombine
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function Vec3Attribute() {
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] Vec3Attribute.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, this.name ) );
+  stats.push( StatisticRecord( Statistic_Category, "Attribute" ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, this.values.size()*4*3 ) );
+  return stats;
+}
+
+inline String Vec3Attribute.getName() {
+  return this.name;
+}
+
+inline UInt32 Vec3Attribute.getVersion() {
+  return this.version;
+}
+
+inline Size Vec3Attribute.getContainerIndex() {
+  return this.containerIndex;
+}
+
+inline Vec3Attribute.setContainerIndex!( Size index ) {
+  this.containerIndex = index;
+}
+
+function Vec3Attribute Vec3Attribute.clone() {
+  //The difference with default clone() is that new.base.autoStat will point to 'new' (from constructor)
+  Vec3Attribute new = Vec3Attribute();
+  new.version = this.version;
+  new.name = this.name.clone();
+  new.containerIndex = this.containerIndex;
+  new.values = this.values.clone();
+  new.normalize = this.normalize;
+  return new;
+}
+
+function Ref<StatisticSource> Vec3Attribute.getStatisticsSource() {
+  return this.autoStats;
+}
+
+inline Vec3Attribute.resize!(Size count) {
+  this.values.resize(count);
+  ++this.version;
+}
+
+inline Size Vec3Attribute.size() {
+  return this.values.size();
+}
+
+inline Data Vec3Attribute.data() {
+  Ref<Vec3Attribute> thisRef = this;
+  return thisRef.values.data();
+}
+
+//Make sure to call this method after position changes are finished, so caches (such as drawing data) know that they need to be regenerated.
+inline Vec3Attribute.incrementVersion!() {
+  ++this.version;
+}
+
+inline Vec3Attribute.copyValue!( Size sourceIndex, Size targetIndex ) {
+  this.values[targetIndex] = this.values[sourceIndex];
+}
+
+inline Vec3Attribute.copyValue!( Ref<Object> sourceAttr, Size sourceIndex, Size targetIndex ) {
+  Ref<Vec3Attribute> source = sourceAttr;
+  this.values[targetIndex] = source.values[sourceIndex];
+}
+
+inline Vec3 Vec3Attribute.getLinearCombination( LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights ) {
+  Vec3 result;
+  for( Size i = 0; i < sourceIndices.size(); ++i )
+    result += this.values[sourceIndices.get(i)]*sourceWeights.get(i);
+  if(this.normalize)
+    result = result.unit_safe();
+  return result;
+}
+
+inline Vec3Attribute.linearCombine!( Ref<Object> sourceAttr, LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights, Size targetIndex ) {
+  Ref<Vec3Attribute> source = sourceAttr;
+  this.values[targetIndex] = source.getLinearCombination( sourceIndices, sourceWeights );
+}
+
+inline Vec3Attribute.copyFrom!( Ref<Object> otherAttr ) {
+  Ref<Vec3Attribute> other = otherAttr;
+  this.incrementVersion();
+
+  // Copy in place to avoid mallocs
+  Size size = other.values.size();
+  this.values.resize( size );
+  for( Size i = 0; i < size; ++i )
+    this.values[i] = other.values[i];
+}
+
+inline Vec3Attribute.setFromScalar!( Size index, LocalL16ScalarArray value ) {
+  this.values[index].x = value.get(0);
+  this.values[index].y = value.get(1);
+  this.values[index].z = value.get(2);
+}
+
+inline Size Vec3Attribute.getScalarValueSize() {
+  return 3;
+}
+
+inline Boolean Vec3Attribute.equalValues( Size index1, Size index2 ) {
+  return this.values[index1].equal( this.values[index2] );
+}
+
+function String Vec3Attribute.valueDesc( Size index ) {
+  return String(this.values[index]);
+}
+
+require Util;
+function String Vec3Attribute.unitTestPrint( Size index ) {
+  return unitTestPrint(this.values[index]);
+}
+//Returns a string description of the attribute.
+function String Vec3Attribute.getDesc?( Boolean includeValues) {
+  String desc;
+  desc += "Attribute: " + this.getName() + " nb elements = "+ this.values.size()+'\n';
+  if(includeValues){
+    if(this.values.size > 0){
+      desc += "  values:[ \n";
+      for(Integer i=0; i<this.values.size; i++){
+        desc += '    ' + unitTestPrint(this.values[i]) + " \n";
+      }
+      desc += "  ]\n";
+    }
+    else{
+      desc += "  values:[]\n";
+    }
+  }
+  return desc;
+}
+function String Vec3Attribute.getDesc?() {
+  return this.getDesc(false);
+}
+
+function Ref<Vec3Attribute> GeometryAttributes.getOrCreateVec3Attribute!( String name ) {
+  Ref<GeometryAttribute> attr = this.getAttribute( name, Vec3Attribute );
+  if( attr )
+    return attr;
+
+  Vec3Attribute newAttr = Vec3Attribute();
+  newAttr.resize(this.elementCount);
+  newAttr.name = name;
+  newAttr.version = this.keysVersion;
+  this.attachNewAttribute(newAttr);
+  return newAttr;
+}

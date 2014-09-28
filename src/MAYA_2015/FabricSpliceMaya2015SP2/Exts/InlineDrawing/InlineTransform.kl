@@ -1,0 +1,98 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlinetransform` represents a transform within the :ref:`inlinedrawing`. The :ref:`inlinetransform` can represent one or more :ref:`xfo` values, thus providing single instance or multiple instance rendering. Please see the :ref:`staticinlinetransform` for a code example.
+*/
+
+interface InlineTransform {
+
+  // returns the name of the transform
+  String getName();
+
+  // returns the path of the transform.
+  // the path encodes the hierarchy using a '/' character,
+  // so nested transfoB below transfoA results in a path
+  // like this: 'transfoA/transfoB'
+  String getPath();
+
+  // returns the number of local transform values
+  Size getLocalCount();
+
+  // resizes the tranform to store n local transform values
+  setLocalCount!(Size n);
+
+  // returns the number of global transform values
+  Size getGlobalCount();
+
+  // An internal method that avoids placing a lock while querying the global count.
+  Size _nonLocking_getGlobalCount();
+
+  // sets a local transform value
+  setLocalXfo!(Index index, Xfo xfo);
+
+  // returns a local transform value
+  Xfo getLocalXfo(Index index);
+
+  // An internal method that avoids placing a lock while querying the local xfo.
+  Xfo _nonLocking_getLocalXfo(Index index);
+
+  // returns a global transform value
+  Xfo getGlobalXfo!(Index index);
+
+  // An internal method that avoids placing a lock while querying the global xfo.
+  Xfo _nonLocking_getGlobalXfo!(Index index);
+
+  // set the global transform value. The Transform is responsible for computing local.
+  setGlobalXfo!(Index index, Xfo xfo);
+
+  // adds an additional local xfo value
+  pushLocalXfo!(Xfo xfo);
+
+  // returns true if this transform has a parent
+  Boolean hasParent();
+
+  // returns the parent of this transform, or null
+  InlineTransform getParent();
+
+  // sets the parent of this transform
+  setParent!(io InlineTransform parent);
+
+  // interal method that sets the parent.
+  _setParent!(InlineTransform parent);
+
+  // adds a child object to this transform
+  Object addChild!(Object child);
+
+  // removes a child object to this transform by index
+  removeChild!(Index index);
+
+  // removes a child object to this transform
+  removeChild!(Object child);
+
+  // returns the number of children of this transform
+  Size getChildCount();
+
+  // returns a given child by index
+  Object getChild(Index index);
+
+  // returns a given child by name, or null
+  Object getChild(String name);
+
+  // empties this transform by clearing its children
+  removeAllChildren!();
+
+  // dirty eventual caches. this should be used
+  // within the _setParent method.
+  incrementVersion!();
+
+  // Configures the drawing system using this Transform. 
+  Boolean _draw!(io DrawContext context, Index index, Size count);
+
+};
+
+
+

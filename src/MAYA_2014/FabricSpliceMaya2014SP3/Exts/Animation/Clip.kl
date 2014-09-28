@@ -1,0 +1,229 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+The :ref:`clip` stores a collection of track sets, each one representing a complex values such as a Vec3 or Xfo.
+
+Example
+---------
+
+*/
+require Math;
+
+object Clip : IClip {
+  String name;
+  ITrackSet trackSets[String];
+  Integer keyIndices[][];
+};
+
+// constructor taking a track set name
+function Clip(String name) {
+  this.name = name;
+}
+
+function String Clip.getName() {
+  return this.name;
+}
+
+function UInt32 Clip.getNumTrackSets() {
+  return this.trackSets.size;
+}
+
+// adds an existing trackSets to the clip.
+function Clip.addTrackSet!(ITrackSet trackSet) {
+  if(this.trackSets.has(trackSet.getName())){
+    report("ERROR: Track Set already exists");
+  }
+  this.trackSets[trackSet.getName()] = trackSet;
+}
+
+// adds an existing trackSets to the clip.
+function Clip.addTrackSet!(String name, ITrackSet trackSet) {
+  if(this.trackSets.has(name)){
+    report("ERROR: Track Set already exists");
+  }
+  this.trackSets[name] = trackSet;
+}
+
+// adds a new Scalar trackSet to the clip.
+function ITrackSet Clip.addTrackSet!(String name, Color color, Scalar defaultValue, UInt32 flags) {
+  if(this.trackSets.has(name)){
+    report("ERROR: Track Set already exists");
+  }
+  this.trackSets[name] = KeyframeTrackSet(name, color, defaultValue, flags);
+  return this.trackSets[name];
+}
+
+// adds a new Vec2 trackSet to the clip.
+function ITrackSet Clip.addTrackSet!(String name, Vec2 defaultValue, UInt32 flags) {
+  if(this.trackSets.has(name)){
+    report("ERROR: Track Set already exists");
+  }
+  this.trackSets[name] = KeyframeTrackSet(name, defaultValue, flags);
+  return this.trackSets[name];
+}
+
+// adds a new Vec3 trackSet to the clip.
+function ITrackSet Clip.addTrackSet!(String name, Vec3 defaultValue, UInt32 flags) {
+  if(this.trackSets.has(name)){
+    report("ERROR: Track Set already exists");
+  }
+  this.trackSets[name] = KeyframeTrackSet(name, defaultValue, flags);
+  return this.trackSets[name];
+}
+
+// adds a new Vec4 trackSet to the clip.
+function ITrackSet Clip.addTrackSet!(String name, Vec4 defaultValue, UInt32 flags) {
+  if(this.trackSets.has(name)){
+    report("ERROR: Track Set already exists");
+  }
+  this.trackSets[name] = KeyframeTrackSet(name, defaultValue, flags);
+  return this.trackSets[name];
+}
+
+// adds a new Quat trackSet to the clip.
+function ITrackSet Clip.addTrackSet!(String name, Quat defaultValue, UInt32 flags) {
+  if(this.trackSets.has(name)){
+    report("ERROR: Track Set already exists");
+  }
+  this.trackSets[name] = KeyframeTrackSet(name, defaultValue, flags);
+  return this.trackSets[name];
+}
+
+// adds a new Euler trackSet to the clip.
+function ITrackSet Clip.addTrackSet!(String name, Euler defaultValue, UInt32 flags) {
+  if(this.trackSets.has(name)){
+    report("ERROR: Track Set already exists");
+  }
+  this.trackSets[name] = KeyframeTrackSet(name, defaultValue, flags);
+  return this.trackSets[name];
+}
+
+// adds a new Xfo trackSet to the clip.
+function ITrackSet Clip.addTrackSet!(String name, Xfo defaultValue, UInt32 flags) {
+  if(this.trackSets.has(name)){
+    report("ERROR: Track Set already exists");
+  }
+  this.trackSets[name] = KeyframeTrackSet(name, defaultValue, flags);
+  return this.trackSets[name];
+}
+
+// returns True if the Clip contains the given trackSet
+function Boolean Clip.hasTrackSet(String name) {
+  return this.trackSets.has(name);
+}
+
+// returns a trackSet by name
+function ITrackSet Clip.getTrackSet(String name) {
+  return this.trackSets[name];
+}
+
+// sets a trackSet by name
+function  Clip.setTrackSet!(String name, ITrackSet trackSet) {
+  this.trackSets[name] = trackSet;
+}
+
+
+// Returns an array of the names of the track sets in the clip.
+function String[] Clip.getTrackSetNames() {
+  String names[];
+  for(name, trackSet in this.trackSets){
+    names.push(name);
+  }
+  return names;
+}
+
+
+function Vec2 Clip.getTimeRange() {
+  Vec2 timeRange(BIGSCALAR_POSITIVE, BIGSCALAR_NEGATIVE);
+  Boolean initialized = false;
+  for(name, trackSet in this.trackSets){
+    Vec2 trackSetRange = trackSet.getTimeRange();
+    if(!initialized){
+      timeRange = trackSetRange;
+      initialized = true;
+    }
+    else{
+      if(timeRange.x > trackSetRange.x){
+        timeRange.x = trackSetRange.x;
+      }
+      if(timeRange.y < trackSetRange.y){
+        timeRange.y = trackSetRange.y;
+      }
+    }
+  }
+  return timeRange;
+}
+
+function IClipValues Clip.evaluate(Scalar time, io Integer keyIndices[][]) {
+  Integer i = 0;
+  keyIndices.resize(this.trackSets.size);
+  ClipValues clipValues();
+  for(name, trackSet in this.trackSets){
+    if(keyIndices.size)
+    switch(trackSet.getValueType()){
+      case 'Scalar':
+        Scalar value;
+        trackSet.evaluate(time, value, keyIndices[i]);
+        clipValues.setScalarValue(name, value, trackSet.getFlags());
+        break;
+      case 'Vec2':
+        Vec2 value;
+        trackSet.evaluate(time, value, keyIndices[i]);
+        clipValues.setVec2Value(name, value, trackSet.getFlags());
+        break;
+      case 'Vec3':
+        Vec3 value;
+        trackSet.evaluate(time, value, keyIndices[i]);
+        clipValues.setVec3Value(name, value, trackSet.getFlags());
+        break;
+      case 'Vec4':
+        Vec4 value;
+        trackSet.evaluate(time, value, keyIndices[i]);
+        clipValues.setVec4Value(name, value, trackSet.getFlags());
+        break;
+      case 'Quat':
+      case 'Euler':
+        Quat value;
+        trackSet.evaluate(time, value, keyIndices[i]);
+        clipValues.setQuatValue(name, value, trackSet.getFlags());
+        break;
+      case 'Xfo':
+        Xfo value;
+        trackSet.evaluate(time, value, keyIndices[i]);
+        clipValues.setXfoValue(name, value, trackSet.getFlags());
+        break;
+    }
+  }
+  return clipValues;
+}
+
+
+function IClipValues Clip.evaluate!(Scalar time) {
+  return this.evaluate(time, this.keyIndices);
+}
+
+
+
+function String Clip.getDesc(String indent) {
+  String desc;
+  desc += indent + "Clip:{ \n";
+  for(name, trackSet in this.trackSets){
+    desc += indent + "  " + name + ":" + trackSet.getDesc(indent +"  ", true) + " \n";
+  }
+  desc += indent + "}";
+  return desc;
+}
+
+function String Clip.getDesc() {
+  return this.getDesc("");
+}
+
+
+// // returns a clone of this KeyframeTrackSet
+// function Clip Clip.clone() {
+//   Clip cloned;
+//   cloned.name = this.name;
+//   cloned.trackSets = this.trackSets.clone();
+//   return cloned;
+// }

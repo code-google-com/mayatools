@@ -1,0 +1,421 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+//	BulletRigidBodyFlags
+const UInt32 BT_DISABLE_WORLD_GRAVITY = 1;
+
+
+///The BulletRigidBodyConstructionInfo structure provides information to create a rigid body. Setting mass to zero creates a fixed (non-dynamic) rigid body.
+///For dynamic objects, you can use the collision shape to approximate the local inertia tensor, otherwise use the zero vector (default argument)
+///You can use the motion state to synchronize the world transform between physics and graphics objects. 
+///And if the motion state is provided, the rigid body will initialize its initial world transform from the motion state,
+///startWorldTransform is only used when you don't provide a motion state.
+struct	BulletRigidBodyConstructionInfo
+{
+	Scalar			mass;
+
+	///When a motionState is provided, the rigid body will initialize its world transform from the motion state
+	///In this case, startWorldTransform is ignored.
+	BulletMotionState		motionState;
+	Xfo	startWorldTransform;
+
+	BulletCollisionShape	collisionShape;
+	Vec3			localInertia;
+	Scalar			linearDamping;
+	Scalar			angularDamping;
+
+	///best simulation results when friction is non-zero
+	Scalar			friction;
+	///best simulation results using zero restitution.
+	Scalar			restitution;
+
+	Scalar			linearSleepingThreshold;
+	Scalar			angularSleepingThreshold;
+
+	//Additional damping can help avoiding lowpass jitter motion, help stability for ragdolls etc.
+	//Such damping is undesirable, so once the overall simulation quality of the rigid body dynamics system has improved, this should become obsolete
+	Boolean			additionalDamping;
+	Scalar			additionalDampingFactor;
+	Scalar			additionalLinearDampingThresholdSqr;
+	Scalar			additionalAngularDampingThresholdSqr;
+	Scalar			additionalAngularDampingFactor;
+};
+
+function BulletRigidBodyConstructionInfo.__construct!( Scalar mass, BulletMotionState motionState, BulletCollisionShape collisionShape, Vec3 localInertia)
+{
+	this.mass = mass;
+	this.motionState = motionState;
+	this.collisionShape = collisionShape;
+	this.localInertia = localInertia;
+
+	this.linearDamping = 0.0;
+	this.angularDamping = 0.0;
+	this.friction = 0.5;
+	this.restitution = 0.0;
+	this.linearSleepingThreshold = 0.8;
+	this.angularSleepingThreshold = 1.0;
+	this.additionalDamping = false;
+	this.additionalDampingFactor = 0.005;
+	this.additionalLinearDampingThresholdSqr = 0.01;
+	this.additionalAngularDampingThresholdSqr = 0.01;
+	this.additionalAngularDampingFactor = 0.01;
+	this.startWorldTransform.setIdentity();
+}
+
+function BulletRigidBodyConstructionInfo( Scalar mass, BulletMotionState motionState, BulletCollisionShape collisionShape, Vec3 localInertia)
+{
+	this.__construct( mass, motionState, collisionShape, localInertia);
+}
+
+function BulletRigidBodyConstructionInfo( Scalar mass, BulletMotionState motionState, BulletCollisionShape collisionShape)
+{
+	this.__construct( mass, motionState, collisionShape, Vec3());
+}
+
+
+
+///The BulletRigidBody is the main class for rigid body objects. It is derived from BulletICollisionObject, so it keeps a pointer to a BulletCollisionShape.
+///It is recommended for performance and memory use to share BulletCollisionShape objects whenever possible.
+///There are 3 types of rigid bodies: 
+///- A) Dynamic rigid bodies, with positive mass. Motion is controlled by rigid body dynamics.
+///- B) Fixed objects with zero mass. They are not moving (basically collision objects)
+///- C) Kinematic objects, which are objects without mass, but the user can move them. There is on-way interaction, and Bullet calculates a velocity based on the timestep and previous and current world transform.
+///Bullet automatically deactivates dynamic rigid bodies, when the velocity is below a threshold for a given time.
+///Deactivated (sleeping) rigid bodies don't take any processing time, except a minor broadphase collision detection impact (to allow active objects to activate/wake up sleeping objects)
+object BulletRigidBody : BulletICollisionObject
+{
+	Data pointer;
+
+	BulletMotionState		__motionState;
+	BulletCollisionShape	__collisionShape;
+	Object					__constraints[];
+	BulletBroadphaseProxy	__broadphaseProxy;
+	Object 					__userPointer;
+};
+
+function Object BulletRigidBody.getObject(){
+	return this;
+}
+
+function Data BulletRigidBody.getPointer(){
+	return this.pointer;
+}
+
+///BulletRigidBody constructor using construction info
+function BulletRigidBody(BulletRigidBodyConstructionInfo constructionInfo){
+	this.__construct(constructionInfo);
+
+	// Keep handles to thes objects, so they remain valid. 
+	this.__motionState = constructionInfo.motionState;
+	this.__collisionShape = constructionInfo.collisionShape;
+}
+
+function BulletRigidBody.__construct!(BulletRigidBodyConstructionInfo constructionInfo) = 'BulletRigidBody_constructConstructionInfo';
+
+function ~BulletRigidBody(){
+	this.setMotionState(null);
+	this.__collisionShape = null;
+	this.__destroy();
+}
+function BulletRigidBody.__destroy!() = 'BulletRigidBody_destroy';
+
+function BulletRigidBody.proceedToTransform!(Xfo newTrans) = 'BulletRigidBody_proceedToTransform';
+
+/// continuous collision detection needs prediction
+function BulletRigidBody.predictIntegratedTransform!(Scalar step, io Xfo predictedTransform) = 'BulletRigidBody_predictIntegratedTransform';
+
+function BulletRigidBody.saveKinematicState!(Scalar step) = 'BulletRigidBody_saveKinematicState';
+
+function BulletRigidBody.applyGravity!() = 'BulletRigidBody_applyGravity';
+
+function BulletRigidBody.setGravity!(Vec3 acceleration) = 'BulletRigidBody_setGravity';
+
+function Vec3 BulletRigidBody.getGravity() = 'BulletRigidBody_getGravity';
+
+function BulletRigidBody.setDamping!(Scalar lin_damping, Scalar ang_damping) = 'BulletRigidBody_setDamping';
+
+function Scalar BulletRigidBody.getLinearDamping() = 'BulletRigidBody_getLinearDamping';
+
+function Scalar BulletRigidBody.getAngularDamping() = 'BulletRigidBody_getAngularDamping';
+
+function Scalar BulletRigidBody.getLinearSleepingThreshold() = 'BulletRigidBody_getLinearSleepingThreshold';
+
+function Scalar BulletRigidBody.getAngularSleepingThreshold() = 'BulletRigidBody_getAngularSleepingThreshold';
+
+function BulletRigidBody.applyDamping!(Scalar timeStep) = 'BulletRigidBody_applyDamping';
+
+
+
+// function BulletRigidBody.setMassProps!(Scalar mass, Vec3 inertia) = 'BulletRigidBody_setMassProps';
+
+function Vec3 BulletRigidBody.getLinearFactor() = 'BulletRigidBody_getLinearFactor';
+function BulletRigidBody.setLinearFactor!(Vec3 linearFactor) = 'BulletRigidBody_setLinearFactor';
+function Scalar		BulletRigidBody.getInvMass() = 'BulletRigidBody_getInvMass';
+function Mat33 BulletRigidBody.getInvInertiaTensorWorld() = 'BulletRigidBody_getInvInertiaTensorWorld';
+	
+function BulletRigidBody.integrateVelocities!(Scalar step) = 'BulletRigidBody_integrateVelocities';
+
+function BulletRigidBody.setCenterOfMassTransform!(Xfo xform) = 'BulletRigidBody_setCenterOfMassTransform';
+
+function BulletRigidBody.applyCentralForce!(Vec3 force) = 'BulletRigidBody_applyCentralForce';
+function Vec3 BulletRigidBody.getTotalForce() = 'BulletRigidBody_getTotalForce';
+
+function Vec3 BulletRigidBody.getTotalTorque() = 'BulletRigidBody_getTotalTorque';
+
+function Vec3 BulletRigidBody.getInvInertiaDiagLocal() = 'BulletRigidBody_getInvInertiaDiagLocal';
+
+function BulletRigidBody.setInvInertiaDiagLocal!(Vec3 diagInvInertia) = 'BulletRigidBody_setInvInertiaDiagLocal';
+
+function BulletRigidBody.setSleepingThresholds!(Scalar linear,Scalar angular) = 'BulletRigidBody_setSleepingThresholds';
+
+function BulletRigidBody.applyTorque!(Vec3 torque) = 'BulletRigidBody_applyTorque';
+
+function BulletRigidBody.applyForce!(Vec3 force, Vec3 rel_pos)  = 'BulletRigidBody_applyForce';
+
+function BulletRigidBody.applyCentralImpulse!(Vec3 impulse) = 'BulletRigidBody_applyCentralImpulse';
+
+function BulletRigidBody.applyTorqueImpulse!(Vec3 torque) = 'BulletRigidBody_applyTorqueImpulse';
+
+function BulletRigidBody.applyImpulse!(Vec3 impulse, Vec3 rel_pos) = 'BulletRigidBody_applyImpulse';
+
+function BulletRigidBody.clearForces!() = 'BulletRigidBody_clearForces';
+
+function BulletRigidBody.updateInertiaTensor!() = 'BulletRigidBody_updateInertiaTensor';    
+
+function Vec3 BulletRigidBody.getCenterOfMassPosition() = 'BulletRigidBody_getCenterOfMassPosition';
+function Quat BulletRigidBody.getOrientation() = 'BulletRigidBody_getOrientation';
+
+function Xfo BulletRigidBody.getCenterOfMassTransform() = 'BulletRigidBody_getCenterOfMassTransform';
+function Vec3 BulletRigidBody.getLinearVelocity() = 'BulletRigidBody_getLinearVelocity';
+function Vec3 BulletRigidBody.getAngularVelocity() = 'BulletRigidBody_getAngularVelocity';
+
+
+function BulletRigidBody.setLinearVelocity!(Vec3 lin_vel) = 'BulletRigidBody_setLinearVelocity';
+
+function BulletRigidBody.setAngularVelocity!(Vec3 ang_vel) = 'BulletRigidBody_setAngularVelocity';
+
+function Vec3 BulletRigidBody.getVelocityInLocalPoint(Vec3 rel_pos) = 'BulletRigidBody_getVelocityInLocalPoint';
+
+function BulletRigidBody.translate!(Vec3 v) = 'BulletRigidBody_translate';
+
+function BulletRigidBody.getAabb!(io Vec3 aabbMin, io Vec3 aabbMax)  = 'BulletRigidBody_getAabb';
+
+
+function Scalar BulletRigidBody.computeImpulseDenominator(Vec3 pos, Vec3 normal) = 'BulletRigidBody_computeImpulseDenominator';
+
+function Scalar BulletRigidBody.computeAngularImpulseDenominator(Vec3 axis) = 'BulletRigidBody_computeAngularImpulseDenominator';
+
+function BulletRigidBody.updateDeactivation!(Scalar timeStep) = 'BulletRigidBody_updateDeactivation';
+
+function Boolean BulletRigidBody.wantsSleeping() = 'BulletRigidBody_wantsSleeping';
+
+
+
+function BulletBroadphaseProxy BulletRigidBody.getBroadphaseProxy(){
+	return this.__broadphaseProxy;
+}
+function BulletRigidBody.setNewBroadphaseProxy!(BulletBroadphaseProxy broadphaseProxy){
+	this.__broadphaseProxy = broadphaseProxy;
+	this.__setNewBroadphaseProxy(broadphaseProxy);
+}
+function BulletRigidBody.__setNewBroadphaseProxy!(BulletBroadphaseProxy broadphaseProxy) = 'BulletRigidBody_setNewBroadphaseProxy';
+
+// //BulletMotionState allows to automatic synchronize the world transform for active objects
+function BulletMotionState	BulletRigidBody.getMotionState(){ return this.__motionState; }
+function BulletRigidBody.setMotionState!(BulletMotionState motionState){
+	this.__setMotionState(motionState);
+	this.__motionState = motionState;
+}
+function BulletRigidBody.__setMotionState!(BulletMotionState motionState) = 'BulletRigidBody_setMotionState';
+
+//for experimental overriding of friction/contact solver func
+
+function BulletRigidBody.setAngularFactor!(Vec3 angFac) = 'BulletRigidBody_setAngularFactor';
+
+function BulletRigidBody.setAngularFactor!(Scalar angFac) = 'BulletRigidBody_setAngularFactorScalar';
+function Vec3 BulletRigidBody.getAngularFactor() = 'BulletRigidBody_getAngularFactor';
+
+//is this rigidbody added to a BulletCollisionWorld/BulletDynamicsWorld/BulletBroadphase?
+function Boolean BulletRigidBody.isInWorld() = 'BulletRigidBody_isInWorld';
+
+function Boolean BulletRigidBody.checkCollideWithOverride(BulletICollisionObject co) = 'BulletRigidBody_checkCollideWithOverride';
+
+// function BulletRigidBody.addConstraintRef!(BulletTypedConstraint c){
+// 	this.__addConstraintRef(c);
+// 	this.__constraints.push(c);
+// }
+// function BulletRigidBody.__addConstraintRef!(BulletTypedConstraint c) = 'BulletRigidBody_addConstraintRef';
+// function BulletRigidBody.removeConstraintRef!(BulletTypedConstraint c){
+// 	this.__removeConstraintRef(c);
+// 	for(Integer i=0; i<this.__constraints.size; i++){
+// 		if(this.__constraints[i] == c){
+// 			for(Integer j=i; j<this.__constraints.size-1; j++){
+// 				this.__constraints[j] = this.__constraints[j+1];
+// 			}
+// 			this.__constraints.resize(this.__constraints.size-1);
+// 			break;
+// 		}
+// 	}
+// }
+// function BulletRigidBody.__removeConstraintRef!(BulletTypedConstraint c) = 'BulletRigidBody_removeConstraintRef';
+
+// function BulletTypedConstraint BulletRigidBody.getConstraintRef(Integer index){
+// 	return this.__constraints[index];
+// }
+
+function Integer BulletRigidBody.getNumConstraintRefs() = 'BulletRigidBody_getNumConstraintRefs';
+
+function BulletRigidBody.setFlags!(Integer flags) = 'BulletRigidBody_setFlags';
+
+function Integer BulletRigidBody.getFlags() = 'BulletRigidBody_getFlags';
+
+function Vec3 BulletRigidBody.getDeltaLinearVelocity() = 'BulletRigidBody_getDeltaLinearVelocity';
+
+function Vec3 BulletRigidBody.getDeltaAngularVelocity() = 'BulletRigidBody_getDeltaAngularVelocity';
+
+function Vec3 BulletRigidBody.getPushVelocity() = 'BulletRigidBody_getPushVelocity';
+
+function Vec3 BulletRigidBody.getTurnVelocity() = 'BulletRigidBody_getTurnVelocity';
+
+// ///////////////////////////////////////////////
+
+// function Integer	BulletRigidBody.calculateSerializeBufferSize()	const;
+
+// ///fills the dataBuffer and returns the struct name (and 0 on failure)
+// function String	BulletRigidBody.serialize(void* dataBuffer,  class BulletSerializer* serializer) const;
+
+// function BulletRigidBody.serializeSingleObject!(class BulletSerializer* serializer) const;
+
+
+
+//////////////////////////////////////////////////
+// Implimentation of BulletICollisionObject
+
+function Boolean BulletRigidBody.mergesSimulationIslands() = 'BulletRigidBody_mergesSimulationIslands';
+
+function Vec3 BulletRigidBody.getAnisotropicFriction() = 'BulletRigidBody_getAnisotropicFriction';
+function BulletRigidBody.setAnisotropicFriction!(Vec3 anisotropicFriction) = 'BulletRigidBody_setAnisotropicFriction';
+function Boolean	BulletRigidBody.hasAnisotropicFriction() = 'BulletRigidBody_hasAnisotropicFriction';
+
+	///the constraint solver can discard solving contacts, if the distance is above this threshold. 0 by default.
+	///Note that using contacts with positive distance can improve stability. It increases, however, the chance of colliding with degerate contacts, such as 'interior' triangle edges
+function BulletRigidBody.setContactProcessingThreshold!( Scalar contactProcessingThreshold) = 'BulletRigidBody_setContactProcessingThreshold';
+function Scalar	BulletRigidBody.getContactProcessingThreshold() = 'BulletRigidBody_getContactProcessingThreshold';
+
+function Boolean BulletRigidBody.isStaticObject() = 'BulletRigidBody_isStaticObject';
+
+function Boolean BulletRigidBody.isKinematicObject() = 'BulletRigidBody_isKinematicObject';
+
+function Boolean BulletRigidBody.isStaticOrKinematicObject() = 'BulletRigidBody_isStaticOrKinematicObject';
+
+function Boolean BulletRigidBody.hasContactResponse() = 'BulletRigidBody_hasContactResponse';
+	
+
+function BulletRigidBody.setCollisionShape!(BulletCollisionShape collisionShape){
+	this.__collisionShape = collisionShape;
+	this.__setCollisionShape(collisionShape);
+}
+function BulletRigidBody.__setCollisionShape!(BulletCollisionShape collisionShape) = 'BulletRigidBody_setCollisionShape';
+
+function BulletCollisionShape BulletRigidBody.getCollisionShape(){
+	return this.__collisionShape;
+}
+
+
+
+function Integer BulletRigidBody.getActivationState() = 'BulletRigidBody_getActivationState';
+
+function BulletRigidBody.setActivationState!(Integer newState) = 'BulletRigidBody_setActivationState';
+
+function BulletRigidBody.setDeactivationTime!(Scalar time) = 'BulletRigidBody_setDeactivationTime';
+function Scalar BulletRigidBody.getDeactivationTime() = 'BulletRigidBody_getDeactivationTime';
+
+
+function BulletRigidBody.forceActivationState!(Integer newState) = 'BulletRigidBody_forceActivationState';
+
+function BulletRigidBody.activate!(){
+	this.activate(false);
+}
+function BulletRigidBody.activate!(Boolean forceActivation) = 'BulletRigidBody_activate';
+
+function Boolean BulletRigidBody.isActive() = 'BulletRigidBody_isActive';
+
+
+
+function BulletRigidBody.setRestitution!(Scalar rest) = 'BulletRigidBody_setRestitution';
+function Scalar BulletRigidBody.getRestitution() = 'BulletRigidBody_getRestitution';
+function BulletRigidBody.setFriction!(Scalar frict) = 'BulletRigidBody_setFriction';
+function Scalar BulletRigidBody.getFriction() = 'BulletRigidBody_getFriction';
+
+
+function Xfo BulletRigidBody.getWorldTransform() = 'BulletRigidBody_getWorldTransform';
+
+function BulletRigidBody.setWorldTransform!(Xfo worldTrans) = 'BulletRigidBody_setWorldTransform';
+
+
+// function BulletRigidBody.setBroadphaseHandle!(BulletBroadphaseProxy handle){
+// 	this.handle = handle;
+// 	this.setNewBroadphaseProxy(handle);
+// };
+// function BulletRigidBody.__setBroadphaseHandle!(BulletBroadphaseProxy handle) = 'BulletRigidBody_setBroadphaseHandle';
+
+function BulletBroadphaseProxy BulletRigidBody.getBroadphaseHandle() = 'BulletRigidBody_getBroadphaseHandle';
+
+
+function Xfo BulletRigidBody.getInterpolationWorldTransform() = 'BulletRigidBody_getInterpolationWorldTransform';
+
+function BulletRigidBody.setInterpolationWorldTransform!(Xfo trans) = 'BulletRigidBody_setInterpolationWorldTransform';
+
+function BulletRigidBody.setInterpolationLinearVelocity!(Vec3 linvel) = 'BulletRigidBody_setInterpolationLinearVelocity';
+
+function BulletRigidBody.setInterpolationAngularVelocity!(Vec3 angvel) = 'BulletRigidBody_setInterpolationAngularVelocity';
+
+function Vec3 BulletRigidBody.getInterpolationLinearVelocity() = 'BulletRigidBody_getInterpolationLinearVelocity';
+
+function Vec3 BulletRigidBody.getInterpolationAngularVelocity() = 'BulletRigidBody_getInterpolationAngularVelocity';
+
+
+
+function Integer BulletRigidBody.getIslandTag() = 'BulletRigidBody_getIslandTag';
+
+function BulletRigidBody.setIslandTag!(Integer tag) = 'BulletRigidBody_setIslandTag';
+
+function Integer BulletRigidBody.getCompanionId() = 'BulletRigidBody_getCompanionId';
+
+function BulletRigidBody.setCompanionId!(Integer id) = 'BulletRigidBody_setCompanionId';
+
+function Scalar			BulletRigidBody.getHitFraction() = 'BulletRigidBody_getHitFraction';
+
+function BulletRigidBody.setHitFraction!(Scalar hitFraction) = 'BulletRigidBody_setHitFraction';
+
+function Integer	BulletRigidBody.getCollisionFlags() = 'BulletRigidBody_getCollisionFlags';
+
+function BulletRigidBody.setCollisionFlags!(Integer flags) = 'BulletRigidBody_setCollisionFlags';
+	
+///Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
+function Scalar			BulletRigidBody.getCcdSweptSphereRadius() = 'BulletRigidBody_getCcdSweptSphereRadius';
+
+///Swept sphere radius (0.0 by default), see btConvexConvexAlgorithm::
+function BulletRigidBody.setCcdSweptSphereRadius!(Scalar radius) = 'BulletRigidBody_setCcdSweptSphereRadius';
+
+function Scalar 	BulletRigidBody.getCcdMotionThreshold() = 'BulletRigidBody_getCcdMotionThreshold';
+
+function Scalar 	BulletRigidBody.getCcdSquareMotionThreshold() = 'BulletRigidBody_getCcdSquareMotionThreshold';
+
+/// Don't do continuous collision detection if the motion (in one step) is less then m_ccdMotionThreshold
+function BulletRigidBody.setCcdMotionThreshold!(Scalar ccdMotionThreshold) = 'BulletRigidBody_setCcdMotionThreshold';
+
+///users can point to their objects, userPointer is not used by Bullet
+function Object	BulletRigidBody.getUserPointer(){
+	return this.__userPointer;
+}
+	
+///users can point to their objects, userPointer is not used by Bullet
+function BulletRigidBody.setUserPointer!(Object userPointer){
+	this.__userPointer = userPointer;
+}
+
+function Boolean BulletRigidBody.checkCollideWith(BulletICollisionObject co) = 'BulletRigidBody_checkCollideWith';

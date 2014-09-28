@@ -1,0 +1,90 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`oglmeshshapeadaptor` implements the :ref:`inlineshapeadaptor` interface. It is used to draw a :ref:`inlinemeshshape` within an OpenGL viewport.
+*/
+
+object OGLMeshShapeAdaptor : InlineShapeAdaptor {
+};
+
+// default constructor
+function OGLMeshShapeAdaptor() {}
+
+// returns the types this adaptor is capable of drawing
+function String[] OGLMeshShapeAdaptor.getShapeTypes() {
+  String result[];
+  result.push('InlineMeshShape');
+  return result;
+}
+
+// draws the mesh to the screen. this is used by the 
+// InlineInstance, and should not be called manually.
+function Boolean OGLMeshShapeAdaptor._draw!(io DrawContext context, io Ref<InlineShape> shape, Index index, Size count) {
+
+  // access the mesh shape
+  InlineMeshShape meshShape = shape;
+  PolygonMesh mesh = meshShape.getMesh();
+  OGLBufferDictionary buffers = meshShape.getMetaData('buffers');
+  if(buffers == null) {
+    buffers = OGLBufferDictionary();
+    meshShape.setMetaData('buffers', buffers);
+  }
+
+  if(mesh.pointCount() == 0)
+    return true;
+
+  if(index == 0) {
+    InlineShader shader = context.getObject('currentShader');
+    _OGLShape_updateGeometryAttributeBuffers(context, buffers, mesh.getAttributes());
+
+    if(buffers.getVersion('topology') != mesh.version) {
+      OGLBuffer buffer = buffers.get('topology');
+      if(buffer == null) {
+        buffer = OGLBuffer();
+        buffer.bufferType = GL_ARRAY_BUFFER;
+        buffer.bufferUsage = GL_STATIC_DRAW;
+        buffers.set('topology', buffer);
+      }
+      if( buffer.bufferID )
+        buffer.bufferUsage = GL_DYNAMIC_DRAW;//Loaded at least 2 times: lazily upgrade to "dynamic"
+
+      UInt32 triangleIndices[];
+      triangleIndices = mesh.generateAttributesTriangleList();
+
+      Boolean useUShorts = mesh.getAttributes().size() < 65536;
+      buffer.bufferElementComponentType = useUShorts ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
+
+      if( useUShorts ) {
+        UInt16 triangleIndicesUShort[];
+        Size num = triangleIndices.size();
+        triangleIndicesUShort.resize( num );
+        for( Size i = 0; i < num; ++i )
+          triangleIndicesUShort[i] = UInt16( triangleIndices[i] );
+
+        buffer.genBuffer(triangleIndicesUShort.data(), triangleIndicesUShort.dataSize(), triangleIndicesUShort.size());
+      } else
+        buffer.genBuffer(triangleIndices.data(), triangleIndices.dataSize(), triangleIndices.size());
+
+      buffers.setVersion('topology', mesh.version);
+    }
+  }
+
+  OGLBuffer buffer = buffers.get('topology');
+  if(buffer == null)
+    return false;
+
+  if(index == 0)
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.bufferID);
+
+  Data NULL;
+  glDrawElements(GL_TRIANGLES, buffer.elementCount, buffer.bufferElementComponentType, NULL);
+
+  if(index == count - 1)
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+  return true;
+}

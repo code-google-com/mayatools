@@ -1,0 +1,224 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+//Currently, this only allows to switch between no acceleration, Octree and SparseGrid.
+//Could be made more generic by allowing user structures with interfaces if required.
+struct SpatialAccelerationChooser {
+  Octree octree;
+  SparseGrid sparseGrid;
+  Ref<StatisticSource> statsParent;
+  Size objectCount;
+};
+
+function SpatialAccelerationChooser( Ref<StatisticSource> statsParent ) {
+  this.statsParent = statsParent;
+}
+
+inline Ref<GenericValue> SpatialAccelerationChooser._getOptionAndValidate( GenericValueContainer options, String name, Type expectedType ) {
+  if( !options ) {
+    Ref<GenericValue> nullValue = null;
+    return nullValue;
+  }
+  Ref<GenericValue> value = options.get(name);
+  if( Boolean(value) && value.type() != expectedType )
+    throw( "SpatialAccelerationChooser.synchronizeOptions: '"+name+"' must be a "+expectedType );
+  return value;
+}
+
+//Synchronizes the spatial acceleration choice with the options. If it returns 'true',
+//the acceleration data needs to be reset (setObjectCount, updateObjectVolume...).
+function Boolean SpatialAccelerationChooser.synchronizeOptions!( GenericValueContainer options ) {
+  Boolean changed;
+
+  String methodString;
+  Ref<GenericStringValue> methodValue = this._getOptionAndValidate( options, _PrepareForSpatialQueriesOption_method, GenericStringValue );
+  if( methodValue )
+    methodString = methodValue.get();
+  else if(this.sparseGrid)
+    methodString = _PrepareForSpatialQueriesOption_sparseGrid;//keep what we have
+  else
+    methodString = _PrepareForSpatialQueriesOption_octree;//default
+
+  if( !methodString ) {
+    //No acceleration
+    if( Boolean(this.octree) || Boolean(this.sparseGrid) ) {
+      this.sparseGrid = null;
+      this.octree = null;
+      changed = true;
+    }
+  } else if( methodString == _PrepareForSpatialQueriesOption_octree ) {
+
+    UInt8 maxDepth = _Oct_MAX_DEPTH;
+    Ref<GenericUInt8Value> depthValue = this._getOptionAndValidate( options, _PrepareForSpatialQueriesOption_octreeMaxDepth, GenericUInt8Value );
+    if( depthValue ) {
+      maxDepth = depthValue.get();
+      if( maxDepth > _Oct_MAX_DEPTH )
+        maxDepth = _Oct_MAX_DEPTH;
+    }
+    if( Boolean( this.octree ) && maxDepth != this.octree.getMaxDepth() )
+      this.octree = null;
+
+    this.sparseGrid = null;
+    if( !this.octree ) {
+      this.octree = Octree( maxDepth, false, 1.0e-5 );
+      if( this.statsParent )
+        AddStatisticsChild( this.statsParent, this.octree.autoStats );
+      changed = true;
+    }
+  } else if( methodString == _PrepareForSpatialQueriesOption_sparseGrid ) {
+    this.octree = null;
+    if( !this.sparseGrid ) {
+      this.sparseGrid = SparseGrid();
+      if( this.statsParent )
+        AddStatisticsChild( this.statsParent, this.sparseGrid.autoStats );
+      changed = true;
+    }
+    Boolean wasValid = this.sparseGrid.isValid();
+
+    Ref<GenericFloat32Value> cellSize = this._getOptionAndValidate( options, _PrepareForSpatialQueriesOption_sparseGridCellSize, GenericFloat32Value );
+    if( cellSize )
+      this.sparseGrid.setExplicitCellSize( cellSize.get() );
+
+    Ref<GenericFloat32Value> autoCellMult = this._getOptionAndValidate( options, _PrepareForSpatialQueriesOption_sparseGridAutoCellSizeMultiplier, GenericFloat32Value );
+    if( autoCellMult )
+      this.sparseGrid.setAutoCellSize( autoCellMult.get() );
+
+    if( wasValid && !this.sparseGrid.isValid() )
+      changed = true;
+  }
+  return changed;
+}
+
+function SpatialAccelerationChooser.setObjectCount!( Size count, Boolean updateAcceleration ) {
+  this.objectCount = count;
+  if( updateAcceleration ) {
+    if( this.octree )
+      this.octree.incrementalUpdateObjectCount(count);
+    else if( this.sparseGrid )
+      this.sparseGrid.incrementalUpdateObjectCount(count);
+  }
+}
+
+function Boolean SpatialAccelerationChooser.hasAccelerationStructure() {
+  return Boolean(this.octree) || Boolean(this.sparseGrid);
+}
+
+inline SpatialAccelerationChooser.updateObjectVolume!( UInt32 index, Vec3 min, Vec3 max ) {
+  if( this.octree )
+    this.octree.updateObjectVolume( index, min, max );
+  else if( this.sparseGrid )
+    this.sparseGrid.updateBBoxObject( index, min, max );
+}
+
+inline SpatialAccelerationChooser.updateObjectVolume!( UInt32 index, Vec3 center, Scalar squaredRadius ) {
+  if( this.octree )
+    this.octree.updateObjectVolume( index, center, squaredRadius );
+  else if( this.sparseGrid )
+    this.sparseGrid.updateBSphereObject( index, center, squaredRadius );
+}
+
+inline SpatialAccelerationChooser.removeObject!( UInt32 index ) {
+  if( this.octree )
+    this.octree.removeObject( index );
+  else if( this.sparseGrid )
+    this.sparseGrid.removeObject( index );
+}
+
+inline SpatialAccelerationChooser.prepare!( Size approximateNumberOfQueries ) {
+  if( this.octree )
+    this.octree.prepare( approximateNumberOfQueries );
+  else if( this.sparseGrid )
+    this.sparseGrid.updateGrid();
+}
+
+inline SpatialAccelerationChooser.raycast( Boolean structureIsUptodate, Ray ray, Boolean doubleSided, Scalar coneThreshold, Scalar maxDistance, io _StatialQueryData data, io Ref<RaycastResult> result ) {
+  if( structureIsUptodate && coneThreshold == 0.0 ) {
+    if( this.octree ) {
+      this.octree.raycast( ray, doubleSided, maxDistance, data, result );
+      return;
+    } else if( this.sparseGrid ) {
+      this.sparseGrid.raycast( ray, doubleSided, maxDistance, data, result );
+      return;
+    }
+  }
+  _Raycast( this.objectCount, ray, doubleSided, coneThreshold, maxDistance, result );
+}
+
+inline SpatialAccelerationChooser.getClosest( Boolean structureIsUptodate, Vec3 position, Vec3 scaling, Scalar maxUnscaledDistance, io _StatialQueryData data, io Ref<ClosestResult> result ) {
+  if( structureIsUptodate ) {
+    if( this.octree ) {
+      this.octree.getClosest( position, scaling, maxUnscaledDistance, data, result );
+      return;
+    } else if( this.sparseGrid ) {
+      this.sparseGrid.getClosest( position, scaling, maxUnscaledDistance, data, result );
+      return;
+    }
+  }
+  _GetClosest( this.objectCount, position, scaling, maxUnscaledDistance, result );
+}
+
+function _GetElementsInBBox( Ref<Geometry> geometry, Vec3 min, Vec3 max, io _StatialQueryData resultData ) {
+  //Keep it simple for now (no multithreading)
+  resultData._cleanup(false);
+  Size elementCount = geometry.elementCount();
+  for( Size i = 0; i < elementCount; ++i ) {
+    LocalBoundingVolume bVol = geometry.getElementBoundingVolume(i);
+    if( bVol.type == LocalBoundingVolume_bBox ) {
+      if( bBoxIntersectsBBox( bVol.pt1, bVol.pt2, min, max ) )
+        resultData.visitedItems.add(i);
+    } else if( bVol.type == LocalBoundingVolume_bSphere ) {
+      if( bBoxIntersectsBSphere( min, max, bVol.bSphereGetCenter(), bVol.bSphereGetSquaredRadius() ) )
+        resultData.visitedItems.add(i);
+    }
+  }
+}
+
+//See SpatialQuery interface. Elements are segment indices.
+//Only segments' bounding box is considered (conservative approximation).
+function Size SpatialAccelerationChooser.getElementsInBBox!( Ref<Geometry> geometry, Boolean structureIsUptodate, Vec3 min, Vec3 max, io _StatialQueryData data ) {
+  if( structureIsUptodate ) {
+    if( this.octree ) {
+      this.octree.getObjectsInBBox( min, max, data );
+      return data.visitedItems.size();
+    } else if( this.sparseGrid ) {
+      this.sparseGrid.bBoxQuery( min, max, data.visitedItems );
+      return data.visitedItems.size();
+    }
+  }
+  _GetElementsInBBox( geometry, min, max, data );
+  return data.visitedItems.size();
+}
+
+function _GetElementsInBSphere( Ref<Geometry> geometry, Vec3 center, Scalar radius, io _StatialQueryData resultData ) {
+  //Keep it simple for now (no multithreading)
+  resultData._cleanup(false);
+  Size elementCount = geometry.elementCount();
+  Scalar sqRadius = radius*radius;
+  for( Size i = 0; i < elementCount; ++i ) {
+    LocalBoundingVolume bVol = geometry.getElementBoundingVolume(i);
+    if( bVol.type == LocalBoundingVolume_bBox ) {
+      if( bBoxIntersectsBSphere( bVol.pt1, bVol.pt2, center, sqRadius ) )
+        resultData.visitedItems.add(i);
+    } else if( bVol.type == LocalBoundingVolume_bSphere ) {
+      if( bVol.bSphereIntersectsBSphere( center, radius ) )
+        resultData.visitedItems.add(i);
+    }
+  }
+}
+
+//See SpatialQuery interface. Elements are segment indices.
+//Only segments' bounding box is considered (conservative approximation).
+function Size SpatialAccelerationChooser.getElementsInBSphere!( Ref<Geometry> geometry, Boolean structureIsUptodate, Vec3 center, Scalar radius, io _StatialQueryData data ) {
+  if( structureIsUptodate ) {
+    if( this.octree ) {
+      this.octree.getObjectsInBSphere( center, radius, data );
+      return data.visitedItems.size();
+    } else if( this.sparseGrid ) {
+      this.sparseGrid.bSphereQuery( center, radius, data.visitedItems );
+      return data.visitedItems.size();
+    }
+  }
+  _GetElementsInBSphere( geometry, center, radius, data );
+  return data.visitedItems.size();
+}

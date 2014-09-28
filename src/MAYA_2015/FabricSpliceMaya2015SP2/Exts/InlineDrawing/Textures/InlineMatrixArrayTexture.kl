@@ -1,0 +1,77 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlinematrixarraytexture` provides a facility to upload large amounts of matrices as a texture. These can then be used in a skinning shader, for example, to deform crowds.
+
+Example
+---------
+
+.. code-block:: kl
+
+    // register the texture in the drawing
+    InlineMatrixArrayTexture texture = draw.registerTexture(InlineMatrixArrayTexture('crowdMatrices'));
+
+    // update the texture later with new poses
+    Mat44 poses[];
+    poses.resize(1024);
+
+    // call some code to fill the poses
+
+    texture.update(poses);
+*/
+
+object InlineMatrixArrayTexture : InlineTexture {
+  String _name;
+  Mat44 _matrices[];
+  Integer _version;
+  Object _metaData[String];
+};
+
+// returns the name of this texture
+function String InlineMatrixArrayTexture.getName() {
+  return this._name;
+}
+
+// returns the version of the texture
+function Integer InlineMatrixArrayTexture.getVersion() {
+  return this._version;
+}
+
+// standard constructor
+function InlineMatrixArrayTexture() {
+  this._version = 1;
+}
+
+// standard constructor with a name only
+function InlineMatrixArrayTexture(String name) {
+  this._name = name;
+  this._version = 1;
+}
+
+// standard constructor with a name and matrix data
+function InlineMatrixArrayTexture(String name, Mat44 matrices[]) {
+  this._name = name;
+  this._version = 1;
+  this.update(matrices);
+}
+
+// updates the texture with the data provides in the array
+function InlineMatrixArrayTexture.update!(Mat44 matrices[]) {
+  this._matrices = matrices;
+  this._version++;
+}
+
+// stores an arbitrary meta data object on the Shape
+function InlineMatrixArrayTexture.setMetaData!(String key, Object metaData){
+  this._metaData[key] = metaData;
+}
+
+// retrieves meta data from the Shape
+function Object InlineMatrixArrayTexture.getMetaData(String key){
+  Object nullObj = null;
+  return this._metaData.get(key, nullObj);
+}

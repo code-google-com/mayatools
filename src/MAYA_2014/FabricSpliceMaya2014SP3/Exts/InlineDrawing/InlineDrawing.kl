@@ -1,0 +1,147 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlinedrawing` is used to perform direct rendering to the viewport. This KL interface is implemented by the :ref:`oglinlinedrawing` type for specialized OpenGL direct rendering. The :ref:`inlinedrawing` manages a minimalistic scene using the :ref:`inlinetransform` interface, as well as :ref:`inlineshader` objects and :ref:`inlineshape` objects. For a code example please see the :ref:`oglinlinedrawing`.
+    
+*/
+
+interface InlineDrawing {
+  // returns the name of the InlineDrawing.
+  String getName();
+
+  // clears the root transform, removes all materials
+  // and instances. shaders and shapes stay intact.
+  reset!();
+
+  // returns the root transform of this drawing.
+  InlineTransform getRoot();
+
+  //////////////////////////////////////////
+  // Shaders
+
+  // returns the number of shaders in this drawing.
+  Size getShaderCount();
+
+  // returns true if a shader with a given name has been registered.
+  Boolean hasShader(String name);
+
+  // registers a shader into this drawing.
+  InlineShader registerShader!(InlineShader shader);
+
+  // returns the index of a shader
+  Integer getShaderIndex(String name);
+
+  // returns a shader with a given index
+  InlineShader getShader(Index index);
+
+  // returns a shader with a given name, or null
+  InlineShader getShader(String name);
+
+
+  //////////////////////////////////////////
+  // Transforms
+
+  registerTransformAdaptor!(InlineTransformAdaptor adaptor);
+
+  // returns the index of a transform adaptor
+  Integer getTransformAdaptorIndex(String transformType);
+
+  // returns the transform adaptor of a given index
+  InlineTransformAdaptor getTransformAdaptor(Index index);
+
+  // returns the transform adaptor for a given type
+  InlineTransformAdaptor getTransformAdaptor(String transformType);
+
+  //////////////////////////////////////////
+  // Shapes
+
+  // registers a new adaptor for shape drawing
+  registerShapeAdaptor!(InlineShapeAdaptor adaptor);
+
+  // returns the index of a shape adaptor
+  Integer getShapeAdaptorIndex(String shapeType);
+
+  // returns the shape adaptor of a given index
+  InlineShapeAdaptor getShapeAdaptor(Index index);
+
+  // returns the shape adaptor for a given type
+  InlineShapeAdaptor getShapeAdaptor(String shapeType);
+  
+  // returns true if a given shape has been registered
+  Boolean hasShape(String name);
+  
+  // registers a new shape into this drawing.
+  // the shape should replace an existing shape if name
+  // unique is relevant.
+  InlineShape registerShape!(InlineShape shape);
+  
+  // returns the number of shapes registered
+  Size getShapeCount();
+  
+  // returns the index of a shape
+  Integer getShapeIndex(String name);
+  
+  // returns a shape with a given index, or null
+  InlineShape getShape(Index index);
+  
+  // returns a shape with a given name, or null
+  InlineShape getShape(String name);
+
+
+  //////////////////////////////////////////
+  // Textures
+  
+  // registers a new adaptor for texture drawing
+  registerTextureAdaptor!(InlineTextureAdaptor adaptor);
+  
+  // returns the index of a texture adaptor
+  Integer getTextureAdaptorIndex(String textureType);
+  
+  // returns the texture adaptor of a given index
+  InlineTextureAdaptor getTextureAdaptor(Index index);
+  
+  // returns the texture adaptor for a given type
+  InlineTextureAdaptor getTextureAdaptor(String textureType);
+  
+  // returns true if a given texture has been registered
+  Boolean hasTexture(String name);
+  
+  // registers a new texture into this drawing.
+  // the shape should replace an existing texture if name
+  // unique is relevant.
+  InlineTexture registerTexture!(InlineTexture texture);
+  
+  // returns the number of textures registered
+  Size getTextureCount();
+  
+  // returns the index of a shape
+  Integer getTextureIndex(String name);
+  
+  // returns a texture with a given index, or null
+  InlineTexture getTexture(Index index);
+  
+  // returns a texture with a given name, or null
+  InlineTexture getTexture(String name);
+  
+  //////////////////////////////////////////
+  // Drawing
+  
+  // draw the content of the drawing. 
+  // this is called automatically by the splice
+  // integrations, and should only happen when a given
+  // context is active, for example with a valid OGLContext.
+  Boolean _draw!(io DrawContext context);
+};
+
+
+// Get the InlineDrawing singleton.
+// this method can be used by tools that are drawing system agnostic. 
+function OGLInlineDrawing InlineDrawing_GetInstance() {
+  // check if we can get the singleton
+  Object drawing = Singleton_get('InlineDrawing');
+  return drawing;
+}

@@ -1,0 +1,148 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+The :ref:`rgb` type represents a byte pixel color, storing the components ordered as red, green and blue.
+
+Example
+---------
+
+.. code-block:: js
+
+    RGB red(255, 0, 0);
+*/
+
+struct RGB
+{
+  Byte r;
+  Byte g;
+  Byte b;
+};
+
+// default constructor from component wise bytes
+inline RGB(Byte r, Byte g, Byte b) {
+  this.r = r;
+  this.g = g;
+  this.b = b;
+}
+
+// constructor from component wise integers
+inline RGB(Integer r, Integer g, Integer b) {
+  this.r = Byte(r);
+  this.g = Byte(g);
+  this.b = Byte(b);
+}
+
+// returns true if this RGB is the same as another one
+inline Boolean RGB.equal(RGB other) {
+  return this.r == other.r && this.g == other.g && this.b == other.b;
+}
+
+// equal operator
+inline Boolean == (RGB a, RGB b) {
+  return a.r == b.r && a.g == b.g && a.b == b.b;
+}
+
+// not equal operator
+inline Boolean != (RGB a, RGB b) {
+  return a.r != b.r || a.g != b.g || a.b != b.b;
+}
+
+// adds two RGB colors
+inline RGB + (RGB a, RGB b) {
+  Integer rval = Integer(a.r) + Integer(b.r);
+  Integer gval = Integer(a.g) + Integer(b.g);
+  Integer bval = Integer(a.b) + Integer(b.b);
+  return RGB(rval, gval, bval);
+}
+
+// adds another RGB color to this one
+inline RGB. += (RGB other) {
+  this = this + other;
+}
+
+// subtracts two RGB colors
+inline RGB - (RGB a, RGB b) {
+  Integer rval = Integer(a.r) - Integer(b.r);
+  Integer gval = Integer(a.g) - Integer(b.g);
+  Integer bval = Integer(a.b) - Integer(b.b);
+  if(rval < 0) rval = 0;
+  if(gval < 0) gval = 0;
+  if(bval < 0) bval = 0;
+  return RGB(rval, gval, bval);
+}
+
+// subtracts another RGB color from this one
+inline RGB. -= (RGB other) {
+  this = this - other;
+}
+
+// multiplies a scalar with a RGB color
+inline RGB * (Scalar a, RGB b) {
+  return RGB(
+    Integer(Scalar(Integer(b.r)) * a),
+    Integer(Scalar(Integer(b.g)) * a),
+    Integer(Scalar(Integer(b.b)) * a)
+    );
+}
+
+// multiplies a RGB color with a scalar
+inline RGB * (RGB a, Scalar b) {
+  // Note: casting Byte -> Scalar generated incorrect results.
+  return RGB(
+    Integer(Scalar(Integer(a.r)) * b),
+    Integer(Scalar(Integer(a.g)) * b),
+    Integer(Scalar(Integer(a.b)) * b)
+    );
+}
+
+// multiplies two RGB colors
+inline RGB * (RGB a, RGB b) {
+  return RGB(
+    Integer(Scalar(Integer(a.r)) * Scalar(Integer(b.r))),
+    Integer(Scalar(Integer(a.g)) * Scalar(Integer(b.g))),
+    Integer(Scalar(Integer(a.b)) * Scalar(Integer(b.b)))
+    );
+}
+
+// multiplies a scalar with this RGB color
+inline RGB. *= (Scalar other) {
+  this = this * other;
+}
+
+// multiplies a this RGB color with another one
+inline RGB. *= (RGB other) {
+  this = this * other;
+}
+
+// overload method for the add operator
+inline RGB RGB.add(RGB other) {
+  return this + other;
+}
+
+// overload method for the subtract operator
+inline RGB RGB.subtract(RGB other) {
+  return this - other;
+}
+
+// overload method for the multiply operator
+inline RGB RGB.multiply(RGB other) {
+  return this * other;
+}
+
+// returns the product of this RGB color and a scalar
+inline RGB RGB.multiplyScalar(Scalar other) {
+  return this * other;
+}
+
+// interpolates two RGB colors given a scalar blend value (0.0 to 1.0)
+inline RGB RGB.linearInterpolate(in RGB other, in Scalar t) {
+  // Byte values cannot be negative, so here we have inlined the sbutraction inline so that we can interpollate down towards zero
+  return RGB( Integer(this.r) + Integer((Scalar(Integer(other.r) - Integer(this.r)) * t)),
+              Integer(this.g) + Integer((Scalar(Integer(other.g) - Integer(this.g)) * t)),
+              Integer(this.b) + Integer((Scalar(Integer(other.b) - Integer(this.b)) * t)));
+}
+
+
+
+

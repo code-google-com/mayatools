@@ -1,0 +1,73 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+function Lines._getPositionsAsExternalArray(io Float32 values<>) {
+  if(this.pointCount() * 3 > values.size())
+    return;
+  GeometryAttributes attributes = this.getAttributes();
+  Vec3Attribute positions = attributes.getAttribute('positions', Vec3Attribute);
+  if(positions == null)
+    return;
+  Size offset = 0;
+  for(Size i=0;i<this.pointCount();i++) {
+    values[offset++] = positions.values[i].x;
+    values[offset++] = positions.values[i].y;
+    values[offset++] = positions.values[i].z;
+  }
+}
+
+function Lines._getPositionsAsExternalArray_d(io Float64 values<>) {
+  if(this.pointCount() * 3 > values.size())
+    return;
+  GeometryAttributes attributes = this.getAttributes();
+  Vec3Attribute positions = attributes.getAttribute('positions', Vec3Attribute);
+  if(positions == null)
+    return;
+  Size offset = 0;
+  for(Size i=0;i<this.pointCount();i++) {
+    values[offset++] = positions.values[i].x;
+    values[offset++] = positions.values[i].y;
+    values[offset++] = positions.values[i].z;
+  }
+}
+
+function Lines._setPositionsFromExternalArray!(Float32 values<>) {
+  GeometryAttributes attributes = this.getAttributes();
+  attributes.resize(values.size()/3);
+  Vec3Attribute positions = attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Size offset = 0;
+  for(Size i=0;i<attributes.size();i++) {
+    positions.values[i].x = values[offset++];
+    positions.values[i].y = values[offset++];
+    positions.values[i].z = values[offset++];
+  }
+  positions.incrementVersion();
+}
+
+function Lines._setPositionsFromExternalArray_d!(Float64 values<>) {
+  GeometryAttributes attributes = this.getAttributes();
+  attributes.resize(values.size()/3);
+  Vec3Attribute positions = attributes.getOrCreateAttribute('positions', Vec3Attribute);
+  Size offset = 0;
+  for(Size i=0;i<attributes.size();i++) {
+    positions.values[i].x = Float32(values[offset++]);
+    positions.values[i].y = Float32(values[offset++]);
+    positions.values[i].z = Float32(values[offset++]);
+  }
+  positions.incrementVersion();
+}
+
+function Lines._getTopologyAsExternalArray(io UInt32 values<>) {
+  if(values.size() < this.indices.size())
+    return;
+  for(Size i=0;i<this.indices.size();i++)
+    values[i] = this.indices[i];
+}
+
+function Lines._setTopologyFromExternalArray!(UInt32 values<>) {
+  this.indices.resize(values.size());
+  for(Size i=0;i<this.indices.size();i++)
+    this.indices[i] = values[i];
+  this.incrementVersion();
+}

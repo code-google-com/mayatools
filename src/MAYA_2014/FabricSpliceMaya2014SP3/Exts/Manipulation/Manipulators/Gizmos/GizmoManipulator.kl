@@ -1,0 +1,145 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`GizmoManipulator` is used to propagate events to gizmos in the scene. A "Gizmo" is any InlineInstance that has a 'GizmoHandler' attached as meta data. 
+
+When the mouse is clicked down, the gizmos in the scene are raycast, and the hit gizmo becomes the active gizmo for the duration of the mouse action. 
+All mouse move events are sent to the gizmo for processing. On mouse up, the gizmo is released and is no longer the active gizmo. 
+How a gizmos handler reacts to mouse events is completely up to the implementation of the gizmo handler. 
+
+*/
+
+
+require Singletons;
+require InlineDrawing;
+
+
+object GizmoManipulator : Manipulator {
+    Scalar coneThreshold;
+    GizmoHandler activeGizmoHandler;
+    InstanceCollector collector;
+    InlineInstance gizmos[];
+};
+
+
+object GizmoCollectorCallback : InstanceCollectorCallback {
+};
+
+function Boolean GizmoCollectorCallback.callback!(InlineInstance instance){
+    GizmoHandler handler = instance.getMetaData('gizmoHandler');
+    return handler != null;
+}
+
+function GizmoManipulator() {
+    this.collector = InstanceCollector(GizmoCollectorCallback());
+    this.coneThreshold = 0.01;
+}
+
+function GizmoManipulator.onEnable!(){
+    this.gizmos = this.collector.collect();
+}
+
+function GizmoManipulator.onDisable!(){}
+
+
+function GizmoManipulator.raycastInstance!(io MouseEvent mouseEvent, Ray ray, InlineInstance instance, io Scalar distance, io GizmoHandler handler){
+
+  // Skip invisible gizmos.
+  if(instance.getNumMaterials() == 0)
+    return;
+
+  GeometryLocation locations[];
+  InlineTransform transform = instance.getTransform();
+  InlineShape shape = instance.getShape();
+  SpatialQueryable queryable = shape.getGeometry();
+  if(queryable != null){
+    for(Integer i=0; i<transform.getGlobalCount(); i++){
+      Xfo xfo = transform.getGlobalXfo(i);
+
+      // Constant sized transfroms compute a scale based on the viewports.
+      if(transform.type == ConstantScreenSizeTransform){
+        ConstantScreenSizeTransform constantScreenSizeTransform = transform;
+        // If the Gizmos are being scaled during rendering, we need to compute the 
+        // same scale here.
+        Boolean orthographic = mouseEvent.getViewport().getCamera().isOrthographic();
+        if(orthographic){
+          // this constant value renders the geometry approximately the same size inthe orthographic viewport to the perspective. 
+          Scalar sizeFudge = 0.003;
+          xfo.sc *= mouseEvent.getViewport().getCamera().getOrthographicFrustumHeight() * sizeFudge;
+        }
+        else{
+          Vec3 cameraPos = mouseEvent.getViewport().getCamera().getMat44().translation();
+          Scalar fovY = mouseEvent.getViewport().getCamera().getFovY();
+          Scalar dist = cameraPos.distanceTo(xfo.tr);
+          Scalar scaleFactor = dist * fovY * (1.0/mouseEvent.getViewport().getDimensions().y);
+          xfo.sc *= scaleFactor;
+        }
+      }
+
+      Xfo invXfo = xfo.inverse();
+      Ray objRay = invXfo.transformRay(ray);
+      GeometryLocation location = queryable.raycast(objRay, true, this.coneThreshold, SCALARINFINITE );
+      if(location.isValid()){
+        Geometry geometry = shape.getGeometry();
+        Vec3 objectSpacePoint = geometry.getPositionAtLocation(location);
+        Vec3 worldSpacePoint = xfo.transformVector(objectSpacePoint);
+        Scalar dist = (worldSpacePoint - ray.start).length();
+        if(dist < distance){
+          handler = instance.getMetaData('gizmoHandler');
+          distance = dist;
+        }
+      }
+    }
+  }
+}
+
+
+function GizmoHandler GizmoManipulator.raycastGizmos!(io MouseEvent mouseEvent){
+
+    Ray ray = mouseEvent.getViewport().calcRayFromScreenPos(mouseEvent.pos);
+    Scalar distance = BIGSCALAR_POSITIVE;
+
+    GizmoHandler handler = null;
+    for(Integer i=0; i< this.gizmos.size(); i++){
+        this.raycastInstance( mouseEvent, ray, this.gizmos[i], distance, handler);
+    }
+    return handler;
+}
+
+function GizmoManipulator.onEvent!(io Event event){
+    if(event.eventType() == Event_MouseButtonPress){
+        MouseEvent mouseEvent = event;
+
+        // On MouseMove/Mousedown.
+        if(mouseEvent.button == MouseButton_LeftButton){
+            // Raycast the Gizmos and get the closest hit.
+            Ray ray = event.getViewport().calcRayFromScreenPos(mouseEvent.pos);
+
+            GizmoHandler handler = this.raycastGizmos(mouseEvent);
+            if(handler){
+                handler.onEvent(mouseEvent);
+                if(mouseEvent.isAccepted())
+                    this.activeGizmoHandler = handler;
+            }
+        }
+    }
+    else if(event.eventType() == Event_MouseMove){
+        MouseEvent mouseEvent = event;
+        // On drag
+        if(this.activeGizmoHandler){
+           this.activeGizmoHandler.onEvent(mouseEvent);
+        }
+    }
+    else if(event.eventType() == Event_MouseButtonRelease){
+        MouseEvent mouseEvent = event;
+        // On release
+        if(this.activeGizmoHandler){
+           this.activeGizmoHandler.onEvent(mouseEvent);
+           this.activeGizmoHandler = null;
+        }
+    }
+}

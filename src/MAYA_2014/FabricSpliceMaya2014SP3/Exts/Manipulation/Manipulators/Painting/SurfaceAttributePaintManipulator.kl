@@ -1,0 +1,290 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`SurfaceAttributePaintManipulator `
+
+*/
+
+
+require Singletons;
+require InlineDrawing;
+
+
+//////////////////////////////////////
+// SurfaceAttributePaintManipulator_PaintData
+//
+
+struct SurfaceAttributePaintManipulator_PaintData {
+    PolygonMesh mesh;
+    ScalarAttribute attribute;
+    Integer pointIds[];
+    Scalar oldValues[];
+    Scalar newValues[];
+};
+
+function SurfaceAttributePaintManipulator_PaintData(PolygonMesh mesh, ScalarAttribute attribute){
+    this.mesh = mesh;
+    this.attribute = attribute;
+}
+
+// Merge the new patin data into the existing paint data to create one set that can be undone/redone
+function SurfaceAttributePaintManipulator_PaintData.mergeIn!(SurfaceAttributePaintManipulator_PaintData paintData){
+    for (Integer i = 0; i < paintData.pointIds.size(); i++) {
+        Integer id = -1;
+        for (Integer j = 0; j < this.pointIds.size(); j++) {
+            if(paintData.pointIds[i] == this.pointIds[j]){
+                id = j;
+                break;
+            }
+        }
+        if(id != -1){
+            this.newValues[id] = paintData.newValues[i];
+        }
+        else{
+            this.pointIds.push(paintData.pointIds[i]);
+            this.oldValues.push(paintData.oldValues[i]);
+            this.newValues.push(paintData.newValues[i]);
+        }
+    }
+}
+
+function SurfaceAttributePaintManipulator_PaintData.doAction!(){
+    Ref<ScalarAttribute> attrRef = this.attribute;
+    for (Integer i = 0; i < this.pointIds.size(); i++) {
+        this.mesh.setPointAttribute(this.pointIds[i], attrRef, this.newValues[i]);
+    }
+    attrRef.incrementVersion();
+}
+
+
+function SurfaceAttributePaintManipulator_PaintData.undoAction!(){
+    Ref<ScalarAttribute> attrRef = this.attribute;
+    for (Integer i = 0; i < this.pointIds.size(); i++) {
+        this.mesh.setPointAttribute(this.pointIds[i], attrRef, this.oldValues[i]);
+    }
+    attrRef.incrementVersion();
+}
+
+//////////////////////////////////////
+// SurfaceAttributePaintCommand
+// The SurfaceAttributePaintCommand contains a dictionary of
+// SurfaceAttributePaintManipulator_PaintData object. One for
+// each geometry. As a paint stoke moves from one geometry to another
+// the paint data is added to the relevant container in the 
+// SurfaceAttributePaintCommand
+object SurfaceAttributePaintCommand : UndoRedoCommand {
+    SurfaceAttributePaintManipulator_PaintData paintData[PolygonMesh];
+};
+
+function SurfaceAttributePaintCommand(){
+}
+
+function SurfaceAttributePaintCommand.doAction!(){
+    for(mesh in this.paintData){
+        this.paintData[mesh].doAction();
+    }
+}
+
+function SurfaceAttributePaintCommand.undoAction!(){
+    for(mesh in this.paintData){
+        this.paintData[mesh].undoAction();
+    }
+}
+
+function SurfaceAttributePaintCommand.addPaintData!(SurfaceAttributePaintManipulator_PaintData paintData){
+    if(this.paintData.has(paintData.mesh)){
+        this.paintData[paintData.mesh].mergeIn(paintData); 
+    }
+    else{
+        this.paintData[paintData.mesh] = paintData;
+    }
+}
+
+//////////////////////////////////////
+// Smooth Points
+operator smoothScalarAttributeValues<<<index>>>(
+  PolygonMesh mesh,
+  Scalar weightMapValues[],
+  SurfacePaintManipulator_PointCollection collectedPoints,
+  io Scalar results[]
+ ) {
+
+  //Pseudo-gaussian: center weight = 0.5, neighbor weights sum = 0.5
+  Index pointId = collectedPoints.pointIds[index];
+  Scalar weight = collectedPoints.weights[index];
+  Scalar value = weightMapValues[pointId];
+
+  LocalL16UInt32Array surroundingPoints;
+  mesh.getPointSurroundingPoints(pointId, false, surroundingPoints);
+  UInt32 nbNei = surroundingPoints.size();
+  
+  if( nbNei ) {
+    Scalar neiSum = 0.0;
+    for( UInt32 i = 0; i < nbNei; ++i ) {
+      UInt32 neiPt = surroundingPoints.get(i);
+      neiSum += weightMapValues[neiPt];
+    }
+    neiSum /= Scalar(nbNei);
+    value = Math_linearInterpolate(value, (value + neiSum) * 0.5, weight);
+  }
+  results[index] = value;
+}
+
+
+///////////////////////////////////////////////
+// SurfaceAttributePaintManipulator_Callback
+
+object SurfaceAttributePaintManipulator_Callback : SurfacePaintManipulator_Callback {
+    Integer paintMode;
+    String attributeName;
+    SurfaceAttributePaintCommand command;
+};
+
+function SurfaceAttributePaintManipulator_Callback.onStrokeBegin!(io MouseEvent mouseEvent){
+
+    // On MouseMove/Mousedown.
+    if(mouseEvent.button == MouseButton_LeftButton)
+        this.paintMode = 0; // Paint
+    else if(mouseEvent.button == MouseButton_RightButton)
+        this.paintMode = 1; // Erase
+    else if(mouseEvent.button == MouseButton_MiddleButton)
+        this.paintMode = 2; // Smooth
+
+    this.command = SurfaceAttributePaintCommand();
+    mouseEvent.accept();
+}
+
+function SurfaceAttributePaintManipulator_Callback.onStrokeEnd!(io MouseEvent mouseEvent){
+    // Register a command only if painting actually occured.
+    // There should be at least one geometry added to the paint data. 
+    if(this.command.paintData.size() > 0)
+        mouseEvent.getHost().addUndoRedoCommand(this.command);
+}
+
+
+function SurfaceAttributePaintManipulator_Callback.onPaint!(SurfacePaintManipulator_PointCollection collectedPoints){
+
+    Ref<ScalarAttribute> weightMapAttr = collectedPoints.mesh.getAttribute(this.attributeName);
+
+    if(weightMapAttr == null){
+        report("ERROR: Geometry Does not have the attribute:" + this.attributeName );
+        return;
+    }
+
+    SurfaceAttributePaintManipulator_PaintData paintData(collectedPoints.mesh, weightMapAttr);
+    paintData.pointIds = collectedPoints.pointIds;
+    paintData.oldValues.resize(collectedPoints.pointIds.size);
+    paintData.newValues.resize(collectedPoints.pointIds.size);
+
+    switch(this.paintMode){
+    case 0: // Paint
+        for (Integer i = 0; i < collectedPoints.pointIds.size(); i++) {
+            Scalar weight = collectedPoints.weights[i];
+            Integer pointId = collectedPoints.pointIds[i];
+            Scalar oldScalar = weightMapAttr.values[pointId];
+            Scalar newScalar = Math_linearInterpolate(oldScalar, Scalar(1.0), weight); 
+
+            paintData.oldValues[i] = oldScalar;
+            paintData.newValues[i] = newScalar;
+        }
+        break;
+    case 1: // Erase
+        for (Integer i = 0; i < collectedPoints.pointIds.size(); i++) {
+            Scalar weight = collectedPoints.weights[i];
+            Integer pointId = collectedPoints.pointIds[i];
+            Scalar oldScalar = weightMapAttr.values[pointId];
+            Scalar newScalar = Math_linearInterpolate(oldScalar, Scalar(0.0), weight);
+
+            paintData.oldValues[i] = oldScalar;
+            paintData.newValues[i] = newScalar;
+        }
+        break;
+    case 2: // Smooth
+        UInt32 nbPoints = collectedPoints.pointIds.size();
+        Scalar smoothedValues[];
+        smoothedValues.resize(nbPoints);
+        smoothScalarAttributeValues<<<nbPoints>>>(
+            collectedPoints.mesh,
+            weightMapAttr.values,
+            collectedPoints,
+            smoothedValues
+        );
+
+        for(Integer i = 0; i < nbPoints; ++i ) {
+            paintData.oldValues[i] = weightMapAttr.values[ collectedPoints.pointIds[i] ];
+            paintData.newValues[i] = smoothedValues[i];
+        }
+        break;
+    }
+    // do the command immedietly...
+    paintData.doAction();
+    // Merge this paintData with the command so that we only generate one undo command 
+    // for the entire paint stroke, even if we cross multipel geometries. 
+    this.command.addPaintData(paintData);
+}
+
+///////////////////////////////////////////////
+// SurfaceAttributePaintManipulator
+
+object SurfaceAttributePaintManipulator : Manipulator {
+
+    SurfacePaintManipulator surfacePaintManipulator;
+    String attributeName;
+
+    SurfaceAttributePaintManipulator_Callback callback;
+};
+
+
+function SurfaceAttributePaintManipulator(){
+
+    this.surfacePaintManipulator = SurfacePaintManipulator();
+    this.callback = SurfaceAttributePaintManipulator_Callback();
+
+    this.surfacePaintManipulator.setCallbackObj(this.callback);
+}
+
+function SurfaceAttributePaintManipulator.setAttributeName!(String attributeName){
+    this.attributeName = attributeName;
+}
+
+function SurfaceAttributePaintManipulator.onEnable!(){
+    this.surfacePaintManipulator.onEnable();
+
+    if(this.attributeName == ""){
+        report("WARNING: No paint attribute set.");
+    }
+    // Check that all the target geometries support the geometry attribute.
+    for(Integer i=0; i< this.surfacePaintManipulator.targetGeometries.size(); i++){
+        InlineShape shape = this.surfacePaintManipulator.targetGeometries[i].getShape();
+        PolygonMesh mesh = shape.getGeometry();
+        if(mesh == null){
+            report("WARNING: Geometry is not a PolygonMesh:" + this.surfacePaintManipulator.targetGeometries[i].getName() );
+            continue;
+        }
+        Ref<ScalarAttribute> weightMapAttr = mesh.getAttribute(this.attributeName);
+        if(weightMapAttr == null){
+            report("WARNING: Geometry: " + this.surfacePaintManipulator.targetGeometries[i].getName() + " Does not have the attribute:" + this.attributeName );
+        }
+    }
+    this.callback.attributeName = this.attributeName;
+}
+
+function SurfaceAttributePaintManipulator.onDisable!(){
+    this.surfacePaintManipulator.onDisable();
+}
+
+function SurfaceAttributePaintManipulator.addTargetGeometry!(InlineInstance instance){
+    this.surfacePaintManipulator.addTargetGeometry(instance);
+}
+
+function SurfaceAttributePaintManipulator.setTargetGeometries!(InlineInstance instances[]){
+    this.surfacePaintManipulator.setTargetGeometries(instances);
+}
+
+function SurfaceAttributePaintManipulator.onEvent!(io Event event){
+    this.surfacePaintManipulator.onEvent(event);
+}

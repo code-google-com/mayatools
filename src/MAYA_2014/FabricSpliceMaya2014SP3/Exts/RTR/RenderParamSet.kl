@@ -1,0 +1,892 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+require Geometry;//Specialized arrays
+
+alias Boolean RenderParamFlag;
+const Boolean RenderParamSet_enableChecks = false;
+
+////////////////////// RenderParamSet
+
+//NOTE: flags, categories and BaseRenderParam are used until we have proper KL Object inheritance and virtual function calls
+const UInt32 RenderParamFlag_none = 0;
+const UInt32 RenderParamFlag_perElement = 1;
+const UInt32 RenderParamFlag_array = 2;
+const UInt32 RenderParamFlag_OGLShaderCompatible = 4;
+const UInt32 RenderParamFlag_OGLPackedInstances = 8;
+
+const Integer RenderParamCategory_unknown = 0;
+const Integer RenderParamCategory_flag = 1;
+const Integer RenderParamCategory_baseType = 2;//Boolean, Integer, Scalar, String, ...
+const Integer RenderParamCategory_math = 3;//Vec, Mat, RGB...
+const Integer RenderParamCategory_attribute = 4;//geometryAttribute, OGLAttribute
+const Integer RenderParamCategory_image = 5;//image, OGLTexture
+const Integer RenderParamCategory_geometry = 6;//boundingVolume, mesh+attr, lines+attr, points+attr, oglGeometry (indices + OGLAttributes + sources)
+const Integer RenderParamCategory_material = 7;//material, shader
+const Integer RenderParamCategory_other = 8;//Custom object, userData...
+
+const Integer TransformSpace_none = 0;
+const Integer TransformSpace_model = 1;
+const Integer TransformSpace_world = 2;
+const Integer TransformSpace_view = 3;
+const Integer TransformSpace_viewProjection = 4;
+
+function String TransformSpaceToString( Integer ref ) {
+  if( ref == TransformSpace_none )
+    return "none";
+  else if( ref == TransformSpace_model )
+    return "model";
+  else if( ref == TransformSpace_world )
+    return "world";
+  else if( ref == TransformSpace_view )
+    return "view";
+  else if( ref == TransformSpace_viewProjection )
+    return "viewProjection";
+  else
+    return "(invalid space)";
+}
+
+const Integer OwnerType_none = 0;
+const Integer OwnerType_viewport = 1;
+const Integer OwnerType_camera = 2;
+const Integer OwnerType_geometry = 3;
+const Integer OwnerType_geometryInstance = 4;
+const Integer OwnerType_light = 5;
+const Integer OwnerType_texture = 6;
+const Integer OwnerType_material = 7;
+const Integer OwnerType_pass = 8;
+const Integer OwnerType_implicitGeometry = 9;
+const Integer numOwnerTypes = 10;
+
+function String ownerTypeToString( Integer ownerType ) {
+  if( ownerType == OwnerType_none )
+    return "none";
+  else if( ownerType == OwnerType_viewport )
+    return "viewport";
+  else if( ownerType == OwnerType_camera )
+    return "camera";
+  else if( ownerType == OwnerType_geometry )
+    return "geometry";
+  else if( ownerType == OwnerType_geometryInstance )
+    return "geometryInstance";
+  else if( ownerType == OwnerType_light )
+    return "light";
+  else if( ownerType == OwnerType_texture )
+    return "texture";
+  else if( ownerType == OwnerType_material )
+    return "material";
+  else if( ownerType == OwnerType_pass )
+    return "pass";
+  else if( ownerType == OwnerType_implicitGeometry )
+    return "implicitGeometry";
+  report("Warning: wrong ownerType value: " + ownerType + " (should be < " + numOwnerTypes + ")");
+  return "wrongType";
+}
+
+function Integer stringToOwnerType( String ownerType ) {
+  if( ownerType == "viewport" )
+    return OwnerType_viewport;
+  else if( ownerType == "camera" )
+    return OwnerType_camera;
+  else if( ownerType == "geometry" )
+    return OwnerType_geometry;
+  else if( ownerType == "geometryInstance" )
+    return OwnerType_geometryInstance;
+  else if( ownerType == "light" )
+    return OwnerType_light;
+  else if( ownerType == "texture" )
+    return OwnerType_texture;
+  else if( ownerType == "material" )
+    return OwnerType_material;
+  else if( ownerType == "pass" )
+    return OwnerType_pass;
+  else if( ownerType == "implicitGeometry" )
+    return OwnerType_implicitGeometry;
+  return OwnerType_none;
+}
+
+struct RenderParam {
+  Object data;
+  Object userData;//For example: source object reference (to detect major changes)
+  Integer category;//RenderParamCategory_x
+  Integer flags;//RenderParamFlag_x
+  Integer transformSpace;//TransformSpace_x
+};
+
+//Note: we keep RenderValueKey as a struct (instead of a simple UInt32) to facilitate an eventual change of structure or type.
+struct RenderValueKey {
+  UInt32 index;
+};
+
+inline RenderValueKey() {
+  this.index = InvalidIndex;
+}
+
+inline RenderValueKey(UInt32 index) {
+  this.index = index;
+}
+
+inline Boolean equals( RenderValueKey first, RenderValueKey second ) {
+  return first.index == second.index;
+}
+
+inline Boolean RenderValueKey.isValid() {
+  return this.index != InvalidIndex;
+}
+
+interface RTRParamGenerator {
+  Type getGeneratedParamType();
+  generate!( io Object param );
+};
+
+//Note: ParamDataGenerator is an object so it can be shared (and generated once)
+object ParamDataGenerator {
+  Boolean dirty;//Data needs to be generated
+  Boolean wasRequired;//Data was previously required (for pre-load heuristics)
+  RTRParamGenerator generator;
+};
+
+struct RenderParamData {
+  RenderParam param;
+  ParamDataGenerator generator;//Optional; in this case "versions" holds the version of the data to be generated
+
+  Versions versions;
+  UInt32 perElementVersions[];//Used if RenderParamFlag_perElement
+  String name;
+};
+
+struct RenderRequest {
+  String name;
+  Object value;
+  UInt32 renderOwnerCookie;
+};
+
+object RenderParamValues {
+  Versions versions;
+  String ownerName;//for debugging
+  Integer ownerType;//OwnerType_...
+  Object ownerRef;
+
+  RenderParamData paramsData[];
+  IndexPool paramsDataIndexPool;
+  RenderValueKey nameToKey[String];
+
+  RenderRequest renderRequests[];
+  //Boolean deleted;//DEBUG DELETED PARAMS
+};
+
+function RenderParamValues.reset!() {
+  this.versions.incTopo();
+/*  if( this.paramsData.size() ) {
+    //Avoid fully freeing memory (for performance; critical to RTR runtime)
+    this.paramsData.resize(1);
+    this.paramsData[0] = RenderParamData();
+    this.paramsDataIndexPool.indexEnd = 0;
+    this.paramsDataIndexPool.freeIndices.resize(1);
+    this.paramsDataIndexPool.freeIndices[0] = 0;
+  } else {*/
+    this.paramsData.resize(0);
+    this.paramsDataIndexPool.reset();
+//  }
+  RenderValueKey emptyDict[String];
+  this.nameToKey = emptyDict;//Unfortunately no way to clear a dict 'inplace'...
+  this.renderRequests.resize(0);
+}
+
+function Size RenderParamValues.getMemUsage_withoutParamValues() {
+  //very approximative; hopefully KL will add a built-in getMemUsage()
+  Size mem = 16*4;
+  for( Size i = 0; i < this.paramsData.size(); ++i ) {
+    mem += 15*4 + this.paramsData[i].perElementVersions.size()*4;//ParamData
+    mem += 4+24+16;//Dict entry; all elements are individually allocated
+  }
+  return mem;
+}
+
+inline Size RenderParamValues.size() {
+  return this.paramsDataIndexPool.getNumUsed();
+}
+
+inline RenderParamValues.incrementValueVersion!(RenderValueKey key) {
+  this.paramsData[key.index].versions.incValue();
+  if(this.paramsData[key.index].generator)
+    this.paramsData[key.index].generator.dirty = true;
+
+  this.versions.incValue();
+}
+
+inline RenderParamValues.incrementValueVersion!(RenderValueKey key, Size elementIndex) {
+  if(this.paramsData[key.index].perElementVersions.size())
+    ++this.paramsData[key.index].perElementVersions[elementIndex];
+  this.incrementValueVersion(key);
+}
+
+inline Boolean RenderParamValues.synchronizeValueVersion!(RenderValueKey key, UInt32 sourceVersion) {
+  if( synchronizeVersion( sourceVersion, this.paramsData[key.index].versions.value ) ) {
+    this.versions.incValue();
+    return true;
+  }
+  return false;
+}
+
+inline RenderParamValues.incrementTopoVersion!(RenderValueKey key) {
+  this.paramsData[key.index].versions.incTopo();
+  this.versions.incTopo();
+}
+
+inline RenderParamValues.incrementTopoVersion!(RenderValueKey key, Size elementIndex) {
+  if(this.paramsData[key.index].perElementVersions.size())
+    this.paramsData[key.index].perElementVersions[elementIndex]++;
+  this.incrementTopoVersion(key);
+}
+
+inline RenderParamValues.setType!(RenderValueKey key, Type paramType, UInt32 category, UInt32 flags) {
+  if( paramType != this.getType(key)) {
+    this.paramsData[key.index].param.data = null;
+    this.paramsData[key.index].generator = null;
+    this.paramsData[key.index].param.category = category;
+    this.incrementTopoVersion(key);
+  }
+  if( flags != (this.paramsData[key.index].param.flags & ~RenderParamFlag_perElement ) ) {
+    this.paramsData[key.index].param.flags = flags | (this.paramsData[key.index].param.flags & RenderParamFlag_perElement);
+    this.incrementValueVersion(key);
+  }
+}
+
+function RenderValueKey RenderParamValues.createKeyFromName_allowDuplicate!(String name) {
+  RenderValueKey key;
+  if( this.paramsDataIndexPool.getFreeIndex( key.index ) )
+    this.paramsData.resize( this.paramsDataIndexPool.getIndexEnd() );
+  this.paramsData[key.index].name = name;
+  this.incrementTopoVersion(key);
+  this.paramsData[key.index].versions = this.versions; //Ensure unique if recreated
+  this.nameToKey[name] = key;
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.getOrCreateKeyFromName!(String name) {
+  RenderValueKey key = this.nameToKey.get(name, RenderValueKey());
+  if( !key.isValid() )
+    key = this.createKeyFromName_allowDuplicate(name);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.getOrCreateKeyFromName!(String name, Type paramType, UInt32 category, UInt32 flags) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setType(key, paramType, category, flags);
+  return key;
+}
+
+inline RenderParamValues.set!(RenderValueKey key, Object value) {
+  if( this.paramsData[key.index].param.data != value ) {
+    this.paramsData[key.index].param.data = value;
+    this.incrementValueVersion(key);
+  }
+}
+
+inline RenderParamValues.setUserData!(RenderValueKey key, Object userData) {
+  this.paramsData[key.index].param.userData = userData;
+}
+
+inline Boolean RenderParamValues.setSpace!(RenderValueKey key, Integer space) {
+  if( this.paramsData[key.index].param.transformSpace != space ) {
+    this.paramsData[key.index].param.transformSpace = space;
+    this.incrementValueVersion(key);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.has(String name) {
+  return this.nameToKey.has(name);
+}
+
+inline RenderParamValues.get!(RenderValueKey key, io Ref<Object> value) {
+  value = this.paramsData[key.index].param.data;
+}
+
+inline Ref<Object> RenderParamValues.get(RenderValueKey key) {
+  return this.paramsData[key.index].param.data;
+}
+
+inline Integer RenderParamValues.getCategory(RenderValueKey key) {
+  return this.paramsData[key.index].param.category;
+}
+
+inline Integer RenderParamValues.getFlags(RenderValueKey key) {
+  return this.paramsData[key.index].param.flags;
+}
+
+inline Ref<Object> RenderParamValues.getUserData(RenderValueKey key) {
+  return this.paramsData[key.index].param.userData;
+}
+
+inline String RenderParamValues.getName(RenderValueKey key) {
+  return this.paramsData[key.index].name;
+}
+
+inline Type RenderParamValues.getType(RenderValueKey key) {
+  if( this.paramsData[key.index].param.data )
+    return this.paramsData[key.index].param.data.type;
+  else if( this.paramsData[key.index].generator )
+    return this.paramsData[key.index].generator.generator.getGeneratedParamType();
+  else
+    return None;
+}
+
+inline Integer RenderParamValues.getSpace(RenderValueKey key) {
+  return this.paramsData[key.index].param.transformSpace;
+}
+
+inline Boolean RenderParamValues.hasDataGenerator(RenderValueKey key) {
+  return this.paramsData[key.index].generator != null;
+}
+
+function ParamDataGenerator InitParamDataGenerator(RTRParamGenerator generator) {
+  ParamDataGenerator paramGenerator = ParamDataGenerator();
+  paramGenerator.dirty = true;
+  paramGenerator.wasRequired = false;
+  paramGenerator.generator = generator;
+  return paramGenerator;
+}
+
+function RenderParamValues.initDataGenerator!(RenderValueKey key, RTRParamGenerator generator) {
+  this.paramsData[key.index].generator = InitParamDataGenerator(generator);
+}
+
+function Ref<RTRParamGenerator> RenderParamValues.getParamGenerator(RenderValueKey key) {
+  if( this.paramsData[key.index].generator )
+    return this.paramsData[key.index].generator.generator;
+  RTRParamGenerator dummy = null;
+  return dummy;
+}
+
+inline Boolean RenderParamData.confirmAsRequired!(RenderValueKey key) {
+  if( this.generator != null ) {
+    if( this.generator.dirty ) {
+      this.generator.generator.generate(this.param.data);
+      this.generator.dirty = false;
+    }
+    this.generator.wasRequired = true;
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.confirmAsRequired!(RenderValueKey key) {
+  return this.paramsData[key.index].confirmAsRequired(key);
+}
+
+//incrementValueVersion_preGenerateIfWasRequired:
+//  This function sets generated data as 'dirty', but regenerates it right away if it was confirmed as
+//  required in the last graph evaluation. This temporal heuristic is used for OpenGL upload operations, 
+//  as they will be more efficient if triggered sooner as they run in parallel.
+function RenderParamValues.incrementValueVersion_preGenerateIfWasRequired!(RenderValueKey key) {
+  if( this.paramsData[key.index].generator.wasRequired ) {
+    this.paramsData[key.index].generator.generator.generate( this.paramsData[key.index].param.data );
+    this.paramsData[key.index].generator.dirty = false;
+    this.paramsData[key.index].generator.wasRequired = false;
+  } else
+    this.paramsData[key.index].generator.dirty = true;
+
+  this.paramsData[key.index].versions.incValue();
+  this.versions.incValue();
+}
+
+function Boolean RenderParamValues.setFrom!(Ref<RenderParamValues> sourceValues, RenderValueKey sourceKey, io RenderValueKey resultKey) {
+  Boolean changed = false;
+  if( !resultKey.isValid() ) {
+    resultKey = this.getOrCreateKeyFromName(sourceValues.paramsData[sourceKey.index].name, sourceValues.paramsData[sourceKey.index].param.data.type, sourceValues.paramsData[sourceKey.index].param.category, sourceValues.paramsData[sourceKey.index].param.flags);
+    changed = true;
+  }
+  if( this.paramsData[resultKey.index].param.data != sourceValues.paramsData[sourceKey.index].param.data ) {
+    this.paramsData[resultKey.index].param = sourceValues.paramsData[sourceKey.index].param;
+    this.paramsData[resultKey.index].param.flags &= ~RenderParamFlag_perElement;//For current usage of this function, perElement should not be propagated
+    this.paramsData[resultKey.index].generator = sourceValues.paramsData[sourceKey.index].generator;
+    this.versions.incValue();
+    changed = true;
+  } else if( this.paramsData[resultKey.index].param.transformSpace != sourceValues.paramsData[sourceKey.index].param.transformSpace ) {
+    this.paramsData[resultKey.index].param.transformSpace = sourceValues.paramsData[sourceKey.index].param.transformSpace;
+    this.versions.incValue();
+    changed = true;
+  }
+  if( this.paramsData[resultKey.index].versions.value != sourceValues.paramsData[sourceKey.index].versions.value ) {
+    this.paramsData[resultKey.index].versions.value = sourceValues.paramsData[sourceKey.index].versions.value;
+    this.versions.incValue();
+    changed = true;
+  }
+  return changed;
+}
+
+//TODO: support per element flags
+inline Boolean RenderParamValues.isExplicitFlag(RenderValueKey key) {
+  if( !key.isValid() )
+    return false;
+  return this.paramsData[key.index].param.category == RenderParamCategory_flag;
+}
+
+inline RenderValueKey RenderParamValues.setFlag!(String name) {
+  RenderValueKey key = this.nameToKey.get(name, RenderValueKey());
+  if( !key.isValid() ) {//Tolerate existing params of other types since they are flag-compatible: this feature is being used!
+    key = this.createKeyFromName_allowDuplicate(name);
+    this.paramsData[key.index].param.category = RenderParamCategory_flag;
+    this.incrementTopoVersion(key);
+  }
+  return key;
+}
+
+inline RenderParamValues.setFlag!(String name, Boolean value) {
+  if(value)
+    this.setFlag(name);
+  else
+    this.removeKeyIfExists( name );
+}
+
+inline RenderValueKey RenderParamValues.getKeyFromName?(String name) {
+  return this.nameToKey.get(name, RenderValueKey());
+}
+
+function Boolean RenderParamValues.removeKey!( RenderValueKey key ) {
+  if( key.isValid() ) {
+    this.paramsDataIndexPool.unusedIndex( key.index );
+    Versions versions = this.paramsData[key.index].versions;
+    this.nameToKey.delete(this.paramsData[key.index].name);
+    this.paramsData[key.index] = RenderParamData();
+    this.paramsData[key.index].versions = versions;
+    this.incrementTopoVersion(key);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.removeKeyIfExists!( String name ) {
+  RenderValueKey key = this.nameToKey.get(name, RenderValueKey());
+  return this.removeKey(key);
+}
+
+function Boolean RenderParamValues.setElementCount!( RenderValueKey key, Size count ) {
+  Boolean isArrayType = (this.paramsData[key.index].param.flags & RenderParamFlag_array) != 0;
+  if( count != 1 && !isArrayType )
+    throw("RenderParamData.setElementCount: setting element count to "+count+" on a non-array parameter type: "+this.paramsData[key.index].param.data.type);
+  Size prevElementCount = this.paramsData[key.index].perElementVersions.size();
+  if( isArrayType && prevElementCount != count ) {
+    this.paramsData[key.index].param.flags = this.paramsData[key.index].param.flags | RenderParamFlag_perElement;
+    this.paramsData[key.index].perElementVersions.resize(count);
+    if( prevElementCount == 0 )
+      this.paramsData[key.index].perElementVersions[0] = this.paramsData[key.index].versions.value;//Transfer version to 1st elt
+    this.incrementValueVersion(key);
+    return true;
+  }
+  return false;
+}
+
+inline Size RenderParamValues.getElementCount( RenderValueKey key ) {
+  Boolean isArrayType = (this.paramsData[key.index].param.flags & RenderParamFlag_array) != 0;
+  if( (this.paramsData[key.index].param.flags & RenderParamFlag_array) != 0 )
+    return this.paramsData[key.index].perElementVersions.size();
+  else
+    return 1;
+}
+
+inline Versions RenderParamData.getVersions( Size elementIndex, io Boolean perElement ) {
+  if( (this.param.flags & RenderParamFlag_perElement) != 0 ) {
+    perElement = true;
+    Versions ver;
+    ver.value = this.perElementVersions[elementIndex];
+    ver.topo = this.versions.topo;
+    return ver;
+  }
+  perElement = false;
+  return this.versions;
+}
+
+inline Versions RenderParamValues.getVersions( RenderValueKey key, Size elementIndex, io Boolean perElement ) {
+  return this.paramsData[key.index].getVersions( elementIndex, perElement );
+}
+
+inline Boolean RenderParamValues.isPerElement( RenderValueKey key ) {
+  return (this.paramsData[key.index].param.flags & RenderParamFlag_perElement) != 0;
+}
+
+/////////////////////////// RenderParams
+
+struct RenderParamKey{
+  UInt32 layerIndex;
+  RenderValueKey valueKey;
+};
+
+inline Boolean equals( RenderParamKey first, RenderParamKey second ) {
+  return first.layerIndex == second.layerIndex && equals( first.valueKey, second.valueKey );
+}
+
+inline Boolean RenderParamKey.isValid() {
+  return this.valueKey.isValid();
+}
+
+struct ParamLayer {
+  RenderParamValues params;
+  Versions lastLayerVersion;
+  Size elementIndex;
+};
+
+struct RenderParams{
+
+  //layers:
+  //  Overrides are applied from last to first.
+  //  Note: 2D array, but 2nd dim size is always 1: the goal is to share memory.
+  ParamLayer layers[];
+  Versions versions;
+  UInt32 layoutOrderVersion;
+};
+
+function RenderParams.reset!() {
+  this.layers.resize(0);
+  this.versions = Versions();
+  this.layoutOrderVersion = 0;
+}
+
+function RenderParams.=( RenderParams other ) {
+  //Avoid reallocating if possible, and share the source layers.
+  this.layers.resize(other.layers.size());
+  for( Size i = 0; i < other.layers.size(); ++i) {
+    this.layers[i].params = other.layers[i].params;
+    this.layers[i].lastLayerVersion = other.layers[i].lastLayerVersion;
+  }
+
+  this.versions = other.versions;
+  this.layoutOrderVersion = other.layoutOrderVersion;
+}
+
+function Size RenderParams.getMemUsage_withoutRenderParamValues() {
+  //very approximative; hopefully KL will add a built-in getMemUsage()
+  return 3*4 + 5*this.layers.size();
+}
+
+inline Size RenderParams.getNumLayers() {
+  return this.layers.size();
+}
+
+inline RenderParamKey RenderParams.getKey?( String paramName, Size layerStart, Size layerEnd ) {
+  RenderParamKey key;
+  for( Size i = layerEnd; i-- > layerStart; ) {
+    if( this.layers[i].params != null ) {
+      if (this.layers[i].params.nameToKey.has(paramName)) {
+        key.valueKey = this.layers[i].params.nameToKey.get(paramName);
+        if (key.valueKey.isValid()) {
+          key.layerIndex = i;
+          break;
+        }
+      }
+    }
+  }
+  return key;
+}
+
+inline RenderParamKey RenderParams.getKey?( String paramName ) {
+  return this.getKey( paramName, 0, this.getNumLayers() );
+}
+
+inline Ref<Object> RenderParams.get(RenderParamKey key) {
+  return this.layers[key.layerIndex].params.get( key.valueKey );
+}
+
+inline Integer RenderParams.getCategory(RenderParamKey key) {
+  return this.layers[key.layerIndex].params.getCategory( key.valueKey );
+}
+
+inline Type RenderParams.getType(RenderParamKey key) {
+  return this.layers[key.layerIndex].params.getType( key.valueKey );
+}
+
+inline Ref<RTRParamGenerator> RenderParams.getParamGenerator(RenderParamKey key) {
+  return this.layers[key.layerIndex].params.getParamGenerator( key.valueKey );
+}
+
+inline Size RenderParams.getElementCount( RenderParamKey key ) {
+  return this.layers[key.layerIndex].params.getElementCount( key.valueKey );
+}
+
+inline Integer RenderParams.getSpace( RenderParamKey key ) {
+  return this.layers[key.layerIndex].params.getSpace( key.valueKey );
+}
+
+inline Boolean RenderParams.setSpace!( RenderParamKey key, Integer space ) {
+  if( this.layers[key.layerIndex].params.setSpace( key.valueKey, space ) ) {
+    this.synchronizeVersion(key.layerIndex);
+    return true;
+  }
+  return false;
+}
+
+// function Integer RenderParams.getGlType( RenderParamKey key ) {
+//   return this.layers[key.layerIndex].params.getGlType( key.valueKey );
+// }
+
+function RenderParams.ensureLayerExists!( Size index ) {
+  Size currCount = this.layers.size();
+  if( index >= currCount ) {
+    Size newCount = index + 1;
+    this.layers.resize( newCount );
+    for( Size i = currCount; i < newCount; ++i )
+      this.layers[i].params = RenderParamValues();
+
+    ++this.layoutOrderVersion;
+  }
+}
+
+inline Ref<RenderParamValues> RenderParams.getLayer( Size index ) {
+  return this.layers[index].params;
+}
+
+function RenderParams.resize!( Size count, Boolean createLayers ) {
+  Size currCount = this.layers.size();
+  if( count > currCount ) {
+    if( createLayers )
+      this.ensureLayerExists( count-1 );
+    else
+      this.layers.resize( count );
+  }
+  else if( count < currCount ){
+    this.layers.resize( count );
+    ++this.layoutOrderVersion;
+  }
+}
+
+inline RenderParams.incrementLayoutOrderVersion!() {
+  ++this.layoutOrderVersion;
+}
+
+inline RenderParams.resetLayer_noVersionChange!( Size index ) {
+  if( index < this.layers.size() && this.layers[index].params != null )
+    this.layers[index].params = null;
+}
+
+inline Boolean RenderParams.setLayer!( Size index, Ref<RenderParamValues> values, Size elementIndex ) {
+  if( values == null )
+    return false;
+
+  if( index >= this.layers.size() ) {
+    this.layers.resize( index + 1 );
+    this.versions.incTopo();
+  }
+  Ref<RenderParamValues> params = this.layers[index].params;
+  if( params !== values) {
+    this.layers[index].params = values;
+    ++this.layoutOrderVersion;
+    this.layers[index].lastLayerVersion = Versions();
+  }
+  this.layers[index].elementIndex = elementIndex;
+  return this.layers[index].lastLayerVersion.synchronize( values.versions, this.versions );
+}
+
+inline Boolean RenderParams.setLayer!( Size index, Ref<RenderParamValues> values ) {
+  return this.setLayer( index, values, 0 );
+}
+
+inline Boolean RenderParams.setLayer!( Size index, ParamLayer layer ) {
+  return this.setLayer( index, layer.params, layer.elementIndex );
+}
+
+inline RenderParams.setLayer_noVersionChange!( Size index, Ref<RenderParamValues> values, Size elementIndex ) {
+  if( values == null )
+    throw('RenderParams.setLayer: uninitialized values');
+
+  if( index >= this.layers.size() ) {
+    this.layers.resize( index + 1 );
+  }
+  this.layers[index].params = values;
+  this.layers[index].elementIndex = elementIndex;
+}
+
+inline RenderParams.setLayer_noVersionChange!( Size index, ParamLayer layer ) {
+  this.setLayer_noVersionChange( index, layer.params, layer.elementIndex );
+}
+
+inline Boolean RenderParams.synchronizeVersion!(Size index) {
+  return this.layers[index].lastLayerVersion.synchronize( this.layers[index].params.versions, this.versions );
+}
+
+inline Boolean RenderParams.synchronizeVersions!() {
+  Boolean changed = false;
+  Size num = this.layers.size();
+  for(Size i = 0; i < num; ++i ) {
+    if( this.synchronizeVersion(i) )
+      changed = true;
+  }
+  return changed;
+}
+
+function String RenderParams.getLayersDesc?(Boolean versions) {
+  Size numLayer = this.getNumLayers();
+  String desc = '[';
+  for( Size layer = 0; layer < numLayer; ++layer ) {
+    if( layer )
+      desc += ", ";
+    if( this.layers[layer].params ) {
+      desc += ownerTypeToString( this.layers[layer].params.ownerType ) + " " + this.layers[layer].params.ownerName;
+      if( this.layers[layer].elementIndex )
+        desc += " el "+ this.layers[layer].elementIndex;
+      if( versions )
+        desc += this.layers[layer].lastLayerVersion;
+    } else
+      desc += "(uninitialized layer)";
+  }
+  desc += "]";
+  return desc;
+}
+
+function String RenderParams.getLayersDesc?() {
+  return this.getLayersDesc(false);
+}
+/////////////// RenderParamVersionedKey
+
+struct RenderParamVersionedKey{
+  RenderParamKey key;
+  Size elementIndex;
+  Versions paramVersions;
+  UInt32 paramsTopoPlusLayoutOrderVersion;
+};
+
+inline Boolean equals( RenderParamVersionedKey first, RenderParamVersionedKey second ) {
+  return first.elementIndex == second.elementIndex && equals( first.key, second.key );
+}
+
+inline Boolean RenderParamVersionedKey.isValid() {
+  return this.key.isValid();
+}
+
+//initialize: build from a valid key & element index; will fetch the related versions
+inline RenderParamVersionedKey.initialize!( RenderParams params, RenderParamKey key, Size elementIndex ) {
+  this.key = key;
+  this.paramsTopoPlusLayoutOrderVersion = params.versions.topo + params.layoutOrderVersion;
+  Boolean perElement;
+  this.paramVersions = params.layers[this.key.layerIndex].params.getVersions(this.key.valueKey, this.elementIndex, perElement);
+  this.elementIndex = perElement ? elementIndex : 0;
+}
+
+function Boolean RenderParamVersionedKey.synchronize_explicitElementIndex!( RenderParams params, String paramName, Size layerStart, Size layerEnd ) {
+  Boolean dirty = false;
+  if( synchronizeVersion( params.versions.topo + params.layoutOrderVersion, this.paramsTopoPlusLayoutOrderVersion ) ) {
+    RenderParamKey key = params.getKey( paramName, layerStart, layerEnd );
+    if( !equals(key, this.key) ) {
+      this.key = key;
+      Versions initVersion;
+      this.paramVersions = initVersion;
+      dirty = true;
+    }
+  }
+  if( this.key.isValid() ) {
+    Boolean perElement;
+    Versions version = params.layers[this.key.layerIndex].params.getVersions(this.key.valueKey, this.elementIndex, perElement);
+    if( this.paramVersions.synchronize( version ) )
+      dirty = true;
+  }
+  return dirty;
+}
+
+inline Boolean RenderParamVersionedKey.synchronize_explicitElementIndex!( RenderParams params, String paramName ) {
+  return this.synchronize_explicitElementIndex( params, paramName, 0, params.getNumLayers() );
+}
+
+function Boolean RenderParamVersionedKey.synchronize!( RenderParams params, String paramName, Size layerStart, Size layerEnd ) {
+  Boolean dirty = false;
+  if( synchronizeVersion( params.versions.topo + params.layoutOrderVersion, this.paramsTopoPlusLayoutOrderVersion ) ) {
+    RenderParamKey key = params.getKey( paramName, layerStart, layerEnd );
+    if( !equals(key, this.key) ) {
+      this.key = key;
+      Versions initVersion;
+      this.paramVersions = initVersion;
+      dirty = true;
+    }
+  }
+  if( this.key.isValid() ) {
+    Boolean perElement;
+    Size elementIndex = params.layers[this.key.layerIndex].elementIndex;
+
+    Versions version = params.layers[this.key.layerIndex].params.getVersions(this.key.valueKey, elementIndex, perElement);
+    if(!perElement)
+      elementIndex = 0;
+    if( this.elementIndex != elementIndex ) {
+      this.elementIndex = elementIndex;
+      dirty = true;
+    }
+    if( this.paramVersions.synchronize( version ) )
+      dirty = true;
+  }
+  return dirty;
+}
+
+inline Boolean RenderParamVersionedKey.synchronize!( RenderParams params, String paramName ) {
+  return this.synchronize( params, paramName, 0, params.getNumLayers() );
+}
+
+inline Boolean RenderParamVersionedKey.synchronize!( RenderParamVersionedKey reference ) {
+  Boolean dirty =   !equals(this.key, reference.key)
+                ||  this.elementIndex != reference.elementIndex
+                ||  this.paramVersions.topo != reference.paramVersions.topo
+                ||  this.paramVersions.value != reference.paramVersions.value
+                ||  this.paramsTopoPlusLayoutOrderVersion != reference.paramsTopoPlusLayoutOrderVersion;
+  if( dirty )
+    this = reference;
+
+  return dirty;
+}
+
+/////////////// LocalL16RenderParamVersionedKeyArray
+
+struct LocalL16RenderParamVersionedKeyArray {
+  RenderParamVersionedKey first16[16];
+  RenderParamVersionedKey others[];
+  UInt32 count;
+};
+
+inline UInt32 LocalL16RenderParamVersionedKeyArray.size() {
+  return this.count;
+}
+
+inline LocalL16RenderParamVersionedKeyArray.resize!( UInt32 size ) {
+  if( size >> 4 )
+    this.others.resize( size-16 );
+  else
+  {
+    this.others.resize( 0 );
+    if( size < this.count ) {
+      UInt32 end = this.count;
+      if( end > 16 )
+        end = 16;
+      for( UInt32 i = size; i != end; ++i ) {
+        RenderParamVersionedKey defaultKey;
+        this.first16[i] = defaultKey;
+      }
+    }
+  }
+  this.count = size;
+}
+
+inline RenderParamVersionedKey LocalL16RenderParamVersionedKeyArray.get( UInt32 index ) {
+  if( index >> 4 )
+    return this.others[ index-16 ];
+  else
+    return this.first16[ index ];
+}
+
+inline LocalL16RenderParamVersionedKeyArray.set!( UInt32 index, RenderParamVersionedKey value ) {
+  if( index >> 4 )
+    this.others[ index-16 ] = value;
+  else
+    this.first16[ index ] = value;
+}
+
+struct RenderParamVersionedNamedKey{
+  RenderParamVersionedKey versionedKey;
+  String name;
+};
+
+inline RenderParamVersionedNamedKey( String name ) {
+  this.name = name;
+}
+
+inline Boolean RenderParamVersionedNamedKey.synchronize!( RenderParams params, Size layerStart, Size layerEnd ) {
+  return this.versionedKey.synchronize( params, this.name, layerStart, layerEnd );
+}

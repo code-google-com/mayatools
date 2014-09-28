@@ -1,0 +1,154 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+const Integer BT_SIMPLE_DYNAMICS_WORLD = 1;
+const Integer BT_DISCRETE_DYNAMICS_WORLD = 2;
+const Integer BT_CONTINUOUS_DYNAMICS_WORLD = 3;
+const Integer BT_SOFT_RIGID_DYNAMICS_WORLD = 4;
+
+///The BulletDynamicsWorld is the interface class for several dynamics implementation, basic, discrete, parallel, and continuous etc.
+interface BulletDynamicsWorld //: BulletCollisionWorld
+{
+    Data getPointer();
+    	
+    ///stepSimulation proceeds the simulation over 'timeStep', units in preferably in seconds.
+    ///By default, Bullet will subdivide the timestep in ant substeps of each 'fixedTimeStep'.
+    ///in order to keep the simulation real-time, the maximum number of substeps can be clamped to 'maxSubSteps'.
+    ///You can disable subdividing the timestep/substepping by passing maxSubSteps=0 as second argument to stepSimulation, but in that case you have to keep the timeStep ant.
+    //Integer stepSimulation( Scalar timeStep);
+    Integer stepSimulation( Scalar timeStep, Integer maxSubSteps);
+
+    // debugDrawWorld();
+
+    // addConstraint(BulletTypedConstraint constraint);
+    addConstraint!(BulletTypedConstraint constraint, Boolean disableCollisionsBetweenLinkedBodies);
+
+    removeConstraint!(BulletTypedConstraint constraint);
+
+    addAction!(BulletActionInterface action);
+
+    removeAction!(BulletActionInterface action);
+
+    //once a rigidbody is added to the dynamics world, it will get this gravity assigned
+    //existing rigidbodies in the world get gravity assigned too, during this method
+    setGravity!(Vec3 gravity);
+    Vec3 getGravity();
+
+    synchronizeMotionStates!();
+
+    addRigidBody!(BulletRigidBody body);
+
+    // addRigidBody(BulletRigidBody body, UInt16 group, UInt16 mask);
+
+    removeRigidBody!(BulletRigidBody body);
+
+    setConstraintSolver!(BulletConstraintSolver solver);
+
+    BulletConstraintSolver getConstraintSolver();
+
+    Integer getNumConstraints();
+
+    BulletTypedConstraint getConstraint(Integer index);
+
+    UInt32 getWorldType();
+
+    clearForces!();
+
+    // /// Set the callback for when an internal tick (simulation substep) happens, optional user info
+    // setInternalTickCallback(btInternalTickCallback cb,	void* worldUserInfo=0,Boolean isPreTick=false);
+
+    // setWorldUserInfo(void* worldUserInfo);
+
+    // getWorldUserInfo();
+
+    // btContactSolverInfo getSolverInfo();
+
+
+    //////////////////////////////////////////////////////
+    // BulletDynamicsWorld should inherit off BulletCollisionWorld
+    // but inheritance is not yet supported, so instead we must duplicate the interface here.
+    // its a horrible solution, but one that we can remove once we can inherit objects and interfaces. 
+
+    setBroadphase!(BulletBroadphaseInterface pairCache);
+
+    BulletBroadphaseInterface   getBroadphase();
+
+    // btOverlappingPairCache   getPairCache();
+
+    // btDispatcher getDispatcher();
+
+    // btDispatcher getDispatcher();
+
+    // updateSingleAabb(BulletICollisionObject colObj);
+
+    // updateAabbs();
+    
+    // setDebugDrawer(btIDebugDraw  debugDrawer);
+
+    // btIDebugDraw getDebugDrawer();
+
+    // debugDrawWorld();
+
+    // void debugDrawObject(Xfo worldTransform, btCollisionShape shape, Vec3 color);
+
+    Integer getNumCollisionObjects();
+
+    // /// rayTest performs a raycast on all objects in the btCollisionWorld, and calls the resultCallback
+    // /// This allows for several queries: first hit, all hits, any hit, dependent on the value returned by the callback.
+    // rayTest(Vec3 rayFromWorld, Vec3 rayToWorld, RayResultCallback resultCallback)  
+
+    // /// convexTest performs a swept convex cast on all objects in the btCollisionWorld, and calls the resultCallback
+    // /// This allows for several queries: first hit, all hits, any hit, dependent on the value return by the callback.
+    // convexSweepTest (btConvexShape castShape, Xfo from, Xfo to, ConvexResultCallback resultCallback,  Scalar allowedCcdPenetration = Scalar(0.));
+
+    // ///contactTest performs a discrete collision test between colObj against all objects in the btCollisionWorld, and calls the resultCallback.
+    // ///it reports one or more contact points for every overlapping object (including the one with deepest penetration)
+    // contactTest(BulletICollisionObject colObj, ContactResultCallback resultCallback);
+
+    // ///contactTest performs a discrete collision test between two collision objects and calls the resultCallback if overlap if detected.
+    // ///it reports one or more contact points (including the one with deepest penetration)
+    // contactPairTest(BulletICollisionObject colObjA, BulletICollisionObject colObjB, ContactResultCallback resultCallback);
+
+
+    // /// rayTestSingle performs a raycast call and calls the resultCallback. It is used internally by rayTest.
+    // /// In a future implementation, we consider moving the ray test as a method in btCollisionShape.
+    // /// This allows more customization.
+    // static rayTestSingle(Xfo rayFromTrans, Xfo rayToTrans,
+    //                BulletICollisionObject collisionObject,
+    //                btCollisionShape collisionShape,
+    //                Xfo colObjWorldTransform,
+    //                RayResultCallback resultCallback);
+
+    // /// objectQuerySingle performs a collision detection query and calls the resultCallback. It is used internally by rayTest.
+    // static objectQuerySingle(btConvexShape castShape, Xfo rayFromTrans,Xfo rayToTrans,
+    //                BulletICollisionObject collisionObject,
+    //                btCollisionShape collisionShape,
+    //                Xfo colObjWorldTransform,
+    //                ConvexResultCallback resultCallback, Scalar   allowedPenetration);
+
+    addCollisionObject!(BulletICollisionObject collisionObject);
+    // addCollisionObject(BulletICollisionObject collisionObject, SInt16 collisionFilterGroup, SInt16 collisionFilterMask);
+
+    BulletICollisionObject[] getCollisionObjectArray();
+
+    removeCollisionObject!(BulletICollisionObject collisionObject);
+
+    // performDiscreteCollisionDetection();
+
+    // btDispatcherInfo getDispatchInfo();
+
+    // btDispatcherInfo getDispatchInfo();
+    
+    // Boolean  getForceUpdateAllAabbs();
+    // void setForceUpdateAllAabbs( Boolean forceUpdateAllAabbs);
+
+    // ///Preliminary serialization test for Bullet 2.76. Loading those files requires a separate parser (Bullet/Demos/SerializeDemo)
+    // virtual  serialize(btSerializer serializer);
+
+};
+
+

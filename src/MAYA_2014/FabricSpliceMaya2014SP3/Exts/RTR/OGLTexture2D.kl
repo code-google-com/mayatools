@@ -1,0 +1,396 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+require FabricOGL, FabricStatistics;
+
+object OGLTexture2D : StatisticSourceWithAutoRegisterMember {
+  UInt32 bufferID;
+  String name;
+
+  UInt32 glTextureType;
+  UInt32 glType;
+  UInt32 glInternalFormat;
+  UInt32 glFormat;
+
+  UInt32 width;
+  UInt32 height;
+  UInt32 depth;
+
+  UInt32 textureMinFilter;
+  UInt32 textureMagFilter;
+  UInt32 wrapS;
+  UInt32 wrapT;
+
+  Boolean shadowTexture;
+  Boolean buildMipmaps;
+  Boolean isRenderBuffer;
+
+  //Statistics
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function OGLTexture2D.configure!(
+  Size width,
+  Size height,
+  Data pixels
+) {
+  if(!cpglHaveContext()){
+    setError("ERROR: OGLTexture2D.configure. OpenGL context not bound");
+    return;
+  }
+  Size nbPixels = width * height;
+  if(nbPixels > 0){
+    if(this.bufferID == 0){
+      UInt32 buffers[];
+      buffers.resize(1);
+      if(this.isRenderBuffer)
+        glGenRenderbuffers(1, buffers);
+      else
+        glGenTextures(1, buffers);
+      this.bufferID = buffers[0];
+    }
+    if(this.isRenderBuffer)
+      glBindRenderbuffer(GL_RENDERBUFFER, this.bufferID);
+    else
+      glBindTexture(this.glTextureType, this.bufferID);
+    
+    //Generate the texture
+    if(this.isRenderBuffer) {
+      glRenderbufferStorage(GL_RENDERBUFFER, this.glInternalFormat, width, height);
+    } else {
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    
+      if(this.glTextureType == GL_TEXTURE_CUBE_MAP) {
+        //Note: for now we don't really support 'pixels' properly here. Actually, an array of 'pixels' should be passed in;
+        //we would support 0 or 6 for cubeMaps, and N for textureArrays.
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, this.glInternalFormat, width, height, 0, this.glFormat, this.glType, pixels);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, this.glInternalFormat, width, height, 0, this.glFormat, this.glType, pixels);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, this.glInternalFormat, width, height, 0, this.glFormat, this.glType, pixels);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, this.glInternalFormat, width, height, 0, this.glFormat, this.glType, pixels);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, this.glInternalFormat, width, height, 0, this.glFormat, this.glType, pixels);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, this.glInternalFormat, width, height, 0, this.glFormat, this.glType, pixels);
+      } else
+        glTexImage2D(this.glTextureType, 0, this.glInternalFormat, width, height, 0, this.glFormat, this.glType, pixels);
+
+      glTexParameteri(this.glTextureType, GL_TEXTURE_MIN_FILTER, this.textureMinFilter);
+      glTexParameteri(this.glTextureType, GL_TEXTURE_MAG_FILTER, this.textureMagFilter);
+      if (this.buildMipmaps)
+        glGenerateMipmap( this.glTextureType );
+
+      if( this.shadowTexture ) {
+        glTexParameteri(this.glTextureType, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+        glTexParameteri(this.glTextureType, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+        if( this.glTextureType != GL_TEXTURE_CUBE_MAP ) {
+          Scalar data[];
+          data.push(1);
+          data.push(1);
+          data.push(1);
+          data.push(1);
+          glTexParameterfv(this.glTextureType, GL_TEXTURE_BORDER_COLOR, data);
+          glTexParameteri(this.glTextureType, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+          glTexParameteri(this.glTextureType, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        }
+      } else {
+        glTexParameteri(this.glTextureType, GL_TEXTURE_WRAP_S, this.wrapS);
+        glTexParameteri(this.glTextureType, GL_TEXTURE_WRAP_T, this.wrapT);
+      }
+    }
+    this.width = width;
+    this.height = height;
+  }
+}
+
+function OGLTexture2D.configure!(
+  Size width,
+  Size height,
+  Size depth,
+  Data pixels
+) {
+  if(!cpglHaveContext()){
+    setError("ERROR: OGLTexture2D.configure. OpenGL context not bound");
+    return;
+  }
+  if( this.glTextureType != GL_TEXTURE_3D && this.glTextureType != GL_TEXTURE_2D_ARRAY ) {
+    this.configure(width, height, pixels);
+    this.depth = depth;
+    return;
+  }
+  Size nbPixels = width * height * depth;
+  if(nbPixels > 0){
+    if(this.bufferID == 0){
+      UInt32 buffers[];
+      buffers.resize(1);
+      glGenTextures(1, buffers);
+      this.bufferID = buffers[0];
+    }
+    glBindTexture(this.glTextureType, this.bufferID);
+    //Generate the texture
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage3D(this.glTextureType, 0, this.glInternalFormat, width, height, depth, 0, this.glFormat, this.glType, pixels);
+
+    glTexParameteri(this.glTextureType, GL_TEXTURE_MIN_FILTER, this.textureMinFilter);
+    glTexParameteri(this.glTextureType, GL_TEXTURE_MAG_FILTER, this.textureMagFilter);
+    if (this.buildMipmaps)
+      glGenerateMipmap( this.glTextureType );
+
+    if( this.shadowTexture ) {
+      glTexParameteri(this.glTextureType, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+      glTexParameteri(this.glTextureType, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+      Scalar data[];
+      data.push(1);
+      data.push(1);
+      data.push(1);
+      data.push(1);
+      glTexParameterfv(this.glTextureType, GL_TEXTURE_BORDER_COLOR, data);
+      glTexParameteri(this.glTextureType, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+      glTexParameteri(this.glTextureType, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    } else {
+      glTexParameteri(this.glTextureType, GL_TEXTURE_WRAP_S, this.wrapS);
+      glTexParameteri(this.glTextureType, GL_TEXTURE_WRAP_T, this.wrapT);
+    }
+
+    this.width = width;
+    this.height = height;
+    this.depth = depth;
+  }
+}
+
+inline OGLTexture2D.delete!() {
+  if(this.bufferID != 0 && cpglHaveContext()){
+    UInt32 buffers[];
+    buffers.push(this.bufferID);
+    if(this.isRenderBuffer)
+      glDeleteRenderbuffers(1, buffers);
+    else
+      glDeleteTextures(1, buffers);
+    this.bufferID = 0;
+  }
+}
+
+inline ~OGLTexture2D() {
+  this.delete();
+}
+
+inline OGLTexture2D() {
+  this.depth = 1;
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+function OGLTexture2D OGLTexture2D.clone() {
+  OGLTexture2D other = OGLTexture2D();
+  other.glTextureType = this.glTextureType;
+  other.glInternalFormat = this.glInternalFormat;
+  other.glFormat = this.glFormat;
+  other.glType = this.glType;
+  other.bufferID = this.bufferID;
+  other.width = this.width;
+  other.height = this.height;
+  other.textureMinFilter = this.textureMinFilter;
+  other.textureMagFilter = this.textureMagFilter;
+  other.shadowTexture = this.shadowTexture;
+  other.wrapS = this.wrapS;
+  other.wrapT = this.wrapT;
+  other.buildMipmaps = this.buildMipmaps;
+  other.isRenderBuffer = this.isRenderBuffer;
+  return other;
+}
+
+inline Boolean OGLTexture2D.hasSameType( OGLTexture2D other ) {
+  return this.glTextureType == other.glTextureType
+      && this.glInternalFormat == other.glInternalFormat
+      && this.glFormat == other.glFormat
+      && this.glType == other.glType
+      && this.textureMinFilter == other.textureMinFilter
+      && this.textureMagFilter == other.textureMagFilter
+      && this.shadowTexture == other.shadowTexture
+      && this.isRenderBuffer == other.isRenderBuffer
+      && this.wrapS == other.wrapS
+      && this.wrapT == other.wrapT
+      && this.buildMipmaps == other.buildMipmaps;
+}
+
+inline OGLTexture2D.bind!(in UInt32 textureUnit){
+//  report("OGLTexture2D.bind bufferID:"+this.bufferID + " textureUnit:"+textureUnit  + " width:"+ this.width + " height:"+ this.height );
+  if (this.bufferID != 0 && !this.isRenderBuffer) {
+    glActiveTexture(GL_TEXTURE0 + textureUnit);
+    glBindTexture(this.glTextureType, this.bufferID);
+  }
+}
+
+function toUpperPowerOfTwo(io Size size) {
+  Size remainingSize = size;
+  Size upperSize = 1;
+  if(remainingSize >= 65536){
+    upperSize = 65536;
+    remainingSize = remainingSize >> 16;
+  }
+  if(remainingSize >= 256){
+    upperSize *= 256;
+    remainingSize = remainingSize >> 8;
+  }
+  if(remainingSize >= 16){
+    upperSize *= 16;
+    remainingSize = remainingSize >> 4;
+  }
+  if(remainingSize >= 4){
+    upperSize *= 4;
+    remainingSize = remainingSize >> 2;
+  }
+  if(remainingSize >= 2){
+    upperSize *= 2;
+    remainingSize = remainingSize >> 1;
+  }
+  if(upperSize < size)
+    upperSize *= 2;
+  //report("next power of two: " + size + " -> " + upperSize);
+  size = upperSize;
+}
+  
+function OGLTexture2D.configureImageMatrixArray!(
+  io Mat44 matrices[]
+) {
+  if (this.bufferID == 0 ) {
+    this.glTextureType = GL_TEXTURE_2D;
+    this.glInternalFormat = GL_RGBA32F;
+    this.glFormat = GL_RGBA;
+    this.glType = GL_FLOAT;
+    this.textureMinFilter = GL_NEAREST;
+    this.textureMagFilter = GL_NEAREST;
+    this.wrapS = GL_CLAMP_TO_EDGE;
+    this.wrapT = GL_CLAMP_TO_EDGE;
+  }
+  Size origSize = matrices.size();
+  Size textureHeightIfLoaded = (matrices.size()+127)/128;
+  toUpperPowerOfTwo(textureHeightIfLoaded);
+  matrices.resize(128*textureHeightIfLoaded);
+  this.configure(Size(128*4), textureHeightIfLoaded, matrices.data());
+}
+
+function UInt64 OGLTexture2D.getApproximateGPUMemoryUsage() {
+  if( !this.bufferID )
+    return 0;
+
+  SInt64 size = this.width * this.height * (this.depth ? this.depth : 1);
+  if(this.glTextureType == GL_TEXTURE_CUBE_MAP)
+    size *= 6;
+
+  switch(this.glInternalFormat) {
+    case GL_COMPRESSED_RED:
+    case GL_COMPRESSED_RED_RGTC1:
+    case GL_COMPRESSED_SIGNED_RED_RGTC1:
+      return size/2;
+    case GL_DEPTH_COMPONENT:
+    case GL_RED:
+    case GL_COMPRESSED_RG:
+    case GL_COMPRESSED_RG_RGTC2:
+    case GL_COMPRESSED_SIGNED_RG_RGTC2:
+    case GL_R8:
+    case GL_R8_SNORM:
+    case GL_R3_G3_B2:
+    case GL_RGBA2:
+    case GL_R8I:
+    case GL_R8UI:
+      return size;
+    case GL_DEPTH_COMPONENT16:
+    case GL_RG:
+    case GL_RG8:
+    case GL_RG8_SNORM:
+    case GL_R16:
+    case GL_R16_SNORM:
+    case GL_RGB4:
+    case GL_RGB5:
+    case GL_RGBA4:
+    case GL_RGB5_A1:
+    case GL_R16F:
+    case GL_R16I:
+    case GL_R16UI:
+    case GL_RG8I:
+    case GL_RG8UI:
+    case GL_COMPRESSED_RGB:
+    case GL_COMPRESSED_SRGB:
+    case GL_COMPRESSED_RGBA:
+    case GL_COMPRESSED_SRGB_ALPHA:
+    case GL_COMPRESSED_RGBA_BPTC_UNORM:
+    case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
+      return size*2;
+    case GL_DEPTH_COMPONENT:
+    case GL_DEPTH_COMPONENT24:
+    case GL_RGB:
+    case GL_RGB8:
+    case GL_RGB8_SNORM:
+    case GL_SRGB8:
+    case GL_RGB8I:
+    case GL_RGB8UI:
+      return size*3;
+    case GL_DEPTH_STENCIL:
+    case GL_DEPTH24_STENCIL8:
+    case GL_DEPTH_COMPONENT32:
+    case GL_DEPTH_COMPONENT32F:
+    case GL_RGBA:
+    case GL_RGBA8:
+    case GL_RGBA8_SNORM:
+    case GL_RGB10_A2:
+    case GL_RGB10_A2UI:
+    case GL_RG16:
+    case GL_RG16_SNORM:
+    case GL_RGB10:
+    case GL_SRGB8_ALPHA8:
+    case GL_RG16F:
+    case GL_R32F:
+    case GL_R11F_G11F_B10F:
+    case GL_RGB9_E5:
+    case GL_R32I:
+    case GL_R32UI:
+    case GL_RG16I:
+    case GL_RG16UI:
+    case GL_RGBA8I:
+    case GL_RGBA8UI:
+      return size*4;
+    case GL_RGB12:
+      return size*5;
+    case GL_RGB16_SNORM:
+    case GL_RGBA12:
+    case GL_RGB16F:
+    case GL_RGB16I:
+    case GL_RGB16UI:
+    case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT:
+    case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT:
+      return size*6;
+    case GL_RGBA16:
+    case GL_RGBA16F:
+    case GL_RG32F:
+    case GL_RG32I:
+    case GL_RG32UI:
+    case GL_RGBA16I:
+    case GL_RGBA16UI:
+      return size*8;
+    case GL_RGB32F:
+    case GL_RGB32I:
+    case GL_RGB32UI:
+      return size*12;
+    case GL_RGBA32F:
+    case GL_RGBA32I:
+    case GL_RGBA32UI:
+      return size*16;
+  }
+  return 0;
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] OGLTexture2D.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, (this.name ? this.name : "OGLTexture")+"_"+this.bufferID ) );
+  stats.push( StatisticRecord( Statistic_Category, "OGL" ) );
+  SInt64 size = this.width * this.height * (this.depth ? this.depth : 1);
+  stats.push( StatisticRecord( "Size", this.width * this.height * (this.depth ? this.depth : 1) ) );
+  stats.push( StatisticRecord( "PixWidth", this.width ) );
+  stats.push( StatisticRecord( "PixHeight", this.height ) );
+  if(this.depth > 1)
+    stats.push( StatisticRecord( "PixDepth", this.depth ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, 20*4 ) );
+  stats.push( StatisticRecord( Statistic_GPUMemoryUsage, this.getApproximateGPUMemoryUsage() ) );
+  return stats;
+}

@@ -1,0 +1,165 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+object Vec4Attribute : GeometryAttribute, StatisticSourceWithAutoRegisterMember {
+  UInt32 version;
+  String name;
+  UInt32 containerIndex;
+
+  Vec4 values[];
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function Vec4Attribute() {
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] Vec4Attribute.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, this.name ) );
+  stats.push( StatisticRecord( Statistic_Category, "Attribute" ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, this.values.size()*4*4 ) );
+  return stats;
+}
+
+inline String Vec4Attribute.getName() {
+  return this.name;
+}
+
+inline UInt32 Vec4Attribute.getVersion() {
+  return this.version;
+}
+
+inline Size Vec4Attribute.getContainerIndex() {
+  return this.containerIndex;
+}
+
+inline Vec4Attribute.setContainerIndex!( Size index ) {
+  this.containerIndex = index;
+}
+
+function Vec4Attribute Vec4Attribute.clone() {
+  //The difference with default clone() is that new.base.autoStat will point to 'new' (from constructor)
+  Vec4Attribute new = Vec4Attribute();
+  new.version = this.version;
+  new.name = this.name.clone();
+  new.containerIndex = this.containerIndex;
+  new.values = this.values.clone();
+  return new;
+}
+
+function Ref<StatisticSource> Vec4Attribute.getStatisticsSource() {
+  return this.autoStats;
+}
+
+inline Vec4Attribute.resize!(Size count) {
+  this.values.resize(count);
+  ++this.version;
+}
+
+inline Size Vec4Attribute.size() {
+  return this.values.size();
+}
+
+inline Data Vec4Attribute.data() {
+  Ref<Vec4Attribute> thisRef = this;
+  return thisRef.values.data();
+}
+
+//Make sure to call this method after position changes are finished, so caches (such as drawing data) know that they need to be regenerated.
+inline Vec4Attribute.incrementVersion!() {
+  ++this.version;
+}
+
+inline Vec4Attribute.copyValue!( Size sourceIndex, Size targetIndex ) {
+  this.values[targetIndex] = this.values[sourceIndex];
+}
+
+inline Vec4Attribute.copyValue!( Ref<Object> sourceAttr, Size sourceIndex, Size targetIndex ) {
+  Ref<Vec4Attribute> source = sourceAttr;
+  this.values[targetIndex] = source.values[sourceIndex];
+}
+
+inline Vec4 Vec4Attribute.getLinearCombination( LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights ) {
+  Vec4 result;
+  for( Size i = 0; i < sourceIndices.size(); ++i )
+    result += this.values[sourceIndices.get(i)]*sourceWeights.get(i);
+  return result;
+}
+
+inline Vec4Attribute.linearCombine!( Ref<Object> sourceAttr, LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights, Size targetIndex ) {
+  Ref<Vec4Attribute> source = sourceAttr;
+  this.values[targetIndex] = source.getLinearCombination( sourceIndices, sourceWeights );
+}
+
+inline Vec4Attribute.copyFrom!( Ref<Object> otherAttr ) {
+  Ref<Vec4Attribute> other = otherAttr;
+  this.incrementVersion();
+
+  // Copy in place to avoid mallocs
+  Size size = other.values.size();
+  this.values.resize( size );
+  for( Size i = 0; i < size; ++i )
+    this.values[i] = other.values[i];
+}
+
+inline Vec4Attribute.setFromScalar!( Size index, LocalL16ScalarArray value ) {
+  this.values[index].x = value.get(0);
+  this.values[index].y = value.get(1);
+  this.values[index].z = value.get(2);
+  this.values[index].t = value.get(3);
+}
+
+inline Size Vec4Attribute.getScalarValueSize() {
+  return 4;
+}
+
+inline Boolean Vec4Attribute.equalValues( Size index1, Size index2 ) {
+  return this.values[index1].equal( this.values[index2] );
+}
+
+function String Vec4Attribute.valueDesc( Size index ) {
+  return String(this.values[index]);
+}
+
+require Util;
+function String Vec4Attribute.unitTestPrint( Size index ) {
+  return unitTestPrint(this.values[index]);
+}
+//Returns a string description of the attribute.
+function String Vec4Attribute.getDesc?( Boolean includeValues) {
+  String desc;
+  desc += "Attribute: " + this.getName() + " nb elements = "+ this.values.size()+'\n';
+  if(includeValues){
+    if(this.values.size > 0){
+      desc += "  values:[ \n";
+      for(Integer i=0; i<this.values.size; i++){
+        desc += '    ' + unitTestPrint(this.values[i]) + " \n";
+      }
+      desc += "  ]\n";
+    }
+    else{
+      desc += "  values:[]\n";
+    }
+  }
+  return desc;
+}
+function String Vec4Attribute.getDesc?() {
+  return this.getDesc(false);
+}
+
+function Ref<Vec4Attribute> GeometryAttributes.getOrCreateVec4Attribute!( String name ) {
+  Ref<GeometryAttribute> attr = this.getAttribute( name, Vec4Attribute );
+  if( attr )
+    return attr;
+
+  Vec4Attribute newAttr = Vec4Attribute();
+  newAttr.resize(this.elementCount);
+  newAttr.name = name;
+  newAttr.version = this.keysVersion;
+  this.attachNewAttribute(newAttr);
+  return newAttr;
+}

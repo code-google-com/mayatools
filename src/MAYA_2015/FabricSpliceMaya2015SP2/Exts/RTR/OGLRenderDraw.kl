@@ -1,0 +1,1393 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+const Integer RenderTarget_none = -1;
+const Integer RenderTarget_viewport = 0;
+
+struct ApplyGLStates {
+  Boolean disablesDepthWrites;
+  Integer cullFace;
+  Integer depthFunc;
+  Boolean hasPolygonOffset;
+  Scalar polygonOffsetFactor;
+  Scalar polygonOffsetUnits;
+  Boolean hasBlend;
+  Integer blendModeSfactor;
+  Integer blendModeDfactor;
+};
+
+struct OGLDrawLogger {
+  Boolean enabled;
+  Boolean logGLStateChanges;
+  Boolean logShaderParams;
+  Boolean logIndices;
+  Boolean logParamVersions;
+
+  Integer logIndentSize;
+  String logIndents[];
+  String output;
+};
+
+function OGLDrawLogger.reset!(Boolean enable, Boolean logGLStateChanges, Boolean logShaderParams, Boolean logIndices, Boolean logParamVersions) {
+  this.logIndentSize = 0;
+  this.output = String();
+  this.enabled = enable;
+  this.logGLStateChanges = enable && logGLStateChanges;
+  this.logShaderParams = enable && logShaderParams;
+  this.logIndices = enable && logIndices;
+  this.logParamVersions = enable && logParamVersions;
+}
+
+//For performance reasons, check OGLDrawLogger.enabled before building a log string and calling OGLDrawLogger.log
+function OGLDrawLogger.log!(String line) {
+  if(!this.enabled)
+    throw("OGLDrawLogger.log called while not enabled");
+  while( this.logIndents.size() <= this.logIndentSize ) {
+    if(this.logIndents.size() == 0)
+      this.logIndents.push("");
+    else
+      this.logIndents.push(this.logIndents[this.logIndents.size()-1]+"  ");
+  }
+  this.output += this.logIndents[this.logIndentSize] + line + '\n';
+  String lastError = getLastError();
+  if( lastError ) {
+    this.output += this.logIndents[this.logIndentSize] + "GLLastError: " + lastError + '\n';
+    clearLastError();
+  }
+}
+
+struct ParamCacheEntry {
+  Ref<Object> param;
+  UInt32 index;
+};
+
+inline Boolean ParamCacheEntry.synchronize!(Ref<Object> param, UInt32 index) {
+  if( param != this.param || index != this.index ) {
+    this.param = param;
+    this.index = index;
+    return true;
+  }
+  return false;
+}
+
+inline ParamCacheEntry.reset!() {
+  this.param = null;
+  this.index = InvalidIndex;
+}
+
+struct ParamCache {
+  ParamCacheEntry lastValues[20];
+  Size numUsed;
+};
+
+inline Boolean ParamCache.synchronize!(Size index, Ref<Object> newValue, Size elementIndex) {
+  if( index >= 20 )
+    return true;
+
+  while( this.numUsed <= index )
+    this.lastValues[this.numUsed++].reset();
+
+  return this.lastValues[index].synchronize(newValue, elementIndex);
+}
+
+inline ParamCache.reset!() {
+  this.numUsed = 0;
+}
+
+struct RenderDrawData {
+  Size numUpdatedRenderTargets;
+
+  UInt32 currentFramebufferTarget;
+
+  LocalL16UInt32Array currentFramebufferColorAttachments;
+  LocalL16UInt32Array currentFramebufferColorAttachmentTypes;
+  UInt32 currentFBOWidth;
+  UInt32 currentFBOHeight;
+  UInt32 currentNumDrawBuffers;
+  Boolean drawBuffersNeedUpdate;
+  UInt32 currentDrawBuffers[];
+  UInt32 currentDefaultColorBufferID;
+  UInt32 currentFramebufferDepthAttachment;
+  UInt32 currentFramebufferDepthAttachmentType;
+  UInt32 currentFramebufferDepthAttachmentSubTexture;
+  Ref<InstanceStoredData> currentRenderTargetInstanceStoredData;
+  InstanceStoredData noneRenderTargetInstanceStoredData;
+
+  UInt32 currentNbVertices;
+
+  UInt32 globalVertexArrayObject;//TODO: use VAOs properly
+
+  Size numDrawnTriangles;
+  Size numDrawnVertices;
+  Size numDrawnGeometries;
+
+  //OGL states cache (to avoid repetitive state changes)
+  ApplyGLStates currentStates;
+  Boolean hasPendingStates;
+  ApplyGLStates pendingStates;
+
+  Ref<OGLShaderProgram> shader;//read-only
+  UInt32 shaderProgramStateFlipBits;//Used by shaders to know if they should re-Enable or re-Disable states.
+
+  ParamCache uniformParamsShaderCache;
+  ParamCache textureParamsShaderCache;
+  ParamCache attributeParamsShaderCache;
+
+  Mat33 tempMat33Array[];//Should not be required; fix OGL wrapper...
+  Mat44 tempMat44Array[];//Should not be required; fix OGL wrapper...
+  SInt32 tempSInt32V[];
+  UInt32 tempUInt32V[];
+
+  OGLDrawLogger logger;
+
+  //FPS info
+  Float64 lastEvalIntervals[10];
+  UInt64 lastDrawTicks[10];
+  Size lastTickIndex;
+
+};
+
+inline OGLShaderProgram.pushGLStates?(io RenderDrawData drawData) {
+  //Note: for OGL3.2 compatibility, we cannot use glPushAttrib.
+  if(this.programId != 0){
+    if(this.disableOptions.size() > 0 || this.enableOptions.size() > 0){
+      UInt32 bitIndex = 0;
+      drawData.shaderProgramStateFlipBits = 0;
+      for(Size i=0; i<this.enableOptions.size(); i++){
+        Boolean enabled = glIsEnabled(this.enableOptions[i]) == GL_TRUE;
+        if( !enabled ) {
+          drawData.shaderProgramStateFlipBits = drawData.shaderProgramStateFlipBits | (1<<bitIndex);
+          glEnable(this.enableOptions[i]);
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("Shader: glEnable("+this.enableOptions[i]+")");
+        }
+        if(this.enableOptions[i]==GL_BLEND && (this.blendModeSfactor != drawData.currentStates.blendModeSfactor || this.blendModeDfactor != drawData.currentStates.blendModeDfactor)){
+          glBlendFunc(this.blendModeSfactor, this.blendModeDfactor);
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("Shader: glBlendFunc("+this.blendModeSfactor+", "+this.blendModeDfactor+")");
+        }
+        ++bitIndex;
+      }
+      for(Integer i=0; i<this.disableOptions.size(); i++){
+        Boolean enabled = glIsEnabled(this.enableOptions[i]) == GL_TRUE;
+        if( enabled ) {
+          drawData.shaderProgramStateFlipBits = drawData.shaderProgramStateFlipBits | (1<<bitIndex);
+          glDisable(this.disableOptions[i]);
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("Shader: glDisable("+this.disableOptions[i]+")");
+        }
+        ++bitIndex;
+      }
+    }
+    if(this.cullFace!=-1){
+      if( drawData.currentStates.cullFace != this.cullFace ) {
+        if( drawData.currentStates.cullFace == GL_NONE ) {
+          glEnable( GL_CULL_FACE );
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("Shader: glEnable( GL_CULL_FACE )");
+        }
+        if(this.cullFace == GL_NONE) {
+          glDisable( GL_CULL_FACE );
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("Shader: glDisable( GL_CULL_FACE )");
+        } else {
+          glCullFace(this.cullFace);
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("Shader: glCullFace("+this.cullFace+")");
+        }
+      }
+    }
+  }
+}
+
+inline OGLShaderProgram.loadShader(io RenderDrawData drawData) {
+  if(this.programId != 0){
+    if(drawData.logger.enabled) {
+      drawData.logger.log("beginShader " + this.name + " (" + this.programId + ")" );
+      ++drawData.logger.logIndentSize;
+    }
+    glUseProgram(this.programId);
+    this.pushGLStates(drawData);
+  }
+}
+
+inline OGLShaderProgram.popGLStates?(io RenderDrawData drawData) {
+  if(this.programId != 0){
+    // Put back original values; it's important to preserve the passes' defaults.
+    if(this.cullFace!=-1){
+      if( drawData.currentStates.cullFace != this.cullFace ) {
+        if(this.cullFace == GL_NONE) {
+          glEnable( GL_CULL_FACE );
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("Shader: glEnable( GL_CULL_FACE )");
+        }
+        if( drawData.currentStates.cullFace == GL_NONE ) {
+          glDisable( GL_CULL_FACE );
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("Shader: glDisable( GL_CULL_FACE )");
+        } else {
+          glCullFace(drawData.currentStates.cullFace);
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("Shader: glCullFace("+drawData.currentStates.cullFace+")");
+        }
+      }
+    }
+    if(this.disableOptions.size() > 0 || this.enableOptions.size() > 0){
+      UInt32 bitIndex = 0;
+      for(Size i=0; i<this.enableOptions.size(); i++){
+        if( drawData.shaderProgramStateFlipBits & (1<<bitIndex) ) {
+          glDisable(this.enableOptions[i]);
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("Shader: glDisable("+this.enableOptions[i]+")");
+        }
+        if(this.enableOptions[i]==GL_BLEND && (this.blendModeSfactor != drawData.currentStates.blendModeSfactor || this.blendModeDfactor != drawData.currentStates.blendModeDfactor)){
+          glBlendFunc(drawData.currentStates.blendModeSfactor, drawData.currentStates.blendModeDfactor);
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("Shader: glBlendFunc("+drawData.currentStates.blendModeSfactor+", "+drawData.currentStates.blendModeDfactor+")");
+        }
+        ++bitIndex;
+      }
+      for(Integer i=0; i<this.disableOptions.size(); i++){
+        if( drawData.shaderProgramStateFlipBits & (1<<bitIndex) ) {
+          glEnable(this.disableOptions[i]);
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("Shader: glEnable("+this.disableOptions[i]+")");
+        }
+        ++bitIndex;
+      }
+    }
+  }
+}
+
+inline OGLShaderProgram.unloadShader?(io RenderDrawData drawData) {
+  for( Size i = 0; i < this.attributes.size(); ++i ) {
+    Integer location = this.attributes[i].programLocation;
+    if( location!=-1 ) {
+      glDisableVertexAttribArray(location);
+
+      Integer glType = this.attributes[i].glType;
+      if( glType == GL_FLOAT_MAT3 ) {
+        glDisableVertexAttribArray(location+1);
+        glDisableVertexAttribArray(location+2);
+      } else if( glType == GL_FLOAT_MAT4 ) {
+        glDisableVertexAttribArray(location+1);
+        glDisableVertexAttribArray(location+2);
+        glDisableVertexAttribArray(location+3);
+      }
+    }
+  }
+  if(this.hasUniformSource_attribute) {
+    for( Size i = 0; i < this.uniforms.size(); ++i ) {
+      if( this.uniforms[i].sourceType == OGLShaderProgram_uniformSource_instancesAttribute ) {
+        Integer glType = this.uniforms[i].glType;
+        Integer location = this.uniforms[i].programLocation;
+        if( location!=-1 ) {
+          glVertexAttribDivisor(location, 0);
+          glDisableVertexAttribArray(location);
+          if( glType == GL_FLOAT_MAT3 ) {
+            glVertexAttribDivisor(location+1, 0);
+            glDisableVertexAttribArray(location+1);
+            glVertexAttribDivisor(location+2, 0);
+            glDisableVertexAttribArray(location+2);
+          } else if( glType == GL_FLOAT_MAT4 ) {
+            glVertexAttribDivisor(location+1, 0);
+            glDisableVertexAttribArray(location+1);
+            glVertexAttribDivisor(location+2, 0);
+            glDisableVertexAttribArray(location+2);
+            glVertexAttribDivisor(location+3, 0);
+            glDisableVertexAttribArray(location+3);
+          }
+        }
+      }
+    }
+  }
+
+  this.popGLStates(drawData);
+  if(drawData.logger.enabled) {
+    //Don't log this; would just create too much noise...
+    --drawData.logger.logIndentSize;
+    drawData.logger.log("endShader " + this.name + " (" + this.programId + ")" );
+  }
+}
+
+inline OGLShaderProgram.loadAttribute?( Size location, OGLBuffer buffer, io RenderDrawData drawData, Boolean perInstance ) {
+  if( location!=-1 ) {
+    if( buffer.bufferID > 0 ) {
+      Data NULL;
+      glBindBuffer(buffer.bufferType, buffer.bufferID);
+      glEnableVertexAttribArray(location);
+      glVertexAttribPointer(location, buffer.numBufferElementComponents, buffer.bufferElementComponentType, buffer.normalize ? GL_TRUE : GL_FALSE, 0, NULL);
+      if( buffer.perInstance )
+        glVertexAttribDivisor(location, 1);
+
+      glBindBuffer(buffer.bufferType, 0);
+
+      for( Size i = 0; i < buffer.additionalBufferIDs.size(); ++i ) {
+        glBindBuffer(buffer.bufferType, buffer.additionalBufferIDs[i]);
+        glEnableVertexAttribArray(location+i+1);
+        glVertexAttribPointer(location+i+1, buffer.numBufferElementComponents, buffer.bufferElementComponentType, buffer.normalize ? GL_TRUE : GL_FALSE, 0, NULL);
+        if( buffer.perInstance )
+          glVertexAttribDivisor(location+i+1, 1);
+
+        glBindBuffer(buffer.bufferType, 0);
+      }
+    } else {
+      glDisableVertexAttribArray(location);
+      for( Size i = 0; i < buffer.additionalBufferIDs.size(); ++i )
+        glDisableVertexAttribArray(location+i+1);
+    }
+  }
+}
+
+//loadUniform: returns 'False' if it was not actually a uniform (texture generic param)
+inline OGLShaderProgram.loadUniform?( Size index, Ref<Object> value, Size elementIndex, io RenderDrawData drawData ) {
+  Integer location = this.uniforms[index].programLocation;
+  if( location != -1 ) {
+    Integer glType = this.uniforms[index].glType;
+    //TODO: support "count" > 1: Integer count = this.uniforms[index].count;
+    if( glType == GL_FLOAT_MAT3 ) {
+      Ref<Mat33RenderParam> param = value;
+      Size count = this.uniforms[index].count;
+      if( count == 1 ) {
+        //Bad: we need to wrap it in an array...
+        param.get(drawData.tempMat33Array[0], elementIndex);
+        glUniformMatrix3fv( location, 1, true, drawData.tempMat33Array );
+      } else {
+        if( count != param.arrayValues.size() )
+          throw( "OGLShaderProgram.loadUniform: shader "+this.name+": uniform "+this.uniforms[index].name+" with count == "+count+" doesn't match param count "+param.arrayValues.size());
+        glUniformMatrix3fv( location, count, true, param.arrayValues );
+      }
+    } else if( glType == GL_FLOAT_MAT4 ) {
+      Ref<Mat44RenderParam> param = value;
+      Size count = this.uniforms[index].count;
+      if( count == 1 ) {
+        //Bad: we need to wrap it in an array...
+        param.get(drawData.tempMat44Array[0], elementIndex);
+        glUniformMatrix4fv( location, 1, true, drawData.tempMat44Array );
+      } else {
+        if( count != param.arrayValues.size() )
+          throw( "OGLShaderProgram.loadUniform: shader "+this.name+": uniform "+this.uniforms[index].name+" with count == "+count+" doesn't match param count "+param.arrayValues.size());
+        glUniformMatrix4fv( location, count, true, param.arrayValues );
+      }
+    } else if( glType == GL_INT || glType == GL_BOOL ) {
+      Integer intValue;
+      if( value.type == IntegerRenderParam ) {
+        Ref<IntegerRenderParam> param = value;
+        param.get(intValue, elementIndex);
+      } else {
+        Ref<BooleanRenderParam> param = value;
+        Boolean paramValue;
+        param.get(paramValue, elementIndex);
+        intValue = paramValue ? 1 : 0 ;
+      }
+      glUniform1i( location, intValue );
+    } else if( glType == GL_FLOAT ) {
+      Ref<ScalarRenderParam> param = value;
+      Scalar paramValue;
+      param.get(paramValue, elementIndex);
+      glUniform1f( location, paramValue );
+    } else if( glType == GL_FLOAT_VEC2 ) {
+      Ref<Vec2RenderParam> param = value;
+      Vec2 paramValue;
+      param.get(paramValue, elementIndex);
+      glUniform2f( location, paramValue.x, paramValue.y );
+    } else if( glType == GL_FLOAT_VEC3 ) {
+      Ref<Vec3RenderParam> param = value;
+      Vec3 paramValue;
+      param.get(paramValue, elementIndex);
+      glUniform3f( location, paramValue.x, paramValue.y, paramValue.z );
+    } else if( glType == GL_FLOAT_VEC4 ) {
+      if( value.type == ColorRenderParam ) {
+        Ref<ColorRenderParam> param = value;
+        Color paramValue;
+        param.get(paramValue, elementIndex);
+        glUniform4f( location, paramValue.r, paramValue.g, paramValue.b, paramValue.a );
+      } else {
+        Ref<Vec4RenderParam> param = value;
+        Vec4 paramValue;
+        param.get(paramValue, elementIndex);
+        glUniform4f( location, paramValue.x, paramValue.y, paramValue.z, paramValue.t );
+      }
+    }
+    /* count > 1: else { //TODO: fix wrapper!!!
+      if( glType == GL_INT )
+        glUniform1iv( location, count, value.intData );
+      else if( glType == GL_FLOAT )
+        glUniform1fv( location, count, value.scalData );
+      else if( glType == GL_FLOAT_VEC2 )
+        glUniform2fv( location, count, value.scalData );
+      else if( glType == GL_FLOAT_VEC3 )
+        glUniform3fv( location, count, value.scalData );
+      else if( glType == GL_FLOAT_VEC4 )
+        glUniform4fv( location, count, value.scalData );
+    }*/
+  }
+}
+
+inline RenderDrawData.loadTexture!( io Ref<RenderParamValues> paramValues, RenderValueKey key, Size textureIndex ) {
+  Ref<OGLTexture2D> texture = paramValues.getOGLTexture2D(key);
+  if( texture != null && this.textureParamsShaderCache.synchronize( textureIndex, texture, 0 ) ) {
+    glActiveTexture(GL_TEXTURE0 + textureIndex);//Important: set active texture before "confirmAsRequired" as it might call glBindTexture
+    paramValues.confirmAsRequired( key );
+    glBindTexture(texture.glTextureType, texture.bufferID);
+    if(this.logger.logShaderParams)
+      this.logger.log("shader loadTexture #"+textureIndex+": "+paramValues.getDesc(key, this.logger.logParamVersions, 0));
+  }
+}
+
+inline RenderDrawData.drawElements!( Ref<OGLBuffer> buffer, Integer geometryElementType, Integer instanceCount ) {
+  if( buffer.bufferType != GL_ELEMENT_ARRAY_BUFFER )
+    report("drawElements: Error: buffer is not an GL_ELEMENT_ARRAY_BUFFER");
+  else {
+    Data NULL;
+    ++this.numDrawnGeometries;
+
+    if(geometryElementType == GL_TRIANGLES)
+      this.numDrawnTriangles += buffer.elementCount/3 * (instanceCount == -1 ? 1 : instanceCount);
+    else if(geometryElementType == GL_QUADS)
+      this.numDrawnTriangles += buffer.elementCount/2 * (instanceCount == -1 ? 1 : instanceCount);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.bufferID);
+    if(instanceCount == -1)
+      glDrawElements(geometryElementType, buffer.elementCount, buffer.bufferElementComponentType, NULL);
+    else
+      glDrawElementsInstanced(geometryElementType, buffer.elementCount, buffer.bufferElementComponentType, NULL, instanceCount);
+
+    if(this.logger.enabled)
+      this.logger.log("glDrawElements: count="+buffer.elementCount+" elementType="+geometryElementType+" indicesBufferID="+buffer.bufferID+" componentType="+buffer.bufferElementComponentType);
+  }
+}
+
+inline RenderDrawData.flushPendingStates!() {
+  if( this.hasPendingStates ) {
+    this.hasPendingStates = false;
+
+    if( this.shader )
+      this.shader.popGLStates( this );
+
+    if( this.pendingStates.disablesDepthWrites != this.currentStates.disablesDepthWrites ) {
+      glDepthMask( this.pendingStates.disablesDepthWrites ? GL_FALSE : GL_TRUE );
+      if( this.logger.logGLStateChanges )
+        this.logger.log("glDepthMask( "+(this.pendingStates.disablesDepthWrites ? GL_FALSE : GL_TRUE)+" )");
+    }
+
+    if( this.pendingStates.hasPolygonOffset != this.currentStates.hasPolygonOffset ) {
+      if( this.pendingStates.hasPolygonOffset ) {
+        glEnable( GL_POLYGON_OFFSET_FILL );
+        if( this.logger.logGLStateChanges )
+          this.logger.log("glEnable( GL_POLYGON_OFFSET_FILL )");
+      } else
+        glDisable( GL_POLYGON_OFFSET_FILL );
+        if( this.logger.logGLStateChanges )
+          this.logger.log("glDisable( GL_POLYGON_OFFSET_FILL )");
+    }
+    if( this.pendingStates.hasPolygonOffset && ( this.pendingStates.polygonOffsetFactor != this.currentStates.polygonOffsetFactor || this.pendingStates.polygonOffsetUnits != this.currentStates.polygonOffsetUnits ) ) {
+      glPolygonOffset( this.pendingStates.polygonOffsetFactor, this.pendingStates.polygonOffsetUnits );
+      if( this.logger.logGLStateChanges )
+        this.logger.log("glPolygonOffset( "+this.pendingStates.polygonOffsetFactor+", "+this.pendingStates.polygonOffsetUnits+" )");
+    }
+    if( this.pendingStates.hasBlend != this.currentStates.hasBlend ) {
+      if( this.pendingStates.hasBlend ) {
+        glEnable( GL_BLEND );
+        if( this.logger.logGLStateChanges )
+          this.logger.log("glEnable( GL_BLEND )");
+      } else
+        glDisable( GL_BLEND );
+        if( this.logger.logGLStateChanges )
+          this.logger.log("glDisable( GL_BLEND )");
+    }
+    if( this.pendingStates.hasBlend && ( this.pendingStates.blendModeSfactor != this.currentStates.blendModeSfactor || this.pendingStates.blendModeDfactor != this.currentStates.blendModeDfactor ) ) {
+      glBlendFunc( this.pendingStates.blendModeSfactor, this.pendingStates.blendModeDfactor );
+      if( this.logger.logGLStateChanges )
+        this.logger.log("glBlendFunc( "+this.pendingStates.blendModeSfactor+", "+this.pendingStates.blendModeDfactor+" )");
+    }
+
+    if( this.pendingStates.cullFace != -1 && this.pendingStates.cullFace != this.currentStates.cullFace ) {
+      if( this.currentStates.cullFace == GL_NONE ) {
+        glEnable( GL_CULL_FACE );
+        if( this.logger.logGLStateChanges )
+          this.logger.log("glEnable( GL_CULL_FACE )");
+      }
+      if( this.pendingStates.cullFace == GL_NONE ) {
+        glDisable( GL_CULL_FACE );
+        if( this.logger.logGLStateChanges )
+          this.logger.log("glDisable( GL_CULL_FACE )");
+      } else {
+        glCullFace( this.pendingStates.cullFace );
+        if( this.logger.logGLStateChanges )
+          this.logger.log("glCullFace( "+this.pendingStates.cullFace+" )");
+      }
+    }
+
+    if( this.pendingStates.depthFunc != -1 && this.pendingStates.depthFunc != this.currentStates.depthFunc ) {
+      if( this.currentStates.depthFunc == GL_NONE ) {
+        glEnable( GL_DEPTH_TEST );
+        if( this.logger.logGLStateChanges )
+          this.logger.log("glEnable( GL_DEPTH_TEST )");
+      }
+      if( this.pendingStates.depthFunc == GL_NONE ) {
+        glDisable( GL_DEPTH_TEST );
+        if( this.logger.logGLStateChanges )
+          this.logger.log("glDisable( GL_DEPTH_TEST )");
+      } else {
+        glDepthFunc( this.pendingStates.depthFunc );
+        if( this.logger.logGLStateChanges )
+          this.logger.log("glDepthFunc( "+this.pendingStates.depthFunc+" )");
+      }
+    }
+
+    this.currentStates = this.pendingStates;
+
+    if( this.shader )
+      this.shader.pushGLStates( this );
+  }
+}
+
+function RenderDrawData.logCurrentDrawBuffers!() {
+  if(this.logger.logGLStateChanges) {
+    String buffersString = '[';
+    for( Size i = 0; i < this.currentNumDrawBuffers; ++i ) {
+      if(i)
+        buffersString += ", ";
+      if( this.currentDrawBuffers[i] == GL_NONE )
+        buffersString += "None";
+      else
+        buffersString += this.currentDrawBuffers[i] - GL_COLOR_ATTACHMENT0;
+    }
+    buffersString += ']';
+    this.logger.log("FBO draw color buffers: "+buffersString);
+  }
+}
+
+function ApplyMemberData.generateShaderVariation!( RenderSequenceDataStruct sequenceData ) {
+  this.shaderVariation = this.shaderParams.shaderPreprocessorVariants.get( this.shaderVariationName, null );
+  if( !this.shaderVariation ) { //Check; previous members might have generated the variation already
+    //Generate the shader variation with the right #defines
+    OGLShaderProgram shader = this.shaderParams.shader.clone();
+    shader.programId = 0;
+    shader.compiled = false;
+    this.shaderParams.shaderPreprocessorVariants[this.shaderVariationName] = shader;
+    this.shaderVariation = shader;
+    Size numDefines = shader.defines.size();
+    for( Size i = 0; i < numDefines; ++i ) {
+      String define = "#define "+shader.defines[i].paramName+" ";
+      Boolean isFlag = this.shader.defines[i].glType == OGLShaderProgram_glType_flag;
+
+      if( this.shader.defines[i].glType == OGLShaderProgram_glType_flag && this.sourceShaderParamKeys[i].isValid() ) {
+        //nothing to do
+      } else {
+        Ref<Object> value;
+        Size elementIndex;
+        if( this.sourceShaderParamKeys[i].isValid() ) {
+          value = this.allParams.get( this.sourceShaderParamKeys[i].key );
+          elementIndex = this.sourceShaderParamKeys[i].elementIndex;
+        } else
+          value = this.shaderParams.shaderDefaults.get(RenderValueKey(i));
+
+        Type paramType = value.type;
+        if( paramType == IntegerRenderParam ) {
+          Ref<IntegerRenderParam> param = value;
+          Integer intValue;
+          param.get(intValue, elementIndex);
+          define += intValue;
+        } else if( paramType == BooleanRenderParam ) {
+          Ref<BooleanRenderParam> param = value;
+          if( shader.defines[i].glType == OGLShaderProgram_glType_flag ) {
+            if(!param.value)
+              define = '';
+          } else
+            define += param.value;
+        } else if( paramType == ScalarRenderParam ) {
+          Ref<ScalarRenderParam> param = value;
+          define += param.value;
+        } else if( paramType == Vec2RenderParam ) {
+          Ref<Vec2RenderParam> param = value;
+          define += 'vec2('+param.value.x+','+param.value.y+')';
+        } else if( paramType == Vec3RenderParam ) {
+          Ref<Vec3RenderParam> param = value;
+          define += 'vec3('+param.value.x+','+param.value.y+','+param.value.z+')';
+        } else if( paramType == Vec4RenderParam ) {
+          Ref<Vec4RenderParam> param = value;
+          define += 'vec4('+param.value.x+','+param.value.y+','+param.value.z+','+param.value.t+')';
+        } else if( paramType == ColorRenderParam ) {
+          Ref<ColorRenderParam> param = value;
+          define += 'vec4('+param.value.r+','+param.value.g+','+param.value.b+','+param.value.a+')';
+        } else if(isFlag && !value) {
+          define = '';
+        }
+      }
+      shader.defineStrings.push( define + '\n');
+    }
+    //Process generic parameters
+    Size genericParameterIndex;
+    for( Size i = 0; i < shader.uniforms.size(); ++i ) {
+      if( shader.uniforms[i].sourceType < 0 ) {
+        Boolean vertexParam = shader.uniforms[i].sourceType == OGLShaderProgram_uniformSource_genericVertex;
+        Integer sourceType = this.shaderVariationGenericTypes.get(genericParameterIndex++);
+        shader.uniforms[i].sourceType = sourceType;
+
+        if( sourceType == OGLShaderProgram_uniformSource_uniform ) {
+          if( vertexParam )
+            shader.defineStrings.push( '#define ' + shader.uniforms[i].paramName + 'CATEGORY GENP_VERTEX_UNIFORM\n');
+          else
+            shader.defineStrings.push( '#define ' + shader.uniforms[i].paramName + 'CATEGORY GENP_FRAGMENT_UNIFORM\n');
+        } else if( sourceType == OGLShaderProgram_uniformSource_instancesTexture ) {
+          if( vertexParam )
+            shader.defineStrings.push( '#define ' + shader.uniforms[i].paramName + 'CATEGORY GENP_VERTEX_INSTANCESTEXTURE\n');
+          else
+            shader.defineStrings.push( '#define ' + shader.uniforms[i].paramName + 'CATEGORY GENP_FRAGMENT_INSTANCESTEXTURE\n');
+        } else if( sourceType == OGLShaderProgram_uniformSource_attribute ) {
+          if( vertexParam )
+            shader.defineStrings.push( '#define ' + shader.uniforms[i].paramName + 'CATEGORY GENP_VERTEX_ATTRIBUTE\n');
+          else
+            shader.defineStrings.push( '#define ' + shader.uniforms[i].paramName + 'CATEGORY GENP_FRAGMENT_ATTRIBUTE\n');
+        } else if( sourceType == OGLShaderProgram_uniformSource_texture ) {
+          if( vertexParam )
+            shader.defineStrings.push( '#define ' + shader.uniforms[i].paramName + 'CATEGORY GENP_VERTEX_TEXTURE\n');
+          else
+            shader.defineStrings.push( '#define ' + shader.uniforms[i].paramName + 'CATEGORY GENP_FRAGMENT_TEXTURE\n');
+        }
+      }
+    }
+  }
+}
+
+function ApplyMemberData.draw!( Size memberIndex, io RenderSequenceDataStruct sequenceData, io ApplyData parentApplyData, io RenderDrawData drawData ) {
+  if(drawData.logger.enabled && Boolean(parentApplyData.group)) {
+    drawData.logger.log("BEGIN ApplyData member "+memberIndex+" draw: "+sequenceData.getInstanceDesc(this.instanceIndex, false, drawData.logger.logIndices, true ));
+    ++drawData.logger.logIndentSize;
+  }
+
+  Boolean renderTargetBuffersChanged = false;
+  Boolean fboChanged = false;
+  Integer newFboWidth, newFboHeight;
+
+  Integer fbo;
+  if( drawData.currentRenderTargetInstanceStoredData !== this.renderTargetInstanceStoredData ) {
+    drawData.processPendingGLOperations( sequenceData );
+    fbo = this.initFBO( sequenceData, parentApplyData );
+  } else
+    fbo = drawData.currentFramebufferTarget;
+
+  if( fbo != drawData.currentFramebufferTarget ) {
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    if(drawData.logger.logGLStateChanges)
+      drawData.logger.log("glBindFramebuffer "+fbo);
+
+    drawData.currentFramebufferTarget = fbo;
+    drawData.currentFramebufferColorAttachments.resize(0);
+    drawData.currentFramebufferColorAttachmentTypes.resize(0);
+
+    drawData.currentNumDrawBuffers = 0;
+    drawData.currentDefaultColorBufferID = 0;
+    drawData.currentFramebufferDepthAttachment = 0;
+    drawData.drawBuffersNeedUpdate = true;
+    renderTargetBuffersChanged = true;
+
+    fboChanged = true;
+
+    if(fbo){
+      glDrawBuffer(GL_NONE);
+      drawData.currentFBOWidth = -1;
+      drawData.currentFBOHeight = -1;
+    } else {
+      sequenceData.getViewportSize( newFboWidth, newFboHeight );
+      glViewport(0, 0, newFboWidth, newFboHeight);
+      glDrawBuffer(sequenceData.targetDrawBuffer);
+      drawData.currentFramebufferColorAttachments.resize(1);
+      drawData.currentFramebufferColorAttachments.set(0, sequenceData.targetDrawBuffer);
+      drawData.currentFramebufferColorAttachmentTypes.resize(1);
+      drawData.currentFramebufferColorAttachmentTypes.set(0, GL_TEXTURE_2D);
+      drawData.currentNumDrawBuffers = 1;
+      if( drawData.currentDrawBuffers.size() < 1 )
+        drawData.currentDrawBuffers.resize(1);//Just increase size: avoid mallocs
+      drawData.currentDrawBuffers[0] = GL_COLOR_ATTACHMENT0;
+      drawData.currentFramebufferDepthAttachment = sequenceData.targetDrawBuffer;//Put anything non-zero
+
+      if(drawData.logger.logGLStateChanges)
+        drawData.logger.log("glViewport( width="+newFboWidth+" height="+newFboHeight+" )");
+    }
+  }
+
+  if( fbo != 0 && drawData.currentRenderTargetInstanceStoredData !== this.renderTargetInstanceStoredData ) {
+    ++drawData.numUpdatedRenderTargets;
+    drawData.currentRenderTargetInstanceStoredData = this.renderTargetInstanceStoredData;
+    renderTargetBuffersChanged = true;
+
+    UInt32 width, height, depthBufferID;
+    this.getTextureTargetInfo( depthBufferID, drawData.currentFramebufferDepthAttachmentType, drawData.currentDefaultColorBufferID, drawData.currentFramebufferColorAttachments, drawData.currentFramebufferColorAttachmentTypes, width, height );
+    if( width != drawData.currentFBOWidth || height != drawData.currentFBOHeight ) {
+      drawData.currentFBOWidth = width;
+      drawData.currentFBOHeight = height;
+      glViewport(0, 0, width, height);
+      if(drawData.logger.logGLStateChanges)
+        drawData.logger.log("glViewport( width="+width+" height="+height+" )");
+    }
+
+    if( depthBufferID != drawData.currentFramebufferDepthAttachment ) {
+      drawData.currentFramebufferDepthAttachment = depthBufferID;
+      if( drawData.currentFramebufferDepthAttachmentType == AttachmentType_depthTexture )
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthBufferID, 0);
+      else if( drawData.currentFramebufferDepthAttachmentType == AttachmentType_depthRenderBuffer )
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBufferID);
+      else if( drawData.currentFramebufferDepthAttachmentType == AttachmentType_depthTextureArray || drawData.currentFramebufferDepthAttachmentType == AttachmentType_depthCubeTexture )
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthBufferID, 0);
+      else if( drawData.currentFramebufferDepthAttachmentType == AttachmentType_depthStencilRenderBuffer )
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthBufferID);
+
+      if(drawData.logger.logGLStateChanges)
+        drawData.logger.log("framebuffer depth attachment: bufferID="+depthBufferID);
+    }
+  }
+  if( renderTargetBuffersChanged || parentApplyData.refineTextureTargetInfos.size() != 0 ) {
+    drawData.flushPendingStates();
+
+    //Initialize buffer attachments
+    Size numColorBuffers = drawData.currentFramebufferColorAttachments.size();
+    if( fbo != 0 ) {
+      for( Size i = 0; i < numColorBuffers; ++i ) {
+        Integer textureType = drawData.currentFramebufferColorAttachmentTypes.get(i);
+        Integer bufferID = drawData.currentFramebufferColorAttachments.get(i);
+        if( textureType == GL_TEXTURE_2D )//Else, needs texture refinement.
+          glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, textureType, bufferID, 0);
+      }
+
+      if(drawData.logger.logGLStateChanges)
+        drawData.logger.log("framebuffer color attachments: "+drawData.currentFramebufferColorAttachments.getString());
+    }
+
+    //Check for refinedRenderTargets
+    for( Size i = 0; i < parentApplyData.refineTextureTargetInfos.size(); ++i ) {
+      RefineTextureTargetInfo info = parentApplyData.refineTextureTargetInfos[i];
+
+      if( info.isDepth ) {
+        if( drawData.currentFramebufferDepthAttachmentType == AttachmentType_depthCubeTexture && info.subIndex >= GL_TEXTURE_CUBE_MAP_POSITIVE_X && info.subIndex <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z ) {
+          glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, info.subIndex, drawData.currentFramebufferDepthAttachment, 0);
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("framebuffer refined depth cubeMap attachment: subTexture="+info.subIndex);
+        } else if( drawData.currentFramebufferDepthAttachmentType == AttachmentType_depthTextureArray 
+                || drawData.currentFramebufferDepthAttachmentType == AttachmentType_depth3DTexture ) {
+          glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, drawData.currentFramebufferDepthAttachment, 0, info.subIndex);
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("framebuffer refined depth texture layer: subTexture="+info.subIndex);
+        } else
+          report("refineTarget: Error: unsupported target depth texture type: "+drawData.currentFramebufferDepthAttachmentType);
+      } else if( info.colorAttachIndex != -1 ) {
+        drawData.currentNumDrawBuffers = 0;
+        if( drawData.currentFramebufferColorAttachmentTypes.get(info.colorAttachIndex) == GL_TEXTURE_CUBE_MAP  && info.subIndex >= GL_TEXTURE_CUBE_MAP_POSITIVE_X && info.subIndex <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z ) {
+          glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+info.colorAttachIndex, info.subIndex, drawData.currentFramebufferColorAttachments.get(info.colorAttachIndex), 0);
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("framebuffer refined color cubeMap attachment: index="+info.colorAttachIndex+" subTexture="+info.subIndex);
+        } else if( drawData.currentFramebufferColorAttachmentTypes.get(info.colorAttachIndex) == GL_TEXTURE_3D || drawData.currentFramebufferColorAttachmentTypes.get(info.colorAttachIndex) == GL_TEXTURE_2D_ARRAY ) {
+          glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+info.colorAttachIndex, drawData.currentFramebufferColorAttachments.get(info.colorAttachIndex), 0, info.subIndex);
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("framebuffer refined color textureArray attachment: index="+info.colorAttachIndex+" subTexture="+info.subIndex);
+        } else
+          report("refineTarget: Error: unsupported target color texture type: "+drawData.currentFramebufferColorAttachmentTypes.get(info.colorAttachIndex));
+
+        if( drawData.currentDrawBuffers.size() < drawData.currentNumDrawBuffers+1 )
+          drawData.currentDrawBuffers.resize(drawData.currentNumDrawBuffers+1);
+        drawData.currentDrawBuffers[drawData.currentNumDrawBuffers++] = GL_COLOR_ATTACHMENT0 + info.colorAttachIndex;
+
+        glDrawBuffers(drawData.currentNumDrawBuffers, drawData.currentDrawBuffers);
+        drawData.logCurrentDrawBuffers();
+      }
+    }
+
+    //TODO: optimize by regrouping compatible clearColor/clearDepth operations
+    if( parentApplyData.hasClearColor ) {
+      for( Size i = 0; i < numColorBuffers; ++i ) {
+        Boolean hasClear;
+        Color color = this.getClearColor(parentApplyData, i, hasClear);
+        if(hasClear) {
+          drawData.drawBuffersNeedUpdate = true;
+          if( drawData.currentDrawBuffers.size() < 1 )
+            drawData.currentDrawBuffers.resize(1);//Just increase size: avoid mallocs
+
+          drawData.currentNumDrawBuffers = 1;
+          drawData.currentDrawBuffers[0] = GL_COLOR_ATTACHMENT0 + i;
+
+          glDrawBuffers(1, drawData.currentDrawBuffers);
+          drawData.logCurrentDrawBuffers();
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("clear color buffers: "+color);
+          glClearColor(color.r, color.g, color.b, color.a);
+          glClear(GL_COLOR_BUFFER_BIT);
+        }
+      }
+    }
+
+    if( parentApplyData.hasClearDepth ) {
+      Boolean hasClear;
+
+      Scalar depth = this.getClearDepth(parentApplyData, hasClear);
+      if( hasClear ) {
+
+        if( drawData.currentStates.disablesDepthWrites ) {
+          glDepthMask( GL_TRUE );
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("glDepthMask( GL_TRUE )");
+        }
+        if(drawData.logger.logGLStateChanges)
+          drawData.logger.log("clear depth buffer: "+depth);
+        glClearDepth(depth);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        if( drawData.currentStates.disablesDepthWrites ) {
+          glDepthMask( GL_FALSE );
+          if(drawData.logger.logGLStateChanges)
+            drawData.logger.log("glDepthMask( GL_FALSE )");
+        }
+      }
+    }
+  }
+
+  if( parentApplyData.hasPreDrawCallback ) {
+    drawData.flushPendingStates();
+    for( Size i = 0; i < parentApplyData.memberDrawCallbackFunctions.size(); ++i ) {
+      if( parentApplyData.isPreDrawCallback[i] ) {
+        this.callDrawFunction( sequenceData, parentApplyData, i, memberIndex );
+        if(drawData.logger.enabled)
+          drawData.logger.log("Calling preDraw user function "+parentApplyData.memberDrawCallbackFunctions[i].sharedKeys.functionName);
+      }
+    }
+  }
+
+  Boolean draw = false;
+  Ref<OGLBuffer> indicesBuffer;
+  if( this.shader != null ) {
+    if( !this.indicesParamKey.key.isValid() ) {
+      draw = true;
+    } else {
+      this.allParams.layers[this.indicesParamKey.key.layerIndex].params.confirmAsRequired( this.indicesParamKey.key.valueKey );
+      indicesBuffer = this.allParams.layers[this.indicesParamKey.key.layerIndex].params.getOGLBuffer(this.indicesParamKey.key.valueKey);
+      if( indicesBuffer.elementCount == 0 )
+        indicesBuffer = null;
+      else
+        draw = true;
+    }
+  }
+
+  if( draw ) {
+
+    //Generate shader variation if not done
+    if( this.shaderVariationName.length() != 0 && this.shaderVariation == null ){
+      this.generateShaderVariation( sequenceData );
+    }
+
+    if( drawData.shader != null && this.shaderVariation.programId != drawData.shader.programId ) {
+      drawData.shader.unloadShader(drawData);
+      drawData.shader = null;
+    }
+
+    //Cull face state is member-specific
+    if( drawData.hasPendingStates )
+      drawData.pendingStates.cullFace = this.memberSpecificCullFace;
+    else if( drawData.currentStates.cullFace != this.memberSpecificCullFace ) {
+      drawData.pendingStates = drawData.currentStates;
+      drawData.pendingStates.cullFace = this.memberSpecificCullFace;
+      drawData.hasPendingStates = true;
+    }
+
+    drawData.flushPendingStates();
+
+    //Load shader
+    if( drawData.shader == null ) {
+      drawData.shader = this.shaderVariation;
+      drawData.shader.createProgramFromShaders();
+      drawData.shader.loadShader(drawData);
+      drawData.drawBuffersNeedUpdate = true;
+      drawData.uniformParamsShaderCache.reset();
+      drawData.textureParamsShaderCache.reset();
+      drawData.attributeParamsShaderCache.reset();
+    }
+    Size numDefines = this.shaderVariation.defines.size();
+    Size numUniforms = this.shaderUniformValues.size();
+    Size numAttributes = this.shaderVariation.attributes.size();
+    Size numTextures = this.shaderVariation.textures.size();
+    Size numOutputFragments = this.shaderVariation.outputFragments.size();
+
+    if( drawData.drawBuffersNeedUpdate ) {
+      drawData.drawBuffersNeedUpdate = false;
+      if( numOutputFragments > 1 && fbo != 0 ) { //In the case fbo == 0, we would expect that only 1 framebuffer attachment is valid.
+        //Set render target attachments...
+        Size keyOffset = numUniforms + numAttributes + numTextures + numDefines;
+
+        Boolean drawBuffersChanged = false;
+        if( drawData.currentDrawBuffers.size() < numOutputFragments+1 )
+          drawData.currentDrawBuffers.resize(numOutputFragments+1);
+
+        Size numValidLocations = 0;
+        Boolean first = true;
+        for( Size i = 0; i < numOutputFragments; ++i ) {
+          RenderParamKey key = this.sourceShaderParamKeys[i+keyOffset].key;
+          Integer bufferID = 0;
+          Integer location = this.shaderVariation.outputFragments[i].programLocation;
+          if( location != -1 ) {
+            ++numValidLocations;
+            if( key.isValid() )
+              bufferID = this.allParams.layers[key.layerIndex].params.getOGLTexture2D( key.valueKey ).bufferID;
+            else if(first) {
+              bufferID = drawData.currentDefaultColorBufferID;
+            }
+
+            //Search among color attachments
+            Integer attachmentIndex = -1;
+            if( bufferID == 0 )
+              attachmentIndex = GL_NONE;
+            else {
+              for( Size j = 0; j < drawData.currentFramebufferColorAttachments.size(); ++j ) {
+                if( drawData.currentFramebufferColorAttachments.get(j) == bufferID ) {
+                  attachmentIndex = GL_COLOR_ATTACHMENT0+j;
+                  break;
+                }
+              }
+            }
+            if( attachmentIndex == -1 ){
+              throw("Error: shader "+this.shaderVariation.name+" "+this.shaderVariationName+": attachment not found: "+this.shaderVariation.outputFragments[i].name+" for "+this.getName(sequenceData));//TODO: have more detailed message
+            }
+
+            else if( drawData.currentDrawBuffers[location] != attachmentIndex ) {
+              drawBuffersChanged = true;
+              drawData.currentDrawBuffers[location] = attachmentIndex;
+            }
+            first = false;
+          }
+        }
+
+        if(drawData.currentNumDrawBuffers != numValidLocations) {
+          drawBuffersChanged = true;
+          drawData.currentNumDrawBuffers = numValidLocations;
+        }
+
+        if( drawBuffersChanged ) {
+          glDrawBuffers(drawData.currentNumDrawBuffers, drawData.currentDrawBuffers);
+          drawData.logCurrentDrawBuffers();
+        }
+      } else {
+        if( drawData.currentDefaultColorBufferID != 0 || fbo == 0 ) {
+          if( drawData.currentNumDrawBuffers != 1 || drawData.currentDrawBuffers[0] != GL_COLOR_ATTACHMENT0 ) {
+            if( drawData.currentDrawBuffers.size() < 1 )
+              drawData.currentDrawBuffers.resize(1);//Just increase size: avoid mallocs
+            drawData.currentNumDrawBuffers = 1;
+            drawData.currentDrawBuffers[0] = GL_COLOR_ATTACHMENT0;
+            glDrawBuffers(1, drawData.currentDrawBuffers);
+            drawData.logCurrentDrawBuffers();
+          }
+        } else {
+          glDrawBuffer(GL_NONE);
+          drawData.currentNumDrawBuffers = 0;
+          drawData.logCurrentDrawBuffers();
+        }
+      }
+      if( drawData.logger.logGLStateChanges ) {
+        Integer status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if(status==GL_FRAMEBUFFER_UNDEFINED)
+          drawData.logger.log("glCheckFramebufferStatus: GL_FRAMEBUFFER_UNDEFINED");
+        else if(status==GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT)
+          drawData.logger.log("glCheckFramebufferStatus: GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
+        else if(status==GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT)
+          drawData.logger.log("glCheckFramebufferStatus: GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
+        else if(status==GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER)
+          drawData.logger.log("glCheckFramebufferStatus: GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER");
+        else if(status==GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER)
+          drawData.logger.log("glCheckFramebufferStatus: GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER");
+        else if(status==GL_FRAMEBUFFER_UNSUPPORTED)
+          drawData.logger.log("glCheckFramebufferStatus: GL_FRAMEBUFFER_UNSUPPORTED");
+        else if(status==GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE)
+          drawData.logger.log("glCheckFramebufferStatus: GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE");
+        else if(status==GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS)
+          drawData.logger.log("glCheckFramebufferStatus: GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS");
+      }
+    }
+
+    //Load uniforms
+    //TODO: update only changing values; at 1st pass compare & cache per-shader value update requirements in sequence...
+    Size keyOffset = numDefines;
+    Size nextTextureID = numTextures;
+    for( Size i = 0; i < numUniforms; ++i ) {
+      Integer sourceType = this.shaderVariation.uniforms[i].sourceType;
+      Ref<Object> transformedValue = this.shaderUniformValues[i].transformedValue;
+      if( transformedValue ) {
+        drawData.uniformParamsShaderCache.synchronize( i, transformedValue, 0 );
+        if( sourceType == OGLShaderProgram_uniformSource_uniform ) {
+          this.shaderVariation.loadUniform( i, transformedValue, 0, drawData );
+          if( drawData.logger.logShaderParams )
+            drawData.logger.log("LoadUniform "+this.shaderVariation.uniforms[i].name+"="+SimpleRenderParam_getDesc(transformedValue, 0, this.shaderVariation.uniforms[i].space));
+        } else if( sourceType == OGLShaderProgram_uniformSource_instancesTexture || sourceType == OGLShaderProgram_uniformSource_texture ) {
+          Ref<OGLTexture2D> texture = transformedValue;
+          Size textureIndex = nextTextureID++;
+          if( drawData.textureParamsShaderCache.synchronize( textureIndex, texture, 0 ) ) {
+            glActiveTexture(GL_TEXTURE0 + textureIndex);//Important: set active texture before "confirmAsRequired" as it might call glBindTexture
+            if( this.shaderUniformValues[i].generator.dirty ) {
+              this.shaderUniformValues[i].generator.generator.generate(this.shaderUniformValues[i].transformedValue);
+              this.shaderUniformValues[i].generator.dirty = false;
+            }
+            glBindTexture(texture.glTextureType, texture.bufferID);
+            if(drawData.logger.logShaderParams)
+              drawData.logger.log("shader loadTexture #"+textureIndex+": "+this.shaderVariation.uniforms[i].name);
+          }
+        } else if( sourceType == OGLShaderProgram_uniformSource_instancesAttribute || sourceType == OGLShaderProgram_uniformSource_attribute ) {
+          Ref<OGLBuffer> buffer = transformedValue;
+          if( buffer != null ) {
+            if( this.shaderUniformValues[i].generator.dirty ) {
+              this.shaderUniformValues[i].generator.generator.generate(this.shaderUniformValues[i].transformedValue);
+              this.shaderUniformValues[i].generator.dirty = false;
+            }
+            this.shaderVariation.loadAttribute( this.shaderVariation.uniforms[i].programLocation, buffer, drawData, sourceType == OGLShaderProgram_uniformSource_instancesAttribute );
+            if(drawData.logger.logShaderParams )
+              drawData.logger.log("LoadAttribute "+this.shaderVariation.uniforms[i].name+": bufferID = " + buffer.bufferID + " numComp=" + buffer.numBufferElementComponents );
+          }
+        }
+      } else {
+        Size index = i+keyOffset;
+        Ref<Object> param;
+        Ref<RenderParamValues> paramValues;
+        UInt32 elementIndex;
+        RenderParamKey key = this.sourceShaderParamKeys[index].key;
+        if( key.isValid() ) {
+          paramValues = this.allParams.layers[key.layerIndex].params;
+          elementIndex = this.sourceShaderParamKeys[index].elementIndex;
+        } else {
+          paramValues = this.shaderParams.shaderDefaults;
+          key.valueKey = RenderValueKey(index);
+        }
+        param = paramValues.get(key.valueKey);
+
+        if( param != null && drawData.uniformParamsShaderCache.synchronize( i, param, elementIndex ) ) {
+
+          if( sourceType == OGLShaderProgram_uniformSource_uniform ) {
+            this.shaderVariation.loadUniform( i, param, elementIndex, drawData );
+            if( drawData.logger.logShaderParams )
+              drawData.logger.log("LoadUniform "+this.shaderVariation.uniforms[i].name+"="+paramValues.getDesc(key.valueKey, drawData.logger.logParamVersions, elementIndex));
+          } else if( sourceType == OGLShaderProgram_uniformSource_instancesTexture || sourceType == OGLShaderProgram_uniformSource_texture ) {
+            drawData.loadTexture( paramValues, key.valueKey, nextTextureID++ );
+          } else if( sourceType == OGLShaderProgram_uniformSource_instancesAttribute || sourceType == OGLShaderProgram_uniformSource_attribute ) {
+            Ref<OGLBuffer> buffer = param;
+            if( buffer != null ) {
+              paramValues.confirmAsRequired(key.valueKey);
+              this.shaderVariation.loadAttribute( this.shaderVariation.uniforms[i].programLocation, buffer, drawData, sourceType == OGLShaderProgram_uniformSource_instancesAttribute );
+              if(drawData.logger.logShaderParams )
+                drawData.logger.log("LoadAttribute "+this.shaderVariation.uniforms[i].name+": bufferID = " + buffer.bufferID + " numComp=" + buffer.numBufferElementComponents );
+            }
+          }
+        }
+      }
+    }
+
+    //Load attributes
+    keyOffset += numUniforms;
+    Size elementCount = 0;
+    for( Size i = 0; i < numAttributes; ++i ) {
+      Size index = i+keyOffset;
+      Ref<OGLBuffer> buffer;
+      Ref<RenderParamValues> paramValues;
+      RenderParamKey key = this.sourceShaderParamKeys[index].key;
+      if( key.isValid() )
+        paramValues = this.allParams.layers[key.layerIndex].params;
+      else {
+        key.valueKey = RenderValueKey(index);
+        paramValues = this.shaderParams.shaderDefaults;
+      }
+      buffer = paramValues.getOGLBuffer(key.valueKey);
+      if( buffer != null && drawData.attributeParamsShaderCache.synchronize( i, buffer, 0 ) ) {
+        paramValues.confirmAsRequired(key.valueKey);
+        this.shaderVariation.loadAttribute( this.shaderVariation.attributes[i].programLocation, buffer, drawData, false );
+
+        if(drawData.logger.logShaderParams )
+          drawData.logger.log("LoadAttribute "+this.shaderVariation.attributes[i].name+": bufferID = " + buffer.bufferID + " numComp=" + buffer.numBufferElementComponents );
+
+        if(buffer.bufferID)
+          drawData.currentNbVertices = buffer.elementCount * (this.drawInstanceCount == -1 ? 1 : this.drawInstanceCount);
+      }
+    }
+
+    keyOffset += numAttributes;
+    for( Size i = 0; i < numTextures; ++i ) {
+      Size index = i+keyOffset;
+      Ref<RenderParamValues> paramValues;
+      RenderParamKey key = this.sourceShaderParamKeys[index].key;
+      
+      if( key.isValid() && !getBit( this.useDefaultTexture, i) )
+        paramValues = this.allParams.layers[key.layerIndex].params;
+      else {
+        key.valueKey = RenderValueKey(index);
+        paramValues = this.shaderParams.shaderDefaults;
+      }
+      drawData.loadTexture( paramValues, key.valueKey, i );
+    }
+
+    drawData.numDrawnVertices += drawData.currentNbVertices;
+    if(indicesBuffer)
+      drawData.drawElements( indicesBuffer, this.geometryElementType, this.drawInstanceCount );
+    else {
+      if( this.drawInstanceCount == -1 )
+        glDrawArrays(this.geometryElementType, 0, drawData.currentNbVertices);
+      else
+        glDrawArraysInstanced(this.geometryElementType, 0, drawData.currentNbVertices, this.drawInstanceCount);
+    }
+  }
+  if(drawData.logger.enabled && Boolean(parentApplyData.group)) {
+    --drawData.logger.logIndentSize;
+    drawData.logger.log("END ApplyData member "+memberIndex+" draw: "+sequenceData.getInstanceDesc(this.instanceIndex, false, drawData.logger.logIndices, true ));
+  }
+}
+
+inline Boolean ApplyData.SameApplyGLStates?( ApplyGLStates reference ) {
+  if(  this.disablesDepthWrites != reference.disablesDepthWrites
+    || (this.depthFunc != -1 && this.depthFunc != reference.depthFunc)
+    || this.hasPolygonOffset != reference.hasPolygonOffset
+    || this.hasBlend != reference.hasBlend )
+    return false;
+  if( this.hasPolygonOffset && ( this.polygonOffsetFactor != reference.polygonOffsetFactor || this.polygonOffsetUnits != reference.polygonOffsetUnits ) )
+    return false;
+  if( this.hasBlend && ( this.blendModeSfactor != reference.blendModeSfactor || this.blendModeDfactor != reference.blendModeDfactor ) )
+    return false;
+  return true;
+}
+
+inline ApplyData.CopyToGLStates?( io ApplyGLStates copy ) {
+  copy.disablesDepthWrites = this.disablesDepthWrites;
+  copy.depthFunc = this.depthFunc;
+  copy.disablesDepthWrites = this.disablesDepthWrites;
+  copy.hasPolygonOffset = this.hasPolygonOffset;
+  copy.polygonOffsetFactor = this.polygonOffsetFactor;
+  copy.polygonOffsetUnits = this.polygonOffsetUnits;
+  copy.hasBlend = this.hasBlend;
+  copy.blendModeSfactor = this.blendModeSfactor;
+  copy.blendModeDfactor = this.blendModeDfactor;
+}
+
+inline ApplyData.draw!( io RenderSequenceDataStruct sequenceData, io RenderDrawData drawData ) {
+  if(drawData.logger.enabled) {
+    Ref<SequencePassDataObj> sequencePass = this.sequencePassDataObj;
+    drawData.logger.log("INIT ApplyData draw: "+this.getName(sequenceData)+" for "+sequenceData.getInstanceDesc(sequencePass.data.ownerInstanceIndex, false, drawData.logger.logIndices, true ));
+    ++drawData.logger.logIndentSize;
+    if(drawData.shader)
+      ++drawData.logger.logIndentSize;
+  }
+  if( drawData.hasPendingStates )
+    this.CopyToGLStates( drawData.pendingStates );
+  else if( !this.SameApplyGLStates( drawData.currentStates ) ) {
+    drawData.hasPendingStates = true;
+    this.CopyToGLStates( drawData.pendingStates );
+  }
+
+  if( this.shaderDraw || this.hasClearColor || this.hasClearDepth || this.refineTextureTargetInfos.size() != 0 || this.hasPreDrawCallback ) {
+    //Render members
+    Size numMembers = this.applyMembersData.size();
+    for( Size i = 0; i < numMembers; ++i ) {
+      if( !this.applyMembersData[i].noDraw )
+        this.applyMembersData[i].draw( i, sequenceData, this, drawData );
+    }
+  }
+
+  if(drawData.logger.enabled)
+    --drawData.logger.logIndentSize;//Don't print 'END', since we are not really enclosing sub-apply Datas
+    if(drawData.shader)
+      --drawData.logger.logIndentSize;
+}
+
+inline ApplyData.postDraw?( RenderSequenceDataStruct sequenceData, io RenderDrawData drawData ) {
+//report("ApplyData.postDraw: "+this.getName(sequenceData));//DEBUGPRINT
+  if( drawData.hasPendingStates )
+    this.CopyToGLStates( drawData.pendingStates );
+  else if( !this.SameApplyGLStates( drawData.currentStates ) ) {
+    drawData.hasPendingStates = true;
+    this.CopyToGLStates( drawData.pendingStates );
+  }
+  drawData.flushPendingStates();
+  Size numMembers = this.applyMembersData.size();
+  for( Size i = 0; i < numMembers; ++i ) {
+    if( !this.applyMembersData[i].noDraw ) {
+      for( Size j = 0; j < this.memberDrawCallbackFunctions.size(); ++j ) {
+        if( !this.isPreDrawCallback[j] ) {
+          this.applyMembersData[i].callDrawFunction( sequenceData, this, j, i );
+          if(drawData.logger.enabled)
+            drawData.logger.log("Calling postDraw user function "+this.memberDrawCallbackFunctions[j].sharedKeys.functionName);
+        }
+      }
+    }
+  }
+}
+
+function ~RenderDrawData() {
+  if(this.globalVertexArrayObject != 0 && cpglHaveContext()) {
+    UInt32 uintArray[];
+    uintArray.resize(1);
+    glDeleteVertexArrays(1,uintArray);
+  }
+}
+
+function RenderDrawData.processPendingGLOperations!( io RenderSequenceDataStruct sequenceData ) {
+  //Allocate and release rendertarget textures
+  sequenceData.releaseFramebuffers();
+  sequenceData.releaseTextures();
+  sequenceData.allocateTextures();
+}
+
+function RenderDrawData.draw!( io RenderSequenceDataStruct sequenceData, io Boolean newGLContext, io Size numDrawnGeometries, io Size numDrawnVertices, io Size numDrawnTriangles, Boolean enableLog, Boolean logGLStateChanges, Boolean logShaderParams, Boolean logIndices, Boolean logParamVersions ) {
+
+  if(!cpglHaveContext()){
+    setError("ERROR: RenderDrawData.draw. OpenGL context not bound");
+    return;
+  }
+  Size numApplyOps = sequenceData.applyOpsSequence.size();
+  if( sequenceData.wrongGLVersion || numApplyOps == 0 )
+    return;
+  UInt64 profileStart;
+  if( sequenceData.enableProfiling )
+    profileStart = getCurrentTicks();
+
+  Boolean initialize = this.tempMat33Array.size() == 0 || newGLContext;
+  if( initialize ) {
+    //Set initial state
+    this.tempMat33Array.resize(1);//Should not be required; fix OGL wrapper...
+    this.tempMat44Array.resize(1);//Should not be required; fix OGL wrapper...
+    this.tempSInt32V.resize(4);
+    this.tempUInt32V.resize(4);
+
+    glGenVertexArrays(1,this.tempUInt32V);
+    this.globalVertexArrayObject = this.tempUInt32V[0];
+    this.noneRenderTargetInstanceStoredData = InstanceStoredData();
+
+    newGLContext = false;
+  }
+  
+  if( !sequenceData.pureGL32 ) {//GL_RENDER_MODE doesn't exist in pure OGL 3.2 (Darwin), and querying it causes an error.
+    // Maya renders in GL_SELECT mode when a user clicks in the viewport, this causes slowness
+    // in glBlitFramebuffer() if we try to render there
+    glGetIntegerv(GL_RENDER_MODE, this.tempSInt32V);
+    if ( this.tempSInt32V[0] == GL_SELECT )
+      return;
+  }
+
+  glGetIntegerv(GL_VIEWPORT, this.tempSInt32V);
+  if( this.tempSInt32V[2]==0 || this.tempSInt32V[3]==0 )
+    return;
+
+  this.logger.reset(enableLog, logGLStateChanges, logShaderParams, logIndices, logParamVersions);
+  this.numUpdatedRenderTargets = 0;
+
+  glBindVertexArray(this.globalVertexArrayObject);
+  glEnable(GL_DEPTH_TEST);
+  glDisable(GL_SCISSOR_TEST);        
+  glDisable( GL_STENCIL_TEST );
+  glDepthFunc(GL_LESS);
+  glDepthMask(GL_TRUE);
+  this.currentStates.disablesDepthWrites = false;
+  this.currentStates.depthFunc = GL_LESS;
+
+  glDisable( GL_POLYGON_OFFSET_FILL );
+  glPolygonOffset( 0, 0 );
+  this.currentStates.hasPolygonOffset = false;
+  this.currentStates.polygonOffsetFactor = 0;
+  this.currentStates.polygonOffsetUnits = 0;
+
+  glDisable( GL_BLEND );
+  this.currentStates.hasBlend = false;
+  this.currentStates.polygonOffsetFactor = GL_NONE;
+  this.currentStates.polygonOffsetUnits = GL_NONE;
+
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+  this.currentStates.cullFace = GL_BACK;
+  this.hasPendingStates = false;
+
+  glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+  if( this.logger.enabled )
+    this.logger.log("BEGIN DRAW: sequenceData.generationCount="+sequenceData.generationCount+" **********************************************");
+
+  if( this.logger.logGLStateChanges ) {
+    this.logger.log("glEnable(GL_DEPTH_TEST)");
+    this.logger.log("glDepthFunc(GL_LESS)");
+    this.logger.log("glDepthMask(GL_TRUE)");
+    this.logger.log("glDisable( GL_POLYGON_OFFSET_FILL )");
+    this.logger.log("glPolygonOffset( 0, 0 )");
+    this.logger.log("glDisable( GL_BLEND )");
+    this.logger.log("glEnable(GL_CULL_FACE)");
+    this.logger.log("glCullFace(GL_BACK)");
+    this.logger.log("GL_TEXTURE_CUBE_MAP_SEAMLESS");
+  }
+
+  this.processPendingGLOperations( sequenceData );
+
+  this.shader = null;
+  this.uniformParamsShaderCache.reset();
+  this.textureParamsShaderCache.reset();
+  this.attributeParamsShaderCache.reset();
+
+  this.currentFramebufferTarget = RenderTarget_none;
+  this.currentFramebufferColorAttachments.resize(0);
+  this.currentFramebufferDepthAttachment = 0;
+  this.numDrawnTriangles = 0;
+  this.numDrawnVertices = 0;
+  this.currentNbVertices = 0;
+  this.numDrawnGeometries = 0;
+  this.currentRenderTargetInstanceStoredData = this.noneRenderTargetInstanceStoredData;
+
+  for( Size i = 0; i < numApplyOps; ++i ) {
+    if(sequenceData.applyOpsSequence[i].onlyPostDrawCallbacks)
+      sequenceData.applyOpsSequence[i].applyData.data.postDraw( sequenceData, this );
+    else
+      sequenceData.applyOpsSequence[i].applyData.data.draw( sequenceData, this );
+  }
+
+  this.flushPendingStates();
+
+  if( this.shader ) {
+    ++this.logger.logIndentSize;//Because the applyData already decreased for the shader
+    this.shader.unloadShader(this);
+    this.shader = null;
+  }
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glDrawBuffer(sequenceData.targetDrawBuffer);
+
+  if( this.logger.logGLStateChanges ) {
+    this.logger.log("glBindFramebuffer(GL_FRAMEBUFFER, 0);");
+    this.logger.log("glDrawBuffer("+sequenceData.targetDrawBuffer+")");
+  }
+  if( this.logger.enabled ) {
+    this.logger.log("TOTAL Num updated targets: "+this.numUpdatedRenderTargets);
+    this.logger.log("END DRAW **********************************************");
+  }
+
+  numDrawnGeometries = this.numDrawnGeometries;
+  numDrawnVertices = this.numDrawnVertices;
+  numDrawnTriangles = this.numDrawnTriangles;
+
+  //report("Num updated targets: "+this.numUpdatedRenderTargets);
+  //glFinish();
+
+  if( sequenceData.enableProfiling ) {
+    UInt64 profileEnd = getCurrentTicks();
+    report("PROFILING: RenderDrawData.draw: "+ Size(getSecondsBetweenTicks(profileStart, profileEnd)*1000000.0));
+  }
+}
+
+function RenderDrawData.updateFPS!( UInt64 beginTick, io Scalar evalFPS, io Scalar globalFPS ) {
+  if( beginTick == 0 )
+    return;
+
+  Size nextTickIndex = (this.lastTickIndex+1)%10;
+  UInt64 drawTick = getCurrentTicks();
+
+  this.lastEvalIntervals[nextTickIndex] = getSecondsBetweenTicks(beginTick, drawTick);
+  this.lastDrawTicks[nextTickIndex] = drawTick;
+
+  if( this.lastDrawTicks[this.lastTickIndex] != 0 ) {
+    globalFPS = Scalar(1.0/getSecondsBetweenTicks(this.lastDrawTicks[this.lastTickIndex], drawTick));
+    Float64 accumEvalTime = 0.0;
+    for( Size i = 0; i < 10; ++i )
+      accumEvalTime += this.lastEvalIntervals[i];
+    evalFPS = Scalar( 10.0/accumEvalTime );
+
+    if( nextTickIndex == 0 )
+      report("evalFPS: "+evalFPS+" globalFPS: "+globalFPS);
+  }
+
+  this.lastTickIndex = nextTickIndex;
+}

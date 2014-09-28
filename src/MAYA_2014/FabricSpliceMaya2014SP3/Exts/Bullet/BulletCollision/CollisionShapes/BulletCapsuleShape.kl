@@ -1,0 +1,127 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+///The BulletCapsuleShape represents a capsule around the Y axis, there is also the BulletCapsuleShapeX aligned around the X axis and BulletCapsuleShapeZ around the Z axis.
+///The total height is height+2*radius, so the height is just the height between the center of each 'sphere' of the capsule caps.
+///The BulletCapsuleShape is a convex hull of two spheres. The BulletMultiSphereShape is a more general collision shape that takes the convex hull of multiple sphere, so it can also represent a capsule when just using two spheres.
+object BulletCapsuleShape : BulletConvexInternalShape, BulletConvexShape, BulletCollisionShape
+{
+	Data pointer;
+};
+
+function Data BulletCapsuleShape.getPointer(){ 
+  return this.pointer; 
+}
+
+function BulletCapsuleShape (Scalar radius, Scalar height){
+  this.__construct(radius, height);
+}
+function BulletCapsuleShape.__construct!(Scalar radius, Scalar height) = 'BulletCapsuleShape_construct';
+
+function ~BulletCapsuleShape(){
+	this.__destroy();
+}
+function BulletCapsuleShape.__destroy!() = 'BulletCapsuleShape_destroy';
+
+
+///CollisionShape Interface
+function BulletCapsuleShape.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = 'BulletCapsuleShape_calculateLocalInertia';
+
+/// BulletConvexShape Interface
+function Vec3 BulletCapsuleShape.localGetSupportingVertexWithoutMargin(in Vec3 vec) = 'BulletCapsuleShape_localGetSupportingVertexWithoutMargin';
+
+function BulletCapsuleShape.batchedUnitVectorGetSupportingVertexWithoutMargin?( Vec3 vectors [], io Vec3 supportVerticesOut[]) = 'BulletCapsuleShape_batchedUnitVectorGetSupportingVertexWithoutMargin';
+
+function BulletCapsuleShape.setMargin!(Scalar collisionMargin) = 'BulletCapsuleShape_setMargin';
+
+function BulletCapsuleShape.getAabb ( Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletCapsuleShape_getAabb';
+
+function String BulletCapsuleShape.getName() = 'BulletCapsuleShape_getName';
+function Integer BulletCapsuleShape.getUpAxis() = 'BulletCapsuleShape_getUpAxis';
+
+function Scalar BulletCapsuleShape.getRadius() = 'BulletCapsuleShape_getRadius';
+
+function Scalar BulletCapsuleShape.getHalfHeight() = 'BulletCapsuleShape_getHalfHeight';
+
+function BulletCapsuleShape.setLocalScaling!(in Vec3 scaling) = 'BulletCapsuleShape_setLocalScaling';
+
+// function Integer BulletCapsuleShape.calculateSerializeBufferSize() ;
+
+// 	///fills the dataBuffer and returns the struct name (and 0 on failure)
+// function const BulletCapsuleShape.char*	serialize(void* dataBuffer, BulletSerializer* serializer);
+
+
+////////////////////////////////////////////////
+// From BulletCollisionShape
+
+function BulletCapsuleShape.setMargin!(Scalar margin) = 'BulletCapsuleShape_setMargin';
+function Scalar	BulletCapsuleShape.getMargin() = 'BulletCapsuleShape_getMargin';
+
+
+
+/*
+///BulletCapsuleShapeX represents a capsule around the Z axis
+///the total height is height+2*radius, so the height is just the height between the center of each 'sphere' of the capsule caps.
+class BulletCapsuleShapeX : public BulletCapsuleShape
+{
+public:
+
+	BulletCapsuleShapeX(Scalar radius,Scalar height);
+		
+	//debugging
+	virtual const char*	getName()const
+	{
+		return "CapsuleX";
+	}
+
+	
+
+};
+
+///BulletCapsuleShapeZ represents a capsule around the Z axis
+///the total height is height+2*radius, so the height is just the height between the center of each 'sphere' of the capsule caps.
+class BulletCapsuleShapeZ : public BulletCapsuleShape
+{
+public:
+	BulletCapsuleShapeZ(Scalar radius,Scalar height);
+
+		//debugging
+	virtual const char*	getName()const
+	{
+		return "CapsuleZ";
+	}
+
+	
+};
+
+///do not change those serialization structures, it requires an updated sBulletDNAstr/sBulletDNAstr64
+struct	BulletCapsuleShapeData
+{
+	BulletConvexInternalShapeData	m_convexInternalShapeData;
+
+	Integer	m_upAxis;
+
+	char	m_padding[4];
+};
+
+SIMD_FORCE_INLINE	Integer	BulletCapsuleShape::calculateSerializeBufferSize() const
+{
+	return sizeof(BulletCapsuleShapeData);
+}
+
+	///fills the dataBuffer and returns the struct name (and 0 on failure)
+SIMD_FORCE_INLINE	const char*	BulletCapsuleShape::serialize(void* dataBuffer, BulletSerializer* serializer) const
+{
+	BulletCapsuleShapeData* shapeData = (BulletCapsuleShapeData*) dataBuffer;
+	
+	BulletConvexInternalShape::serialize(&shapeData->m_convexInternalShapeData,serializer);
+
+	shapeData->m_upAxis = m_upAxis;
+	
+	return "BulletCapsuleShapeData";
+}
+
+
+*/

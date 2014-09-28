@@ -1,0 +1,47 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+object OpenImageInput {
+  Data handle;
+};
+
+function OpenImageInput() = "OpenImageInput_construct";
+function ~OpenImageInput() = "OpenImageInput_free";
+function OpenImageInput.reset() = "OpenImageInput_free";
+inline Boolean OpenImageInput.valid() {
+  Data nil;
+  return this.handle != nil;
+}
+
+inline OpenImageInput(String fileName) { this.open(fileName); }
+
+function OpenImageInput.open!(String fileName) = "OpenImageInput_open";
+function OpenImageSpec OpenImageInput.spec() = "OpenImageInput_spec";
+function Boolean OpenImageInput.supports(String feature) = "OpenImageInput_supports";
+function Boolean OpenImageInput.close!() = "OpenImageInput_close";
+function SInt32 OpenImageInput.current_subimage() = "OpenImageInput_current_subimage";
+function SInt32 OpenImageInput.current_miplevel() = "OpenImageInput_current_miplevel";
+function Boolean OpenImageInput.seek_subimage!(SInt32 subimage, SInt32 miplevel, io OpenImageSpec newspec) = "OpenImageInput_seek_subimage_variant1";
+function Boolean OpenImageInput.seek_subimage!(SInt32 subimage, io OpenImageSpec newspec) = "OpenImageInput_seek_subimage_variant2";
+function Boolean OpenImageInput.read_scanline!(SInt32 y, SInt32 z, OpenImageTypeDesc format, io Data data, SInt64 xstride) = "OpenImageInput_read_scanline_variant1";
+function Boolean OpenImageInput.read_scanline!(SInt32 y, SInt32 z, io Float32 data[]) = "OpenImageInput_read_scanline_variant2";
+function Boolean OpenImageInput.read_scanlines!(SInt32 ybegin, SInt32 yend, SInt32 z, OpenImageTypeDesc format, io Data data, SInt64 xstride, SInt64 ystride) = "OpenImageInput_read_scanlines_variant1";
+function Boolean OpenImageInput.read_scanlines!(SInt32 ybegin, SInt32 yend, SInt32 z, SInt32 chbegin, SInt32 chend, OpenImageTypeDesc format, io Data data, SInt64 xstride, SInt64 ystride) = "OpenImageInput_read_scanlines_variant2";
+function Boolean OpenImageInput.read_tile!(SInt32 x, SInt32 y, SInt32 z, OpenImageTypeDesc format, io Data data, SInt64 xstride, SInt64 ystride, SInt64 zstride) = "OpenImageInput_read_tile_variant1";
+function Boolean OpenImageInput.read_tile!(SInt32 x, SInt32 y, SInt32 z, io Float32 data[]) = "OpenImageInput_read_tile_variant2";
+function Boolean OpenImageInput.read_tiles!(SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend, SInt32 zbegin, SInt32 zend, OpenImageTypeDesc format, io Data data, SInt64 xstride, SInt64 ystride, SInt64 zstride) = "OpenImageInput_read_tiles_variant1";
+function Boolean OpenImageInput.read_tiles!(SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend, SInt32 zbegin, SInt32 zend,  SInt32 chbegin, SInt32 chend, OpenImageTypeDesc format, io Data data, SInt64 xstride, SInt64 ystride, SInt64 zstride) = "OpenImageInput_read_tiles_variant2";
+function Boolean OpenImageInput.read_image!(OpenImageTypeDesc format, io Data data, SInt64 xstride, SInt64 ystride, SInt64 zstride) = "OpenImageInput_read_image_variant1";
+function Boolean OpenImageInput.read_image!(io Float32 data[]) = "OpenImageInput_read_image_variant2";
+function Boolean OpenImageInput.read_native_scanline!(SInt32 y, SInt32 z, io Data data) = "OpenImageInput_read_native_scanline";
+function Boolean OpenImageInput.read_native_scanlines!(SInt32 ybegin, SInt32 yend, SInt32 z, io Data data) = "OpenImageInput_read_native_scanlines_variant1";
+function Boolean OpenImageInput.read_native_scanlines!(SInt32 ybegin, SInt32 yend, SInt32 z, SInt32 chbegin, SInt32 chend, io Data data) = "OpenImageInput_read_native_scanlines_variant2";
+function Boolean OpenImageInput.read_native_tile!(SInt32 x, SInt32 y, SInt32 z, io Data data) = "OpenImageInput_read_native_tile";
+function Boolean OpenImageInput.read_native_tiles!(SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend, SInt32 zbegin, SInt32 zend, io Data data) = "OpenImageInput_read_native_tiles_variant1";
+function Boolean OpenImageInput.read_native_tiles!(SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend, SInt32 zbegin, SInt32 zend, SInt32 chbegin, SInt32 chend, io Data data) = "OpenImageInput_read_native_tiles_variant2";
+function Boolean OpenImageInput.read_native_deep_scanlines!(SInt32 ybegin, SInt32 yend, SInt32 z, SInt32 chbegin, SInt32 chend, io OpenImageDeepData deepdata) = "OpenImageInput_read_native_deep_scanlines";
+function Boolean OpenImageInput.read_native_deep_tiles!(SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend, SInt32 zbegin, SInt32 zend, SInt32 chbegin, SInt32 chend, io OpenImageDeepData deepdata) = "OpenImageInput_read_native_deep_tiles";
+function Boolean OpenImageInput.read_native_deep_image!(io OpenImageDeepData deepdata) = "OpenImageInput_read_native_deep_image";
+function String OpenImageInput.geterror() = "OpenImageInput_geterror";

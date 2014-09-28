@@ -1,0 +1,68 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlineshader` is an interface representing a single shader for an :ref:`inlinedrawing`. For a code example please see the :ref:`oglinlineshader`.
+*/
+
+require Math;
+
+interface InlineShader {
+  // returns the name of the shader
+  String getName();
+
+  // removes all materials from the shader
+  reset!();
+
+  // draws the shader on the screen.
+  // this is used by the InlineDrawing and should not 
+  // be called manually.
+  Boolean _draw!(io DrawContext context);
+
+  // returns true if this shader has a material with a given name
+  Boolean hasMaterial(String name);
+
+  // returns (and eventually creates) a new matching material with a given name
+  InlineMaterial getOrCreateMaterial!(String name);
+
+  // returns the number of materials in this shader
+  Size getMaterialCount();
+
+  // returns an existing material by index
+  InlineMaterial getMaterial(Index index);
+
+  // define a new uniform on the shader.
+  defineUniform!(InlineUniform uniform);
+
+  // returns true if this shader has a uniform with a given name
+  Boolean hasUniform(String name);
+
+  // sets the global value of a uniform
+  // this can be changed per material, per instance or even per transform
+  setUniform!(InlineUniform uniform);
+
+  // define a surface attribute with a given name and type
+  defineAttribute!(String name, String attributeType);
+
+  // returns true if this shader has an attribute with a given name
+  Boolean hasAttribute(String name);
+
+  // returns the number of attributes
+  Size getAttributeCount();
+
+  // returns the name of an attribute
+  String getAttributeName(Index index);
+
+  // returns the ID / location of a given attribute inside the shader.
+  // for OpenGL this is the program attribute id, for example.
+  Integer getAttributeID(String name);
+
+  // draws a uniform for the shader, applies the value essentially. 
+  // this should be used from within the InlineMaterial's _draw or 
+  // the InlineInstance's _draw.
+  Boolean _drawUniform!(io DrawContext context, InlineUniform uniform);
+};
+

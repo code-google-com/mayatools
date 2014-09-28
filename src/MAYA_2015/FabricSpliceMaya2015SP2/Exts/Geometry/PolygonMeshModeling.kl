@@ -1,0 +1,317 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+//Merge multiple meshes to this one, and transform merged meshes' positions and optionally normals.
+function PolygonMesh.mergeMeshes!( PolygonMesh sources[], Xfo transformXfos[], Boolean transformNormals ) {
+  //TODO: have a version with Float64 Xfo
+  Size firstPoints[];
+  Size firstPolygons[];
+  this.mergeMeshes( sources, firstPoints, firstPolygons );
+  Ref<Vec3Attribute> normals = this.getNormals();
+
+  for( Size i = 0; i < sources.size(); ++i ) {
+    Ref<PolygonMesh> source = sources[i];
+    Mat44 mat44 = transformXfos[i].toMat44();
+    Size firstPoint = firstPoints[i];
+
+    for( Size j = 0; j < source.pointCount(); ++j ) {
+      Vec3 pos = mat44 * this.getPointPosition( firstPoint+j );
+      this.setPointPosition( firstPoint+j, pos );
+    }
+
+    if(transformNormals && normals != null) {
+      Mat33 normMat = mat44.upperLeft().inverse().transpose();
+      for( Size j = 0; j < source.pointCount(); ++j ) {
+        //Sharing is unchanged: just transform all values directly
+        DataIter pointIter = this._getPointIter( firstPoint+j );
+        _UnsharedAttributeIndexIter iter = this._getPointIterUnsharedAttributeIndexIter( pointIter );
+        UInt32 attributeIndex;
+        while( this._unsharedAttributeIndexIterGetNext(iter, attributeIndex) )
+          normals.values[ attributeIndex ] = (normMat * normals.values[ attributeIndex ]).unit_safe();//TODO: don't normalize if no scaling
+      }
+    }
+  }
+}
+
+//Merge multiple copies of a mesh to this one, with different transforms.
+function PolygonMesh.mergeMeshClones!( Ref<PolygonMesh> source, Xfo transformXfos[], Boolean transformNormals ) {
+  PolygonMesh sources[];
+  sources.resize(transformXfos.size());
+  for( Size i = 0; i < sources.size(); ++i )
+    sources[i] = source;
+  this.mergeMeshes( sources, transformXfos, transformNormals );
+}
+
+//Merge a single mesh to this one.
+inline PolygonMesh.mergeMesh!( Ref<PolygonMesh> source ) {
+  Size firstPoints[];
+  Size firstPolygons[];
+  PolygonMesh sources[];
+  sources.push(source);
+  this.mergeMeshes( sources, firstPoints, firstPolygons );
+}
+
+//Subdivide polygons linearly.
+//Created edge points are firsEdgePoint..firstCenterPoint, and created center points are firstCenterPoint..pointCount().
+function PolygonMesh.linearSubdividePolygons!( Size polygons[], io Size firstEdgePoint, io Size firstCenterPoint ) {
+  this.beginStructureChanges();
+
+  //Create edge points
+  firstEdgePoint = this.pointCount();
+  for( Size i = 0; i < polygons.size(); ++i ) {
+    Size polygon = polygons[i];
+    LocalIndexArray points;
+    this.getPolygonPoints( polygon, points );
+
+    Size polygonDeltaOffset;
+    for( Size j = 0; j < points.size(); ++j ) {
+      Size offset = j+polygonDeltaOffset;
+      Size point = points.get(j);
+      Size nextPoint = points.get( NextOff( j, points.size() ) );
+      if( point < firstEdgePoint && nextPoint < firstEdgePoint) {
+        //unsplit edge
+        Size newPointIndex;
+        this.splitEdge( polygon, polygonDeltaOffset, 0.5, newPointIndex );
+        ++polygonDeltaOffset;//Skip over the newly created point
+      }
+      ++polygonDeltaOffset;
+    }
+  }
+
+  //Split polygons
+  firstCenterPoint = this.pointCount();
+  for( Size i = 0; i < polygons.size(); ++i ) {
+    Size polygon = polygons[i];
+
+    Size size = this.getPolygonSize(polygon);
+    Size sizeBeforeSplit = size/2;
+
+    //Split edge garantees that added point was at polygonPointIndex+1,
+    //so we can assume that polygon odd indices are new points.
+
+    if( sizeBeforeSplit == 4 ) {
+      //optimize for quads: in such case, splitting as a cross would lead to proper attribute values right away
+      Size newPolygonIndex, newPolygonEdgeStartPointIndex;
+      this.splitPolygon( polygon, 1, 5, newPolygonIndex, newPolygonEdgeStartPointIndex );
+
+      Size centerPoint;
+      this.splitEdge( newPolygonIndex, newPolygonEdgeStartPointIndex, 0.5, centerPoint );
+
+      Size otherPolygon;
+      this.splitPolygon( polygon, 2, 5, otherPolygon, newPolygonEdgeStartPointIndex );
+      this.splitPolygon( newPolygonIndex, 2, 5, otherPolygon, newPolygonEdgeStartPointIndex );
+    } else {
+      Size newPolygonIndex, newPolygonEdgeStartPointIndex;
+      this.splitPolygon( polygon, 3, 1, newPolygonIndex, newPolygonEdgeStartPointIndex );
+
+      Size centerPoint;
+      this.splitEdge( newPolygonIndex, newPolygonEdgeStartPointIndex, 0.5, centerPoint );
+      Size newPolygonSize = size;//removed 1 by addEdge, added 1 by splitEdge
+
+      LocalL16UInt32Array sourceIndices;
+      LocalL16ScalarArray sourceWeights;
+      sourceIndices.resize(sizeBeforeSplit);//only unsplit points
+      sourceWeights.resize(sizeBeforeSplit);//only unsplit points
+      Scalar weight = 1.0f/sizeBeforeSplit;
+      for( Size j = 0; j < sizeBeforeSplit; j++ ) {
+        sourceIndices.set(j, this.getPolygonAttributeIndex(newPolygonIndex, j*2) );
+        sourceWeights.set(j, weight);
+      }
+      //We know that centerPoint has a single, uniform attribute (comes from addEdge+splitPoint)
+      this.base.attributes.linearCombine( sourceIndices, sourceWeights, centerPoint );
+
+      Size polygonToSplit = newPolygonIndex;
+      this.splitPolygon( polygonToSplit, 2, newPolygonSize-1, newPolygonIndex, newPolygonEdgeStartPointIndex );
+      for( Size j = 0; j < sizeBeforeSplit-3; ++j ) {
+        newPolygonSize -= 2;
+        polygonToSplit = newPolygonIndex;
+        this.splitPolygon( polygonToSplit, 2, newPolygonSize-1, newPolygonIndex, newPolygonEdgeStartPointIndex );
+      }
+    }
+  }
+  this.endStructureChanges();
+}
+
+
+
+// Adds a revolution mesh given 
+//   - a transform
+//   - a profile points array
+//   - a center position
+//   - a revolution axis
+//   - a detail setting
+//   - a rotational range (full = Vec2(0,1))
+//   - a close setting
+function PolygonMesh.addRevolution!(Xfo xfo, Vec3 profile[], Vec3 center, Vec3 axis, Size detail, Vec2 range, Boolean close) {
+  if(detail < 3)
+    return;
+  if(profile.size() < 2)
+    return;
+  if(range.x == range.y)
+    return;
+
+  Size nbSegments = profile.size() - 1;
+  Size nbPointRows = detail;
+  Size nbQuadRows = (close ? detail : detail-1);
+
+  Size nbPoints = profile.size() * nbPointRows;
+  Size firstPoint = this.createPoints(nbPoints);
+  Scalar angleIncrement = (range.y - range.x ) * TWO_PI / Scalar(nbQuadRows);
+
+  Quat q[];
+  q.resize(nbPointRows);
+  for(Size i=0;i<nbPointRows;i++)
+    q[i].setFromAxisAndAngle(axis, range.x + Scalar(i) * angleIncrement);
+
+  for(Size i=0;i<nbPoints;i++) {
+    Size row = i / profile.size();
+    Size pointIndex = i % profile.size();
+    Vec3 pos = center + q[row].rotateVector(profile[pointIndex] - center);
+    this.setPointPosition(firstPoint+i, xfo.transformVector(pos));
+  }
+
+  this.beginStructureChanges();
+
+  Size nbQuads = nbSegments * nbQuadRows;
+  Size v0, v1, v2, v3;
+  for(Size i=0;i<nbQuads;i++) {
+    Size segmentIndex = i % nbSegments;
+    Size row = i / nbSegments;
+    v0 = (profile.size() * row + segmentIndex) % nbPoints;
+    v1 = (profile.size() * row + segmentIndex + 1) % nbPoints;
+    if(row == nbQuadRows - 1 && close) {
+      v2 = (segmentIndex + 1) % nbPoints;
+      v3 = (segmentIndex) % nbPoints;
+    } else {
+      v2 = (profile.size() * (row+1) + segmentIndex + 1) % nbPoints;
+      v3 = (profile.size() * (row+1) + segmentIndex) % nbPoints;
+    }
+    this.addPolygon(firstPoint+v3, firstPoint+v2, firstPoint+v1, firstPoint+v0);
+  }
+
+  this.endStructureChanges();
+}
+
+// Adds a revolution mesh given 
+//   - a transform
+//   - a profile points array
+//   - a center position
+//   - a revolution axis
+//   - a detail setting
+inline PolygonMesh.addRevolution!(Xfo xfo, Vec3 profile[], Vec3 center, Vec3 axis, Size detail) {
+  this.addRevolution(xfo, profile, center, axis, detail, Vec2(0, 1), true);
+}
+
+// Adds an extrusion mesh given 
+//   - a transform array
+//   - a profile points array (expected to be Y ~= 0.0)
+//   - a close setting
+function PolygonMesh.addExtrusion!(Xfo xfos[], Vec3 profile[], Boolean close) {
+  if(profile.size() < 2)
+    return;
+  if(xfos.size() < 2)
+    return;
+
+  Size nbSegments = close ? profile.size() : profile.size() - 1;
+  Size nbPointRows = xfos.size();
+  Size nbQuadRows = nbPointRows - 1;
+  
+  Size nbPoints = profile.size() * nbPointRows;
+  Size firstPoint = this.createPoints(nbPoints);
+  for(Size i=0;i<nbPoints;i++) {
+    Size row = i / profile.size();
+    Size pointIndex = i % profile.size();
+    Vec3 pos = xfos[row].transformVector(profile[pointIndex]);
+    this.setPointPosition(firstPoint+i, pos);
+  }
+
+  this.beginStructureChanges();
+
+  Size nbQuads = nbSegments * nbQuadRows;
+  Size v0, v1, v2, v3;
+  for(Size i=0;i<nbQuads;i++) {
+    Size segmentIndex = i % nbSegments;
+    Size row = i / nbSegments;
+    if(segmentIndex == profile.size() - 1) {
+      v0 = (profile.size() * row + segmentIndex) % nbPoints;
+      v1 = (profile.size() * row) % nbPoints;
+      v2 = (profile.size() * (row+1)) % nbPoints;
+      v3 = (profile.size() * (row+1) + segmentIndex) % nbPoints;
+    } else {
+      v0 = (profile.size() * row + segmentIndex) % nbPoints;
+      v1 = (profile.size() * row + segmentIndex + 1) % nbPoints;
+      v2 = (profile.size() * (row+1) + segmentIndex + 1) % nbPoints;
+      v3 = (profile.size() * (row+1) + segmentIndex) % nbPoints;
+    }
+    this.addPolygon(firstPoint+v3, firstPoint+v2, firstPoint+v1, firstPoint+v0);
+  }
+
+  this.endStructureChanges();
+}
+
+// Adds an extrusion mesh given 
+//   - a transform array
+//   - a profile points array (expected to be Y ~= 0.0)
+inline PolygonMesh.addExtrusion!(Xfo xfos[], Vec3 profile[]) { 
+  this.addExtrusion(xfos, profile, true);
+}
+
+
+// Adds a shell to the object, by copying the surface
+// and connecting all border polygons
+function PolygonMesh.addShell!(Scalar thickness) {
+
+  UInt32 counts[];
+  UInt32 indices[];
+  counts.resize(this.polygonCount());
+  indices.resize(this.polygonPointsCount());
+
+  LocalIndexArray vertices;
+  UInt32 border[];
+  UInt32 offset = 0;
+  for(Size i=0;i<this.polygonCount();i++) {
+    counts[i] = this.getPolygonSize(i);
+    this.getPolygonPoints(i, vertices);
+    for(Size j=0;j<counts[i];j++) {
+      if(this.isPolygonBorder(i,j)) {
+        border.push(vertices.get(j));
+        border.push(vertices.get((j+1)%counts[i]));
+      }
+      indices[offset++] = vertices.get(counts[i]-j-1) + this.pointCount();
+    }
+  }
+
+  if(border.size() == 0)
+    return;
+
+  this.recomputePointNormals();
+  Size firstPoint = this.createPoints(this.pointCount());
+  for(Size i=0;i<firstPoint;i++) {
+    Vec3 pos = this.getPointPosition(i);
+    Vec3 normal = this.getPointNormal(i);
+    this.setPointPosition(i, pos + normal * thickness * 0.5);
+    this.setPointPosition(firstPoint+i, pos - normal * thickness * 0.5);
+  }
+  this.incrementPointPositionsVersion();
+
+  this.beginStructureChanges();
+
+  offset = 0;
+  for(Size i=0;i<counts.size();i++) {
+    vertices.resize(counts[i]);
+    for(Size j=0;j<counts[i];j++)
+      vertices.set(j, indices[offset++]);
+    this.addPolygon(vertices);
+  }
+
+  for(Size i=0;i<border.size();i+=2) {
+    UInt32 v0 = border[i];
+    UInt32 v1 = border[i+1];
+    UInt32 v2 = border[i+1] + firstPoint;
+    UInt32 v3 = border[i] + firstPoint;
+    this.addPolygon(v3, v2, v1, v0);
+  }
+
+  this.endStructureChanges();
+}

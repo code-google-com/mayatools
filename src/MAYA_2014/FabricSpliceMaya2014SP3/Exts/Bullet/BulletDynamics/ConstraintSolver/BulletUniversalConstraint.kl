@@ -1,0 +1,227 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+/// Constraint similar to ODE Universal Joint
+/// has 2 rotatioonal degrees of freedom, similar to Euler rotations around Z (axis 1)
+/// and Y (axis 2)
+/// Description from ODE manual : 
+/// "Given axis 1 on body 1, and axis 2 on body 2 that is perpendicular to axis 1, it keeps them perpendicular. 
+/// In other words, rotation of the two bodies about the direction perpendicular to the two axes will be equal."
+
+object BulletUniversalConstraint : BulletTypedConstraint//BulletGeneric6DofConstraint
+{
+	Data pointer;
+	BulletRigidBody rbA;
+	BulletRigidBody rbB;
+};
+function Data BulletUniversalConstraint.getPointer(){
+	return this.pointer;
+}
+
+
+
+	// constructor
+	// anchor, axis1 and axis2 are in world coordinate system
+	// axis1 must be orthogonal to axis2
+function BulletUniversalConstraint(BulletRigidBody rbA, BulletRigidBody rbB, Vec3 anchor, Vec3 axis1, Vec3 axis2){
+	this.rbA = rbA;
+	this.rbB = rbB;
+	this.__construct(rbA,rbB, anchor, axis1, axis2);
+}
+function BulletUniversalConstraint.__construct!(BulletRigidBody rbA, BulletRigidBody rbB, Vec3 anchor, Vec3 axis1, Vec3 axis2) = "BulletUniversalConstraint_construct1";
+
+function ~BulletUniversalConstraint() = "BulletUniversalConstraint_destroy";
+
+
+// access
+function Vec3 BulletUniversalConstraint.getAnchor() = 'BulletUniversalConstraint_getAnchor';
+function Vec3 BulletUniversalConstraint.getAnchor2() = 'BulletUniversalConstraint_getAnchor2';
+function Vec3 BulletUniversalConstraint.getAxis1() = 'BulletUniversalConstraint_getAxis1';
+function Vec3 BulletUniversalConstraint.getAxis2() = 'BulletUniversalConstraint_getAxis2';
+function Scalar BulletUniversalConstraint.getAngle1() = 'BulletUniversalConstraint_getAngle1';
+function Scalar BulletUniversalConstraint.getAngle2() = 'BulletUniversalConstraint_getAngle2';
+// limits
+function BulletUniversalConstraint.setUpperLimit!(Scalar ang1max, Scalar ang2max) = 'BulletUniversalConstraint_setUpperLimit';
+function BulletUniversalConstraint.setLowerLimit!(Scalar ang1min, Scalar ang2min) = 'BulletUniversalConstraint_setLowerLimit';
+
+function BulletUniversalConstraint.setAxis!( in Vec3 axis1, in Vec3 axis2) = 'BulletUniversalConstraint_setAxis';
+
+
+
+///////////////////////////////////////////////////
+// BulletGeneric6DofConstraint
+
+
+function BulletRigidBody BulletUniversalConstraint.getRigidBodyA()
+{
+    return this.rbA;
+}
+function BulletRigidBody BulletUniversalConstraint.getRigidBodyB()
+{
+    return this.rbB;
+}
+
+
+//! Calcs global transform of the offsets
+/*!
+\Calcs the global transform for the joint offset for body A an B, and also calcs the agle differences between the bodies.
+\sa getCalculatedTransformA , getCalculatedTransformB, calculateAngleInfo
+*/ 
+function BulletUniversalConstraint.calculateTransforms!(in Xfo transA,in Xfo transB) = 'BulletUniversalConstraint_calculateTransforms';
+
+function BulletUniversalConstraint.calculateTransforms!() = 'BulletUniversalConstraint_calculateTransforms';
+
+//! Gets the global transform of the offset for body A
+/*!
+\sa getFrameOffsetA, getFrameOffsetB, calculateAngleInfo.
+*/
+function Xfo BulletUniversalConstraint.getCalculatedTransformA() = 'BulletUniversalConstraint_getCalculatedTransformA';
+
+//! Gets the global transform of the offset for body B
+/*!
+\sa getFrameOffsetA, getFrameOffsetB, calculateAngleInfo.
+*/
+function Xfo BulletUniversalConstraint.getCalculatedTransformB() = 'BulletUniversalConstraint_getCalculatedTransformB';
+
+function Xfo BulletUniversalConstraint.getFrameOffsetA() = 'BulletUniversalConstraint_getFrameOffsetA';
+
+function Xfo BulletUniversalConstraint.getFrameOffsetB() = 'BulletUniversalConstraint_getFrameOffsetB';
+
+
+function Xfo BulletUniversalConstraint.getFrameOffsetA() = 'BulletUniversalConstraint_getFrameOffsetA';
+
+function Xfo BulletUniversalConstraint.getFrameOffsetB() = 'BulletUniversalConstraint_getFrameOffsetB';
+
+
+//! performs Jacobian calculation, and also calculates angle differences and axis
+function BulletUniversalConstraint.buildJacobian!() = 'BulletUniversalConstraint_buildJacobian';
+
+// function BulletUniversalConstraint.getInfo1 (BulletConstraintInfo1 info) = 'BulletUniversalConstraint_getInfo1';
+
+// function BulletUniversalConstraint.getInfo1Non(BulletConstraintInfo1 info) = 'BulletUniversalConstraint_getInfo1Non';
+
+// function BulletUniversalConstraint.getInfo2 (BulletConstraintInfo2 info) = 'BulletUniversalConstraint_getInfo2';
+
+// function BulletUniversalConstraint.getInfo2Non(BulletConstraintInfo2 info,in Xfo transA,in Xfo transB,in Vec3 linVelA,in Vec3 linVelB,in Vec3 angVelA,in Vec3 angVelB) = 'BulletUniversalConstraint_getInfo2Non';
+
+
+function BulletUniversalConstraint.updateRHS!(Scalar timeStep) = 'BulletUniversalConstraint_updateRHS';
+
+//! Get the rotation axis in global coordinates
+/*!
+\pre buildJacobian must be called previously.
+*/
+function Vec3 BulletUniversalConstraint.getAxis(Integer axis_index) = 'BulletUniversalConstraint_getAxis';
+
+//! Get the relative Euler angle
+/*!
+ \pre calculateTransforms() must be called previously.
+ */
+function Scalar BulletUniversalConstraint.getAngle(Integer axis_index) = 'BulletUniversalConstraint_getAngle';
+
+//! Get the relative position of the constraint pivot
+/*!
+\pre calculateTransforms() must be called previously.
+*/
+function Scalar BulletUniversalConstraint.getRelativePivotPosition(Integer axis_index) = 'BulletUniversalConstraint_getRelativePivotPosition';
+
+function BulletUniversalConstraint.setFrames!(in Xfo frameA, in Xfo frameB) = 'BulletUniversalConstraint_setFrames';
+
+//! Test angular limit.
+/*!
+Calculates angular correction and returns true if limit needs to be corrected.
+\pre calculateTransforms() must be called previously.
+*/
+function Boolean BulletUniversalConstraint.testAngularLimitMotor(Integer axis_index) = 'BulletUniversalConstraint_testAngularLimitMotor';
+
+function BulletUniversalConstraint.setLinearLowerLimit!(in Vec3 linearLower) = 'BulletUniversalConstraint_setLinearLowerLimit';
+
+function BulletUniversalConstraint.getLinearLowerLimit(io Vec3 linearLower) = 'BulletUniversalConstraint_getLinearLowerLimit';
+
+function BulletUniversalConstraint.setLinearUpperLimit!(in Vec3 linearUpper) = 'BulletUniversalConstraint_setLinearUpperLimit';
+
+function BulletUniversalConstraint.getLinearUpperLimit(io Vec3 linearUpper) = 'BulletUniversalConstraint_getLinearUpperLimit';
+
+function BulletUniversalConstraint.setAngularLowerLimit!(in Vec3 angularLower) = 'BulletUniversalConstraint_setAngularLowerLimit';
+
+function BulletUniversalConstraint.getAngularLowerLimit(io Vec3 angularLower) = 'BulletUniversalConstraint_getAngularLowerLimit';
+
+function BulletUniversalConstraint.setAngularUpperLimit!(in Vec3 angularUpper) = 'BulletUniversalConstraint_setAngularUpperLimit';
+
+function BulletUniversalConstraint.getAngularUpperLimit(io Vec3 angularUpper) = 'BulletUniversalConstraint_getAngularUpperLimit';
+
+//! Retrieves the angular limit informacion
+function BulletRotationalLimitMotor  BulletUniversalConstraint.getRotationalLimitMotor(Integer index) = 'BulletUniversalConstraint_getRotationalLimitMotor';
+
+//! Retrieves the  limit informacion
+function BulletTranslationalLimitMotor  BulletUniversalConstraint.getTranslationalLimitMotor() = 'BulletUniversalConstraint_getTranslationalLimitMotor';
+
+//first 3 are linear, next 3 are angular
+ function BulletUniversalConstraint.setLimit!(Integer axis, Scalar lo, Scalar hi) = 'BulletUniversalConstraint_setLimit';
+
+//! Test limit
+/*!
+- free means upper < lower,
+- locked means upper == lower
+- limited means upper > lower
+- limitIndex: first 3 are linear, next 3 are angular
+*/
+function Boolean	BulletUniversalConstraint.isLimited(Integer limitIndex) = 'BulletUniversalConstraint_isLimited';
+
+// function BulletUniversalConstraint.calcAnchorPos() = 'BulletUniversalConstraint_calcAnchorPos'; // overridable
+
+// function Integer BulletUniversalConstraint.get_limit_motor_info2(	BulletRotationalLimitMotor limot,
+// 								in Xfo transA,in Xfo transB,in Vec3 linVelA,in Vec3 linVelB,in Vec3 angVelA,in Vec3 angVelB,
+// 								BulletConstraintInfo2 info, Integer row, io Vec3 ax1, Integer rotational, Integer rotAllowed = false) = 'BulletUniversalConstraint_get_limit_motor_info2';
+
+// access for UseFrameOffset
+function Boolean BulletUniversalConstraint.getUseFrameOffset() = 'BulletUniversalConstraint_getUseFrameOffset';
+function BulletUniversalConstraint.setUseFrameOffset!(Boolean frameOffsetOnOff) = 'BulletUniversalConstraint_setUseFrameOffset';
+
+///override the default global value of a parameter (such as ERP or CFM), optionally provide the BulletUniversalConstraint.axis (0..5). = 'BulletUniversalConstraint_axis' 
+///If no axis is provided, it uses the default axis for this constraint.
+function BulletUniversalConstraint.setParam!(Integer num, Scalar value) = 'BulletUniversalConstraint_setParam';
+function BulletUniversalConstraint.setParam!(Integer num, Scalar value, Integer axis) = 'BulletUniversalConstraint_setParam';
+///return the local value of parameter
+function Scalar BulletUniversalConstraint.getParam?(Integer num) = 'BulletUniversalConstraint_getParam';
+function Scalar BulletUniversalConstraint.getParam?(Integer num, Integer axis) = 'BulletUniversalConstraint_getParam';
+
+function BulletUniversalConstraint.setAxis!( in Vec3 axis1, in Vec3 axis2) = 'BulletUniversalConstraint_setAxis';
+
+
+// Integer	calculateSerializeBufferSizeBulletUniversalConstraint.?();
+
+// ///fills the dataBuffer and returns the struct name (and 0 on failure)
+// const char*	BulletUniversalConstraint.serialize(void* dataBuffer, BulletSerializer* serializer);
+
+
+
+
+
+
+///////////////////////////////////////////////////////
+// From BulletTypedConstraint
+
+
+function Scalar BulletUniversalConstraint.getBreakingImpulseThreshold() = 'BulletUniversalConstraint_getBreakingImpulseThreshold';
+
+function BulletUniversalConstraint.setBreakingImpulseThreshold!(Scalar threshold) = 'BulletUniversalConstraint_setBreakingImpulseThreshold';
+
+function Boolean BulletUniversalConstraint.isEnabled() = 'BulletUniversalConstraint_isEnabled';
+
+function BulletUniversalConstraint.setEnabled!(Boolean enabled) = 'BulletUniversalConstraint_setEnabled';
+
+function Boolean BulletUniversalConstraint.needsFeedback() = 'BulletUniversalConstraint_needsFeedback';
+
+///enableFeedback will allow to read the applied linear and angular impulse
+///use getAppliedImpulse, getAppliedLinearImpulse and getAppliedAngularImpulse to read feedback information
+function BulletUniversalConstraint.enableFeedback!(Boolean needsFeedback) = 'BulletUniversalConstraint_enableFeedback';
+
+///getAppliedImpulse is an estimated total applied impulse. 
+///This feedback could be used to determine breaking constraints or playing sounds.
+function Scalar BulletUniversalConstraint.getAppliedImpulse() = 'BulletUniversalConstraint_getAppliedImpulse';
+
+function UInt32 BulletUniversalConstraint.getConstraintType() = 'BulletUniversalConstraint_getConstraintType';

@@ -1,0 +1,1059 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+// Adds a cuboid given a transform and three side lengths
+function PolygonMesh.addDisc!(Xfo xfo, Scalar radius, Scalar arcAngle, Boolean cap, Size detail, Boolean setNormals, Boolean setUVs) {
+
+  Size nbSides = (detail >= 0) ? (detail + 3) : 3;
+  Size numVertices = nbSides + 1;
+
+  Size firstPoly = this.polygonCount();
+  Size firstPoint = this.createPoints(numVertices);
+
+    // Set the point positions
+  this.setPointPosition(firstPoint, xfo.transformVector(Vec3(0.0, 0.0, 0.0)));
+  for (Integer i = 0; i < nbSides; i++) {
+    Scalar theta = (i / Scalar(nbSides)) * arcAngle;
+    this.setPointPosition(firstPoint+i+1, xfo.transformVector(Vec3(radius * cos(theta), 0.0, radius * sin(theta))));
+  }
+
+  this.beginStructureChanges();
+  // build the topology
+  for (Integer i = 0; i < nbSides; i++) {
+    Integer j = (i + 1) % nbSides;
+    this.addPolygon(firstPoint, firstPoint+i, firstPoint+i+1);
+  }
+  this.endStructureChanges();
+
+  if(setUVs){
+    // set positions and normals
+    Ref<Vec2Attribute> uvs = this.getOrCreateVec2Attribute("uvs0");
+
+    for (Integer i = 0; i < nbSides; i++) {
+      this.setPolygonAttribute(i, 0, uvs, Vec2(Scalar(i) / Scalar(nbSides), 0.0));
+      this.setPolygonAttribute(i, 1, uvs, Vec2(Scalar(i+1) / Scalar(nbSides), 0.0));
+      this.setPolygonAttribute(i, 2, uvs, Vec2((Scalar(i)+0.5) / Scalar(nbSides), 1.0));
+    }
+  }
+
+  if(setNormals){
+    Ref<Vec3Attribute> normals = this.getOrCreateNormals();
+
+    Vec3 normal(0.0, 1.0, 0.0);
+    for (Integer i = 0; i < nbSides; i++) {
+      this.setPolygonAttribute(i, 0, normals, xfo.ori.rotateVector(normal));
+      this.setPolygonAttribute(i, 1, normals, xfo.ori.rotateVector(normal));
+      this.setPolygonAttribute(i, 2, normals, xfo.ori.rotateVector(normal));
+    }
+  }
+}
+
+// Adds a cuboid given a transform and three side lengths
+function PolygonMesh.addCone!(Xfo xfo, Scalar radius, Scalar height, Boolean cap, Size detail, Boolean setNormals, Boolean setUVs) {
+
+  Size nbSides = (detail >= 0) ? (detail + 3) : 3;
+  Size numVertices = nbSides + 1;
+  if (cap) {
+    numVertices += 1;
+  }
+  Size firstPoly = this.polygonCount();
+  Size firstPoint = this.createPoints(numVertices);
+  Size tipPoint = firstPoint+nbSides;
+  Size basePoint = firstPoint+nbSides+1;
+
+  // Set the point positions
+  this.setPointPosition(tipPoint, xfo.transformVector(Vec3(0.0,(height / 2.0), 0.0)));
+  for (Integer i = 0; i < nbSides; i++) {
+    Scalar theta = (i / Scalar(nbSides)) * 2.0 * PI;
+    this.setPointPosition(firstPoint+i, xfo.transformVector(Vec3(radius * cos(theta), -height / 2.0, radius * sin(theta))));
+  }
+  if (cap) {
+    this.setPointPosition(firstPoint+basePoint, xfo.transformVector(Vec3(0.0,(-height / 2.0), 0.0)));
+  }
+
+  this.beginStructureChanges();
+  // build the topology
+  for (Integer i = 0; i < nbSides; i++) {
+    Integer j = (i + 1) % nbSides;
+    this.addPolygon(firstPoint+j, firstPoint+i, firstPoint+tipPoint);
+  }
+  if(cap) {
+    for (Integer i = 0; i < nbSides; i++) {
+      Integer j = (i + 1) % nbSides;
+      this.addPolygon(firstPoint+i, firstPoint+j, firstPoint+basePoint);
+    }
+  }
+  this.endStructureChanges();
+
+
+  if(setUVs){
+    // set positions and normals
+    Ref<Vec2Attribute> uvs = this.getOrCreateVec2Attribute("uvs0");
+
+    // Now set the attrbute values
+    for (Integer i = 0; i < nbSides; i++) {
+      this.setPolygonAttribute(firstPoly+i, 0, uvs, Vec2(Scalar(i+1) / Scalar(nbSides), 0.0));
+      this.setPolygonAttribute(firstPoly+i, 1, uvs, Vec2(Scalar(i) / Scalar(nbSides), 0.0));
+      this.setPolygonAttribute(firstPoly+i, 2, uvs, Vec2((Scalar(i)+0.5) / Scalar(nbSides), 1.0));
+    }
+    if (cap) {
+      for (Integer i = 0; i < nbSides; i++) {
+        this.setPolygonAttribute(firstPoly+i+nbSides, 0, uvs, Vec2(Scalar(i) / Scalar(nbSides), 0.0));
+        this.setPolygonAttribute(firstPoly+i+nbSides, 1, uvs, Vec2(Scalar(i+1) / Scalar(nbSides), 0.0));
+        this.setPolygonAttribute(firstPoly+i+nbSides, 2, uvs, Vec2((Scalar(i)+0.5) / Scalar(nbSides), 1.0));
+      }
+    }
+  }
+
+  if(setNormals){
+    Ref<Vec3Attribute> normals = this.getOrCreateNormals();
+
+    Scalar normalElevation;
+    Scalar divider = height;
+    if( abs(height) < 1.0e-12 )
+      normalElevation = height < 0 ? -1.0e-12 : 1.0e-12;
+    normalElevation = radius / divider;
+
+    // Now set the attrbute values
+    for (Integer i = 0; i < nbSides; i++) {
+      Scalar theta1 = ((i+1) / Scalar(nbSides)) * 2.0 * PI;
+      this.setPolygonAttribute(firstPoly+i, 0, normals, xfo.ori.rotateVector(Vec3(cos(theta1), normalElevation, sin(theta1)).unit()));
+
+      Scalar theta2 = (i / Scalar(nbSides)) * 2.0 * PI;
+      this.setPolygonAttribute(firstPoly+i, 1, normals, xfo.ori.rotateVector(Vec3(cos(theta2), normalElevation, sin(theta2)).unit()));
+
+      Scalar theta = (theta1 + theta2) * 0.5;
+      this.setPolygonAttribute(firstPoly+i, 2, normals, xfo.ori.rotateVector(Vec3(cos(theta), normalElevation, sin(theta)).unit()));
+    }
+    if (cap) {
+      Vec3 normal(0.0, -1.0, 0.0);
+      for (Integer i = 0; i < nbSides; i++) {
+        this.setPolygonAttribute(firstPoly+i+nbSides, 0, normals, xfo.ori.rotateVector(normal));
+        this.setPolygonAttribute(firstPoly+i+nbSides, 1, normals, xfo.ori.rotateVector(normal));
+        this.setPolygonAttribute(firstPoly+i+nbSides, 2, normals, xfo.ori.rotateVector(normal));
+      }
+    }
+  }
+}
+function PolygonMesh.addCone!(Xfo xfo, Scalar r, Scalar h, Boolean cap, Size detail) {
+  this.addCone(xfo, r, h, cap, detail, false, false);
+}
+
+
+// Adds a cuboid given a transform and three side lengths
+function PolygonMesh.addCuboid!(Xfo xfo, Scalar x, Scalar y, Scalar z, Boolean setNormals, Boolean setUVs) {
+  
+  Size firstPoly = this.polygonCount();
+  Size firstPoint = this.createPoints(8);
+  this.setPointPosition(firstPoint+0, xfo.transformVector(Vec3(0.5 * x, -0.5 * y, 0.5 * z)));
+  this.setPointPosition(firstPoint+1, xfo.transformVector(Vec3(-0.5 * x, -0.5 * y, 0.5 * z)));
+  this.setPointPosition(firstPoint+2, xfo.transformVector(Vec3(0.5 * x, 0.5 * y, 0.5 * z)));
+  this.setPointPosition(firstPoint+3, xfo.transformVector(Vec3(-0.5 * x, 0.5 * y, 0.5 * z)));
+  this.setPointPosition(firstPoint+4, xfo.transformVector(Vec3(-0.5 * x, -0.5 * y, -0.5 * z)));
+  this.setPointPosition(firstPoint+5, xfo.transformVector(Vec3(0.5 * x, -0.5 * y, -0.5 * z)));
+  this.setPointPosition(firstPoint+6, xfo.transformVector(Vec3(-0.5 * x, 0.5 * y, -0.5 * z)));
+  this.setPointPosition(firstPoint+7, xfo.transformVector(Vec3(0.5 * x, 0.5 * y, -0.5 * z)));
+
+  this.beginStructureChanges();
+  this.addPolygon(firstPoint+0, firstPoint+2, firstPoint+3, firstPoint+1);
+  this.addPolygon(firstPoint+4, firstPoint+6, firstPoint+7, firstPoint+5);
+  this.addPolygon(firstPoint+2, firstPoint+7, firstPoint+6, firstPoint+3);
+  this.addPolygon(firstPoint+0, firstPoint+1, firstPoint+4, firstPoint+5);
+  this.addPolygon(firstPoint+0, firstPoint+5, firstPoint+7, firstPoint+2);
+  this.addPolygon(firstPoint+1, firstPoint+3, firstPoint+6, firstPoint+4);
+  this.endStructureChanges();
+
+  if(setNormals){
+    Ref<Vec3Attribute> normals = this.getOrCreateNormals();
+
+    // Set Points Normals
+    Vec3 normal;
+
+    // Face 0 (+Z)
+    normal = Vec3(0.0,0.0,1.0);
+    this.setPolygonAttribute(firstPoly+0, 0, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+0, 1, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+0, 2, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+0, 3, normals, xfo.ori.rotateVector(normal));
+
+    // Face 1 (-Z)
+    normal = Vec3(0.0,0.0,-1.0);
+    this.setPolygonAttribute(firstPoly+1, 0, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+1, 1, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+1, 2, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+1, 3, normals, xfo.ori.rotateVector(normal));
+
+    // Face 2 (+Y)
+    normal = Vec3(0.0,1.0,0.0);
+    this.setPolygonAttribute(firstPoly+2, 0, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+2, 1, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+2, 2, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+2, 3, normals, xfo.ori.rotateVector(normal));
+
+    // Face 3 (-Y)
+    normal = Vec3(0.0,-1.0,0.0);
+    this.setPolygonAttribute(firstPoly+3, 0, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+3, 1, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+3, 2, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+3, 3, normals, xfo.ori.rotateVector(normal));
+
+    // Face 4 (+X)
+    normal = Vec3(1.0,0.0,0.0);
+    this.setPolygonAttribute(firstPoly+4, 0, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+4, 1, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+4, 2, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+4, 3, normals, xfo.ori.rotateVector(normal)); 
+
+     // Face 5 (-X)
+    normal = Vec3(-1.0,0.0,0.0);
+    this.setPolygonAttribute(firstPoly+5, 0, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+5, 1, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+5, 2, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+5, 3, normals, xfo.ori.rotateVector(normal));
+  }
+
+  if(setUVs){
+    // Set Uvs
+    Ref<Vec2Attribute> uvs = this.getOrCreateVec2Attribute("uvs0");
+
+    // Face 0 (+Z)
+    this.setPolygonAttribute(firstPoly+0, 0, uvs, Vec2(1.0,1.0));
+    this.setPolygonAttribute(firstPoly+0, 1, uvs, Vec2(1.0,0.0));
+    this.setPolygonAttribute(firstPoly+0, 2, uvs, Vec2(0.0,0.0));
+    this.setPolygonAttribute(firstPoly+0, 3, uvs, Vec2(0.0,1.0));
+
+    // Face 1 (-Z)
+    this.setPolygonAttribute(firstPoly+1, 0, uvs, Vec2(1.0,1.0));
+    this.setPolygonAttribute(firstPoly+1, 1, uvs, Vec2(1.0,0.0));
+    this.setPolygonAttribute(firstPoly+1, 2, uvs, Vec2(0.0,0.0));
+    this.setPolygonAttribute(firstPoly+1, 3, uvs, Vec2(0.0,1.0));
+
+    // Face 2 (+Y)
+    this.setPolygonAttribute(firstPoly+2, 0, uvs, Vec2(1.0,1.0));
+    this.setPolygonAttribute(firstPoly+2, 1, uvs, Vec2(1.0,0.0));
+    this.setPolygonAttribute(firstPoly+2, 2, uvs, Vec2(0.0,0.0));
+    this.setPolygonAttribute(firstPoly+2, 3, uvs, Vec2(0.0,1.0));
+
+    // Face 3 (-Y)
+    this.setPolygonAttribute(firstPoly+3, 0, uvs, Vec2(1.0,0.0));
+    this.setPolygonAttribute(firstPoly+3, 1, uvs, Vec2(1.0,1.0));
+    this.setPolygonAttribute(firstPoly+3, 2, uvs, Vec2(0.0,1.0));
+    this.setPolygonAttribute(firstPoly+3, 3, uvs, Vec2(0.0,0.0));
+
+    // Face 4 (+X)
+    this.setPolygonAttribute(firstPoly+4, 0, uvs, Vec2(0.0,1.0));
+    this.setPolygonAttribute(firstPoly+4, 1, uvs, Vec2(1.0,1.0));
+    this.setPolygonAttribute(firstPoly+4, 2, uvs, Vec2(1.0,0.0));
+    this.setPolygonAttribute(firstPoly+4, 3, uvs, Vec2(0.0,0.0));
+
+    // Face 5 (-X)
+    this.setPolygonAttribute(firstPoly+5, 0, uvs, Vec2(1.0,1.0));
+    this.setPolygonAttribute(firstPoly+5, 1, uvs, Vec2(1.0,0.0));
+    this.setPolygonAttribute(firstPoly+5, 2, uvs, Vec2(0.0,0.0));
+    this.setPolygonAttribute(firstPoly+5, 3, uvs, Vec2(0.0,1.0));
+  }
+}
+
+function PolygonMesh.addCuboid!(Xfo xfo, Scalar x, Scalar y, Scalar z) {
+  this.addCuboid(xfo, x, y, z, false, false);
+}
+function PolygonMesh.addCube!(Xfo xfo, Scalar x, Scalar y, Scalar z) {
+  this.addCuboid(xfo, x, y, z, false, false);
+}
+
+
+function PolygonMesh.addCylinder!(Xfo xfo, Scalar radius, Scalar height, Boolean caps, Integer sides, Integer loops, Boolean setNormals, Boolean setUVs) {
+
+
+  Size nbLoops = ((loops > 0) ? loops : 1) + 1;
+  Size nbSides = ((sides > 0) ? sides : 3) + 1;
+  Size nb_vtx = 2 * (nbSides-1) * nbLoops;
+  if (caps) {
+    nb_vtx += (nbSides * 2) * 2;
+  }
+
+  Size firstPoly = this.polygonCount();
+  Size firstPoint = this.createPoints(nb_vtx);
+
+  this.beginStructureChanges();
+
+  // build the topology for the body of the cylinder
+  for (Integer i = 0; i < nbLoops; i++) {
+    for (Integer j = 0; j < (nbSides-1); j++) {
+      Integer v0, v1, v2, v3;
+      v0 = firstPoint+(nbSides * i) + j;
+      v1 = firstPoint+(nbSides * i) + ((j + 1) % nbSides);
+      v2 = firstPoint+(nbSides * (i+1)) + ((j + 1) % nbSides);
+      v3 = firstPoint+(nbSides * (i+1)) + j;
+      this.addPolygon( v0, v1, v2, v3 );
+    }
+  }  
+
+  if (caps) {
+    // Top cap topology
+    for (Integer j = 0; j < (nbSides-1); j++) {
+      Integer i = nbLoops;
+      Integer v0, v1, v2, v3;
+      v0 = firstPoint+(nbSides * (nbLoops+1)) + j;
+      v1 = firstPoint+(nbSides * (nbLoops+1)) + ((j + 1) % nbSides);
+      v2 = firstPoint+(nbSides * (nbLoops+2)) + ((j + 1) % nbSides);
+      v3 = firstPoint+(nbSides * (nbLoops+2)) + j;
+      this.addPolygon( v0, v1, v2, v3 );
+    }
+    // Bottom cap topology 
+    for (Integer j = 0; j < (nbSides-1); j++) {
+      Integer i = nbLoops;
+      Integer v0, v1, v2, v3;
+      v0 = firstPoint+(nbSides * (nbLoops+3)) + j;
+      v1 = firstPoint+(nbSides * (nbLoops+3)) + ((j + 1) % nbSides);
+      v2 = firstPoint+(nbSides * (nbLoops+4)) + ((j + 1) % nbSides);
+      v3 = firstPoint+(nbSides * (nbLoops+4)) + j;
+      this.addPolygon( v3, v2, v1, v0 );
+    }
+  }
+  this.endStructureChanges();
+
+  // Set positions
+  Integer voff = firstPoint;
+  for (Integer i = 0; i <= nbLoops; i++) {
+    Scalar y = ((i / Scalar(nbLoops)) * height) - (height * 0.5);
+    for (Integer j = 0; j < nbSides; j++) {
+      Scalar phi = (j / Scalar(nbSides-1)) * 2.0 * PI;
+      this.setPointPosition(voff, xfo.transformVector(Vec3( sin(phi) * radius, y, cos(phi) * radius )));
+      voff++;
+    }
+  }
+  if (caps) {
+    // Top cap
+    Scalar y = height * 0.5;
+    for (Integer j = 0; j < nbSides; j++) {
+      Scalar phi = (j / Scalar((nbSides-1))) * 2.0 * PI;
+      this.setPointPosition(voff, xfo.transformVector(Vec3(sin(phi) * radius, y, cos(phi) * radius)));
+      voff++;
+    }
+    for (Integer j = 0; j < nbSides; j++) {
+      this.setPointPosition(voff, xfo.transformVector(Vec3(0.0, y, 0.0)));
+      voff++;
+    }
+    
+    // Bottom cap
+    y = height * -0.5;
+    for (Integer j = 0; j < nbSides; j++) {
+      Scalar phi = (j / Scalar((nbSides-1))) * 2.0 * PI;
+      this.setPointPosition(voff, xfo.transformVector(Vec3(sin(phi) * radius, y, cos(phi) * radius)));
+      voff++;
+    }
+    for (Integer j = 0; j < nbSides; j++) {
+      this.setPointPosition(voff, xfo.transformVector(Vec3(0, y, 0)));
+      voff++;
+    }       
+  }  
+
+
+  if(setNormals){
+    Ref<Vec3Attribute> normals = this.getOrCreateNormals();
+
+    // set normals
+    voff = firstPoint;
+    Vec3 normal;
+
+    for (Integer i = 0; i <= nbLoops; i++) {
+      Scalar y = (i / Scalar(nbLoops)) * height;
+      for (Integer j = 0; j < nbSides; j++) {
+        Scalar phi = (j / Scalar(nbSides-1)) * 2.0 * PI;
+        normal.set( sin(phi), 0.0, cos(phi) );
+        this.setPointAttribute(voff, normals, xfo.ori.rotateVector(normal) );
+        voff++;
+      }
+    }
+    if (caps) {
+      // Top cap
+      normal.set(0.0, 1.0, 0.0);
+      Scalar y = height * 0.5;
+          
+      for (Integer j = 0; j < nbSides; j++) {
+        Scalar phi = (j / Scalar(nbSides-1)) * 2.0 * PI;
+        this.setPointAttribute(voff, normals, xfo.ori.rotateVector(normal));
+        voff++;
+      }
+      for (Integer j = 0; j < nbSides; j++) {
+        Scalar phi = (j / Scalar(nbSides-1)) * 2.0 * PI;
+        this.setPointAttribute(voff, normals, xfo.ori.rotateVector(normal));
+        voff++;
+      } 
+      
+      // Bottom cap
+      normal.set(0.0, -1.0, 0.0);
+      y = height * -0.5;
+          
+      for (Integer j = 0; j < nbSides; j++) {
+        Scalar phi = (j / Scalar(nbSides-1)) * 2.0 * PI;
+        this.setPointAttribute(voff, normals, xfo.ori.rotateVector(normal));
+        voff++;
+      }
+      for (Integer j = 0; j < nbSides; j++) {
+        Scalar phi = (j / Scalar(nbSides-1)) * 2.0 * PI;
+        this.setPointAttribute(voff, normals, xfo.ori.rotateVector(normal));
+        voff++;
+      } 
+    }
+  }
+
+  if(setUVs){
+    // set  uvs
+    voff = firstPoint;
+    Ref<Vec2Attribute> uvs = this.getOrCreateVec2Attribute("uvs0");
+    Vec2 uv;
+    for (Integer i = 0; i <= nbLoops; i++) {
+      Scalar y = (i / Scalar(nbLoops)) * height;
+      for (Integer j = 0; j < nbSides; j++) {
+        Scalar phi = (j / Scalar(nbSides-1)) * 2.0 * PI;
+        uv.set(1.0 - Scalar(j) / Scalar(nbSides-1), Scalar(i) / Scalar(nbLoops));
+        this.setPointAttribute(voff, uvs, uv);
+        voff++;
+      }
+    }
+    if (caps) {
+      // Top cap
+      Scalar y = height;
+          
+      for (Integer j = 0; j < nbSides; j++) {
+        this.setPointAttribute(voff, uvs, Vec2(1.0 - Scalar(j) / Scalar(nbSides-1), 0.0));
+        voff++;
+      }
+      for (Integer j = 0; j < nbSides; j++) {
+        this.setPointAttribute(voff, uvs, Vec2(1.0 - Scalar(j) / Scalar(nbSides-1), 1.0));
+        voff++;
+      } 
+      
+      // Bottom cap
+      y = 0.0;
+      for (Integer j = 0; j < nbSides; j++) {
+        this.setPointAttribute(voff, uvs, Vec2(1.0 - Scalar(j) / Scalar(nbSides-1), 0.0));
+        voff++;
+      }
+      for (Integer j = 0; j < nbSides; j++) {
+        this.setPointAttribute(voff, uvs, Vec2(1.0 - Scalar(j) / Scalar(nbSides-1), 1.0));
+        voff++;
+      }       
+    }  
+  }
+}
+
+function PolygonMesh.addCylinder!(Xfo xfo, Scalar radius, Scalar height, Boolean caps, Integer sides, Integer loops) {
+  this.addCylinder(xfo, radius, height, caps, sides, loops, false, false);
+}
+
+
+function PolygonMesh.addPlane!(Xfo xfo, Scalar length, Scalar width, Size lengthSections, Size widthSections, Boolean setNormals, Boolean setUVs) {
+  Size firstPoint = this.createPoints(Size((lengthSections + 1) * (widthSections + 1)) );
+  this.beginStructureChanges();
+  for (Size i = 0; i < lengthSections; i++) {
+    for (Size j = 0; j < widthSections; j++) {
+      Size v0, v1, v2, v3;
+      v0 = firstPoint+((widthSections + 1) * i) + (j + 1);
+      v1 = firstPoint+((widthSections + 1) * i) + j;
+      v2 = firstPoint+((widthSections + 1) * (i+1)) + j;
+      v3 = firstPoint+((widthSections + 1) * (i+1)) + (j + 1);
+      this.addPolygon( v0, v1, v2, v3 );
+    }
+  }
+  this.endStructureChanges();
+
+  Size voff = firstPoint;
+  for (Size i = 0; i <= lengthSections; i++) {
+    Scalar z = ((i / Scalar(lengthSections))-0.5) * length;
+    for (Size j = 0; j <= widthSections; j++) {
+      Scalar x = ((j / Scalar(widthSections))-0.5) * width;
+      this.setPointPosition( voff, xfo.transformVector(Vec3( x, 0.0, z )));
+      voff++;
+    }
+  }
+  if(setNormals){
+    Ref<Vec3Attribute> normals = this.getOrCreateNormals();
+    voff = firstPoint;
+    for (Size i = 0; i <= lengthSections; i++) {
+      for (Size j = 0; j <= widthSections; j++) {
+        this.setPointAttribute( voff, normals, xfo.ori.rotateVector(Vec3(0.0, 1.0, 0.0)));
+        voff++;
+      }
+    }
+  }
+  if(setUVs){
+    Ref<Vec2Attribute> uvs = this.getOrCreateVec2Attribute("uvs0");
+    voff = firstPoint;
+    for (Size i = 0; i <= lengthSections; i++) {
+      for (Size j = 0; j <= widthSections; j++) {
+        this.setPointAttribute( voff, uvs, Vec2(Scalar(j) / Scalar(widthSections), Scalar(i) / Scalar(lengthSections)) );
+        voff++;
+      }
+    }
+  }
+}
+function PolygonMesh.addPlane!(Xfo xfo, Scalar length, Scalar width, Size lengthSections, Size widthSections) {
+  this.addPlane(xfo, length, width, lengthSections, widthSections, false, false);
+}
+
+
+// Adds a sphere given a transform, a detail setting and a radius
+function PolygonMesh.addSphere!(Xfo xfo, Scalar radius, Size detail, Boolean setNormals, Boolean setUVs) {
+
+  Size sides = (detail >= 0) ? (detail * 2 + 3) : 3;
+  Size loops = (detail >= 0) ? (detail + 1) : 1;
+  Size nbSides, nbLoops;
+  nbLoops = loops + 1;
+  nbSides = sides + 1;
+  Size nb_vtx = Size(2 * sides * (2 + loops));
+
+  Size firstPoly = this.polygonCount();
+  Size firstPoint = this.createPoints( nb_vtx );
+
+  // build the topology
+  this.beginStructureChanges();
+  for (Size i = 0; i < nbLoops; i++) {
+    for (Size j = 0; j < nbSides; j++) {
+      Size v0, v1, v2, v3;
+      v0 = (nbSides * i) + j;
+      v1 = (nbSides * i) + ((j + 1) % nbSides);
+      v2 = (nbSides * (i+1)) + ((j + 1) % nbSides);
+      v3 = (nbSides * (i+1)) + j;
+      this.addPolygon( firstPoint+v0, firstPoint+v1, firstPoint+v2, firstPoint+v3 );
+    }
+  }
+  this.endStructureChanges();
+
+  // set positions
+  Vec3 normal;
+  Size voff = firstPoint;
+  for (Size i = 0; i <= nbLoops; i++) {
+    Scalar theta = (i / Scalar(nbLoops)) * PI;
+    for (Size j = 0; j < nbSides; j++) {
+      Scalar phi = (j / Scalar(nbSides)) * 2.0 * PI;
+      normal.set( sin(theta) * cos(phi), cos(theta), sin(theta) * sin(phi) );
+      this.setPointPosition(voff++, xfo.transformVector(normal * radius));
+    }
+  }
+
+  // set normals
+  if(setNormals){
+    Ref<Vec3Attribute> normals = this.getOrCreateNormals();
+    voff = firstPoint;
+    for (Integer i = 0; i <= nbLoops; i++) {
+      Scalar theta = (i / Scalar(nbLoops)) * PI;
+      for (Integer j = 0; j < nbSides; j++) {
+        Scalar phi = (j / Scalar(nbSides)) * 2.0 * PI;
+        normal.set( sin(theta) * cos(phi), cos(theta), sin(theta) * sin(phi) );
+        this.setPointAttribute( voff, normals, xfo.ori.rotateVector(normal));
+        voff++;
+      }
+    }
+  }
+
+  // set uvs
+  if(setUVs){
+    Ref<Vec2Attribute> uvs = this.getOrCreateVec2Attribute("uvs0");
+    voff = firstPoint;
+    for (Size i = 0; i < nbLoops; i++) {
+      for (Size j = 0; j < nbSides; j++) {
+        Vec2 uv(1.0 - (Scalar(j) / Scalar(nbSides)), Scalar(i+1) / Scalar(nbLoops));
+        this.setPointAttribute( voff, uvs, uv );
+        voff++;
+      }
+    }
+    uvs.incrementVersion();
+  }
+}
+
+// Adds a sphere given a transform, a detail setting and a radius
+function PolygonMesh.addSphere!(Xfo xfo, Scalar radius, Size detail) {
+  this.addSphere(xfo, radius, detail, false, false);
+}
+
+
+
+// Adds a sphere given a transform, a detail setting and a radius
+function PolygonMesh.addTorus!(Xfo xfo, Scalar innerRadius, Scalar outerRadius, Size detail, Boolean setNormals, Boolean setUVs) {
+
+  Ref<Vec3Attribute> normals = null;
+  Ref<Vec2Attribute> uvs = null;
+
+  if(setNormals)
+    normals = this.getOrCreateNormals();
+  if(setUVs)
+    uvs = this.getOrCreateVec2Attribute("uvs0");
+
+  Size slices = (detail >= 0) ? (detail + 3) : 3;
+  Size loops = (detail >= 0) ? ((detail * 2) + 3) : 3;
+  Size nb_vtx = slices * loops;
+
+  this.beginStructureChanges();
+  this.createPoints( nb_vtx );
+
+  for (Size i = 0; i < loops; i++) {
+    for (Size j = 0; j < slices; j++) {
+
+      Size v0, v1, v2, v3;
+      Size ip = (i + 1) % loops;
+      Size jp = (j + 1) % slices;
+      v0 = slices * i + j;
+      v1 = slices * i + jp;
+      v2 = slices * ip + jp;
+      v3 = slices * ip + j;
+      Size polIndex = this.addPolygon( v0, v1, v2, v3 );
+
+      if(setUVs){
+        this.setPolygonAttribute( polIndex, 0, uvs, Vec2( Scalar(i) / loops, Scalar(j) / loops ) );
+        this.setPolygonAttribute( polIndex, 1, uvs, Vec2( Scalar(i) / loops, Scalar(j+1) / loops ) );
+        this.setPolygonAttribute( polIndex, 2, uvs, Vec2( Scalar(i+1) / loops, Scalar(j+1) / loops ) );
+        this.setPolygonAttribute( polIndex, 3, uvs, Vec2( Scalar(i+1) / loops, Scalar(j) / loops ) );
+      }
+    }
+  }
+  this.endStructureChanges();
+
+  Size index = 0;
+
+  for (Size i = 0; i < loops; i++) {
+    Scalar theta = (i / Scalar(loops)) * 2.0 * PI;
+    Scalar ctheta = cos(theta);
+    Scalar stheta = sin(theta);
+
+    for (Size j = 0; j < slices; j++) {
+      Scalar phi = (j / Scalar(slices)) * 2.0 * PI;
+
+      Scalar sphi = sin(phi);
+      Scalar cphi = cos(phi);
+      Scalar d = outerRadius + cphi * innerRadius;
+
+      this.setPointPosition( index, xfo.transformVector(Vec3(ctheta * d, innerRadius * sphi, stheta * d )) );
+      if(setNormals)
+        this.setPointAttribute( index, normals, xfo.ori.rotateVector(Vec3(ctheta * cphi, sphi, stheta * cphi)) );
+
+      index++;
+    }
+  }
+
+  this.incrementPointPositionsVersion();
+  if(setNormals)
+    normals.incrementVersion();
+}
+
+function PolygonMesh.addTorus!(Xfo xfo, Scalar innerRadius, Scalar outerRadius, Size detail) {
+  this.addTorus(xfo, innerRadius, outerRadius, detail, false, false);
+}
+
+
+/////////////////////////////////////////////
+// Teapot
+
+struct Patch {
+  Integer indices[4][4];
+};
+
+function Patch(
+  in Integer a00, in Integer a01, in Integer a02, in Integer a03,
+  in Integer a10, in Integer a11, in Integer a12, in Integer a13,
+  in Integer a20, in Integer a21, in Integer a22, in Integer a23,
+  in Integer a30, in Integer a31, in Integer a32, in Integer a33
+) {
+  this.indices[0][0] = a00; this.indices[0][1] = a01; this.indices[0][2] = a02; this.indices[0][3] = a03;
+  this.indices[1][0] = a10; this.indices[1][1] = a11; this.indices[1][2] = a12; this.indices[1][3] = a13;
+  this.indices[2][0] = a20; this.indices[2][1] = a21; this.indices[2][2] = a22; this.indices[2][3] = a23;
+  this.indices[3][0] = a30; this.indices[3][1] = a31; this.indices[3][2] = a32; this.indices[3][3] = a33;
+}
+
+struct Quad {
+  Integer indices[2][2];
+  Vec3 normal;
+};
+
+function Quad(in Vec3 positions[], in Integer i00, in Integer i01, in Integer i10, in Integer i11) {
+  this.indices[0][0] = i00;
+  this.indices[0][1] = i01;
+  this.indices[1][0] = i10;
+  this.indices[1][1] = i11;
+
+  // Compute the face normal from the diagonals
+  Vec3 d0, d1;
+
+  d0 = positions[i11] - positions[i00];
+  d1 = positions[i10] - positions[i01];
+
+  this.normal = d0.cross(d1).unit();
+}
+
+struct Adjacency {
+  Integer qidx[];
+};
+
+function computeTeapotNormals(
+  io Patch p[],
+  io Vec3 positions[],
+  io Vec3 normals[]
+) {
+  Quad q[];
+
+  // Break patches into quads
+  for (Size i = 0; i < p.size(); i++) {
+    for (Size j = 0; j < 3; j++) {
+      for (Size k = 0; k < 3; k++) {
+        q.push(Quad(positions, p[i].indices[j][k], p[i].indices[j][k + 1], p[i].indices[j + 1][k], p[i].indices[j + 1][k + 1]));
+      }
+    }
+  }
+
+  Adjacency a[];
+  a.resize(positions.size());
+
+  // Build adjacency information
+  for (Size i = 0; i < q.size(); i++) {
+    for (Size j = 0; j < 2; j++) {
+      for (Size k = 0; k < 2; k++) {
+        a[q[i].indices[j][k]].qidx.push(Integer(i));
+      }
+    }
+  }
+  // Compute vertex normals from surrounding face normals
+  normals.resize(positions.size());
+  for (Size i = 0; i < a.size(); i++) {
+    Vec3 avgn(0.0, 0.0, 0.0);
+
+    for (Size j = 0; j < a[i].qidx.size(); j++)
+      avgn += q[a[i].qidx[j]].normal;
+
+    if (avgn.length() > 0.0)
+      avgn.setUnit();
+
+    normals[i] = avgn;
+  }
+}
+
+function Vec3 maxVec(in Vec3 a, in Vec3 b) {
+  Vec3 v;
+  v.x = a.x > b.x ? a.x : b.x;
+  v.y = a.y > b.y ? a.y : b.y;
+  v.z = a.z > b.z ? a.z : b.z;
+  return v;
+}
+
+function Vec3 minVec(in Vec3 a, in Vec3 b) {
+  Vec3 v;
+  v.x = a.x < b.x ? a.x : b.x;
+  v.y = a.y < b.y ? a.y : b.y;
+  v.z = a.z < b.z ? a.z : b.z;
+  return v;
+}
+
+
+function getTeapotHull(
+  io Patch p[],
+  io Vec3 positions[],
+  io Vec3 normals[]
+) {
+  p.resize(0);
+  p.push(Patch(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
+  p.push(Patch(3, 16, 17, 18, 7, 19, 20, 21, 11, 22, 23, 24, 15, 25, 26, 27));
+  p.push(Patch(18, 28, 29, 30, 21, 31, 32, 33, 24, 34, 35, 36, 27, 37, 38, 39));
+  p.push(Patch(30, 40, 41, 0, 33, 42, 43, 4, 36, 44, 45, 8, 39, 46, 47, 12));
+  p.push(Patch(12, 13, 14, 15, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59));
+  p.push(Patch(15, 25, 26, 27, 51, 60, 61, 62, 55, 63, 64, 65, 59, 66, 67, 68));
+  p.push(Patch(27, 37, 38, 39, 62, 69, 70, 71, 65, 72, 73, 74, 68, 75, 76, 77));
+  p.push(Patch(39, 46, 47, 12, 71, 78, 79, 48, 74, 80, 81, 52, 77, 82, 83, 56));
+  p.push(Patch(56, 57, 58, 59, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95));
+  p.push(Patch(59, 66, 67, 68, 87, 96, 97, 98, 91, 99, 100, 101, 95, 102, 103, 104));
+  p.push(Patch(68, 75, 76, 77, 98, 105, 106, 107, 101, 108, 109, 110, 104, 111, 112, 113));
+  p.push(Patch(77, 82, 83, 56, 107, 114, 115, 84, 110, 116, 117, 88, 113, 118, 119, 92));
+  p.push(Patch(120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135));
+  p.push(Patch(123, 136, 137, 120, 127, 138, 139, 124, 131, 140, 141, 128, 135, 142, 143, 132));
+  p.push(Patch(132, 133, 134, 135, 144, 145, 146, 147, 148, 149, 150, 151, 68, 152, 153, 154));
+  p.push(Patch(135, 142, 143, 132, 147, 155, 156, 144, 151, 157, 158, 148, 154, 159, 160, 68));
+  p.push(Patch(161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176));
+  p.push(Patch(164, 177, 178, 161, 168, 179, 180, 165, 172, 181, 182, 169, 176, 183, 184, 173));
+  p.push(Patch(173, 174, 175, 176, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196));
+  p.push(Patch(176, 183, 184, 173, 188, 197, 198, 185, 192, 199, 200, 189, 196, 201, 202, 193));
+  p.push(Patch(203, 203, 203, 203, 206, 207, 208, 209, 210, 210, 210, 210, 211, 212, 213, 214));
+  p.push(Patch(203, 203, 203, 203, 209, 216, 217, 218, 210, 210, 210, 210, 214, 219, 220, 221));
+  p.push(Patch(203, 203, 203, 203, 218, 223, 224, 225, 210, 210, 210, 210, 221, 226, 227, 228));
+  p.push(Patch(203, 203, 203, 203, 225, 229, 230, 206, 210, 210, 210, 210, 228, 231, 232, 211));
+  p.push(Patch(211, 212, 213, 214, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244));
+  p.push(Patch(214, 219, 220, 221, 236, 245, 246, 247, 240, 248, 249, 250, 244, 251, 252, 253));
+  p.push(Patch(221, 226, 227, 228, 247, 254, 255, 256, 250, 257, 258, 259, 253, 260, 261, 262));
+  p.push(Patch(228, 231, 232, 211, 256, 263, 264, 233, 259, 265, 266, 237, 262, 267, 268, 241));
+  p.push(Patch(269, 269, 269, 269, 278, 279, 280, 281, 274, 275, 276, 277, 270, 271, 272, 273));
+  p.push(Patch(269, 269, 269, 269, 281, 288, 289, 290, 277, 285, 286, 287, 273, 282, 283, 284));
+  p.push(Patch(269, 269, 269, 269, 290, 297, 298, 299, 287, 294, 295, 296, 284, 291, 292, 293));
+  p.push(Patch(269, 269, 269, 269, 299, 304, 305, 278, 296, 302, 303, 274, 293, 300, 301, 270));
+
+  positions.resize(0);
+  positions.push(Vec3(1.40000, 2.40000, - 0.00000)); positions.push(Vec3(1.40000, 2.40000, 0.78400)); positions.push(Vec3(0.78400, 2.40000, 1.40000)); positions.push(Vec3(0.00000, 2.40000, 1.40000)); positions.push(Vec3(1.33750, 2.53125, - 0.00000)); positions.push(Vec3(1.33750, 2.53125, 0.74900)); positions.push(Vec3(0.74900, 2.53125, 1.33750)); positions.push(Vec3(0.00000, 2.53125, 1.33750)); positions.push(Vec3(1.43750, 2.53125, - 0.00000)); positions.push(Vec3(1.43750, 2.53125, 0.80500));
+  positions.push(Vec3(0.80500, 2.53125, 1.43750)); positions.push(Vec3(0.00000, 2.53125, 1.43750)); positions.push(Vec3(1.50000, 2.40000, - 0.00000)); positions.push(Vec3(1.50000, 2.40000, 0.84000)); positions.push(Vec3(0.84000, 2.40000, 1.50000)); positions.push(Vec3(0.00000, 2.40000, 1.50000)); positions.push(Vec3(-0.78400, 2.40000, 1.40000)); positions.push(Vec3(-1.40000, 2.40000, 0.78400)); positions.push(Vec3(-1.40000, 2.40000, - 0.00000)); positions.push(Vec3(-0.74900, 2.53125, 1.33750));
+  positions.push(Vec3(-1.33750, 2.53125, 0.74900)); positions.push(Vec3(-1.33750, 2.53125, - 0.00000)); positions.push(Vec3(-0.80500, 2.53125, 1.43750)); positions.push(Vec3(-1.43750, 2.53125, 0.80500)); positions.push(Vec3(-1.43750, 2.53125, - 0.00000)); positions.push(Vec3(-0.84000, 2.40000, 1.50000)); positions.push(Vec3(-1.50000, 2.40000, 0.84000)); positions.push(Vec3(-1.50000, 2.40000, - 0.00000)); positions.push(Vec3(-1.40000, 2.40000, - 0.78400)); positions.push(Vec3(-0.78400, 2.40000, - 1.40000));
+  positions.push(Vec3(0.00000, 2.40000, - 1.40000)); positions.push(Vec3(-1.33750, 2.53125, - 0.74900)); positions.push(Vec3(-0.74900, 2.53125, - 1.33750)); positions.push(Vec3(0.00000, 2.53125, - 1.33750)); positions.push(Vec3(-1.43750, 2.53125, - 0.80500)); positions.push(Vec3(-0.80500, 2.53125, - 1.43750)); positions.push(Vec3(0.00000, 2.53125, - 1.43750)); positions.push(Vec3(-1.50000, 2.40000, - 0.84000)); positions.push(Vec3(-0.84000, 2.40000, - 1.50000)); positions.push(Vec3(0.00000, 2.40000, - 1.50000));
+  positions.push(Vec3(0.78400, 2.40000, - 1.40000)); positions.push(Vec3(1.40000, 2.40000, - 0.78400)); positions.push(Vec3(0.74900, 2.53125, - 1.33750)); positions.push(Vec3(1.33750, 2.53125, - 0.74900)); positions.push(Vec3(0.80500, 2.53125, - 1.43750)); positions.push(Vec3(1.43750, 2.53125, - 0.80500)); positions.push(Vec3(0.84000, 2.40000, - 1.50000)); positions.push(Vec3(1.50000, 2.40000, - 0.84000)); positions.push(Vec3(1.75000, 1.87500, - 0.00000)); positions.push(Vec3(1.75000, 1.87500, 0.98000));
+  positions.push(Vec3(0.98000, 1.87500, 1.75000)); positions.push(Vec3(0.00000, 1.87500, 1.75000)); positions.push(Vec3(2.00000, 1.35000, - 0.00000)); positions.push(Vec3(2.00000, 1.35000, 1.12000)); positions.push(Vec3(1.12000, 1.35000, 2.00000)); positions.push(Vec3(0.00000, 1.35000, 2.00000)); positions.push(Vec3(2.00000, 0.90000, - 0.00000)); positions.push(Vec3(2.00000, 0.90000, 1.12000)); positions.push(Vec3(1.12000, 0.90000, 2.00000)); positions.push(Vec3(0.00000, 0.90000, 2.00000));
+  positions.push(Vec3(-0.98000, 1.87500, 1.75000)); positions.push(Vec3(-1.75000, 1.87500, 0.98000)); positions.push(Vec3(-1.75000, 1.87500, - 0.00000)); positions.push(Vec3(-1.12000, 1.35000, 2.00000)); positions.push(Vec3(-2.00000, 1.35000, 1.12000)); positions.push(Vec3(-2.00000, 1.35000, - 0.00000)); positions.push(Vec3(-1.12000, 0.90000, 2.00000)); positions.push(Vec3(-2.00000, 0.90000, 1.12000)); positions.push(Vec3(-2.00000, 0.90000, - 0.00000)); positions.push(Vec3(-1.75000, 1.87500, - 0.98000));
+  positions.push(Vec3(-0.98000, 1.87500, - 1.75000)); positions.push(Vec3(0.00000, 1.87500, - 1.75000)); positions.push(Vec3(-2.00000, 1.35000, - 1.12000)); positions.push(Vec3(-1.12000, 1.35000, - 2.00000)); positions.push(Vec3(0.00000, 1.35000, - 2.00000)); positions.push(Vec3(-2.00000, 0.90000, - 1.12000)); positions.push(Vec3(-1.12000, 0.90000, - 2.00000)); positions.push(Vec3(0.00000, 0.90000, - 2.00000)); positions.push(Vec3(0.98000, 1.87500, - 1.75000)); positions.push(Vec3(1.75000, 1.87500, - 0.98000));
+  positions.push(Vec3(1.12000, 1.35000, - 2.00000)); positions.push(Vec3(2.00000, 1.35000, - 1.12000)); positions.push(Vec3(1.12000, 0.90000, - 2.00000)); positions.push(Vec3(2.00000, 0.90000, - 1.12000)); positions.push(Vec3(2.00000, 0.45000, - 0.00000)); positions.push(Vec3(2.00000, 0.45000, 1.12000)); positions.push(Vec3(1.12000, 0.45000, 2.00000)); positions.push(Vec3(0.00000, 0.45000, 2.00000)); positions.push(Vec3(1.50000, 0.22500, - 0.00000)); positions.push(Vec3(1.50000, 0.22500, 0.84000));
+  positions.push(Vec3(0.84000, 0.22500, 1.50000)); positions.push(Vec3(0.00000, 0.22500, 1.50000)); positions.push(Vec3(1.50000, 0.15000, - 0.00000)); positions.push(Vec3(1.50000, 0.15000, 0.84000)); positions.push(Vec3(0.84000, 0.15000, 1.50000)); positions.push(Vec3(0.00000, 0.15000, 1.50000)); positions.push(Vec3(-1.12000, 0.45000, 2.00000)); positions.push(Vec3(-2.00000, 0.45000, 1.12000)); positions.push(Vec3(-2.00000, 0.45000, - 0.00000)); positions.push(Vec3(-0.84000, 0.22500, 1.50000));
+  positions.push(Vec3(-1.50000, 0.22500, 0.84000)); positions.push(Vec3(-1.50000, 0.22500, - 0.00000)); positions.push(Vec3(-0.84000, 0.15000, 1.50000)); positions.push(Vec3(-1.50000, 0.15000, 0.84000)); positions.push(Vec3(-1.50000, 0.15000, - 0.00000)); positions.push(Vec3(-2.00000, 0.45000, - 1.12000)); positions.push(Vec3(-1.12000, 0.45000, - 2.00000)); positions.push(Vec3(0.00000, 0.45000, - 2.00000)); positions.push(Vec3(-1.50000, 0.22500, - 0.84000)); positions.push(Vec3(-0.84000, 0.22500, - 1.50000));
+  positions.push(Vec3(0.00000, 0.22500, - 1.50000)); positions.push(Vec3(-1.50000, 0.15000, - 0.84000)); positions.push(Vec3(-0.84000, 0.15000, - 1.50000)); positions.push(Vec3(0.00000, 0.15000, - 1.50000)); positions.push(Vec3(1.12000, 0.45000, - 2.00000)); positions.push(Vec3(2.00000, 0.45000, - 1.12000)); positions.push(Vec3(0.84000, 0.22500, - 1.50000)); positions.push(Vec3(1.50000, 0.22500, - 0.84000)); positions.push(Vec3(0.84000, 0.15000, - 1.50000)); positions.push(Vec3(1.50000, 0.15000, - 0.84000));
+  positions.push(Vec3(-1.60000, 2.02500, - 0.00000)); positions.push(Vec3(-1.60000, 2.02500, 0.30000)); positions.push(Vec3(-1.50000, 2.25000, 0.30000)); positions.push(Vec3(-1.50000, 2.25000, - 0.00000)); positions.push(Vec3(-2.30000, 2.02500, - 0.00000)); positions.push(Vec3(-2.30000, 2.02500, 0.30000)); positions.push(Vec3(-2.50000, 2.25000, 0.30000)); positions.push(Vec3(-2.50000, 2.25000, - 0.00000)); positions.push(Vec3(-2.70000, 2.02500, - 0.00000)); positions.push(Vec3(-2.70000, 2.02500, 0.30000));
+  positions.push(Vec3(-3.00000, 2.25000, 0.30000)); positions.push(Vec3(-3.00000, 2.25000, - 0.00000)); positions.push(Vec3(-2.70000, 1.80000, - 0.00000)); positions.push(Vec3(-2.70000, 1.80000, 0.30000)); positions.push(Vec3(-3.00000, 1.80000, 0.30000)); positions.push(Vec3(-3.00000, 1.80000, - 0.00000)); positions.push(Vec3(-1.50000, 2.25000, - 0.30000)); positions.push(Vec3(-1.60000, 2.02500, - 0.30000)); positions.push(Vec3(-2.50000, 2.25000, - 0.30000)); positions.push(Vec3(-2.30000, 2.02500, - 0.30000));
+  positions.push(Vec3(-3.00000, 2.25000, - 0.30000)); positions.push(Vec3(-2.70000, 2.02500, - 0.30000)); positions.push(Vec3(-3.00000, 1.80000, - 0.30000)); positions.push(Vec3(-2.70000, 1.80000, - 0.30000)); positions.push(Vec3(-2.70000, 1.57500, - 0.00000)); positions.push(Vec3(-2.70000, 1.57500, 0.30000)); positions.push(Vec3(-3.00000, 1.35000, 0.30000)); positions.push(Vec3(-3.00000, 1.35000, - 0.00000)); positions.push(Vec3(-2.50000, 1.12500, - 0.00000)); positions.push(Vec3(-2.50000, 1.12500, 0.30000));
+  positions.push(Vec3(-2.65000, 0.93750, 0.30000)); positions.push(Vec3(-2.65000, 0.93750, - 0.00000)); positions.push(Vec3(-2.00000, 0.90000, 0.30000)); positions.push(Vec3(-1.90000, 0.60000, 0.30000)); positions.push(Vec3(-1.90000, 0.60000, - 0.00000)); positions.push(Vec3(-3.00000, 1.35000, - 0.30000)); positions.push(Vec3(-2.70000, 1.57500, - 0.30000)); positions.push(Vec3(-2.65000, 0.93750, - 0.30000)); positions.push(Vec3(-2.50000, 1.12500, - 0.30000)); positions.push(Vec3(-1.90000, 0.60000, - 0.30000));
+  positions.push(Vec3(-2.00000, 0.90000, - 0.30000)); positions.push(Vec3(1.70000, 1.42500, - 0.00000)); positions.push(Vec3(1.70000, 1.42500, 0.66000)); positions.push(Vec3(1.70000, 0.60000, 0.66000)); positions.push(Vec3(1.70000, 0.60000, - 0.00000)); positions.push(Vec3(2.60000, 1.42500, - 0.00000)); positions.push(Vec3(2.60000, 1.42500, 0.66000)); positions.push(Vec3(3.10000, 0.82500, 0.66000)); positions.push(Vec3(3.10000, 0.82500, - 0.00000)); positions.push(Vec3(2.30000, 2.10000, - 0.00000));
+  positions.push(Vec3(2.30000, 2.10000, 0.25000)); positions.push(Vec3(2.40000, 2.02500, 0.25000)); positions.push(Vec3(2.40000, 2.02500, - 0.00000)); positions.push(Vec3(2.70000, 2.40000, - 0.00000)); positions.push(Vec3(2.70000, 2.40000, 0.25000)); positions.push(Vec3(3.30000, 2.40000, 0.25000)); positions.push(Vec3(3.30000, 2.40000, - 0.00000)); positions.push(Vec3(1.70000, 0.60000, - 0.66000)); positions.push(Vec3(1.70000, 1.42500, - 0.66000)); positions.push(Vec3(3.10000, 0.82500, - 0.66000));
+  positions.push(Vec3(2.60000, 1.42500, - 0.66000)); positions.push(Vec3(2.40000, 2.02500, - 0.25000)); positions.push(Vec3(2.30000, 2.10000, - 0.25000)); positions.push(Vec3(3.30000, 2.40000, - 0.25000)); positions.push(Vec3(2.70000, 2.40000, - 0.25000)); positions.push(Vec3(2.80000, 2.47500, - 0.00000)); positions.push(Vec3(2.80000, 2.47500, 0.25000)); positions.push(Vec3(3.52500, 2.49375, 0.25000)); positions.push(Vec3(3.52500, 2.49375, - 0.00000)); positions.push(Vec3(2.90000, 2.47500, - 0.00000));
+  positions.push(Vec3(2.90000, 2.47500, 0.15000)); positions.push(Vec3(3.45000, 2.51250, 0.15000)); positions.push(Vec3(3.45000, 2.51250, - 0.00000)); positions.push(Vec3(2.80000, 2.40000, - 0.00000)); positions.push(Vec3(2.80000, 2.40000, 0.15000)); positions.push(Vec3(3.20000, 2.40000, 0.15000)); positions.push(Vec3(3.20000, 2.40000, - 0.00000)); positions.push(Vec3(3.52500, 2.49375, - 0.25000)); positions.push(Vec3(2.80000, 2.47500, - 0.25000)); positions.push(Vec3(3.45000, 2.51250, - 0.15000));
+  positions.push(Vec3(2.90000, 2.47500, - 0.15000)); positions.push(Vec3(3.20000, 2.40000, - 0.15000)); positions.push(Vec3(2.80000, 2.40000, - 0.15000)); positions.push(Vec3(0.00000, 3.15000, - 0.00000)); positions.push(Vec3(0.00000, 3.15000, 0.00200)); positions.push(Vec3(0.00200, 3.15000, - 0.00000)); positions.push(Vec3(0.80000, 3.15000, - 0.00000)); positions.push(Vec3(0.80000, 3.15000, 0.45000)); positions.push(Vec3(0.45000, 3.15000, 0.80000)); positions.push(Vec3(0.00000, 3.15000, 0.80000));
+  positions.push(Vec3(0.00000, 2.85000, - 0.00000)); positions.push(Vec3(0.20000, 2.70000, - 0.00000)); positions.push(Vec3(0.20000, 2.70000, 0.11200)); positions.push(Vec3(0.11200, 2.70000, 0.20000)); positions.push(Vec3(0.00000, 2.70000, 0.20000)); positions.push(Vec3(-0.00200, 3.15000, - 0.00000)); positions.push(Vec3(-0.45000, 3.15000, 0.80000)); positions.push(Vec3(-0.80000, 3.15000, 0.45000)); positions.push(Vec3(-0.80000, 3.15000, - 0.00000)); positions.push(Vec3(-0.11200, 2.70000, 0.20000));
+  positions.push(Vec3(-0.20000, 2.70000, 0.11200)); positions.push(Vec3(-0.20000, 2.70000, - 0.00000)); positions.push(Vec3(0.00000, 3.15000, - 0.00200)); positions.push(Vec3(-0.80000, 3.15000, - 0.45000)); positions.push(Vec3(-0.45000, 3.15000, - 0.80000)); positions.push(Vec3(0.00000, 3.15000, - 0.80000)); positions.push(Vec3(-0.20000, 2.70000, - 0.11200)); positions.push(Vec3(-0.11200, 2.70000, - 0.20000)); positions.push(Vec3(0.00000, 2.70000, - 0.20000)); positions.push(Vec3(0.45000, 3.15000, - 0.80000));
+  positions.push(Vec3(0.80000, 3.15000, - 0.45000)); positions.push(Vec3(0.11200, 2.70000, - 0.20000)); positions.push(Vec3(0.20000, 2.70000, - 0.11200)); positions.push(Vec3(0.40000, 2.55000, - 0.00000)); positions.push(Vec3(0.40000, 2.55000, 0.22400)); positions.push(Vec3(0.22400, 2.55000, 0.40000)); positions.push(Vec3(0.00000, 2.55000, 0.40000)); positions.push(Vec3(1.30000, 2.55000, - 0.00000)); positions.push(Vec3(1.30000, 2.55000, 0.72800)); positions.push(Vec3(0.72800, 2.55000, 1.30000));
+  positions.push(Vec3(0.00000, 2.55000, 1.30000)); positions.push(Vec3(1.30000, 2.40000, - 0.00000)); positions.push(Vec3(1.30000, 2.40000, 0.72800)); positions.push(Vec3(0.72800, 2.40000, 1.30000)); positions.push(Vec3(0.00000, 2.40000, 1.30000)); positions.push(Vec3(-0.22400, 2.55000, 0.40000)); positions.push(Vec3(-0.40000, 2.55000, 0.22400)); positions.push(Vec3(-0.40000, 2.55000, - 0.00000)); positions.push(Vec3(-0.72800, 2.55000, 1.30000)); positions.push(Vec3(-1.30000, 2.55000, 0.72800));
+  positions.push(Vec3(-1.30000, 2.55000, - 0.00000)); positions.push(Vec3(-0.72800, 2.40000, 1.30000)); positions.push(Vec3(-1.30000, 2.40000, 0.72800)); positions.push(Vec3(-1.30000, 2.40000, - 0.00000)); positions.push(Vec3(-0.40000, 2.55000, - 0.22400)); positions.push(Vec3(-0.22400, 2.55000, - 0.40000)); positions.push(Vec3(0.00000, 2.55000, - 0.40000)); positions.push(Vec3(-1.30000, 2.55000, - 0.72800)); positions.push(Vec3(-0.72800, 2.55000, - 1.30000)); positions.push(Vec3(0.00000, 2.55000, - 1.30000));
+  positions.push(Vec3(-1.30000, 2.40000, - 0.72800)); positions.push(Vec3(-0.72800, 2.40000, - 1.30000)); positions.push(Vec3(0.00000, 2.40000, - 1.30000)); positions.push(Vec3(0.22400, 2.55000, - 0.40000)); positions.push(Vec3(0.40000, 2.55000, - 0.22400)); positions.push(Vec3(0.72800, 2.55000, - 1.30000)); positions.push(Vec3(1.30000, 2.55000, - 0.72800)); positions.push(Vec3(0.72800, 2.40000, - 1.30000)); positions.push(Vec3(1.30000, 2.40000, - 0.72800)); positions.push(Vec3(0.00000, 0.00000, - 0.00000));
+  positions.push(Vec3(1.50000, 0.15000, - 0.00000)); positions.push(Vec3(1.50000, 0.15000, - 0.84000)); positions.push(Vec3(0.84000, 0.15000, - 1.50000)); positions.push(Vec3(0.00000, 0.15000, - 1.50000)); positions.push(Vec3(1.50000, 0.07500, - 0.00000)); positions.push(Vec3(1.50000, 0.07500, - 0.84000)); positions.push(Vec3(0.84000, 0.07500, - 1.50000)); positions.push(Vec3(0.00000, 0.07500, - 1.50000)); positions.push(Vec3(1.42500, 0.00000, - 0.00000)); positions.push(Vec3(1.42500, 0.00000, - 0.79800));
+  positions.push(Vec3(0.79800, 0.00000, - 1.42500)); positions.push(Vec3(0.00000, 0.00000, - 1.42500)); positions.push(Vec3(-0.84000, 0.15000, - 1.50000)); positions.push(Vec3(-1.50000, 0.15000, - 0.84000)); positions.push(Vec3(-1.50000, 0.15000, - 0.00000)); positions.push(Vec3(-0.84000, 0.07500, - 1.50000)); positions.push(Vec3(-1.50000, 0.07500, - 0.84000)); positions.push(Vec3(-1.50000, 0.07500, - 0.00000)); positions.push(Vec3(-0.79800, 0.00000, - 1.42500)); positions.push(Vec3(-1.42500, 0.00000, - 0.79800));
+  positions.push(Vec3(-1.42500, 0.00000, - 0.00000)); positions.push(Vec3(-1.50000, 0.15000, 0.84000)); positions.push(Vec3(-0.84000, 0.15000, 1.50000)); positions.push(Vec3(0.00000, 0.15000, 1.50000)); positions.push(Vec3(-1.50000, 0.07500, 0.84000)); positions.push(Vec3(-0.84000, 0.07500, 1.50000)); positions.push(Vec3(0.00000, 0.07500, 1.50000)); positions.push(Vec3(-1.42500, 0.00000, 0.79800)); positions.push(Vec3(-0.79800, 0.00000, 1.42500)); positions.push(Vec3(0.00000, 0.00000, 1.42500));
+  positions.push(Vec3(0.84000, 0.15000, 1.50000)); positions.push(Vec3(1.50000, 0.15000, 0.84000)); positions.push(Vec3(0.84000, 0.07500, 1.50000)); positions.push(Vec3(1.50000, 0.07500, 0.84000)); positions.push(Vec3(0.79800, 0.00000, 1.42500)); positions.push(Vec3(1.42500, 0.00000, 0.79800));
+
+  // Center on teapot's bbox center
+  Vec3 vmin, vmax, vmid;
+  vmin.setNull();
+  vmax.setNull();
+  for (Size i = 0; i < positions.size(); i++) {
+    vmin = minVec(vmin, positions[i]);
+    vmax = maxVec(vmax, positions[i]);
+  }
+
+  vmid = (vmin + vmax) * 0.5;
+  for (Size i = 0; i < positions.size(); i++)
+    positions[i] -= vmid;
+
+  computeTeapotNormals(p, positions, normals);
+}
+
+operator PolygonMeshSubdividePatch(
+  io PolygonMesh mesh,
+  in Patch p,
+  io Vec3 pv[],
+  io Vec3 pn[],
+  io Ref<Vec3Attribute> positionsAttr,
+  io Ref<Vec3Attribute> normalsAttr,
+  io Ref<Vec2Attribute> uvsAttr,
+  io Size voff,
+  io Size idxoff,
+  in Integer nb_points
+) {
+  // Compute the basis function
+  Scalar b[][4];
+  b.resize(nb_points);
+
+  for (Integer i = 0; i < nb_points; i++) {
+    Scalar u = Scalar(i) / Scalar(nb_points - 1);
+    b[i][0] = (1 - u) * (1 - u) * (1 - u);
+    b[i][1] = 3.0 * u * (1 - u) * (1 - u);
+    b[i][2] = 3.0 * u * u * (1 - u);
+    b[i][3] = u * u * u;
+  }
+
+  Vec2 pt[4][4];
+  for (Integer i = 0; i < 4; i++) {
+    for (Integer j = 0; j < 4; j++) {
+      pt[i][j] = Vec2(1.0 - (Scalar(j) / 3.0), Scalar(i) / 3.0);
+    }
+  }
+
+  Vec3 rv[][4], rn[][4];
+  Vec2 rt[][4];
+  rv.resize(nb_points);
+  rn.resize(nb_points);
+  rt.resize(nb_points);
+
+  // Create smoothed control curves along the U iso lines
+  for (Integer i = 0; i < nb_points; i++) {
+    for (Integer j = 0; j < 4; j++) {
+      rv[i][j] =
+        b[i][0] * pv[p.indices[j][0]] +
+        b[i][1] * pv[p.indices[j][1]] +
+        b[i][2] * pv[p.indices[j][2]] +
+        b[i][3] * pv[p.indices[j][3]];
+      rn[i][j] =
+        b[i][0] * pn[p.indices[j][0]] +
+        b[i][1] * pn[p.indices[j][1]] +
+        b[i][2] * pn[p.indices[j][2]] +
+        b[i][3] * pn[p.indices[j][3]];
+
+      rt[i][j] =
+        b[i][0] * pt[j][0] +
+        b[i][1] * pt[j][1] +
+        b[i][2] * pt[j][2] +
+        b[i][3] * pt[j][3];
+    }
+  }
+
+  // Create a smooth surface from the smoothed control
+  // curves along the V iso lines.
+  Integer offset = voff;
+  for (Integer i = 0; i < nb_points; i++) {
+    for (Integer j = 0; j < nb_points; j++) {
+
+      positionsAttr.values[voff] =
+        b[i][0] * rv[j][0] +
+        b[i][1] * rv[j][1] +
+        b[i][2] * rv[j][2] +
+        b[i][3] * rv[j][3];
+      normalsAttr.values[voff] =
+        (b[i][0] * rn[j][0] +
+         b[i][1] * rn[j][1] +
+         b[i][2] * rn[j][2] +
+         b[i][3] * rn[j][3]).unit();
+
+      uvsAttr.values[voff] =
+        b[i][0] * rt[j][0] +
+        b[i][1] * rt[j][1] +
+        b[i][2] * rt[j][2] +
+        b[i][3] * rt[j][3];
+      voff++;
+    }
+  }
+
+  for (Integer i = 0; i < (nb_points - 1); i++) {
+    for (Integer j = 0; j < (nb_points - 1); j++) {
+      Integer c0, c1, c2, c3;
+      c0 = i * nb_points + j;
+      c1 = i * nb_points + j + 1;
+      c2 = (i + 1) * nb_points + j + 1;
+      c3 = (i + 1) * nb_points + j;
+      mesh.addPolygon( offset + c0, offset + c1, offset + c2, offset + c3 );
+    }
+  }
+}
+
+
+function PolygonMesh.addTeapot!(Xfo xfo, in Scalar size, in Integer detail) {
+
+  Ref<Vec3Attribute> positions = this.getAttributes().getPositions();
+  Ref<Vec3Attribute> normals = this.getOrCreateNormals();
+  Ref<Vec2Attribute> uvs = this.getOrCreateVec2Attribute("uvs0");
+
+  Integer nb_points = (detail >= 0) ? (detail + 2) : 2;
+
+  Patch tp[];
+  Vec3 tv[], tn[];
+
+  getTeapotHull(tp, tv, tn);
+
+  this.beginStructureChanges();
+  this.createPoints(Size(tp.size() * nb_points * nb_points));
+
+  Size voff = 0.0, idxoff = 0;
+  // Workaround to kl compilation error. 
+  // 'this' is considered readonly when calling the following method
+  // but by creating a local variable 'mesh' it call works. 
+  PolygonMesh mesh = this;
+  for (Size i = 0; i < tp.size(); i++) {
+    PolygonMeshSubdividePatch(
+      mesh, tp[i], tv, tn,
+      positions,
+      normals, 
+      uvs,
+      voff, idxoff, nb_points
+    );
+  }
+  this.endStructureChanges();
+
+  Scalar maxV = 0.0;
+  for (Size i = 0; i < positions.size(); i++) {
+    if (positions.values[i].length() > maxV) {
+      maxV = positions.values[i].length();
+    }
+  }
+  Scalar scale = (size / maxV) * 2.0;
+  for (Size i = 0; i < positions.size(); i++) {
+    positions.values[i] = xfo.transformVector(positions.values[i] * scale);
+    normals.values[i] = xfo.ori.rotateVector(normals.values[i]);
+  }
+
+  this.incrementPointPositionsVersion();
+  normals.incrementVersion();
+  uvs.incrementVersion();
+}
+
+
+/////////////////////////////////////////////
+// Bone
+// draws a bone primitive as triangles given a transform, a length, a radius.
+function PolygonMesh.drawBone!(Xfo xfo, Scalar length, Scalar radius, Boolean setNormals) {
+  
+  Vec3 boneVec = Vec3(length, 0.0, 0.0);
+  Vec3 yVec = Vec3(0.0, radius, 0.0);
+  Vec3 zVec = Vec3(0.0, 0.0, radius);
+
+  Size firstPoly = this.polygonCount();
+  Size firstPoint = this.createPoints(6);
+  Size pointId = firstPoint;
+
+  Vec3 p0 = xfo.tr;
+  Vec3 p1 = xfo.transformVector((boneVec * 0.2) + yVec + zVec);
+  Vec3 p2 = xfo.transformVector((boneVec * 0.2) - yVec + zVec);
+  Vec3 p3 = xfo.transformVector((boneVec * 0.2) - yVec - zVec);
+  Vec3 p4 = xfo.transformVector((boneVec * 0.2) + yVec - zVec);
+  Vec3 p5 = xfo.transformVector(boneVec);
+
+  this.setPointPosition(pointId, p0); pointId++;
+  this.setPointPosition(pointId, p1); pointId++;
+  this.setPointPosition(pointId, p2); pointId++;
+  this.setPointPosition(pointId, p3); pointId++;
+  this.setPointPosition(pointId, p4); pointId++;
+  this.setPointPosition(pointId, p5); pointId++;
+
+  this.beginStructureChanges();
+  this.addPolygon(firstPoint+0, firstPoint+1, firstPoint+2);
+  this.addPolygon(firstPoint+0, firstPoint+2, firstPoint+3);
+  this.addPolygon(firstPoint+0, firstPoint+3, firstPoint+4);
+  this.addPolygon(firstPoint+5, firstPoint+2, firstPoint+1);
+  this.addPolygon(firstPoint+5, firstPoint+3, firstPoint+2);
+  this.addPolygon(firstPoint+5, firstPoint+4, firstPoint+3);
+  this.endStructureChanges();
+
+  if(setNormals){
+    Ref<Vec3Attribute> normals = this.getOrCreateNormals();
+
+    // Set Points Normals
+    Vec3 normal;
+
+    normal = (p2 - p0).cross(p0 - p1).unit();
+    this.setPolygonAttribute(firstPoly+0, 0, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+0, 1, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+0, 2, normals, xfo.ori.rotateVector(normal));
+
+    normal = (p3 - p0).cross(p0 - p2).unit();
+    this.setPolygonAttribute(firstPoly+1, 0, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+1, 1, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+1, 2, normals, xfo.ori.rotateVector(normal));
+
+    normal = (p4 - p0).cross(p0 - p3).unit();
+    this.setPolygonAttribute(firstPoly+2, 0, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+2, 1, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+2, 2, normals, xfo.ori.rotateVector(normal));
+
+    normal = (p1 - p5).cross(p5 - p2).unit();
+    this.setPolygonAttribute(firstPoly+3, 0, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+3, 1, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+3, 2, normals, xfo.ori.rotateVector(normal));
+
+    normal = (p2 - p5).cross(p5 - p3).unit();
+    this.setPolygonAttribute(firstPoly+4, 0, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+4, 1, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+4, 2, normals, xfo.ori.rotateVector(normal));
+
+    normal = (p3 - p5).cross(p5 - p4).unit();
+    this.setPolygonAttribute(firstPoly+5, 0, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+5, 1, normals, xfo.ori.rotateVector(normal));
+    this.setPolygonAttribute(firstPoly+5, 2, normals, xfo.ori.rotateVector(normal));
+  }
+}
+
+

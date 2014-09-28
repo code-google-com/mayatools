@@ -1,0 +1,131 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+// struct	BulletConstraintSetting
+// {
+// 	BulletConstraintSetting()	:
+// 		m_tau(Scalar(0.3)),
+// 		m_damping(Scalar(1.)),
+// 		m_impulseClamp(Scalar(0.))
+// 	{
+// 	}
+// 	Scalar		m_tau;
+// 	Scalar		m_damping;
+// 	Scalar		m_impulseClamp;
+// };
+
+
+const UInt32 BulletPoint2PointFlags_BT_P2P_FLAGS_ERP = 1;
+const UInt32 BulletPoint2PointFlags_BT_P2P_FLAGS_CFM = 2;
+
+
+/// point to point constraint between two rigidbodies each with a pivotpoint that descibes the 'ballsocket' location in local space
+object BulletPoint2PointConstraint : BulletTypedConstraint
+{
+	Data pointer;
+	BulletRigidBody	rbA;
+	BulletRigidBody	rbB;
+	// ///for backwards compatibility during the transition to 'getInfo/getInfo2'
+	// Boolean		m_useSolveConstraintObsolete;
+
+	// BulletConstraintSetting	m_setting;
+};
+
+function Data BulletPoint2PointConstraint.getPointer(){
+	return this.pointer;
+}
+
+function BulletPoint2PointConstraint(BulletRigidBody rbA, BulletRigidBody rbB, in Vec3 pivotInA, in Vec3 pivotInB){
+	this.rbA = rbA;
+	this.rbB = rbB;
+	this.__construct(rbA,rbB, pivotInA, pivotInB);
+}
+function BulletPoint2PointConstraint.__construct!(BulletRigidBody rbA, BulletRigidBody rbB, in Vec3 pivotInA, in Vec3 pivotInB) = "BulletPoint2PointConstraint_construct1";
+
+
+function BulletPoint2PointConstraint(BulletRigidBody rbA, in Vec3 pivotInA){
+	this.rbA = rbA;
+	this.__construct( rbA, pivotInA);
+}
+
+function BulletPoint2PointConstraint.__construct!(BulletRigidBody rbA,in Vec3 pivotInA) = "BulletPoint2PointConstraint_construct2";
+
+function ~BulletPoint2PointConstraint() = "BulletPoint2PointConstraint_destroy";
+
+function BulletRigidBody BulletPoint2PointConstraint.getRigidBodyA()
+{
+	return this.rbA;
+}
+function BulletRigidBody BulletPoint2PointConstraint.getRigidBodyB()
+{
+	return this.rbB;
+}
+
+
+function BulletPoint2PointConstraint.buildJacobian!() = 'BulletPoint2PointConstraint_buildJacobian';
+
+// function BulletPoint2PointConstraint.getInfo1! (BulletConstraintInfo1* info) = 'BulletPoint2PointConstraint_getInfo1';
+
+// function BulletPoint2PointConstraint.getInfo1NonVirtual! (BulletConstraintInfo1* info) = 'BulletPoint2PointConstraint_getInfo1NonVirtual';
+
+// function BulletPoint2PointConstraint.getInfo2! (BulletConstraintInfo2* info) = 'BulletPoint2PointConstraint_getInfo2';
+
+// function BulletPoint2PointConstraint.getInfo2NonVirtual! (BulletConstraintInfo2* info, in Xfo body0_trans, in Xfo body1_trans) = 'BulletPoint2PointConstraint_getInfo2NonVirtual';
+
+function BulletPoint2PointConstraint.updateRHS!(Scalar timeStep) = 'BulletPoint2PointConstraint_updateRHS';
+
+function BulletPoint2PointConstraint.setPivotA!(in Vec3 pivotA) = 'BulletPoint2PointConstraint_setPivotA';
+
+function BulletPoint2PointConstraint.setPivotB!(in Vec3 pivotB) = 'BulletPoint2PointConstraint_setPivotB';
+
+function Vec3 BulletPoint2PointConstraint.getPivotInA() = 'BulletPoint2PointConstraint_getPivotInA';
+
+function Vec3 BulletPoint2PointConstraint.getPivotInB() = 'BulletPoint2PointConstraint_getPivotInB';
+
+	///override the default global value of a parameter (such as ERP or CFM), optionally provide the axis (0..5). 
+	///If no axis is provided, it uses the default axis for this constraint.
+function BulletPoint2PointConstraint.setParam!(Integer num, Scalar value){
+	this.setParam(num, value, -1);
+}
+function BulletPoint2PointConstraint.setParam!(Integer num, Scalar value, Integer axis) = 'BulletPoint2PointConstraint_setParam';
+
+	///return the local value of parameter
+function Scalar BulletPoint2PointConstraint.getParam?(Integer num){
+	return this.getParam(num, -1);
+}
+function Scalar BulletPoint2PointConstraint.getParam?(Integer num, Integer axis) = 'BulletPoint2PointConstraint_getParam';
+
+// function Integer BulletPoint2PointConstraint.calculateSerializeBufferSize() const;
+
+	///fills the dataBuffer and returns the struct name (and 0 on failure)
+// function const char*	serialize(void* dataBuffer, BulletSerializer* serializer) const;
+
+
+///////////////////////////////////////////////////////
+// From BulletTypedConstraint
+
+
+function Scalar BulletPoint2PointConstraint.getBreakingImpulseThreshold() = 'BulletPoint2PointConstraint_getBreakingImpulseThreshold';
+
+function BulletPoint2PointConstraint.setBreakingImpulseThreshold!(Scalar threshold) = 'BulletPoint2PointConstraint_setBreakingImpulseThreshold';
+
+function Boolean BulletPoint2PointConstraint.isEnabled() = 'BulletPoint2PointConstraint_isEnabled';
+
+function BulletPoint2PointConstraint.setEnabled!(Boolean enabled) = 'BulletPoint2PointConstraint_setEnabled';
+
+function Boolean BulletPoint2PointConstraint.needsFeedback() = 'BulletPoint2PointConstraint_needsFeedback';
+
+///enableFeedback will allow to read the applied linear and angular impulse
+///use getAppliedImpulse, getAppliedLinearImpulse and getAppliedAngularImpulse to read feedback information
+function BulletPoint2PointConstraint.enableFeedback!(Boolean needsFeedback) = 'BulletPoint2PointConstraint_enableFeedback';
+
+///getAppliedImpulse is an estimated total applied impulse. 
+///This feedback could be used to determine breaking constraints or playing sounds.
+function Scalar	BulletPoint2PointConstraint.getAppliedImpulse() = 'BulletPoint2PointConstraint_getAppliedImpulse';
+
+function UInt32 BulletPoint2PointConstraint.getConstraintType() = 'BulletPoint2PointConstraint_getConstraintType';
+
+

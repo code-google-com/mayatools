@@ -1,0 +1,142 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+//TODO: improve. This is a simple, nonsophisticated implementation. Should be improved, and use some LRU logic to decide which texture to free...
+//NOTE: for now, very simple implementation: reuse, but don't free. Freeing might
+
+inline UInt64 getHeightWidthDepthTypeKey( Size width, Size height, Size depth, OGLTexture2D texture ) {
+  return (UInt64( width & 65535 ) << 48) | (UInt64( height & 65535 ) << 32) | (UInt64( depth & 65535 ) << 16) | UInt64( texture.glTextureType );
+}
+
+inline UInt32 getInternalFormatKey( OGLTexture2D texture ) {
+  return UInt32( texture.glInternalFormat );
+}
+
+struct TextureCacheEntry {
+  OGLTexture2D texture;
+  Size approxMemoryUsage;
+};
+
+object OGLTextureCache : StatisticSourceWithAutoRegisterMember {
+  Size maxCacheMemory;
+  Size currentCacheMemory;
+  TextureCacheEntry cacheEntries[UInt64][UInt32][];
+
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function OGLTextureCache() {
+  this.maxCacheMemory = Size(1048576) * 8;//Arbitrary...
+  this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+//Mostly to add the children textures
+function StatisticRecord[] OGLTextureCache.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, "RTRTextureCache" ) );
+  stats.push( StatisticRecord( Statistic_Category, "RTR" ) );
+  return stats;
+}
+
+function Size OGLTexture2D.getApproximateMemoryUsage() {
+  Size numPixels = this.width * this.height * this.depth;
+
+  Size bitsPerPixel;
+  //Todo: add more...
+  switch ( this.glInternalFormat ) {
+    case GL_RGBA32F:
+      bitsPerPixel = 128;
+      break;
+    case GL_RGBA16:
+    case GL_RGBA16F:
+      bitsPerPixel = 64;
+      break;
+    case GL_RGB16:
+    case GL_RGB16F:
+      bitsPerPixel = 48;
+      break;
+    case GL_DEPTH_COMPONENT:
+    case GL_DEPTH_COMPONENT32:
+    case GL_DEPTH_COMPONENT32F:
+    case GL_RGBA:
+    case GL_RGBA8:
+      bitsPerPixel = 32;
+      break;
+    case GL_DEPTH_COMPONENT24:
+    case GL_RGB8:
+    case GL_RGB:
+      bitsPerPixel = 24;
+      break;
+    case GL_DEPTH_COMPONENT16:
+    case GL_LUMINANCE16:
+    case GL_INTENSITY16:
+      bitsPerPixel = 16;
+      break;
+    case GL_LUMINANCE:
+    case GL_INTENSITY:
+    case GL_INTENSITY8:
+    case GL_LUMINANCE8:
+      bitsPerPixel = 8;
+      break;
+    default:
+      bitsPerPixel = 32;//Arbitrary...
+  }
+  return (bitsPerPixel*numPixels)/8;
+}
+
+//TODO: code destructor which releases all texture memory
+
+function OGLTexture2D OGLTextureCache.allocateTexture!( io Boolean needsConfigure, Size width, Size height, Size depth, OGLTexture2D textureTypeReference, io TextureCacheEntry cacheVector[] ) {
+  //Search for an available texture
+  OGLTexture2D texture = null;
+  for( Size i = 0; i < cacheVector.size(); ++i ) {
+    if( cacheVector[i].texture.hasSameType( textureTypeReference ) ) {
+      texture = cacheVector[i].texture;
+      this.currentCacheMemory -= cacheVector[i].approxMemoryUsage;
+      if( i < cacheVector.size()-1 ) {
+        //Shuffle last...
+        cacheVector[i] = cacheVector[cacheVector.size()-1];
+      }
+      cacheVector.resize( cacheVector.size()-1 );
+    }
+    needsConfigure = false;
+    return texture;
+  }
+  texture = textureTypeReference.clone();
+  if( FabricStatisticsEnabled() ) {
+    if( !texture.autoStats )
+      texture.autoStats = StatisticsAutoRegisterMember(texture);
+    else
+      texture.autoStats.postCloneRefresh(texture); //see postCloneRefresh for comments
+  }
+  needsConfigure = true;
+  texture.width = width;
+  texture.height = height;
+  texture.depth = depth;
+  return texture;
+}
+
+inline OGLTexture2D OGLTextureCache.allocateTexture!( io Boolean GLAllocate, Size width, Size height, Size depth, OGLTexture2D textureTypeReference ) {
+  UInt64 heightWidthDepthTypeKey = getHeightWidthDepthTypeKey( width, height, depth, textureTypeReference );
+  UInt32 internalFormatKey = getInternalFormatKey( textureTypeReference );
+  return this.allocateTexture( GLAllocate, width, height, depth, textureTypeReference, this.cacheEntries[heightWidthDepthTypeKey][internalFormatKey] );
+}
+
+function OGLTextureCache.releaseTexture!( io OGLTexture2D texture ) {
+  if( texture != null && texture.bufferID != 0 ) {
+    UInt64 heightWidthDepthTypeKey = getHeightWidthDepthTypeKey( texture.width, texture.height, texture.depth, texture );
+    UInt32 internalFormatKey = getInternalFormatKey( texture );
+
+    TextureCacheEntry entry;
+    entry.approxMemoryUsage = texture.getApproximateMemoryUsage();
+    entry.texture = texture;
+    AddStatisticsChild( this.autoStats, texture.autoStats );
+    this.cacheEntries[heightWidthDepthTypeKey][internalFormatKey].push(entry);
+    this.currentCacheMemory += entry.approxMemoryUsage;
+    //TODO: release some texture if we bust this.maxCacheMemory; however, 
+    //      to do this we should release LRU ones...
+  }
+  texture = null;
+}

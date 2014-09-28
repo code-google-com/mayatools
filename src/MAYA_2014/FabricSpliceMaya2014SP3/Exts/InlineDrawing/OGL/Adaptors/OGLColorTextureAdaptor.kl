@@ -1,0 +1,112 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`oglcolortextureadaptor` is used to render objects such as the :ref:`inlinefilebasedtexture` and the :ref:`inlineproceduraltexture`.
+*/
+
+require OpenImageIO;
+
+object OGLColorTextureAdaptor : InlineTextureAdaptor {
+};
+
+// returns the types this adaptor is capable of drawing
+function String[] OGLColorTextureAdaptor.getTextureTypes() {
+  String result[];
+  result.push('InlineFileBasedTexture');
+  result.push('InlineProceduralTexture');
+  return result;
+}
+
+// standard constructor
+function OGLColorTextureAdaptor() {}
+
+function Boolean OGLColorTextureAdaptor._draw!(io DrawContext context, io InlineTexture texture, Object metaData) {
+
+  _OGLTexture2DAdaptorMetaData localMetaData = metaData;
+  if(localMetaData == null)
+    return false;
+
+  Size imageWidth = 0;
+  Size imageHeight = 0;
+  Color pixels[];
+
+  if(localMetaData._textureVersion != texture.getVersion()) {
+    if(texture.type() == InlineFileBasedTexture) {
+
+      // undefined textures will not cause an error,
+      // when the user updates the texture (for example loads a file)
+      // the texture's version will be increased, thus the cases
+      // further down will be invoked.
+      if(texture.getName() == "") {
+        localMetaData._textureVersion = texture.getVersion();
+        return true;
+      }
+      OpenImageInput image(texture.getName());
+      if(image.valid()) {
+
+        OpenImageTypeDesc desc = OpenImageTypeDesc(OpenImage_BASETYPE_FLOAT, OpenImage_AGGREGATE_SCALAR, OpenImage_VECSEMANTICS_NOXFORM);
+
+        OpenImageSpec spec = image.spec();
+        imageWidth = spec.get_full_width();
+        imageHeight = spec.get_full_height();
+        if(spec.get_nchannels() == 4) {
+          pixels.resize(imageWidth * imageHeight);
+          Data data = pixels.data();
+          if(!image.read_image(desc, data, 0, 0, 0))
+            pixels.resize(0);
+        } else if(spec.get_nchannels() == 3) {
+          Float32 floats[];
+          floats.resize(imageWidth * imageHeight * spec.get_nchannels());
+          Data data = floats.data();
+          if(image.read_image(desc, data, 0, 0, 0)) {
+            pixels.resize(imageWidth * imageHeight);
+            Size offset = 0;
+            for(Size i=0;i<pixels.size();i++) {
+              pixels[i].r = floats[offset++];
+              pixels[i].g = floats[offset++];
+              pixels[i].b = floats[offset++];
+              pixels[i].a = 1.0;
+            }
+          }
+        }
+      } else
+        setError('Texture file "'+texture.getName()+'" not found.');
+    } else if(texture.type() == InlineProceduralTexture) {
+      InlineProceduralTexture procTex = texture;
+      imageWidth = procTex._width;
+      imageHeight = procTex._height;
+      pixels = procTex._pixels;
+    } else {
+      setError(texture.type()+' not supported by OGLColorTextureAdaptor.');
+      return false;
+    }
+  }
+
+  // upload if we have received pixels
+  if(pixels.size() > 0 && pixels.size() >= imageWidth * imageHeight) {
+    if(localMetaData._texture == null)
+      localMetaData._texture = OGLTexture2D();
+    localMetaData._texture.name = texture.getName();
+    localMetaData._texture.glTextureType = GL_TEXTURE_2D;
+    localMetaData._texture.glInternalFormat = GL_RGBA32F;
+    localMetaData._texture.glFormat = GL_RGBA;
+    localMetaData._texture.glType = GL_FLOAT;
+    localMetaData._texture.textureMinFilter = GL_LINEAR;
+    localMetaData._texture.textureMagFilter = GL_LINEAR;
+    localMetaData._texture.wrapS = GL_REPEAT;
+    localMetaData._texture.wrapT = GL_REPEAT;
+    localMetaData._texture.configure(imageWidth, imageHeight, pixels.data());
+
+    localMetaData._textureVersion = texture.getVersion();
+  }
+
+  if(localMetaData._texture != null) {
+    localMetaData._texture.bind(localMetaData._textureUnit);
+  }
+
+  return true;
+}

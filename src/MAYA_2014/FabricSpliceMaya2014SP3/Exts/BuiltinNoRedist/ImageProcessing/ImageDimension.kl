@@ -1,0 +1,170 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`imagedimension` type represents a struct to manage pixel index lookups within 2D images. It's also able to manage partial images, such as crop regions. This is useful when working with offline renderers, or implementing image effects inside of 2D compositing applications, which might be performing an operation only on a part of the whole dataset. The ImageDimension can also return mipmapped pixel values of type :ref:`rgb` and :ref:`color`.
+
+Example
+---------
+
+.. code-block:: kl
+
+    // setup an image dimension
+    ImageDimension dim(1920, 1080);
+
+    // query the pixel index from a coordinate
+    UInt32 pixelIndex = dim.getIndex(800, 600);
+
+    // get the UV coordinates given a pixel index
+    Scalar u = dim.getURatio();
+    Scalar v = dim.getVRatio();
+  
+    // access a mipmapped value using Scalar coordinate
+    // in a differently sized image.
+    Color smallImage[];
+    smallImage.resize(320 * 240);
+    ImageDimension smallImageDim(320, 240);
+    Color pixelValue = smallImageDim.getPixel(u, v, smallImage);
+*/
+require Math;
+
+struct ImageDimension
+{
+  UInt32 left;
+  UInt32 right;
+  UInt32 bottom;
+  UInt32 top;
+  UInt32 width;
+  UInt32 height;
+};
+
+// default constructor
+inline ImageDimension()
+{
+  this.left = this.right = this.bottom = this.top = this.width = this.height = 0;
+}
+
+// constructor based on width and height
+inline ImageDimension(UInt32 width, UInt32 height)
+{
+  this.left = this.top = 0;
+  this.right = this.width = width;
+  this.bottom = this.height = height;
+}
+
+// returns the index of a pixel given a coordinate
+inline UInt32 ImageDimension.getIndex(UInt32 x, UInt32 y) {
+  return y * this.width + x;
+}
+
+// returns the u index coordinate of a pixel given its index
+inline UInt32 ImageDimension.getUIndex(Index index) {
+  UInt32 extendW = this.right - this.left;
+  return index % extendW + this.left;
+}
+
+// returns the v index coordinate of a pixel given its index
+inline UInt32 ImageDimension.getVIndex(Index index) {
+  UInt32 extendW = this.right - this.left;
+  UInt32 x = index % extendW;
+  return (index - x) / extendW + this.top;
+}
+
+// returns the u ratio (0.0 to 1.0) of a pixel given its index
+inline Scalar ImageDimension.getURatio(Index index) {
+  if(this.width == 0)
+    return 0.0;
+  return Scalar(this.getUIndex(index)) / Scalar(this.width);
+}
+
+// returns the v ratio (0.0 to 1.0) of a pixel given its index
+inline Scalar ImageDimension.getVRatio(Index index) {
+  if(this.height == 0)
+    return 0.0;
+  return Scalar(this.getVIndex(index)) / Scalar(this.height);
+}
+
+// returns a Color pixel value given a ratio u and v.
+// the pixel value is looked up within a pixel array of type
+// Color[], which has to be complete (match width + height).
+inline Color ImageDimension.getPixel(Scalar u, Scalar v, Color pixels[]) {
+  Color result;
+  if(this.width <= 1 || this.height <= 1)
+    return result;
+  
+  Scalar ustep = 1.0 / Scalar(this.width - 1);
+  Scalar vstep = 1.0 / Scalar(this.height - 1);
+  
+  UInt32 l = floor(u / ustep);
+  UInt32 r = l + 1;
+  UInt32 t = floor(v / vstep);
+  UInt32 b = t + 1;
+  if(l < this.left) l = this.left;
+  if(r > this.right) r = this.right;
+  if(t < this.top) t = this.top;
+  if(b > this.bottom) b = this.bottom;
+
+  Scalar urest = (u % ustep) / ustep;
+  Scalar vrest = (v % vstep) / vstep;
+
+  Index tl = t * this.width + l;
+  Index tr = t * this.width + r;
+  Index bl = b * this.width + l;
+  Index br = b * this.width + r;
+
+  if(tl >= pixels.size())
+    return result;
+  if(tr >= pixels.size())
+    return result;
+  if(bl >= pixels.size())
+    return result;
+  if(br >= pixels.size())
+    return result;
+
+  Color tColor = pixels[tl].linearInterpolate(pixels[tr], urest);
+  Color bColor = pixels[bl].linearInterpolate(pixels[br], urest);
+  return tColor.linearInterpolate(bColor, vrest);
+}
+
+// returns a RGB pixel value given a ratio u and v (x and y).
+// the pixel value is looked up within a pixel array of type
+// RGB[], which has to be complete (match width + height).
+inline RGB ImageDimension.getPixel(Scalar u, Scalar v, RGB pixels[]) {
+  RGB result;
+  if(this.width <= 1 || this.height <= 1)
+    return result;
+  
+  Scalar ustep = 1.0 / Scalar(this.width - 1);
+  Scalar vstep = 1.0 / Scalar(this.height - 1);
+  
+  UInt32 l = floor(u / ustep);
+  UInt32 r = l + 1;
+  UInt32 t = floor(v / vstep);
+  UInt32 b = t + 1;
+  if(l < this.left) l = this.left;
+  if(r > this.right) r = this.right;
+  if(t < this.top) t = this.top;
+  if(b > this.bottom) b = this.bottom;
+
+  Scalar urest = (u % ustep) / ustep;
+  Scalar vrest = (v % vstep) / vstep;
+
+  Index tl = t * this.width + l;
+  Index tr = t * this.width + r;
+  Index bl = b * this.width + l;
+  Index br = b * this.width + r;
+
+  if(tl >= pixels.size())
+    return result;
+  if(tr >= pixels.size())
+    return result;
+  if(bl >= pixels.size())
+    return result;
+  if(br >= pixels.size())
+    return result;
+
+  RGB tColor = pixels[tl].linearInterpolate(pixels[tr], urest);
+  RGB bColor = pixels[bl].linearInterpolate(pixels[br], urest);
+  return tColor.linearInterpolate(bColor, vrest);
+}

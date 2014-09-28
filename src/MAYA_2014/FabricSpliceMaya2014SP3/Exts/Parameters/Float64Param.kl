@@ -1,0 +1,65 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`float64param` implements the :ref:`param` interface for Float64 values.
+
+Example
+---------
+
+.. code-block:: kl
+
+    Float64Param param = Float64Param('width', 17.3);
+    report(param.getValue());
+*/
+
+object Float64Param : Param {
+  String name;
+  Float64 value;
+  Param options[String];
+};
+
+// default constructor
+function Float64Param(String name) {
+  this.name = name;
+  this.value = 0;
+}
+
+// constructor taking input value
+function Float64Param(String name, Float64 value) {
+  this.name = name;
+  this.value = value;
+}
+
+// returns the name of this parameter
+function String Float64Param.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String Float64Param.getValueType() {
+  return "Float64";
+}
+
+// getting an option on this param
+function Param Float64Param.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function Float64Param.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function Float64 Float64Param.getValue() {
+  return this.value;
+}
+
+// sets the param's value
+function Float64Param.setValue!(Float64 value) {
+  this.value = value;
+}

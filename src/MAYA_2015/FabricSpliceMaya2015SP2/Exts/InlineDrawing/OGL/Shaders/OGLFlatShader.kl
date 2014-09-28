@@ -1,0 +1,164 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`oglflatshader` implements the :ref:`inlineshader` interface for OpenGL direct rendering. It encapsulates the :ref:`oglinlineshader` for shading with flat colors.
+
+Uniforms
+----------
+=============== ============ ===================================== ==================================
+Name            Type         Description                           Default
+=============== ============ ===================================== ==================================
+u_color         Color        The diffuse color                     Color(1.0, 0.0, 0.0)
+=============== ============ ===================================== ==================================
+
+Attributes
+----------
+=============== ============ =====================================
+Name            Type         Description
+=============== ============ =====================================
+positions       Vec3         Geometry positions
+=============== ============ =====================================
+
+Example
+---------
+
+.. code-block:: kl
+
+    InlineShader shader = draw.registerShader(OGLFlatShader());
+    InlineMaterial mat = shader.getOrCreateMaterial('green');
+    mat.setUniform('u_color', Color(0.0, 1.0, 0.0));
+*/
+
+require Math;
+require FabricOGL;
+
+object OGLFlatShader: InlineShader {
+  OGLInlineShader _shader;
+};
+
+// default constructor without a name
+function OGLFlatShader() {
+  this = OGLFlatShader(this.type());
+}
+
+// default constructor taking a name
+function OGLFlatShader(String name) {
+  this._shader = OGLInlineShader(
+    name,
+    "
+      #version 150 //required for OSX support
+
+      uniform mat4 u_viewMatrix;
+      uniform mat4 u_projection;
+      uniform mat4 u_modelMatrix;
+      
+      in vec4 positions;
+
+      void main(){
+        gl_Position = u_projection * (u_viewMatrix * (u_modelMatrix * positions));
+      }
+    ", "
+      #version 150 //required for OSX support
+      
+      uniform vec4 u_color;
+      out vec4 out_fragColor;
+      
+      void main(){
+        out_fragColor = u_color;
+      }
+    ");  
+  this._shader.defineUniform(InlineUniform("u_viewMatrix", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_projection", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_modelMatrix", Mat44()));
+  this._shader.defineUniform(InlineUniform('u_color', Color(1.0, 0.0, 0.0)));
+  this._shader.defineAttribute('positions', "Vec3");
+}
+
+// empties all materials of this shader
+function OGLFlatShader.reset!() {
+  this._shader.reset();
+}
+
+// returns the name of this shader
+function String OGLFlatShader.getName() {
+  return this._shader.getName();
+}
+
+// called by the InlineDrawing, should not be called manually
+function Boolean OGLFlatShader._draw!(io DrawContext context) {
+  return this._shader._draw(context);
+}
+
+// returns true if this shader has a material with a given name
+function Boolean OGLFlatShader.hasMaterial(String name) {
+  return this._shader.hasMaterial(name);
+}
+
+// returns (and eventually creates) a new matching material with a given name
+function InlineMaterial OGLFlatShader.getOrCreateMaterial!(String name) {
+  return this._shader.getOrCreateMaterial(name);
+}
+
+// returns the number of materials in this shader
+function Size OGLFlatShader.getMaterialCount() {
+  return this._shader.getMaterialCount();
+}
+
+// returns an existing material by index
+function InlineMaterial OGLFlatShader.getMaterial(Index index) {
+  return this._shader.getMaterial(index);
+}
+
+// define a new uniform on the shader. the uniformType is
+// auxiliary and can be used within the shader later if required.
+function OGLFlatShader.defineUniform!(InlineUniform uniform) {
+  return;
+}
+
+// returns true if this shader has a uniform with a given name
+function Boolean OGLFlatShader.hasUniform(String name) {
+  return this._shader.hasUniform(name);
+}
+
+// sets the global value of a uniform
+// this can be changed per material, per instance or even per transform
+function OGLFlatShader.setUniform!(InlineUniform uniform) {
+  this._shader.setUniform(uniform);
+}
+
+// draws a uniform for the shader, applies the value essentially. 
+// this should be used from within the InlineMaterial's _draw or 
+// the InlineInstance's _draw.
+function Boolean OGLFlatShader._drawUniform!(io DrawContext context, InlineUniform uniform) {
+  return this._shader._drawUniform(context, uniform);
+}
+
+// define a surface attribute with a given name and type
+function OGLFlatShader.defineAttribute!(String name, String attributeType) {
+  return;
+}
+
+// returns the number of attributes
+function Size OGLFlatShader.getAttributeCount() {
+  return this._shader.getAttributeCount();
+}
+
+// returns the name of an attribute
+function String OGLFlatShader.getAttributeName(Index index) {
+  return this._shader.getAttributeName(index);
+}
+
+// returns true if this shader has an attribute with a given name
+function Integer OGLFlatShader.getAttributeID(String name) {
+  return this._shader.getAttributeID(name);
+}
+
+// returns the ID / location of a given attribute inside the shader.
+function Boolean OGLFlatShader.hasAttribute(String name) {
+  return this._shader.hasAttribute(name);
+}
+

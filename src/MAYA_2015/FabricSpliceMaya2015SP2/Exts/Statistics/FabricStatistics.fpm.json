@@ -1,0 +1,10 @@
+{
+  "libs": "FabricStatistics",
+  "code": [
+    "StatisticRecord.kl",
+	  "FabricStatistics.kl",
+		"FabricStatistics_RTValWrapper.kl",
+		"StatisticsAutoRegisterMember.kl",
+		"FabricStatisticsInternal.kl"
+  ]
+}

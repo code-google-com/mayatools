@@ -1,0 +1,92 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+
+///The BulletStaticPlaneShape simulates an infinite non-moving (static) collision plane.
+object BulletStaticPlaneShape : BulletConcaveShape, BulletCollisionShape
+{
+	Data pointer;
+};
+
+function Data BulletStaticPlaneShape.getPointer(){ 
+  return this.pointer; 
+}
+
+function BulletStaticPlaneShape (Vec3 planeNormal,Scalar planeConstant){
+  this.__construct(planeNormal, planeConstant);
+}
+function BulletStaticPlaneShape.__construct!(Vec3 planeNormal, Scalar planeConstant) = 'BulletStaticPlaneShape_construct';
+
+function ~BulletStaticPlaneShape(){
+	this.__destroy();
+}
+function BulletStaticPlaneShape.__destroy!() = 'BulletStaticPlaneShape_destroy';
+
+
+
+function BulletStaticPlaneShape.getAabb(in Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletStaticPlaneShape_getAabb';
+
+// function BulletStaticPlaneShape.processAllTriangles(BulletTriangleCallback* callback, Vec3 aabbMin, Vec3 aabbMax) const;
+
+function BulletStaticPlaneShape.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = "BulletStaticPlaneShape_calculateLocalInertia";
+
+function BulletStaticPlaneShape.setLocalScaling!( Vec3 scaling) = "BulletStaticPlaneShape_setLocalScaling";
+function Vec3 BulletStaticPlaneShape.getLocalScaling() = "BulletStaticPlaneShape_getLocalScaling";
+	
+function Vec3 BulletStaticPlaneShape.getPlaneNormal() = 'BulletStaticPlaneShape_getPlaneNormal';
+
+function Scalar	BulletStaticPlaneShape.getPlaneConstant() = 'BulletStaticPlaneShape_getPlaneConstant';
+
+	//debugging
+// function String	BulletStaticPlaneShape.getName();
+
+/*function Integer calculateSerializeBufferSize() const;
+
+	///fills the dataBuffer and returns the struct name (and 0 on failure)
+function String	serialize(void* dataBuffer, BulletSerializer* serializer) const;*/
+
+
+/*
+///do not change those serialization structures, it requires an updated sBulletDNAstr/sBulletDNAstr64
+struct	BulletStaticPlaneShapeData
+{
+	BulletCollisionShapeData	m_collisionShapeData;
+
+	Vec3FloatData	m_localScaling;
+	Vec3FloatData	m_planeNormal;
+	float			m_planeConstant;
+	char	m_pad[4];
+};
+
+
+SIMD_FORCE_INLINE	Integer	BulletStaticPlaneShape::calculateSerializeBufferSize() const
+{
+	return sizeof(BulletStaticPlaneShapeData);
+}
+
+///fills the dataBuffer and returns the struct name (and 0 on failure)
+SIMD_FORCE_INLINE	const char*	BulletStaticPlaneShape::serialize(void* dataBuffer, BulletSerializer* serializer) const
+{
+	BulletStaticPlaneShapeData* planeData = (BulletStaticPlaneShapeData*) dataBuffer;
+	BulletCollisionShape::serialize(&planeData->m_collisionShapeData,serializer);
+
+	m_localScaling.serializeFloat(planeData->m_localScaling);
+	m_planeNormal.serializeFloat(planeData->m_planeNormal);
+	planeData->m_planeConstant = float(m_planeConstant);
+		
+	return "BulletStaticPlaneShapeData";
+}
+*/
+
+
+
+////////////////////////////////////////////////
+// From BulletCollisionShape
+
+function BulletStaticPlaneShape.setMargin!(Scalar margin) = 'BulletStaticPlaneShape_setMargin';
+function Scalar	BulletStaticPlaneShape.getMargin() = 'BulletStaticPlaneShape_getMargin';
+
+

@@ -1,0 +1,412 @@
+
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+/*SPHINX-description
+The :ref:`vec4` type represents a vector with 4 components. The :ref:`vec4` is also used as the row type for the :ref:`mat44`.
+
+Example
+---------
+
+.. code-block:: js
+
+    Vec4 v(0.0, 0.0, 0.0, 0.0);
+*/
+
+struct Vec4
+{
+  Scalar x;
+  Scalar y;
+  Scalar z;
+  Scalar t;
+};
+
+
+// constructor from scalar components
+inline Vec4(Scalar x, Scalar y, Scalar z, Scalar t) {
+  this.set(x, y, z, t);
+}
+
+// setter from scalar components
+inline Vec4 Vec4.set!(Scalar x, Scalar y, Scalar z, Scalar t) {
+  this.x = x;
+  this.y = y;
+  this.z = z;
+  this.t = t;
+  return this;
+}
+
+// setter from a Vec3 (t = 1.0)
+inline Vec4 Vec4.set!(Vec3 v) {
+  this.x = v.x;
+  this.y = v.y;
+  this.z = v.z;
+  this.t = 1.0;
+  return this;
+}
+
+// setter from (standard/external) float32 array and an offset
+inline Vec4.set!(Float32 v<>, UInt32 o) {
+  if(v.size() >= 4 + o) {
+    this.x = v[o + 0];
+    this.y = v[o + 1];
+    this.z = v[o + 2];
+    this.t = v[o + 3];
+  }
+}
+
+// getter as external float32 array and an offset
+inline Vec4.get(io Float32 v<>, UInt32 o) {
+  if(v.size() >= 4 + o) {
+    v[o + 0] = this.x;
+    v[o + 1] = this.y;
+    v[o + 2] = this.z;
+    v[o + 3] = this.t;
+  }
+}
+
+// getter as float32 array and an offset
+inline Vec4.get(io Float32 v[], UInt32 o) {
+  if(v.size() < 4 + o)
+    v.resize(4 + o);
+  v[o + 0] = this.x;
+  v[o + 1] = this.y;
+  v[o + 2] = this.z;
+  v[o + 3] = this.t;
+}
+
+// setter from (standard/external) float64 array and an offset
+inline Vec4.set!(Float64 v<>, UInt32 o) {
+  if(v.size() >= 4 + o) {
+    this.x = Float32(v[o + 0]);
+    this.y = Float32(v[o + 1]);
+    this.z = Float32(v[o + 2]);
+    this.t = Float32(v[o + 3]);
+  }
+}
+
+// getter as external float64 array and an offset
+inline Vec4.get(io Float64 v<>, UInt32 o) {
+  if(v.size() >= 4 + o) {
+    v[o + 0] = this.x;
+    v[o + 1] = this.y;
+    v[o + 2] = this.z;
+    v[o + 3] = this.t;
+  }
+}
+
+// getter as float64 array and an offset
+inline Vec4.get(io Float64 v[], UInt32 o) {
+  if(v.size() < 4 + o)
+    v.resize(4 + o);
+  v[o + 0] = this.x;
+  v[o + 1] = this.y;
+  v[o + 2] = this.z;
+  v[o + 3] = this.t;
+}
+
+// setter from (standard/external) float32 array
+inline Vec4.set!(Float32 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float32 array
+inline Vec4.get(io Float32 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float32 array
+inline Vec4.get(io Float32 v[]) {
+  this.get(v, 0);
+}
+
+// setter from (standard/external) float64 array
+inline Vec4.set!(Float64 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float64 array
+inline Vec4.get(io Float64 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float64 array
+inline Vec4.get(io Float64 v[]) {
+  this.get(v, 0);
+}
+
+// sets all components of this vec to 0.0
+inline Vec4.setNull!() {
+  this.x = this.y = this.z = this.t = 0.0;
+}
+
+// returns true if this vector is the same as another one
+inline Boolean Vec4.equal(in Vec4 other) {
+  return this.x == other.x && this.y == other.y && this.z == other.z && this.t == other.t;
+}
+
+// returns true if this vector is the same as another one
+// (given a precision)
+inline Boolean Vec4.almostEqual(in Vec4 other, in Scalar precision) {
+  return
+      (abs(this.x - other.x) < precision) &&
+      (abs(this.y - other.y) < precision) &&
+      (abs(this.z - other.z) < precision) &&
+      (abs(this.t - other.t) < precision);
+}
+
+// returns true if this vector is the same as another one
+// (using a default precision)
+inline Boolean Vec4.almostEqual(in Vec4 other) {
+  return this.almostEqual(other, PRECISION);
+}
+
+// returns a Vec3 containing the X, Y and Z components.
+inline Vec3 Vec4.xyz() {
+  return Vec3(this.x, this.y, this.z);
+}
+
+// returns the component of this vector by index
+inline Scalar Vec4.component( Size i ) {
+  if(i == 0)
+    return this.x;
+  else if(i == 1)
+    return this.y;
+  else if(i == 2)
+    return this.z;
+  else
+    return this.t;
+}
+
+// sets the component of this vector by index
+inline Vec4.setComponent!( Size i, Scalar v ) {
+  if(i == 0)
+    this.x = v;
+  else if(i == 1)
+    this.y = v;
+  else if(i == 2)
+    this.z = v;
+  else
+    this.t = v;
+}
+
+// equals operator
+inline Boolean == (Vec4 a, Vec4 b) {
+  return a.x == b.x && a.y == b.y && a.z == b.z && a.t == b.t;
+}
+
+// not equals operator
+inline Boolean != (Vec4 a, Vec4 b) {
+  return a.x != b.x || a.y != b.y || a.z != b.z || a.t != b.t;
+}
+
+// adds to vectors
+inline Vec4 + (Vec4 a, Vec4 b) {
+  return vecAdd(a, b);
+}
+
+// adds a vector to this one
+inline Vec4. += (Vec4 other) {
+  this = this + other;
+}
+
+// subtracts two vectors
+inline Vec4 - (Vec4 a, Vec4 b) {
+  return vecSub(a, b);
+}
+
+// subtracts a vector from this one
+inline Vec4. -= (Vec4 other) {
+  this = this - other;
+}
+
+// multiplies a scalar and a vector
+inline Vec4 * (Scalar a, Vec4 b) {
+  return vecMul(a, b);
+}
+
+// multiplies a vector and a scalar
+inline Vec4 * (Vec4 a, Scalar b) {
+  return vecMul(a, b);
+}
+
+// multiplies two vectors
+inline Vec4 * (Vec4 a, Vec4 b) {
+  return vecMul(a, b);
+}
+
+// multiplies this vector with a scalar
+inline Vec4. *= (Scalar other) {
+  this = this * other;
+}
+
+// multiplies this vector with another one
+inline Vec4. *= (Vec4 other) {
+  this = this * other;
+}
+
+// divides two vectors
+inline Vec4 / (Vec4 a, Vec4 b) {
+  if( Math_badDivisor( b.x ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( b.x, "Vec4.divide: b.x" );
+  if( Math_badDivisor( b.y ) )
+    Math_reportBadDivisor( b.y, "Vec4.divide: b.y" );
+  if( Math_badDivisor( b.z ) )
+    Math_reportBadDivisor( b.z, "Vec4.divide: b.z" );
+  if( Math_badDivisor( b.t ) )
+    Math_reportBadDivisor( b.t, "Vec4.divide: b.t" );
+  return vecDiv(a, b);
+}
+
+// divides a vector by a scalar
+inline Vec4 / (Vec4 a, Scalar b) {
+  if( Math_badDivisor( b ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( b, "Vec4.divide" );
+  return vecDiv(a, b);
+}
+
+// divides this vector with a scalar
+inline Vec4. /= (Scalar other) {
+  this = this / other;
+}
+
+// divides this vector with another one
+inline Vec4. /= (Vec4 other) {
+  this = this / other;
+}
+
+// overload method for the add operator
+inline Vec4 Vec4.add(Vec4 other) {
+  return this + other;
+}
+
+// overload method for the subtract operator
+inline Vec4 Vec4.subtract(Vec4 other) {
+  return this - other;
+}
+
+// overload method for the multiply operator
+inline Vec4 Vec4.multiply(Vec4 other) {
+  return this * other;
+}
+
+// overload method for the divide operator
+inline Vec4 Vec4.divide(Vec4 other) {
+  return this / other;
+}
+
+// returns the product of this vector and a scalar
+inline Vec4 Vec4.multiplyScalar(Scalar other) {
+  return this * other;
+}
+
+// returns the division of this vector and a scalar
+inline Vec4 Vec4.divideScalar(Scalar other) {
+  return this / other;
+}
+
+// returns the negated version of this vector
+inline Vec4 Vec4.negate() {
+  return Vec4(-this.x, - this.y, - this.z, - this.t);
+}
+
+// returns the inversed version of this vector
+inline Vec4 Vec4.inverse() {
+  if( Math_badDivisor( this.x ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( this.x, "Vec4.inverse: this.x" );
+  if( Math_badDivisor( this.y ) )
+    Math_reportBadDivisor( this.y, "Vec4.inverse: this.y" );
+  if( Math_badDivisor( this.z ) )
+    Math_reportBadDivisor( this.z, "Vec4.inverse: this.z" );
+  if( Math_badDivisor( this.t ) )
+    Math_reportBadDivisor( this.t, "Vec4.inverse: this.t" );
+  return Vec4(1.0/this.x, 1.0/this.y, 1.0/this.z, 1.0/this.t);
+}
+
+// returns the dot product of this vector and another one
+inline Scalar Vec4.dot(in Vec4 other) {
+  return this.x * other.x + this.y * other.y + this.z * other.z + this.t * other.t;
+}
+
+// returns the squared length of this vector
+inline Scalar Vec4.lengthSquared() {
+  return this.dot(this);
+}
+
+// returns the length of this vector
+inline Scalar Vec4.length() {
+  return sqrt(this.lengthSquared());
+}
+
+// returns the unit vector of this one
+inline Vec4 Vec4.unit() {
+  Scalar n = this.length();
+  if( Math_badDivisor( n ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( n, "Vec4.unit" );
+  return this / n;
+}
+
+// sets this vector to its unit vector
+// and returns its previous length
+inline Scalar Vec4.setUnit!() {
+  Scalar n = this.length();
+  if( Math_badDivisor( n ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( n, "Vec4.setUnit" );
+  this /= n;
+  return n;
+}
+
+// clamps this vector per component by 
+// a min and max vector
+inline Vec4 Vec4.clamp(in Vec4 min, in Vec4 max) {
+  return Vec4(
+    (this.x < min.x ? min.x : (this.x > max.x ? max.x : this.x)),
+    (this.y < min.y ? min.y : (this.y > max.y ? max.y : this.y)),
+    (this.z < min.z ? min.z : (this.z > max.z ? max.z : this.z)),
+    (this.t < min.t ? min.t : (this.t > max.t ? max.t : this.t))
+  );
+}
+
+// returns the angle (in radians) of this vector
+// to another one
+//Note: expects both vectors to be units (else use angleTo)
+inline Scalar Vec4.unitsAngleTo(in Vec4 other) {
+  Scalar acosAngle = Math_clamp(this.dot(other), -1.0, 1.0);
+  return acos(acosAngle);
+}
+
+// returns the angle (in radians) of this vector
+// to another one
+inline Scalar Vec4.angleTo(in Vec4 other) {
+  return this.unit().unitsAngleTo(other.unit());
+}
+
+// returns the distance of this vector to another one
+inline Scalar Vec4.distanceTo(in Vec4 other) {
+  return (this - other).length();
+}
+
+// linearly interpolates this vector with another one
+// based on a scalar blend value (0.0 to 1.0)
+inline Vec4 Vec4.linearInterpolate(in Vec4 other, in Scalar t) {
+  return this + ((other - this) * t);
+}
+
+// returns a homogenious Vec3
+inline Vec3 Vec4.makeHomogeneousVec3() {
+  if( this.t != 1.0 ) {
+    if( Math_badDivisor( this.t ) )//Perf: check first to avoid building the report string
+      Math_reportBadDivisor( this.t, "Vec4.makeHomogeneousVec3" );
+    Scalar invT = 1.0 / this.t;
+    return Vec3(this.x * invT, this.y * invT, this.z * invT);
+  }
+  else
+    return Vec3(this.x, this.y, this.z);
+}
+
+// returns the X, Y and Z components as Vec3
+inline Vec3 Vec4.toVec3(){
+  return Vec3(this.x, this.y, this.z);
+}
+
+

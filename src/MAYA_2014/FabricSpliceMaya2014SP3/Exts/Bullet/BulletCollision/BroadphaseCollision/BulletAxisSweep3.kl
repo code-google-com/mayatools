@@ -1,0 +1,131 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+object BulletAxisSweep3 : BulletBroadphaseInterface {
+  Data pointer;
+};
+
+function Data BulletAxisSweep3.getPointer(){
+	return this.pointer;
+}
+function BulletAxisSweep3( Vec3 worldAabbMin, Vec3 worldAabbMax){
+	this.__construct(worldAabbMin, worldAabbMax, 16384, null, false);
+}
+function BulletAxisSweep3( Vec3 worldAabbMin, Vec3 worldAabbMax, UInt16 maxHandles){
+	this.__construct(worldAabbMin, worldAabbMax, maxHandles, null, false);
+}
+function BulletAxisSweep3( Vec3 worldAabbMin, Vec3 worldAabbMax, UInt16 maxHandles, BulletOverlappingPairCache pairCache, Boolean disableRaycastAccelerator){
+	this.__construct(worldAabbMin, worldAabbMax, maxHandles, pairCache, disableRaycastAccelerator);
+}
+function BulletAxisSweep3.__construct!( Vec3 worldAabbMin, Vec3 worldAabbMax, UInt16 maxHandles, BulletOverlappingPairCache pairCache, Boolean disableRaycastAccelerator) = 'BulletAxisSweep3_construct';
+
+function ~BulletAxisSweep3() = 'BulletAxisSweep3_destruct';
+
+
+function UInt32 BulletAxisSweep3.getNumHandles() = 'BulletAxisSweep3_getNumHandles';
+
+function BulletAxisSweep3.calculateOverlappingPairs!(BulletDispatcher dispatcher) = 'BulletAxisSweep3_calculateOverlappingPairs';
+	
+// function UInt32 BulletAxisSweep3.addHandle(in Vec3 aabbMin,in Vec3 aabbMax, Object pOwner, SInt16 collisionFilterGroup, SInt16 collisionFilterMask,BulletDispatcher dispatcher,Object multiSapProxy);
+// function BulletAxisSweep3.removeHandle(UInt32 handle, BulletDispatcher dispatcher) = 'BulletAxisSweep3_removeHandle';
+// function BulletAxisSweep3.updateHandle(UInt32 handle, in Vec3 aabbMin,in Vec3 aabbMax,BulletDispatcher dispatcher) = 'BulletAxisSweep3_updateHandle';
+// // function Handle* Bullet32BitA xisSweep3.getPointer(UInt32 index) = 'BulletAxisSweep3_getPointer';
+
+function BulletAxisSweep3.resetPool!(BulletDispatcher dispatcher) = 'BulletAxisSweep3_resetPool';
+
+// function 	BulletAxisSweep3.processAllOverlappingPairs(BulletOverlapCallback* callback) = 'BulletAxisSweep3_processAllOverlappingPairs';
+
+// //Broadphase Interface
+// function BulletBroadphaseProxy*	BulletAxisSweep3.createProxy(  in Vec3 aabbMin,  in Vec3 aabbMax,Integer shapeType,Object userPtr , SInt16 collisionFilterGroup, SInt16 collisionFilterMask,BulletDispatcher dispatcher,Object multiSapProxy) = 'BulletAxisSweep3_createProxy';
+// function BulletAxisSweep3.destroyProxy(BulletBroadphaseProxy* proxy,BulletDispatcher dispatcher) = 'BulletAxisSweep3_destroyProxy';
+// function BulletAxisSweep3.setAabb(BulletBroadphaseProxy* proxy,in Vec3 aabbMin,in Vec3 aabbMax,BulletDispatcher dispatcher) = 'BulletAxisSweep3_setAabb';
+// function BulletAxisSweep3.getAabb?(BulletBroadphaseProxy proxy, io Vec3 aabbMin, io Vec3 aabbMax ) = 'BulletAxisSweep3_getAabb';
+
+// function BulletAxisSweep3.rayTest(in Vec3 rayFrom,in Vec3 rayTo, BulletBroadphaseRayCallback& rayCallback, in Vec3 aabbMin=Vec3(0,0,0), in Vec3 aabbMax = Vec3(0,0,0)) = 'BulletAxisSweep3_rayTest';
+function BulletAxisSweep3.aabbTest?(in Vec3 aabbMin, in Vec3 aabbMax, BulletBroadphaseAabbCallback callback) = 'BulletAxisSweep3_aabbTest';
+
+
+// function  BulletAxisSweep3.quantize(UInt32* out, in Vec3 point, Integer isMax) = 'BulletAxisSweep3_quantize';
+// ///unQuantize should be conservative: aabbMin/aabbMax should be larger then 'getAabb' result
+// function  BulletAxisSweep3.unQuantize(BulletBroadphaseProxy proxy, io Vec3 aabbMin, io Vec3 aabbMax ) = 'BulletAxisSweep3_unQuantize';
+
+// Boolean	BulletAxisSweep3.testAabbOverlap(BulletBroadphaseProxy* proxy0,BulletBroadphaseProxy* proxy1) = 'BulletAxisSweep3_testAabbOverlap';
+
+function BulletOverlappingPairCache	BulletAxisSweep3.getOverlappingPairCache()  = 'BulletAxisSweep3_getOverlappingPairCache';
+
+// function 	BulletAxisSweep3.setOverlappingPairUserCallback(BulletOverlappingPairCallback* pairCallback)  = 'BulletAxisSweep3_setOverlappingPairUserCallback';
+// const BulletOverlappingPairCallback*	BulletAxisSweep3.getOverlappingPairUserCallback()  = 'BulletAxisSweep3_getOverlappingPairUserCallback';
+
+// ///getAabb returns the axis aligned bounding box in the 'global' coordinate frame
+// ///will add some transform later
+function BulletAxisSweep3.getBroadphaseAabb?(io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletAxisSweep3_getBroadphaseAabb';
+
+
+
+
+
+object Bullet32BitAxisSweep3 : BulletBroadphaseInterface {
+  Data pointer;
+};
+
+function Data Bullet32BitAxisSweep3.getPointer(){
+	return this.pointer;
+}
+function Bullet32BitAxisSweep3( Vec3 worldAabbMin, Vec3 worldAabbMax){
+	this.__construct(worldAabbMin, worldAabbMax, 16384, null, false);
+}
+function Bullet32BitAxisSweep3( Vec3 worldAabbMin, Vec3 worldAabbMax, UInt16 maxHandles){
+	this.__construct(worldAabbMin, worldAabbMax, maxHandles, null, false);
+}
+function Bullet32BitAxisSweep3( Vec3 worldAabbMin, Vec3 worldAabbMax, UInt16 maxHandles, BulletOverlappingPairCache pairCache, Boolean disableRaycastAccelerator){
+	this.__construct(worldAabbMin, worldAabbMax, maxHandles, pairCache, disableRaycastAccelerator);
+}
+function Bullet32BitAxisSweep3.__construct!( Vec3 worldAabbMin, Vec3 worldAabbMax, UInt16 maxHandles, BulletOverlappingPairCache pairCache, Boolean disableRaycastAccelerator) = 'Bullet32BitAxisSweep3_construct';
+
+function ~Bullet32BitAxisSweep3() = 'Bullet32BitAxisSweep3_destruct';
+
+// function UInt32 Bullet32BitAxisSweep3.getNumHandles() = 'Bullet32BitAxisSweep3_getNumHandles';
+
+function Bullet32BitAxisSweep3.calculateOverlappingPairs!(BulletDispatcher dispatcher) = 'Bullet32BitAxisSweep3_calculateOverlappingPairs';
+	
+// function UInt32 Bullet32BitAxisSweep3.addHandle(in Vec3 aabbMin,in Vec3 aabbMax, Object pOwner, SInt16 collisionFilterGroup, SInt16 collisionFilterMask,BulletDispatcher dispatcher,Object multiSapProxy);
+// function Bullet32BitAxisSweep3.removeHandle(UInt32 handle, BulletDispatcher dispatcher) = 'Bullet32BitAxisSweep3_removeHandle';
+// function Bullet32BitAxisSweep3.updateHandle(UInt32 handle, in Vec3 aabbMin,in Vec3 aabbMax,BulletDispatcher dispatcher) = 'Bullet32BitAxisSweep3_updateHandle';
+// // function Handle* Bullet32BitAxisSweep3.getPointer(UInt32 index) = 'Bullet32BitAxisSweep3_getPointer';
+
+function Bullet32BitAxisSweep3.resetPool!(BulletDispatcher dispatcher) = 'Bullet32BitAxisSweep3_resetPool';
+
+// function 	Bullet32BitAxisSweep3.processAllOverlappingPairs(BulletOverlapCallback* callback) = 'Bullet32BitAxisSweep3_processAllOverlappingPairs';
+
+// //Broadphase Interface
+// function BulletBroadphaseProxy*	Bullet32BitAxisSweep3.createProxy(  in Vec3 aabbMin,  in Vec3 aabbMax,Integer shapeType,Object userPtr , SInt16 collisionFilterGroup, SInt16 collisionFilterMask,BulletDispatcher dispatcher,Object multiSapProxy) = 'Bullet32BitAxisSweep3_createProxy';
+// function Bullet32BitAxisSweep3.destroyProxy(BulletBroadphaseProxy* proxy,BulletDispatcher dispatcher) = 'Bullet32BitAxisSweep3_destroyProxy';
+// function Bullet32BitAxisSweep3.setAabb(BulletBroadphaseProxy* proxy,in Vec3 aabbMin,in Vec3 aabbMax,BulletDispatcher dispatcher) = 'Bullet32BitAxisSweep3_setAabb';
+// function Bullet32BitAxisSweep3.getAabb?(BulletBroadphaseProxy proxy, io Vec3 aabbMin, io Vec3 aabbMax ) = 'Bullet32BitAxisSweep3_getAabb';
+
+// function Bullet32BitAxisSweep3.rayTest(in Vec3 rayFrom,in Vec3 rayTo, BulletBroadphaseRayCallback& rayCallback, in Vec3 aabbMin=Vec3(0,0,0), in Vec3 aabbMax = Vec3(0,0,0)) = 'Bullet32BitAxisSweep3_rayTest';
+function Bullet32BitAxisSweep3.aabbTest?(in Vec3 aabbMin, in Vec3 aabbMax, BulletBroadphaseAabbCallback callback) = 'Bullet32BitAxisSweep3_aabbTest';
+
+
+// function  Bullet32BitAxisSweep3.quantize(UInt32* out, in Vec3 point, Integer isMax) = 'Bullet32BitAxisSweep3_quantize';
+// ///unQuantize should be conservative: aabbMin/aabbMax should be larger then 'getAabb' result
+// function  Bullet32BitAxisSweep3.unQuantize(BulletBroadphaseProxy proxy, io Vec3 aabbMin, io Vec3 aabbMax ) = 'Bullet32BitAxisSweep3_unQuantize';
+
+// Boolean	Bullet32BitAxisSweep3.testAabbOverlap(BulletBroadphaseProxy* proxy0,BulletBroadphaseProxy* proxy1) = 'Bullet32BitAxisSweep3_testAabbOverlap';
+
+function BulletOverlappingPairCache	Bullet32BitAxisSweep3.getOverlappingPairCache()  = 'Bullet32BitAxisSweep3_getOverlappingPairCache';
+
+// function 	Bullet32BitAxisSweep3.setOverlappingPairUserCallback(BulletOverlappingPairCallback* pairCallback)  = 'Bullet32BitAxisSweep3_setOverlappingPairUserCallback';
+// const BulletOverlappingPairCallback*	Bullet32BitAxisSweep3.getOverlappingPairUserCallback()  = 'Bullet32BitAxisSweep3_getOverlappingPairUserCallback';
+
+///getAabb returns the axis aligned bounding box in the 'global' coordinate frame
+///will add some transform later
+function Bullet32BitAxisSweep3.getBroadphaseAabb?(io Vec3 aabbMin, io Vec3 aabbMax) = 'Bullet32BitAxisSweep3_getBroadphaseAabb';
+
+
+////////////////////////////////////////////////////////////////////
+

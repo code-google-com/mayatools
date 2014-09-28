@@ -1,0 +1,90 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+const UInt32 BONEFLAG_NONSKINNINGBONE = 1<<2;
+const UInt32 BONEFLAG_DEFORMER = 1<<3;
+
+struct Bone {
+  String name;
+  Scalar length;
+  Scalar radius;
+  Integer parent;
+  Index children[];
+  Integer mirrorBoneID;
+  UInt32 flags;
+  Color color;
+  Integer shapeType;
+  Xfo referencePose;
+  Mat44 invRefPose;
+};
+
+function Bone() {
+  this.name = 'Bone'; 
+  this.referencePose.setIdentity(); 
+  this.parent = -1; 
+  this.mirrorBoneID = -1; 
+  this.length = 3.0; 
+  this.radius = 1.0;
+  this.color = Color(1.0, 1.0, 0.0, 1.0);
+  this.flags = 0; 
+  this.invRefPose.setIdentity();
+}
+
+function Bone.setFlag!(UInt32 flag) {
+  this.flags |= flag;
+}
+
+function Bone.clearFlag!(UInt32 flag) {
+  this.flags &= ~flag;
+}
+
+function Boolean Bone.testFlag(UInt32 flag) {
+  return this.flags & flag;
+}
+
+function Bone.calcInvRefPose!() {
+  this.invRefPose = this.referencePose.toMat44().inverse();
+}
+
+
+
+
+function String Bone.getDesc(String indent) {
+  String desc;
+  desc += indent + "Bone { \n";
+  desc += indent + "  name: " + this.name + "\n";
+  desc += indent + "  length: " + this.length + "\n";
+  desc += indent + "  radius: " + this.radius + "\n";
+  desc += indent + "  parent: " + this.parent + "\n";
+  desc += indent + "  children: " + this.children + "\n";
+  desc += indent + "  mirrorBoneID: " + this.mirrorBoneID + "\n";
+  desc += indent + "  flags: " + this.flags + "\n";
+  desc += indent + "  color: " + unitTestPrint(this.color) + "\n";
+  desc += indent + "  referencePose: " + unitTestPrint(this.referencePose) + "\n";
+  desc += indent + "}";
+  return desc;
+}
+
+
+function String Bone.getDesc() {
+  return this.getDesc("");
+}
+
+
+require InlineDrawing;
+require Geometry;
+
+
+function InlineMeshShape constructBoneShape( Bone bone) {
+  InlineMeshShape shape = null;
+  if(bone.shapeType == 0){
+    PolygonMesh mesh = PolygonMesh();
+    mesh.drawBone(Xfo(), bone.length, bone.radius, true);
+    shape = InlineMeshShape(bone.name, mesh);
+  }
+  return shape;
+}
+

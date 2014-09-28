@@ -1,0 +1,9 @@
+{
+  "libs": [
+    "Singletons"
+  ],
+  "code": [
+    "SingletonScope.kl",
+    "Singletons.kl"
+  ]
+}

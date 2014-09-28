@@ -1,0 +1,28 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlineshape` interface is used to represent any shape within the :ref:`inlinedrawing`. For a code example please see the :ref:`oglmeshshape`.
+*/
+
+interface InlineShape {
+
+  // returns the name of the shape
+  String getName();
+
+  // Returns the geometry associated with this shape. 
+  Geometry getGeometry();
+
+  // stores an arbitrary meta data object on the Shape
+  setMetaData!(String key, Object metaData);
+
+  // retrieves meta data from the Shape
+  Object getMetaData(String key);
+
+
+	Boolean _draw!(io DrawContext context, Index index, Size count);
+};
+

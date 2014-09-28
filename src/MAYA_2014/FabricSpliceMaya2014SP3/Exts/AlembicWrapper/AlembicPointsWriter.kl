@@ -1,0 +1,149 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+require Geometry;
+
+object AlembicPointsWriter : AlembicObjectWriter{
+  AlembicOPoints _points;
+  AlembicOPointsSchema _schema;
+  AlembicOPointsSample _sample;
+  AlembicOFloat32GeomParamSample _widthSample;
+  UInt32 _numSamples;
+  UInt32 _storedSamples;
+  SInt32 _timeSamplingIndex;
+  UInt32 _versions[String];
+  AlembicGeometryAttributesWriter _attributeWriter;
+};
+
+function AlembicPointsWriter(AlembicOObject parent, String name, SInt32 timeSampling) {
+  this._points = AlembicOPoints(parent, name, timeSampling);
+  this._schema = this._points.getSchema();
+  this._sample = AlembicOPointsSample();
+  Float32 widths[];
+  this._widthSample = AlembicOFloat32GeomParamSample(widths, Alembic_kVertexScope);
+  this._numSamples = this._schema.getTimeSampling().getNumStoredTimes();
+  if(this._numSamples == 0)
+    this._numSamples = 1;
+  this._storedSamples = 0;
+  this._timeSamplingIndex = timeSampling;
+  this._attributeWriter = AlembicGeometryAttributesWriter();
+}
+
+function String AlembicPointsWriter.getPath() {
+  return this._points.asOObject().getFullName();
+}
+
+function Boolean AlembicPointsWriter.valid() {
+  return this._points.valid();
+}
+
+function AlembicPointsWriter.reset!() {
+  this._points.reset();
+  this._schema.reset();
+  this._sample = null;
+  this._widthSample = null;
+  this._attributeWriter.reset();
+}
+
+function AlembicOObject AlembicPointsWriter.getOObject() {
+  return this._points.asOObject();
+}
+
+function Ref<AlembicGeometryAttributesWriter> AlembicPointsWriter.getGeometryAttributesWriter() {
+  return this._attributeWriter;
+}
+
+function Boolean AlembicPointsWriter.writeSample!(Ref<GeometryAttributes> points) {
+  if(this._storedSamples == this._numSamples) {
+    setError('AlembicPointsWriter: Max number of samples reached.');
+    return false;
+  }
+
+  // init on first frame
+  if(this._storedSamples == 0) {
+
+    if(!points.has('positions')) {
+      setError('AlembicPointsWriter: Provided GeometryAttributes does not contain positions.');
+      return false;
+    }
+
+    AlembicOCompoundProperty props = this._schema.getArbGeomParams();
+
+    // vertexColors
+    if(points.has('vertexColors')) {
+      ColorAttribute attr = points.getAttribute('vertexColors', ColorAttribute);
+      AlembicGeometryParamWriter writer = AlembicGeometryParamWriter(props, 'vertexColors', Alembic_kVertexScope, this._timeSamplingIndex, attr);
+      this._attributeWriter.addParamWriter(writer);
+    }
+
+    // scales
+    if(points.has('scales')) {
+      Vec3Attribute attr = points.getAttribute('scales', Vec3Attribute);
+      AlembicGeometryParamWriter writer = AlembicGeometryParamWriter(props, 'scales', Alembic_kVertexScope, this._timeSamplingIndex, attr);
+      this._attributeWriter.addParamWriter(writer);
+    }
+
+    // orientations
+    if(points.has('orientations')) {
+      QuatAttribute attr = points.getAttribute('orientations', QuatAttribute);
+      AlembicGeometryParamWriter writer = AlembicGeometryParamWriter(props, 'orientations', Alembic_kVertexScope, this._timeSamplingIndex, attr);
+      this._attributeWriter.addParamWriter(writer);
+    }
+  }
+
+  Vec3Attribute positionsAttr = points.getAttribute('positions', Vec3Attribute);
+  if(positionsAttr.getVersion() != this._versions.get('positions', 0)) {
+    Box3 bounds;
+    for(Size i=0;i<positionsAttr.values.size();i++)
+      bounds.merge(positionsAttr.values[i]);
+    this._sample.setSelfBounds(bounds);
+    this._sample.setPositions(positionsAttr.values);
+    this._versions['positions'] = positionsAttr.getVersion();
+  }
+
+  if(points.has('ids')) {
+    UInt32Attribute attr = points.getAttribute('ids', UInt32Attribute);
+    if(attr.getVersion() != this._versions.get('ids', 0)) {
+      UInt64 idValues[];
+      idValues.resize(attr.values.size());
+      for(Size i=0;i<idValues.size();i++)
+        idValues[i] = attr.values[i];
+      this._sample.setIds(idValues);
+      this._versions['ids'] = attr.getVersion();
+    }
+  } else {
+    if(points.size() != this._versions.get('ids', 0)) {
+      UInt64 idValues[];
+      idValues.resize(points.size());
+      for(Size i=0;i<idValues.size();i++)
+        idValues[i] = i;
+      this._sample.setIds(idValues);
+      this._versions['ids'] = points.size();
+    }
+  }
+
+  if(points.has('pointSizes')) {
+    ScalarAttribute attr = points.getAttribute('pointSizes', ScalarAttribute);
+    if(attr.getVersion() != this._versions.get('pointSizes', 0)) {
+      this._widthSample.setVals(attr.values);
+      this._sample.setWidths(this._widthSample);
+      this._versions['pointSizes'] = attr.getVersion();
+    }
+  }
+
+  if(points.has('velocities')) {
+    Vec3Attribute attr = points.getAttribute('velocities', Vec3Attribute);
+    if(attr.getVersion() != this._versions.get('velocities', 0)) {
+      this._sample.setVelocities(attr.values);
+      this._versions['velocities'] = attr.getVersion();
+    }
+  }
+  
+  this._schema.set(this._sample);
+  this._attributeWriter.writeSample(points);
+
+  this._storedSamples++;
+  return true;
+}

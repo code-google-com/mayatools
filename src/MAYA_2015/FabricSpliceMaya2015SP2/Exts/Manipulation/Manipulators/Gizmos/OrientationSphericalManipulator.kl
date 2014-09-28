@@ -1,0 +1,68 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`OrientationSphericalManipulator` displays a sphere as its gizmo geometry and connects it to a OrientationSphericalGizmoHandler for handling the manipulation
+
+
+*/
+
+
+
+object OrientationSphericalManipulator {
+	OrientationSphericalGizmoHandler handler;
+  InlineMaterial gizmosMaterial;
+	InlineInstance instance;
+};
+
+function OrientationSphericalManipulator(io InlineTransform parent, Color color, GizmoManipulationCallback callback){
+
+  InlineDrawing drawing = OGLInlineDrawing_GetInstance();
+  InlineShader gizmoShader = drawing.getShader('gizmos');
+  if(!gizmoShader){
+    gizmoShader = OGLSurfaceGizmoShader('gizmos');
+    drawing.registerShader(gizmoShader);
+  }
+  this.gizmosMaterial = gizmoShader.getOrCreateMaterial("gizmos");
+
+  InlineMeshShape shape = drawing.getShape('OrientationSphericalManipulator_Shape');
+  if(shape == null){
+	  PolygonMesh mesh();
+	  Size detail = 24;
+	  Scalar radius = 0.7;
+    mesh.addSphere(Xfo(), radius, detail, true, false);
+
+	  shape = InlineMeshShape('OrientationSphericalManipulator_Shape', mesh);
+	  drawing.registerShape(shape);
+	}
+
+  {
+    InlineTransform transform = ConstantScreenSizeTransform('OrientationSphericalManipulator_Transform', Xfo());
+    parent.addChild(transform);
+
+    this.instance = SimpleInlineInstance('OrientationSphericalManipulator', transform, shape);
+    this.instance.setInstanceUniform(InlineUniform('u_diffuseColor', color));
+
+    this.handler = OrientationSphericalGizmoHandler(this.instance, 0.001, callback);
+    this.instance.setMetaData('gizmoHandler', this.handler);
+  }
+}
+
+function OrientationSphericalManipulator.hide!(){
+  if(this.instance.hasMaterial(this.gizmosMaterial))
+    this.instance.removeMaterial(this.gizmosMaterial);
+}
+
+function OrientationSphericalManipulator.show!(){
+  if(!this.instance.hasMaterial(this.gizmosMaterial))
+    this.instance.addMaterial(this.gizmosMaterial);
+}
+
+function InlineInstance[] OrientationSphericalManipulator.getGizmos(){
+    InlineInstance gizmos[];
+    gizmos.push(this.instance);
+    return gizmos;
+}

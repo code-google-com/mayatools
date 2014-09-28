@@ -1,0 +1,26 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+///btCollisionConfiguration allows to configure Bullet collision detection
+///stack allocator size, default collision algorithms and persistent manifold pool size
+///@todo: describe the meaning
+interface	BulletCollisionConfiguration
+{
+  Data getPointer();
+  
+	///memory pools
+  // btPoolAllocator* getPersistentManifoldPool();
+
+  // btPoolAllocator* getCollisionAlgorithmPool();
+
+  // btStackAlloc*	getStackAllocator();
+
+  // btCollisionAlgorithmCreateFunc* getCollisionAlgorithmCreateFunc(Integer proxyType0, Integer proxyType1);
+
+};
+
+

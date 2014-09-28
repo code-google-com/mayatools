@@ -1,0 +1,164 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+const UInt32 VORONOI_SIMPLEX_MAX_VERTS = 5;
+
+///disable next define, or use defaultCollisionConfiguration->getSimplexSolver()->setEqualVertexThreshold(0.0) to disable/configure
+const Boolean BT_USE_EQUAL_VERTEX_THRESHOLD = true;
+const UInt32 VORONOI_DEFAULT_EQUAL_VERTEX_THRESHOLD = 0.0001;
+
+
+// struct BulletUsageBitfield{
+// 	UInt16 usedVertexA	: 1;
+// 	UInt16 usedVertexB	: 1;
+// 	UInt16 usedVertexC	: 1;
+// 	UInt16 usedVertexD	: 1;
+// 	UInt16 unused1		: 1;
+// 	UInt16 unused2		: 1;
+// 	UInt16 unused3		: 1;
+// 	UInt16 unused4		: 1;
+// };
+
+
+// function BulletUsageBitfield()
+// {
+// 	reset();
+// }
+
+// function BulletUsageBitfield.reset()
+// {
+// 	this.usedVertexA = false;
+// 	this.usedVertexB = false;
+// 	this.usedVertexC = false;
+// 	this.usedVertexD = false;
+// }
+
+
+// struct	BulletSubSimplexClosestResult
+// {
+// 	Vec3 closestPointOnSimplex;
+// 	//MASK for usedVertices
+// 	//stores the simplex vertex-usage, using the MASK, 
+// 	// if usedVertices & MASK then the related vertex is used
+// 	BulletUsageBitfield	usedVertices;
+// 	Scalar	barycentricCoords[4];
+// 	Boolean degenerate;
+
+// };
+
+// function BulletUsageBitfield.reset()
+// {
+// 	this.degenerate = false;
+// 	setBarycentricCoordinates();
+// 	this.usedVertices.reset();
+// }
+
+// function Boolean	BulletUsageBitfield.isValid()
+// {
+// 	Boolean valid = (this.barycentricCoords[0] >= 0.0) &&
+// 		(this.barycentricCoords[1] >= 0.0) &&
+// 		(this.barycentricCoords[2] >= 0.0) &&
+// 		(this.barycentricCoords[3] >= 0.0);
+
+// 	return valid;
+// }
+
+// function BulletUsageBitfield.setBarycentricCoordinates(Scalar a=0.0,Scalar b=0.0,Scalar c=0.0,Scalar d=0.0)
+// {
+// 	this.barycentricCoords[0] = a;
+// 	this.barycentricCoords[1] = b;
+// 	this.barycentricCoords[2] = c;
+// 	this.barycentricCoords[3] = d;
+// }
+
+// function BulletUsageBitfield.setBarycentricCoordinates()
+// {
+// 	this.setBarycentricCoordinates( 0.0, 0.0, 0.0, 0.0)
+// }
+
+/// BulletVoronoiSimplexSolver is an implementation of the closest point distance algorithm from a 1-4 points simplex to the origin.
+/// Can be used with GJK, as an alternative to Johnson distance algorithm.
+object BulletVoronoiSimplexSolver : BulletSimplexSolverInterface
+{
+	Data pointer;
+	// Note: [phtaylor 5/3/2014] the BulletVoronoiSimplexSolver declares public members!
+	// We can provide the smae interface, but then need to synchronize the public values from KL->C++
+	// and we don't know when to do this.
+// public:
+
+// 	Integer	m_numVertices;
+
+// 	Vec3	m_simplexVectorW[VORONOI_SIMPLEX_MAX_VERTS];
+// 	Vec3	m_simplexPointsP[VORONOI_SIMPLEX_MAX_VERTS];
+// 	Vec3	m_simplexPointsQ[VORONOI_SIMPLEX_MAX_VERTS];
+
+	
+
+// 	Vec3	m_cachedP1;
+// 	Vec3	m_cachedP2;
+// 	Vec3	m_cachedV;
+// 	Vec3	m_lastW;
+	
+// 	Scalar	m_equalVertexThreshold;
+// 	Boolean		m_cachedValidClosest;
+
+
+// 	BulletSubSimplexClosestResult m_cachedBC;
+
+// 	Boolean	m_needsUpdate;
+};
+
+function BulletVoronoiSimplexSolver(){
+	this.__construct();
+}
+function BulletVoronoiSimplexSolver.__construct!() = 'BulletVoronoiSimplexSolver_construct';
+
+function ~BulletVoronoiSimplexSolver(){
+	this.__destroy();
+}
+function BulletVoronoiSimplexSolver.__destroy!() = 'BulletVoronoiSimplexSolver_destroy';
+
+function Data BulletVoronoiSimplexSolver.getPointer(){
+	return this.pointer;
+}
+
+// function BulletVoronoiSimplexSolver.removeVertex(Integer index);
+// function BulletVoronoiSimplexSolver.reduceVertices (const BulletUsageBitfield& usedVerts);
+// function Boolean	BulletVoronoiSimplexSolver.updateClosestVectorAndPoints();
+
+// function Boolean	BulletVoronoiSimplexSolver.closestPtPointTetrahedron(in Vec3 p, in Vec3 a, in Vec3 b, in Vec3 c, in Vec3 d, BulletSubSimplexClosestResult& finalResult);
+// function Integer	BulletVoronoiSimplexSolver.pointOutsideOfPlane(in Vec3 p, in Vec3 a, in Vec3 b, in Vec3 c, in Vec3 d);
+// function Boolean	BulletVoronoiSimplexSolver.closestPtPointTriangle(in Vec3 p, in Vec3 a, in Vec3 b, in Vec3 c,BulletSubSimplexClosestResult& result);
+
+
+// function BulletVoronoiSimplexSolver.reset();
+
+// function BulletVoronoiSimplexSolver.addVertex(in Vec3 w, in Vec3 p, in Vec3 q);
+
+// function BulletVoronoiSimplexSolver.setEqualVertexThreshold(Scalar threshold)
+
+// function Scalar	BulletVoronoiSimplexSolver.getEqualVertexThreshold()
+
+// function Boolean BulletVoronoiSimplexSolver.closest(Vec3& v);
+
+// function Scalar BulletVoronoiSimplexSolver.maxVertex();
+
+// function Boolean BulletVoronoiSimplexSolver.fullSimplex() const
+
+// function Integer BulletVoronoiSimplexSolver.getSimplex(Vec3 *pBuf, Vec3 *qBuf, Vec3 *yBuf) const;
+
+// function Boolean BulletVoronoiSimplexSolver.inSimplex(in Vec3 w);
+	
+// function BulletVoronoiSimplexSolver.backup_closest(Vec3& v) ;
+
+// function Boolean BulletVoronoiSimplexSolver.emptySimplex() const ;
+
+// function BulletVoronoiSimplexSolver.compute_points(Vec3& p1, Vec3& p2) ;
+
+// function Integer BulletVoronoiSimplexSolver.numVertices() const 
+
+
+

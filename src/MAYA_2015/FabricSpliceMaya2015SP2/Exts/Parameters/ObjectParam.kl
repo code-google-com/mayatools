@@ -1,0 +1,65 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`objectparam` implements the :ref:`param` interface for Object values.
+
+Example
+---------
+
+.. code-block:: kl
+
+    ObjectParam param = ObjectParam('mesh', PolygonMesh());
+    report(param.getValue());
+*/
+
+object ObjectParam : Param {
+  String name;
+  Object value;
+  Param options[String];
+};
+
+// default constructor
+function ObjectParam(String name) {
+  this.name = name;
+  this.value = null;
+}
+
+// constructor taking input value
+function ObjectParam(String name, Object value) {
+  this.name = name;
+  this.value = value;
+}
+
+// returns the name of this parameter
+function String ObjectParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String ObjectParam.getValueType() {
+  return "Object";
+}
+
+// getting an option on this param
+function Param ObjectParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function ObjectParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function Object ObjectParam.getValue() {
+  return this.value;
+}
+
+// sets the param's value
+function ObjectParam.setValue!(Object value) {
+  this.value = value;
+}

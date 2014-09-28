@@ -1,0 +1,48 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+
+///The BulletSequentialImpulseConstraintSolver is a fast SIMD implementation of the Projected Gauss Seidel (iterative LCP) method.
+object BulletSequentialImpulseConstraintSolver : BulletConstraintSolver
+{
+	Data pointer;
+};
+
+function Data BulletSequentialImpulseConstraintSolver.getPointer(){ 
+  return this.pointer; 
+}
+
+// Note: we can't directly override the constructor, so we instead call __construct on construction.
+function BulletSequentialImpulseConstraintSolver( ){
+  this.__construct();
+}
+
+function BulletSequentialImpulseConstraintSolver.__construct!( ) = 'BulletSequentialImpulseConstraintSolver_construct';
+
+function ~BulletSequentialImpulseConstraintSolver(){
+	this.__destroy();
+}
+function BulletSequentialImpulseConstraintSolver.__destroy!() = 'BulletSequentialImpulseConstraintSolver_destroy';
+
+// function Scalar BulletSequentialImpulseConstraintSolver.solveGroup(BulletICollisionObject** bodies,Integer numBodies,BulletPersistentManifold** manifold,Integer numManifolds,BulletTypedConstraint** constraints,Integer numConstraints,const BulletContactSolverInfo& info, BulletIDebugDraw* debugDrawer, BulletStackAlloc* stackAlloc,BulletDispatcher* dispatcher);
+	
+	
+///clear internal cached data and reset random seed
+function	BulletSequentialImpulseConstraintSolver.reset!() = 'BulletSequentialImpulseConstraintSolver_reset';
+
+// function UInt64 BulletSequentialImpulseConstraintSolver.BulletRand2();
+// Integer BulletSequentialImpulseConstraintSolver.BulletRandInt2 (Integer n);
+// function 	BulletSequentialImpulseConstraintSolver.setRandSeed(UInt64 seed);
+// function UInt64	BulletSequentialImpulseConstraintSolver.getRandSeed();
+
+
+// #ifndef BT_PREFER_SIMD
+// typedef BulletSequentialImpulseConstraintSolver BulletSequentialImpulseConstraintSolverPrefered;
+// #endif
+
+
+

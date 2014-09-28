@@ -1,0 +1,94 @@
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The Pose is used to store the pose of a character. the Pose object lazily builds the global space transforms of bones as they are requested. 
+
+*/
+
+require Math;
+require Animation;
+
+
+object Pose : IPose {
+  // The skeleton that this pose is based on.
+  Skeleton skeleton;
+
+  // The pose of the character.
+  Xfo xfos[];
+  Boolean valid[];
+
+  UInt64 version;
+};
+
+function Pose(Skeleton skeleton){
+  this.skeleton = skeleton;
+  this.reset();
+}
+
+function Pose.incrementVersion!(){
+  this.version += 1;
+}
+
+function UInt64 Pose.getVersion(){
+  return this.version;
+}
+
+// Reset the pose back to the reference pose stored in the skeleon.
+function Pose.reset!(){
+  this.xfos.resize(this.skeleton.getNumBones());
+  this.valid.resize(this.skeleton.getNumBones());
+  for(Index i = 0; i < this.skeleton.getNumBones(); ++i){
+    this.xfos[i] = this.skeleton.getBone(i).referencePose;
+    this.valid[i] = false;
+  }
+  this.incrementVersion();
+}
+
+function Pose._updateXfo!(Index index){
+  Integer parentIndex = this.skeleton.getBone(index).parent;
+  if(parentIndex >= 0){
+    if(!this.valid[index])
+      this._updateXfo(parentIndex);
+    this.xfos[index] = this.xfos[parentIndex] * this.skeleton.getReferenceLocalPose(index);
+  }
+  else
+    this.xfos[index] = this.skeleton.getReferencePose(index);
+  this.valid[index] = true;
+}
+
+// Get the pose of a bone in the skeleton using its index.
+function Xfo Pose.getBoneXfo!(Index index){
+  if(!this.valid[index])
+    this._updateXfo(index);
+  return this.xfos[index];
+}
+
+// Set the pose of a bone in the skeleton using its index.
+// This marks the joint as valid. 
+// TODO: invalidate chidren joints...
+function Pose.setBoneXfo!(Index index, Xfo xfo){
+  this.xfos[index] = xfo;
+  this.valid[index] = true;
+}
+
+
+function String Pose.getDesc(String indent, Boolean includeXfos) {
+  String desc;
+  desc += indent + "Pose { \n";
+  if(includeXfos){
+    desc += indent + "  xfos:[ \n";
+    for(Integer i=0; i<this.xfos.size; i++){
+      desc += indent + "  " + unitTestPrint(this.xfos[i]) + "\n";
+    }
+    desc += indent + "  ]\n";
+  }
+  desc += indent + "}\n";
+  return desc;
+}
+
+function String Pose.getDesc() {
+  return this.getDesc("", true);
+}

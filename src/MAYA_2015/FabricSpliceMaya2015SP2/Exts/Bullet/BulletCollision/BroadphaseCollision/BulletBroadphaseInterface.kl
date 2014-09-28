@@ -1,0 +1,68 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+interface	BulletBroadphaseAabbCallback
+{
+	Data getPointer();
+
+	Boolean	process!(BulletBroadphaseProxy proxy);
+};
+
+
+
+// object	BulletBroadphaseRayCallback : BulletBroadphaseAabbCallback
+// {
+// // 	///added some cached data to accelerate ray-AABB tests
+// // 	Vec3	m_rayDirectionInverse;
+// // 	UInt32	m_signs[3];
+// // 	Scalar	m_lambda_max;
+// 	Data pointer; 
+// };
+// function Data BulletBroadphaseRayCallback.getPointer(){
+// 	return this.pointer;
+// }
+
+// function BulletBroadphaseRayCallback(){
+// 	this.__construct();
+// }
+// function BulletBroadphaseRayCallback.__construct() = 'BulletBroadphaseRayCallback_construct';
+
+// function BulletBroadphaseRayCallback.process() = 'BulletBroadphaseRayCallback_process';
+
+
+///The BulletBroadphaseInterface class provides an interface to detect aabb-overlapping object pairs.
+///Some implementations for this broadphase interface include BulletAxisSweep3, Bullet32BitAxisSweep3 and BulletDbvtBroadphase.
+///The actual overlapping pair management, storage, adding and removing of pairs is dealt by the BulletOverlappingPairCache class.
+interface BulletBroadphaseInterface
+{
+	Data getPointer();
+
+	// BulletBroadphaseProxy	createProxy(  Vec3 aabbMin, Vec3 aabbMax, Integer shapeType, Object userPtr, SInt16 collisionFilterGroup, SInt16 collisionFilterMask, BulletDispatcher dispatcher, Object multiSapProxy) ;
+	// destroyProxy(BulletBroadphaseProxy proxy, BulletDispatcher dispatcher);
+	// setAabb(BulletBroadphaseProxy proxy, Vec3 aabbMin, Vec3 aabbMax, BulletDispatcher dispatcher);
+	// getAabb(BulletBroadphaseProxy proxy,Vec3& aabbMin, Vec3& aabbMax );
+
+	// rayTest( Vec3 rayFrom, Vec3 rayTo, io BulletBroadphaseRayCallback rayCallback, Vec3 aabbMin, Vec3 aabbMax);
+	// rayTest( Vec3 rayFrom, Vec3 rayTo, io BulletBroadphaseRayCallback rayCallback);
+
+	aabbTest?( Vec3 aabbMin, Vec3 aabbMax, BulletBroadphaseAabbCallback callback);
+
+	///calculateOverlappingPairs is optional: incremental algorithms (sweep and prune) might do it during the set aabb
+	calculateOverlappingPairs!(BulletDispatcher dispatcher);
+
+	BulletOverlappingPairCache	getOverlappingPairCache();
+
+	///getAabb returns the axis aligned bounding box in the 'global' coordinate frame
+	///will add some transform later
+	getBroadphaseAabb?(io Vec3 aabbMin, io Vec3 aabbMax);
+
+	///reset broadphase internal structures, to ensure determinism/reproducability
+	resetPool!(BulletDispatcher dispatcher);
+
+	// // printStats();
+};
+

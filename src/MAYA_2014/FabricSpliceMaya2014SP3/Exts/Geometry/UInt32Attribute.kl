@@ -1,0 +1,168 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+object UInt32Attribute : GeometryAttribute, StatisticSourceWithAutoRegisterMember {
+  UInt32 version;
+  String name;
+  UInt32 containerIndex;
+
+  UInt32 values[];
+  Boolean canInterpolate;
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function UInt32Attribute() {
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] UInt32Attribute.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, this.name ) );
+  stats.push( StatisticRecord( Statistic_Category, "Attribute" ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, this.values.size()*4 ) );
+  return stats;
+}
+
+inline String UInt32Attribute.getName() {
+  return this.name;
+}
+
+inline UInt32 UInt32Attribute.getVersion() {
+  return this.version;
+}
+
+inline Size UInt32Attribute.getContainerIndex() {
+  return this.containerIndex;
+}
+
+inline UInt32Attribute.setContainerIndex!( Size index ) {
+  this.containerIndex = index;
+}
+
+function UInt32Attribute UInt32Attribute.clone() {
+  //The difference with default clone() is that new.base.autoStat will point to 'new' (from constructor)
+  UInt32Attribute new = UInt32Attribute();
+  new.version = this.version;
+  new.name = this.name.clone();
+  new.containerIndex = this.containerIndex;
+  new.values = this.values.clone();
+  new.canInterpolate = this.canInterpolate;
+  return new;
+}
+
+function Ref<StatisticSource> UInt32Attribute.getStatisticsSource() {
+  return this.autoStats;
+}
+
+inline UInt32Attribute.resize!(Size count) {
+  this.values.resize(count);
+  ++this.version;
+}
+
+inline Size UInt32Attribute.size() {
+  return this.values.size();
+}
+
+inline Data UInt32Attribute.data() {
+  Ref<UInt32Attribute> thisRef = this;
+  return thisRef.values.data();
+}
+
+
+//Make sure to call this method after position changes are finished, so caches (such as drawing data) know that they need to be regenerated.
+inline UInt32Attribute.incrementVersion!() {
+  ++this.version;
+}
+
+inline UInt32Attribute.copyValue!( Size sourceIndex, Size targetIndex ) {
+  this.values[targetIndex] = this.values[sourceIndex];
+}
+
+inline UInt32Attribute.copyValue!( Ref<Object> sourceAttr, Size sourceIndex, Size targetIndex ) {
+  Ref<UInt32Attribute> source = sourceAttr;
+  this.values[targetIndex] = source.values[sourceIndex];
+}
+
+inline UInt32 UInt32Attribute.getLinearCombination( LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights ) {
+  if( this.canInterpolate ) {
+    Float64 result;//Minimize rounding errors
+    for( Size i = 0; i < sourceIndices.size(); ++i )
+      result += this.values[sourceIndices.get(i)]*sourceWeights.get(i);
+    return UInt32(result+0.5);//rounding
+  } else if(sourceIndices.size())
+    return this.values[sourceIndices.get(0)];
+  return 0;
+}
+
+inline UInt32Attribute.linearCombine!( Ref<Object> sourceAttr, LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights, Size targetIndex ) {
+  Ref<UInt32Attribute> source = sourceAttr;
+  this.values[targetIndex] = source.getLinearCombination( sourceIndices, sourceWeights );
+}
+
+inline UInt32Attribute.copyFrom!( Ref<Object> otherAttr ) {
+  Ref<UInt32Attribute> other = otherAttr;
+  this.incrementVersion();
+
+  // Copy in place to avoid mallocs
+  Size size = other.values.size();
+  this.values.resize( size );
+  for( Size i = 0; i < size; ++i )
+    this.values[i] = other.values[i];
+}
+
+inline UInt32Attribute.setFromScalar!( Size index, LocalL16ScalarArray value ) {
+  this.values[index] = UInt32(value.get(0));
+}
+
+inline Size UInt32Attribute.getScalarValueSize() {
+  return 1;
+}
+
+inline Boolean UInt32Attribute.equalValues( Size index1, Size index2 ) {
+  return this.values[index1] == this.values[index2];
+}
+
+function String UInt32Attribute.valueDesc( Size index ) {
+  return String(this.values[index]);
+}
+
+function String UInt32Attribute.unitTestPrint( Size index ) {
+  return this.valueDesc(index);
+}
+//Returns a string description of the attribute.
+function String UInt32Attribute.getDesc?( Boolean includeValues) {
+  String desc;
+  desc += "Attribute: " + this.getName() + " nb elements = "+ this.values.size()+'\n';
+  if(includeValues){
+    if(this.values.size > 0){
+      desc += "  values:[ \n";
+      for(Integer i=0; i<this.values.size; i++){
+        desc += '    ' + unitTestPrint(this.values[i]) + " \n";
+      }
+      desc += "  ]\n";
+    }
+    else{
+      desc += "  values:[]\n";
+    }
+  }
+  return desc;
+}
+function String UInt32Attribute.getDesc?() {
+  return this.getDesc(false);
+}
+
+function Ref<UInt32Attribute> GeometryAttributes.getOrCreateUInt32Attribute!( String name ) {
+  Ref<GeometryAttribute> attr = this.getAttribute( name, UInt32Attribute );
+  if( attr )
+    return attr;
+
+  UInt32Attribute newAttr = UInt32Attribute();
+  newAttr.resize(this.elementCount);
+  newAttr.name = name;
+  newAttr.version = this.keysVersion;
+  this.attachNewAttribute(newAttr);
+  return newAttr;
+}

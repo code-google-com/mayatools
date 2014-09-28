@@ -1,0 +1,385 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+The ``FabricStatistics`` extension contains functions for collecting statistics and custom profiling events. Through a thread-safe singleton, statistic source objects and profiling events can be recorded at any time, from any KL code. The ``FabricStatistics`` extension has been designed for both simplicity of usage and to minimize overhead. In particular, most of the work for analysing statistics and profiling events is delayed until a final report is requested.
+
+Statistics
+__________
+
+The ``FabricStatistics`` extension can collect custom statistics and information for any registered objects, from any KL source code (extension, operator...). It support object hierarchies, which simplifies the reports, and is useful for summing values through the hierarchy (eg: memory usage).
+
+Statistics collection for an object is enabled through the implementation of the ``StatisticSource`` interface. Through the ``StatisticSource.getStatistics()`` method, the object can submit any statistics or information that can be useful for further analysis. The implementation of the ``StatisticSource`` can be simplified by using the :ref:`StatisticsAutoRegisterMember` helper, as seen in the example below.
+
+In order to be registered by the ``FabricStatistics`` extension, objects implementing the ``StatisticSource`` interface must call ``RegisterToFabricStatistics`` in their constructor(s), and ``UnregisterFromFabricStatistics`` in their destructor. Again, this process can be simplified and made more robus by using the :ref:`StatisticsAutoRegisterMember` helper. Statistic source objects will be recorded if the ``EnableFabricStatistics()`` function has been called previously. Statistic source objects that were constructed before ``EnableFabricStatistics()`` was called will not be monitored, so it is recommended to enable statistics before the scene gets populated.
+
+If a ``StatisticSource`` has some sub-objects that are themselve ``StatisticSource``s (eg: ``PolygonMesh`` has a ``GeometryAttributes`` container), these should be recorded as such by calling the :ref:`AddStatisticsChild` method.
+
+.. warning::
+
+  Failing to unregister an object in its destructor can lead to a crash, since the ``FabricStatistics`` extension only keeps a Ref<> (unowned) of the object in order (else, the object would never destroy).
+
+Statistics returned by an object through the ``StatisticSource.getStatistics()`` method are simple name / value pairs, embedded in a :ref:`StatisticRecord`. Values can be a ``String``, a ``SInt64`` or a ``Float64``. Although returned statistics can be arbitrary (eg: ``Image`` returning its ``width`` and ``height``), there are some standard fields:
+
+- "Name" (the ``Statistic_Name`` constant): objects should provide a name, as this is the best way to identify an object in the statistics report.
+
+- "Category" (the ``Statistic_Category`` constant): this allows to regroup objects of different types in the statistics report for more clarity.
+
+- "Type" (the ``Statistic_Type`` constant): the KL type of the source. This one doesn't have to be provided, as it is automatically generated using the ``.type()`` KL feature. The statistics report can regroup objects of the same type for more clarity.
+
+- "Memory" (the ``Statistic_MemoryUsage`` constant): the main memory usage for an object. If the object has sub-objects that implement themselve the ``StatisticSource`` interface, these should not be included in the "Memory", but rather registed are chidren objects (using the :ref:`AddStatisticsChild` function). By default, the "Memory" statistic will get summed through the hierarchy in the final report. Since KL doen't provide (yet) facilities for retrieving actual memory usage, this has to be estimated manually.
+
+- "GPUMemory" (the ``Statistic_GPUMemoryUsage`` constant): similar to "Memory" (above), but for the GPU (eg: OpenGL buffer objects).
+
+Example
+---------
+
+.. code-block:: js
+
+  // This example uses the StatisticsAutoRegisterMember helper object, which simplifies the implementation
+
+  object MyObject : StatisticSourceWithAutoRegisterMember {
+    String name;
+    Float32 scalars[];
+
+    StatisticsAutoRegisterMember autoStats;
+  };
+
+  function StatTest() {
+    if( FabricStatisticsEnabled() ) //Reduce overhead if stats are turned off
+      this.autoStats = StatisticsAutoRegisterMember(this);
+  }
+
+  function StatisticRecord[] StatTest.getStatistics() {
+    StatisticRecord stats[];
+    stats.push(StatisticRecord(Statistic_Name, this.name));
+    stats.push(StatisticRecord(Statistic_MemoryUsage, this.scalars.size()*4 + 8*3));// 8*3: minimal approximation for sizeof(this)
+    return stats;
+  }
+
+Statistics for all registered objects and their hierarchy can be retrieved by calling functions such as :ref:`GetStatisticStrings` and :ref:`GetStatisticsCSV`. In order to minimize runtime overhead, statistic source objects' ``getStatistics()`` methods are only called when the statistic report is built. Information about destroyed objects is not retained.
+
+The report can generate the sum of some statistics (eg: "Memory"). The list of the statistics to sum through the object hierarchies is provided by the ``ColumnsToSum`` argument in functions such as ``GetStatisticStrings``.
+
+.. note::
+
+  The :ref:`FabricStatistics_RTValWrapper` object simply wraps the ``FabricStatistics`` functions so they can be accessible through RTVals (global functions are not accessible because of a limitation)
+
+Profiling
+__________
+
+The ``FabricStatistics`` extension provides some facility for recording custom profiling events. Since the SceneGraph already has a profiler that can show operators on the timeline with CPU scheduling, ``FabricStatistics`` profile events are mostly useful for tracking with more details, for example breaking operators into multiple steps, identified with meaningful tags. The ``FabricStatistics`` profile events can be hierarchical, by optionally specifying a parent event.
+
+Submitted profiling events will only be recorded if profiling is enabled (:ref:`StartFabricProfiling` or :ref:`StartFabricProfilingFrames` ). 
+
+Profiling events need to be bracketed through a call to :ref:`BeginProfilingEvent` and :ref:`EndProfilingEvent`. The ``key`` returned by :ref:`BeginProfilingEvent` must be passed to the corresponding :ref:`EndProfilingEvent`. That same ``key`` can be passed to children events as the ``parentProfilingEventKey`` parameter to establish a hierarchy. When applicable, events can refer a ``StatisticSource`` object in order to provide more information.
+
+The ``AutoProfilingEvent`` struct can simplify profiling events recording since it will automatically call :ref:`EndProfilingEvent` upon destruction.
+
+All recorded events from the last profiling session can be retrieved by calling :ref:`GetProfilingEvents` or :ref:`GetProfilingReport`.
+
+.. note:: Profiling events' hierarchy need to be explicitely provided because KL doesn't have (yet) features such as thread local storage. Hopefully this can be improved eventually.
+
+Example
+---------
+
+.. code-block:: js
+
+  function Bar(Size parentProfilingKey) {
+    AutoProfilingEvent AP("SubFoo",parentProfilingKey);
+    ... do some work ...
+  }
+
+  function Foo() {
+    AutoProfilingEvent AP("Foo");
+    ... do some work ...
+    Bar(AP.key);
+    ... do some work ...
+    Bar(AP.key);
+  }
+
+*/
+
+
+//StatisticSource: the interface allowing for statistics collection of an object. See :ref:`fabricstatistics` for more details.
+//Note: see the :ref:`StatisticsAutoRegisterMember` helper for simplifying the support for ``StatisticSource``.
+interface StatisticSource {
+
+  //Returns all the statistics or information related to the statisticSource (inluding the ``Name``). The ``Type`` will be generated automatically if not provided.
+  StatisticRecord[] getStatistics();
+
+  //Sets a statistic key, for private usage from the FabricStatistic extension. This key should be stored
+  //and the same key should be returned by the getStatisticsKey() function.
+  //Note: see the :ref:`StatisticsAutoRegisterMember` helper for simplifying the support for ``StatisticSource``.
+  setStatisticsKey!( Size key );
+
+  //Retrieves the statistic key, for private usage from the FabricStatistic extension. This key should
+  //have the same value as the last ``setStatisticsKey()`` call.
+  //Note: see the :ref:`StatisticsAutoRegisterMember` helper for simplifying the support for ``StatisticSource``.
+  Size getStatisticsKey();
+};
+
+//Return true if statistics collection is enabled.
+function Boolean FabricStatisticsEnabled() = "FabricStatisticsEnabled";
+
+
+//Enables statistics collection.
+function EnableFabricStatistics() {
+  _GetOrCreateFabricStatisticsSingleton();
+  _EnableFabricStatistics();
+}
+
+//Disable statistics collection, and collected data is lost (reset).
+function DisableFabricStatistics() {
+  _DisableFabricStatistics();
+  if( !FabricProfilingEnabled() )
+    _FabricStatisticsInitSingleton(null);//cleanup
+}
+
+//Registers a statistic source
+inline RegisterToFabricStatistics( Ref<StatisticSource> source ) {
+  if( !FabricStatisticsEnabled() )
+    return;
+
+  Ref<_FabricStatistics> singleton = _GetFabricStatisticsSingleton();
+  singleton.registerSource(source);
+}
+
+//Declares a parent-child relationship between two statistic sources (hierarchy)
+inline AddStatisticsChild( Ref<StatisticSource> parent, Ref<StatisticSource> child ) {
+  if( !FabricStatisticsEnabled() )
+    return;
+
+  Ref<_FabricStatistics> singleton = _GetFabricStatisticsSingleton();
+  singleton.addChild( parent, child );
+}
+
+//Unregisters a statistic source. This must be called before the source gets destroyed.
+inline UnregisterFromFabricStatistics( Ref<StatisticSource> source ) {
+  if( !FabricStatisticsEnabled() )
+    return;
+
+  Ref<_FabricStatistics> singleton = _GetFabricStatisticsSingleton();
+  singleton.unregisterSource(source);
+}
+
+//Returns the statistics as CSV-formatted lines. The first line contains the column names.
+//The data is provided as a flattened hierarchy (root first), and the first column is the hierarchy level.
+//The second column is the ``Name``.
+//If no ``columnsToSelect`` is provided, one column will be created for all existing statistic fields.
+//``columnTosum`` define which statistic columns should be summed over the hierarchy.
+function String[] GetStatisticsCSV( String columnsToSelect[], String columnsToSum[] ) {
+  if( !FabricStatisticsEnabled() ) {
+    String emptyResult[];
+    return emptyResult;
+  }
+
+  Ref<_FabricStatistics> singleton = _GetFabricStatisticsSingleton();
+  return singleton.getStatisticsCSV(columnsToSelect, columnsToSum);
+}
+
+function String[] GetStatisticsCSV( String columnsToSelect[] ) {
+  if( !FabricStatisticsEnabled() ) {
+    String emptyResult[];
+    return emptyResult;
+  }
+
+  Ref<_FabricStatistics> singleton = _GetFabricStatisticsSingleton();
+  return singleton.getStatisticsCSV(columnsToSelect);
+}
+
+function String[] GetStatisticsCSV() {
+  String columnsToSelect[];
+  if( !FabricStatisticsEnabled() )
+    return columnsToSelect;
+
+  Ref<_FabricStatistics> singleton = _GetFabricStatisticsSingleton();
+  return singleton.getStatisticsCSV(columnsToSelect);
+}
+
+//Returns the statistics as String lines and hierarchy levels (flattened hierarchy, root first).
+//The ``levels`` format is: ``statsName1=value1 statsName2=value2 statsName2=value3 ...``. String values have double-quotes.
+//If no ``columnsToSelect`` is provided, one column will be created for all existing statistic fields.
+//``columnTosum`` define which statistic columns should be summed over the hierarchy.
+function GetStatisticStrings( io String lines[], io Size levels[], String columnsToSelect[], String columnsToSum[] ) {
+  if( !FabricStatisticsEnabled() )
+    return;
+
+  Ref<_FabricStatistics> singleton = _GetFabricStatisticsSingleton();
+  singleton.getStatisticStrings(lines, levels, columnsToSelect, columnsToSum);
+}
+
+function GetStatisticStrings( io String lines[], io Size levels[], String columnsToSelect[] ) {
+  if( !FabricStatisticsEnabled() )
+    return;
+
+  Ref<_FabricStatistics> singleton = _GetFabricStatisticsSingleton();
+  singleton.getStatisticStrings(lines, levels, columnsToSelect);
+}
+
+function GetStatisticStrings( io String lines[], io Size levels[] ) {
+  if( !FabricStatisticsEnabled() )
+    return;
+
+  Ref<_FabricStatistics> singleton = _GetFabricStatisticsSingleton();
+  String columnsToSelect[];
+  singleton.getStatisticStrings(lines, levels, columnsToSelect);
+}
+
+//GetStatisticsReport returns a full statistics report as a single String, providing a simple way to dump the results in the console from KL.
+function String GetStatisticsReport( String columnsToSelect[], String columnsToSum[] ) {
+  String lines[];
+  Size levels[];
+  GetStatisticStrings( lines, levels, columnsToSelect );
+  String result;
+  for( Size i = 0; i < lines.size(); ++i ) {
+    for( Size j = 0; j < levels[i]; ++j )
+      result += '  ';
+    result += lines[i] + '\n';
+  }
+  return result;
+}
+
+function String GetStatisticsReport( String columnsToSelect[] ) {
+  String columnsToSum[];
+  return GetStatisticsReport( columnsToSelect, columnsToSum );
+}
+
+function String GetStatisticsReport() {
+  String columnsToSelect[];
+  return GetStatisticsReport( columnsToSelect );
+}
+
+//Profiling
+
+//Returns true if profiling events recording is enabled.
+function Boolean FabricProfilingEnabled() = "FabricProfilingEnabled";
+
+//Enables profiling events recording until ``StopFabricProfiling`` is called.
+function StartFabricProfiling() {
+  Ref<_FabricStatistics> singleton = _GetOrCreateFabricStatisticsSingleton();
+  singleton.startProfiling();
+}
+
+//Enables profiling events recording for a specific timelapse (in seconds).
+function StartFabricProfiling( Scalar seconds ) {
+  Ref<_FabricStatistics> singleton = _GetOrCreateFabricStatisticsSingleton();
+  singleton.startProfiling(seconds);
+}
+
+//Enables profiling events recording for a certain number of frames.
+function StartFabricProfilingFrames( Size frameCount ) {
+  Ref<_FabricStatistics> singleton = _GetOrCreateFabricStatisticsSingleton();
+  singleton.startProfilingFrames(frameCount);
+}
+
+//Stops the profiling events recording. This can be called for any of the methods above (timelapse, frames).
+function StopFabricProfiling() {
+  Ref<_FabricStatistics> singleton = _GetOrCreateFabricStatisticsSingleton();
+  singleton.stopProfiling();
+}
+
+//Records that a profiling event, identified by ``label``, has started.
+//A StatisticSource can optionally be associated with the event for more context.
+//The key of a parent profiling event can be passed to declare a parent-child relationship.
+//The function returns a ``key`` that is needed for calling the associated ``EndProfilingEvent``. The same key can be provided to a child event to declare a parent-child relationship.
+//.. note:: It is recommended to use the ``AutoProfilingEvent`` helper, for simplicity and to minimize error risks.
+inline Size BeginProfilingEvent(String label, Ref<StatisticSource> source, Size parentProfilingEventKey) {
+  if( FabricProfilingEnabled() ) {
+    Ref<_FabricStatistics> singleton = _GetOrCreateFabricStatisticsSingleton();
+    return singleton.beginProfilingEvent(label, source, parentProfilingEventKey);
+  }
+  return 0;
+}
+
+inline Size BeginProfilingEvent(String label, Ref<StatisticSource> source) {
+  return BeginProfilingEvent(label, source, 0);
+}
+
+inline Size BeginProfilingEvent(String label, Size parentProfilingEventKey) {
+  Ref<StatisticSource> nullSource = null;
+  return BeginProfilingEvent(label, nullSource, parentProfilingEventKey);
+}
+
+inline Size BeginProfilingEvent(String label) {
+  Ref<StatisticSource> nullSource = null;
+  return BeginProfilingEvent(label, nullSource, 0);
+}
+
+//Records the end of a profiling event. The ``key`` is the returned value of the associated ``BeginProfilingEvent`` call.
+inline EndProfilingEvent(Size key) {
+  if( FabricProfilingEnabled() ) {
+    Ref<_FabricStatistics> singleton = _GetOrCreateFabricStatisticsSingleton();
+    singleton.endProfilingEvent(key);
+  }
+}
+
+//The AutoProfilingEvent helper struct simplifies the recording of a profiling event by automatically calling the begin/end event function in its constructor and destructor.
+//This is intended to be created as a local variable, whose scope is the same as the profiled event.
+struct AutoProfilingEvent {
+  Size key;
+};
+
+function AutoProfilingEvent( String label, Ref<StatisticSource> source, Size parentProfilingEventKey ) {
+  this.key = BeginProfilingEvent(label, source, parentProfilingEventKey);
+}
+
+function AutoProfilingEvent( String label, Ref<StatisticSource> source ) {
+  this.key = BeginProfilingEvent(label, source);
+}
+
+function AutoProfilingEvent( String label, Size parentProfilingEventKey ) {
+  this.key = BeginProfilingEvent(label, parentProfilingEventKey);
+}
+
+function AutoProfilingEvent( String label ) {
+  this.key = BeginProfilingEvent(label );
+}
+
+function ~AutoProfilingEvent() {
+  EndProfilingEvent(this.key);
+}
+
+struct ProfilingEvent {
+  Size level;
+  Size frame;
+  String label;
+  Float64 seconds;
+  String sourceName;
+};
+
+//Returns all the recorded statistic events. The ``level`` member of the ``ProfilingEvent`` struct defines event's level withing the flattened hierarchy.
+//.. note:: Events are not order by ``start`` time.
+inline ProfilingEvent[] GetProfilingEvents() {
+  Ref<_FabricStatistics> singleton = _GetOrCreateFabricStatisticsSingleton();
+  return singleton.getProfilingEvents();
+}
+
+//Returns all profiling events as a single String, providing a simple way to dump the results in the console from KL.
+function String GetProfilingReport() {
+  ProfilingEvent events[] = GetProfilingEvents();
+
+  //Check if frames differ
+  Boolean differentFrames;
+  for( Size i = 1; i < events.size(); ++i ) {
+    if( events[i].frame != events[i-1].frame ) {
+      differentFrames = true;
+      break;
+    }
+  }
+
+  String result;
+  for( Size i = 0; i < events.size(); ++i ) {
+    if( differentFrames && (i == 0 || events[i].frame != events[i-1].frame ) )
+      result += 'Frame '+events[i].frame+'\n';
+
+    if( differentFrames )
+      result += '  ';
+
+    for( Size j = 0; j < events[i].level; ++j )
+      result += '  ';
+
+    result += events[i].seconds + ": " + events[i].label + (events[i].sourceName ? ('(source='+events[i].sourceName+')') : '') + '\n';
+  }
+  return result;
+}

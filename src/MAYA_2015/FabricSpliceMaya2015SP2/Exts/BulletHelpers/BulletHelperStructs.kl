@@ -1,0 +1,42 @@
+
+require Math;
+require Bullet;
+require Geometry;
+require InlineDrawing;
+
+struct RigidBodyMesh {
+	Geometry geometry;
+	BulletRigidBody body;
+	InlineTransform tfo;
+	InlineInstance instance;
+  Color color;
+};
+
+
+struct SoftBodyMesh {
+  PolygonMesh mesh;
+  BulletSoftBody softBody;
+  Vec3 initialPositions[];
+  Vec3 initialNormals[];
+	InlineInstance instance;
+  Color color;
+};
+
+struct SoftBodyLines {
+  Lines lines;
+  BulletSoftBody softBody;
+  Vec3 initialPositions[];
+	InlineInstance instance;
+  Color color;
+};
+
+
+function Color BulletHelpers_randomColor(Size offset)
+{
+  Size seed = 16841;
+  return Color(
+    mathRandomFloat32(seed, offset+0),
+    mathRandomFloat32(seed, offset+1),
+    mathRandomFloat32(seed, offset+2)
+    );
+}

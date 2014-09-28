@@ -1,0 +1,86 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+require Geometry;
+
+object AlembicGeometryAttributesReader {
+  AlembicICompoundProperty _compound;
+  AlembicGeometryParamReader _paramReaders[String];
+};
+
+function AlembicGeometryAttributesReader.reset!() {
+  this._paramReaders.clear();
+}
+
+function AlembicGeometryAttributesReader.addParamReader!(AlembicGeometryParamReader reader) {
+  this._paramReaders[reader.getName()] = reader;
+}
+
+function AlembicGeometryAttributesReader(AlembicICompoundProperty compound) {
+  this._compound = compound;
+  if(!this._compound.valid())
+    return;
+  
+  for(Size i=0;i<this._compound.getNumProperties();i++) {
+    AlembicPropertyHeader ph = this._compound.getPropertyHeader(i);
+
+    if(AlembicIFloat32GeomParam().matches(ph))
+    {
+      this.addParamReader(AlembicGeometryParamReader(AlembicIFloat32GeomParam(this._compound, ph.getName())));
+      continue;
+    }
+    if(AlembicIUInt32GeomParam().matches(ph))
+    {
+      this.addParamReader(AlembicGeometryParamReader(AlembicIUInt32GeomParam(this._compound, ph.getName())));
+      continue;
+    }
+    if(AlembicIVec2VfGeomParam().matches(ph))
+    {
+      this.addParamReader(AlembicGeometryParamReader(AlembicIVec2VfGeomParam(this._compound, ph.getName())));
+      continue;
+    }
+    if(AlembicIVec3VfGeomParam().matches(ph))
+    {
+      this.addParamReader(AlembicGeometryParamReader(AlembicIVec3VfGeomParam(this._compound, ph.getName())));
+      continue;
+    }
+    if(AlembicIVec3NfGeomParam().matches(ph))
+    {
+      this.addParamReader(AlembicGeometryParamReader(AlembicIVec3NfGeomParam(this._compound, ph.getName())));
+      continue;
+    }
+    if(AlembicIQuatfGeomParam().matches(ph))
+    {
+      this.addParamReader(AlembicGeometryParamReader(AlembicIQuatfGeomParam(this._compound, ph.getName())));
+      continue;
+    }
+    if(AlembicIColorfGeomParam().matches(ph))
+    {
+      this.addParamReader(AlembicGeometryParamReader(AlembicIColorfGeomParam(this._compound, ph.getName())));
+      continue;
+    }
+    report('AlembicGeometryAttributesReader: Property "'+ph.getName()+'" not supported.');
+  }
+}
+
+function Boolean AlembicGeometryAttributesReader.readSample!(Float64 time, io GeometryAttributes attributes) {
+  for(name, readerRef in this._paramReaders) {
+    AlembicGeometryParamReader reader = readerRef;
+    if(!reader.readSample(time, attributes))
+      return false;
+  }
+
+  return true;
+}
+
+function Boolean AlembicGeometryAttributesReader.readSample!(Float64 time, io PolygonMesh mesh) {
+  for(name, readerRef in this._paramReaders) {
+    AlembicGeometryParamReader reader = readerRef;
+    if(!reader.readSample(time, mesh))
+      return false;
+  }
+
+  return true;
+}

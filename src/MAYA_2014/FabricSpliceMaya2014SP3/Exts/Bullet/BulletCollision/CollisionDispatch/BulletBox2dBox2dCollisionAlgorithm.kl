@@ -1,0 +1,52 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+/*
+///box-box collision detection
+object BulletBox2dBox2dCollisionAlgorithm : BulletActivatingCollisionAlgorithm, BulletCollisionAlgorithm
+{
+	Data pointer;
+}
+	// Boolean	m_ownManifold;
+	// BulletPersistentManifold*	m_manifoldPtr;
+
+function BulletBox2dBox2dCollisionAlgorithm(BulletCollisionAlgorithmConstructionInfo ci) = "BulletBox2dBox2dCollisionAlgorithm_constructBulletCollisionAlgorithmConstructionInfo";
+
+function ~BulletBox2dBox2dCollisionAlgorithm();
+
+function BulletBox2dBox2dCollisionAlgorithm(BulletPersistentManifold mf, in BulletCollisionAlgorithmConstructionInfo ci, io BulletICollisionObject body0, io BulletICollisionObject body1);
+
+function BulletBox2dBox2dCollisionAlgorithm.processCollision (io BulletICollisionObject body0, io BulletICollisionObject body1, in BulletDispatcherInfo dispatchInfo, io BulletManifoldResult resultOut);
+
+function Scalar BulletBox2dBox2dCollisionAlgorithm.calculateTimeOfImpact( io BulletICollisionObject body0, io BulletICollisionObject body1, in BulletDispatcherInfo dispatchInfo, io BulletManifoldResult resultOut);
+
+function BulletBox2dBox2dCollisionAlgorithm.getAllContactManifolds(BulletManifoldArray&	manifoldArray)
+*/
+
+object BulletBox2dBox2dCollisionAlgorithm_CreateFunc : BulletCollisionAlgorithmCreateFunc
+{
+	Data pointer;
+};
+
+function Data BulletBox2dBox2dCollisionAlgorithm_CreateFunc.getPointer(){
+	return this.pointer;
+}
+
+function BulletBox2dBox2dCollisionAlgorithm_CreateFunc(){
+	this.__construct();
+}
+function BulletBox2dBox2dCollisionAlgorithm_CreateFunc.__construct!() = "BulletBox2dBox2dCollisionAlgorithm_CreateFunc_construct";
+
+function ~BulletBox2dBox2dCollisionAlgorithm_CreateFunc() = "BulletBox2dBox2dCollisionAlgorithm_CreateFunc_destroy";
+
+
+
+// virtual	BulletCollisionAlgorithm* CreateCollisionAlgorithm(BulletCollisionAlgorithmConstructionInfo& ci, BulletICollisionObject* body0,BulletICollisionObject* body1)
+// {
+// 	Integer bbsize = sizeof(BulletBox2dBox2dCollisionAlgorithm);
+// 	void* ptr = ci.m_dispatcher1->allocateCollisionAlgorithm(bbsize);
+// 	return new(ptr) BulletBox2dBox2dCollisionAlgorithm(0,ci,body0,body1);
+// }

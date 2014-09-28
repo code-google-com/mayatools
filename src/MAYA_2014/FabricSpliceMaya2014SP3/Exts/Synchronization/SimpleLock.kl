@@ -1,0 +1,232 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+/*SPHINX-description
+The ``SimpleLock`` is a simple, reentrant, active-wait mutex designed for protecting access to resources that are locked for a relatively small time. The waiting thread will not return to the scheduler, and wait actively. There is no queue, so starvation is possible under sustained access competition, so the lock is not designed for that scenario.
+
+The ``SimpleLock`` is reentrant, and can be aquired by the same thread multiple times. Aquiring a lock twice does incur some cost, to care should be taken to avoid locking for very highly performant code. 
+
+The ``AutoLock`` wrapper class encapsulates the lock and unlock of a mutex.
+
+The following facilities might be useful for debugging locking problems:
+
+- The ``SimpleLock`` has a ``label`` member, which should be set to a meaningful name, since the exceptions will use that label for reporting issues.
+
+- The ``SimpleLock`` has a ``maxWaitSeconds`` member. If that delay is passed:
+  - If ``throwAtMaxWait``, an exception will be thrown (default)
+  - Else, an error statement will get printed (setError)
+
+- The ``SimpleLock_trace`` constant will report (log) each lock and unlock actions of a SimpleLock
+
+.. warning::
+
+  If an exception is thrown by the thread that locked a lock, the lock will remain in a locked state forever. This applies for ``AutoLock`` helper since KL won't cleanup the stack upon exceptions.
+
+*/
+
+//Enables logging of lock acquire / release events.
+const Boolean SimpleLock_trace = false;
+
+const UInt32 _SimpleLock_unlocked = 0;
+const UInt32 _SimpleLock_locked = 1;
+
+//SimpleLock: a simple reentrant, active wait lock.
+//For debugging purpose:
+// - the lock has a debugName.
+// - an error will be thrown or printed 
+//   if a delay gets past
+object SimpleLock {
+  UInt32 state;
+  Scalar secondsBetweenChecks;
+  Scalar maxWaitSeconds;
+  Boolean throwAtMaxWait;
+  String debugName; // Used for debugging / throwing exceptions
+
+  //Because KL doesn't have 'volatile' variables, we will split
+  //the lock count per thread.
+  UInt32 perThreadCounts[];
+};
+
+function SimpleLock._init!( String debugName, Scalar maxWaitSeconds, Boolean throwAtMaxWait, Scalar secondsBetweenChecks ) {
+  this.debugName = debugName;
+  this.secondsBetweenChecks = secondsBetweenChecks;
+  this.throwAtMaxWait = throwAtMaxWait;
+  this.maxWaitSeconds = maxWaitSeconds;
+  this.perThreadCounts.resize( getCoreCount() );//custom TLS
+}
+
+//Constructs a SimpleLock.
+//  debugName: this name will identify the lock if acquiring fails (maxWaitSeconds) or if logging is enabled (SimpleLock_trace)
+//  maxWaitSeconds:
+//    if throwAtMaxWait: an error will be thrown if the lock cannot be acquired in less than maxWaitSeconds seconds
+//    else: an error will get printed if the lock cannot be acquired in less than maxWaitSeconds seconds
+//  secondsBetweenChecks: small delay before the lock is tested again (to minimize memory cache flushes).
+//    This number should be smaller if the lock is expected to be held for a small amount of time.
+function SimpleLock( String debugName, Scalar maxWaitSeconds, Boolean throwAtMaxWait, Scalar secondsBetweenChecks ) {
+  this._init( debugName, maxWaitSeconds, throwAtMaxWait, secondsBetweenChecks );
+}
+
+//Constructs a SimpleLock. See previous constructor for details.
+function SimpleLock( String debugName, Scalar maxWaitSeconds, Boolean throwAtMaxWait ) {
+  this._init( debugName, maxWaitSeconds, throwAtMaxWait, 1.0e-6 );
+}
+
+//Constructs a SimpleLock. See previous constructor for details.
+function SimpleLock( String debugName, Scalar maxWaitSeconds ) {
+  this._init( debugName, maxWaitSeconds, true, 1.0e-6 );
+}
+
+//Constructs a SimpleLock. See previous constructor for details.
+function SimpleLock( String debugName ) {
+  this._init( debugName, 5.0, true, 1.0e-6 );
+}
+
+function SimpleLock() {
+  this._init( "", 5.0, true, 1.0e-6 );
+}
+
+function SimpleLock SimpleLock.clone() {
+  //Important: don't copy this.state!
+  return SimpleLock(this.debugName, this.maxWaitSeconds, this.throwAtMaxWait, this.secondsBetweenChecks);
+}
+
+function ~SimpleLock() {
+  if( this.state == _SimpleLock_locked )
+    setError("~SimpleLock() : Error : deleting a locked SimpleLock: "+this.debugName);
+}
+
+//Returns 'true' if it is currently locked.
+//However, by the time it returns another thread might already have changed it,
+//so it should only be used for heuristic purposes.
+function Boolean SimpleLock.locked() {
+  return this.state == _SimpleLock_locked;
+}
+
+//Tries to acquire a lock for ``maxWaitSeconds`` seconds. Will return ``false`` if failed.
+function Boolean TryAcquire( Ref<SimpleLock> lock, Scalar maxWaitSeconds ) {
+  Ref<SimpleLock> lockNoConst = lock;//Trick KL's 'const'
+  Float64 totalWait;
+  while( true ) {
+    // This lock might be owned by the current thread. 
+    // In that case, we can continue. 
+    UInt32 threadId = getCoreIndex();
+    if( lockNoConst.perThreadCounts[threadId] ){
+      ++lockNoConst.perThreadCounts[threadId];
+      if( SimpleLock_trace )
+        report("Re-entering the lock:" + lockNoConst.debugName + " thread:" + threadId + " count:" + lockNoConst.perThreadCounts[threadId]);
+      break;
+    }
+    UInt32 result = lockNoConst.state.atomicCAS( _SimpleLock_unlocked, _SimpleLock_locked );
+    if( result == _SimpleLock_unlocked ){
+      lockNoConst.perThreadCounts[threadId] = 1;
+      if( SimpleLock_trace )
+        report("Entering the lock:" + lockNoConst.debugName + " thread:" + threadId + " count: 1");
+      break;
+    }
+
+    if( totalWait > maxWaitSeconds )
+      return false;
+    ActiveWait( lockNoConst.secondsBetweenChecks );
+    totalWait += lockNoConst.secondsBetweenChecks;
+  }
+  return true;
+}
+
+//Tries to acquire a lock immediately and will return ``false`` if failed.
+inline Boolean TryAcquire( Ref<SimpleLock> lock ) {
+  UInt32 threadId = getCoreIndex();
+  Ref<SimpleLock> lockNoConst = lock;//Trick KL's 'const'
+  if( lockNoConst.perThreadCounts[threadId] ){
+    if( SimpleLock_trace )
+      report("Re-entering the lock:" + lockNoConst.debugName + " thread:" + threadId + " count:" + lockNoConst.perThreadCounts[threadId]);
+    ++lockNoConst.perThreadCounts[threadId];
+    return true;
+  }
+  UInt32 result = lockNoConst.state.atomicCAS( _SimpleLock_unlocked, _SimpleLock_locked );
+  if(result == _SimpleLock_unlocked){
+    lockNoConst.perThreadCounts[threadId] = 1;
+    if( SimpleLock_trace )
+      report("Entering the lock:" + lockNoConst.debugName + " thread:" + threadId + " count: 1");
+  }
+  return result == _SimpleLock_unlocked;
+}
+
+//Acquires a lock. If it takes more than ``maxWaitSeconds``, an exception is thrown.
+function Acquire( Ref<SimpleLock> lock, Scalar maxWaitSeconds ) {
+  while( !TryAcquire( lock, maxWaitSeconds ) ) {
+    String message = "Acquire SimpleLock "+lock.debugName+": giving up after maximum delay of "+lock.maxWaitSeconds+" seconds. Possible causes: locked for too long, trying to re-enter the lock, coding error (missing 'Release'), locked forever because of a 'throw' or another exception, deadlock.";
+    if( lock.throwAtMaxWait )
+      throw(message);
+    else
+      setError(message);
+  }
+  if( SimpleLock_trace )
+    report("SimpleLock.Acquire: "+lock.debugName);
+}
+
+//Acquires a lock. If it takes more than ``lock.maxWaitSeconds``, an exception is thrown.
+inline Acquire( Ref<SimpleLock> lock ) {
+  Acquire( lock, lock.maxWaitSeconds );
+}
+
+//Releases a lock.
+function Release( Ref<SimpleLock> lock ) {
+  UInt32 threadId = getCoreIndex();
+  UInt32 count = lock.perThreadCounts[threadId];
+  if( count ){
+    if( lock.state == _SimpleLock_locked ){
+      Ref<SimpleLock> lockNoConst = lock;//Trick KL's 'const'
+      --count;
+      lockNoConst.perThreadCounts[threadId] = count;
+      if( SimpleLock_trace )
+        report("Releasing the lock:" + lockNoConst.debugName + " count:" + count);
+      if(count == 0){
+        if( SimpleLock_trace )
+          report("SimpleLock.Released: "+lock.debugName + " thread:" + threadId);
+        //Note: call an 'atomic' just to force an immediate memory commit
+        lockNoConst.state.atomicCAS( _SimpleLock_locked, _SimpleLock_unlocked );
+      }
+      else if(count == UInt32(-1)){
+        setError("Release SimpleLock "+lock.debugName+": error: lock Aquire/Release counts do not match.");
+      }
+    }
+  }
+  else{
+    setError("Release SimpleLock "+lock.debugName+": error: lock not owned by thread trying to release.");
+  }
+}
+
+//Automatically acquires and releases a lock, upon its construction and destruction.
+//This is intended to be created as a local variable, whose scope is the same as the need for a lock.
+//
+//To localize the scope of an AutoLock, add an additional code block:
+//
+//  ... thread-safe code ...
+//  {
+//    AutoLock lock( this.myLock );
+//    ... non thread-safe code ...
+//  }
+//  ... thread-safe code ...
+//
+struct AutoLock {
+  Ref<SimpleLock> lock;
+};
+
+inline AutoLock( Ref<SimpleLock> lock, Scalar maxWaitSeconds ) {
+  this.lock = lock;
+  Acquire( lock, maxWaitSeconds );
+}
+
+inline AutoLock( Ref<SimpleLock> lock ) {
+  this.lock = lock;
+  Acquire( lock, lock.maxWaitSeconds );
+}
+
+function AutoLock.=( AutoLock other ) {
+  throw("AutoLock.= : Error : copying not allowed");
+}
+
+inline ~AutoLock() {
+  Release( this.lock );
+}

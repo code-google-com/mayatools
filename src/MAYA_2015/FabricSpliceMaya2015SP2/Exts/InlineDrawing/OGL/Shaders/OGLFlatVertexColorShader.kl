@@ -1,0 +1,158 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`oglflatvertexcolorshader` implements the :ref:`inlineshader` interface for OpenGL direct rendering. It encapsulates the :ref:`oglinlineshader` for shading with flat colors, using the vertexColors attribute for the difusse.
+
+Attributes
+----------
+=============== ============ =====================================
+Name            Type         Description
+=============== ============ =====================================
+positions       Vec3         Geometry positions
+vertexColors    Color        Color per vertex
+=============== ============ =====================================
+
+Example
+---------
+
+.. code-block:: kl
+
+    InlineShader shader = draw.registerShader(OGLFlatVertexColorShader());
+    InlineMaterial mat = shader.getOrCreateMaterial('vertexColors');
+*/
+
+require Math;
+require FabricOGL;
+
+object OGLFlatVertexColorShader: InlineShader {
+  OGLInlineShader _shader;
+};
+
+// default constructor without a name
+function OGLFlatVertexColorShader() {
+  this = OGLFlatVertexColorShader(this.type());
+}
+
+// default constructor taking a name
+function OGLFlatVertexColorShader(String name) {
+  this._shader = OGLInlineShader(
+    name,
+    "
+      #version 150 //required for OSX support
+
+      uniform mat4 u_viewMatrix;
+      uniform mat4 u_projection;
+      uniform mat4 u_modelMatrix;
+      
+      in vec4 positions;
+      in vec4 vertexColors;
+      out vec4 vertexColor;
+
+      void main(){
+        gl_Position = u_projection * (u_viewMatrix * (u_modelMatrix * positions));
+        vertexColor = vertexColors;
+      }
+    ", "
+      #version 150 //required for OSX support
+      
+      out vec4 out_fragColor;
+      in vec4 vertexColor;
+      
+      void main(){
+        out_fragColor = vertexColor;
+      }
+    ");  
+  this._shader.defineUniform(InlineUniform("u_viewMatrix", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_projection", Mat44()));
+  this._shader.defineUniform(InlineUniform("u_modelMatrix", Mat44()));
+  this._shader.defineAttribute('positions', "Vec4");
+  this._shader.defineAttribute('vertexColors', "Vec4");
+}
+
+// empties all materials of this shader
+function OGLFlatVertexColorShader.reset!() {
+  this._shader.reset();
+}
+
+// returns the name of this shader
+function String OGLFlatVertexColorShader.getName() {
+  return this._shader.getName();
+}
+
+// called by the InlineDrawing, should not be called manually
+function Boolean OGLFlatVertexColorShader._draw!(io DrawContext context) {
+  return this._shader._draw(context);
+}
+
+// returns true if this shader has a material with a given name
+function Boolean OGLFlatVertexColorShader.hasMaterial(String name) {
+  return this._shader.hasMaterial(name);
+}
+
+// returns (and eventually creates) a new matching material with a given name
+function InlineMaterial OGLFlatVertexColorShader.getOrCreateMaterial!(String name) {
+  return this._shader.getOrCreateMaterial(name);
+}
+
+// returns the number of materials in this shader
+function Size OGLFlatVertexColorShader.getMaterialCount() {
+  return this._shader.getMaterialCount();
+}
+
+// returns an existing material by index
+function InlineMaterial OGLFlatVertexColorShader.getMaterial(Index index) {
+  return this._shader.getMaterial(index);
+}
+
+// define a new uniform on the shader.
+function OGLFlatVertexColorShader.defineUniform!(InlineUniform uniform) {
+  return;
+}
+
+// returns true if this shader has a uniform with a given name
+function Boolean OGLFlatVertexColorShader.hasUniform(String name) {
+  return this._shader.hasUniform(name);
+}
+
+// sets the global value of a uniform
+// this can be changed per material, per instance or even per transform
+function OGLFlatVertexColorShader.setUniform!(InlineUniform uniform) {
+  this._shader.setUniform(uniform);
+}
+
+// draws a uniform for the shader, applies the value essentially. 
+// this should be used from within the InlineMaterial's _draw or 
+// the InlineInstance's _draw.
+function Boolean OGLFlatVertexColorShader._drawUniform!(io DrawContext context, InlineUniform uniform) {
+  return this._shader._drawUniform(context, uniform);
+}
+
+// define a surface attribute with a given name and type
+function OGLFlatVertexColorShader.defineAttribute!(String name, String attributeType) {
+  return;
+}
+
+// returns the number of attributes
+function Size OGLFlatVertexColorShader.getAttributeCount() {
+  return this._shader.getAttributeCount();
+}
+
+// returns the name of an attribute
+function String OGLFlatVertexColorShader.getAttributeName(Index index) {
+  return this._shader.getAttributeName(index);
+}
+
+// returns true if this shader has an attribute with a given name
+function Integer OGLFlatVertexColorShader.getAttributeID(String name) {
+  return this._shader.getAttributeID(name);
+}
+
+// returns the ID / location of a given attribute inside the shader.
+function Boolean OGLFlatVertexColorShader.hasAttribute(String name) {
+  return this._shader.hasAttribute(name);
+}
+

@@ -1,0 +1,2010 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+//////////////////// Boolean
+
+object BooleanRenderParam {
+  Boolean value;
+  Boolean isArray;
+  Boolean arrayValues[];
+};
+
+function String BooleanRenderParam.getKLTypeString() {
+  return 'Boolean';
+}
+
+function Boolean BooleanRenderParam.equals( Ref<BooleanRenderParam> other ) {
+  if( this.isArray != other.isArray )
+    return false;
+  if( !this.isArray )
+    return this.value == other.value;
+  if( this.arrayValues.size() != other.arrayValues.size() )
+    return false;
+  for(Size i = 0; i < this.arrayValues.size(); ++i )
+    if(this.arrayValues[i] != other.arrayValues[i])
+      return false;
+  return true;
+}
+
+inline Boolean BooleanRenderParam.set!(Boolean value, UInt32 index) {
+  if(this.isArray) {
+    if(this.arrayValues[index] != value) {
+      this.arrayValues[index] = value;
+      return true;
+    }
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: BooleanRenderParam.set: index ("+index+") out of range (1)");
+    if(this.value != value) {
+      this.value = value;
+      return true;
+    }
+  }
+  return false;
+}
+
+inline Boolean BooleanRenderParam.set!(Boolean value) {
+  if(this.isArray)
+    throw("Error: BooleanRenderParam.set: setting an array value without an index");
+  if(this.value != value) {
+    this.value = value;
+    return true;
+  }
+  return false;
+}
+
+inline BooleanRenderParam.get(io Boolean value, UInt32 index) {
+  if(this.isArray) {
+    value = this.arrayValues[index];
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: BooleanRenderParam.get: index ("+index+") out of range (1)");
+    value = this.value;
+  }
+}
+
+inline BooleanRenderParam.get(io Boolean value) {
+  if(this.isArray)
+    throw("Error: BooleanRenderParam.get: setting an array value without an index");
+  value = this.value;
+}
+
+function RenderParamValues.setAsBoolean_NotPerElement!(RenderValueKey key, Size elementCount) {
+  Boolean isArray = elementCount != 1;
+  this.setType(key, BooleanRenderParam, RenderParamCategory_baseType, isArray ? (RenderParamFlag_OGLShaderCompatible|RenderParamFlag_array) : RenderParamFlag_OGLShaderCompatible);
+
+  BooleanRenderParam param = null;
+  if( this.paramsData[key.index].param.data == null ) {
+    param = BooleanRenderParam();
+    this.paramsData[key.index].param.data = param;
+  } else
+    param = BooleanRenderParam(this.paramsData[key.index].param.data);
+
+  if(isArray) {
+    if( param.arrayValues.size() != elementCount ) {
+      param.arrayValues.resize(elementCount);
+      this.incrementValueVersion(key);
+    }
+    if( !param.isArray && elementCount != 0 )
+      param.arrayValues[0] = param.value;
+  } else {
+    if( param.isArray && param.arrayValues.size() != 0 ) {
+      param.value = param.arrayValues[0];
+      param.arrayValues.resize(0);
+    }
+  }
+  param.isArray = isArray;
+}
+
+inline RenderParamValues.setAsBoolean!(RenderValueKey key, Size elementCount) {
+  this.setAsBoolean_NotPerElement(key, elementCount);
+  if(elementCount>1)
+    this.setElementCount(key, elementCount);
+}
+
+inline RenderParamValues.setAsBoolean!(RenderValueKey key) {
+  this.setAsBoolean(key, 1);
+}
+
+inline RenderValueKey RenderParamValues.setAsBoolean!(String name) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsBoolean(key, 1);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.setAsBoolean!(String name, Size elementCount) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsBoolean(key, elementCount);
+  return key;
+}
+
+inline Boolean RenderParamValues.isBoolean(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == BooleanRenderParam;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Boolean value, UInt32 index) {
+  Ref<BooleanRenderParam> param = this.get(key);
+  if( param.set(value, index) ) {
+    this.incrementValueVersion(key, index);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Boolean value) {
+  return this.set(key, value, 0);
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Boolean value, UInt32 index) {
+  if( this.layers[key.layerIndex].params.set(key.valueKey, value, index) ) {
+    this.synchronizeVersion(key.layerIndex);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Boolean value) {
+  return this.set(key, value, 0);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Boolean value, UInt32 index) {
+  Ref<BooleanRenderParam> param = this.get(key);
+  param.get(value, index);
+}
+
+inline Boolean RenderParamValues.getBoolean?(RenderValueKey key) {
+  Boolean value;
+  this.get(key, value, 0);
+  return value;
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Boolean value) {
+  this.get(key, value, 0);
+}
+
+inline RenderParams.get?(RenderParamKey key, io Boolean value, UInt32 index) {
+  this.layers[key.layerIndex].params.get(key.valueKey, value, index);
+}
+
+inline RenderParams.get?(RenderParamKey key, io Boolean value) {
+  this.get(key, value, 0);
+}
+
+inline RenderParams.get?(RenderParamVersionedKey key, io Boolean v) {
+  this.get(key.key, v, key.elementIndex);
+}
+
+//////////////////// Integer
+
+object IntegerRenderParam {
+  Integer value;
+  Boolean isArray;
+  Integer arrayValues[];
+};
+
+function String IntegerRenderParam.getKLTypeString() {
+  return 'Integer';
+}
+
+function Boolean IntegerRenderParam.equals( Ref<IntegerRenderParam> other ) {
+  if( this.isArray != other.isArray )
+    return false;
+  if( !this.isArray )
+    return this.value == other.value;
+  if( this.arrayValues.size() != other.arrayValues.size() )
+    return false;
+  for(Size i = 0; i < this.arrayValues.size(); ++i )
+    if(this.arrayValues[i] != other.arrayValues[i])
+      return false;
+  return true;
+}
+
+inline Boolean IntegerRenderParam.set!(Integer value, UInt32 index) {
+  if(this.isArray) {
+    if(this.arrayValues[index] != value) {
+      this.arrayValues[index] = value;
+      return true;
+    }
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: IntegerRenderParam.set: index ("+index+") out of range (1)");
+    if(this.value != value) {
+      this.value = value;
+      return true;
+    }
+  }
+  return false;
+}
+
+inline Boolean IntegerRenderParam.set!(Integer value) {
+  if(this.isArray)
+    throw("Error: IntegerRenderParam.set: setting an array value without an index");
+  if(this.value != value) {
+    this.value = value;
+    return true;
+  }
+  return false;
+}
+
+inline IntegerRenderParam.get(io Integer value, UInt32 index) {
+  if(this.isArray) {
+    value = this.arrayValues[index];
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: IntegerRenderParam.get: index ("+index+") out of range (1)");
+    value = this.value;
+  }
+}
+
+inline IntegerRenderParam.get(io Integer value) {
+  if(this.isArray)
+    throw("Error: IntegerRenderParam.get: setting an array value without an index");
+  value = this.value;
+}
+
+function RenderParamValues.setAsInteger_NotPerElement!(RenderValueKey key, Size elementCount) {
+  Boolean isArray = elementCount != 1;
+  this.setType(key, IntegerRenderParam, RenderParamCategory_baseType, isArray ? (RenderParamFlag_OGLShaderCompatible|RenderParamFlag_array) : RenderParamFlag_OGLShaderCompatible);
+
+  IntegerRenderParam param = null;
+  if( this.paramsData[key.index].param.data == null ) {
+    param = IntegerRenderParam();
+    this.paramsData[key.index].param.data = param;
+  } else
+    param = IntegerRenderParam(this.paramsData[key.index].param.data);
+
+  if(isArray) {
+    if( param.arrayValues.size() != elementCount ) {
+      param.arrayValues.resize(elementCount);
+      this.incrementValueVersion(key);
+    }
+    if( !param.isArray && elementCount != 0 )
+      param.arrayValues[0] = param.value;
+  } else {
+    if( param.isArray && param.arrayValues.size() != 0 ) {
+      param.value = param.arrayValues[0];
+      param.arrayValues.resize(0);
+    }
+  }
+  param.isArray = isArray;
+}
+
+inline RenderParamValues.setAsInteger!(RenderValueKey key, Size elementCount) {
+  this.setAsInteger_NotPerElement(key, elementCount);
+  if(elementCount>1)
+    this.setElementCount(key, elementCount);
+}
+
+inline RenderParamValues.setAsInteger!(RenderValueKey key) {
+  this.setAsInteger(key, 1);
+}
+
+inline RenderValueKey RenderParamValues.setAsInteger!(String name) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsInteger(key, 1);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.setAsInteger!(String name, Size elementCount) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsInteger(key, elementCount);
+  return key;
+}
+
+inline Boolean RenderParamValues.isInteger(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == IntegerRenderParam;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Integer value, UInt32 index) {
+  Ref<IntegerRenderParam> param = this.get(key);
+  if( param.set(value, index) ) {
+    this.incrementValueVersion(key, index);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Integer value) {
+  return this.set(key, value, 0);
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Integer value, UInt32 index) {
+  if( this.layers[key.layerIndex].params.set(key.valueKey, value, index) ) {
+    this.synchronizeVersion(key.layerIndex);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Integer value) {
+  return this.set(key, value, 0);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Integer value, UInt32 index) {
+  Ref<IntegerRenderParam> param = this.get(key);
+  param.get(value, index);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Integer value) {
+  this.get(key, value, 0);
+}
+
+inline Integer RenderParamValues.getInteger?(RenderValueKey key) {
+  Integer value;
+  this.get(key, value, 0);
+  return value;
+}
+
+inline RenderParams.get?(RenderParamKey key, io Integer value, UInt32 index) {
+  this.layers[key.layerIndex].params.get(key.valueKey, value, index);
+}
+
+inline RenderParams.get?(RenderParamKey key, io Integer value) {
+  this.get(key, value, 0);
+}
+
+inline RenderParams.get?(RenderParamVersionedKey key, io Integer v) {
+  this.get(key.key, v, key.elementIndex);
+}
+
+//////////////////// Scalar
+
+object ScalarRenderParam {
+  Scalar value;
+  Boolean isArray;
+  Scalar arrayValues[];
+};
+
+function String ScalarRenderParam.getKLTypeString() {
+  return 'Scalar';
+}
+
+function Boolean ScalarRenderParam.equals( Ref<ScalarRenderParam> other ) {
+  if( this.isArray != other.isArray )
+    return false;
+  if( !this.isArray )
+    return this.value == other.value;
+  if( this.arrayValues.size() != other.arrayValues.size() )
+    return false;
+  for(Size i = 0; i < this.arrayValues.size(); ++i )
+    if(this.arrayValues[i] != other.arrayValues[i])
+      return false;
+  return true;
+}
+
+inline Boolean ScalarRenderParam.set!(Scalar value, UInt32 index) {
+  if(this.isArray) {
+    if(this.arrayValues[index] != value) {
+      this.arrayValues[index] = value;
+      return true;
+    }
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: ScalarRenderParam.set: index ("+index+") out of range (1)");
+    if(this.value != value) {
+      this.value = value;
+      return true;
+    }
+  }
+  return false;
+}
+
+inline Boolean ScalarRenderParam.set!(Scalar value) {
+  if(this.isArray)
+    throw("Error: ScalarRenderParam.set: setting an array value without an index");
+  if(this.value != value) {
+    this.value = value;
+    return true;
+  }
+  return false;
+}
+
+inline ScalarRenderParam.get(io Scalar value, UInt32 index) {
+  if(this.isArray) {
+    value = this.arrayValues[index];
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: ScalarRenderParam.get: index ("+index+") out of range (1)");
+    value = this.value;
+  }
+}
+
+inline ScalarRenderParam.get(io Scalar value) {
+  if(this.isArray)
+    throw("Error: ScalarRenderParam.get: setting an array value without an index");
+  value = this.value;
+}
+
+function RenderParamValues.setAsScalar_NotPerElement!(RenderValueKey key, Size elementCount) {
+  Boolean isArray = elementCount != 1;
+  this.setType(key, ScalarRenderParam, RenderParamCategory_baseType, isArray ? (RenderParamFlag_OGLShaderCompatible|RenderParamFlag_array) : RenderParamFlag_OGLShaderCompatible);
+
+  ScalarRenderParam param = null;
+  if( this.paramsData[key.index].param.data == null ) {
+    param = ScalarRenderParam();
+    this.paramsData[key.index].param.data = param;
+  } else
+    param = ScalarRenderParam(this.paramsData[key.index].param.data);
+
+  if(isArray) {
+    if( param.arrayValues.size() != elementCount ) {
+      param.arrayValues.resize(elementCount);
+      this.incrementValueVersion(key);
+    }
+    if( !param.isArray && elementCount != 0 )
+      param.arrayValues[0] = param.value;
+  } else {
+    if( param.isArray && param.arrayValues.size() != 0 ) {
+      param.value = param.arrayValues[0];
+      param.arrayValues.resize(0);
+    }
+  }
+  param.isArray = isArray;
+}
+
+inline RenderParamValues.setAsScalar!(RenderValueKey key, Size elementCount) {
+  this.setAsScalar_NotPerElement(key, elementCount);
+  if(elementCount>1)
+    this.setElementCount(key, elementCount);
+}
+
+inline RenderParamValues.setAsScalar!(RenderValueKey key) {
+  this.setAsScalar(key, 1);
+}
+
+inline RenderValueKey RenderParamValues.setAsScalar!(String name) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsScalar(key, 1);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.setAsScalar!(String name, Size elementCount) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsScalar(key, elementCount);
+  return key;
+}
+
+inline Boolean RenderParamValues.isScalar(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == ScalarRenderParam;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Scalar value, UInt32 index) {
+  Ref<ScalarRenderParam> param = this.get(key);
+  if( param.set(value, index) ) {
+    this.incrementValueVersion(key, index);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Scalar value) {
+  return this.set(key, value, 0);
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Scalar value, UInt32 index) {
+  if( this.layers[key.layerIndex].params.set(key.valueKey, value, index) ) {
+    this.synchronizeVersion(key.layerIndex);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Scalar value) {
+  return this.set(key, value, 0);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Scalar value, UInt32 index) {
+  Ref<ScalarRenderParam> param = this.get(key);
+  param.get(value, index);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Scalar value) {
+  this.get(key, value, 0);
+}
+
+inline Scalar RenderParamValues.getScalar?(RenderValueKey key) {
+  Scalar value;
+  this.get(key, value, 0);
+  return value;
+}
+
+inline RenderParams.get?(RenderParamKey key, io Scalar value, UInt32 index) {
+  this.layers[key.layerIndex].params.get(key.valueKey, value, index);
+}
+
+inline RenderParams.get?(RenderParamKey key, io Scalar value) {
+  this.get(key, value, 0);
+}
+
+inline RenderParams.get?(RenderParamVersionedKey key, io Scalar v) {
+  this.get(key.key, v, key.elementIndex);
+}
+
+//////////////////// String
+
+object StringRenderParam {
+  String value;
+  Boolean isArray;
+  String arrayValues[];
+};
+
+function String StringRenderParam.getKLTypeString() {
+  return 'String';
+}
+
+function Boolean StringRenderParam.equals( Ref<StringRenderParam> other ) {
+  if( this.isArray != other.isArray )
+    return false;
+  if( !this.isArray )
+    return this.value == other.value;
+  if( this.arrayValues.size() != other.arrayValues.size() )
+    return false;
+  for(Size i = 0; i < this.arrayValues.size(); ++i )
+    if(this.arrayValues[i] != other.arrayValues[i])
+      return false;
+  return true;
+}
+
+inline Boolean StringRenderParam.set!(String value, UInt32 index) {
+  if(this.isArray) {
+    if(this.arrayValues[index] != value) {
+      this.arrayValues[index] = value;
+      return true;
+    }
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: StringRenderParam.set: index ("+index+") out of range (1)");
+    if(this.value != value) {
+      this.value = value;
+      return true;
+    }
+  }
+  return false;
+}
+
+inline Boolean StringRenderParam.set!(String value) {
+  if(this.isArray)
+    throw("Error: StringRenderParam.set: setting an array value without an index");
+  if(this.value != value) {
+    this.value = value;
+    return true;
+  }
+  return false;
+}
+
+inline StringRenderParam.get(io String value, UInt32 index) {
+  if(this.isArray) {
+    value = this.arrayValues[index];
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: StringRenderParam.get: index ("+index+") out of range (1)");
+    value = this.value;
+  }
+}
+
+inline StringRenderParam.get(io String value) {
+  if(this.isArray)
+    throw("Error: StringRenderParam.get: setting an array value without an index");
+  value = this.value;
+}
+
+function RenderParamValues.setAsString_NotPerElement!(RenderValueKey key, Size elementCount) {
+  Boolean isArray = elementCount != 1;
+  this.setType(key, StringRenderParam, RenderParamCategory_baseType, isArray ? (RenderParamFlag_OGLShaderCompatible|RenderParamFlag_array) : RenderParamFlag_OGLShaderCompatible);
+
+  StringRenderParam param;
+  if( this.paramsData[key.index].param.data == null ) {
+    param = StringRenderParam();
+    this.paramsData[key.index].param.data = param;
+  } else
+    param = StringRenderParam(this.paramsData[key.index].param.data);
+
+  if(isArray) {
+    if( param.arrayValues.size() != elementCount ) {
+      param.arrayValues.resize(elementCount);
+      this.incrementValueVersion(key);
+    }
+    if( !param.isArray && elementCount != 0 )
+      param.arrayValues[0] = param.value;
+  } else {
+    if( param.isArray && param.arrayValues.size() != 0 ) {
+      param.value = param.arrayValues[0];
+      param.arrayValues.resize(0);
+    }
+  }
+  param.isArray = isArray;
+}
+
+inline RenderParamValues.setAsString!(RenderValueKey key, Size elementCount) {
+  this.setAsString_NotPerElement(key, elementCount);
+  if(elementCount>1)
+    this.setElementCount(key, elementCount);
+}
+
+inline RenderParamValues.setAsString!(RenderValueKey key) {
+  this.setAsString(key, 1);
+}
+
+inline RenderValueKey RenderParamValues.setAsString!(String name) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsString(key, 1);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.setAsString!(String name, Size elementCount) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsString(key, elementCount);
+  return key;
+}
+
+inline Boolean RenderParamValues.isString(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == StringRenderParam;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, String value, UInt32 index) {
+  Ref<StringRenderParam> param = this.get(key);
+  if( param.set(value, index) ) {
+    this.incrementValueVersion(key, index);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, String value) {
+  return this.set(key, value, 0);
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, String value, UInt32 index) {
+  if( this.layers[key.layerIndex].params.set(key.valueKey, value, index) ) {
+    this.synchronizeVersion(key.layerIndex);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, String value) {
+  return this.set(key, value, 0);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io String value, UInt32 index) {
+  Ref<StringRenderParam> param = this.get(key);
+  param.get(value, index);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io String value) {
+  this.get(key, value, 0);
+}
+
+inline String RenderParamValues.getString?(RenderValueKey key) {
+  String value;
+  this.get(key, value, 0);
+  return value;
+}
+
+inline RenderParams.get?(RenderParamKey key, io String value, UInt32 index) {
+  this.layers[key.layerIndex].params.get(key.valueKey, value, index);
+}
+
+inline RenderParams.get?(RenderParamKey key, io String value) {
+  this.get(key, value, 0);
+}
+
+inline RenderParams.get?(RenderParamVersionedKey key, io String v) {
+  this.get(key.key, v, key.elementIndex);
+}
+
+//////////////////// Vec2
+
+object Vec2RenderParam {
+  Vec2 value;
+  Boolean isArray;
+  Vec2 arrayValues[];
+};
+
+function String Vec2RenderParam.getKLTypeString() {
+  return 'Vec2';
+}
+
+function Boolean Vec2RenderParam.equals( Ref<Vec2RenderParam> other ) {
+  if( this.isArray != other.isArray )
+    return false;
+  if( !this.isArray )
+    return this.value == other.value;
+  if( this.arrayValues.size() != other.arrayValues.size() )
+    return false;
+  for(Size i = 0; i < this.arrayValues.size(); ++i )
+    if(this.arrayValues[i] != other.arrayValues[i])
+      return false;
+  return true;
+}
+
+inline Boolean Vec2RenderParam.set!(Vec2 value, UInt32 index) {
+  if(this.isArray) {
+    if(this.arrayValues[index] != value) {
+      this.arrayValues[index] = value;
+      return true;
+    }
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: Vec2RenderParam.set: index ("+index+") out of range (1)");
+    if(this.value != value) {
+      this.value = value;
+      return true;
+    }
+  }
+  return false;
+}
+
+inline Boolean Vec2RenderParam.set!(Vec2 value) {
+  if(this.isArray)
+    throw("Error: Vec2RenderParam.set: setting an array value without an index");
+  if(this.value != value) {
+    this.value = value;
+    return true;
+  }
+  return false;
+}
+
+inline Vec2RenderParam.get(io Vec2 value, UInt32 index) {
+  if(this.isArray) {
+    value = this.arrayValues[index];
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: Vec2RenderParam.get: index ("+index+") out of range (1)");
+    value = this.value;
+  }
+}
+
+inline Vec2RenderParam.get(io Vec2 value) {
+  if(this.isArray)
+    throw("Error: Vec2RenderParam.get: setting an array value without an index");
+  value = this.value;
+}
+
+function RenderParamValues.setAsVec2_NotPerElement!(RenderValueKey key, Size elementCount) {
+  Boolean isArray = elementCount != 1;
+  this.setType(key, Vec2RenderParam, RenderParamCategory_math, isArray ? (RenderParamFlag_OGLShaderCompatible|RenderParamFlag_array) : RenderParamFlag_OGLShaderCompatible);
+
+  Vec2RenderParam param = null;
+  if( this.paramsData[key.index].param.data == null ) {
+    param = Vec2RenderParam();
+    this.paramsData[key.index].param.data = param;
+  } else
+    param = Vec2RenderParam(this.paramsData[key.index].param.data);
+
+  if(isArray) {
+    if( param.arrayValues.size() != elementCount ) {
+      param.arrayValues.resize(elementCount);
+      this.incrementValueVersion(key);
+    }
+    if( !param.isArray && elementCount != 0 )
+      param.arrayValues[0] = param.value;
+  } else {
+    if( param.isArray && param.arrayValues.size() != 0 ) {
+      param.value = param.arrayValues[0];
+      param.arrayValues.resize(0);
+    }
+  }
+  param.isArray = isArray;
+}
+
+inline RenderParamValues.setAsVec2!(RenderValueKey key, Size elementCount) {
+  this.setAsVec2_NotPerElement(key, elementCount);
+  if(elementCount>1)
+    this.setElementCount(key, elementCount);
+}
+
+inline RenderParamValues.setAsVec2!(RenderValueKey key) {
+  this.setAsVec2(key, 1);
+}
+
+inline RenderValueKey RenderParamValues.setAsVec2!(String name) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsVec2(key, 1);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.setAsVec2!(String name, Size elementCount) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsVec2(key, elementCount);
+  return key;
+}
+
+inline Boolean RenderParamValues.isVec2(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == Vec2RenderParam;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Vec2 value, UInt32 index) {
+  Ref<Vec2RenderParam> param = this.get(key);
+  if( param.set(value, index) ) {
+    this.incrementValueVersion(key, index);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Vec2 value) {
+  return this.set(key, value, 0);
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Vec2 value, UInt32 index) {
+  if( this.layers[key.layerIndex].params.set(key.valueKey, value, index) ) {
+    this.synchronizeVersion(key.layerIndex);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Vec2 value) {
+  return this.set(key, value, 0);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Vec2 value, UInt32 index) {
+  Ref<Vec2RenderParam> param = this.get(key);
+  param.get(value, index);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Vec2 value) {
+  this.get(key, value, 0);
+}
+
+inline Vec2 RenderParamValues.getVec2?(RenderValueKey key) {
+  Vec2 value;
+  this.get(key, value, 0);
+  return value;
+}
+
+inline RenderParams.get?(RenderParamKey key, io Vec2 value, UInt32 index) {
+  this.layers[key.layerIndex].params.get(key.valueKey, value, index);
+}
+
+inline RenderParams.get?(RenderParamKey key, io Vec2 value) {
+  this.get(key, value, 0);
+}
+
+inline RenderParams.get?(RenderParamVersionedKey key, io Vec2 v) {
+  this.get(key.key, v, key.elementIndex);
+}
+
+//////////////////// Vec3
+
+object Vec3RenderParam {
+  Vec3 value;
+  Boolean isArray;
+  Vec3 arrayValues[];
+};
+
+function String Vec3RenderParam.getKLTypeString() {
+  return 'Vec3';
+}
+
+function Boolean Vec3RenderParam.equals( Ref<Vec3RenderParam> other ) {
+  if( this.isArray != other.isArray )
+    return false;
+  if( !this.isArray )
+    return this.value == other.value;
+  if( this.arrayValues.size() != other.arrayValues.size() )
+    return false;
+  for(Size i = 0; i < this.arrayValues.size(); ++i )
+    if(this.arrayValues[i] != other.arrayValues[i])
+      return false;
+  return true;
+}
+
+inline Boolean Vec3RenderParam.set!(Vec3 value, UInt32 index) {
+  if(this.isArray) {
+    if(this.arrayValues[index] != value) {
+      this.arrayValues[index] = value;
+      return true;
+    }
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: Vec3RenderParam.set: index ("+index+") out of range (1)");
+    if(this.value != value) {
+      this.value = value;
+      return true;
+    }
+  }
+  return false;
+}
+
+inline Boolean Vec3RenderParam.set!(Vec3 value) {
+  if(this.isArray)
+    throw("Error: Vec3RenderParam.set: setting an array value without an index");
+  if(this.value != value) {
+    this.value = value;
+    return true;
+  }
+  return false;
+}
+
+inline Vec3RenderParam.get(io Vec3 value, UInt32 index) {
+  if(this.isArray) {
+    value = this.arrayValues[index];
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: Vec3RenderParam.get: index ("+index+") out of range (1)");
+    value = this.value;
+  }
+}
+
+inline Vec3RenderParam.get(io Vec3 value) {
+  if(this.isArray)
+    throw("Error: Vec3RenderParam.get: setting an array value without an index");
+  value = this.value;
+}
+
+function RenderParamValues.setAsVec3_NotPerElement!(RenderValueKey key, Size elementCount) {
+  Boolean isArray = elementCount != 1;
+  this.setType(key, Vec3RenderParam, RenderParamCategory_math, isArray ? (RenderParamFlag_OGLShaderCompatible|RenderParamFlag_array) : RenderParamFlag_OGLShaderCompatible);
+
+  Vec3RenderParam param;
+  if( this.paramsData[key.index].param.data == null ) {
+    param = Vec3RenderParam();
+    this.paramsData[key.index].param.data = param;
+  } else
+    param = Vec3RenderParam(this.paramsData[key.index].param.data);
+
+  if(isArray) {
+    if( param.arrayValues.size() != elementCount ) {
+      param.arrayValues.resize(elementCount);
+      this.incrementValueVersion(key);
+    }
+    if( !param.isArray && elementCount != 0 )
+      param.arrayValues[0] = param.value;
+  } else {
+    if( param.isArray && param.arrayValues.size() != 0 ) {
+      param.value = param.arrayValues[0];
+      param.arrayValues.resize(0);
+    }
+  }
+  param.isArray = isArray;
+}
+
+inline RenderParamValues.setAsVec3!(RenderValueKey key, Size elementCount) {
+  this.setAsVec3_NotPerElement(key, elementCount);
+  if(elementCount>1)
+    this.setElementCount(key, elementCount);
+}
+
+inline RenderParamValues.setAsVec3!(RenderValueKey key) {
+  this.setAsVec3(key, 1);
+}
+
+inline RenderValueKey RenderParamValues.setAsVec3!(String name) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsVec3(key, 1);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.setAsVec3!(String name, Size elementCount) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsVec3(key, elementCount);
+  return key;
+}
+
+inline Boolean RenderParamValues.isVec3(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == Vec3RenderParam;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Vec3 value, UInt32 index) {
+  Ref<Vec3RenderParam> param = this.get(key);
+  if( param.set(value, index) ) {
+    this.incrementValueVersion(key, index);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Vec3 value) {
+  return this.set(key, value, 0);
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Vec3 value, UInt32 index) {
+  if( this.layers[key.layerIndex].params.set(key.valueKey, value, index) ) {
+    this.synchronizeVersion(key.layerIndex);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Vec3 value) {
+  return this.set(key, value, 0);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Vec3 value, UInt32 index) {
+  Ref<Vec3RenderParam> param = this.get(key);
+  param.get(value, index);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Vec3 value) {
+  this.get(key, value, 0);
+}
+
+inline Vec3 RenderParamValues.getVec3?(RenderValueKey key) {
+  Vec3 value;
+  this.get(key, value, 0);
+  return value;
+}
+
+inline RenderParams.get?(RenderParamKey key, io Vec3 value, UInt32 index) {
+  this.layers[key.layerIndex].params.get(key.valueKey, value, index);
+}
+
+inline RenderParams.get?(RenderParamKey key, io Vec3 value) {
+  this.get(key, value, 0);
+}
+
+inline RenderParams.get?(RenderParamVersionedKey key, io Vec3 v) {
+  this.get(key.key, v, key.elementIndex);
+}
+
+//////////////////// Vec4
+
+object Vec4RenderParam {
+  Vec4 value;
+  Boolean isArray;
+  Vec4 arrayValues[];
+};
+
+function String Vec4RenderParam.getKLTypeString() {
+  return 'Vec4';
+}
+
+function Boolean Vec4RenderParam.equals( Ref<Vec4RenderParam> other ) {
+  if( this.isArray != other.isArray )
+    return false;
+  if( !this.isArray )
+    return this.value == other.value;
+  if( this.arrayValues.size() != other.arrayValues.size() )
+    return false;
+  for(Size i = 0; i < this.arrayValues.size(); ++i )
+    if(this.arrayValues[i] != other.arrayValues[i])
+      return false;
+  return true;
+}
+
+inline Boolean Vec4RenderParam.set!(Vec4 value, UInt32 index) {
+  if(this.isArray) {
+    if(this.arrayValues[index] != value) {
+      this.arrayValues[index] = value;
+      return true;
+    }
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: Vec4RenderParam.set: index ("+index+") out of range (1)");
+    if(this.value != value) {
+      this.value = value;
+      return true;
+    }
+  }
+  return false;
+}
+
+inline Boolean Vec4RenderParam.set!(Vec4 value) {
+  if(this.isArray)
+    throw("Error: Vec4RenderParam.set: setting an array value without an index");
+  if(this.value != value) {
+    this.value = value;
+    return true;
+  }
+  return false;
+}
+
+inline Vec4RenderParam.get(io Vec4 value, UInt32 index) {
+  if(this.isArray) {
+    value = this.arrayValues[index];
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: Vec4RenderParam.get: index ("+index+") out of range (1)");
+    value = this.value;
+  }
+}
+
+inline Vec4RenderParam.get(io Vec4 value) {
+  if(this.isArray)
+    throw("Error: Vec4RenderParam.get: setting an array value without an index");
+  value = this.value;
+}
+
+function RenderParamValues.setAsVec4_NotPerElement!(RenderValueKey key, Size elementCount) {
+  Boolean isArray = elementCount != 1;
+  this.setType(key, Vec4RenderParam, RenderParamCategory_math, isArray ? (RenderParamFlag_OGLShaderCompatible|RenderParamFlag_array) : RenderParamFlag_OGLShaderCompatible);
+
+  Vec4RenderParam param;
+  if( this.paramsData[key.index].param.data == null ) {
+    param = Vec4RenderParam();
+    this.paramsData[key.index].param.data = param;
+  } else
+    param = Vec4RenderParam(this.paramsData[key.index].param.data);
+
+  if(isArray) {
+    if( param.arrayValues.size() != elementCount ) {
+      param.arrayValues.resize(elementCount);
+      this.incrementValueVersion(key);
+    }
+    if( !param.isArray && elementCount != 0 )
+      param.arrayValues[0] = param.value;
+  } else {
+    if( param.isArray && param.arrayValues.size() != 0 ) {
+      param.value = param.arrayValues[0];
+      param.arrayValues.resize(0);
+    }
+  }
+  param.isArray = isArray;
+}
+
+inline RenderParamValues.setAsVec4!(RenderValueKey key, Size elementCount) {
+  this.setAsVec4_NotPerElement(key, elementCount);
+  if(elementCount>1)
+    this.setElementCount(key, elementCount);
+}
+
+inline RenderParamValues.setAsVec4!(RenderValueKey key) {
+  this.setAsVec4(key, 1);
+}
+
+inline RenderValueKey RenderParamValues.setAsVec4!(String name) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsVec4(key, 1);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.setAsVec4!(String name, Size elementCount) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsVec4(key, elementCount);
+  return key;
+}
+
+inline Boolean RenderParamValues.isVec4(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == Vec4RenderParam;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Vec4 value, UInt32 index) {
+  Ref<Vec4RenderParam> param = this.get(key);
+  if( param.set(value, index) ) {
+    this.incrementValueVersion(key, index);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Vec4 value) {
+  return this.set(key, value, 0);
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Vec4 value, UInt32 index) {
+  if( this.layers[key.layerIndex].params.set(key.valueKey, value, index) ) {
+    this.synchronizeVersion(key.layerIndex);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Vec4 value) {
+  return this.set(key, value, 0);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Vec4 value, UInt32 index) {
+  Ref<Vec4RenderParam> param = this.get(key);
+  param.get(value, index);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Vec4 value) {
+  this.get(key, value, 0);
+}
+
+inline Vec4 RenderParamValues.getVec4?(RenderValueKey key) {
+  Vec4 value;
+  this.get(key, value, 0);
+  return value;
+}
+
+inline RenderParams.get?(RenderParamKey key, io Vec4 value, UInt32 index) {
+  this.layers[key.layerIndex].params.get(key.valueKey, value, index);
+}
+
+inline RenderParams.get?(RenderParamKey key, io Vec4 value) {
+  this.get(key, value, 0);
+}
+
+inline RenderParams.get?(RenderParamVersionedKey key, io Vec4 v) {
+  this.get(key.key, v, key.elementIndex);
+}
+
+//////////////////// Color
+
+object ColorRenderParam {
+  Color value;
+  Boolean isArray;
+  Color arrayValues[];
+};
+
+function String ColorRenderParam.getKLTypeString() {
+  return 'Color';
+}
+
+function Boolean ColorRenderParam.equals( Ref<ColorRenderParam> other ) {
+  if( this.isArray != other.isArray )
+    return false;
+  if( !this.isArray )
+    return this.value == other.value;
+  if( this.arrayValues.size() != other.arrayValues.size() )
+    return false;
+  for(Size i = 0; i < this.arrayValues.size(); ++i )
+    if(this.arrayValues[i] != other.arrayValues[i])
+      return false;
+  return true;
+}
+
+inline Boolean ColorRenderParam.set!(Color value, UInt32 index) {
+  if(this.isArray) {
+    if(this.arrayValues[index] != value) {
+      this.arrayValues[index] = value;
+      return true;
+    }
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: ColorRenderParam.set: index ("+index+") out of range (1)");
+    if(this.value != value) {
+      this.value = value;
+      return true;
+    }
+  }
+  return false;
+}
+
+inline Boolean ColorRenderParam.set!(Color value) {
+  if(this.isArray)
+    throw("Error: ColorRenderParam.set: setting an array value without an index");
+  if(this.value != value) {
+    this.value = value;
+    return true;
+  }
+  return false;
+}
+
+inline ColorRenderParam.get(io Color value, UInt32 index) {
+  if(this.isArray) {
+    value = this.arrayValues[index];
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: ColorRenderParam.get: index ("+index+") out of range (1)");
+    value = this.value;
+  }
+}
+
+inline ColorRenderParam.get(io Color value) {
+  if(this.isArray)
+    throw("Error: ColorRenderParam.get: setting an array value without an index");
+  value = this.value;
+}
+
+function RenderParamValues.setAsColor_NotPerElement!(RenderValueKey key, Size elementCount) {
+  Boolean isArray = elementCount != 1;
+  this.setType(key, ColorRenderParam, RenderParamCategory_math, isArray ? (RenderParamFlag_OGLShaderCompatible|RenderParamFlag_array) : RenderParamFlag_OGLShaderCompatible);
+
+  ColorRenderParam param;
+  if( this.paramsData[key.index].param.data == null ) {
+    param = ColorRenderParam();
+    this.paramsData[key.index].param.data = param;
+  } else
+    param = ColorRenderParam(this.paramsData[key.index].param.data);
+
+  if(isArray) {
+    if( param.arrayValues.size() != elementCount ) {
+      param.arrayValues.resize(elementCount);
+      this.incrementValueVersion(key);
+    }
+    if( !param.isArray && elementCount != 0 )
+      param.arrayValues[0] = param.value;
+  } else {
+    if( param.isArray && param.arrayValues.size() != 0 ) {
+      param.value = param.arrayValues[0];
+      param.arrayValues.resize(0);
+    }
+  }
+  param.isArray = isArray;
+}
+
+inline RenderParamValues.setAsColor!(RenderValueKey key, Size elementCount) {
+  this.setAsColor_NotPerElement(key, elementCount);
+  if(elementCount>1)
+    this.setElementCount(key, elementCount);
+}
+
+inline RenderParamValues.setAsColor!(RenderValueKey key) {
+  this.setAsColor(key, 1);
+}
+
+inline RenderValueKey RenderParamValues.setAsColor!(String name) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsColor(key, 1);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.setAsColor!(String name, Size elementCount) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsColor(key, elementCount);
+  return key;
+}
+
+inline Boolean RenderParamValues.isColor(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == ColorRenderParam;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Color value, UInt32 index) {
+  Ref<ColorRenderParam> param = this.get(key);
+  if( param.set(value, index) ) {
+    this.incrementValueVersion(key, index);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Color value) {
+  return this.set(key, value, 0);
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Color value, UInt32 index) {
+  if( this.layers[key.layerIndex].params.set(key.valueKey, value, index) ) {
+    this.synchronizeVersion(key.layerIndex);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Color value) {
+  return this.set(key, value, 0);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Color value, UInt32 index) {
+  Ref<ColorRenderParam> param = this.get(key);
+  param.get(value, index);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Color value) {
+  this.get(key, value, 0);
+}
+
+inline Color RenderParamValues.getColor?(RenderValueKey key) {
+  Color value;
+  this.get(key, value, 0);
+  return value;
+}
+
+inline RenderParams.get?(RenderParamKey key, io Color value, UInt32 index) {
+  this.layers[key.layerIndex].params.get(key.valueKey, value, index);
+}
+
+inline RenderParams.get?(RenderParamKey key, io Color value) {
+  this.get(key, value, 0);
+}
+
+inline RenderParams.get?(RenderParamVersionedKey key, io Color v) {
+  this.get(key.key, v, key.elementIndex);
+}
+
+//////////////////// Mat33
+
+object Mat33RenderParam {
+  Mat33 value;
+  Boolean isArray;
+  Mat33 arrayValues[];
+};
+
+function String Mat33RenderParam.getKLTypeString() {
+  return 'Mat33';
+}
+
+function Boolean Mat33RenderParam.equals( Ref<Mat33RenderParam> other ) {
+  if( this.isArray != other.isArray )
+    return false;
+  if( !this.isArray )
+    return this.value == other.value;
+  if( this.arrayValues.size() != other.arrayValues.size() )
+    return false;
+  for(Size i = 0; i < this.arrayValues.size(); ++i )
+    if(this.arrayValues[i] != other.arrayValues[i])
+      return false;
+  return true;
+}
+
+inline Boolean Mat33RenderParam.set!(Mat33 value, UInt32 index) {
+  if(this.isArray) {
+    if(!this.arrayValues[index].equal(value)) {
+      this.arrayValues[index] = value;
+      return true;
+    }
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: Mat33RenderParam.set: index ("+index+") out of range (1)");
+    if(!this.value.equal(value)) {
+      this.value = value;
+      return true;
+    }
+  }
+  return false;
+}
+
+inline Boolean Mat33RenderParam.set!(Mat33 value) {
+  if(this.isArray)
+    throw("Error: Mat33RenderParam.set: setting an array value without an index");
+  if(!this.value.equal(value)) {
+    this.value = value;
+    return true;
+  }
+  return false;
+}
+
+inline Mat33RenderParam.get(io Mat33 value, UInt32 index) {
+  if(this.isArray) {
+    value = this.arrayValues[index];
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: Mat33RenderParam.get: index ("+index+") out of range (1)");
+    value = this.value;
+  }
+}
+
+inline Mat33RenderParam.get(io Mat33 value) {
+  if(this.isArray)
+    throw("Error: Mat33RenderParam.get: setting an array value without an index");
+  value = this.value;
+}
+
+function RenderParamValues.setAsMat33_NotPerElement!(RenderValueKey key, Size elementCount) {
+  Boolean isArray = elementCount != 1;
+  this.setType(key, Mat33RenderParam, RenderParamCategory_math, isArray ? (RenderParamFlag_OGLShaderCompatible|RenderParamFlag_array) : RenderParamFlag_OGLShaderCompatible);
+
+  Mat33RenderParam param;
+  if( this.paramsData[key.index].param.data == null ) {
+    param = Mat33RenderParam();
+    this.paramsData[key.index].param.data = param;
+  } else
+    param = Mat33RenderParam(this.paramsData[key.index].param.data);
+
+  if(isArray) {
+    if( param.arrayValues.size() != elementCount ) {
+      param.arrayValues.resize(elementCount);
+      this.incrementValueVersion(key);
+    }
+    if( !param.isArray && elementCount != 0 )
+      param.arrayValues[0] = param.value;
+  } else {
+    if( param.isArray && param.arrayValues.size() != 0 ) {
+      param.value = param.arrayValues[0];
+      param.arrayValues.resize(0);
+    }
+  }
+  param.isArray = isArray;
+}
+
+inline RenderParamValues.setAsMat33!(RenderValueKey key, Size elementCount) {
+  this.setAsMat33_NotPerElement(key, elementCount);
+  if(elementCount>1)
+    this.setElementCount(key, elementCount);
+}
+
+inline RenderParamValues.setAsMat33!(RenderValueKey key, Size elementCount, Integer space) {
+  this.setAsMat33(key, elementCount);
+  this.setSpace(key, space);
+}
+
+inline RenderParamValues.setAsMat33!(RenderValueKey key) {
+  this.setAsMat33(key, 1);
+}
+
+inline RenderValueKey RenderParamValues.setAsMat33!(String name) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsMat33(key, 1);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.setAsMat33!(String name, Size elementCount) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsMat33(key, elementCount);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.setAsMat33!(String name, Size elementCount, Integer space) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsMat33(key, elementCount, space);
+  return key;
+}
+
+inline Boolean RenderParamValues.isMat33(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == Mat33RenderParam;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Mat33 value, UInt32 index) {
+  Ref<Mat33RenderParam> param = this.get(key);
+  if( param.set(value, index) ) {
+    this.incrementValueVersion(key, index);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Mat33 value) {
+  return this.set(key, value, 0);
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Mat33 value, UInt32 index) {
+  if( this.layers[key.layerIndex].params.set(key.valueKey, value, index) ) {
+    this.synchronizeVersion(key.layerIndex);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Mat33 value) {
+  return this.set(key, value, 0);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Mat33 value, UInt32 index) {
+  Ref<Mat33RenderParam> param = this.get(key);
+  param.get(value, index);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Mat33 value) {
+  this.get(key, value, 0);
+}
+
+inline Mat33 RenderParamValues.getMat33?(RenderValueKey key) {
+  Mat33 value;
+  this.get(key, value, 0);
+  return value;
+}
+
+inline RenderParams.get?(RenderParamKey key, io Mat33 value, UInt32 index) {
+  this.layers[key.layerIndex].params.get(key.valueKey, value, index);
+}
+
+inline RenderParams.get?(RenderParamKey key, io Mat33 value) {
+  this.get(key, value, 0);
+}
+
+inline RenderParams.get?(RenderParamVersionedKey key, io Mat33 v) {
+  this.get(key.key, v, key.elementIndex);
+}
+
+//////////////////// Mat44
+
+object Mat44RenderParam {
+  Mat44 value;
+  Boolean isArray;
+  Mat44 arrayValues[];
+};
+
+function String Mat44RenderParam.getKLTypeString() {
+  return 'Mat44';
+}
+
+function Boolean Mat44RenderParam.equals( Ref<Mat44RenderParam> other ) {
+  if( this.isArray != other.isArray )
+    return false;
+  if( !this.isArray )
+    return this.value == other.value;
+  if( this.arrayValues.size() != other.arrayValues.size() )
+    return false;
+  for(Size i = 0; i < this.arrayValues.size(); ++i )
+    if(this.arrayValues[i] != other.arrayValues[i])
+      return false;
+  return true;
+}
+
+inline Boolean Mat44RenderParam.set!(Mat44 value, UInt32 index) {
+  if(this.isArray) {
+    if(!this.arrayValues[index].equal(value)) {
+      this.arrayValues[index] = value;
+      return true;
+    }
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: Mat44RenderParam.set: index ("+index+") out of range (1)");
+    if(!this.value.equal(value)) {
+      this.value = value;
+      return true;
+    }
+  }
+  return false;
+}
+
+inline Boolean Mat44RenderParam.set!(Mat44 value) {
+  if(this.isArray)
+    throw("Error: Mat44RenderParam.set: setting an array value without an index");
+  if(!this.value.equal(value)) {
+    this.value = value;
+    return true;
+  }
+  return false;
+}
+
+inline Size Mat44RenderParam.size() {
+  return this.isArray ? this.arrayValues.size() : 1;
+}
+
+inline Mat44RenderParam.get(io Mat44 value, UInt32 index) {
+  if(this.isArray) {
+    value = this.arrayValues[index];
+  } else {
+    if(RenderParamSet_enableChecks && index != 0)
+      throw("Error: Mat44RenderParam.get: index ("+index+") out of range (1)");
+    value = this.value;
+  }
+}
+
+inline Mat44RenderParam.get(io Mat44 value) {
+  if(this.isArray)
+    throw("Error: Mat44RenderParam.get: setting an array value without an index");
+  value = this.value;
+}
+
+function RenderParamValues.setAsMat44_NotPerElement!(RenderValueKey key, Size elementCount) {
+  Boolean isArray = elementCount != 1;
+  this.setType(key, Mat44RenderParam, RenderParamCategory_math, isArray ? (RenderParamFlag_OGLShaderCompatible|RenderParamFlag_array) : RenderParamFlag_OGLShaderCompatible);
+
+  Mat44RenderParam param = null;
+  if( this.paramsData[key.index].param.data == null ) {
+    param = Mat44RenderParam();
+    this.paramsData[key.index].param.data = param;
+  } else
+    param = Mat44RenderParam(this.paramsData[key.index].param.data);
+
+  if(isArray) {
+    if( param.arrayValues.size() != elementCount ) {
+      param.arrayValues.resize(elementCount);
+      this.incrementValueVersion(key);
+    }
+    if( !param.isArray && elementCount != 0 )
+      param.arrayValues[0] = param.value;
+  } else {
+    if( param.isArray && param.arrayValues.size() != 0 ) {
+      param.value = param.arrayValues[0];
+      param.arrayValues.resize(0);
+    }
+  }
+  param.isArray = isArray;
+}
+
+inline RenderParamValues.setAsMat44!(RenderValueKey key, Size elementCount) {
+  this.setAsMat44_NotPerElement(key, elementCount);
+  if(elementCount>1)
+    this.setElementCount(key, elementCount);
+}
+
+inline RenderParamValues.setAsMat44!(RenderValueKey key, Size elementCount, Integer space) {
+  this.setAsMat44(key, elementCount);
+  this.setSpace(key, space);
+}
+
+inline RenderParamValues.setAsMat44!(RenderValueKey key) {
+  this.setAsMat44(key, 1);
+}
+
+inline RenderValueKey RenderParamValues.setAsMat44!(String name) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsMat44(key, 1);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.setAsMat44!(String name, Size elementCount) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsMat44(key, elementCount);
+  return key;
+}
+
+inline RenderValueKey RenderParamValues.setAsMat44!(String name, Size elementCount, Integer space) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setAsMat44(key, elementCount, space);
+  return key;
+}
+
+inline Boolean RenderParamValues.isMat44(RenderValueKey key) {
+  return this.paramsData[key.index].param.data.type == Mat44RenderParam;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Mat44 value, UInt32 index) {
+  Ref<Mat44RenderParam> param = this.get(key);
+  if( param.set(value, index) ) {
+    this.incrementValueVersion(key, index);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParamValues.set!(RenderValueKey key, Mat44 value) {
+  return this.set(key, value, 0);
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Mat44 value, UInt32 index) {
+  if( this.layers[key.layerIndex].params.set(key.valueKey, value, index) ) {
+    this.synchronizeVersion(key.layerIndex);
+    return true;
+  }
+  return false;
+}
+
+inline Boolean RenderParams.set!(RenderParamKey key, Mat44 value) {
+  return this.set(key, value, 0);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Mat44 value, UInt32 index) {
+  Ref<Mat44RenderParam> param = this.get(key);
+  param.get(value, index);
+}
+
+inline RenderParamValues.get?(RenderValueKey key, io Mat44 value) {
+  this.get(key, value, 0);
+}
+
+inline Mat44 RenderParamValues.getMat44?(RenderValueKey key) {
+  Mat44 value;
+  this.get(key, value, 0);
+  return value;
+}
+
+inline RenderParams.get?(RenderParamKey key, io Mat44 value, UInt32 index) {
+  this.layers[key.layerIndex].params.get(key.valueKey, value, index);
+}
+
+inline RenderParams.get?(RenderParamKey key, io Mat44 value) {
+  this.get(key, value, 0);
+}
+
+inline RenderParams.get?(RenderParamVersionedKey key, io Mat44 v) {
+  this.get(key.key, v, key.elementIndex);
+}
+
+//SetFromSimpleRenderParamOfSameType: sets from another simple render param,
+//and copies the value instead of referencing it. This has the advantage of
+//updating the version by comparing the values, so there is no need to have
+//a consistent versioning between the source and target param.
+function RenderParamValues.setFromSimpleRenderParam!(RenderValueKey key, Object simpleParam, Integer transformSpace) {
+  Type type = simpleParam.type;
+  if( type == BooleanRenderParam ) {
+    Ref<BooleanRenderParam> param = simpleParam;
+    this.setAsBoolean(key);
+    this.set( key, param.value );
+  } else if( type == IntegerRenderParam ) {
+    Ref<IntegerRenderParam> param = simpleParam;
+    this.setAsInteger(key);
+    this.set( key, param.value );
+  } else if( type == ScalarRenderParam ) {
+    Ref<ScalarRenderParam> param = simpleParam;
+    this.setAsScalar(key);
+    this.set( key, param.value );
+  } else if( type == StringRenderParam ) {
+    Ref<StringRenderParam> param = simpleParam;
+    this.setAsString(key);
+    this.set( key, param.value );
+  } else if( type == Vec2RenderParam ) {
+    Ref<Vec2RenderParam> param = simpleParam;
+    this.setAsVec2(key);
+    this.set( key, param.value );
+  } else if( type == Vec3RenderParam ) {
+    Ref<Vec3RenderParam> param = simpleParam;
+    this.setAsVec3(key);
+    this.set( key, param.value );
+  } else if( type == Vec4RenderParam ) {
+    Ref<Vec4RenderParam> param = simpleParam;
+    this.setAsVec4(key);
+    this.set( key, param.value );
+  } else if( type == ColorRenderParam ) {
+    Ref<ColorRenderParam> param = simpleParam;
+    this.setAsColor(key);
+    this.set( key, param.value );
+  } else if( type == Mat33RenderParam ) {
+    Ref<Mat33RenderParam> param = simpleParam;
+    this.setAsMat33(key, 1);
+    this.set( key, param.value );
+  } else if( type == Mat44RenderParam ) {
+    Ref<Mat44RenderParam> param = simpleParam;
+    this.setAsMat44(key, 1);
+    this.set( key, param.value );
+  } else
+    throw("setFromSimpleRenderParam: parameter is not a SimpleRenderParam: "+type);
+  this.setSpace( key, transformSpace );
+}
+
+function RenderValueKey RenderParamValues.setFromSimpleRenderParam!(String name, Object simpleParam, Integer transformSpace) {
+  RenderValueKey key = this.getOrCreateKeyFromName(name);
+  this.setFromSimpleRenderParam(key, simpleParam, transformSpace);
+  return key;
+}
+
+// Special type used by passes: bindingRenderParam:
+const Integer BindingRenderParam_noScope = 0;
+const Integer BindingRenderParam_memberScope = 1;
+const Integer BindingRenderParam_parentScope = 2;
+const Integer BindingRenderParam_globalScope = 3;
+const Integer BindingRenderParam_initializing = 4;
+
+object BindingRenderParam {
+  String name;
+  Integer scope;
+};
+
+function String BindingRenderParam.getKLTypeString() {
+  return 'Binding';
+}
+
+function String BindingRenderParam.toString() {
+    if(this.scope == BindingRenderParam_memberScope)
+      return 'member.'+this.name;
+    if(this.scope == BindingRenderParam_parentScope)
+      return 'parent.'+this.name;
+    if(this.scope == BindingRenderParam_globalScope)
+      return 'global.'+this.name;
+    return this.name;
+}
+
+function Boolean SimpleRenderParam_equals( Ref<Object> simpleParam1, Ref<Object> simpleParam2 ) {
+  Type type = simpleParam1.type;
+  if( type != simpleParam2.type )
+    return false;
+  if( type == BooleanRenderParam ) {
+    Ref<BooleanRenderParam> param1 = simpleParam1, param2 = simpleParam2;
+    return param1.equals(param2);
+  } else if( type == IntegerRenderParam ) {
+    Ref<IntegerRenderParam> param1 = simpleParam1, param2 = simpleParam2;
+    return param1.equals(param2);
+  } else if( type == ScalarRenderParam ) {
+    Ref<ScalarRenderParam> param1 = simpleParam1, param2 = simpleParam2;
+    return param1.equals(param2);
+  } else if( type == StringRenderParam ) {
+    Ref<StringRenderParam> param1 = simpleParam1, param2 = simpleParam2;
+    return param1.equals(param2);
+  } else if( type == Vec2RenderParam ) {
+    Ref<Vec2RenderParam> param1 = simpleParam1, param2 = simpleParam2;
+    return param1.equals(param2);
+  } else if( type == Vec3RenderParam ) {
+    Ref<Vec3RenderParam> param1 = simpleParam1, param2 = simpleParam2;
+    return param1.equals(param2);
+  } else if( type == Vec4RenderParam ) {
+    Ref<Vec4RenderParam> param1 = simpleParam1, param2 = simpleParam2;
+    return param1.equals(param2);
+  } else if( type == ColorRenderParam ) {
+    Ref<ColorRenderParam> param1 = simpleParam1, param2 = simpleParam2;
+    return param1.equals(param2);
+  } else if( type == Mat33RenderParam ) {
+    Ref<Mat33RenderParam> param1 = simpleParam1, param2 = simpleParam2;
+    return param1.equals(param2);
+  } else if( type == Mat44RenderParam ) {
+    Ref<Mat44RenderParam> param1 = simpleParam1, param2 = simpleParam2;
+    return param1.equals(param2);
+  } else if( type == BindingRenderParam ) {
+    Ref<BindingRenderParam> param1 = simpleParam1, param2 = simpleParam2;
+    return param1.name == param2.name && param1.scope == param2.scope;
+  } else
+    throw("SimpleRenderParam_equals: parameter is not a SimpleRenderParam: "+type);
+}
+
+function Object SimpleRenderParam_createDefaultFromKLTypeString( String typeStr ) {
+  if( typeStr == 'Boolean' )
+    return BooleanRenderParam();
+  else if( typeStr == 'Integer' )
+    return IntegerRenderParam();
+  else if( typeStr == 'Scalar' )
+    return ScalarRenderParam();
+  else if( typeStr == 'String' )
+    return StringRenderParam();
+  else if( typeStr == 'Vec2' )
+    return Vec2RenderParam();
+  else if( typeStr == 'Vec3' )
+    return Vec3RenderParam();
+  else if( typeStr == 'Vec4' )
+    return Vec4RenderParam();
+  else if( typeStr == 'Color' )
+    return ColorRenderParam();
+  else if( typeStr == 'Mat33' )
+    return Mat33RenderParam();
+  else if( typeStr == 'Mat44' )
+    return Mat44RenderParam();
+  else if( typeStr == 'flag' )
+    return BooleanRenderParam();//Special case to be handled by caller
+
+  throw("SimpleRenderParam_createDefaultFromKLTypeString: unsupported type: "+typeStr);
+}
+
+function String SimpleRenderParam_getDesc(Object genParam, Integer specificInstance, Integer transformSpace) {
+  Type type = genParam.type;
+  //TODO: make all array-enabled...
+  if( type == BooleanRenderParam ) {
+    BooleanRenderParam param = genParam;
+    if(param.isArray){
+      if(specificInstance != -1)
+        return "Boolean="+param.arrayValues[specificInstance];
+      else
+        return "Boolean="+param.arrayValues;
+    } else
+      return "Boolean="+param.value;
+  } else if( type == IntegerRenderParam ) {
+    IntegerRenderParam param = genParam;
+    if(param.isArray){
+      if(specificInstance != -1)
+        return "Integer="+param.arrayValues[specificInstance];
+      else
+        return "Integer="+param.arrayValues;
+    } else
+      return "Integer="+param.value;
+  } else if( type == ScalarRenderParam ) {
+    ScalarRenderParam param = genParam;
+    if(param.isArray){
+      if(specificInstance != -1)
+        return "Scalar="+param.arrayValues[specificInstance];
+      else
+        return "Scalar="+param.arrayValues;
+    } else
+      return "Scalar="+param.value;
+  } else if( type == StringRenderParam ) {
+    StringRenderParam param = genParam;
+    if(param.isArray){
+      if(specificInstance != -1)
+        return "String="+param.arrayValues[specificInstance];
+      else
+        return "String="+param.arrayValues;
+    } else
+      return "String="+param.value;
+  } else if( type == Vec2RenderParam ) {
+    Vec2RenderParam param = genParam;
+    if(param.isArray){
+      if(specificInstance != -1)
+        return "Vec2="+param.arrayValues[specificInstance];
+      else
+        return "Vec2="+param.arrayValues;
+    } else
+      return "Vec2="+param.value;
+  } else if( type == Vec3RenderParam ) {
+    Vec3RenderParam param = genParam;
+    if(param.isArray){
+      if(specificInstance != -1)
+        return "Vec3="+param.arrayValues[specificInstance];
+      else
+        return "Vec3="+param.arrayValues;
+    } else
+      return "Vec3="+param.value;
+  } else if( type == Vec4RenderParam ) {
+    Vec4RenderParam param = genParam;
+    if(param.isArray){
+      if(specificInstance != -1)
+        return "Vec4="+param.arrayValues[specificInstance];
+      else
+        return "Vec4="+param.arrayValues;
+    } else
+      return "Vec4="+param.value;
+  } else if( type == ColorRenderParam ) {
+    ColorRenderParam param = genParam;
+    if(param.isArray){
+      if(specificInstance != -1)
+        return "Color="+param.arrayValues[specificInstance];
+      else
+        return "Color="+param.arrayValues;
+    } else
+      return "Color="+param.value;
+  } else if( type == Mat33RenderParam ) {
+    Mat33RenderParam param = genParam;
+    if(param.isArray){
+      if(specificInstance != -1)
+        return "Mat33="+param.arrayValues[specificInstance]+(transformSpace ? ",space="+TransformSpaceToString(transformSpace) : "");
+      else
+        return "Mat33="+param.arrayValues+(transformSpace ? ",space="+TransformSpaceToString(transformSpace) : "");
+    } else
+      return "Mat33="+param.value+(transformSpace ? ",space="+TransformSpaceToString(transformSpace) : "");
+  } else if( type == Mat44RenderParam ) {
+    Mat44RenderParam param = genParam;
+    if(param.isArray){
+      if(specificInstance != -1)
+        return "Mat44="+param.arrayValues[specificInstance]+(transformSpace ? ",space="+TransformSpaceToString(transformSpace) : "");
+      else
+        return "Mat44="+param.arrayValues+(transformSpace ? ",space="+TransformSpaceToString(transformSpace) : "");
+    } else
+      return "Mat44="+param.value+(transformSpace ? ",space="+TransformSpaceToString(transformSpace) : "");
+  } else if( type == BindingRenderParam ) {
+    BindingRenderParam param = genParam;
+    return "Binding="+param.toString();
+  }
+  return "(unknown SimpleRenderParam type: "+type+")";
+}

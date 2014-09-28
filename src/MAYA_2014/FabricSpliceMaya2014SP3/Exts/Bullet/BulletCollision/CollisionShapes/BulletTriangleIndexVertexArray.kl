@@ -1,0 +1,137 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+/*
+///The BulletIndexedMesh indexes a single vertex and index array. Multiple BulletIndexedMesh objects can be passed into a BulletTriangleIndexVertexArray using addIndexedMesh.
+///Instead of the number of indices, we pass the number of triangles.
+struct	BulletIndexedMesh
+{
+	BT_DECLARE_ALIGNED_ALLOCATOR();
+
+   Integer                     m_numTriangles;
+   const unsigned char *   m_triangleIndexBase;
+   Integer                     m_triangleIndexStride;
+   Integer                     m_numVertices;
+   const unsigned char *   m_vertexBase;
+   Integer                     m_vertexStride;
+
+   // The index type is set when adding an indexed mesh to the
+   // BulletTriangleIndexVertexArray, do not set it manually
+   PHY_ScalarType m_indexType;
+
+   // The vertex type has a default type similar to Bullet's precision mode (float or double)
+   // but can be set manually if you for example run Bullet with double precision but have
+   // mesh data in single precision..
+   PHY_ScalarType m_vertexType;
+
+
+   BulletIndexedMesh()
+	   :m_indexType(PHY_INTEGER),
+#ifdef BT_USE_DOUBLE_PRECISION
+      m_vertexType(PHY_DOUBLE)
+#else // BT_USE_DOUBLE_PRECISION
+      m_vertexType(PHY_FLOAT)
+#endif // BT_USE_DOUBLE_PRECISION
+      {
+      }
+};
+
+typedef BulletAlignedObjectArray<BulletIndexedMesh>	IndexedMeshArray;
+*/
+
+///The BulletTriangleIndexVertexArray allows to access multiple triangle meshes, by indexing into existing triangle/index arrays.
+///Additional meshes can be added using addIndexedMesh
+///No duplcate is made of the vertex/index data, it only indexes into external vertex/index arrays.
+///So keep those arrays around during the lifetime of this BulletTriangleIndexVertexArray.
+object BulletTriangleIndexVertexArray : BulletStridingMeshInterface
+{
+	Data pointer;
+	Integer __indices[];
+	Vec3 __vertices[];
+};
+
+
+function Data BulletTriangleIndexVertexArray.getPointer(){ 
+  return this.pointer; 
+}
+
+function BulletTriangleIndexVertexArray (Integer indices[], Vec3 vertices[]){
+	this.__indices = indices;
+	this.__vertices = vertices;
+	this.__construct(indices, vertices);
+}
+function BulletTriangleIndexVertexArray.__construct!(Integer indices[], Vec3 vertices[]) = 'BulletTriangleIndexVertexArray_construct';
+
+function ~BulletTriangleIndexVertexArray(){
+	this.__destroy();
+}
+function BulletTriangleIndexVertexArray.__destroy!() = 'BulletTriangleIndexVertexArray_destroy';
+
+
+/*
+protected:
+	IndexedMeshArray	m_indexedMeshes;
+	Integer m_pad[2];
+	mutable Integer m_hasAabb; // using Integer instead of Boolean to maintain alignment
+	mutable Vec3 m_aabbMin;
+	mutable Vec3 m_aabbMax;
+
+public:
+
+	BT_DECLARE_ALIGNED_ALLOCATOR();
+
+	BulletTriangleIndexVertexArray() : m_hasAabb(0)
+	{
+	}
+
+	virtual ~BulletTriangleIndexVertexArray();
+
+	//just to be backwards compatible
+	BulletTriangleIndexVertexArray(Integer numTriangles,Integer* triangleIndexBase,Integer triangleIndexStride,Integer numVertices,Scalar* vertexBase,Integer vertexStride);
+	
+	void	addIndexedMesh(const BulletIndexedMesh& mesh, PHY_ScalarType indexType = PHY_INTEGER)
+	{
+		m_indexedMeshes.push_back(mesh);
+		m_indexedMeshes[m_indexedMeshes.size()-1].m_indexType = indexType;
+	}
+	
+	
+	virtual void	getLockedVertexIndexBase(unsigned char **vertexbase, Integer& numverts,PHY_ScalarType& type, Integer& vertexStride,unsigned char **indexbase,Integer & indexstride,Integer& numfaces,PHY_ScalarType& indicestype,Integer subpart=0);
+
+	virtual void	getLockedReadOnlyVertexIndexBase(const unsigned char **vertexbase, Integer& numverts,PHY_ScalarType& type, Integer& vertexStride,const unsigned char **indexbase,Integer & indexstride,Integer& numfaces,PHY_ScalarType& indicestype,Integer subpart=0) const;
+
+	/// unLockVertexBase finishes the access to a subpart of the triangle mesh
+	/// make a call to unLockVertexBase when the read and write access (using getLockedVertexIndexBase) is finished
+	virtual void	unLockVertexBase(Integer subpart) {(void)subpart;}
+
+	virtual void	unLockReadOnlyVertexBase(Integer subpart) const {(void)subpart;}
+
+	/// getNumSubParts returns the number of seperate subparts
+	/// each subpart has a continuous array of vertices and indices
+	virtual Integer		getNumSubParts() const { 
+		return (Integer)m_indexedMeshes.size();
+	}
+
+	IndexedMeshArray&	getIndexedMeshArray()
+	{
+		return m_indexedMeshes;
+	}
+
+	const IndexedMeshArray&	getIndexedMeshArray() const
+	{
+		return m_indexedMeshes;
+	}
+
+	virtual void	preallocateVertices(Integer numverts){(void) numverts;}
+	virtual void	preallocateIndices(Integer numindices){(void) numindices;}
+
+	virtual Boolean	hasPremadeAabb() const;
+	virtual void	setPremadeAabb(in Vec3 aabbMin, in Vec3 aabbMax ) const;
+	virtual void	getPremadeAabb(Vec3* aabbMin, Vec3* aabbMax ) const;
+
+}
+;
+*/
+

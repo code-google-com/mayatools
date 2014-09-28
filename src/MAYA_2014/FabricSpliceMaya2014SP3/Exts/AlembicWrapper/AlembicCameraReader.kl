@@ -1,0 +1,189 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+
+object AlembicCameraReader : AlembicObjectReader{
+  AlembicICamera _camera;
+  AlembicICameraSchema _schema;
+  AlembicTimeSampling _timeSampling;
+  AlembicSampleInfo _info;
+  UInt32 _numSamples;
+  AlembicCameraSample _sampleA;
+  AlembicCameraSample _sampleB;
+};
+
+function AlembicCameraReader(AlembicIObject obj) {
+  this._camera = AlembicICamera(obj);
+  this._schema = this._camera.getSchema();
+  this._timeSampling = this._schema.getTimeSampling();
+  this._numSamples = this._schema.getNumSamples();
+  this._sampleA = AlembicCameraSample();
+  this._sampleB = AlembicCameraSample();
+}
+
+function String AlembicCameraReader.getPath() {
+  return this._camera.asIObject().getFullName();
+}
+
+function Boolean AlembicCameraReader.valid() {
+  return this._camera.valid();
+}
+
+function AlembicCameraReader.reset!() {
+  this._camera.reset();
+  this._schema.reset();
+  this._sampleA = null;
+  this._sampleB = null;
+}
+
+function AlembicIObject AlembicCameraReader.getIObject() {
+  return this._camera.asIObject();
+}
+
+function SInt32 AlembicCameraReader.getNumSamples() {
+  return this._numSamples;
+}
+
+function Float64 AlembicCameraReader.getFocalLength() {
+  Float64 valueA = this._sampleA.getFocalLength();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getFocalLength();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getHorizontalAperture() {
+  Float64 valueA = this._sampleA.getHorizontalAperture();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getHorizontalAperture();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getHorizontalFilmOffset() {
+  Float64 valueA = this._sampleA.getHorizontalFilmOffset();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getHorizontalFilmOffset();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getVerticalAperture() {
+  Float64 valueA = this._sampleA.getVerticalAperture();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getVerticalAperture();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getVerticalFilmOffset() {
+  Float64 valueA = this._sampleA.getVerticalFilmOffset();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getVerticalFilmOffset();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getLensSqueezeRatio() {
+  Float64 valueA = this._sampleA.getLensSqueezeRatio();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getLensSqueezeRatio();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getOverScanLeft() {
+  Float64 valueA = this._sampleA.getOverScanLeft();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getOverScanLeft();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getOverScanRight() {
+  Float64 valueA = this._sampleA.getOverScanRight();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getOverScanRight();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getOverScanTop() {
+  Float64 valueA = this._sampleA.getOverScanTop();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getOverScanTop();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getOverScanBottom() {
+  Float64 valueA = this._sampleA.getOverScanBottom();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getOverScanBottom();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getFStop() {
+  Float64 valueA = this._sampleA.getFStop();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getFStop();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getFocusDistance() {
+  Float64 valueA = this._sampleA.getFocusDistance();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getFocusDistance();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getShutterOpen() {
+  Float64 valueA = this._sampleA.getShutterOpen();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getShutterOpen();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getShutterClose() {
+  Float64 valueA = this._sampleA.getShutterClose();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getShutterClose();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getNearClippingPlane() {
+  Float64 valueA = this._sampleA.getNearClippingPlane();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getNearClippingPlane();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function Float64 AlembicCameraReader.getFarClippingPlane() {
+  Float64 valueA = this._sampleA.getFarClippingPlane();
+  if(!this._info.requiresInterpolation())
+    return valueA;
+  Float64 valueB = this._sampleB.getFarClippingPlane();
+  return valueA * this._info.ifraction + valueB * this._info.fraction;
+}
+
+function AlembicCameraReader.readSample!(Float64 time) {
+  if(this._info.time == time)
+    return;
+
+  AlembicSampleInfo info(time, this._timeSampling, this._numSamples);
+  if(info == this._info)
+    return;
+  this._info = info;
+
+  this._schema.get(this._sampleA, AlembicISampleSelector(this._info.indexA));
+  if(this._info.requiresInterpolation())
+    this._schema.get(this._sampleB, AlembicISampleSelector(this._info.indexB));
+}

@@ -1,0 +1,8 @@
+{
+  "libs": [
+    "Alembic"
+  ],
+  "code": [
+    "Alembic.kl"
+  ]
+}

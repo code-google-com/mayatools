@@ -1,0 +1,112 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+alias UInt32 OpenImage_IBStorage;
+const OpenImage_IBStorage OpenImage_IBStorage_UNINITIALIZED = 0;
+const OpenImage_IBStorage OpenImage_IBStorage_LOCALBUFFER = 1;
+const OpenImage_IBStorage OpenImage_IBStorage_APPBUFFER = 2;
+const OpenImage_IBStorage OpenImage_IBStorage_IMAGECACHE = 3;
+
+alias UInt32 OpenImage_WrapMode;
+const OpenImage_WrapMode OpenImage_WrapMode_WrapDefault = 0;
+const OpenImage_WrapMode OpenImage_WrapMode_WrapBlack = 1;
+const OpenImage_WrapMode OpenImage_WrapMode_WrapClamp = 2;
+const OpenImage_WrapMode OpenImage_WrapMode_WrapPeriodic = 3;
+const OpenImage_WrapMode OpenImage_WrapMode_WrapMirror = 4;
+const OpenImage_WrapMode OpenImage_WrapMode_WrapLast = 5;
+
+object OpenImageBuf {
+  Data handle;
+};
+
+function OpenImageBuf() = "OpenImageBuf_construct";
+function ~OpenImageBuf() = "OpenImageBuf_free";
+
+function OpenImageBuf(String name, SInt32 subimage, SInt32 miplevel) = "OpenImageBuf_construct_variant1";
+function OpenImageBuf(OpenImageSpec spec) = "OpenImageBuf_construct_variant2";
+function OpenImageBuf(String name, OpenImageSpec spec) = "OpenImageBuf_construct_variant3";
+
+function OpenImageBuf.clear() = "OpenImageBuf_clear";
+function OpenImageBuf.reset(String name, SInt32 subimage, SInt32 miplevel) = "OpenImageBuf_reset_variant1";
+function OpenImageBuf.reset(OpenImageSpec spec) = "OpenImageBuf_reset_variant2";
+function OpenImageBuf.reset(String name, OpenImageSpec spec) = "OpenImageBuf_reset_variant3";
+function OpenImageBuf.alloc(OpenImageSpec spec) = "OpenImageBuf_alloc";
+function OpenImage_IBStorage OpenImageBuf.storage() = "OpenImageBuf_storage";
+function Boolean OpenImageBuf.initialized() = "OpenImageBuf_initialized";
+function Boolean OpenImageBuf.read(SInt32 subimage, SInt32 miplevel, Boolean force) = "OpenImageBuf_read_variant1";
+function Boolean OpenImageBuf.read(SInt32 subimage, SInt32 miplevel, Boolean force, OpenImageTypeDesc convert) = "OpenImageBuf_read_variant2";
+function Boolean OpenImageBuf.init_spec(String filename, SInt32 subimage, SInt32 miplevel) = "OpenImageBuf_init_spec";
+function Boolean OpenImageBuf.write(String filename) = "OpenImageBuf_write_variant1";
+function Boolean OpenImageBuf.write(String filename, String fileformat) = "OpenImageBuf_write_variant2";
+function OpenImageBuf.set_write_format(OpenImageTypeDesc format) = "OpenImageBuf_set_write_format";
+function OpenImageBuf.set_write_tiles(SInt32 width, SInt32 height, SInt32 depth) = "OpenImageBuf_set_write_tiles";
+function Boolean OpenImageBuf.write(OpenImageOutput out) = "OpenImageBuf_write_variant3";
+function OpenImageBuf.copy_metadata(OpenImageBuf src) = "OpenImageBuf_copy_metadata";
+function Boolean OpenImageBuf.copy_pixels(OpenImageBuf src) = "OpenImageBuf_copy_pixels";
+function Boolean OpenImageBuf.copy(OpenImageBuf src) = "OpenImageBuf_copy";
+function OpenImageBuf.swap(OpenImageBuf other) = "OpenImageBuf_swap";
+function Boolean OpenImageBuf.has_error() = "OpenImageBuf_has_error";
+function String OpenImageBuf.geterror() = "OpenImageBuf_geterror";
+function OpenImageSpec OpenImageBuf.spec() = "OpenImageBuf_spec";
+function OpenImageSpec OpenImageBuf.specmod() = "OpenImageBuf_specmod";
+function OpenImageSpec OpenImageBuf.nativespec() = "OpenImageBuf_nativespec";
+function String OpenImageBuf.name() = "OpenImageBuf_name";
+function String OpenImageBuf.file_format_name() = "OpenImageBuf_file_format_name";
+function SInt32 OpenImageBuf.subimage() = "OpenImageBuf_subimage";
+function SInt32 OpenImageBuf.nsubimages() = "OpenImageBuf_nsubimages";
+function SInt32 OpenImageBuf.miplevel() = "OpenImageBuf_miplevel";
+function SInt32 OpenImageBuf.nmiplevels() = "OpenImageBuf_nmiplevels";
+function SInt32 OpenImageBuf.nchannels() = "OpenImageBuf_nchannels";
+function Float32 OpenImageBuf.getchannel(SInt32 x, SInt32 y, SInt32 z, SInt32 c) = "OpenImageBuf_getchannel_variant1";
+function Float32 OpenImageBuf.getchannel(SInt32 x, SInt32 y, SInt32 z, SInt32 c, OpenImage_WrapMode wrap) = "OpenImageBuf_getchannel_variant2";
+function OpenImageBuf.getpixel(SInt32 x, SInt32 y, io Float32 pixel[]) = "OpenImageBuf_getpixel_variant1";
+function OpenImageBuf.getpixel(SInt32 x, SInt32 y, io Float32 pixel[], SInt32 maxchannels) = "OpenImageBuf_getpixel_variant2";
+function OpenImageBuf.getpixel(SInt32 x, SInt32 y, SInt32 z, io Float32 pixel[], SInt32 maxchannels, OpenImage_WrapMode wrap) = "OpenImageBuf_getpixel_variant3";
+function OpenImageBuf.interppixel(Float32 x, Float32 y, io Float32 pixel[], OpenImage_WrapMode wrap) = "OpenImageBuf_interppixel";
+function OpenImageBuf.interppixel_NDC(Float32 s, Float32 t, io Float32 pixel[], OpenImage_WrapMode wrap) = "OpenImageBuf_interppixel_NDC";
+function OpenImageBuf.interppixel_NDC_full(Float32 s, Float32 t, io Float32 pixel[], OpenImage_WrapMode wrap) = "OpenImageBuf_interppixel_NDC_full";
+function OpenImageBuf.setpixel(SInt32 x, SInt32 y, Float32 pixel[]) = "OpenImageBuf_setpixel_variant1";
+function OpenImageBuf.setpixel(SInt32 x, SInt32 y, Float32 pixel[], SInt32 maxchannels) = "OpenImageBuf_setpixel_variant2";
+function OpenImageBuf.setpixel(SInt32 x, SInt32 y, SInt32 z, Float32 pixel[], SInt32 maxchannels) = "OpenImageBuf_setpixel_variant3";
+function OpenImageBuf.setpixel(SInt32 i, Float32 pixel[]) = "OpenImageBuf_setpixel_variant4";
+function OpenImageBuf.setpixel(SInt32 i, Float32 pixel[], SInt32 maxchannels) = "OpenImageBuf_setpixel_variant5";
+function Boolean OpenImageBuf.get_pixel_channels(SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend, SInt32 zbegin, SInt32 zend, SInt32 chbegin, SInt32 chend, OpenImageTypeDesc format, io Data result, SInt64 xstride, SInt64 ystride, SInt64 zstride) = "OpenImageBuf_get_pixel_channels";
+function Boolean OpenImageBuf.get_pixels(SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend, SInt32 zbegin, SInt32 zend, OpenImageTypeDesc format, io Data result, SInt64 xstride, SInt64 ystride, SInt64 zstride) = "OpenImageBuf_get_pixels";
+function SInt32 OpenImageBuf.orientation() = "OpenImageBuf_orientation";
+function SInt32 OpenImageBuf.oriented_width() = "OpenImageBuf_oriented_width";
+function SInt32 OpenImageBuf.oriented_height() = "OpenImageBuf_oriented_height";
+function SInt32 OpenImageBuf.oriented_x() = "OpenImageBuf_oriented_x";
+function SInt32 OpenImageBuf.oriented_y() = "OpenImageBuf_oriented_y";
+function SInt32 OpenImageBuf.oriented_full_width() = "OpenImageBuf_oriented_full_width";
+function SInt32 OpenImageBuf.oriented_full_height() = "OpenImageBuf_oriented_full_height";
+function SInt32 OpenImageBuf.oriented_full_x() = "OpenImageBuf_oriented_full_x";
+function SInt32 OpenImageBuf.oriented_full_y() = "OpenImageBuf_oriented_full_y";
+function SInt32 OpenImageBuf.xbegin() = "OpenImageBuf_xbegin";
+function SInt32 OpenImageBuf.xend() = "OpenImageBuf_xend";
+function SInt32 OpenImageBuf.ybegin() = "OpenImageBuf_ybegin";
+function SInt32 OpenImageBuf.yend() = "OpenImageBuf_yend";
+function SInt32 OpenImageBuf.zbegin() = "OpenImageBuf_zbegin";
+function SInt32 OpenImageBuf.zend() = "OpenImageBuf_zend";
+function SInt32 OpenImageBuf.xmin() = "OpenImageBuf_xmin";
+function SInt32 OpenImageBuf.xmax() = "OpenImageBuf_xmax";
+function SInt32 OpenImageBuf.ymin() = "OpenImageBuf_ymin";
+function SInt32 OpenImageBuf.ymax() = "OpenImageBuf_ymax";
+function SInt32 OpenImageBuf.zmin() = "OpenImageBuf_zmin";
+function SInt32 OpenImageBuf.zmax() = "OpenImageBuf_zmax";
+function OpenImageBuf.set_full(SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend, SInt32 zbegin, SInt32 zend) = "OpenImageBuf_set_full";
+function OpenImageROI OpenImageBuf.roi() = "OpenImageBuf_roi";
+function OpenImageROI OpenImageBuf.roi_full() = "OpenImageBuf_roi_full";
+function OpenImageBuf.set_roi_full(OpenImageROI roi) = "OpenImageBuf_set_roi_full";
+function Boolean OpenImageBuf.pixels_valid() = "OpenImageBuf_pixels_valid";
+function OpenImageTypeDesc OpenImageBuf.pixeltype() = "OpenImageBuf_pixeltype";
+function Data OpenImageBuf.localpixels() = "OpenImageBuf_localpixels";
+function Boolean OpenImageBuf.cachedpixels() = "OpenImageBuf_cachedpixels";
+function Data OpenImageBuf.pixeladdr(SInt32 x, SInt32 y) = "OpenImageBuf_pixeladdr_variant1";
+function Data OpenImageBuf.pixeladdr(SInt32 x, SInt32 y, SInt32 z) = "OpenImageBuf_pixeladdr_variant2";
+function Boolean OpenImageBuf.deep() = "OpenImageBuf_deep";
+function SInt32 OpenImageBuf.deep_samples(SInt32 x, SInt32 y) = "OpenImageBuf_deep_samples_variant1";
+function SInt32 OpenImageBuf.deep_samples(SInt32 x, SInt32 y, SInt32 z) = "OpenImageBuf_deep_samples_variant2";
+function Data OpenImageBuf.deep_pixel_ptr(SInt32 x, SInt32 y, SInt32 z, SInt32 c) = "OpenImageBuf_deep_pixel_ptr";
+function Float32 OpenImageBuf.deep_value(SInt32 x, SInt32 y, SInt32 z, SInt32 c, SInt32 s) = "OpenImageBuf_deep_value";
+function OpenImageDeepData OpenImageBuf.deepdata() = "OpenImageBuf_deepdata";

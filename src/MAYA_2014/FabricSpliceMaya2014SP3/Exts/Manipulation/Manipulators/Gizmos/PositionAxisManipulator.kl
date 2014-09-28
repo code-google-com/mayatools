@@ -1,0 +1,76 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`PositionAxisManipulator` displays an arrow made up of a cylinder and cone as its gizmo geometry and connects it to a PositionAxisGizmoHandler for handling the manipulation
+
+
+*/
+
+
+
+
+object PositionAxisManipulator {
+
+	PositionAxisGizmoHandler handler;
+  InlineMaterial gizmosMaterial;
+	InlineInstance instance;
+};
+
+function PositionAxisManipulator(io InlineTransform parent, Xfo offset, Color color, GizmoManipulationCallback callback){
+
+  InlineDrawing drawing = OGLInlineDrawing_GetInstance();
+  
+  InlineShader gizmoShader = drawing.getShader('gizmos');
+  if(!gizmoShader){
+    gizmoShader = OGLSurfaceGizmoShader('gizmos');
+    drawing.registerShader(gizmoShader);
+  }
+  this.gizmosMaterial = gizmoShader.getOrCreateMaterial("gizmos");
+
+  InlineMeshShape shape = drawing.getShape('PositionAxisManipulator_Shape');
+  if(shape == null){
+	  PolygonMesh mesh();
+	  Size detail = 24;
+	  Scalar coneRadius = 0.1;
+	  Scalar coneHeight = 0.4;
+	  mesh.addCone(Xfo(Vec3(0.0, 0.8, 0.0)), coneRadius, coneHeight, true, detail, true, false);
+	  Scalar cylinderRadius = 0.02;
+	  Scalar cylinderHeight = 0.8;
+	  mesh.addCylinder(Xfo(Vec3(0.0, 0.4, 0.0)), cylinderRadius, cylinderHeight, true, detail, 1, true, false);
+    mesh.recomputePointNormals( 0.5 );
+
+	  shape = InlineMeshShape('PositionAxisManipulator_Shape', mesh);
+	  drawing.registerShape(shape);
+	}
+
+  {
+    InlineTransform transform = ConstantScreenSizeTransform('PositionAxisManipulator_Transform', offset);
+    parent.addChild(transform);
+
+    this.instance = SimpleInlineInstance('PositionAxisManipulator', transform, shape);
+    this.instance.setInstanceUniform(InlineUniform('u_diffuseColor', color));
+
+    this.handler = PositionAxisGizmoHandler(this.instance, Vec3(0.0, 1.0, 0.0), callback);
+  }
+}
+
+
+function PositionAxisManipulator.hide!(){
+  if(this.instance.hasMaterial(this.gizmosMaterial))
+    this.instance.removeMaterial(this.gizmosMaterial);
+}
+
+function PositionAxisManipulator.show!(){
+  if(!this.instance.hasMaterial(this.gizmosMaterial))
+    this.instance.addMaterial(this.gizmosMaterial);
+}
+
+function InlineInstance[] PositionAxisManipulator.getGizmos(){
+    InlineInstance gizmos[];
+    gizmos.push(this.instance);
+    return gizmos;
+}

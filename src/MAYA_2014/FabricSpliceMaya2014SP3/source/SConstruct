@@ -1,0 +1,102 @@
+#
+# Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+#
+
+import os, sys, platform
+
+
+# check all env vars
+envVars = ['FABRIC_SPLICEAPI_DIR', 'MAYA_ROOT', 'BOOST_INCLUDE_DIR', 'BOOST_LIBRARY_DIR']
+for envVar in envVars:
+  if not os.environ.has_key(envVar):
+    raise Exception('Environment variable %s not found!' % envVar)
+  if not os.path.exists(os.environ[envVar]):
+    raise Exception('%s does not exist!' % os.environ[envVar])
+
+spliceDir = os.environ[envVars[0]]
+mayaDir = os.environ[envVars[1]]
+
+# create the build environment
+env = Environment()
+buildOS = platform.system()
+buildArch = env['TARGET_ARCH']
+
+# define the baseFlags for the OS
+if buildOS == "Windows":
+  baseFlags = {
+    'CCFLAGS': ['/EHsc', '/wd4624', '/Ox', '/MT'],
+    'CPPDEFINES': ['_SCL_SECURE_NO_WARNINGS=1', '_ITERATOR_DEBUG_LEVEL=0', '_WIN32_WINNT=0x0600', 'NDEBUG'],
+    'LINKFLAGS': ['chkstk.obj'],
+  }
+  if buildArch.endswith('64'):
+    baseFlags['CPPDEFINES'] += ['WIN64']
+else:
+  baseFlags = {
+    'CCFLAGS': ['-fPIC', '-m64', '-O2', '-D_BOOL'],
+    'LINKFLAGS': ['-m64']
+  }
+
+# define the flags for boost
+boostFlags = { 
+  'CPPPATH': [os.environ[envVars[2]]],
+  'LIBPATH': [os.environ[envVars[3]]],
+  'LIBS': []
+}
+# you might have to edit this to match your boost version
+if buildOS == "Windows":
+  boostFlags['LIBS'] += [
+    'libboost_thread-vc100-mt-s-1_47.lib',
+    'libboost_system-vc100-mt-s-1_47.lib',
+    'libboost_filesystem-vc100-mt-s-1_47.lib'
+  ]
+else:
+  boostFlags['LIBS'] += [
+    'boost_thread',
+    'boost_system',
+    'boost_filesystem'
+  ]
+
+# define the flags for splice
+spliceFlags = { 
+  'CPPDEFINES' :['FEC_SHARED', 'FECS_STATIC'],
+  'CPPPATH': [spliceDir],
+  'LIBPATH': [spliceDir],
+  'LIBS': []
+}
+
+if buildOS == 'Windows':
+  spliceFlags['LIBS'] += ['FabricSplice-1.12.0_s.lib']
+  spliceFlags['LIBS'] += ['FabricCore-1.12.lib']
+else:
+  spliceFlags['LIBS'] += ['libFabricSplice-1.12.0_s.a']
+  spliceFlags['LIBS'] += ['libFabricCore-1.12']
+
+# define the flags for maya
+mayaFlags = { 
+  'CPPPATH': [os.path.join(mayaDir, 'include'), os.path.join(mayaDir, 'include', 'Qt')],
+  'LIBPATH': [os.path.join(mayaDir, 'lib')],
+  'LIBS': ['OpenMaya', 'OpenMayaAnim', 'OpenMayaUI', 'Foundation']
+}
+
+if buildOS == 'Windows':
+  mayaFlags['CCFLAGS'] = ['/DNT_PLUGIN']
+  mayaFlags['LIBS'] += ['QtCore4', 'QtGui4']
+elif buildOS == 'Linux':
+  mayaFlags['CCFLAGS'] = ['-DLINUX']
+  mayaFlags['LIBS'] += ['QtCore', 'QtGui']
+
+# merge all flags
+env.MergeFlags(baseFlags)
+env.MergeFlags(boostFlags)
+env.MergeFlags(spliceFlags)
+env.MergeFlags(mayaFlags)
+
+# build the maya plugin
+mayaVersion = mayaDir[mayaDir.find('201'):][:4]
+target = 'FabricSpliceMaya' + mayaVersion
+env.Append(CPPDEFINES = ['_SPLICE_MAYA_VERSION='+mayaVersion])
+
+libSuffix = '.so'
+if buildOS == 'Windows':
+  libSuffix = '.mll'
+mayaModule = env.SharedLibrary(target = target, source = Glob('*.cpp'), SHLIBSUFFIX=libSuffix, SHLIBPREFIX='')

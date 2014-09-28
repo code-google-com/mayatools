@@ -1,0 +1,27 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlinetexture` interface represents a texture to be used with a :ref:`inlineshader` or :ref:`inlinematerial`.
+*/
+
+require RTR;
+
+interface InlineTexture {
+
+  // returns the name of this texture
+  String getName();
+
+  // returns the version of the texture
+  Integer getVersion();
+
+  // stores an arbitrary meta data object on the texture
+  setMetaData!(String key, Object metaData);
+
+  // retrieves meta data from the texture
+  Object getMetaData(String key);
+};
+

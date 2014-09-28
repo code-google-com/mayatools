@@ -1,0 +1,19 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+Object supporting the :ref:`GizmoHandler` interface are added as metadata to InlineInstance onbects to indicate that they can be treated as Gizmos. 
+
+The GizmoHandler onEvent method is invoked by the GizmoManipulator when that associated InlineInstance has become the active gizmo. See :ref:`GizmoManipulator` for more details. 
+
+*/
+
+
+
+interface GizmoHandler {
+    onEvent!(io MouseEvent event);
+};
+

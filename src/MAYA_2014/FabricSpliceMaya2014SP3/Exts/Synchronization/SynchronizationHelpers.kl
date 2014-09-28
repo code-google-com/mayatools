@@ -1,0 +1,13 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+//Helper function for waiting actively during a specific timelapse.
+function ActiveWait( Scalar seconds ) {
+  UInt64 profileStart = getCurrentTicks();
+  while( true ) {
+    UInt64 profileEnd = getCurrentTicks();
+    if( getSecondsBetweenTicks(profileStart, profileEnd) >= seconds )
+      break;
+  }
+}

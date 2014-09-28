@@ -1,0 +1,175 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+require FabricOGL;
+
+struct OGLRenderPassGroup {
+  String name;
+  String debugName;
+  Integer types[];
+  BindingRenderParam flags[];
+  UInt8 flagOpsBits[];
+  String sourceGroup;
+  String complementGroup;
+  OGLRenderValueOrFunction cullBoundingVolume;
+  OGLRenderValueOrFunction condition;
+  Boolean store;
+  Boolean subGroup;
+  Integer passOrder;
+};
+
+function OGLRenderPassGroup.addFlag!( BindingRenderParam flag, Integer flagOpsBits ) {
+  this.flags.push(flag);
+  this.flagOpsBits.push(UInt8(flagOpsBits));
+}
+
+function OGLRenderPassGroup.addType!( Integer type ) {
+  this.types.push(type);
+}
+
+function OGLRenderPassGroup() {
+  this.cullBoundingVolume = OGLRenderValueOrFunction();
+  this.condition = OGLRenderValueOrFunction();
+}
+
+struct OGLRenderTarget {
+  OGLTexture2D definition;
+  String name;
+
+  OGLRenderValueOrFunction widthFunction;
+  OGLRenderValueOrFunction heightFunction;
+  OGLRenderValueOrFunction depthFunction;
+  Boolean recycleInPool;
+  OGLRenderValueOrFunction source;
+  OGLRenderValueOrFunction clearColor;
+  OGLRenderValueOrFunction clearDepth;
+};
+
+function OGLRenderTarget() {
+  this.definition = OGLTexture2D();
+  this.widthFunction = OGLRenderValueOrFunction();
+  this.heightFunction = OGLRenderValueOrFunction();
+  this.depthFunction = OGLRenderValueOrFunction();
+  this.source = OGLRenderValueOrFunction();
+  this.clearColor = OGLRenderValueOrFunction();
+  this.clearDepth = OGLRenderValueOrFunction();
+}
+
+struct OGLRefineRenderTarget {
+  String name;
+  Integer subIndex;
+  OGLRenderValueOrFunction clearColor;
+  OGLRenderValueOrFunction clearDepth;
+};
+
+function OGLRefineRenderTarget() {
+  this.clearColor = OGLRenderValueOrFunction();
+  this.clearDepth = OGLRenderValueOrFunction();
+}
+
+struct OGLRenderPassApply {
+  String group;
+  String passName;
+  String passDebugName;
+
+  Boolean isElse;
+  Integer implicitGeometry;
+  Boolean transformSpace;
+  Boolean shaderDraw;
+
+  Integer depthMask;
+  Scalar polygonOffsetFactor;
+  Scalar polygonOffsetUnits;
+  Integer blendModeSfactor;
+  Integer blendModeDfactor;
+  OGLRenderValueOrFunction cullFace;
+  Integer depthFunc;
+
+  OGLRenderTarget renderTargets[];
+  OGLRefineRenderTarget refineRenderTargets[];
+  
+  OGLRenderValueOrFunction bindingSources[];
+  String bindingTargets[];
+  UInt8 bindingStore[];
+  Integer bindingSpaces[];
+
+  String groupAliasSources[];
+  String groupAliasTargets[];
+
+  OGLRenderValueOrFunction drawCallbacks[];
+  Boolean isPreDrawCallback[];
+
+  OGLRenderValueOrFunction updateInterval;
+  OGLRenderValueOrFunction condition;
+  BindingRenderParam flags[];
+  UInt8 flagOpsBits[];
+  Integer passOrder;
+};
+
+function OGLRenderPassApply() {
+  this.depthMask = -1;
+  this.polygonOffsetFactor = -1.0;
+  this.polygonOffsetUnits = -1.0;
+  this.blendModeSfactor = GL_NONE;
+  this.blendModeDfactor = GL_NONE;
+  this.cullFace = OGLRenderValueOrFunction();
+  this.depthFunc = -1;
+  this.updateInterval = OGLRenderValueOrFunction();
+  this.condition = OGLRenderValueOrFunction();
+}
+
+function OGLRenderPassApply.addRenderTarget!( OGLRenderTarget value ) {
+  this.renderTargets.push(value);
+}
+
+function OGLRenderPassApply.addRefineRenderTarget!( OGLRefineRenderTarget value ) {
+  this.refineRenderTargets.push(value);
+}
+
+function OGLRenderPassApply.addBinding!( String bindingTarget, OGLRenderValueOrFunction bindingSource, Integer bindingStore, Integer bindingSpace ) {
+  this.bindingTargets.push(bindingTarget);
+  this.bindingSources.push(bindingSource);
+  this.bindingStore.push(UInt8(bindingStore));
+  this.bindingSpaces.push(bindingSpace);
+}
+
+function OGLRenderPassApply.addAlias!( String groupAliasSource, String groupAliasTarget ) {
+  this.groupAliasSources.push(groupAliasSource);
+  this.groupAliasTargets.push(groupAliasTarget);
+}
+
+function OGLRenderPassApply.addDrawCallback!( OGLRenderValueOrFunction drawCallback, Boolean isPreDrawCallback ) {
+  this.drawCallbacks.push(drawCallback);
+  this.isPreDrawCallback.push(isPreDrawCallback);
+}
+
+function OGLRenderPassApply.addFlag!( BindingRenderParam flag, Integer flagOpsBits ) {
+  this.flags.push(flag);
+  this.flagOpsBits.push(UInt8(flagOpsBits));
+}
+
+struct OGLRenderPass {
+  String name;
+  OGLRenderPassGroup groups[];
+  OGLRenderPassApply applyOps[];
+};
+
+function OGLRenderPass.addGroup!( OGLRenderPassGroup group ) {
+  this.groups.push(group);
+}
+
+function OGLRenderPass.addApply!( OGLRenderPassApply apply ) {
+  this.applyOps.push(apply);
+}
+
+//OGLRenderPasses: work around the fact that an array of RTVals cannot be filled
+
+struct OGLRenderPasses {
+  OGLRenderPass passes[];
+};
+
+function OGLRenderPasses.addPass!( OGLRenderPass pass ) {
+  this.passes.push(pass);
+}

@@ -1,0 +1,24 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+object OpenImageDeepData {
+  Data handle;
+};
+
+function OpenImageDeepData() = "OpenImageDeepData_construct";
+function ~OpenImageDeepData() = "OpenImageDeepData_free";
+function OpenImageDeepData.reset() = "OpenImageDeepData_free";
+
+function OpenImageDeepData.init!(SInt32 npix, SInt32 nchan, OpenImageTypeDesc formats[]) = "OpenImageDeepData_init";
+function OpenImageDeepData.alloc() = "OpenImageDeepData_alloc";
+function OpenImageDeepData.clear() = "OpenImageDeepData_clear";
+function OpenImageDeepData.free() = "OpenImageDeepData_free_2";
+function UInt32 OpenImageDeepData.get_npixels() = "OpenImageDeepData_get_npixels";
+function UInt32 OpenImageDeepData.get_nchannels() = "OpenImageDeepData_get_nchannels";
+function OpenImageTypeDesc[] OpenImageDeepData.get_channeltypes() = "OpenImageDeepData_get_channeltypes";
+function UInt32<> OpenImageDeepData.get_nsamples() = "OpenImageDeepData_get_nsamples";
+function Data<> OpenImageDeepData.get_pointers() = "OpenImageDeepData_get_pointers";
+function UInt8<> OpenImageDeepData.get_data() = "OpenImageDeepData_get_data";
+

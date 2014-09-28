@@ -1,0 +1,12 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+The ``singletonscope`` is used to automatically destroy all singletons when the scope is destroyed. This is used for the Splice DCC integrations.
+*/
+
+object SingletonScope {};
+
+function ~SingletonScope() {
+  Singleton_removeAll();
+}

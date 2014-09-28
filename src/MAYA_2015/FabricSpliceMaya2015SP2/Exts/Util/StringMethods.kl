@@ -1,0 +1,427 @@
+//
+// Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+//
+require Math;
+
+// returns a substring given a start index and a length
+inline String String.subString(Size start, Size length) {
+  if(start >= this.length() || length == 0)
+    return "";
+  if(length == 1)
+    return this[start];
+  if(start == 0 && length >= this.length())
+    return this;
+
+  String result;
+  Size end = Math_min(this.length()-1, start + length - 1);
+  for(Size i=start;i<=end;i++)
+    result += this[i];
+  return result;
+}
+
+// returns a substring on the left
+inline String String.left(Size length) {
+  return this.subString(0, length);
+}
+
+// returns a substring on the right
+inline String String.right(Size length) {
+  Size l = Math_min(this.length(), length);
+  return this.subString(this.length() - l, l);
+}
+
+// returns a reversed version of this string
+inline String String.reverse() {
+  String result;
+  for(Size i=1;i<=this.length();i++)
+    result += this[this.length()-i];
+  return result;
+}
+
+// returns a string truncated by a number of chars on the left
+inline String String.leftStrip(Size length) {
+  return this.right(this.length() - Math_min(this.length(), length));
+}
+
+// returns a string truncated by a number of chars on the right
+inline String String.rightStrip(Size length) {
+  return this.left(this.length() - Math_min(this.length(), length));
+}
+
+// returns a version of this string with all chars lowercase
+inline String String.lower() {
+  String aAzZ = 'aAzZ';
+  Byte aAzZBytes<> = aAzZ;
+  Byte a = aAzZBytes[0];
+  Byte A = aAzZBytes[1];
+  Byte z = aAzZBytes[2];
+  Byte Z = aAzZBytes[3];
+
+  String result = this.clone();
+  Byte stringBytes<> = result;
+  for( Size i = 0; i < stringBytes.size(); ++i ) {
+    if( stringBytes[i] >= A && stringBytes[i] <= Z )
+      stringBytes[i] += Byte(Integer(a) - Integer(A));
+  }
+  return result;
+}
+
+// returns a version of this string with all chars lowercase
+inline String String.upper() {
+  String aAzZ = 'aAzZ';
+  Byte aAzZBytes<> = aAzZ;
+  Byte a = aAzZBytes[0];
+  Byte A = aAzZBytes[1];
+  Byte z = aAzZBytes[2];
+  Byte Z = aAzZBytes[3];
+
+  String result = this.clone();
+  Byte stringBytes<> = result;
+  for( Size i = 0; i < stringBytes.size(); ++i ) {
+    if( stringBytes[i] >= a && stringBytes[i] <= z )
+      stringBytes[i] += Byte(Integer(A) - Integer(a));
+  }
+  return result;
+}
+
+// returns copy of the string with its first character capitalized and the rest lowercased.
+inline String String.capitalize() {
+  return this.left(1).upper() + this.leftStrip(1);
+}
+
+// returns the first position of a search string given a start index
+// returns -1 if it's not found
+inline Integer String.find(String search, Size start) {
+  if(search.length() == 0 || (start+search.length()) > this.length())
+    return -1;
+  else if(search.length() == this.length()) {
+    return this == search ? 0 : -1;
+  } else if(search.length() == 1) {
+    for(Size i=start;i<this.length();i++) {
+      if(this[i] == search)
+        return i;
+    }
+  } else {
+    Size end = this.length() - search.length();
+    for(Size i=start;i<=end;i++) {
+      String s = this.subString(i, search.length());
+      if(s == search)
+        return i;
+    }
+  }
+  return -1;
+}
+
+// returns the first position of a search string
+// returns -1 if it's not found
+inline Integer String.find(String search) {
+  return this.find(search, 0);
+}
+
+// returns the last position of a search string given a last index
+// returns -1 if it's not found
+inline Integer String.reverseFind(String search, Size end) {
+  if(search.length() == 0 || (end+search.length()) > this.length())
+    return -1;
+  else if(search.length() == this.length()) {
+    return this == search ? 0 : -1;
+  } else if(search.length() == 1) {
+    for(Integer i=end;i>=0;i--) {
+      if(this[i] == search)
+        return i;
+    }
+  } else {
+    for(Integer i=end;i>=0;i--) {
+      String s = this.subString(i, search.length());
+      if(s == search)
+        return i;
+    }
+  }
+  return -1;
+}
+
+// returns the last position of a search string
+// returns -1 if it's not found
+inline Integer String.reverseFind(String search) {
+  return this.reverseFind(search, this.length()-search.length());
+}
+
+// returns the number of non-overlapping occurrences of substring search in the range [start, end]
+inline Size String.count(String search, Size start, Size end) {
+  if(this.length() < search.length() || search.length() == 0 || start >= this.length() || end < start)
+    return 0;
+  Size result = 0;
+  if(search.length() == 1) {
+    for(Size i=start;i<=Math_min(end, this.length()-1);i++) {
+      if(this[i] == search)
+        result++;
+    }
+  } else {
+    for(Size i=start;i<=Math_min(end - search.length(), this.length()-1);) {
+      String s = this.subString(i, search.length());
+      if(s == search) {
+        result++;
+        i += search.length();
+      } else {
+        i++;
+      }
+    }
+  }
+  return result;
+}
+
+// returns the number of non-overlapping occurrences of substring search
+inline Size String.count(String search) {
+  return this.count(search, 0, this.length() - 1);
+}
+
+// returns true if the string starts with the specified suffix, otherwise return false
+// beginning at the start position, ending at the end position
+inline Boolean String.startsWith(String search, Size start, Size end) {
+  if(end-start+1 < search.length())
+    return false;
+  String s = this.subString(start, search.length());
+  return s == search;
+}
+
+// returns true if the string starts with the specified suffix, otherwise return false
+inline Boolean String.startsWith(String search) {
+  return this.startsWith(search, 0, this.length()-1);
+}
+
+// returns true if the string ends with the specified suffix, otherwise return false
+// beginning at the start position, ending at the end position
+inline Boolean String.endsWith(String search, Size start, Size end) {
+  if(end-start+1 < search.length())
+    return false;
+  String s = this.subString(end-search.length()+1, search.length());
+  return s == search;
+}
+
+// returns true if the string ends with the specified suffix, otherwise return false
+inline Boolean String.endsWith(String search) {
+  return this.endsWith(search, 0, this.length()-1);
+}
+
+// returns a string containing the provided string several times
+inline String String.fill!(String c, Size count) {
+  this = '';
+  for(Size i=0;i<count;i++)
+    this += c;
+  return this;
+}
+
+// returns a string filled with a specific number of spaces
+inline String String.whiteSpace!(Size count) {
+  return this.fill(' ', count);
+}
+
+// returns the joined string array using this as a separator
+inline String String.join(String segments[]) {
+  String result;
+  for(Size i=0;i<segments.size();i++) {
+    if(i>0)
+      result += this;
+    result += segments[i];
+  }
+  return result;
+}
+
+// splitting this string by a given separator
+inline String[] String.split(String separator) {
+  String result[];
+  if(separator.length() == 0) {
+    result.push(this);
+  } else if(this.length() > 0){
+    Size start = 0;
+    Size sepLength = separator.length();
+    Size end = this.length() - sepLength;
+    while(start <= end) {
+      Integer pos = this.find(separator, start);
+      if(pos < 0) {
+        result.push(this.subString(start, this.length()));
+        break;
+      } else {
+        result.push(this.subString(start, pos - start));
+        start = pos;
+      }
+      start += sepLength;
+    }
+    if(this.endsWith(separator))
+      result.push("");
+  }
+  return result;
+}
+
+// splitting by all characters contained in the separator string
+inline String[] String.splitAny(String separator) {
+  String result[];
+  if(separator.length() == 0) {
+    result.push(this);
+  } else if(this.length() > 0){
+    String segment;
+    Size nbSeparators = separator.length();
+    Size end = this.length();
+    for(Size start=0;start<end;start++) {
+      String c = this[start];
+      Boolean found = false;
+      for(Size i=0;i<nbSeparators;i++) {
+        if(c == separator[i]) {
+          found = true;
+          break;
+        }
+      }
+      if(found) {
+        result.push(segment);
+        segment = '';
+      } else {
+        segment += c;
+      }
+    }
+    result.push(segment);
+  }
+  return result;
+}
+
+// split the string once by the first occurence of the separator string, returns three segments (left, separator, right)
+inline String[] String.partition(String separator) {
+  String result[];
+  Integer pos = this.find(separator);
+  if(pos == -1) {
+    result.push(this);
+    result.push('');
+    result.push('');
+  } else {
+    result.push(this.subString(0, pos));
+    result.push(separator);
+    result.push(this.leftStrip(pos + separator.length()));
+  }
+  return result;
+}
+
+// split the string once by the last occurence of the separator string, returns three segments (left, separator, right)
+inline String[] String.reversePartition(String separator) {
+  String result[];
+  Integer pos = this.reverseFind(separator);
+  if(pos == -1) {
+    result.push('');
+    result.push('');
+    result.push(this);
+  } else {
+    result.push(this.subString(0, pos));
+    result.push(separator);
+    result.push(this.leftStrip(pos + separator.length()));
+  }
+  return result;
+}
+
+// replace a given number of occurences of a search string with a replacement string
+inline String String.replace(String search, String replacement, Size count) {
+  if(count == 0 || this.length() == 0 || search.length() == 0)
+    return this;
+  if(this == search)
+    return replacement;
+  String result;
+  Size performed = 0;
+  for(Size i=0;i<this.length();) {
+    String s = this.subString(i, search.length());
+    if(s == search) {
+      result += replacement;
+      i += s.length();
+      performed++;
+      if(performed == count && i != this.length()) {
+        result += this.leftStrip(i);
+        break;
+      }
+    } else {
+      result += this[i];
+      i++;
+    }
+  }
+  return result;
+}
+
+// replace a given number of occurences of a search string with a replacement string
+inline String String.replace(String search, String replacement) {
+  return this.replace(search, replacement, this.length());
+}
+
+// replace a given number of occurences of any character in a search string with a replacement string
+inline String String.replaceAny(String search, String replacement, Size count) {
+  if(count == 0 || this.length() == 0 || search.length() == 0)
+    return this;
+  if(this == search)
+    return replacement;
+  String result;
+  Size performed = 0;
+  for(Size i=0;i<this.length();) {
+    Boolean found = false;
+    String c = this[i];
+    for(Size j=0;j<search.length();j++) {
+      if(search[j] == c) {
+        found = true;
+        break;
+      }
+    }
+    if(found) {
+      result += replacement;
+      i++;
+      performed++;
+      if(performed == count && i != this.length()) {
+        result += this.leftStrip(i);
+        break;
+      }
+    } else {
+      result += c;
+      i++;
+    }
+  }
+  return result;
+}
+
+// replace a given number of occurences of a search string with a replacement string
+inline String String.replaceAny(String search, String replacement) {
+  return this.replaceAny(search, replacement, this.length());
+}
+
+// returns true if all characters in the string are alphanumeric and there is at least one character, false otherwise.
+inline Boolean String.isAlphaNumeric() {
+  if(this.length() == 0)
+    return false;
+  for(Size i=0;i<this.length();i++) {
+    String c = this[i];
+    if(!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')))
+      return false;
+  }
+  return true;  
+}
+
+// returns true if all characters in the string are alphabetic and there is at least one character, false otherwise.
+inline Boolean String.isAlpha() {
+  if(this.length() == 0)
+    return false;
+  for(Size i=0;i<this.length();i++) {
+    String c = this[i];
+    if(!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')))
+      return false;
+  }
+  return true;  
+}
+
+// returns true if all characters in the string are digits and there is at least one character, false otherwise.
+inline Boolean String.isDigit() {
+  if(this.length() == 0)
+    return false;
+  for(Size i=0;i<this.length();i++) {
+    String c = this[i];
+    if(!(c >= '0' && c <= '9'))
+      return false;
+  }
+  return true;  
+}
+
+// returns the content of this string as an Integer
+function Integer String.toInteger() = "String_toInteger";
+
+// returns the content of this string as a Scalar
+function Scalar String.toScalar() = "String_toScalar";

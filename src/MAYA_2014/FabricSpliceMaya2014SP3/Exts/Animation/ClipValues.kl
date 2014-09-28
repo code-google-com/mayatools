@@ -1,0 +1,306 @@
+require Util;
+
+struct ScalarValue {
+  Scalar value;
+  UInt32 flags;
+};
+function ScalarValue(Scalar value){
+  this.value = value;
+  this.flags = 0;
+}
+function ScalarValue(Scalar value, UInt32 flags){
+  this.value = value;
+  this.flags = flags;
+}
+
+struct Vec2Value {
+  Vec2 value;
+  UInt32 flags;
+};
+function Vec2Value(Vec2 value){
+  this.value = value;
+  this.flags = 0;
+}
+function Vec2Value(Vec2 value, UInt32 flags){
+  this.value = value;
+  this.flags = flags;
+}
+
+
+struct Vec3Value {
+  Vec3 value;
+  UInt32 flags;
+};
+function Vec3Value(Vec3 value){
+  this.value = value;
+  this.flags = 0;
+}
+function Vec3Value(Vec3 value, UInt32 flags){
+  this.value = value;
+  this.flags = flags;
+}
+
+struct Vec4Value {
+  Vec4 value;
+  UInt32 flags;
+};
+function Vec4Value(Vec4 value){
+  this.value = value;
+  this.flags = 0;
+}
+function Vec4Value(Vec4 value, UInt32 flags){
+  this.value = value;
+  this.flags = flags;
+}
+
+struct QuatValue {
+  Quat value;
+  UInt32 flags;
+};
+function QuatValue(Quat value){
+  this.value = value;
+  this.flags = 0;
+}
+function QuatValue(Quat value, UInt32 flags){
+  this.value = value;
+  this.flags = flags;
+}
+
+struct XfoValue {
+  Xfo value;
+  UInt32 flags;
+};
+function XfoValue(Xfo value){
+  this.value = value;
+  this.flags = 0;
+}
+function XfoValue(Xfo value, UInt32 flags){
+  this.value = value;
+  this.flags = flags;
+}
+
+object ClipValues : IClipValues {
+  ScalarValue scalarValues[String];
+  Vec2Value vec2Values[String];
+  Vec3Value vec3Values[String];
+  Vec4Value vec4Values[String];
+  QuatValue quatValues[String];
+  XfoValue xfoValues[String];
+};
+
+
+inline ClipValues.setScalarValue!(String name, Scalar value){
+  this.scalarValues[name] = ScalarValue(value);
+}
+inline ClipValues.setScalarValue!(String name, Scalar value, UInt32 flags){
+  this.scalarValues[name] = ScalarValue(value, flags);
+}
+inline Boolean ClipValues.hasScalarValue(String name){
+  return this.scalarValues.has(name);
+}
+inline Scalar ClipValues.getScalarValue(String name){
+  return this.scalarValues[name].value;
+}
+
+
+inline ClipValues.setVec2Value!(String name, Vec2 value){
+  this.vec2Values[name] = Vec2Value(value);
+}
+inline ClipValues.setVec2Value!(String name, Vec2 value, UInt32 flags){
+  this.vec2Values[name] = Vec2Value(value, flags);
+}
+inline Boolean ClipValues.hasVec2Value(String name){
+  return this.vec2Values.has(name);
+}
+inline Vec2 ClipValues.getVec2Value(String name){
+  return this.vec2Values[name].value;
+}
+
+
+inline ClipValues.setVec3Value!(String name, Vec3 value){
+  this.vec3Values[name] = Vec3Value(value);
+}
+inline ClipValues.setVec3Value!(String name, Vec3 value, UInt32 flags){
+  this.vec3Values[name] = Vec3Value(value, flags);
+}
+inline Boolean ClipValues.hasVec3Value(String name){
+  return this.vec3Values.has(name);
+}
+inline Vec3 ClipValues.getVec3Value(String name){
+  return this.vec3Values[name].value;
+}
+
+
+inline ClipValues.setVec4Value!(String name, Vec4 value){
+  this.vec4Values[name] = Vec4Value(value);
+}
+inline ClipValues.setVec4Value!(String name, Vec4 value, UInt32 flags){
+  this.vec4Values[name] = Vec4Value(value, flags);
+}
+inline Boolean ClipValues.hasVec4Value(String name){
+  return this.vec4Values.has(name);
+}
+inline Vec4 ClipValues.getVec4Value(String name){
+  return this.vec4Values[name].value;
+}
+
+
+inline ClipValues.setQuatValue!(String name, Quat value){
+  this.quatValues[name] = QuatValue(value);
+}
+inline ClipValues.setQuatValue!(String name, Quat value, UInt32 flags){
+  this.quatValues[name] = QuatValue(value, flags);
+}
+inline Boolean ClipValues.hasQuatValue(String name){
+  return this.quatValues.has(name);
+}
+inline Quat ClipValues.getQuatValue(String name){
+  return this.quatValues[name].value;
+}
+
+
+inline ClipValues.setXfoValue!(String name, Xfo value){
+  this.xfoValues[name] = XfoValue(value);
+}
+inline ClipValues.setXfoValue!(String name, Xfo value, UInt32 flags){
+  this.xfoValues[name] = XfoValue(value, flags);
+}
+inline Boolean ClipValues.hasXfoValue(String name){
+  return this.xfoValues.has(name);
+}
+inline Xfo ClipValues.getXfoValue(String name){
+  return this.xfoValues[name].value;
+}
+
+//////////////////////////////////
+// Math functions
+
+
+function ClipValues ClipValues.clone?(Boolean deepClone) {
+  ClipValues result();
+
+  // TODO: KL does not provide a method to overload the 'clone' operation. 
+  // This feature has been requested, and when we have it, we can remove these lines. 
+  for(key, value in this.scalarValues){
+    result.scalarValues[key] = value;
+  }
+  for(key, value in this.vec3Values){
+    result.vec3Values[key] = value;
+  }
+  for(key, value in this.quatValues){
+    result.quatValues[key] = value;
+  }
+  for(key, value in this.xfoValues){
+    result.xfoValues[key] = value;
+  }
+  return result;
+}
+
+
+function ClipValues ClipValues.clone() {
+  return this.clone(true);
+}
+
+
+
+function ClipValues.setIdentity!() {
+  Integer i=0;
+  for(key, value in this.scalarValues){
+    this.scalarValues[key].value = 0.0;
+  }
+  for(key, value in this.vec3Values){
+    this.vec3Values[key].value.set(0.0,0.0,0.0);
+  }
+  for(key, value in this.quatValues){
+    this.quatValues[key].value.setIdentity();
+  }
+  for(key, value in this.xfoValues){
+    this.xfoValues[key].value.setIdentity();
+  }
+}
+
+
+function ClipValues ClipValues.subtract?(ClipValues other) {
+
+  Integer i=0;
+  ClipValues result = this.clone(true);
+  
+  result.setIdentity();
+
+  for(key, value in this.scalarValues){
+    if(other.hasScalarValue(key))
+      result.scalarValues[key].value = value.value - other.scalarValues[key].value;
+  }
+  for(key, value in this.vec3Values){
+    if(other.hasVec3Value(key))
+      result.vec3Values[key].value = value.value - other.vec3Values[key].value;
+  }
+  for(key, value in this.quatValues){
+    if(other.hasQuatValue(key))
+      result.quatValues[key].value = value.value * other.quatValues[key].value.inverse();
+  }
+  for(key, value in this.xfoValues){
+    if(other.hasXfoValue(key)){
+      result.xfoValues[key].value.tr = value.value.tr - other.xfoValues[key].value.tr;
+      result.xfoValues[key].value.ori = value.value.ori * other.xfoValues[key].value.ori.inverse();
+      // result.xfoValues[i].sc = Vec3(1.0,1.0,1.0) + (this.xfoValues[i].sc - other.xfoValues[index].sc);
+    }
+  }
+
+  return result;
+}
+
+
+function ClipValues.addWeighted!(ClipValues other, Scalar weight) {
+  
+  for(key, value in this.scalarValues){
+    if(other.hasScalarValue(key))
+      this.scalarValues[key].value += other.getScalarValue(key) * weight;
+  }
+  for(key, value in this.vec3Values){
+    if(other.hasVec3Value(key))
+      this.vec3Values[key].value += other.getVec3Value(key) * weight;
+  }
+  for(key, value in this.quatValues){
+    if(other.hasQuatValue(key))
+      this.quatValues[key].value = value.value.sphericalLinearInterpolate(other.getQuatValue(key) * value.value, weight);
+  }
+  for(key, value in this.xfoValues){
+    if(other.hasXfoValue(key)){
+      this.xfoValues[key].value.tr += other.getXfoValue(key).tr * weight;
+      this.xfoValues[key].value.ori = value.value.ori.sphericalLinearInterpolate(other.getXfoValue(key).ori * value.value.ori, weight);
+      // this.xfoValues[i].sc += Vec3(1.0,1.0,1.0) - other.xfoValues[key].value.sc * weight;
+    }
+  }
+}
+
+
+//////////////////////////////////
+// Debugging
+
+
+function String ClipValues.getDesc() {
+  String desc;
+  desc += "ClipValues:{ \n";
+  for(name, value in this.scalarValues){
+    desc += "  " + name + "=" + unitTestPrint(value.value) + " \n";
+  }
+  for(name, value in this.vec2Values){
+    desc += "  " + name + "=" + unitTestPrint(value.value) + " \n";
+  }
+  for(name, value in this.vec3Values){
+    desc += "  " + name + "=" + unitTestPrint(value.value) + " \n";
+  }
+  for(name, value in this.vec4Values){
+    desc += "  " + name + "=" + unitTestPrint(value.value) + " \n";
+  }
+  for(name, value in this.quatValues){
+    desc += "  " + name + "=" + unitTestPrint(value.value) + " \n";
+  }
+  for(name, value in this.xfoValues){
+    desc += "  " + name + "=" + unitTestPrint(value.value) + " \n";
+  }
+  desc += "}";
+  return desc;
+}
+

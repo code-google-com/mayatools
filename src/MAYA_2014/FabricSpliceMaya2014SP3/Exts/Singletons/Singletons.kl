@@ -1,0 +1,44 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+The ``singletons`` extension contains functions managing thread-safe global objects. One example of this is the :ref:`oglinlinedrawing`.
+
+Example
+---------
+
+.. code-block:: kl
+
+    require Singletons;
+
+    object MySingleton {
+      String name;
+    };
+
+    operator entry() {
+      MySingleton someSingleton = MySingleton();
+      someSingleton.name = 'test';
+
+      Singleton_put('someSingleton', someSingleton);
+      someSingleton = null;
+
+      someSingleton = Singleton_get('someSingleton');
+
+      Singleton_removeAll();
+    }
+*/
+
+// returns true if a singleton with a given name exists
+function Boolean Singleton_has(String key) = "Singleton_has";
+
+// stores a singleton
+function Singleton_set(String key, Object obj) = "Singleton_set";
+
+// retrieves a singleton
+function Object Singleton_get(String key) = "Singleton_get";
+
+// deletes a singleton
+function Boolean Singleton_remove(String key) = "Singleton_remove";
+
+// deletes all known singletons
+function Singleton_removeAll() = "Singleton_removeAll";

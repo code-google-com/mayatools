@@ -1,0 +1,304 @@
+/*
+ *  Copyright 2010-2012 Fabric Engine Inc. All rights reserved.
+ */
+
+require Math;
+require Geometry;
+
+
+object Character : ICharacter {
+  String name;
+  Geometry geometries[];
+  Mat44 bindShapeTransforms[]; // These values should be stored as meta data on the Geometry object. 
+  Mat44 skinningMatrices[];
+
+  Skeleton skeleton;
+  IPose pose;
+
+  Xfo globalXfo;
+
+  // When deforming on the CPU, we cache the cloned meshes here.
+  Geometry deformedGeometries[];
+  
+  LocalBoundingVolume localBVol;
+
+  UInt64 version;
+  UInt64 bboxVersion;
+};
+
+function Character(String name){
+  this.name = name;
+  this.skeleton = Skeleton(name);
+  this.pose = Pose(this.skeleton);
+  this.version = -1; // Ensure the version is invalid at construction time. 
+}
+
+// This constructor is usefull for creating instances of characters based
+// on an existing instance. The constructred instance shares most of the data
+// with the original instance, but maintains a unique pose(if it is a ClipPose)
+// This enables the pose to be evaluated at different times to generate unique motion.
+function Character(ICharacter other, String nameSuffix){
+  this.name = other.getName() + nameSuffix;
+  this.geometries.resize(other.getNumGeometries());
+  this.bindShapeTransforms.resize(other.getNumGeometries());
+  for(Integer i=0; i<other.getNumGeometries(); i++){
+    this.geometries[i] = other.getGeometry(i);
+    this.bindShapeTransforms[i] = other.getBindShapeTransform(i);
+  }
+  this.skeleton = other.getSkeleton();
+  if(other.getPose().type() == ClipPose){
+    this.pose = ClipPose(this.skeleton, ClipPose(other.getPose()).getClip());
+  }
+  else{
+    this.pose = Pose(this.skeleton);
+  }
+  this.version = -1; // Ensure the version is invalid at construction time. 
+}
+
+function String Character.getName(){
+  return this.name;
+}
+
+function Character.incrementVersion!(){
+  this.version += 1;
+}
+
+function UInt64 Character.getVersion(){
+  return this.version;
+}
+
+function Size Character.getNumGeometries(){
+  return this.geometries.size();
+}
+
+function Geometry Character.getGeometry(Index index){
+  return this.geometries[index];
+}
+
+function ISkeleton Character.getSkeleton(){
+  return this.skeleton;
+}
+
+function Character.setSkeleton!(Skeleton skeleton){
+  this.skeleton = skeleton;
+  Pose pose = Pose(skeleton);
+  this.pose = pose;
+}
+
+function IPose Character.getPose(){
+  return this.pose;
+}
+
+function Character.setPose!(IPose pose){
+  this.pose = pose;
+}
+
+function Xfo Character.getGlobalXfo(){
+  return this.globalXfo;
+}
+
+function Character.setGlobalXfo!(Xfo globalXfo){
+  this.globalXfo = globalXfo;
+}
+
+
+function Mat44 Character.getBindShapeTransform(Index index){
+  return this.bindShapeTransforms[index];
+}
+
+function Mat44[] Character.getSkinningMatrices!(){
+  // If either the pose or the skeleton change, the skinning matrices 
+  // must be recomputed.  
+  UInt64 version = this.pose.getVersion() + this.skeleton.getVersion();
+  if(this.version != version){
+    Size deformerIndices[] = this.skeleton.getDeformerIndices();
+    this.skinningMatrices.resize(deformerIndices.size);
+    for (Integer i = 0; i < deformerIndices.size; i++) {
+      this.skinningMatrices[i] = (this.globalXfo * this.pose.getBoneXfo(deformerIndices[i])).toMat44() * this.skeleton.getBone(deformerIndices[i]).invRefPose;
+    }
+    this.version = version;
+  }
+  return this.skinningMatrices;
+}
+
+
+/////////////////////////////////
+
+function LocalBoundingVolume Character.getBoundingVolume!(){
+  if(this.bboxVersion != this.version){
+    this.localBVol.bBoxInit();
+    Mat44 skinningMatrices[] = this.getSkinningMatrices();
+    // The following code computes an accurate bounding box by transforming the 
+    // source box by each of the bones skinning matricies. 
+    for( UInt32 i = 0; i < this.geometries.size(); ++i ) {
+      LocalBoundingVolume geomVol = this.geometries[i].getBoundingVolume();
+      Mat44 bindShapeTransform;// = this.geometries[i].getMetaData('bindShapeTransform');
+      bindShapeTransform.setIdentity();
+      for( UInt32 j = 0; j < skinningMatrices.size(); ++j ) {
+        if(this.skeleton.getBone(i).testFlag(BONEFLAG_DEFORMER)){
+          this.localBVol.bBoxAddTransformedBBox(geomVol, skinningMatrices[i] * bindShapeTransform);
+        }
+      }
+    }
+    this.bboxVersion = this.version;
+  }
+  return this.localBVol;
+}
+
+
+function Geometry Character.getDeformedGeometry!(Index index){
+  Geometry geometry = this.getGeometry(index);
+  Geometry deformedGeometry = null;
+  this.deformedGeometries.resize(this.geometries.size);
+  if(this.deformedGeometries[index] == null){
+    deformedGeometry = geometry.clone();
+    this.deformedGeometries[index] = deformedGeometry;
+  }
+  else{
+    deformedGeometry = this.deformedGeometries[index];
+  }
+
+  Mat44 bindShapeTransform = this.bindShapeTransforms[index];
+  Mat44 skinningMatrices[] = this.getSkinningMatrices();
+
+  if(this._calcDeformation(geometry, deformedGeometry, bindShapeTransform, skinningMatrices))
+    return deformedGeometry;
+  else
+    return geometry;
+}
+
+
+
+operator skinPositions<<<index>>>(
+  Vec3 srcpositions[],
+  io Vec3 positions[],
+  Scalar boneWeights[],
+  UInt16 boneIds[],
+  Mat44 skinningPosAndNormMatrices[]
+){
+  Vec3 srcPos = srcpositions[index];
+  Vec3 position(0,0,0);
+  UInt32 skinningDataIter = index*4;
+  for( UInt32 i = 0; i < 4; ++i ) {
+    Scalar boneWeight = boneWeights[skinningDataIter+i];
+    if( boneWeight == 0.0 )
+      break;
+    UInt16 boneId = boneIds[skinningDataIter+i];
+    position += (skinningPosAndNormMatrices[boneId*2] * srcPos) * boneWeight;
+  }
+
+  positions[index] = position;
+}
+
+operator skinPositionsAndNormals<<<index>>>(
+  Vec3 srcpositions[],
+  Vec3 srcnormals[],
+  io Vec3 positions[],
+  io Vec3 normals[],
+  Scalar boneWeights[],
+  UInt16 boneIds[],
+  Mat44 skinningPosAndNormMatrices[]
+){
+  Vec3 srcPos = srcpositions[index];
+  Vec3 srcNorm = srcnormals[index];
+  Vec3 position(0,0,0);
+  Vec3 normal(0,0,0);
+  
+  UInt32 skinningDataIter = index*4;
+  for( UInt32 i = 0; i < 4; ++i ) {
+    Scalar boneWeight = boneWeights[skinningDataIter+i];
+    if( boneWeight == 0.0 )
+      break;
+    UInt16 boneId = boneIds[skinningDataIter+i];
+    position += (skinningPosAndNormMatrices[boneId*2] * srcPos) * boneWeight;
+    normal += (skinningPosAndNormMatrices[boneId*2+1] * srcNorm) * boneWeight;
+  }
+  Scalar length = normal.length();//Don't call setUnit to avoid runtime error reports..
+  if( length > 0.0001 )
+    normal *= 1.0 / length;
+
+  positions[index] = position;
+  normals[index] = normal;
+}
+
+function Boolean Character._calcDeformation?(
+  Geometry srcGeometry, 
+  io Geometry targGeometry,
+  Mat44 bindShapeTransform,
+  Mat44 skinningMatrices[]
+){
+  Ref<GeometryAttributes> srcAttributes = srcGeometry.getAttributes();
+  Ref<GeometryAttributes> targAttributes = targGeometry.getAttributes();
+
+  if( !srcAttributes.has("boneWeights") ){
+    setError("ERROR: mesh does not have boneWeights");
+    return false;
+  }
+  if( !srcAttributes.has("boneIds") ){
+    setError("ERROR: mesh does not have boneIds");
+    return false;
+  }
+
+  Mat44 skinningPosAndNormMatrices[];
+  skinningPosAndNormMatrices.resize( skinningMatrices.size()*2 );
+  for( UInt32 i = 0; i < skinningMatrices.size(); ++i ) {
+    skinningPosAndNormMatrices[i*2] = skinningMatrices[i] * bindShapeTransform;
+    skinningPosAndNormMatrices[i*2 + 1] = skinningPosAndNormMatrices[i*2];
+    skinningPosAndNormMatrices[i*2 + 1].zeroTranslation();
+  }
+  
+  Vec3Attribute srcPositionsAttribute = srcAttributes.positionsAttribute;
+  Vec3Attribute srcNormalsAttribute = srcAttributes.normalsAttribute;
+  Vec3Attribute targPositionsAttribute = targAttributes.positionsAttribute;
+  Vec3Attribute targNormalsAttribute = targAttributes.normalsAttribute;
+  ScalarConstantArrayAttribute boneWeightsAttr = srcAttributes.getAttribute("boneWeights");
+  UInt16ConstantArrayAttribute boneIdsAttr = srcAttributes.getAttribute("boneIds");
+
+  if(srcNormalsAttribute == null){
+    skinPositions<<<targAttributes.size()>>>(
+      srcPositionsAttribute.values,
+      targPositionsAttribute.values,
+      boneWeightsAttr.values,
+      boneIdsAttr.values,
+      skinningPosAndNormMatrices
+    );
+    targPositionsAttribute.incrementVersion();
+  }
+  else{
+    skinPositionsAndNormals<<<targAttributes.size()>>>(
+      srcPositionsAttribute.values,
+      srcNormalsAttribute.values,
+      targPositionsAttribute.values,
+      targNormalsAttribute.values,
+      boneWeightsAttr.values,
+      boneIdsAttr.values,
+      skinningPosAndNormMatrices
+    );
+    targPositionsAttribute.incrementVersion();
+    targNormalsAttribute.incrementVersion();
+  }
+  return true;
+}
+
+
+function String Character.getDesc(String indent, Boolean includeGeometries) {
+  String desc;
+  desc += indent + "Character:{ \n";
+  desc += indent + "  name: " + this.name + " \n";
+  desc += indent + "  skeleton:" + this.skeleton.getDesc(indent +"  ", true) + " \n";
+  desc += indent + "  pose:" + this.pose.getDesc(indent +"  ", true) + " \n";
+
+  if(includeGeometries){
+    desc += indent + "  geometries:[ \n";
+    for(Integer i=0; i<this.geometries.size; i++){
+      desc += this.geometries[i].getDesc(true, true) + " \n";
+    }
+    desc += indent + "  ]\n";
+  }
+  desc += indent + "}";
+  return desc;
+}
+
+function String Character.getDesc() {
+  return this.getDesc("", true);
+}

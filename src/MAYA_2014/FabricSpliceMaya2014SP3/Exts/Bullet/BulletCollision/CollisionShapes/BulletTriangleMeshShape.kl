@@ -1,0 +1,59 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+///The btTriangleMeshShape is an internal concave triangle mesh interface. Don't use this class directly, use btBvhTriangleMeshShape instead.
+interface BulletTriangleMeshShape //: BulletConcaveShape
+{
+	Data getPointer();
+
+	// virtual Vec3 localGetSupportingVertex(in Vec3 vec) const;
+
+	// virtual Vec3	localGetSupportingVertexWithoutMargin(in Vec3 vec)const
+	// {
+	// 	btAssert(0);
+	// 	return localGetSupportingVertex(vec);
+	// }
+
+	// void	recalcLocalAabb();
+
+	// virtual void getAabb(in Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) const;
+
+	// virtual void	processAllTriangles(btTriangleCallback* callback,in Vec3 aabbMin,in Vec3 aabbMax) const;
+
+	// virtual void	calculateLocalInertia?(Scalar mass, io Vec3 inertia) const;
+
+	// virtual void	setLocalScaling(in Vec3 scaling);
+	// virtual in Vec3 getLocalScaling() const;
+	
+	// btStridingMeshInterface* getMeshInterface()
+	// {
+	// 	return m_meshInterface;
+	// }
+
+	// const btStridingMeshInterface* getMeshInterface() const
+	// {
+	// 	return m_meshInterface;
+	// }
+
+	// in Vec3 getLocalAabbMin() const
+	// {
+	// 	return m_localAabbMin;
+	// }
+	// in Vec3 getLocalAabbMax() const
+	// {
+	// 	return m_localAabbMax;
+	// }
+
+
+
+	// //debugging
+	// virtual const char*	getName()const {return "TRIANGLEMESH";}
+
+};
+
+
+
+

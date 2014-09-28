@@ -1,0 +1,172 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+require Geometry;
+
+object AlembicCurvesWriter : AlembicObjectWriter{
+  AlembicOCurves _curves;
+  AlembicOCurvesSchema _schema;
+  AlembicOCurvesSample _sample;
+  SInt32 _numVertices[];
+  Vec3 _positions[];
+  Vec3 _velocities[];
+  Float32 _widths[];
+  AlembicOFloat32GeomParamSample _widthsSample;
+  Vec2 _uvs[];
+  AlembicOVec2VfGeomParamSample _uvsSample;
+  UInt32 _numSamples;
+  UInt32 _storedSamples;
+  SInt32 _timeSamplingIndex;
+  UInt32 _versions[String];
+  AlembicGeometryAttributesWriter _attributeWriter;
+};
+
+function AlembicCurvesWriter(AlembicOObject parent, String name, SInt32 timeSampling) {
+  this._curves = AlembicOCurves(parent, name, timeSampling);
+  this._schema = this._curves.getSchema();
+  this._sample = AlembicOCurvesSample();
+  this._widthsSample = AlembicOFloat32GeomParamSample(this._widths, Alembic_kFacevaryingScope);
+  this._uvsSample = AlembicOVec2VfGeomParamSample(this._uvs, Alembic_kFacevaryingScope);
+  this._numSamples = this._schema.getTimeSampling().getNumStoredTimes();
+  if(this._numSamples == 0)
+    this._numSamples = 1;
+  this._storedSamples = 0;
+  this._timeSamplingIndex = timeSampling;
+  this._attributeWriter = AlembicGeometryAttributesWriter();
+}
+
+function String AlembicCurvesWriter.getPath() {
+  return this._curves.asOObject().getFullName();
+}
+
+function Boolean AlembicCurvesWriter.valid() {
+  return this._curves.valid();
+}
+
+function AlembicCurvesWriter.reset!() {
+  this._curves.reset();
+  this._schema.reset();
+  this._sample = null;
+  this._widthsSample = null;
+  this._uvsSample = null;
+  this._attributeWriter.reset();
+}
+
+function AlembicOObject AlembicCurvesWriter.getOObject() {
+  return this._curves.asOObject();
+}
+
+function Ref<AlembicGeometryAttributesWriter> AlembicCurvesWriter.getGeometryAttributesWriter() {
+  return this._attributeWriter;
+}
+
+function Boolean AlembicCurvesWriter.writeSample!(Ref<Lines> lines) {
+  if(this._storedSamples == this._numSamples) {
+    setError('AlembicCurvesWriter: Max number of samples reached.');
+    return false;
+  }
+
+  Ref<GeometryAttributes> attributes = lines.getAttributes();
+
+  // init on first frame
+  if(this._storedSamples == 0) {
+
+    if(!attributes.has('positions')) {
+      setError('AlembicCurvesWriter: Provided Lines does not contain positions.');
+      return false;
+    }
+
+    AlembicOCompoundProperty props = this._schema.getArbGeomParams();
+
+    // for now we only support linear curves
+    this._sample.setType(Alembic_kLinear);
+    this._sample.setWrap(Alembic_kNonPeriodic);
+    this._sample.setBasis(Alembic_kNoBasis);
+
+    // vertexColors
+    if(attributes.has('vertexColors')) {
+      ColorAttribute attr = attributes.getAttribute('vertexColors', ColorAttribute);
+      AlembicGeometryParamWriter writer = AlembicGeometryParamWriter(props, 'vertexColors', Alembic_kVertexScope, this._timeSamplingIndex, attr);
+      this._attributeWriter.addParamWriter(writer);
+    }
+  }
+
+  Vec3Attribute positionsAttr = attributes.getAttribute('positions', Vec3Attribute);
+  if(positionsAttr.getVersion() != this._versions.get('positions', 0)) {
+    Box3 bounds;
+    this._positions.resize(attributes.size());
+    for(Size i=0;i<this._positions.size();i++) {
+      this._positions[i] = positionsAttr.values[i];
+      bounds.merge(positionsAttr.values[i]);
+    }
+    this._sample.setSelfBounds(bounds);
+    this._sample.setPositions(this._positions);
+    this._versions['positions'] = positionsAttr.getVersion();
+  }
+
+  if(attributes.has('velocities')) {
+    Vec3Attribute attr = attributes.getAttribute('velocities', Vec3Attribute);
+    if(attr.getVersion() != this._versions.get('velocities', 0)) {
+      this._velocities.resize(attributes.size());
+      for(Size i=0;i<this._velocities.size();i++)
+        this._velocities[i] = attr.values[i];
+      this._sample.setVelocities(this._velocities);
+      this._versions['velocities'] = attr.getVersion();
+    }
+  }
+
+  if(attributes.has('sizes')) {
+    ScalarAttribute attr = attributes.getAttribute('sizes', Vec2Attribute);
+    if(attr.getVersion() != this._versions.get('sizes', 0)) {
+
+      this._widthsSample.setScope(Alembic_kVertexScope);
+      this._widths.resize(attributes.size());
+      for(Size i=0;i<this._widths.size();i++)
+        this._widths[i] = attr.values[i];
+
+      this._widthsSample.setVals(this._widths);
+      this._sample.setWidths(this._widthsSample);
+      this._versions['sizes'] = attr.getVersion();
+    }
+  }
+
+  if(attributes.has('uvs0')) {
+    Vec2Attribute attr = attributes.getAttribute('uvs0', Vec2Attribute);
+    if(attr.getVersion() != this._versions.get('uvs0', 0)) {
+
+      this._uvsSample.setScope(Alembic_kVertexScope);
+      this._uvs.resize(attributes.size());
+      for(Size i=0;i<this._uvs.size();i++)
+        this._uvs[i] = attr.values[i];
+
+      this._uvsSample.setVals(this._uvs);
+      this._sample.setUVs(this._uvsSample);
+      this._versions['uvs0'] = attr.getVersion();
+    }
+  }
+
+  // topology
+  if(lines.version != this._versions.get('_topology', 0) && lines.indices.size() > 0) {
+    this._numVertices.resize(0);
+    SInt32 count = 1;
+    for(Size i=2;i<lines.indices.size();i+=2) {
+      if(lines.indices[i] != lines.indices[i-1]) {
+        this._numVertices.push(1 + count);
+        count = 1;
+      } else
+        count++;
+    }
+    if(count > 0)
+      this._numVertices.push(1 + count);
+    this._sample.setCurvesNumVertices(this._numVertices);
+    this._versions['_topology'] = lines.version;
+  }
+  
+  this._schema.set(this._sample);
+  this._attributeWriter.writeSample(attributes);
+
+  this._storedSamples++;
+  return true;
+}

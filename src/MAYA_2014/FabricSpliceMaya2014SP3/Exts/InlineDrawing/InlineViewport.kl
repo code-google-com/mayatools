@@ -1,0 +1,139 @@
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`InlineViewport` object is used to send Viewport information from the host application to the InlineDrawing system and the Manipulation system. 
+
+The interface 'Viewport' is implemented in case we require different kinds of Viewport objects to support the same interface. Currenly only InlineViewport implements the Viewport interface. 
+
+*/
+
+require Math;
+
+interface Viewport {
+    // returns the dimensions of the viewportManipulation in pixels.
+    Vec2 getDimensions(); 
+    Camera getCamera();
+
+    Mat44 getProjectionMat();
+    Mat44 getViewMat();
+    Ray calcRayFromScreenPos(Vec2 pos);
+};
+
+object InlineViewport : Viewport {
+    Vec2 dimensions;
+    InlineCamera camera;
+};
+
+function InlineViewport(){
+  this.camera = InlineCamera();
+}
+
+function Vec2 InlineViewport.getDimensions(){
+    return this.dimensions;
+}
+
+function Camera InlineViewport.getCamera(){
+    return this.camera;
+}
+
+// Taken from http://www.geeks3d.com/20090729/howto-perspective-projection-matrix-in-opengl/
+function Mat44 symmetricPerspectiveFrustum(
+  Scalar width, Scalar height,
+  Scalar near, Scalar far,
+  Scalar centerX, Scalar centerY
+) {
+  Scalar d = far - near;
+  Scalar q = -(far + near) / d;
+  Scalar qn = -2.0 * (far * near) / d;
+  Scalar w = 2.0 * (near / width);
+  Scalar h = 2.0 * (near / height);
+  Mat44 result(
+    w, 0.0, -centerX, 0.0,
+    0.0, h, -centerY, 0.0,
+    0.0, 0.0, q, qn,
+    0.0, 0.0, -1.0, 0.0);
+  return result;
+}
+
+function Mat44 symmetricOrthographicFrustum(
+  Scalar w, Scalar h,
+  Scalar n, Scalar f
+) {
+  Scalar d = f - n;
+  Mat44 result(
+    2.0 / w, 0.0, 0.0, 0.0,
+    0.0, 2.0 / h, 0.0, 0.0,
+    0.0, 0.0, - 2.0 / d, -(f + n) / d,
+    0.0, 0.0, 0.0, 1.0);
+  return result;
+}
+
+// computes the projection matrix based on the viewport dimensions, camera field of view, and cliping ranges.
+function Mat44 InlineViewport.getProjectionMat(){
+    Scalar aspectRatio = this.dimensions.x / this.dimensions.y;
+
+    if(!this.camera.isOrthographic){
+      Scalar frustumH = (tan(this.camera.fovY / 2) * this.camera.nearDistance) * 2.0;
+      Scalar frustumW = frustumH * aspectRatio;
+      return symmetricPerspectiveFrustum(frustumW, frustumH, this.camera.nearDistance, this.camera.farDistance, 0.0, 0.0);
+    }
+    else{
+      Scalar frustumH = this.camera.orthographicFrustumH;
+      Scalar frustumW = this.camera.orthographicFrustumH * aspectRatio;
+      return symmetricOrthographicFrustum(frustumW, frustumH, this.camera.nearDistance, this.camera.farDistance);
+    }
+}
+
+function Mat44 InlineViewport.getViewMat(){
+    return this.camera.getMat44().inverse();
+}
+
+// Computes a world space ray using on the current viewport and camera, based on the provided screen space mouse position.
+function Ray InlineViewport.calcRayFromScreenPos(Vec2 pos){
+  // Compute a ray based on a position on the viewportManipulation 
+  Ray ray;
+  Vec2 dim = this.getDimensions();
+  if (dim.x == 0 || dim.y == 0){
+    setError("Error in calcRayFromScreenPos. Invalid InlineViewport dimensions:" + dim);
+    return ray;
+  }
+
+  // Convert the raster coordinates to screen space ([0,{w|h}] -> [-1,1]
+  // - Note: The raster vertical is inverted wrt OGL screenspace Y
+  Scalar sx = pos.x / Scalar(dim.x);
+  Scalar sy = pos.y / Scalar(dim.y);
+
+  sx = (sx * 2.0) - 1.0;
+  sy = (sy * 2.0) - 1.0;
+
+  // Transform the origin from camera local to world space
+  Mat44 cameraMat = this.camera.getMat44();
+
+  if(!this.camera.isOrthographic){
+    Vec3 rayStart = cameraMat * Vec3(0.0, 0.0, 0.0);
+
+    // Get the projected window coordinate on the near plane
+    // See http://www.songho.ca/opengl/gl_projectionmatrix.html
+    // for details.
+    Mat44 projInv = this.getProjectionMat().inverse();
+    Vec3 rayDirection = projInv * Vec3(sx, - sy, - 1.0);
+
+    // And from projection space to camera local.
+    // - We nuke the translation part since we're transforming a vector.
+    cameraMat.zeroTranslation();
+    rayDirection = (cameraMat * rayDirection).unit();
+    return Ray(rayStart, rayDirection);
+  }
+  else{
+    Scalar aspectRatio = this.dimensions.x / this.dimensions.y;
+    Scalar frustumH = this.camera.orthographicFrustumH;
+    Scalar frustumW = this.camera.orthographicFrustumH * aspectRatio;
+    Vec3 rayStart = cameraMat * Vec3(frustumW * sy, frustumH * sy, 0.0);
+    Vec3 rayDirection = Vec3(-cameraMat.row2.x, -cameraMat.row2.y, -cameraMat.row2.z);
+    return Ray(rayStart, rayDirection);
+  }
+}
+

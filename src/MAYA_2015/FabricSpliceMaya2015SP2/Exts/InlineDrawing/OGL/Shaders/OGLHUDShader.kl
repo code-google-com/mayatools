@@ -1,0 +1,180 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`OGLHUDShader` is used oto draw HUD geometry, or Heads Up Display objects. It positions the geometry onscreen in screen coordinates.
+
+Uniforms
+----------
+=============== ============ ===================================== ==================================
+Name            Type         Description                           Default
+=============== ============ ===================================== ==================================
+u_color         Color        The diffuse color                     Color(1.0, 0.0, 0.0)
+=============== ============ ===================================== ==================================
+
+Attributes
+----------
+=============== ============ =====================================
+Name            Type         Description
+=============== ============ =====================================
+positions       Vec3         Geometry positions
+=============== ============ =====================================
+
+Example
+---------
+
+.. code-block:: kl
+
+    InlineShader shader = draw.registerShader(OGLHUDShader());
+    InlineMaterial mat = shader.getOrCreateMaterial('green');
+    mat.setUniform('u_color', Color(0.0, 1.0, 0.0));
+*/
+
+require Math;
+require FabricOGL;
+
+object OGLHUDShader: InlineShader {
+  OGLInlineShader _shader;
+};
+
+// default constructor without a name
+function OGLHUDShader() {
+  this = OGLHUDShader(this.type());
+}
+
+// default constructor taking a name
+function OGLHUDShader(String name) {
+  this._shader = OGLInlineShader(
+    name,
+    "
+      #version 150 //required for OSX support
+
+      uniform mat4 u_modelMatrix;
+      
+      in vec4 positions;
+
+      void main(){
+        gl_Position = u_modelMatrix * positions;
+      }
+    ", "
+      #version 150 //required for OSX support
+      
+      uniform vec4 u_color;
+      out vec4 out_fragColor;
+      
+      void main(){
+        out_fragColor = u_color;
+      }
+    ");  
+  this._shader.defineUniform(InlineUniform("u_modelMatrix", Mat44()));
+  this._shader.defineUniform(InlineUniform('u_color', Color(1.0, 0.0, 0.0)));
+  this._shader.defineAttribute('positions', "Vec3");
+}
+
+// empties all materials of this shader
+function OGLHUDShader.reset!() {
+  this._shader.reset();
+}
+
+// returns the name of this shader
+function String OGLHUDShader.getName() {
+  return this._shader.getName();
+}
+
+// called by the InlineDrawing, should not be called manually
+function Boolean OGLHUDShader._draw!(io DrawContext context) {
+
+  if(this._shader._materials.size() == 0)
+    return true;
+
+  if(!this._shader._compileProgram(context)){
+    return false;
+  }
+
+  glUseProgram(this._shader._shaderProgram.programId);
+  context.storeObject('currentShader', this._shader);
+
+  if(!this._shader._drawUniforms(context))
+    return false;
+
+  if(!this._shader._traverseTree(context))
+    return false;
+
+  this._shader._disableVertexAttribs(context);
+
+  return true;
+}
+
+
+// returns true if this shader has a material with a given name
+function Boolean OGLHUDShader.hasMaterial(String name) {
+  return this._shader.hasMaterial(name);
+}
+
+// returns (and eventually creates) a new matching material with a given name
+function InlineMaterial OGLHUDShader.getOrCreateMaterial!(String name) {
+  return this._shader.getOrCreateMaterial(name);
+}
+
+// returns the number of materials in this shader
+function Size OGLHUDShader.getMaterialCount() {
+  return this._shader.getMaterialCount();
+}
+
+// returns an existing material by index
+function InlineMaterial OGLHUDShader.getMaterial(Index index) {
+  return this._shader.getMaterial(index);
+}
+
+// define a new uniform on the shader. the uniformType is
+// auxiliary and can be used within the shader later if required.
+function OGLHUDShader.defineUniform!(InlineUniform uniform) {
+  return;
+}
+
+// returns true if this shader has a uniform with a given name
+function Boolean OGLHUDShader.hasUniform(String name) {
+  return this._shader.hasUniform(name);
+}
+
+// sets the global value of a uniform
+// this can be changed per material, per instance or even per transform
+function OGLHUDShader.setUniform!(InlineUniform uniform) {
+  this._shader.setUniform(uniform);
+}
+
+// draws a uniform for the shader, applies the value essentially. 
+// this should be used from within the InlineMaterial's _draw or 
+// the InlineInstance's _draw.
+function Boolean OGLHUDShader._drawUniform!(io DrawContext context, InlineUniform uniform) {
+  return this._shader._drawUniform(context, uniform);
+}
+
+// define a surface attribute with a given name and type
+function OGLHUDShader.defineAttribute!(String name, String attributeType) {
+  return;
+}
+
+// returns the number of attributes
+function Size OGLHUDShader.getAttributeCount() {
+  return this._shader.getAttributeCount();
+}
+
+// returns the name of an attribute
+function String OGLHUDShader.getAttributeName(Index index) {
+  return this._shader.getAttributeName(index);
+}
+
+// returns true if this shader has an attribute with a given name
+function Integer OGLHUDShader.getAttributeID(String name) {
+  return this._shader.getAttributeID(name);
+}
+
+// returns the ID / location of a given attribute inside the shader.
+function Boolean OGLHUDShader.hasAttribute(String name) {
+  return this._shader.hasAttribute(name);
+}
+

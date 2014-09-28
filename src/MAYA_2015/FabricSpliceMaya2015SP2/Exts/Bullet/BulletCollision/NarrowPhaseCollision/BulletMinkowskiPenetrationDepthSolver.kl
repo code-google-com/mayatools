@@ -1,0 +1,42 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+
+///MinkowskiPenetrationDepthSolver implements bruteforce penetration depth estimation.
+///Implementation is based on sampling the depth using support mapping, and using GJK step to get the witness points.
+object BulletMinkowskiPenetrationDepthSolver : BulletConvexPenetrationDepthSolver
+{
+	Data pointer;
+};
+function Data BulletMinkowskiPenetrationDepthSolver.getPointer(){
+	return this.pointer;
+}
+
+///BulletMinkowskiPenetrationDepthSolver constructor using construction info
+function BulletMinkowskiPenetrationDepthSolver(){
+	this.__construct();
+}
+
+function BulletMinkowskiPenetrationDepthSolver.__construct!() = 'BulletMinkowskiPenetrationDepthSolver_construct';
+
+function ~BulletMinkowskiPenetrationDepthSolver(){
+	this.__destroy();
+}
+function BulletMinkowskiPenetrationDepthSolver.__destroy!() = 'BulletMinkowskiPenetrationDepthSolver_destroy';
+
+
+// function Boolean BulletMinkowskiPenetrationDepthSolver.calcPenDepth( 
+// 	io BulletSimplexSolverInterface simplexSolver, 
+// 	in BulletConvexShape convexA,
+// 	in BulletConvexShape convexB,
+// 	in Xfo transA,
+// 	in Xfo transB,
+// 	io Vec3 v,
+// 	io Vec3 pa,
+// 	io Vec3 pb/*,
+// 	io BulletIDebugDraw debugDraw,
+// 	io BulletStackAlloc stackAlloc*/
+// 	) = "BulletMinkowskiPenetrationDepthSolver_calcPenDepth";

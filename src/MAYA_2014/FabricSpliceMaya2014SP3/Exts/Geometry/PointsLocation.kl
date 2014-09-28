@@ -1,0 +1,409 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+//Returns the point index corresponding to the location.
+inline Size Points.getLocationPointIndex( GeometryLocation location ) {
+  return location.index;
+}
+
+//Returns 'true' if the point location is defined at point's center.
+//See 'getLocationBoundingSphereCoordinate()' for more details relatively to sized points' GeometryLocation positions.
+inline Boolean Points.isLocationAtPointCenter( GeometryLocation location ) {
+  return location.barycentric == Vec3();
+}
+
+//Sized points' GeometryLocation can encode a spherical coordinate relative to their bounding sphere.
+//For a sized point, returns a vector corresponding to point sphere's local coordinate, otherwise, returns Vec3(0,0,0).
+//A vector of unit length corresponds to the surface of the sphere, such that the actual position can be computed as:
+//
+//  Size pointIndex = points.getPointIndex( location );
+//  Vec3 position = points.getPosition( pointIndex ) + points.getBoundingSphereCoordinate( location ) * points.getSize( pointIndex );
+//
+inline Vec3 Points.getLocationBoundingSphereCoordinate( GeometryLocation location ) {
+  return location.barycentric;
+}
+
+//From a GeometryLocation built from the points, returns the attribute indices and weights required to linearly interpolate attribute values (Geometry interface)
+inline Points.getLocationAttributeIndicesAndWeights?( GeometryLocation location, io LocalL16UInt32Array attributeIndices, io LocalL16ScalarArray weights ) {
+  attributeIndices.push(location.index);
+  weights.push(1.0);
+}
+
+//Evaluates the position attribute at a specific location.
+//For a sized particle, the returned position might be a position on its bounding sphere surface when applicable.
+inline Vec3 Points.getPositionAtLocation( GeometryLocation location ) {
+  Vec3 position = this.getAttributes().getPosition(location.index);
+  if( location.barycentric == Vec3() )
+    return position;
+
+  //The spherical point's coordinate was encoded with barycentrics
+  return position + location.barycentric * (this.getSize(location.index) * 0.5);
+}
+
+object _PointsSpatialQueryCache {
+  Ref<Points> points; //Don't keep a hard ref, since this cache can be stored as a Points shared user data
+
+  Scalar defaultPointSize;
+
+  Size sizesVersion;
+  Ref<ScalarAttribute> sizeAttr;
+
+  Size prevCount;
+  Size positionsVersion;
+  Ref<Vec3Attribute> posAttr;
+  Boolean dirtyPositions;
+
+  SpatialAccelerationChooser acceleration;
+  SimpleLock updateLock;
+
+  FewObjectsRecyclingAllocator queryAllocator;//PointsSpatialQuery objects
+};
+
+object _PointsRaycastResult : RaycastResult {
+  Vec3 start;
+  Vec3 unitDir;
+  Vec3 dirPoint;
+
+  Scalar coneThreshold;
+  GeometryLocation location;
+  Ref<_PointsSpatialQueryCache> queryCache;
+};
+
+function _PointsRaycastResult(Ref<_PointsSpatialQueryCache> queryCache) {
+  this.queryCache = queryCache;
+}
+
+function _PointsRaycastResult.reset!( Vec3 start, Vec3 unitDir, Boolean doubleSided, Scalar coneThreshold ) {
+  this.start = start;
+  this.unitDir = unitDir;
+  this.dirPoint = start+unitDir;
+  this.coneThreshold = coneThreshold;
+  this.location = GeometryLocation();//Invalidate
+}
+
+function Boolean _PointsRaycastResult.compareAndUpdate!( Size objectIndex, io Scalar maxDistance ) {
+  Vec3 point = this.queryCache.posAttr.values[objectIndex];
+  Scalar pointRadius = 0.5 * (this.queryCache.sizeAttr ? this.queryCache.sizeAttr.values[objectIndex] : this.queryCache.defaultPointSize);
+
+  Scalar ratio = closestPointToLineRatio( point, this.start, this.dirPoint );
+  Vec3 rayPoint = this.start + ratio * this.unitDir;
+  Scalar raySquaredDist = (rayPoint - point).lengthSquared();
+  Scalar allowedDist = pointRadius + ratio * this.coneThreshold;
+
+  if( raySquaredDist > allowedDist*allowedDist )
+    return false;
+
+  Scalar squaredRadius = pointRadius*pointRadius;
+  if( raySquaredDist < squaredRadius && abs(ratio) < pointRadius ) {
+    // We might cast from 'inside' the particle, in which case distance is 0
+    Vec3 centerToStart = this.start - point;
+    Scalar rayStartSquaredDist = centerToStart.lengthSquared();
+    if( rayStartSquaredDist <= squaredRadius ) {
+      maxDistance = 0;
+      this.location.index = objectIndex;
+
+      if( pointRadius > 1e-4 )//Encode bounding sphere relative coordinate
+        this.location.barycentric = centerToStart / pointRadius;
+
+      return true;
+    }
+  }
+
+  Scalar distance = ratio;
+  Boolean encodeSurfaceCoordinate;
+  if( raySquaredDist < squaredRadius && pointRadius > 1e-4 ) {
+    //Consider the point as a sphere for the 'distance'
+    Scalar squaredHeight = squaredRadius - raySquaredDist;
+    distance = ratio - sqrt(squaredHeight);
+    encodeSurfaceCoordinate = true;
+  }
+
+  if( distance < maxDistance ) {
+    this.location.index = objectIndex;
+    maxDistance = distance;
+
+    if( encodeSurfaceCoordinate ) {
+      //We hit a sized particle: encode the surface location of the sphere we hit.
+      Vec3 hitPosition = this.start + distance * this.unitDir;
+      Vec3 normal = (hitPosition - point).unit_safe();
+      this.location.barycentric.x = normal.x;
+      this.location.barycentric.y = normal.y;
+      this.location.barycentric.z = normal.z;
+    } else
+      this.location.barycentric = Vec3();
+
+    return true;
+  }
+  return false;
+}
+
+function _PointsRaycastResult.copyResultFrom!( Ref<RaycastResult> other ) {
+  Ref<_PointsRaycastResult> otherResult = other;
+  this.location = otherResult.location;
+}
+
+object _PointsClosestResult : ClosestResult {
+  Vec3 position;
+  Vec3 scaling;
+  Boolean hasScaling;
+  GeometryLocation location;
+  Ref<_PointsSpatialQueryCache> queryCache;
+};
+
+function _PointsClosestResult(Ref<_PointsSpatialQueryCache> queryCache) {
+  this.queryCache = queryCache;
+}
+
+function _PointsClosestResult.reset!( Vec3 position, Vec3 scaling, Boolean hasScaling ) {
+  this.position = position;
+  this.scaling = scaling;
+  this.hasScaling = hasScaling;
+  this.location = GeometryLocation();//Invalidate
+}
+
+function Boolean _PointsClosestResult.compareAndUpdate!( Size objectIndex, io Scalar maxScaledSquaredDistance ) {
+  //Compute distance vector in local space, consider scaling afterward (if any)
+  Vec3 point = this.queryCache.posAttr.values[objectIndex];
+  Scalar pointRadius = 0.5 * (this.queryCache.sizeAttr ? this.queryCache.sizeAttr.values[objectIndex] : this.queryCache.defaultPointSize);
+
+  Vec3 vector = point - this.position;
+  Scalar squaredDistance = vector.lengthSquared();
+  Scalar squaredRadius = pointRadius*pointRadius;
+
+  if( squaredDistance <= squaredRadius ) {
+    //inside the point
+    maxScaledSquaredDistance = 0;
+    this.location.index = objectIndex;
+
+    if( pointRadius > 1e-4 )//Encode bounding sphere relative coordinate
+      this.location.barycentric = vector / -pointRadius;
+
+    return true;
+  }
+
+  //Take radius + scaling into account
+  Boolean encodeSurfaceCoordinate;
+  Scalar distanceForEncode;
+
+  if( pointRadius <= 1e-4 ) {
+    if( this.hasScaling )
+      squaredDistance = (vector * this.scaling).lengthSquared();
+  } else {
+    Scalar distance = sqrt(squaredDistance);
+
+    encodeSurfaceCoordinate = true;
+    distanceForEncode = distance;
+
+    if( !this.hasScaling ) {
+      distance -= pointRadius;
+      squaredDistance = distance * distance;
+    } else {
+      //More complex; we need to remove the radius from the distance vector in local space
+      //and then scale the resulting vector
+      Vec3 vectorToSphere = vector * ( (distance - pointRadius)/distance );
+      squaredDistance = ( vectorToSphere * this.scaling ).lengthSquared();
+    }
+  }
+  if( squaredDistance < maxScaledSquaredDistance ) {
+    this.location.index = objectIndex;
+    maxScaledSquaredDistance = squaredDistance;
+
+    if( encodeSurfaceCoordinate && distanceForEncode >= pointRadius ) {
+      //We hit a sized particle: encode the surface location of the sphere we hit.
+      Vec3 normal = vector / -distanceForEncode;
+      this.location.barycentric.x = normal.x;
+      this.location.barycentric.y = normal.y;
+      this.location.subIndex = normal.z < 0 ? 1 : 2;
+    } else
+      this.location.subIndex = 0;
+
+    return true;
+  }
+  return false;
+}
+
+function _PointsClosestResult.copyResultFrom!( Ref<ClosestResult> other ) {
+  Ref<_PointsClosestResult> otherResult = other;
+  this.location = otherResult.location;
+}
+
+object PointsSpatialQuery : SpatialQuery {
+  _StatialQueryData data;
+  _PointsRaycastResult raycastResult;
+  _PointsClosestResult closestResult;
+  Ref<_PointsSpatialQueryCache> queryCache;
+};
+
+function PointsSpatialQuery( Ref<_PointsSpatialQueryCache> queryCache ) {
+  this.queryCache = queryCache;
+  this.raycastResult = _PointsRaycastResult(queryCache);
+  this.closestResult = _PointsClosestResult(queryCache);
+}
+
+function _PointsSpatialQueryCache( Points points ) {
+  this.points = points;
+  this.acceleration = SpatialAccelerationChooser( points.base.autoStats );
+  this.updateLock = SimpleLock();
+  this.queryAllocator = FewObjectsRecyclingAllocator( PointsSpatialQuery(this), 1000, "Warning: Points.beginSpatialQuery: called more than 1000 times, intentional or missing a matching 'endSpatialQuery'?" );
+  this.dirtyPositions = true;
+}
+
+function Ref<_PointsSpatialQueryCache> Points._getQueryCache( Scalar defaultPointSize ) {
+  //Note: this is complex to avoid unrequired locking
+  Ref<_PointsSpatialQueryCache> queryCache = null;
+  if( this.spatialAccelerationCache ) {
+    queryCache = this.spatialAccelerationCache;
+  } else {
+    Ref<ThreadsafeMetaDataContainer> mutableMetaData = this.base.metaData;//Make non-const
+    AutoLock AL(mutableMetaData.lock);
+    //Another thread might have created it
+    queryCache = mutableMetaData.lockedGet("spatialAccel");
+    if( !queryCache ) {
+      _PointsSpatialQueryCache newQueryCache = _PointsSpatialQueryCache(this);
+      mutableMetaData.lockedSet("spatialAccel", newQueryCache);
+      newQueryCache.defaultPointSize = defaultPointSize;
+      queryCache = newQueryCache;
+    }
+  }
+  //Check if it is synchronized. Note: another thread might be synchronizing it at the same time.
+  Ref<GeometryAttributes> attributes = this.getAttributes();
+  Ref<Vec3Attribute> positions = attributes.getPositions();
+
+  if( queryCache.posAttr !== positions || positions.getVersion() != queryCache.positionsVersion ||
+      queryCache.sizeAttr !== this.sizesAttribute || 
+      (Boolean(this.sizesAttribute) && this.sizesAttribute.getVersion() != queryCache.sizesVersion) ||
+      (!this.sizesAttribute && defaultPointSize != queryCache.defaultPointSize ) ) {
+    //We assume no lines changes during spatial queries. TODO: use a readers-writers lock here.
+    AutoLock AL(queryCache.updateLock);
+
+    //NOTE: conditions need to be checked again since another thread might have updated it
+    if( synchronizeVersion( positions.getVersion(), queryCache.positionsVersion ) || positions !== queryCache.posAttr ) {
+      queryCache.posAttr = positions;
+      queryCache.dirtyPositions = true;
+    }
+
+    if( synchronizeVersion( positions.size(), queryCache.prevCount ) ) {
+      queryCache.acceleration.setObjectCount( positions.size(), false );
+      queryCache.dirtyPositions = true;
+    }
+
+    if( this.sizesAttribute ) {
+      if( synchronizeVersion( this.sizesAttribute.getVersion(), queryCache.sizesVersion ) || this.sizesAttribute !== queryCache.sizeAttr ) {
+        queryCache.sizeAttr = this.sizesAttribute;
+        queryCache.dirtyPositions = true;
+      }
+      queryCache.defaultPointSize = -1;//reset
+    } else if( defaultPointSize != queryCache.defaultPointSize ) {
+      queryCache.dirtyPositions = true;
+      queryCache.defaultPointSize = defaultPointSize;
+
+      queryCache.sizeAttr = this.sizesAttribute;//null
+      queryCache.sizesVersion = 0;//reset
+    }
+  }
+  return queryCache;
+}
+
+//See SpatialQueryable interface.
+function Points.prepareForSpatialQueries!( Size approximateNumberOfQueries, GenericValueContainer options ) {
+  Ref<_PointsSpatialQueryCache> queryCache = this._getQueryCache(this.defaultPointSize);
+  if( queryCache.queryAllocator.allocatedCount() )
+    throw("Points.prepareForSpatialQueries: preparing before all endSpatialQuery() were called");
+  {
+    AutoLock AL(queryCache.updateLock);//TODO: use readers-writers lock
+    Boolean accelerationChanged = queryCache.acceleration.synchronizeOptions( options );
+
+    if( accelerationChanged || queryCache.dirtyPositions ) {
+      queryCache.acceleration.setObjectCount( queryCache.posAttr.size(), true );
+      for( Size i = 0; i < queryCache.posAttr.size(); ++i ) {
+        Vec3 center = queryCache.posAttr.values[i];
+        Scalar radius;
+        if( queryCache.sizeAttr )
+          radius = queryCache.sizeAttr.values[i]*0.5; //Assuming "size" is the diameter..??
+        else
+          radius = queryCache.defaultPointSize*0.5;
+
+        queryCache.acceleration.updateObjectVolume( i, center, radius );
+      }
+      queryCache.dirtyPositions = false;
+    }
+    queryCache.acceleration.prepare( approximateNumberOfQueries );
+  }
+}
+
+//See SpatialQueryable interface.
+inline Points.removeSpatialQueryAcceleration!() {
+  this.base.metaData.remove("spatialAccel");
+  this.spatialAccelerationCache = null;
+}
+
+//See SpatialQueryable interface.
+inline Ref<SpatialQuery> Points.beginSpatialQuery() {
+  return this._getQueryCache(this.defaultPointSize).queryAllocator.allocate();
+}
+
+//See SpatialQueryable interface.
+inline Points.endSpatialQuery( Ref<SpatialQuery> query ) {
+  Ref<PointsSpatialQuery> pointsQuery = query;
+  if( pointsQuery.queryCache.points !== this )
+    throw("Points.endSpatialQuery: invalid query object for this");
+  this._getQueryCache(this.defaultPointSize).queryAllocator.free(query);
+}
+
+//See SpatialQueryable interface.
+//Takes point sizes into account ('Points.defaultPointSize' and 'Points.sizesAttribute' members).
+//For a sized particle, the returned location can include point's bounding sphere's position, and
+//'getPositionAtLocation()' will return a position on point's bounding sphere, if applicable.
+//See 'getLocationBoundingSphereCoordinate()' for more details relatively to sized points' GeometryLocation positions.
+inline GeometryLocation PointsSpatialQuery.raycast!( Ray ray, Boolean doubleSided, Scalar coneThreshold, Scalar maxDistance ) {
+  Ref<RaycastResult> result = this.raycastResult;
+  this.queryCache.acceleration.raycast( !this.queryCache.dirtyPositions, ray, doubleSided, coneThreshold, maxDistance, this.data, result );
+  return this.raycastResult.location;
+}
+
+//See PointsSpatialQuery.raycast
+inline GeometryLocation Points.raycast( Ray ray, Boolean doubleSided, Scalar coneThreshold, Scalar maxDistance ) {
+  Ref<PointsSpatialQuery> query = this.beginSpatialQuery();
+  GeometryLocation location = query.raycast( ray, doubleSided, coneThreshold, maxDistance );
+  this.endSpatialQuery(query);
+  return location;
+}
+
+//See SpatialQueryable interface. This will take into account points' size.
+//Takes point sizes into account ('Points.defaultPointSize' and 'Points.sizesAttribute' members).
+//For a sized particle, the returned location can include point's bounding sphere's position, and
+//'getPositionAtLocation()' will return a position on point's bounding sphere, if applicable.
+//See 'getLocationBoundingSphereCoordinate()' for more details relatively to sized points' GeometryLocation positions.
+inline GeometryLocation PointsSpatialQuery.getClosest!( Vec3 position, Vec3 scaling, Scalar maxUnscaledDistance ) {
+  Ref<ClosestResult> result = this.closestResult;
+  this.queryCache.acceleration.getClosest( !this.queryCache.dirtyPositions, position, scaling, maxUnscaledDistance, this.data, result );
+  return this.closestResult.location;
+}
+
+//See PointsSpatialQuery.getClosest
+inline GeometryLocation Points.getClosest( Vec3 position, Vec3 scaling, Scalar maxUnscaledDistance ) {
+  Ref<PointsSpatialQuery> query = this.beginSpatialQuery();
+  GeometryLocation location = query.getClosest( position, scaling, maxUnscaledDistance );
+  this.endSpatialQuery(query);
+  return location;
+}
+
+//See SpatialQuery interface. Elements are segment indices.
+//Only segments' bounding box is considered (conservative approximation).
+function Size PointsSpatialQuery.getElementsInBBox!( Vec3 min, Vec3 max ) {
+  return this.queryCache.acceleration.getElementsInBBox( this.queryCache.points, !this.queryCache.dirtyPositions, min, max, this.data );
+}
+
+//See SpatialQuery interface. Elements are segment indices.
+//Only segments' bounding box is considered (conservative approximation).
+function Size PointsSpatialQuery.getElementsInBSphere!( Vec3 center, Scalar radius ) {
+  return this.queryCache.acceleration.getElementsInBSphere( this.queryCache.points, !this.queryCache.dirtyPositions, center, radius, this.data );
+}
+
+//See SpatialQuery interface. Elements are segment indices.
+//Only segments' bounding box is considered (conservative approximation).
+function Size PointsSpatialQuery.getQueriedElement( Size index ) {
+  return this.data.getQueriedElement(index);
+}

@@ -1,0 +1,70 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`OrientationAxisManipulator` displays a torus as its gizmo geometry and connects it to a OrientationAxisGizmoHandler for handling the manipulation
+
+
+*/
+
+
+
+object OrientationAxisManipulator {
+	OrientationAxisGizmoHandler handler;
+  InlineMaterial gizmosMaterial;
+	InlineInstance instance;
+};
+
+function OrientationAxisManipulator(io InlineTransform parent, Xfo offset, Color color, GizmoManipulationCallback callback){
+
+  InlineDrawing drawing = OGLInlineDrawing_GetInstance();
+  InlineShader gizmoShader = drawing.getShader('gizmos');
+  if(!gizmoShader){
+    gizmoShader = OGLSurfaceGizmoShader('gizmos');
+    drawing.registerShader(gizmoShader);
+  }
+  this.gizmosMaterial = gizmoShader.getOrCreateMaterial("gizmos");
+
+  InlineMeshShape shape = drawing.getShape('OrientationAxisManipulator_Shape');
+  if(shape == null){
+	  PolygonMesh mesh();
+	  Size detail = 24;
+	  Scalar innerRadius = 0.02;
+	  Scalar outerRadius = 0.8;
+    mesh.addTorus(Xfo(), innerRadius, outerRadius, detail, true, false);
+
+	  shape = InlineMeshShape('OrientationAxisManipulator_Shape', mesh);
+	  drawing.registerShape(shape);
+	}
+
+  {
+    InlineTransform transform = ConstantScreenSizeTransform('OrientationAxisManipulator_Transform', offset);
+    parent.addChild(transform);
+
+    this.instance = SimpleInlineInstance('OrientationAxisManipulator', transform, shape);
+    this.instance.setInstanceUniform(InlineUniform('u_diffuseColor', color));
+    // this.instance.addMaterial(gizmosMaterial); 
+
+    this.handler = OrientationAxisGizmoHandler(this.instance, Vec3(0.0, 1.0, 0.0), callback);
+    this.instance.setMetaData('gizmoHandler', this.handler);
+  }
+}
+
+function OrientationAxisManipulator.hide!(){
+  if(this.instance.hasMaterial(this.gizmosMaterial))
+    this.instance.removeMaterial(this.gizmosMaterial);
+}
+
+function OrientationAxisManipulator.show!(){
+  if(!this.instance.hasMaterial(this.gizmosMaterial))
+    this.instance.addMaterial(this.gizmosMaterial);
+}
+
+function InlineInstance[] OrientationAxisManipulator.getGizmos(){
+    InlineInstance gizmos[];
+    gizmos.push(this.instance);
+    return gizmos;
+}

@@ -1,0 +1,174 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+object Mat44Attribute : GeometryAttribute, StatisticSourceWithAutoRegisterMember {
+  UInt32 version;
+  String name;
+  UInt32 containerIndex;
+
+  Mat44 values[];
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function Mat44Attribute() {
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] Mat44Attribute.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, this.name ) );
+  stats.push( StatisticRecord( Statistic_Category, "Attribute" ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, this.values.size()*4*16 ) );
+  return stats;
+}
+
+inline String Mat44Attribute.getName() {
+  return this.name;
+}
+
+inline UInt32 Mat44Attribute.getVersion() {
+  return this.version;
+}
+
+inline Size Mat44Attribute.getContainerIndex() {
+  return this.containerIndex;
+}
+
+inline Mat44Attribute.setContainerIndex!( Size index ) {
+  this.containerIndex = index;
+}
+
+function Mat44Attribute Mat44Attribute.clone() {
+  //The difference with default clone() is that new.base.autoStat will point to 'new' (from constructor)
+  Mat44Attribute new = Mat44Attribute();
+  new.version = this.version;
+  new.name = this.name.clone();
+  new.containerIndex = this.containerIndex;
+  new.values = this.values.clone();
+  return new;
+}
+
+function Ref<StatisticSource> Mat44Attribute.getStatisticsSource() {
+  return this.autoStats;
+}
+
+inline Mat44Attribute.resize!(Size count) {
+  this.values.resize(count);
+  ++this.version;
+}
+
+inline Size Mat44Attribute.size() {
+  return this.values.size();
+}
+
+inline Data Mat44Attribute.data() {
+  Ref<Mat44Attribute> thisRef = this;
+  return thisRef.values.data();
+}
+
+//Make sure to call this method after value changes are finished, so caches (such as drawing data) know that they need to be regenerated.
+inline Mat44Attribute.incrementVersion!() {
+  ++this.version;
+}
+
+inline Mat44Attribute.copyValue!( Size sourceIndex, Size targetIndex ) {
+  this.values[targetIndex] = this.values[sourceIndex];
+}
+
+inline Mat44Attribute.copyValue!( Ref<Object> sourceAttr, Size sourceIndex, Size targetIndex ) {
+  Ref<Mat44Attribute> source = sourceAttr;
+  this.values[targetIndex] = source.values[sourceIndex];
+}
+
+inline Mat44 Mat44Attribute.getLinearCombination( LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights ) {
+  Mat44 result;
+  for( Size i = 0; i < sourceIndices.size(); ++i )
+    result += this.values[sourceIndices.get(i)]*sourceWeights.get(i);
+  return result;
+}
+
+inline Mat44Attribute.linearCombine!( Ref<Object> sourceAttr, LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights, Size targetIndex ) {
+  Ref<Mat44Attribute> source = sourceAttr;
+  this.values[targetIndex] = source.getLinearCombination( sourceIndices, sourceWeights );
+}
+
+inline Mat44Attribute.copyFrom!( Ref<Object> otherAttr ) {
+  Ref<Mat44Attribute> other = otherAttr;
+  this.incrementVersion();
+
+  // Copy in place to avoid mallocs
+  Size size = other.values.size();
+  this.values.resize( size );
+  for( Size i = 0; i < size; ++i )
+    this.values[i] = other.values[i];
+}
+
+inline Mat44Attribute.setFromScalar!( Size index, LocalL16ScalarArray value ) {
+  this.values[index].row0.x = value.get(0);
+  this.values[index].row0.y = value.get(1);
+  this.values[index].row0.z = value.get(2);
+  this.values[index].row1.x = value.get(0);
+  this.values[index].row1.y = value.get(1);
+  this.values[index].row1.z = value.get(2);
+  this.values[index].row2.x = value.get(0);
+  this.values[index].row2.y = value.get(1);
+  this.values[index].row2.z = value.get(2);
+}
+
+inline Size Mat44Attribute.getScalarValueSize() {
+  return 9;
+}
+
+inline Boolean Mat44Attribute.equalValues( Size index1, Size index2 ) {
+  return this.values[index1].equal( this.values[index2] );
+}
+
+function String Mat44Attribute.valueDesc( Size index ) {
+  return String(this.values[index]);
+}
+
+require Util;
+function String Mat44Attribute.unitTestPrint( Size index ) {
+  return unitTestPrint(this.values[index]);
+}
+
+
+//Returns a string description of the attribute.
+function String Mat44Attribute.getDesc?( Boolean includeValues) {
+  String desc;
+  desc += "Attribute: " + this.getName() + " nb elements = "+ this.values.size()+'\n';
+  if(includeValues){
+    if(this.values.size > 0){
+      desc += "  values:[ \n";
+      for(Integer i=0; i<this.values.size; i++){
+        desc += '    ' + unitTestPrint(this.values[i]) + " \n";
+      }
+      desc += "  ]\n";
+    }
+    else{
+      desc += "  values:[]\n";
+    }
+  }
+  return desc;
+}
+function String Mat44Attribute.getDesc?() {
+  return this.getDesc(false);
+}
+
+
+function Ref<Mat44Attribute> GeometryAttributes.getOrCreateMat44Attribute!( String name ) {
+  Ref<GeometryAttribute> attr = this.getAttribute( name, Mat44Attribute );
+  if( attr )
+    return attr;
+
+  Mat44Attribute newAttr = Mat44Attribute();
+  newAttr.resize(this.elementCount);
+  newAttr.name = name;
+  newAttr.version = this.keysVersion;
+  this.attachNewAttribute(newAttr);
+
+  return newAttr;
+}

@@ -1,0 +1,145 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+/// BulletDispatcher uses these types
+/// IMPORTANT NOTE:The types are ordered polyhedral, implicit convex and concave
+/// to facilitate type checking
+/// CUSTOM_POLYHEDRAL_SHAPE_TYPE,CUSTOM_CONVEX_SHAPE_TYPE and CUSTOM_CONCAVE_SHAPE_TYPE can be used to extend Bullet without modifying source code
+
+// polyhedral convex shapes
+alias UInt32 BroadphaseNativeTypes;
+const BroadphaseNativeTypes BOX_SHAPE_PROXYTYPE = 0;
+const BroadphaseNativeTypes TRIANGLE_SHAPE_PROXYTYPE = 1;
+const BroadphaseNativeTypes TETRAHEDRAL_SHAPE_PROXYTYPE = 2;
+const BroadphaseNativeTypes CONVEX_TRIANGLEMESH_SHAPE_PROXYTYPE = 3;
+const BroadphaseNativeTypes CONVEX_HULL_SHAPE_PROXYTYPE = 4;
+const BroadphaseNativeTypes CONVEX_POINT_CLOUD_SHAPE_PROXYTYPE = 5;
+const BroadphaseNativeTypes CUSTOM_POLYHEDRAL_SHAPE_TYPE = 6;
+//implicit convex shapes
+//IMPLICIT_CONVEX_SHAPES_START_HERE,
+const BroadphaseNativeTypes SPHERE_SHAPE_PROXYTYPE = 8;
+const BroadphaseNativeTypes MULTI_SPHERE_SHAPE_PROXYTYPE = 9;
+const BroadphaseNativeTypes CAPSULE_SHAPE_PROXYTYPE = 10;
+const BroadphaseNativeTypes CONE_SHAPE_PROXYTYPE = 11;
+const BroadphaseNativeTypes CONVEX_SHAPE_PROXYTYPE = 12;
+const BroadphaseNativeTypes CYLINDER_SHAPE_PROXYTYPE = 13;
+const BroadphaseNativeTypes UNIFORM_SCALING_SHAPE_PROXYTYPE = 14;
+const BroadphaseNativeTypes MINKOWSKI_SUM_SHAPE_PROXYTYPE = 15;
+const BroadphaseNativeTypes MINKOWSKI_DIFFERENCE_SHAPE_PROXYTYPE = 16;
+const BroadphaseNativeTypes BOX_2D_SHAPE_PROXYTYPE = 17;
+const BroadphaseNativeTypes CONVEX_2D_SHAPE_PROXYTYPE = 18;
+const BroadphaseNativeTypes CUSTOM_CONVEX_SHAPE_TYPE = 19;
+//concave shapes
+//CONCAVE_SHAPES_START_HERE,
+// keep all the convex shapetype below here, for the check IsConvexShape in broadphase proxy!
+const BroadphaseNativeTypes TRIANGLE_MESH_SHAPE_PROXYTYPE = 21;
+const BroadphaseNativeTypes SCALED_TRIANGLE_MESH_SHAPE_PROXYTYPE = 22;
+// used for demo integration FAST/Swift collision library and Bullet
+const BroadphaseNativeTypes FAST_CONCAVE_MESH_PROXYTYPE = 23;
+// terrain
+const BroadphaseNativeTypes TERRAIN_SHAPE_PROXYTYPE = 24;
+///Used for GIMPACT Trimesh integration
+const BroadphaseNativeTypes GIMPACT_SHAPE_PROXYTYPE = 25;
+///Multimaterial mesh
+const BroadphaseNativeTypes MULTIMATERIAL_TRIANGLE_MESH_PROXYTYPE = 26;
+
+const BroadphaseNativeTypes EMPTY_SHAPE_PROXYTYPE = 27;
+const BroadphaseNativeTypes STATIC_PLANE_PROXYTYPE = 28;
+const BroadphaseNativeTypes CUSTOM_CONCAVE_SHAPE_TYPE = 29;
+// CONCAVE_SHAPES_END_HERE,
+
+const BroadphaseNativeTypes COMPOUND_SHAPE_PROXYTYPE = 31;
+
+const BroadphaseNativeTypes SOFTBODY_SHAPE_PROXYTYPE = 32;
+const BroadphaseNativeTypes HFFLUID_SHAPE_PROXYTYPE = 33;
+const BroadphaseNativeTypes HFFLUID_BUOYANT_CONVEX_SHAPE_PROXYTYPE = 34;
+const BroadphaseNativeTypes INVALID_SHAPE_PROXYTYPE = 35;
+
+const BroadphaseNativeTypes MAX_BROADPHASE_COLLISION_TYPES = 36;
+
+
+///optional filtering to cull potential collisions
+// CollisionFilterGroups
+alias SInt16 CollisionFilterGroups;
+const CollisionFilterGroups BulletBroadphaseProxy_DefaultFilter = 1;
+const CollisionFilterGroups BulletBroadphaseProxy_StaticFilter = 2;
+const CollisionFilterGroups BulletBroadphaseProxy_KinematicFilter = 4;
+const CollisionFilterGroups BulletBroadphaseProxy_DebrisFilter = 8;
+const CollisionFilterGroups BulletBroadphaseProxy_SensorTrigger = 16;
+const CollisionFilterGroups BulletBroadphaseProxy_CharacterFilter = 32;
+const CollisionFilterGroups BulletBroadphaseProxy_AllFilter = -1; //all bits sets: DefaultFilter | StaticFilter | KinematicFilter | DebrisFilter | SensorTrigger
+
+
+// ///The BulletBroadphaseProxy is the main class that can be used with the Bullet broadphases. 
+// ///It stores collision shape type information, collision filter information and a client object, typically a BulletICollisionObject or BulletRigidBody.
+object BulletBroadphaseProxy : BulletTypedObject
+{	
+	Data pointer;
+};
+
+function Data BulletBroadphaseProxy.getPointer(){
+	return this.pointer;
+}
+
+function Data BulletBroadphaseProxy.getClientObject() = 'BulletBroadphaseProxy_getClientObject';
+// function BulletBroadphaseProxy.setClientObject!(Object clientObject) = 'BulletBroadphaseProxy_setClientObject';
+function SInt16 BulletBroadphaseProxy.getCollisionFilterGroup() = 'BulletBroadphaseProxy_getCollisionFilterGroup';
+function BulletBroadphaseProxy.setCollisionFilterGroup!(SInt16 collisionFilterGroup) = 'BulletBroadphaseProxy_setCollisionFilterGroup';
+function SInt16 BulletBroadphaseProxy.getCollisionFilterMask() = 'BulletBroadphaseProxy_getCollisionFilterMask';
+function BulletBroadphaseProxy.setCollisionFilterMask!(SInt16 collisionFilterMask) = 'BulletBroadphaseProxy_setCollisionFilterMask';
+
+// function Object BulletBroadphaseProxy.getMultiSapParentProxy() = 'BulletBroadphaseProxy_getMultiSapParentProxy';
+// function BulletBroadphaseProxy.setMultiSapParentProxy!(Object object) = 'BulletBroadphaseProxy_setMultiSapParentProxy';
+function SInt32 BulletBroadphaseProxy.getUniqueId() = 'BulletBroadphaseProxy_getUniqueId';
+function BulletBroadphaseProxy.setUniqueId!(SInt32 uid) = 'BulletBroadphaseProxy_setUniqueId';
+
+function Vec3 BulletBroadphaseProxy.getAabbMin() = 'BulletBroadphaseProxy_getAabbMin';
+function BulletBroadphaseProxy.setAabbMin!(Vec3 aabbMin) = 'BulletBroadphaseProxy_setAabbMin';
+function Vec3 BulletBroadphaseProxy.getAabbMax() = 'BulletBroadphaseProxy_getAabbMax';
+function BulletBroadphaseProxy.setAabbMax!(Vec3 aabbMax) = 'BulletBroadphaseProxy_setAabbMax';
+
+function Boolean BulletBroadphaseProxy.isPolyhedral(Integer proxyType) = 'BulletBroadphaseProxy_isPolyhedral';
+function Boolean BulletBroadphaseProxy.isConvex(Integer proxyType) = 'BulletBroadphaseProxy_isConvex';
+function Boolean BulletBroadphaseProxy.isNonMoving(Integer proxyType) = 'BulletBroadphaseProxy_isNonMoving';
+function Boolean BulletBroadphaseProxy.isConcave(Integer proxyType) = 'BulletBroadphaseProxy_isConcave';
+function Boolean BulletBroadphaseProxy.isCompound(Integer proxyType) = 'BulletBroadphaseProxy_isCompound';
+
+function Boolean BulletBroadphaseProxy.isSoftBody(Integer proxyType) = 'BulletBroadphaseProxy_isSoftBody';
+
+function Boolean BulletBroadphaseProxy.isInfinite(Integer proxyType) = 'BulletBroadphaseProxy_isInfinite';
+
+function Boolean BulletBroadphaseProxy.isConvex2d(Integer proxyType) = 'BulletBroadphaseProxy_isConvex2d';
+
+
+///The BulletBroadphasePair class contains a pair of aabb-overlapping objects.
+///A BulletDispatcher can search a BulletCollisionAlgorithm that performs exact/narrowphase collision detection on the actual collision shapes.
+object BulletBroadphasePair : BulletTypedObject
+{
+	Data pointer;
+};
+
+function Data BulletBroadphasePair.getPointer(){
+	return this.pointer;
+}
+
+// function BulletBroadphasePair(BulletBroadphasePair other) = 'BulletBroadphasePair_copyConstruct';
+// function BulletBroadphasePair(BulletBroadphaseProxy proxy0,BulletBroadphaseProxy proxy1) = 'BulletBroadphasePair_constructProxy0Proxy1';
+function BulletBroadphasePair.getProxy0() = 'BulletBroadphasePair_getProxy0';
+function BulletBroadphasePair.getProxy1() = 'BulletBroadphasePair_getProxy1';
+
+
+// object BulletBroadphasePairSortPredicate
+// {
+// 	Data pointer;
+// };
+
+// function BulletBroadphasePairSortPredicate() = 'BulletBroadphasePairSortPredicate_construct';
+
+// // // equals operator
+// inline Boolean == (BulletBroadphasePair a, BulletBroadphasePair b) = 'BulletBroadphasePair_equal';
+
+

@@ -1,0 +1,80 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`PositionPlanarGizmoHandler` converts mouse events into translation over the surface of a plane.
+
+
+*/
+
+require InlineDrawing;
+
+
+
+object PositionPlanarGizmoHandler : GizmoHandler {
+  Ref<InlineInstance> owner; // The instance that owns the handler. 
+  Vec3 manipulationPlane;
+
+  Boolean dragging;
+  Vec3 planePoint;
+  Vec3 planeNormal;
+  Vec3 hitPointStart;
+
+  GizmoManipulationCallback callback;
+};
+
+function PositionPlanarGizmoHandler(InlineInstance owner, Vec3 manipulationPlane, GizmoManipulationCallback callback){
+    this.owner = owner;
+    this.manipulationPlane = manipulationPlane;
+    this.owner.setMetaData('gizmoHandler', this);
+    this.callback = callback;
+}
+
+function PositionPlanarGizmoHandler.onEvent!(io MouseEvent event){
+    if(event.eventType() == Event_MouseButtonPress){
+        MouseEvent mouseEvent = event;
+
+        // On MouseMove/Mousedown.
+        if(mouseEvent.button == MouseButton_LeftButton){
+            
+            Ray ray = event.getViewport().calcRayFromScreenPos(event.pos);
+            Xfo xfo = this.owner.getTransform().getGlobalXfo(0);
+            this.planePoint = xfo.tr;
+            this.planeNormal  = xfo.ori.rotateVector(this.manipulationPlane);
+
+            Scalar dist = ray.intersectPlane(this.planePoint, this.planeNormal);
+            this.hitPointStart = ray.start + (ray.direction * dist);
+            this.dragging = true;
+            this.callback.onDragBegin(mouseEvent);
+            event.accept();
+        }
+    }
+    else if(event.eventType() == Event_MouseMove){
+        MouseEvent mouseEvent = event;
+        // On drag
+        if(this.dragging){
+            Ray ray = event.getViewport().calcRayFromScreenPos(event.pos);
+            Scalar dist = ray.intersectPlane(this.planePoint, this.planeNormal);
+            Vec3 hitPoint2 = ray.start + (ray.direction * dist);
+            Xfo delta();
+            delta.tr = hitPoint2 - this.hitPointStart;
+
+            this.callback.onDrag(mouseEvent, Xfo(), delta, ManipulationMode_Position);
+            event.accept();
+        }
+    }
+    else if(event.eventType() == Event_MouseButtonRelease){
+        MouseEvent mouseEvent = event;
+        // On release
+        if(this.dragging){
+            this.dragging = false;
+            this.callback.onDragEnd(mouseEvent);
+            event.accept();
+        }
+    }
+}
+
+

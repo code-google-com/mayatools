@@ -1,0 +1,83 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require FabricStatistics;
+
+struct BaseGeometry {
+  GeometryAttributes attributes;
+  String debugName;
+
+  ThreadsafeMetaDataContainer metaData; //eg: raycast cache, bounding volume
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function BaseGeometry.init!( String debugName, Ref<StatisticSourceWithAutoRegisterMember> geometryStats ) {
+  this.debugName = debugName;
+  this.attributes = GeometryAttributes();
+  this.attributes.getOrCreatePositions();
+  this.metaData = ThreadsafeMetaDataContainer();
+
+  if(FabricStatisticsEnabled()) {
+    //KL gets confused when constructing with an interface, so we do it in 2 steps
+    this.autoStats = StatisticsAutoRegisterMember();
+    this.autoStats._init(geometryStats);
+    AddStatisticsChild(geometryStats, this.attributes.autoStats);
+  }
+}
+
+function BaseGeometry.attachAttributes!( io GeometryAttributes attributes ) {
+  this.attributes = attributes;
+  if( !this.attributes.positionsAttribute )
+    this.attributes.getOrCreatePositions();
+  AddStatisticsChild(this.autoStats, this.attributes.autoStats);
+}
+
+function BaseGeometry.addStatistics?( io StatisticRecord stats[] ) {
+  stats.push( StatisticRecord( Statistic_Name, this.debugName ) );
+  stats.push( StatisticRecord( Statistic_Category, "Geometry" ) );
+}
+
+object _BasicGeometryBoundingVolumeCache {
+  LocalBoundingVolume bbox;
+
+  UInt32 prevPosAttrVersion;
+  Ref<GeometryAttribute> prevPosAttr;
+  SimpleLock lock;
+};
+
+//Returns the bounding volume of the geometry, from the positions attribute.
+//This function is complex since we want the bounding box to be computed lazily, in a thread-safe fashion.
+function LocalBoundingVolume BaseGeometry.getBoundingVolume() {
+  if( !this.attributes || !this.attributes.positionsAttribute ) {
+    LocalBoundingVolume bbox;
+    bbox.bBoxInit();
+    return bbox;
+  }
+
+  Ref<_BasicGeometryBoundingVolumeCache> boundingVolumeCache = null;
+  {
+    //Get from meta-data; add if not present
+    Ref<ThreadsafeMetaDataContainer> mutableMetaData = this.metaData;//Make non-const
+    AutoLock AL(mutableMetaData.lock);
+    boundingVolumeCache = mutableMetaData.lockedGet("boundingBox");
+    if( !boundingVolumeCache ) {
+      _BasicGeometryBoundingVolumeCache newBoundingVolumeCache = _BasicGeometryBoundingVolumeCache();
+      newBoundingVolumeCache.lock = SimpleLock("_BasicGeometryBoundingVolumeCache");
+      mutableMetaData.lockedSet("boundingBox", newBoundingVolumeCache);
+      boundingVolumeCache = newBoundingVolumeCache;
+    }
+  }
+  AutoLock AL(boundingVolumeCache.lock);
+
+  //Update if required
+  if( synchronizeVersion( this.attributes.positionsAttribute.getVersion(), boundingVolumeCache.prevPosAttrVersion ) || this.attributes.positionsAttribute != boundingVolumeCache.prevPosAttr ) {
+    boundingVolumeCache.prevPosAttr = this.attributes.positionsAttribute;
+
+    boundingVolumeCache.bbox.bBoxInit();
+    for( UInt32 i = 0; i < this.attributes.size(); ++i )
+      boundingVolumeCache.bbox.bBoxAdd( this.attributes.getPosition(i) );
+  }
+  return boundingVolumeCache.bbox;
+}
+

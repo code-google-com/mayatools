@@ -1,0 +1,106 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+///The BulletBvhTriangleMeshShape is a static-triangle mesh shape with several optimizations, such as bounding volume hierarchy and cache friendly traversal for PlayStation 3 Cell SPU. It is recommended to enable useQuantizedAabbCompression for better memory usage.
+///It takes a triangle mesh as input, for example a BulletTriangleMesh or BulletTriangleIndexVertexArray. The BulletBvhTriangleMeshShape class allows for triangle mesh deformations by a refit or partialRefit method.
+///Instead of building the bounding volume hierarchy acceleration structure, it is also possible to serialize (save) and deserialize (load) the structure from disk.
+///See Demos\ConcaveDemo\ConcavePhysicsDemo.cpp for an example.
+object BulletBvhTriangleMeshShape : BulletTriangleMeshShape, BulletConcaveShape, BulletCollisionShape
+{
+	Data pointer;
+	BulletStridingMeshInterface __meshInterface;
+};
+
+function Data BulletBvhTriangleMeshShape.getPointer(){
+	return this.pointer;
+}
+
+function BulletBvhTriangleMeshShape (BulletStridingMeshInterface meshInterface, Boolean useQuantizedAabbCompression){
+	this.__meshInterface = meshInterface;
+	this.__construct(meshInterface, useQuantizedAabbCompression, true);
+}
+function BulletBvhTriangleMeshShape (BulletStridingMeshInterface meshInterface, Boolean useQuantizedAabbCompression, Boolean buildBvh){
+	this.__meshInterface = meshInterface;
+	this.__construct(meshInterface, useQuantizedAabbCompression, buildBvh);
+}
+function BulletBvhTriangleMeshShape.__construct!(BulletStridingMeshInterface meshInterface, Boolean useQuantizedAabbCompression, Boolean buildBvh) = 'BulletBvhTriangleMeshShape_construct1';
+
+function BulletBvhTriangleMeshShape (BulletStridingMeshInterface meshInterface, Boolean useQuantizedAabbCompression, in Vec3 bvhAabbMin, in Vec3 bvhAabbMax){
+	this.__meshInterface = meshInterface;
+	this.__construct(meshInterface, useQuantizedAabbCompression, true);
+}
+function BulletBvhTriangleMeshShape (BulletStridingMeshInterface meshInterface, Boolean useQuantizedAabbCompression, in Vec3 bvhAabbMin, in Vec3 bvhAabbMax, Boolean buildBvh){
+	this.__meshInterface = meshInterface;
+	this.__construct(meshInterface, useQuantizedAabbCompression, buildBvh);
+}
+function BulletBvhTriangleMeshShape.__construct!(BulletStridingMeshInterface meshInterface, Boolean useQuantizedAabbCompression, in Vec3 bvhAabbMin, in Vec3 bvhAabbMax, Boolean buildBvh) = 'BulletBvhTriangleMeshShape_construct2';
+
+function ~BulletBvhTriangleMeshShape(){
+	this.__destroy();
+}
+function BulletBvhTriangleMeshShape.__destroy!() = 'BulletBvhTriangleMeshShape_destroy';
+	
+
+
+function BulletBvhTriangleMeshShape.getAabb(Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletBvhTriangleMeshShape_getAabb';
+/*
+
+	Boolean getOwnsBvh ();
+
+
+	
+	void performRaycast (BulletTriangleCallback* callback, in Vec3 raySource, in Vec3 rayTarget);
+	void performConvexcast (BulletTriangleCallback* callback, in Vec3 boxSource, in Vec3 boxTarget, in Vec3 boxMin, in Vec3 boxMax);
+
+	virtual void	processAllTriangles(BulletTriangleCallback* callback, in Vec3 aabbMin, in Vec3 aabbMax) const;
+
+	void	refitTree(in Vec3 aabbMin, in Vec3 aabbMax);
+
+	///for a fast incremental refit of parts of the tree. Note: the entire AABB of the tree will become more conservative, it never shrinks
+	void	partialRefitTree(in Vec3 aabbMin, in Vec3 aabbMax);
+
+	//debugging
+	virtual const char*	getName();
+
+
+	virtual void	setLocalScaling(in Vec3 scaling);
+	
+	BulletOptimizedBvh*	getOptimizedBvh();
+
+	void	setOptimizedBvh(BulletOptimizedBvh* bvh, in Vec3 localScaling=Vec3(1,1,1));
+
+	void    buildOptimizedBvh();
+
+	Boolean	usesQuantizedAabbCompression();
+
+	void	setTriangleInfoMap(BulletTriangleInfoMap* triangleInfoMap);
+	const BulletTriangleInfoMap*	getTriangleInfoMap();
+	
+	BulletTriangleInfoMap*	getTriangleInfoMap();
+
+	virtual	Integer	calculateSerializeBufferSize() const;
+
+	///fills the dataBuffer and returns the struct name (and 0 on failure)
+	virtual	const char*	serialize(void* dataBuffer, BulletSerializer* serializer) const;
+
+	virtual void	serializeSingleBvh(BulletSerializer* serializer) const;
+
+	virtual void	serializeSingleTriangleInfoMap(BulletSerializer* serializer) const;
+
+};
+
+
+*/
+
+
+//////////////////////////////////
+// From interface BulletCollisionShape
+
+
+function BulletBvhTriangleMeshShape.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = 'BulletBvhTriangleMeshShape_calculateLocalInertia';
+
+function BulletBvhTriangleMeshShape.setMargin!(Scalar margin) = 'BulletBvhTriangleMeshShape_setMargin';
+function Scalar BulletBvhTriangleMeshShape.getMargin() = 'BulletBvhTriangleMeshShape_getMargin';

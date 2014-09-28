@@ -1,0 +1,16 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The :ref:`UndoRedoCommand` interface ised used by all commands that can be sent back to the host to be stored in the undo stack tobe undone/redone later. 
+
+
+*/
+
+interface UndoRedoCommand {
+    doAction!();
+    undoAction!();
+};

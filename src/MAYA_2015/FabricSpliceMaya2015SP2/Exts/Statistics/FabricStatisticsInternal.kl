@@ -1,0 +1,593 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+
+Internal implementation for :ref:`FabricStatistics`.
+
+*/
+
+require FabricSynchronization;
+
+struct _ProfilingFrame {
+  Size firstEntry;
+  Integer frameID;
+  Scalar time;
+};
+
+function String GetSourceName( Ref<StatisticSource> source ) {
+  String name;
+  StatisticRecord data[] = source.getStatistics();
+  for( Size j = 0; j < data.size(); ++j ) {
+    if( data[j].name == Statistic_Name ) {
+      name = data[j].stringValue;
+      break;
+    }
+  }
+  return name;
+}
+
+struct _FabricStatisticsReference {
+  Ref<StatisticSource> source;
+  Size key; //Cached for validation purposes
+};
+
+function _FabricStatisticsReference(Ref<StatisticSource> source) {
+  this.source = source;
+  if(source)
+    this.key = source.getStatisticsKey();
+}
+
+struct _FabricStatisticsSourceInfo {
+  _FabricStatisticsReference ref;
+  Size generationCount;
+
+  Size parentKey;
+  Size parentGenerationCount; //parentKeys are not cleaned up: generation count must be checked first.
+};
+
+struct _ProfilingInfo {
+  UInt64 beginTick;
+  UInt64 endTick;
+  String label;
+
+  _FabricStatisticsReference ref;//None if 0
+  Size parentEvent;
+};
+
+object _FabricStatistics {
+  SimpleLock lock;
+
+  _FabricStatisticsSourceInfo registeredSources[];
+  Size freeIndices[];
+
+  //Profiling
+  Boolean profilingFinished;
+  _ProfilingInfo profilingInfo[];
+
+  //Time profiling
+  UInt64 profilingStartTick;
+  Scalar profilingTime;
+
+  //Frames profiling
+  Size remainingFramesToProfile;
+  _ProfilingFrame profilingFrames[];
+};
+
+function _FabricStatistics() {
+  this.lock = SimpleLock("FabricStatisticsSingleton");
+  //Reserve key 0 as 'invalid'
+  this.registeredSources.resize(1);
+  this.profilingInfo.resize(1);
+}
+
+function _FabricStatistics.registerSource!( Ref<StatisticSource> source ) {
+  if( !source )
+    throw("_FabricStatistics.registerSource: unexpected: null source");
+  AutoLock AL(this.lock);
+
+  Size key;
+  if( this.freeIndices.size() ) {
+    key = this.freeIndices[this.freeIndices.size()-1];
+    this.freeIndices.resize(this.freeIndices.size()-1);
+  } else {
+    key = this.registeredSources.size();
+    this.registeredSources.resize(this.registeredSources.size()+1);
+  }
+  Ref<StatisticSource> sourceNoConst = source;
+  sourceNoConst.setStatisticsKey(key);
+  if( sourceNoConst.getStatisticsKey() != key )
+    throw("_FabricStatistics.registerSource: source's setKey not properly implemented");
+
+  this.registeredSources[key].ref = _FabricStatisticsReference(source);
+}
+
+function Boolean _FabricStatistics.isValid( Ref<StatisticSource> source ) {
+  if( !source )
+    return false;
+  Size key = source.getStatisticsKey();
+  return key < this.registeredSources.size() && this.registeredSources[key].ref.source === source;
+}
+
+//We assume isValid(source)
+function Boolean _FabricStatistics.isParentValid( Ref<StatisticSource> source ) {
+  Size key = source.getStatisticsKey();
+  Size parentKey = this.registeredSources[key].parentKey;
+  if( parentKey == 0 || parentKey >= this.registeredSources.size() )
+    return false;
+
+  if( this.registeredSources[key].parentGenerationCount != this.registeredSources[parentKey].generationCount )
+    return false;
+
+  return this.isValid(this.registeredSources[parentKey].ref.source);
+}
+
+function _FabricStatistics.validate( Ref<StatisticSource> source ) {
+  if( !this.isValid( source ) )
+    throw("_FabricStatistics.validate: source not properly registered");
+}
+
+function _FabricStatistics.addChild!( Ref<StatisticSource> parent, Ref<StatisticSource> child ) {
+  if( !parent || !child )
+    return;//Return silently; possible that stats were not enabled when one or the other were created
+
+  AutoLock AL(this.lock);
+
+  this.validate(parent);
+  this.validate(child);
+
+  _FabricStatisticsReference parentRef(parent);
+  _FabricStatisticsReference childRef(child);
+  this.registeredSources[childRef.key].parentKey = parentRef.key;
+  this.registeredSources[childRef.key].parentGenerationCount = this.registeredSources[parentRef.key].generationCount;
+}
+
+function _FabricStatistics.beginFrame!( Integer frameID, Scalar time ) {
+  _ProfilingFrame profilingFrame;
+  profilingFrame.firstEntry = this.profilingInfo.size();
+  profilingFrame.frameID = frameID;
+  profilingFrame.time = time;
+
+  // We suppose this won't be called in parallel    
+  if( FabricProfilingEnabled() ) {
+    if( this.remainingFramesToProfile ) {
+      --this.remainingFramesToProfile;
+      if(this.remainingFramesToProfile)
+        this.profilingFrames.push(profilingFrame);
+      else {
+        _DisableFabricProfiling();//Done
+        this.profilingFinished = true;
+      }
+    } else if(this.profilingTime > 0)
+      this.checkIfProfilingTimeElapsed();
+  }
+}
+
+function _FabricStatistics.checkIfProfilingTimeElapsed!() {
+  if( FabricProfilingEnabled() && this.profilingTime > 0 ) {
+    UInt64 currentTick = getCurrentTicks();
+    if( getSecondsBetweenTicks( this.profilingStartTick, currentTick ) > this.profilingTime ) {
+      _DisableFabricProfiling();//Done
+      this.profilingFinished = true;
+    }
+  }
+}
+
+function _FabricStatistics._resetProfilingInfo!() {
+  this.profilingFrames.resize(0);
+  this.profilingInfo.resize(1);
+  this.profilingFinished = false;
+  this.profilingStartTick = 0;
+  this.profilingTime = 0;
+}
+
+function _FabricStatistics.startProfiling!() {
+  this._resetProfilingInfo();
+  _EnableFabricProfiling();
+}
+
+function _FabricStatistics.stopProfiling!() {
+  _DisableFabricProfiling();
+  this.profilingFinished = true;
+}
+
+function _FabricStatistics.startProfiling!(Scalar time) {
+  this._resetProfilingInfo();
+  this.profilingStartTick = getCurrentTicks();
+  this.profilingTime = time;
+  _EnableFabricProfiling();
+}
+
+function _FabricStatistics.startProfilingFrames!(Size frameCount) {
+  this._resetProfilingInfo();
+  this.remainingFramesToProfile = frameCount;
+  _EnableFabricProfiling();
+}
+
+function Size _FabricStatistics.beginProfilingEvent!(String label, Ref<StatisticSource> source, Size parentProfilingEventKey) {
+  if( FabricProfilingEnabled() ) {
+    _ProfilingInfo info;
+    info.beginTick = getCurrentTicks();
+    info.endTick = info.beginTick;
+    info.label = label;
+    info.ref = _FabricStatisticsReference(source);
+    info.parentEvent = parentProfilingEventKey;
+
+    AutoLock AL(this.lock);
+    Size eventKey = this.profilingInfo.size();
+    if( parentProfilingEventKey >= eventKey )
+      throw("_FabricStatistics.beginProfilingEvent: invalid parentProfilingEventKey");
+
+    this.profilingInfo.push( info );
+    return eventKey;
+  }
+  return 0;
+}
+
+function _FabricStatistics.endProfilingEvent!(Size key) {
+  if( FabricProfilingEnabled() ) {
+    UInt64 endTick = getCurrentTicks();
+    if( key >= this.profilingInfo.size() )
+      throw("_FabricStatistics.endProfilingEvent: invalid key");
+
+    AutoLock AL(this.lock);
+    this.profilingInfo[key].endTick = endTick;
+  }
+}
+
+function _FabricStatistics.unregisterSource!( Ref<StatisticSource> source ) {
+  Size key = source.getStatisticsKey();
+  if( key == 0 )
+    return; //ignore invalid keys; probably registered when statistics were not enabled.
+
+  AutoLock AL(this.lock);
+
+  this.validate(source);
+
+  Ref<StatisticSource> nullSource = null;
+  this.registeredSources[key].ref = _FabricStatisticsReference();
+  this.registeredSources[key].parentKey = 0;
+  this.registeredSources[key].parentGenerationCount = 0;
+  ++this.registeredSources[key].generationCount;
+  this.freeIndices.push(key);
+}
+
+// Report building
+
+struct _StatisticsHierarchyElement {
+  Size level;
+  Size key;
+};
+
+function _BuildStatisticsHierarchy( Size level, Size key, UInt32 childrenPerKey[][], io _StatisticsHierarchyElement hierarchy[] ) {
+  _StatisticsHierarchyElement element;
+  element.level = level;
+  element.key = key;
+  hierarchy.push(element);
+  for( Size i = 0; i < childrenPerKey[key].size(); ++i )
+    _BuildStatisticsHierarchy( level+1, childrenPerKey[key][i], childrenPerKey, hierarchy );
+}
+
+function _StatisticsHierarchyElement[] _FabricStatistics._buildStatisticsHierarchy() {
+  //We should already be locked
+  
+  _StatisticsHierarchyElement hierarchy[];
+  UInt32 childrenPerKey[][];
+  childrenPerKey.resize(this.registeredSources.size());
+
+  for( Size i = 1; i < this.registeredSources.size(); ++i ) {
+    if( this.isValid(this.registeredSources[i].ref.source) && this.isParentValid(this.registeredSources[i].ref.source) )
+      childrenPerKey[this.registeredSources[i].parentKey].push(this.registeredSources[i].ref.key);
+  }
+
+  for( Size i = 1; i < this.registeredSources.size(); ++i ) {
+    if( this.isValid( this.registeredSources[i].ref.source ) && !this.isParentValid( this.registeredSources[i].ref.source ) )
+      _BuildStatisticsHierarchy(0, i, childrenPerKey, hierarchy);
+  }
+
+  return hierarchy;
+}
+
+struct StatisticsReportElement {
+  Size level;
+  StatisticRecord data[];
+};
+
+function String StatisticsReportElement.toString() {
+  String result;
+  for( Size i = 0; i < this.data.size(); ++i ) {
+    if(i)
+      result += ' ';
+    result += this.data[i].toString(true);
+  }
+  return result;
+}
+
+function String StatisticsReportElement.toCSVString() {
+  String result = this.level;
+  for( Size i = 0; i < this.data.size(); ++i ) {
+    result += ',';
+    result += this.data[i].toString(false);
+  }
+  return result;
+}
+
+function StatisticRecord _ComputeStatisticsSum( Size startIndex, io StatisticsReportElement reportElements[], String columnName, String sumName, Boolean alwaysInsert ) {
+  StatisticRecord sum;
+  sum.name = sumName;
+  Size childIndex = startIndex+1;
+  while( childIndex < reportElements.size() && reportElements[childIndex].level > reportElements[startIndex].level ) {
+    if( reportElements[childIndex].level == reportElements[startIndex].level+1 )
+      sum.add( _ComputeStatisticsSum( childIndex, reportElements, columnName, sumName, alwaysInsert ) );
+    ++childIndex;
+  }
+
+  Boolean childrenHaveSome = sum.valueType != _StatisticRecordType_None;
+
+  // Check if we have that column
+  Boolean hasColumn;
+  for( Size i = 0; i < reportElements[startIndex].data.size(); ++i ) {
+    if( reportElements[startIndex].data[i].name == columnName ) {
+      sum.add(reportElements[startIndex].data[i]);
+      hasColumn = true;
+      break;
+    }
+  }
+
+  if( childrenHaveSome || alwaysInsert ) {
+
+    Size prevSize = reportElements[startIndex].data.size();
+    reportElements[startIndex].data.resize(prevSize+1);
+    for( Size i = prevSize+1; i--; ) {
+      if(  (hasColumn && reportElements[startIndex].data[i-1].name == columnName)
+        || (i == 0 || reportElements[startIndex].data[i-1].name == Statistic_Name || reportElements[startIndex].data[i-1].name < sumName ) ) {
+        reportElements[startIndex].data[i] = sum;
+        break;
+      } else
+        reportElements[startIndex].data[i] = reportElements[startIndex].data[i-1];
+    }
+  }
+  return sum;
+}
+
+function StatisticsReportElement[] _FabricStatistics.getStatistics() {
+  AutoLock AL(this.lock);
+
+  StatisticsReportElement reportElements[];
+  _StatisticsHierarchyElement elements[] = this._buildStatisticsHierarchy();
+  for( Size i = 0; i < elements.size(); ++i ) {
+    StatisticsReportElement element;
+    element.level = elements[i].level;
+    Size key = elements[i].key;
+    element.data = this.registeredSources[key].ref.source.getStatistics();
+    //Add 'type' automatically
+    Boolean hasType;
+    for( Size j = 0; j < element.data.size(); ++j ) {
+      if( element.data[j].name == Statistic_Type ) {
+        hasType = true;
+        break;
+      }
+    }
+    if(!hasType)
+      element.data.push( StatisticRecord(Statistic_Type, String(this.registeredSources[key].ref.source.type())) );
+    _reorderStatisticElements( element.data );
+
+    reportElements.push(element);
+  }
+  return reportElements;
+}
+
+function _reorderStatisticElements( io StatisticRecord data[] ) {
+  //Reorder columns, if applicable. Name first, then other by ascii order (simple bubble sort)
+  for( Size j = 1; j < data.size(); ++j ) {
+    Size best = j-1;
+    for( Size k = j; k < data.size(); ++k ) {
+      if( data[k].name == Statistic_Name || 
+          ( data[best].name != Statistic_Name && data[k].name < data[best].name ) )
+        best = k;
+    }
+    if( best != j-1 ) {
+      StatisticRecord temp = data[j-1];
+      data[j-1] = data[best];
+      data[best] = temp;
+    }
+  }
+}
+
+function _filterStatistics( io StatisticsReportElement reportElements[], String columnsToSelect[], String columnsToSum[] ) {
+
+  if( columnsToSelect.size() ) {
+    for( Size i = 0; i < reportElements.size(); ++i ) {
+      StatisticRecord reordered[];
+      reordered.resize(columnsToSelect.size());
+      for( Size j = 0; j < columnsToSelect.size(); ++j ) {
+        reordered[j].name = columnsToSelect[j];
+        for( Size k = 0; k < reportElements[i].data.size(); ++k ) {
+          if( columnsToSelect[j] == reportElements[i].data[k].name ) {
+            reordered[j] = reportElements[i].data[k];
+            break;
+          }
+        }
+      }
+      reportElements[i].data = reordered;
+    }
+  }
+
+  for( Size i = 0; i < columnsToSum.size(); ++i ) {
+    if( columnsToSelect.size() ) {
+      Boolean hasColumnToSum;
+      for( Size j = 0; j < columnsToSelect.size(); ++j ) {
+        if(columnsToSum[i] == columnsToSelect[j]) {
+          hasColumnToSum = true;
+          break;
+        }
+      }
+      if( !hasColumnToSum )
+        continue;
+    }
+
+    String sumName = columnsToSum[i]+'Sum';
+    for( Size j = 0; j < reportElements.size(); ++j ) {
+      if( reportElements[j].level == 0 )
+        _ComputeStatisticsSum( j, reportElements, columnsToSum[i], sumName, columnsToSelect.size() != 0 );
+    }
+  }
+}
+
+function StatisticsReportElement[] _FabricStatistics.getStatistics( String columnsToSelect[], String columnsToSum[] ) {
+  StatisticsReportElement reportElements[] = this.getStatistics();
+  _filterStatistics( reportElements, columnsToSelect, columnsToSum );
+  return reportElements;
+}
+
+function StatisticsReportElement[] _FabricStatistics.getStatistics( String columnsToSelect[] ) {
+  String columnsToSum[];
+  columnsToSum.push(Statistic_MemoryUsage);
+  columnsToSum.push(Statistic_GPUMemoryUsage);
+  return this.getStatistics(columnsToSelect, columnsToSum);
+}
+
+function String[] _FabricStatistics.getStatisticsCSV( String columnsToSelect[], String columnsToSum[] ) {
+  StatisticsReportElement reportElements[] = this.getStatistics();
+
+  String actualColumnsToSelect[] = columnsToSelect;
+
+  if( !columnsToSelect ) {
+    //Do a 1st pass just to get existing columns
+    Size allElementsDict[String];
+    StatisticRecord allElements[];
+
+    for( Size i = 0; i < reportElements.size(); ++i ) {
+      for( Size j = 0; j < reportElements[i].data.size(); ++j ) {
+        String name = reportElements[i].data[j].name;
+        if( !allElementsDict.has(name) ) {
+          allElementsDict[name] = 0;
+          allElements.push(reportElements[i].data[j]);
+        }
+      }
+    }
+    _reorderStatisticElements( allElements );
+    for( Size i = 0; i < allElements.size(); ++i )
+      actualColumnsToSelect.push( allElements[i].name );
+  }
+  _filterStatistics( reportElements, actualColumnsToSelect, columnsToSum );
+
+  String lines[];
+  lines.resize(reportElements.size() + 1);
+  lines[0] = 'level';
+
+  for( Size i = 0; i < actualColumnsToSelect.size(); ++i ) {
+    lines[0] += ','+actualColumnsToSelect[i];
+    for( Size j = 0; j < columnsToSum.size(); ++j ) {
+      if( columnsToSum[j] == actualColumnsToSelect[i] )
+        lines[0] += ','+actualColumnsToSelect[i]+'Sum';
+    }
+  }
+
+  for( Size i = 0; i < reportElements.size(); ++i )
+    lines[i+1] = reportElements[i].toCSVString();
+
+  return lines;
+}
+
+function String[] _FabricStatistics.getStatisticsCSV( String columnsToSelect[] ) {
+  String columnsToSum[];
+  columnsToSum.push(Statistic_MemoryUsage);
+  columnsToSum.push(Statistic_GPUMemoryUsage);
+  return this.getStatisticsCSV(columnsToSelect, columnsToSum);
+}
+
+function _FabricStatistics.getStatisticStrings!( io String lines[], io Size levels[], String columnsToSelect[], String columnsToSum[] ) {
+  StatisticsReportElement reportElements[] = this.getStatistics( columnsToSelect, columnsToSum );
+  lines.resize(reportElements.size());
+  levels.resize(reportElements.size());
+
+  for( Size i = 0; i < reportElements.size(); ++i ) {
+    levels[i] = reportElements[i].level;
+    lines[i]= reportElements[i].toString();
+  }
+}
+
+function _FabricStatistics.getStatisticStrings!( io String lines[], io Size levels[], String columnsToSelect[] ) {
+  String columnsToSum[];
+  columnsToSum.push(Statistic_MemoryUsage);
+  columnsToSum.push(Statistic_GPUMemoryUsage);
+  this.getStatisticStrings(lines, levels, columnsToSelect, columnsToSum);
+}
+
+function _FabricStatistics._buildProfilingHierarchy?( io _StatisticsHierarchyElement hierarchy[], io Size frameStarts[] ) {
+  //We should already be locked
+  
+  UInt32 childrenPerKey[][];
+  childrenPerKey.resize(this.profilingInfo.size());
+
+  Size nextFrame = 0;
+  Size nextFrameStart = this.profilingFrames.size() ? this.profilingFrames[0].firstEntry : 1;
+  Size currFrameStart = 0;
+
+  for( Size i = 1; i < this.profilingInfo.size(); ++i ) {
+    if( i == nextFrameStart ) {
+      frameStarts.push(i);
+      currFrameStart = nextFrameStart;
+
+      ++nextFrame;
+      if( nextFrame < this.profilingFrames.size() )
+        nextFrameStart = this.profilingFrames[nextFrame].firstEntry;
+      else
+        nextFrameStart = this.profilingInfo.size();
+    }
+    //Block inter-frame relationships if any
+    if( this.profilingInfo[i].parentEvent != 0 && this.profilingInfo[i].parentEvent >= currFrameStart && this.profilingInfo[i].parentEvent < nextFrameStart )
+      childrenPerKey[this.profilingInfo[i].parentEvent].push(i);
+  }
+
+  for( Size i = 1; i < this.profilingInfo.size(); ++i ) {
+    if( this.profilingInfo[i].parentEvent == 0 )
+      _BuildStatisticsHierarchy(0, i, childrenPerKey, hierarchy);
+  }
+}
+
+function ProfilingEvent[] _FabricStatistics.getProfilingEvents() {
+  AutoLock AL(this.lock);
+
+  _StatisticsHierarchyElement elements[];
+  Size frameStarts[];
+
+  this._buildProfilingHierarchy( elements, frameStarts );
+  ProfilingEvent events[];
+  events.resize(elements.size());
+  Size frame;
+  for( Size i = 0; i < elements.size(); ++i ) {
+    if( frame+1 < frameStarts.size() && frame == frameStarts[frame+1] )
+      ++frame;
+
+    Size key = elements[i].key;
+
+    ProfilingEvent event;
+    event.level = elements[i].level;
+    event.frame = frame;
+    event.label = this.profilingInfo[key].label;
+    event.seconds = getSecondsBetweenTicks(this.profilingInfo[key].beginTick, this.profilingInfo[key].endTick);
+    if( this.isValid( this.profilingInfo[key].ref.source ) )
+      event.sourceName = GetSourceName(this.profilingInfo[key].ref.source);
+    events[i] = event;
+  }
+  return events;
+}
+
+function Ref<_FabricStatistics> _GetOrCreateFabricStatisticsSingleton() {
+  Ref<_FabricStatistics> singleton = _GetFabricStatisticsSingleton();
+  if( singleton )
+    return singleton;
+
+  _FabricStatistics newSingleton = _FabricStatistics();
+  _FabricStatisticsInitSingleton(newSingleton);
+  return newSingleton;
+}
+
+function Ref<_FabricStatistics> _GetFabricStatisticsSingleton() = "_GetFabricStatisticsSingleton";
+function _EnableFabricStatistics() = "_EnableFabricStatistics";
+function _DisableFabricStatistics() = "_DisableFabricStatistics";
+function _EnableFabricProfiling() = "_EnableFabricProfiling";
+function _DisableFabricProfiling() = "_DisableFabricProfiling";
+function _FabricStatisticsInitSingleton( _FabricStatistics singleton ) = "_FabricStatisticsInitSingleton";

@@ -1,0 +1,1538 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+require Math;
+
+const Integer LocalBoundingVolume_infinite = 0;
+const Integer LocalBoundingVolume_bBox = 1;
+const Integer LocalBoundingVolume_bSphere = 2;
+const Integer LocalBoundingVolume_bCone = 3; //Note: center = 0, dir = -Z
+const Integer LocalBoundingVolume_bPyramid = 4; //Note: center = 0, dir = -Z
+
+struct LocalBoundingVolume {
+  Integer type;
+  Vec3 pt1;
+  Vec3 pt2;
+  Scalar sc1;
+  Scalar sc2;
+  Scalar sc3;
+  Scalar sc4;
+};
+
+const UInt8 IntersectionNone = 0;
+const UInt8 IntersectionOverlap = 1;
+const UInt8 IntersectionIncludesOther = 2;
+
+//Helpers
+inline Size getMinComponent( Vec3 dir ) {
+  Vec3 absDir = Vec3( abs(dir.x), abs(dir.y), abs(dir.z) );
+  Scalar min;
+  Size minComp;
+  if( absDir.x < absDir.y ) {
+    min = absDir.x;
+    minComp = 0;
+  } else {
+    min = absDir.y;
+    minComp = 1;
+  }
+  if( absDir.z < min )
+    minComp = 2;
+  
+  return minComp;
+}
+
+inline Boolean LocalBoundingVolume.equal?( LocalBoundingVolume other ) {
+  if( this.type != other.type )
+    return false;
+  switch( this.type ) {
+    case LocalBoundingVolume_infinite:
+      return true;
+    case LocalBoundingVolume_bBox:
+      return this.pt1.equal(other.pt1) && this.pt2.equal(other.pt2);
+    case LocalBoundingVolume_bSphere:
+      return this.pt1.equal(other.pt1) && this.sc1 == other.sc1;
+    case LocalBoundingVolume_bCone:
+      return this.sc1 == other.sc1 && this.sc2 == other.sc2;
+    case LocalBoundingVolume_bPyramid:
+      return this.sc1 == other.sc1 && this.sc2 == other.sc2 && this.sc3 == other.sc3 && this.sc4 == other.sc4;
+  }
+  return false;
+}
+
+inline Boolean == (LocalBoundingVolume a, LocalBoundingVolume b) {
+  return a.equal(b);
+}
+
+inline Boolean != (LocalBoundingVolume a, LocalBoundingVolume b) {
+  return !a.equal(b);
+}
+
+// not equals operator
+inline Boolean != (Vec3 a, Vec3 b) {
+  return a.x != b.x || a.y != b.y || a.z != b.z;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// BBox: pt1 = min, pt2 = max
+
+inline Vec3 LocalBoundingVolume.bBoxGetMin() {
+  return this.pt1;
+}
+
+inline Vec3 LocalBoundingVolume.bBoxGetMax() {
+  return this.pt2;
+}
+
+inline LocalBoundingVolume.bBoxSetMin!( Vec3 min ) {
+  this.pt1 = min;
+}
+
+inline LocalBoundingVolume.bBoxSetMax!( Vec3 max ) {
+  this.pt2 = max;
+}
+
+inline LocalBoundingVolume.bBoxInit!( Vec3 min, Vec3 max ) {
+  this.type = LocalBoundingVolume_bBox;
+  this.pt1 = min;
+  this.pt2 = max;
+  this.sc1 = 0;
+}
+
+inline LocalBoundingVolume.bBoxInit!() {
+  this.type = LocalBoundingVolume_bBox;
+  this.pt1.x = 0;
+  this.pt1.y = 0;
+  this.pt1.z = 0;
+  this.pt2.x = 0;
+  this.pt2.y = 0;
+  this.pt2.z = 0;
+  this.sc1 = -1;
+}
+
+inline LocalBoundingVolume.bBoxAdd!( Vec3 pt ) {
+  if( this.sc1 == -1 ) {
+    this.sc1 = 0;
+    this.pt1 = pt;
+    this.pt2 = pt;
+  } else {
+    if( pt.x < this.pt1.x )
+      this.pt1.x = pt.x;
+    else if( pt.x > this.pt2.x )
+      this.pt2.x = pt.x;
+
+    if( pt.y < this.pt1.y )
+      this.pt1.y = pt.y;
+    else if( pt.y > this.pt2.y )
+      this.pt2.y = pt.y;
+
+    if( pt.z < this.pt1.z )
+      this.pt1.z = pt.z;
+    else if( pt.z > this.pt2.z )
+      this.pt2.z = pt.z;
+  }
+}
+
+function Scalar LocalBoundingVolume.bBoxGetVolume() {
+  Vec3 bboxSize = this.pt2 - this.pt1;
+  return bboxSize.x * bboxSize.y * bboxSize.z;
+}
+
+function LocalBoundingVolume.bBoxAddBBox!( Vec3 min, Vec3 max ) {
+  if( this.sc1 == -1 ) {
+    this.sc1 = 0;
+    this.pt1 = min;
+    this.pt2 = max;
+  } else {
+    if( min.x < this.pt1.x )
+      this.pt1.x = min.x;
+    if( max.x > this.pt2.x )
+      this.pt2.x = max.x;
+
+    if( min.y < this.pt1.y )
+      this.pt1.y = min.y;
+    if( max.y > this.pt2.y )
+      this.pt2.y = max.y;
+
+    if( min.z < this.pt1.z )
+      this.pt1.z = min.z;
+    if( max.z > this.pt2.z )
+      this.pt2.z = max.z;
+  }
+}
+
+inline Boolean BBoxContains(Vec3 min, Vec3 max, Vec3 point) {
+  return point.x >= min.x && point.x <= max.x
+      && point.y >= min.y && point.y <= max.y
+      && point.z >= min.z && point.z <= max.z;
+}
+
+inline Boolean LocalBoundingVolume.bBoxContains(Vec3 point) {
+  return BBoxContains(this.pt1, this.pt2, point);
+}
+
+function Boolean bBoxIntersectsBBox( Vec3 min1, Vec3 max1, Vec3 min2, Vec3 max2 ) {
+  return min1.x <= max2.x && max1.x >= min2.x
+      && min1.y <= max2.y && max1.y >= min2.y
+      && min1.z <= max2.z && max1.z >= min2.z;
+}
+
+inline Vec3 bBoxGetClosestPoint( Vec3 bBoxMin, Vec3 bBoxMax, Vec3 position ) {
+  return Vec3(
+    Math_clamp( position.x, bBoxMin.x, bBoxMax.x ),
+    Math_clamp( position.y, bBoxMin.y, bBoxMax.y ),
+    Math_clamp( position.z, bBoxMin.z, bBoxMax.z ) );
+}
+
+inline Vec3 bBoxGetFarthestPoint( Vec3 bBoxMin, Vec3 bBoxMax, Vec3 position ) {
+  Vec3 farthest;
+  if( position.x <= bBoxMin.x )
+    farthest.x = bBoxMax.x;
+  else if( position.x >= bBoxMax.x )
+    farthest.x = bBoxMin.x;
+  else
+    farthest.x = (position.x - bBoxMin.x) < (bBoxMax.x - position.x) ? bBoxMax.x : bBoxMin.x;
+
+  if( position.y <= bBoxMin.y )
+    farthest.y = bBoxMax.y;
+  else if( position.y >= bBoxMax.y )
+    farthest.y = bBoxMin.y;
+  else
+    farthest.y = (position.y - bBoxMin.y) < (bBoxMax.y - position.y) ? bBoxMax.y : bBoxMin.y;
+
+  if( position.z <= bBoxMin.z )
+    farthest.z = bBoxMax.z;
+  else if( position.z >= bBoxMax.z )
+    farthest.z = bBoxMin.z;
+  else
+    farthest.z = (position.z - bBoxMin.z) < (bBoxMax.z - position.z) ? bBoxMax.z : bBoxMin.z;
+
+  return farthest;
+}
+
+//Careful: takes SQUARED radius!
+inline Boolean bBoxIntersectsBSphere( Vec3 bBoxMin, Vec3 bBoxMax, Vec3 bSphereCenter, Scalar bSphereSquaredRadius ) {
+  Vec3 bboxPoint = bBoxGetClosestPoint(bBoxMin, bBoxMax, bSphereCenter);
+  return (bSphereCenter - bboxPoint).lengthSquared() <= bSphereSquaredRadius;
+}
+
+inline transformedBBoxGetBSphere( Mat44 transform, Vec3 bBoxMin, Vec3 bBoxMax, io Vec3 bSphereCenter, io Scalar bSphereSquaredRadius ) {
+  Vec3 center = (bBoxMin + bBoxMax) * 0.5;
+  bSphereCenter = transform*center;
+  Vec3 radiusVec = (bBoxMax - bBoxMin) * 0.5;
+  Vec3 transformedRadius = transform.upperLeft() * radiusVec;
+  bSphereSquaredRadius = transformedRadius.lengthSquared();
+}
+
+inline Mat44 symmetricOrthographicFrustum(
+  Scalar w, Scalar h,
+  Scalar n, Scalar f
+) {
+  Scalar d = f - n;
+  if( d < 1.0e-12 )
+    d = 1.0e-12;
+  Mat44 result(
+    2.0 / (w < 1.0e-12 ? 1.0e-12 : w), 0.0, 0.0, 0.0,
+    0.0, 2.0 / (h < 1.0e-12 ? 1.0e-12 : h), 0.0, 0.0,
+    0.0, 0.0, -2.0 / d, -(f + n) / d,
+    0.0, 0.0, 0.0, 1.0);
+  return result;
+}
+
+inline Mat44 LocalBoundingVolume.bBoxGetOrthographicMat44() {
+  if( this.type != LocalBoundingVolume_bBox )
+    setError("bBoxGetOrthographicMat44: error: volume is not a bBox");
+  return symmetricOrthographicFrustum( this.pt2.x - this.pt1.x, this.pt2.y - this.pt1.y, -this.pt2.z, -this.pt1.z );
+}
+
+function transformedBBoxComputeUnscaled(
+  Mat44 transform, LocalBoundingVolume localBVol, 
+  io Mat44 noScalingTransform, io LocalBoundingVolume noScalingLocalBVol
+  ) {
+  if( localBVol.type != LocalBoundingVolume_bBox )
+    setError("transformedBBoxComputeVectors: error: volume is not a bBox");
+
+  //Here, we want to compute the inverse transform with no scaling, the scaling being applied as part of the min/max definition.
+  //This way, a sphere remains a sphere in local space after this transfo, simplifying the intersection checks.
+  Mat33 rotation;
+  Vec3 scaling, translation;
+  transform.decompose(scaling, rotation, translation);
+
+  noScalingTransform.setFromMat33(rotation);
+  noScalingTransform.setTranslation(translation);
+  noScalingLocalBVol.bBoxInit( localBVol.pt1 * scaling, localBVol.pt2 * scaling );
+}
+
+inline transformedBBoxGetVectors( Mat44 transform, LocalBoundingVolume localBVol, io Vec3 origin, io Vec3 dX, io Vec3 dY, io Vec3 dZ ) {
+  origin = transform * Vec3(localBVol.pt1.x, localBVol.pt1.y, localBVol.pt1.z);
+  dX = Vec3(transform.row0.x, transform.row1.x, transform.row2.x) * (localBVol.pt2.x-localBVol.pt1.x);
+  dY = Vec3(transform.row0.y, transform.row1.y, transform.row2.y) * (localBVol.pt2.y-localBVol.pt1.y);
+  dZ = Vec3(transform.row0.z, transform.row1.z, transform.row2.z) * (localBVol.pt2.z-localBVol.pt1.z);
+}
+
+function transformedBBoxGetBBox( Mat44 transform, LocalBoundingVolume localBVol, io Vec3 min, io Vec3 max ) {
+  Vec3 origin, dX, dY, dZ;
+  transformedBBoxGetVectors( transform, localBVol, origin, dX, dY, dZ );
+  Vec3 ptX = origin + dX;
+  Vec3 ptY = origin + dY;
+  Vec3 ptZ = origin + dZ;
+
+  LocalBoundingVolume bbox;
+  bbox.bBoxInit();
+  bbox.bBoxAdd(origin);
+  bbox.bBoxAdd(ptX);
+  bbox.bBoxAdd(ptY);
+  bbox.bBoxAdd(ptZ);
+
+  bbox.bBoxAdd(ptX+dY);
+  bbox.bBoxAdd(ptX+dY+dZ);
+  bbox.bBoxAdd(ptX+dZ);
+  bbox.bBoxAdd(ptZ+dY);
+  min = bbox.pt1;
+  max = bbox.pt2;
+}
+
+function LocalBoundingVolume.bBoxAddTransformedBBox!( LocalBoundingVolume other, Mat44 transform ) {
+  Vec3 min, max;
+  transformedBBoxGetBBox( transform, other, min, max );
+  if( min.x < this.pt1.x )
+    this.pt1.x = min.x;
+  if( max.x > this.pt2.x )
+    this.pt2.x = max.x;
+
+  if( min.y < this.pt1.y )
+    this.pt1.y = min.y;
+  if( max.y > this.pt2.y )
+    this.pt2.y = max.y;
+
+  if( min.z < this.pt1.z )
+    this.pt1.z = min.z;
+  if( max.z > this.pt2.z )
+    this.pt2.z = max.z;
+}
+
+function UInt8 bBoxGetBSphereIntersection( Vec3 min, Vec3 max, Vec3 sphereCenter, Scalar sphereRadius ) {
+//report("localSphereCenter "+localSphereCenter+" rad "+sphereRadius+" minmax "+this.pt1+" "+this.pt2);
+  if( sphereCenter.x - sphereRadius >= max.x || sphereCenter.x + sphereRadius <= min.x
+   || sphereCenter.y - sphereRadius >= max.y || sphereCenter.y + sphereRadius <= min.y
+   || sphereCenter.z - sphereRadius >= max.z || sphereCenter.z + sphereRadius <= min.z )
+    return IntersectionNone;
+
+  Scalar distances[3];
+  Boolean centerInside = true;
+  for(Size i = 0; i < 3; ++i) {
+    if(sphereCenter.component(i) < min.component(i)) {
+      distances[i] = min.component(i) - sphereCenter.component(i);
+      centerInside = false;
+    }
+    else if(sphereCenter.component(i) > max.component(i)) {
+      distances[i] = sphereCenter.component(i) - max.component(i);
+      centerInside = false;
+    }
+  }
+
+  if( centerInside ) {
+    if(  sphereCenter.x - sphereRadius >= min.x && sphereCenter.x + sphereRadius <= max.x
+      && sphereCenter.y - sphereRadius >= min.y && sphereCenter.y + sphereRadius <= max.y
+      && sphereCenter.z - sphereRadius >= min.z && sphereCenter.z + sphereRadius <= max.z ){
+      return IntersectionIncludesOther;
+    }
+    return IntersectionOverlap;
+  }
+
+  Scalar squaredDist = distances[0]*distances[0] + distances[1]*distances[1] + distances[2]*distances[2];
+  if(squaredDist > sphereRadius*sphereRadius)
+    return IntersectionNone;
+  return IntersectionOverlap;
+}
+
+inline UInt8 LocalBoundingVolume.bBoxGetBSphereIntersection( Mat44 noScalingInvTransform, Vec3 sphereCenter, Scalar sphereRadius ) {
+  Vec3 localSphereCenter = noScalingInvTransform * sphereCenter;
+  return bBoxGetBSphereIntersection( this.pt1, this.pt2, localSphereCenter, sphereRadius );
+}
+
+inline getBBoxPoints( Vec3 min, Vec3 max, io Vec3 pts[8] ) {
+  pts[0] = Vec3(min.x, min.y, min.z);
+  pts[1] = Vec3(max.x, min.y, min.z);
+  pts[2] = Vec3(min.x, max.y, min.z);
+  pts[3] = Vec3(max.x, max.y, min.z);
+  pts[4] = Vec3(min.x, min.y, max.z);
+  pts[5] = Vec3(max.x, min.y, max.z);
+  pts[6] = Vec3(min.x, max.y, max.z);
+  pts[7] = Vec3(max.x, max.y, max.z);
+}
+
+inline Scalar LocalBoundingVolume.bBoxGetMaxDistToPlane(Vec3 planeOrigin, Vec3 planeNormal) {
+  Vec3 pts[8];
+  getBBoxPoints(this.pt1, this.pt2, pts);
+  Scalar maxDist;
+  for( Size i = 0; i < 8; ++i ) {
+    Scalar dist = (pts[i]-planeOrigin).dot(planeNormal);
+    if( dist > maxDist || i == 0 )
+      maxDist = dist;
+  }
+  return maxDist;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// BSphere
+
+inline Scalar LocalBoundingVolume.bSphereGetRadius() {
+  return this.sc1;
+}
+
+inline Scalar LocalBoundingVolume.bSphereGetSquaredRadius() {
+  return this.sc2;
+}
+
+inline Vec3 LocalBoundingVolume.bSphereGetCenter() {
+  return this.pt1;
+}
+
+inline LocalBoundingVolume.bSphereSetCenter!( Vec3 center ) {
+  this.pt1 = center;
+}
+
+//We treat 'negative' values as an infinite radius
+inline LocalBoundingVolume.bSphereSetRadius!( Scalar radius ) {
+  if( radius >= 0 ) {
+    this.sc1 = radius;
+    this.sc2 = radius * radius;
+  } else {
+    this.sc1 = -1;
+    this.sc2 = -1;
+  }
+}
+
+inline LocalBoundingVolume.bSphereInit!( Vec3 center, Scalar radius ) {
+  this.type = LocalBoundingVolume_bSphere;
+  this.pt1 = center;
+  this.bSphereSetRadius( radius );
+}
+
+inline Boolean LocalBoundingVolume.bSphereContains( Vec3 point ) {
+  Vec3 deltaVec = point - this.pt1;
+  return deltaVec.lengthSquared() < this.sc2;
+}
+
+inline Boolean LocalBoundingVolume.bSphereIntersectsBSphere( Vec3 center, Scalar radius ) {
+  Scalar radiusSum = this.sc1 + radius;
+  Scalar minSqDist = radiusSum * radiusSum;
+  Vec3 distVec = this.pt1 - center;
+  return distVec.lengthSquared() <= minSqDist;
+}
+
+inline Vec3 LocalBoundingVolume.bSphereGetLocalDistanceVector( Vec3 localCoord ) {
+  Vec3 deltaCenter = localCoord - this.pt1;
+  Scalar sqLen = deltaCenter.lengthSquared();
+  if( sqLen < ( this.sc2 + DIVIDEPRECISION ) )
+    return Vec3(0,0,0);
+  Scalar len = sqrt( sqLen );
+  return ( deltaCenter / len ) * ( len - this.sc1 );
+}
+
+
+inline transformedBSphereGetBSphere(
+  Mat44 transform, Vec3 localCenter, Scalar localRadius, 
+  io Vec3 bSphereCenter, io Scalar bSphereSquaredRadius) {
+
+  bSphereCenter = transform*localCenter;
+  if(localRadius < 0)
+    bSphereSquaredRadius = -1;
+  else {
+    //Might have non-uniform scaling
+    Scalar maxSqRad = Vec3(transform.row0.x, transform.row1.x, transform.row2.x).lengthSquared();
+    Scalar sqRad = Vec3(transform.row0.y, transform.row1.y, transform.row2.y).lengthSquared();
+    if( sqRad > maxSqRad )
+      maxSqRad = sqRad;
+    sqRad = Vec3(transform.row0.z, transform.row1.z, transform.row2.z).lengthSquared();
+    if( sqRad > maxSqRad )
+      maxSqRad = sqRad;
+
+    bSphereSquaredRadius = maxSqRad * localRadius * localRadius;
+  }
+}
+
+inline transformedBSphereGetBBox(Mat44 transform, LocalBoundingVolume localBVol, io Vec3 min, io Vec3 max) {
+  Vec3 bSphereCenter;
+  Scalar bSphereSquaredRadius;
+  transformedBSphereGetBSphere( transform, localBVol.pt1, localBVol.sc1, bSphereCenter, bSphereSquaredRadius );
+  Scalar radius = sqrt(bSphereSquaredRadius);
+  Vec3 delta = Vec3(radius, radius, radius);
+  min = bSphereCenter - delta;
+  max = bSphereCenter + delta;
+}
+
+function UInt8 bSphereGetBBoxIntersection( Vec3 sphereCenter, Scalar sphereRadius, Vec3 min, Vec3 max ) {
+  Scalar sqRadius = sphereRadius*sphereRadius;
+
+  Vec3 closest = bBoxGetClosestPoint( min, max, sphereCenter );
+  if( (closest - sphereCenter).lengthSquared() > sqRadius )
+    return IntersectionNone;
+
+  Vec3 farthest = bBoxGetFarthestPoint( min, max, sphereCenter );
+  if( (farthest - sphereCenter).lengthSquared() <= sqRadius )
+    return IntersectionIncludesOther;
+  else
+    return IntersectionOverlap;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// BPyramid
+
+inline Scalar LocalBoundingVolume.bPyramidGetNearWidth() {
+  return this.sc1;
+}
+
+inline Scalar LocalBoundingVolume.bPyramidGetNearHeight() {
+  return this.sc2;
+}
+
+inline Scalar LocalBoundingVolume.bPyramidGetNear() {
+  return this.sc3;
+}
+
+inline Scalar LocalBoundingVolume.bPyramidGetFar() {
+  return this.sc4;
+}
+
+inline LocalBoundingVolume.bPyramidSetNearWidth!( Scalar nearWidth ) {
+  this.sc1 = nearWidth;
+}
+
+inline LocalBoundingVolume.bPyramidSetNearHeight!( Scalar nearHeight ) {
+  this.sc2 = nearHeight;
+}
+
+inline LocalBoundingVolume.bPyramidSetNear!( Scalar near ) {
+  this.sc3 = near;
+}
+
+inline LocalBoundingVolume.bPyramidSetFar!( Scalar far ) {
+  this.sc4 = far;
+}
+
+inline LocalBoundingVolume.bPyramidInit!( Scalar nearWidth, Scalar nearHeight, Scalar near, Scalar far  ) {
+  this.type = LocalBoundingVolume_bPyramid;
+  this.sc1 = nearWidth;
+  this.sc2 = nearHeight;
+  this.sc3 = near;
+  this.sc4 = far;
+}
+
+inline Mat44 symmetricPerspectiveFrustum(
+  Scalar nearWidth, Scalar nearHeight,
+  Scalar near, Scalar far,
+  Scalar centerX, Scalar centerY
+) {
+  Scalar d = far - near;
+  if( d < 1.0e-12 )
+    d = 1.0e-12;
+  Scalar q = -(far + near) / d;
+  Scalar qn = -2.0 * (far * near) / d;
+  Scalar w = 2.0 * (near / (nearWidth < 1.0e-12 ? 1.0e-12 : nearWidth));
+  Scalar h = 2.0 * (near / (nearHeight < 1.0e-12 ? 1.0e-12 : nearHeight));
+  Mat44 result(
+    w, 0.0, -centerX, 0.0,
+    0.0, h, -centerY, 0.0,
+    0.0, 0.0, q, qn,
+    0.0, 0.0, -1.0, 0.0);
+  return result;
+}
+
+inline Mat44 LocalBoundingVolume.bPyramidGetPerspectiveMat44() {
+  if( this.type != LocalBoundingVolume_bPyramid )
+    setError("bPyramidGetPerspectiveMat44: error: volume is not a bPyramid");
+  return symmetricPerspectiveFrustum( this.sc1, this.sc2, this.sc3, this.sc4, 0, 0 );
+}
+
+function transformedBPyramidComputeVectors(
+  Mat44 transform, LocalBoundingVolume localBVol, 
+  io Vec3 origin, io Vec3 unitDir, io Scalar near, io Scalar far, io Vec3 nearRightVec, io Vec3 nearUpVec
+  ) {
+  if( localBVol.type != LocalBoundingVolume_bPyramid )
+    setError("transformedBPyramidComputeVectors: error: volume is not a bPyramid");
+
+  origin = transform.translation();
+  unitDir = Vec3( -transform.row0.z, -transform.row1.z, -transform.row2.z );
+  Scalar factor = unitDir.length();
+  if( factor > DIVIDEPRECISION )
+    unitDir /= factor;
+
+  near = localBVol.sc3 * factor;
+  far = localBVol.sc4 * factor;
+  Mat33 scalRotMat = transform.upperLeft();
+  nearRightVec = Vec3( localBVol.sc1 * 0.5 * transform.row0.x, localBVol.sc1 * 0.5 * transform.row1.x, localBVol.sc1 * 0.5 * transform.row2.x );
+  nearUpVec = Vec3( localBVol.sc2 * 0.5 * transform.row0.y, localBVol.sc2 * 0.5 * transform.row1.y, localBVol.sc2 * 0.5 * transform.row2.y );
+}
+
+function bPyramidComputePlanes(
+  Vec3 origin, Vec3 unitDir, Scalar near, Scalar far, Vec3 nearRightVec, Vec3 nearUpVec,
+  io Vec3 leftPlaneNormal, io Vec3 rightPlaneNormal,
+  io Vec3 upPlaneNormal, io Vec3 downPlaneNormal ) {
+
+  Vec3 nearVec = unitDir * near;
+  Vec3 nearRight = nearVec + nearRightVec;
+  Vec3 nearUpRight = nearRight + nearUpVec;
+  Vec3 nearUp = nearVec + nearUpVec;
+
+  rightPlaneNormal = nearRight.cross( nearUpRight ).unit();
+  upPlaneNormal = nearUpRight.cross( nearUp ).unit();
+
+  Scalar dot = rightPlaneNormal.dot(unitDir);
+  if( dot > 0 ) {
+    //Negative scaling: flip the normal
+    rightPlaneNormal = rightPlaneNormal.negate();
+    dot = -dot;
+  }
+  Vec3 proj = unitDir * dot;
+  leftPlaneNormal = rightPlaneNormal + ( proj - rightPlaneNormal ) * 2.0;
+
+  dot = upPlaneNormal.dot(unitDir);
+  if( dot > 0 ) {
+    //Negative scaling: flip the normal
+    upPlaneNormal = upPlaneNormal.negate();
+    dot = -dot;
+  }
+  proj = unitDir * dot;
+  downPlaneNormal = upPlaneNormal + ( proj - upPlaneNormal ) * 2.0;
+}
+
+function bPyramidGetBSphere( Vec3 origin, Vec3 unitDir, Scalar near, Scalar far, Vec3 nearRightVec, Vec3 nearUpVec,
+                              io Vec3 bSphereCenter, io Scalar bSphereSquaredRadius ) {
+  //This is an approximation!
+  //TODO: compute the precise bsphere mathematically if not too costly (see http://en.wikipedia.org/wiki/Circumscribed_circle; use if tanHalfAngle < 1)
+
+  Scalar factor = 0;
+  if( near > DIVIDEPRECISION )
+    factor = far / near;
+  else
+    setError("pyramidGetBBox: near must be > 0");//TODO: use unit right/up vec; would avoid this limitation...
+
+  bSphereCenter = origin + (near + ( near + far ) * 0.5 ) * unitDir;
+
+  Vec3 maxRadius = origin + far * unitDir + nearRightVec + nearUpVec;
+  bSphereSquaredRadius = ( maxRadius - bSphereCenter ).lengthSquared();
+}
+
+inline Boolean bPyramidIntersectsBSphere(
+  Vec3 pyrOrigin, Vec3 pyrDir, 
+  Scalar pyrNear, Scalar pyrFar,
+  Vec3 pyrLeftPlaneNormal, Vec3 pyrRightPlaneNormal,
+  Vec3 pyrUpPlaneNormal, Vec3 pyrDownPlaneNormal,
+  Vec3 center, Scalar radius   ) {
+
+  Vec3 relativeCenter = center - pyrOrigin;
+  Scalar dirDist = pyrDir.dot( relativeCenter );
+
+  if( dirDist + radius < pyrNear || dirDist - radius > pyrFar )
+    return false;
+  
+  Scalar leftDot = pyrLeftPlaneNormal.dot( relativeCenter );
+  if( leftDot > radius )
+    return false;
+
+  Scalar rightDot = pyrRightPlaneNormal.dot( relativeCenter );
+  if( rightDot > radius )
+    return false;
+
+  Scalar upDot = pyrUpPlaneNormal.dot( relativeCenter );
+  if( upDot > radius )
+    return false;
+
+  Scalar downDot = pyrDownPlaneNormal.dot( relativeCenter );
+  if( downDot > radius )
+    return false;
+
+  return true;
+}
+
+inline UInt8 bPyramidGetBSphereIntersection(
+  Vec3 pyrOrigin, Vec3 pyrDir, 
+  Scalar pyrNear, Scalar pyrFar,
+  Vec3 pyrLeftPlaneNormal, Vec3 pyrRightPlaneNormal,
+  Vec3 pyrUpPlaneNormal, Vec3 pyrDownPlaneNormal,
+  Vec3 center, Scalar radius   ) {
+
+  Vec3 relativeCenter = center - pyrOrigin;
+  Scalar dirDist = pyrDir.dot( relativeCenter );
+
+  if( dirDist + radius < pyrNear || dirDist - radius > pyrFar )
+    return IntersectionNone;
+  
+  Scalar leftDot = pyrLeftPlaneNormal.dot( relativeCenter );
+  if( leftDot > radius )
+    return IntersectionNone;
+
+  Scalar rightDot = pyrRightPlaneNormal.dot( relativeCenter );
+  if( rightDot > radius )
+    return IntersectionNone;
+
+  Scalar upDot = pyrUpPlaneNormal.dot( relativeCenter );
+  if( upDot > radius )
+    return IntersectionNone;
+
+  Scalar downDot = pyrDownPlaneNormal.dot( relativeCenter );
+  if( downDot > radius )
+    return IntersectionNone;
+
+  if( dirDist - radius < pyrNear || dirDist + radius > pyrFar || leftDot > -radius || rightDot > -radius || upDot > -radius || downDot > -radius )
+    return IntersectionOverlap;
+
+  return IntersectionIncludesOther;
+}
+
+function pyramidGetBBox( Vec3 origin, Vec3 unitDir, Scalar near, Scalar far, Vec3 nearRightVec, Vec3 nearUpVec, io Vec3 min, io Vec3 max ) {
+
+  //This could be more optimal...
+  Scalar factor = 0;
+  if( near > DIVIDEPRECISION )
+    factor = far / near;
+  else
+    setError("pyramidGetBBox: near must be > 0");//TODO: use unit right/up vec; would avoid this limitation...
+
+  Vec3 nearVec = near * unitDir;
+
+  LocalBoundingVolume bbox;
+  Vec3 vec = nearVec - nearRightVec - nearUpVec;
+  Vec3 pos = origin + vec;
+  bbox.bBoxInit( pos, pos );
+  bbox.bBoxAdd( origin + vec * factor );
+
+  vec = nearVec - nearRightVec + nearUpVec;
+  bbox.bBoxAdd( origin + vec );
+  bbox.bBoxAdd( origin + vec * factor );
+
+  vec = nearVec + nearRightVec - nearUpVec;
+  bbox.bBoxAdd( origin + vec );
+  bbox.bBoxAdd( origin + vec * factor );
+
+  vec = nearVec + nearRightVec + nearUpVec;
+  bbox.bBoxAdd( origin + vec );
+  bbox.bBoxAdd( origin + vec * factor );
+
+  min = bbox.pt1;
+  max = bbox.pt2;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// BCone
+
+inline Scalar LocalBoundingVolume.bConeGetRadAngle() {
+  return this.sc1;
+}
+
+inline Scalar LocalBoundingVolume.bConeGetCutoff() {
+  return this.sc2;
+}
+
+inline Scalar LocalBoundingVolume.bConeGetTanHalfAngle() {
+  return this.sc3;
+}
+
+inline Scalar LocalBoundingVolume.bConeGetCosHalfAngle() {
+  return this.sc4;
+}
+
+inline LocalBoundingVolume.bConeSetRadAngle!( Scalar radAngle ) {
+  this.sc1 = radAngle;
+  this.sc3 = tan(radAngle/2);
+  this.sc4 = 1.0/sqrt(1.0+this.sc3*this.sc3);// == cos(radAngle/2);
+}
+
+inline LocalBoundingVolume.bConeSetCutoff!( Scalar cutoff ) {
+  this.sc2 = cutoff;
+}
+
+inline LocalBoundingVolume.bConeInit!( Scalar radAngle, Scalar cutoff ) {
+  this.type = LocalBoundingVolume_bCone;
+  this.bConeSetRadAngle( radAngle );
+  this.bConeSetCutoff( cutoff );
+}
+
+function Vec3 LocalBoundingVolume.bConeGetLocalDistanceVector( Vec3 localCoord ) {
+  //1) If inside, dist == 0
+  Scalar maxZAxisDist = this.sc3 * -localCoord.z + DIVIDEPRECISION;
+  Scalar maxZAxisSqDist = maxZAxisDist * maxZAxisDist;
+
+  Scalar zAxisSqDist = localCoord.x*localCoord.x + localCoord.y*localCoord.y;
+  if( zAxisSqDist <= maxZAxisSqDist && localCoord.z <= DIVIDEPRECISION && (localCoord.z >= -this.sc2 || this.sc2 < 0 ) )
+    return Vec3(0,0,0);
+
+  //2) Compute cone-orthogonal vector
+  Scalar zAxisDist = sqrt(zAxisSqDist);
+  Vec2 unitPerpVec;
+  if( zAxisDist > DIVIDEPRECISION ) {
+    Scalar zAxisInvDist = 1.0/zAxisDist;
+    unitPerpVec = Vec2( localCoord.x*zAxisInvDist, localCoord.y*zAxisInvDist );
+  }
+
+  Vec2 maxDistPerpVec = unitPerpVec * maxZAxisDist;
+  Scalar parallelDelta = ( zAxisDist - maxZAxisDist ) * this.sc4 * this.sc3 * this.sc4;
+  Scalar perpDelta = parallelDelta * this.sc3;
+  Scalar parallelVecZ = localCoord.z - parallelDelta;
+
+  Boolean atTip = parallelVecZ > DIVIDEPRECISION;
+  Boolean atEnd = parallelVecZ < -this.sc2 && (this.sc2 >= 0);
+
+  if( !atTip && !atEnd ) {
+    Vec3 coneParallelVec = Vec3( unitPerpVec.x * (perpDelta + maxZAxisDist), unitPerpVec.y * (perpDelta + maxZAxisDist), parallelVecZ );
+    return localCoord - coneParallelVec;
+  }
+
+  if( atTip )
+    return localCoord;
+
+  //atEnd
+  Scalar endMaxDist = this.sc2 * this.sc3;
+  if( zAxisDist > endMaxDist ) {
+    Vec2 endMaxDistPerpVec = unitPerpVec * endMaxDist;
+    return Vec3( localCoord.x-endMaxDistPerpVec.x, localCoord.y-endMaxDistPerpVec.y, localCoord.z+this.sc2 );
+  }
+  return Vec3( 0, 0, localCoord.z+this.sc2 );
+}
+
+function UInt8 bConeGetBSphereIntersection( Vec3 coneOrigin, Vec3 coneUnitDir, Scalar coneLength, Scalar tanHalfAngle, Scalar invCosHalfAngle, Vec3 center, Scalar radius ) {
+  Vec3 centerVec = center - coneOrigin;
+  Scalar dirDist = coneUnitDir.dot(centerVec);
+  if( dirDist + radius < 0 || dirDist - radius > coneLength )
+    return IntersectionNone;
+
+  Vec3 projectedCenterVec = centerVec - coneUnitDir*dirDist;
+  Scalar projectedCenterVecSquaredconeLength = projectedCenterVec.lengthSquared();
+  Scalar cutoffDist = dirDist * tanHalfAngle;
+  if( dirDist >= 0 ) {
+    Scalar squaredCutoffDist = cutoffDist * cutoffDist;
+    if( projectedCenterVecSquaredconeLength <= squaredCutoffDist ) {
+      if( cutoffDist >= radius ) {
+        Scalar insideMaxDist = cutoffDist - radius;
+        if( projectedCenterVecSquaredconeLength <= insideMaxDist * insideMaxDist )
+          return IntersectionIncludesOther;
+      }
+      return IntersectionOverlap;
+    }
+  }
+
+  Scalar angleAdjustedRadius = radius * invCosHalfAngle;
+
+  Scalar maxDist = angleAdjustedRadius + cutoffDist;
+  if( projectedCenterVecSquaredconeLength <= maxDist*maxDist )
+    return IntersectionOverlap;
+  else
+    return IntersectionNone;
+}
+
+function Boolean bConeIntersectsBSphere( Vec3 coneOrigin, Vec3 coneUnitDir, Scalar coneLength, Scalar tanHalfAngle, Scalar invCosHalfAngle, Vec3 center, Scalar radius ) {
+  Vec3 centerVec = center - coneOrigin;
+  Scalar dirDist = coneUnitDir.dot(centerVec);
+  if( dirDist + radius < 0 || dirDist - radius > coneLength )
+    return false;
+
+  Vec3 projectedCenterVec = centerVec - coneUnitDir*dirDist;
+  Scalar projectedCenterVecSquaredconeLength = projectedCenterVec.lengthSquared();
+  Scalar cutoffDist = dirDist * tanHalfAngle;
+  if( dirDist >= 0 ) {
+    Scalar squaredCutoffDist = cutoffDist * cutoffDist;
+    if( projectedCenterVecSquaredconeLength <= squaredCutoffDist )
+      return true;
+  }
+
+  Scalar angleAdjustedRadius = radius * invCosHalfAngle;
+  Scalar maxDist = angleAdjustedRadius + cutoffDist;
+  return projectedCenterVecSquaredconeLength <= maxDist*maxDist;
+}
+
+function coneGetBBox( Vec3 origin, Vec3 unitDir, Scalar length, Scalar tanHalfAngle, io Vec3 min, io Vec3 max ) {
+  //Build BBox out of the cone (approx)
+  Scalar cutLen = length > 1e15 ? 1e15 : length;
+
+  Vec3 perpendicularDir;
+  perpendicularDir.setComponent( getMinComponent( unitDir ), 1.0 );//Make it axis-aligned to minimize axis-aligned bbox
+  perpendicularDir = (perpendicularDir - unitDir*perpendicularDir.dot(unitDir)).unit();
+  perpendicularDir *= cutLen*tanHalfAngle;
+  Vec3 otherPerpendicularDir = perpendicularDir.cross(unitDir);//inherits cutLen*tanHalfAngle factor
+  
+  Vec3 end = origin + unitDir*cutLen;
+  LocalBoundingVolume bbox;
+  bbox.bBoxInit( origin, origin );
+  bbox.bBoxAdd( end + perpendicularDir + otherPerpendicularDir );
+  bbox.bBoxAdd( end + perpendicularDir - otherPerpendicularDir );
+  bbox.bBoxAdd( end - perpendicularDir + otherPerpendicularDir );
+  bbox.bBoxAdd( end - perpendicularDir - otherPerpendicularDir );
+  min = bbox.pt1;
+  max = bbox.pt2;
+}
+
+inline coneGetBSphere( Vec3 origin, Vec3 unitDir, Scalar length, Scalar tanHalfAngle, io Vec3 bSphereCenter, io Scalar bSphereSquaredRadius ) {
+  //This is an approximation!
+  //TODO: compute the precise bsphere mathematically if not too costly (see http://en.wikipedia.org/wiki/Circumscribed_circle; use if tanHalfAngle < 1)
+  if(length < 0) {
+    bSphereCenter = origin;
+    bSphereSquaredRadius = -1;
+    return;
+  }
+  Scalar halfLen = length * 0.5;
+  bSphereCenter = origin + unitDir * halfLen;
+
+  Scalar baseRadius = tanHalfAngle * length;
+  bSphereSquaredRadius = halfLen * halfLen + baseRadius * baseRadius;
+}
+
+function transformedBConeComputeVectors(
+  Mat44 transform, LocalBoundingVolume localBVol, 
+  io Vec3 origin, io Vec3 unitDir, io Scalar length, io Scalar tanHalfAngle, io Scalar cosHalfAngle
+  ) {
+  if( localBVol.type != LocalBoundingVolume_bCone )
+    setError("transformedBConeComputeVectors: error: volume is not a bCone");
+  origin = transform.translation();
+  unitDir = Vec3( -transform.row0.z, -transform.row1.z, -transform.row2.z );
+  length = unitDir.length();
+  if( length > DIVIDEPRECISION )
+    unitDir /= length;
+  else
+    unitDir = Vec3(0.0, 1.0, 0.0);
+  length *= localBVol.sc2;
+  tanHalfAngle = localBVol.sc3;
+  cosHalfAngle = localBVol.sc4;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Helpers
+
+function localBVolGetBSphere( Mat44 transform, LocalBoundingVolume localBVol, io Vec3 bSphereCenter, io Scalar bSphereSquaredRadius ) {
+  if( localBVol.type == LocalBoundingVolume_bCone ) {
+    Vec3 origin, unitDir;
+    Scalar length, tanHalfAngle, cosHalfAngle;
+    transformedBConeComputeVectors( transform, localBVol, 
+      origin, unitDir, length, tanHalfAngle, cosHalfAngle );
+    coneGetBSphere( origin, unitDir, length, tanHalfAngle, bSphereCenter, bSphereSquaredRadius );
+  } else if( localBVol.type == LocalBoundingVolume_bPyramid ) {
+    Vec3 origin, unitDir, nearRightVec, nearUpVec;
+    Scalar near, far;
+    transformedBPyramidComputeVectors( transform, localBVol, origin, unitDir, near, far, nearRightVec, nearUpVec );
+    bPyramidGetBSphere( origin, unitDir, near, far, nearRightVec, nearUpVec,
+                                  bSphereCenter, bSphereSquaredRadius );
+  } else if( localBVol.type == LocalBoundingVolume_bBox ) {
+    transformedBBoxGetBSphere( transform, localBVol.pt1, localBVol.pt2, bSphereCenter, bSphereSquaredRadius );
+  } else if( localBVol.type == LocalBoundingVolume_bSphere ) {
+    transformedBSphereGetBSphere( transform, localBVol.pt1, localBVol.sc1, bSphereCenter, bSphereSquaredRadius );
+   } else //TODO: implement others!
+    report("localBVolGetBSphere: unsupported LocalBoundingVolume type: " + localBVol.getDesc() );
+}
+
+function localBVolGetBBox( Mat44 transform, LocalBoundingVolume localBVol, io Vec3 min, io Vec3 max ) {
+  if( localBVol.type == LocalBoundingVolume_bCone ) {
+    Vec3 origin, unitDir;
+    Scalar length, tanHalfAngle, cosHalfAngle;
+    transformedBConeComputeVectors( transform, localBVol, 
+      origin, unitDir, length, tanHalfAngle, cosHalfAngle );
+    coneGetBBox( origin, unitDir, length, tanHalfAngle, min, max );
+  } else if( localBVol.type == LocalBoundingVolume_bPyramid ) {
+    Vec3 origin, unitDir, nearRightVec, nearUpVec;
+    Scalar near, far;
+    transformedBPyramidComputeVectors( transform, localBVol, origin, unitDir, near, far, nearRightVec, nearUpVec );
+    pyramidGetBBox( origin, unitDir, near, far, nearRightVec, nearUpVec, min, max );
+  } else if( localBVol.type == LocalBoundingVolume_bBox ) {
+    transformedBBoxGetBBox( transform, localBVol, min, max );
+  } else if( localBVol.type == LocalBoundingVolume_bSphere ) {
+    transformedBSphereGetBBox( transform, localBVol, min, max );
+   } else //TODO: implement others!
+    report("localBVolGetBBox: unsupported LocalBoundingVolume type: " + localBVol.getDesc() );
+}
+
+function Scalar getSquaredDistanceToTransformedBVol( LocalBoundingVolume localBVol, Mat44 localBVolTransfo, Vec3 globalPos ) {
+  //Optmize: avoid inverting the Mat44 matrix since row 4 is expected to be empty...
+  Mat33 localBVolScaleRot = localBVolTransfo.upperLeft();
+  Mat33 localBVolInvScaleRot = localBVolScaleRot.inverse();
+  Vec3 localCoord = localBVolInvScaleRot * (globalPos - localBVolTransfo.translation());
+  Vec3 localDistanceVector;
+  if( localBVol.type == LocalBoundingVolume_infinite )
+    return 0;
+  else if( localBVol.type == LocalBoundingVolume_bCone )
+    localDistanceVector = localBVol.bConeGetLocalDistanceVector( localCoord );
+  else if( localBVol.type == LocalBoundingVolume_bSphere ) {
+    localDistanceVector = localBVol.bSphereGetLocalDistanceVector( localCoord );
+  } else
+    report("localBVolGetBSphere: unsupported LocalBoundingVolume type: " + localBVol.getDesc() );
+  return (localBVolScaleRot * localDistanceVector).lengthSquared();//Transform to put back scaling
+}
+
+inline Vec3 segmentPlaneIntersect( Vec3 planeOrigin, Vec3 planeUnitDir, Scalar pt1SignedDist, Vec3 pt1, Vec3 pt2 ) {
+  Vec3 v = pt2-pt1;
+  Scalar d = planeUnitDir.dot(v);
+  if( abs(d) < 1.0e-12 )
+    return pt1;
+  return pt1 + v * -pt1SignedDist / d;
+}
+
+function Boolean clipSegmentWithPlane( Vec3 planeOrigin, Vec3 planeUnitDir, Vec3 seg[2], io Vec3 seg1[2] ) {
+  Scalar signedDist[3];
+  Integer sign[2];
+  for( Size i = 0; i < 2; ++i ) {
+    signedDist[i] = planeUnitDir.dot(seg[i] - planeOrigin);
+    sign[i] = signedDist[i] < 0 ? -1 : 1;
+  }
+  Integer signSum = sign[0]+sign[1];
+  if(signSum == 2) {
+    return false;
+  }
+  if(signSum == -2) {
+    seg1 = seg;
+    return true;
+  }
+  Integer idx[2];
+  if(sign[0] < 0) {
+    idx[0] = 0;
+    idx[1] = 1;
+  } else {
+    idx[0] = 1;
+    idx[1] = 0;
+  }
+  seg1[0] = seg[idx[0]];
+  seg1[1] = segmentPlaneIntersect( planeOrigin, planeUnitDir, signedDist[idx[0]], seg[idx[0]], seg[idx[1]] );
+  return true;
+}
+
+function clipSegmentsWithPlane( Vec3 origin, Vec3 unitDir, io Vec3 segPts[][2] ) {
+  Size target = 0;
+  for( Size i = 0; i < segPts.size(); ++i ) {
+    Vec3 newSeg[2];
+    if( clipSegmentWithPlane( origin, unitDir, segPts[i], newSeg ) )
+      segPts[target++] = newSeg;
+  }
+  segPts.resize(target);
+}
+
+function getBoxSegments( Vec3 pts[8], io Vec3 segPts[][2] ) {
+  segPts.resize(12);
+  segPts[0][0] = pts[0]; segPts[0][1] = pts[1];
+  segPts[1][0] = pts[1]; segPts[1][1] = pts[3];
+  segPts[2][0] = pts[3]; segPts[2][1] = pts[2];
+  segPts[3][0] = pts[2]; segPts[3][1] = pts[0];
+  segPts[4][0] = pts[4]; segPts[4][1] = pts[6];
+  segPts[5][0] = pts[6]; segPts[5][1] = pts[7];
+  segPts[6][0] = pts[7]; segPts[6][1] = pts[5];
+  segPts[7][0] = pts[5]; segPts[7][1] = pts[4];
+  segPts[8][0] = pts[0]; segPts[8][1] = pts[4];
+  segPts[9][0] = pts[1]; segPts[9][1] = pts[5];
+  segPts[10][0] = pts[3]; segPts[10][1] = pts[7];
+  segPts[11][0] = pts[2]; segPts[11][1] = pts[6];
+}
+
+function clipSegmentsWithBBox( LocalBoundingVolume bbox, io Vec3 segPts[][2] ) {
+  clipSegmentsWithPlane( bbox.pt1, Vec3(-1,0,0), segPts);
+  clipSegmentsWithPlane( bbox.pt1, Vec3(0,-1,0), segPts);
+  clipSegmentsWithPlane( bbox.pt1, Vec3(0,0,-1), segPts);
+  clipSegmentsWithPlane( bbox.pt2, Vec3(1,0,0), segPts);
+  clipSegmentsWithPlane( bbox.pt2, Vec3(0,1,0), segPts);
+  clipSegmentsWithPlane( bbox.pt2, Vec3(0,0,1), segPts);
+}
+
+/*
+function clipTriangleWithPlane( Vec3 planeOrigin, Vec3 planeUnitDir, Vec3 tri[3], io Size numTri, io Vec3 tri1[3], io Vec3 tri2[3] ) {
+  Scalar signedDist[3];
+  Integer sign[3];
+  for( Size i = 0; i < 3; ++i ) {
+    signedDist[i] = planeUnitDir.dot(tri[i] - planeOrigin);
+    sign[i] = signedDist[i] < 0 ? -1 : 1;
+  }
+  Integer signSum = sign[0]+sign[1]+sign[2];
+  if(signSum == 3) {
+    numTri = 0;
+    return;
+  }
+  if(signSum == 0) {
+    numTri = 1;
+    tri1 = tri;
+    return;
+  }
+  Integer idx[3];
+  if(signSum == 1) {
+    if(sign[0] < 0) {
+      idx[0] = 0;
+      idx[1] = 1;
+      idx[2] = 2;
+    } else if(sign[1] < 0) {
+      idx[0] = 1;
+      idx[1] = 2;
+      idx[2] = 0;
+    } else {
+      idx[0] = 2;
+      idx[1] = 0;
+      idx[2] = 1;
+    }
+    numTri = 1;
+    tri1[0] = tri[idx[0]];
+    tri1[1] = segmentPlaneIntersect( planeOrigin, planeUnitDir, signedDist[idx[0]], tri[idx[0]], tri[idx[1]] );
+    tri1[2] = segmentPlaneIntersect( planeOrigin, planeUnitDir, signedDist[idx[0]], tri[idx[0]], tri[idx[2]] );
+    return;
+  }
+  if(sign[0] > 0) {
+    idx[0] = 0;
+    idx[1] = 1;
+    idx[2] = 2;
+  } else if(sign[1] > 0) {
+    idx[0] = 1;
+    idx[1] = 2;
+    idx[2] = 0;
+  } else {
+    idx[0] = 2;
+    idx[1] = 0;
+    idx[2] = 1;
+  }
+  numTri = 2;
+  tri1[0] = segmentPlaneIntersect( planeOrigin, planeUnitDir, signedDist[idx[2]], tri[idx[2]], tri[idx[0]] );
+  tri1[1] = tri[idx[1]];
+  tri1[2] = tri[idx[2]];
+
+  tri2[0] = tri1[0];
+  tri2[1] = segmentPlaneIntersect( planeOrigin, planeUnitDir, signedDist[idx[1]], tri[idx[1]], tri[idx[0]] );
+  tri2[2] = tri[idx[1]];
+}
+
+function clipTrianglesWithPlane( Vec3 origin, Vec3 unitDir, io Vec3 triPts[][3] ) {
+  Size prevSize = triPts.size();
+  Size target = 0;
+  for( Size i = 0; i < prevSize; ++i ) {
+    Vec3 newTri[2][3];
+    Size numTri;
+    clipTriangleWithPlane( origin, unitDir, triPts[i], numTri, newTri[0], newTri[1] );
+    for( Size j = 0; j < numTri; ++j ) {
+      if( target <= i )
+        triPts[target++] = newTri[j];
+      else
+        triPts.push(newTri[j]);
+    }
+  }
+  Size numPushed = triPts.size() - prevSize;
+  for( Size i = 0; i < numPushed; ++i )
+    triPts[target++] = triPts[prevSize+i];
+  triPts.resize(target);
+}
+
+function getBoxTriangles( Vec3 pts[8], io Vec3 triPts[][3] ) {
+  triPts.resize(12);
+  triPts[0][0] = pts[0]; triPts[0][1] = pts[2]; triPts[0][2] = pts[3];
+  triPts[1][0] = pts[0]; triPts[1][1] = pts[3]; triPts[1][2] = pts[1];
+  triPts[2][0] = pts[4]; triPts[2][1] = pts[6]; triPts[2][2] = pts[2];
+  triPts[3][0] = pts[4]; triPts[3][1] = pts[2]; triPts[3][2] = pts[0];
+  triPts[4][0] = pts[2]; triPts[4][1] = pts[6]; triPts[4][2] = pts[7];
+  triPts[5][0] = pts[2]; triPts[5][1] = pts[7]; triPts[5][2] = pts[3];
+  triPts[6][0] = pts[0]; triPts[6][1] = pts[1]; triPts[6][2] = pts[5];
+  triPts[7][0] = pts[0]; triPts[7][1] = pts[5]; triPts[7][2] = pts[4];
+  triPts[8][0] = pts[5]; triPts[8][1] = pts[1]; triPts[8][2] = pts[3];
+  triPts[9][0] = pts[5]; triPts[9][1] = pts[3]; triPts[9][2] = pts[7];
+  triPts[10][0] = pts[4]; triPts[10][1] = pts[5]; triPts[10][2] = pts[7];
+  triPts[11][0] = pts[4]; triPts[11][1] = pts[7]; triPts[11][2] = pts[6];
+}
+*/
+
+function clipBBoxWithBVol( LocalBoundingVolume localBVol, Mat44 transform, io LocalBoundingVolume bBox ) {
+
+  Vec3 bboxPts[8];
+  getBBoxPoints( bBox.pt1, bBox.pt2, bboxPts );
+  Vec3 bboxSegPts[][2];
+  getBoxSegments( bboxPts, bboxSegPts );
+
+  LocalBoundingVolume resultBBox;
+  resultBBox.bBoxInit();
+
+  LocalBoundingVolume projBBox;
+  projBBox.bBoxInit(Vec3(-1,-1,-1),Vec3(1,1,1));
+
+  Vec3 bVolPts[8];
+  Mat44 projMat;
+
+  if( localBVol.type == LocalBoundingVolume_bPyramid ) {
+    Vec3 origin, unitDir, nearRightVec, nearUpVec;
+    Scalar near, far;
+    transformedBPyramidComputeVectors( transform, localBVol, origin, unitDir, near, far, nearRightVec, nearUpVec );
+    Vec3 leftPlaneNormal, rightPlaneNormal, upPlaneNormal, downPlaneNormal;
+    bPyramidComputePlanes( origin, unitDir, near, far, nearRightVec, nearUpVec, leftPlaneNormal, rightPlaneNormal, upPlaneNormal, downPlaneNormal );
+
+    //Clip bbox with pyramid
+    Vec3 nearCenter = origin+unitDir*near;
+    Vec3 farCenter = origin+unitDir*far;
+    Scalar ratio = far/near;
+    Vec3 farRightVec = nearRightVec*ratio;
+    Vec3 farUpVec = nearUpVec*ratio;
+    clipSegmentsWithPlane( nearCenter, unitDir.negate(), bboxSegPts );
+    clipSegmentsWithPlane( farCenter, unitDir, bboxSegPts );
+    clipSegmentsWithPlane( origin, rightPlaneNormal, bboxSegPts );
+    clipSegmentsWithPlane( origin, leftPlaneNormal, bboxSegPts );
+    clipSegmentsWithPlane( origin, upPlaneNormal, bboxSegPts );
+    clipSegmentsWithPlane( origin, downPlaneNormal, bboxSegPts );
+
+    for( Size i = 0; i < bboxSegPts.size(); ++i ) {
+      resultBBox.bBoxAdd(bboxSegPts[i][0]);
+      resultBBox.bBoxAdd(bboxSegPts[i][1]);
+    }
+
+    //Set bVol points; to be added if contained by bbox
+    bVolPts[0] = nearCenter+nearRightVec+nearUpVec;
+    bVolPts[1] = nearCenter-nearRightVec+nearUpVec;
+    bVolPts[2] = nearCenter+nearRightVec-nearUpVec;
+    bVolPts[3] = nearCenter-nearRightVec-nearUpVec;
+    bVolPts[4] = farCenter+farRightVec+farUpVec;
+    bVolPts[5] = farCenter-farRightVec+farUpVec;
+    bVolPts[6] = farCenter+farRightVec-farUpVec;
+    bVolPts[7] = farCenter-farRightVec-farUpVec;
+
+    projMat = localBVol.bPyramidGetPerspectiveMat44() * transform.inverse();
+
+  } else if( localBVol.type == LocalBoundingVolume_bBox ) {
+    Vec3 min, dX, dY, dZ;
+    transformedBBoxGetVectors( transform, localBVol, min, dX, dY, dZ );
+    Vec3 max = min + dX + dY + dZ;
+
+    clipSegmentsWithPlane( min, dX.negate(), bboxSegPts );
+    clipSegmentsWithPlane( min, dY.negate(), bboxSegPts );
+    clipSegmentsWithPlane( min, dZ.negate(), bboxSegPts );
+    clipSegmentsWithPlane( max, dX, bboxSegPts );
+    clipSegmentsWithPlane( max, dY, bboxSegPts );
+    clipSegmentsWithPlane( max, dZ, bboxSegPts );
+
+    for( Size i = 0; i < bboxSegPts.size(); ++i ) {
+      resultBBox.bBoxAdd(bboxSegPts[i][0]);
+      resultBBox.bBoxAdd(bboxSegPts[i][1]);
+    }
+
+    //Set bVol points; to be added if contained by bbox
+    bVolPts[0] = min;
+    bVolPts[1] = min+dX;
+    bVolPts[2] = min+dY;
+    bVolPts[3] = max-dZ;
+    bVolPts[4] = min+dZ;
+    bVolPts[5] = max-dY;
+    bVolPts[6] = max-dX;
+    bVolPts[7] = max;
+
+    projMat = localBVol.bBoxGetOrthographicMat44() * transform.inverse();
+  }
+
+  for(Size i = 0; i < 8; ++i) {
+    if(bBox.bBoxContains(bVolPts[i]))
+      resultBBox.bBoxAdd(bVolPts[i]);
+  }
+
+  //Clip bVol with bbox
+  getBoxSegments( bVolPts, bboxSegPts );
+  clipSegmentsWithBBox( bBox, bboxSegPts );
+
+  for( Size i = 0; i < bboxSegPts.size(); ++i ) {
+    resultBBox.bBoxAdd(bboxSegPts[i][0]);
+    resultBBox.bBoxAdd(bboxSegPts[i][1]);
+  }
+
+  //Add bbox points contained by bVol
+  for(Size i = 0; i < 8; ++i) {
+    Vec3 projPt = projMat * bboxPts[i];
+    if(projBBox.bBoxContains(projPt))
+      resultBBox.bBoxAdd(bboxPts[i]);
+  }
+  bBox = resultBBox;
+}
+
+function getDirectionalBBoxFromBVol( Vec3 unitDirection, LocalBoundingVolume localBVol, Mat44 transform, LocalBoundingVolume worldBBox, io Mat44 bboxTransform, io LocalBoundingVolume bbox ) {
+  Quat directionToMinusZ;
+  directionToMinusZ.setFrom2Vectors(unitDirection, Vec3(0,0,-1), true);
+  Xfo worldToBBox;
+  Vec3 localBVolPts[8];
+  Vec3 localBVolXAxis, localBVolYAxis;
+
+  if( localBVol.type == LocalBoundingVolume_bPyramid ) {
+    Vec3 origin, unitDir, nearRightVec, nearUpVec;
+    Scalar near, far;
+    transformedBPyramidComputeVectors( transform, localBVol, origin, unitDir, near, far, nearRightVec, nearUpVec );
+
+    localBVolXAxis = nearRightVec;
+    localBVolYAxis = nearUpVec;
+
+    Vec3 nearCenter = origin+unitDir*near;
+    Vec3 farCenter = origin+unitDir*far;
+    Scalar ratio = far/near;
+    Vec3 farRightVec = nearRightVec*ratio;
+    Vec3 farUpVec = nearUpVec*ratio;
+
+    localBVolPts[0] = nearCenter+nearRightVec+nearUpVec;
+    localBVolPts[1] = nearCenter-nearRightVec+nearUpVec;
+    localBVolPts[2] = nearCenter+nearRightVec-nearUpVec;
+    localBVolPts[3] = nearCenter-nearRightVec-nearUpVec;
+    localBVolPts[4] = farCenter+farRightVec+farUpVec;
+    localBVolPts[5] = farCenter-farRightVec+farUpVec;
+    localBVolPts[6] = farCenter+farRightVec-farUpVec;
+    localBVolPts[7] = farCenter-farRightVec-farUpVec;
+  } else if( localBVol.type == LocalBoundingVolume_bBox ) {
+    Vec3 min, dX, dY, dZ;
+    transformedBBoxGetVectors( transform, localBVol, min, dX, dY, dZ );
+
+    localBVolXAxis = dX;
+    localBVolYAxis = dY;
+
+    Vec3 max = min + dX + dY + dZ;
+    localBVolPts[0] = min;
+    localBVolPts[1] = min+dX;
+    localBVolPts[2] = min+dY;
+    localBVolPts[3] = max-dZ;
+    localBVolPts[4] = min+dZ;
+    localBVolPts[5] = max-dY;
+    localBVolPts[6] = max-dX;
+    localBVolPts[7] = max;
+  }
+
+  //Align light shadow with screen X or Y
+  Vec3 transformedRightVec = directionToMinusZ.rotateVector(localBVolXAxis);
+  Vec3 transformedUpVec = directionToMinusZ.rotateVector(localBVolYAxis);
+
+  Vec2 projectedRightVec = Vec2(transformedRightVec.x, transformedRightVec.y);
+  Vec2 projectedUpVec = Vec2(transformedUpVec.x, transformedUpVec.y);
+  Vec2 referenceUpVec;
+  if( projectedRightVec.lengthSquared() > projectedUpVec.lengthSquared() )
+    referenceUpVec = projectedRightVec;
+  else
+    referenceUpVec = projectedUpVec;
+
+  if(referenceUpVec.x < 0)
+    referenceUpVec = referenceUpVec.negate();
+
+  Quat alignX;
+  alignX.setFrom2Vectors(Vec3( referenceUpVec.x, referenceUpVec.y, 0).unit(), Vec3(1,0,0), true);
+  worldToBBox.ori = alignX*directionToMinusZ;
+
+  //Compute a bbox in directional space
+  bbox.bBoxInit();
+  for( Size i = 0; i < 8; ++i )
+    bbox.bBoxAdd( worldToBBox.ori.rotateVector(localBVolPts[i]) );
+
+  //Adjust on world bbox
+  LocalBoundingVolume clippedWorldBBox = worldBBox;
+  clipBBoxWithBVol( localBVol, transform, clippedWorldBBox );
+  Vec3 rotatedWorldMin, rotatedWorldMax;
+  Mat44 worldToBBoxMat = worldToBBox.toMat44();
+  transformedBBoxGetBBox( worldToBBoxMat, clippedWorldBBox, rotatedWorldMin, rotatedWorldMax);
+
+  //X and Y: shrink to world bbox (increase directional light shadowmap precision)
+  if( rotatedWorldMin.x > bbox.pt1.x ) {
+    if( rotatedWorldMin.x < bbox.pt2.x )
+      bbox.pt1.x = rotatedWorldMin.x;
+    else
+      bbox.pt1.x = bbox.pt2.x;
+  }
+  if( rotatedWorldMin.y > bbox.pt1.y ) {
+    if( rotatedWorldMin.y < bbox.pt2.y )
+      bbox.pt1.y = rotatedWorldMin.y;
+    else
+      bbox.pt1.y = bbox.pt2.y;
+  }
+
+  if( rotatedWorldMax.x < bbox.pt2.x ) {
+    if( rotatedWorldMax.x > bbox.pt1.x )
+      bbox.pt2.x = rotatedWorldMax.x;
+    else
+      bbox.pt2.x = bbox.pt1.x;
+  }
+  if( rotatedWorldMax.y < bbox.pt2.y ) {
+    if( rotatedWorldMax.y > bbox.pt1.y )
+      bbox.pt2.y = rotatedWorldMax.y;
+    else
+      bbox.pt2.y= bbox.pt1.y;
+  }
+
+  //Adjust depth: -Z: light from closest world to end of viewer volume OR end of world bbox
+  if( rotatedWorldMin.z > bbox.pt1.z )
+    bbox.pt1.z = rotatedWorldMin.z;
+
+  Scalar depthBound = (worldBBox.pt2-worldBBox.pt1).length();
+  bbox.pt2.z += depthBound;
+
+  LocalBoundingVolume clippedLightBBox = bbox;
+  clipBBoxWithBVol( worldBBox, worldToBBoxMat, clippedLightBBox );
+  bbox.pt2.z = clippedLightBBox.pt2.z;
+
+  worldToBBox.tr = (bbox.pt1+bbox.pt2)*-0.5;
+  bbox.pt1 += worldToBBox.tr;
+  bbox.pt2 += worldToBBox.tr;
+
+  bboxTransform = worldToBBox.inverse().toMat44();
+}
+
+inline bBox2DAddPt(io Vec2 min, io Vec2 max, Vec2 pt) {
+  if( pt.x < min.x )
+    min.x = pt.x;
+  else if( pt.x > max.x )
+    max.x = pt.x;
+
+  if( pt.y < min.y )
+    min.y = pt.y;
+  else if( pt.y > max.y )
+    max.y = pt.y;
+}
+
+
+function Boolean LocalBoundingVolume.pyramidNearPlaneIntersectsBVol?( Mat44 pyrTransform, LocalBoundingVolume localBVol, Mat44 transform ) {
+  if( this.type != LocalBoundingVolume_bPyramid )
+    setError("pyramidNearPlaneIntersectsBVol: error: volume is not a bPyramid");
+
+  Vec2 halfPlaneSize = Vec2(this.sc1, this.sc2)*0.5;
+
+  if( localBVol.type == LocalBoundingVolume_bSphere ) {
+    if( localBVol.sc1 < 0 )//infinite
+      return true;
+    Mat44 pyrToBVol = transform.inverse()*pyrTransform;
+    Vec3 localCenter;
+    Scalar localSquaredRadius;
+    transformedBSphereGetBSphere( pyrToBVol, localBVol.pt1, localBVol.sc1, localCenter, localSquaredRadius );
+    Scalar nearZ = -this.sc3;
+    Scalar zDist = nearZ-localCenter.z;
+    Scalar sqZDist = zDist*zDist;
+    if( sqZDist > localSquaredRadius )
+      return false;
+    Scalar sqRadiusAtNear = localSquaredRadius - sqZDist;
+    Vec2 relativeCenter = Vec2(abs(localCenter.x), abs(localCenter.y));
+    Vec2 distVec = relativeCenter - halfPlaneSize;
+    if( distVec.x < 0.0 )
+      distVec.x = 0.0;
+    if( distVec.y < 0.0 )
+      distVec.y = 0.0;
+    return distVec.lengthSquared() <= sqRadiusAtNear;
+  } else if( localBVol.type == LocalBoundingVolume_bCone ) {
+    //Answer is approximative in this case: might return some false positives, but only a few
+    //To improve... if time.
+    Mat44 bVolToPyr = pyrTransform.inverse()*transform;
+    Vec3 coneOrig = bVolToPyr.translation();
+    coneOrig.z += this.sc3;
+    Vec3 coneDir = Vec3(-bVolToPyr.row0.z, -bVolToPyr.row1.z, -bVolToPyr.row2.z).unit();
+    if( coneOrig.z < 0 ) {
+      coneOrig.z = -coneOrig.z;
+      coneDir.z = -coneDir.z;
+    }
+    Scalar coneLen = localBVol.sc2;
+    Boolean infinite = coneLen < 0;
+    if( infinite )
+      coneLen = 1;
+    Vec3 coneEnd = coneOrig + coneDir * (infinite ? 1 : coneLen);
+    Vec2 projDir = Vec2(coneDir.x, coneDir.y);
+    Scalar projCosAngle = projDir.length();
+    Vec2 normProjDir;
+    if( projCosAngle > 1.0e-12 )
+      normProjDir = projDir / projCosAngle;
+    else
+      normProjDir = Vec2(0,1);//Any unit vec perp to Z
+
+    Vec3 coneEndZMinVec = coneLen * localBVol.sc3 * Vec3(coneDir.z*normProjDir.x, coneDir.z*normProjDir.y, -projCosAngle).unit();
+    if( coneEndZMinVec.z > 0 )
+      coneEndZMinVec = coneEndZMinVec.negate();
+
+    Vec3 coneEndZMin = coneEnd + coneEndZMinVec;
+    if( !infinite && coneEndZMin.z >= 0 || infinite && coneEndZMin.z >= coneOrig.z )
+      return false;//Cone doesn't cross the near infinite plane
+
+    Vec3 origToMinVec = coneEndZMin-coneOrig;
+    Scalar deltaZ = -origToMinVec.z;
+    if( deltaZ < 1.0e-12 )
+      return false;
+    Vec3 minIntersectPos = coneOrig + origToMinVec*(coneOrig.z/deltaZ);
+    if(  minIntersectPos.x >= -halfPlaneSize.x && minIntersectPos.x <= halfPlaneSize.x
+      && minIntersectPos.y >= -halfPlaneSize.y && minIntersectPos.y <= halfPlaneSize.y )
+      return true;
+
+    //get max signed proj dists of bbox corners, from minIntersectPos in normProjDir
+    Vec2 minIntersectPosV2 = Vec2(minIntersectPos.x, minIntersectPos.y);
+    Scalar maxSignedProj = (Vec2(-halfPlaneSize.x,-halfPlaneSize.y)-minIntersectPosV2).dot(normProjDir);
+    Scalar minSignedProj = maxSignedProj;
+    Scalar signedProj = (Vec2(halfPlaneSize.x,-halfPlaneSize.y)-minIntersectPosV2).dot(normProjDir);
+    if( signedProj > maxSignedProj )
+      maxSignedProj = signedProj;
+    if( signedProj < minSignedProj )
+      minSignedProj = signedProj;
+    signedProj = (Vec2(-halfPlaneSize.x,halfPlaneSize.y)-minIntersectPosV2).dot(normProjDir);
+    if( signedProj > maxSignedProj )
+      maxSignedProj = signedProj;
+    if( signedProj < minSignedProj )
+      minSignedProj = signedProj;
+    signedProj = (Vec2(halfPlaneSize.x,halfPlaneSize.y)-minIntersectPosV2).dot(normProjDir);
+    if( signedProj > maxSignedProj )
+      maxSignedProj = signedProj;
+    if( signedProj < minSignedProj )
+      minSignedProj = signedProj;
+
+    if( maxSignedProj < 0 )
+      return false;
+
+    Scalar maxCutoff = maxSignedProj;
+    Scalar maxAmplitudeDist = maxCutoff;
+
+    Vec3 coneEndZMax = coneEnd - coneEndZMinVec;
+    Vec3 origToMaxVec = coneEndZMax-coneOrig;
+    deltaZ = -origToMaxVec.z;
+
+    Boolean maxZVecIntersects = deltaZ > 1.0e-12;
+    Vec3 maxZVecIntersectPos;
+    if( maxZVecIntersects ) {
+      maxZVecIntersectPos = coneOrig + origToMaxVec*(coneOrig.z/deltaZ);
+      signedProj = (Vec2(maxZVecIntersectPos.x,maxZVecIntersectPos.y)-minIntersectPosV2).dot(normProjDir);
+      if( signedProj < minSignedProj )
+        return false;
+      //It is an ellipse: max amplitude is at half dist
+      if( signedProj < maxAmplitudeDist )
+        maxAmplitudeDist = signedProj;
+    }
+
+    if( !infinite && coneEndZMax.z > 1.0e-12 ) {
+      //Check light cutoff intersection
+      Vec3 maxToMinVec = coneEndZMin-coneEndZMax;
+      Vec3 cutoffIntersectPos = coneEndZMax + maxToMinVec*(coneEndZMax.z/-maxToMinVec.z);
+      signedProj = (Vec2(cutoffIntersectPos.x,cutoffIntersectPos.y)-minIntersectPosV2).dot(normProjDir);
+      if( signedProj < maxAmplitudeDist )
+        maxAmplitudeDist = signedProj;
+    }
+
+    Vec2 upVec = normProjDir*maxAmplitudeDist;
+
+    Vec3 maxAmplitudePos = minIntersectPos + Vec3(upVec.x, upVec.y, 0);
+    Scalar maxAmplitudeLightDist = (maxAmplitudePos-coneOrig).dot(coneDir);
+    Scalar coneRadAtMaxAmplitudeLightDist = maxAmplitudeLightDist*localBVol.sc3;
+    Vec3 maxAmpRadVec = maxAmplitudePos - (coneOrig + maxAmplitudeLightDist*coneDir);
+    Scalar rightDistAtMaxAmplitude;
+    if(Vec2(maxAmpRadVec.x,maxAmpRadVec.y).dot(normProjDir) <= 0) {
+      //Safe to take radius at cutoff pos (radius increases with cutoff dist); 
+      //else the radius maxima is not obvious to determine so play safe and take max radius (coneRadAtMaxAmplitudeLightDist)
+      Scalar radAtMaxAmplitudeLightDist = maxAmpRadVec.length();
+      rightDistAtMaxAmplitude = coneRadAtMaxAmplitudeLightDist*coneRadAtMaxAmplitudeLightDist - radAtMaxAmplitudeLightDist*radAtMaxAmplitudeLightDist;
+      if( rightDistAtMaxAmplitude > 0 )//Should not, but play safe with rounding errors
+        rightDistAtMaxAmplitude = sqrt(rightDistAtMaxAmplitude);
+      else
+        rightDistAtMaxAmplitude = 0;
+    } else
+      rightDistAtMaxAmplitude = coneRadAtMaxAmplitudeLightDist;//Play safe: this is not an ellipse, but more an oval...
+
+    Vec2 rightVec = Vec2(-normProjDir.y, normProjDir.x)*rightDistAtMaxAmplitude;
+
+    //This is where we approximate. Just build a bbox around the min/max/left/right and compare
+    //Note: using a rectangle VS rotatedRectangle intersection routine would be more precise here.
+    Vec2 min = minIntersectPosV2-rightVec;
+    Vec2 max = min;
+    bBox2DAddPt(min, max, minIntersectPosV2+rightVec);
+    bBox2DAddPt(min, max, Vec2(maxAmplitudePos.x, maxAmplitudePos.y)-rightVec);
+    bBox2DAddPt(min, max, Vec2(maxAmplitudePos.x, maxAmplitudePos.y)+rightVec);
+
+    return min.x < halfPlaneSize.x && max.x > -halfPlaneSize.x &&  min.y < halfPlaneSize.y && max.y > -halfPlaneSize.y;
+  } else
+    setError("pyramidNearPlaneIntersectsBVol: unsupported LocalBoundingVolume type: " + localBVol.getDesc());
+  return false;
+}
+
+function String LocalBoundingVolume.getDesc() {
+  if( this.type == LocalBoundingVolume_infinite )
+    return "infinite bVol";
+  else if( this.type == LocalBoundingVolume_bBox )
+    return "bBox: min=" + this.pt1 + " max=" + this.pt2;
+  else if( this.type == LocalBoundingVolume_bSphere )
+    return "bSphere: center=" + this.pt1 + " radius=" + this.sc1;
+  else if( this.type == LocalBoundingVolume_bCone )
+    return "bCone: radAngle=" + this.sc1 + " cutoff=" + this.sc2 + " cosAngle=" + this.sc3;
+  else if( this.type == LocalBoundingVolume_bPyramid )
+    return "bPyramid: nearWidth=" + this.sc1 + " nearHeight=" + this.sc2 + " near=" + this.sc3 + " far=" + this.sc4;
+
+  return "invalid LocalBoundingVolume";
+}

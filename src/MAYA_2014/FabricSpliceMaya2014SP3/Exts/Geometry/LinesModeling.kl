@@ -1,0 +1,485 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+ 
+require Math, FabricStatistics;
+
+
+function Lines.addSegmentedLine!(Vec3 from, Vec3 to, Integer numSegments) {
+  Ref<GeometryAttributes> attributes = this.getAttributes();
+  Size firstPoint = attributes.size();
+  Integer iidx = this.indices.size();
+  attributes.resize(firstPoint + Size(numSegments * 2));
+  this.indices.resize(iidx +  Size(numSegments * 2));
+
+  Ref<Vec3Attribute> positions = attributes.getOrCreatePositions();
+  
+  if(numSegments > 0) {
+    for (Index i = 0; i < numSegments; i++) {
+      positions.values[firstPoint + (i*2)] = from.linearInterpolate(to, Scalar(i)/(Scalar(numSegments)-0.5));
+      positions.values[firstPoint + (i*2)+1] = from.linearInterpolate(to, (Scalar(i)+0.5)/(Scalar(numSegments)-0.5));
+      this.indices[iidx] = firstPoint + (i*2); iidx++;
+      this.indices[iidx] = firstPoint + (i*2)+1; iidx++;
+    }
+    positions.incrementVersion();
+    this.incrementVersion();
+  }
+}
+
+function Lines.addLine!(Vec3 start, Vec3 end) {
+  Ref<GeometryAttributes> attributes = this.getAttributes();
+  Size firstPoint = attributes.size();
+  attributes.resize(firstPoint + 2);
+  Ref<Vec3Attribute> positions = attributes.getOrCreatePositions();
+  positions.values[firstPoint + 0] = start;
+  positions.values[firstPoint + 1] = end;
+  this.addLine(firstPoint, firstPoint + 1);
+  positions.incrementVersion();
+  this.incrementVersion();
+}
+
+
+function Lines.addLineStrip!(Vec3 strip[]) {
+  if(strip.size == 0)
+    return;
+  Ref<GeometryAttributes> attributes = this.getAttributes();
+  Size firstPoint = attributes.size();
+  attributes.resize(firstPoint + strip.size());
+  Ref<Vec3Attribute> positions = attributes.getOrCreatePositions();
+  for (Integer i = 0; i < strip.size(); i++) {
+    positions.values[firstPoint + i] = strip[i];
+  }
+
+  this.addLine(firstPoint, firstPoint + strip.size() - 1);
+  positions.incrementVersion();
+  this.incrementVersion();
+}
+
+
+
+
+function Lines.addAxes!(Xfo xfo, Scalar size) {
+  Ref<GeometryAttributes> attributes = this.getAttributes();
+  Ref<Vec3Attribute> positions = attributes.getOrCreatePositions();
+
+  Integer iidx = this.indices.size();
+  Integer vidx = attributes.size();
+  Integer cidx = attributes.size();
+
+  attributes.resize(vidx + Size(18));
+  this.indices.resize(iidx + 23);
+
+  ColorAttribute colors = attributes.getOrCreateColorAttribute("vertexColors");
+
+
+  // X-axis
+  positions.values[vidx++] = xfo.transformVector(Vec3( size, 0.0, 0.0));
+  positions.values[vidx++] = xfo.transformVector(Vec3( 0.0, 0.0, 0.0));
+  this.indices[iidx++] = 0; this.indices[iidx++] = 1;
+  positions.values[vidx++] = xfo.transformVector(Vec3( 1.2 * size, 0.2 * size, 0.0));
+  positions.values[vidx++] = xfo.transformVector(Vec3( 1.6 * size, - 0.2 * size, 0.0));
+  this.indices[iidx++] = 2; this.indices[iidx++] = 3;
+  positions.values[vidx++] = xfo.transformVector(Vec3( 1.6 * size, 0.2 * size, 0.0));
+  positions.values[vidx++] = xfo.transformVector(Vec3( 1.2 * size, - 0.2 * size, 0.0));
+  this.indices[iidx++] = 4; this.indices[iidx++] = 5;
+  colors.values[cidx++] = Color(1.0,0.0,0.0,1.0);
+  colors.values[cidx++] = Color(1.0,0.0,0.0,1.0);
+  colors.values[cidx++] = Color(1.0,0.0,0.0,1.0);
+  colors.values[cidx++] = Color(1.0,0.0,0.0,1.0);
+  colors.values[cidx++] = Color(1.0,0.0,0.0,1.0);
+  colors.values[cidx++] = Color(1.0,0.0,0.0,1.0);
+
+  // Y-axis
+  positions.values[vidx++] = xfo.transformVector(Vec3( 0.0, size, 0.0));
+  positions.values[vidx++] = xfo.transformVector(Vec3( 0.0, 0.0, 0.0));
+  this.indices[iidx++] = 6; this.indices[iidx++] = 7;
+  positions.values[vidx++] = xfo.transformVector(Vec3( 0.0, 1.2 * size, 0.0));
+  positions.values[vidx++] = xfo.transformVector(Vec3( 0.0, 1.4 * size, 0.0));
+  this.indices[iidx++] = 8; this.indices[iidx++] = 9;
+  positions.values[vidx++] = xfo.transformVector(Vec3( -0.2 * size, 1.6 * size, 0.0));
+  this.indices[iidx++] = 9; this.indices[iidx++] = 10;
+  positions.values[vidx++] = xfo.transformVector(Vec3( 0.2 * size, 1.6 * size, 0.0));
+  this.indices[iidx++] = 9; this.indices[iidx++] = 11;
+  colors.values[cidx++] = Color(0.0,1.0,0.0,1.0);
+  colors.values[cidx++] = Color(0.0,1.0,0.0,1.0);
+  colors.values[cidx++] = Color(0.0,1.0,0.0,1.0);
+  colors.values[cidx++] = Color(0.0,1.0,0.0,1.0);
+  colors.values[cidx++] = Color(0.0,1.0,0.0,1.0);
+  colors.values[cidx++] = Color(0.0,1.0,0.0,1.0);
+
+  // Z-axis
+  positions.values[vidx++] = xfo.transformVector(Vec3( 0.0, 0.0, size));
+  positions.values[vidx++] = xfo.transformVector(Vec3( 0.0, 0.0, 0.0));
+  this.indices[iidx++] = 12; this.indices[iidx++] = 13;
+  positions.values[vidx++] = xfo.transformVector(Vec3( 0.0, - 0.2 * size, 1.2 * size));
+  positions.values[vidx++] = xfo.transformVector(Vec3( 0.0, - 0.2 * size, 1.6 * size));
+  this.indices[iidx++] = 14; this.indices[iidx++] = 15;
+  positions.values[vidx++] = xfo.transformVector(Vec3( 0.0, 0.2 * size, 1.2 * size));
+  this.indices[iidx++] = 15; this.indices[iidx++] = 16;
+  positions.values[vidx++] = xfo.transformVector(Vec3( 0.0, 0.2 * size, 1.6 * size));
+  this.indices[iidx++] = 16; this.indices[iidx++] = 17;
+
+  colors.values[cidx++] = Color(0.0,0.0,1.0,1.0);
+  colors.values[cidx++] = Color(0.0,0.0,1.0,1.0);
+  colors.values[cidx++] = Color(0.0,0.0,1.0,1.0);
+  colors.values[cidx++] = Color(0.0,0.0,1.0,1.0);
+  colors.values[cidx++] = Color(0.0,0.0,1.0,1.0);
+  colors.values[cidx++] = Color(0.0,0.0,1.0,1.0);
+
+  positions.incrementVersion();
+  colors.incrementVersion();
+  this.incrementVersion();
+}
+
+
+function Lines.drawBoundingBox!(Xfo xfo, Vec3 bboxmin, Vec3 bboxmax) {
+  if(this.indices.size() != 24)
+  {
+    Ref<GeometryAttributes> attributes = this.getAttributes();
+    Ref<Vec3Attribute> positions = attributes.getOrCreatePositions();
+    Ref<Vec3Attribute> normals = attributes.getOrCreateNormals();
+
+    attributes.resize(8);
+
+    positions.values[0] = Vec3(bboxmin.x, bboxmin.y, bboxmin.z);
+    positions.values[1] = Vec3(bboxmin.x, bboxmax.y, bboxmin.z);
+    positions.values[2] = Vec3(bboxmin.x, bboxmax.y, bboxmax.z);
+    positions.values[3] = Vec3(bboxmin.x, bboxmin.y, bboxmax.z);
+
+    positions.values[4] = Vec3(bboxmax.x, bboxmin.y, bboxmin.z);
+    positions.values[5] = Vec3(bboxmax.x, bboxmax.y, bboxmin.z);
+    positions.values[6] = Vec3(bboxmax.x, bboxmax.y, bboxmax.z);
+    positions.values[7] = Vec3(bboxmax.x, bboxmin.y, bboxmax.z);
+
+    positions.incrementVersion();
+
+    normals.values[0] = Vec3(-1, -1, -1).unit();
+    normals.values[1] = Vec3(-1, 1, -1).unit();
+    normals.values[2] = Vec3(-1, 1, 1).unit();
+    normals.values[3] = Vec3(-1, -1, 1).unit();
+
+    normals.values[4] = Vec3(1, -1, -1).unit();
+    normals.values[5] = Vec3(1, 1, -1).unit();
+    normals.values[6] = Vec3(1, 1, 1).unit();
+    normals.values[7] = Vec3(1, -1, 1).unit();
+
+    normals.incrementVersion();
+
+    Integer i = 0;
+    this.indices.resize(24);
+    this.indices[i++] = 0; this.indices[i++] = 4;
+    this.indices[i++] = 1; this.indices[i++] = 5;
+    this.indices[i++] = 2; this.indices[i++] = 6;
+    this.indices[i++] = 3; this.indices[i++] = 7;
+
+    this.indices[i++] = 0; this.indices[i++] = 1;
+    this.indices[i++] = 1; this.indices[i++] = 2;
+    this.indices[i++] = 2; this.indices[i++] = 3;
+    this.indices[i++] = 3; this.indices[i++] = 0;
+
+    this.indices[i++] = 4; this.indices[i++] = 5;
+    this.indices[i++] = 5; this.indices[i++] = 6;
+    this.indices[i++] = 6; this.indices[i++] = 7;
+    this.indices[i++] = 7; this.indices[i++] = 4;
+    this.incrementVersion();
+  }
+  else 
+  {
+    Ref<GeometryAttributes> attributes = this.getAttributes();
+    Ref<Vec3Attribute> positions = attributes.getOrCreatePositions();
+    if(!positions.values[0].almostEqual(bboxmin) ||
+       !positions.values[6].almostEqual(bboxmax)) {
+      positions.values[0] = Vec3(bboxmin.x, bboxmin.y, bboxmin.z);
+      positions.values[1] = Vec3(bboxmin.x, bboxmax.y, bboxmin.z);
+      positions.values[2] = Vec3(bboxmin.x, bboxmax.y, bboxmax.z);
+      positions.values[3] = Vec3(bboxmin.x, bboxmin.y, bboxmax.z);
+      positions.values[4] = Vec3(bboxmax.x, bboxmin.y, bboxmin.z);
+      positions.values[5] = Vec3(bboxmax.x, bboxmax.y, bboxmin.z);
+      positions.values[6] = Vec3(bboxmax.x, bboxmax.y, bboxmax.z);
+      positions.values[7] = Vec3(bboxmax.x, bboxmin.y, bboxmax.z);
+      positions.incrementVersion();
+    }
+  }
+}
+
+
+function Lines.drawCameraDisplay!( Scalar focalDistance, Scalar fovY, Size windowWidth, Size windowHeight) {
+  Ref<GeometryAttributes> attributes = this.getAttributes();
+  Ref<Vec3Attribute> positions = attributes.getOrCreatePositions();
+  attributes.resize(13);
+  this.indices.resize(48);
+
+  Scalar size = focalDistance * 0.02;
+
+  positions.values[0] = Vec3(-size, -size, -size);
+  positions.values[1] = Vec3(-size, size, -size);
+  positions.values[2] = Vec3(-size, size, size);
+  positions.values[3] = Vec3(-size, -size, size);
+
+  positions.values[4] = Vec3(size, -size, -size);
+  positions.values[5] = Vec3(size, size, -size);
+  positions.values[6] = Vec3(size, size, size);
+  positions.values[7] = Vec3(size, -size, size);
+
+  Scalar height = abs(focalDistance) * tan(fovY * 0.5);
+  Scalar aspectRatio = Scalar(windowWidth)/Scalar(windowHeight);
+  Scalar width = height * aspectRatio;
+  positions.values[8] = Vec3(width, -height, -focalDistance);
+  positions.values[9] = Vec3(width, height, -focalDistance);
+  positions.values[10] = Vec3(-width, height, -focalDistance);
+  positions.values[11] = Vec3(-width, -height, -focalDistance);
+  positions.values[12] = Vec3(0, 0, 0);
+  positions.incrementVersion();
+
+  Integer i = 0;
+  this.indices[i++] = 0; this.indices[i++] = 4;
+  this.indices[i++] = 1; this.indices[i++] = 5;
+  this.indices[i++] = 2; this.indices[i++] = 6;
+  this.indices[i++] = 3; this.indices[i++] = 7;
+
+  this.indices[i++] = 0; this.indices[i++] = 1;
+  this.indices[i++] = 1; this.indices[i++] = 2;
+  this.indices[i++] = 2; this.indices[i++] = 3;
+  this.indices[i++] = 3; this.indices[i++] = 0;
+
+  this.indices[i++] = 4; this.indices[i++] = 5;
+  this.indices[i++] = 5; this.indices[i++] = 6;
+  this.indices[i++] = 6; this.indices[i++] = 7;
+  this.indices[i++] = 7; this.indices[i++] = 4;
+
+  this.indices[i++] = 8; this.indices[i++] = 9;
+  this.indices[i++] = 9; this.indices[i++] = 10;
+  this.indices[i++] = 10; this.indices[i++] = 11;
+  this.indices[i++] = 11; this.indices[i++] = 8;
+
+  this.indices[i++] = 8; this.indices[i++] = 12;
+  this.indices[i++] = 9; this.indices[i++] = 12;
+  this.indices[i++] = 10; this.indices[i++] = 12;
+  this.indices[i++] = 11; this.indices[i++] = 12;
+  this.incrementVersion();
+}
+
+// adds a line arc around the Y axis given a transform for the arc, 
+// a radius, a angular min and max as a Vec3 and a detail setting. 
+// the detail describes the number of line segments of the circle (minimum of 3).
+function Lines.addArc!(Xfo xfo, Scalar radius, Vec2 angleMinMax, Integer detail) {
+  Ref<GeometryAttributes> attributes = this.getAttributes();
+  Size firstPoint = attributes.size();
+  attributes.resize(firstPoint + Size(detail) + 1);
+
+  Ref<Vec3Attribute> positions = attributes.getOrCreatePositions();
+  
+  if(detail > 0) {
+    Scalar angle = (angleMinMax.y - angleMinMax.x) / Scalar(detail);
+    for (Index i = 0; i <= detail; i++) {
+      positions.values[firstPoint+i] = xfo.transformVector( Vec3(sin((angle * i)+angleMinMax.x) * radius, 0.0, cos((angle * i)+angleMinMax.x) * radius));
+    }
+    this.addLine(firstPoint, firstPoint + Size(detail));
+  }
+  positions.incrementVersion();
+  this.incrementVersion();
+}
+
+// draws a closed circle. 
+function Lines.addCircle!(Xfo xfo, Scalar radius, Size detail) {
+  Ref<GeometryAttributes> attributes = this.getAttributes();
+  Size firstPoint = attributes.size();
+  attributes.resize(firstPoint + Size(detail));
+
+  Ref<Vec3Attribute> positions = attributes.getOrCreatePositions();
+  
+  if(detail > 0) {
+    Scalar angle = TWO_PI / Scalar(detail);
+    Index i;
+    for (i = 0; i < detail; i++) {
+      positions.values[firstPoint+i] = xfo.transformVector( Vec3(sin(angle * i) * radius, 0.0, cos(angle * i) * radius));
+    }
+    this.addClosedLine(firstPoint, firstPoint + Size(detail) - 1);
+    positions.incrementVersion();
+    this.incrementVersion();
+  }
+}
+
+function Lines.addSphere!(Xfo xfo, Scalar radius, Size detail) {
+  Quat offset;
+  Xfo circleXfo;
+
+  this.addCircle(xfo, radius, detail);
+
+  offset.setFromAxisAndAngle(Vec3(1.0, 0.0, 0.0), HALF_PI);
+  circleXfo = xfo;
+  circleXfo.ori = xfo.ori * offset;
+  this.addCircle(circleXfo, radius, detail);
+
+  offset.setFromAxisAndAngle(Vec3(0.0, 0.0, 1.0), HALF_PI);
+  circleXfo = xfo;
+  circleXfo.ori = xfo.ori * offset;
+  this.addCircle(circleXfo, radius, detail);
+}
+
+
+
+function Lines.addCross!(Xfo xfo, Scalar size) {
+  Ref<GeometryAttributes> attributes = this.getAttributes();
+  Size firstPoint = attributes.size();
+  Size vidx = firstPoint;
+  Size iidx = this.indices.size();
+  attributes.resize(vidx+6);
+  this.indices.resize(iidx+6);
+
+  Ref<Vec3Attribute> positions = attributes.getOrCreatePositions();
+
+  positions.values[vidx++] = Vec3(size,0,0);
+  positions.values[vidx++] = Vec3(-size,0,0);
+  positions.values[vidx++] = Vec3(0,size,0);
+  positions.values[vidx++] = Vec3(0,-size,0);
+  positions.values[vidx++] = Vec3(0,0,size);
+  positions.values[vidx++] = Vec3(0,0,-size);
+  positions.incrementVersion();
+
+  this.indices[iidx++] = firstPoint+0;
+  this.indices[iidx++] = firstPoint+1;
+  this.indices[iidx++] = firstPoint+2;
+  this.indices[iidx++] = firstPoint+3;
+  this.indices[iidx++] = firstPoint+4;
+  this.indices[iidx++] = firstPoint+5;
+  this.incrementVersion();
+}
+
+function Lines.addGrid!(Xfo xfo, 
+  Scalar sizeX,
+  Scalar sizeY,
+  Scalar sizeZ,
+  Integer numXsections,
+  Integer numYsections,
+  Integer numZsections,
+) {
+  // if (numXsections < 2) numXsections = 2;
+  // if (numYsections < 1) numYsections = 1;
+  // if (numZsections < 2) numZsections = 2;
+
+  
+  //TODO: this is not sharing positions... which leads to having 4 times+ more data than it should.
+  Size numPoints = ((numXsections * 2) * numYsections) + ((numZsections * 2) * numYsections);
+  if(numYsections > 1){
+    numPoints += (numXsections * numZsections * 2);
+  }
+
+  Ref<GeometryAttributes> attributes = this.getAttributes();
+  Size firstPoint = attributes.size();
+  Size vidx = firstPoint;
+  Size iidx = this.indices.size();
+  attributes.resize(vidx+numPoints);
+  this.indices.resize(iidx+numPoints);
+
+  Ref<Vec3Attribute> positions = attributes.getOrCreatePositions();
+
+  for (Integer j = 0; j < numYsections; j++) {
+    Scalar y = 0.0;
+    if(numYsections > 1){
+      y = ((Scalar(j) / Scalar(numYsections-1)) - 0.5) * sizeY;
+    }
+    for (Integer i = 0; i < numXsections; i++) {
+      Scalar x = ((Scalar(i) / Scalar(numXsections-1)) - 0.5) * sizeX;
+      positions.values[vidx++] = Vec3(x, y, Scalar( sizeZ*0.5));
+      this.indices[iidx] = firstPoint + iidx; iidx++;
+      positions.values[vidx++] = Vec3(x, y, Scalar(-sizeZ*0.5));
+      this.indices[iidx] = firstPoint + iidx; iidx++;
+
+    }
+    for (Integer i = 0; i < numZsections; i++) {
+      Scalar z = ((Scalar(i) / Scalar(numZsections-1)) - 0.5) * sizeZ;
+      positions.values[vidx++] = Vec3(Scalar( sizeX*0.5), y, z);
+      this.indices[iidx] = firstPoint + iidx; iidx++;
+      positions.values[vidx++] = Vec3(Scalar(-sizeX*0.5), y, z);
+      this.indices[iidx] = firstPoint + iidx; iidx++;
+    }
+  }
+  if(numYsections > 1){
+    for (Integer j = 0; j < numZsections; j++) {
+      Scalar z = ((Scalar(j) / Scalar(numZsections-1)) - 0.5) * sizeZ;
+      for (Integer i = 0; i < numXsections; i++) {
+        Scalar x = ((Scalar(i) / Scalar(numXsections-1)) - 0.5) * sizeX;
+        positions.values[vidx++] = Vec3(x, Scalar(-sizeY*0.5), z);
+        this.indices[iidx] = firstPoint + iidx; iidx++;
+        positions.values[vidx++] = Vec3(x, Scalar( sizeY*0.5), z);
+        this.indices[iidx] = firstPoint + iidx; iidx++;
+      }
+    }
+  }
+  positions.incrementVersion();
+  this.incrementVersion();
+}
+
+function Lines.addRectangle!(Xfo xfo, Scalar length, Scalar width) {
+  Ref<GeometryAttributes> attributes = this.getAttributes();
+  Size firstPoint = attributes.size();
+  Size vidx = firstPoint;
+  Size iidx = this.indices.size();
+  attributes.resize(vidx+8);
+  this.indices.resize(iidx+8);
+  Ref<Vec3Attribute> positions = attributes.getOrCreatePositions();
+
+  positions.values[vidx++] = Vec3(length / 2.0, 0, width / 2.0);
+  positions.values[vidx++] = Vec3(-length / 2.0, 0, width / 2.0);
+
+  positions.values[vidx++] = Vec3(length / 2.0, 0, -width / 2.0);
+  positions.values[vidx++] = Vec3(-length / 2.0, 0, -width / 2.0);
+
+  positions.values[vidx++] = Vec3(length / 2.0, 0, width / 2.0);
+  positions.values[vidx++] = Vec3(length / 2.0, 0, -width / 2.0);
+
+  positions.values[vidx++] = Vec3(-length / 2.0, 0, width / 2.0);
+  positions.values[vidx++] = Vec3(-length / 2.0, 0, -width / 2.0);
+
+  this.indices[iidx] = firstPoint + iidx; iidx++;
+  this.indices[iidx] = firstPoint + iidx; iidx++;
+  this.indices[iidx] = firstPoint + iidx; iidx++;
+  this.indices[iidx] = firstPoint + iidx; iidx++;
+  this.indices[iidx] = firstPoint + iidx; iidx++;
+  this.indices[iidx] = firstPoint + iidx; iidx++;
+  this.indices[iidx] = firstPoint + iidx; iidx++;
+  this.indices[iidx] = firstPoint + iidx; iidx++;
+
+  positions.incrementVersion();
+  this.incrementVersion();
+}
+
+
+
+// draws a capsule shape using lines. 
+// the detail describes the number of line segments for each circle (minimum of 3).
+inline Lines.addCapsule!(Xfo xfo, Scalar radius, Scalar height, Integer detail) {
+
+  Xfo baseXfo;
+  baseXfo.tr.y = height * -0.5;
+  this.addCircle(xfo * baseXfo, radius, detail);
+
+  Xfo arcXfo;
+  arcXfo.ori.setFromAxisAndAngle(Vec3(1.0, 0.0, 0.0), HALF_PI);
+  this.addArc(xfo * baseXfo * arcXfo, radius, Vec2(-HALF_PI, HALF_PI), detail);
+
+  arcXfo.ori.setFromAxisAndAngle(Vec3(0.0, 0.0, 1.0), -HALF_PI);
+  Quat rotX;
+  rotX.setFromAxisAndAngle(Vec3(1.0, 0.0, 0.0), HALF_PI);
+  arcXfo.ori = rotX * arcXfo.ori;
+  this.addArc(xfo * baseXfo * arcXfo, radius, Vec2(-HALF_PI, HALF_PI), detail);
+
+  Xfo tipXfo;
+  tipXfo.tr.y = height * 0.5;
+  this.addCircle(tipXfo, radius, detail);
+
+  arcXfo.ori.setFromAxisAndAngle(Vec3(1.0, 0.0, 0.0), -HALF_PI);
+  this.addArc(xfo * tipXfo * arcXfo, radius, Vec2(-HALF_PI, HALF_PI), detail);
+
+  arcXfo.ori.setFromAxisAndAngle(Vec3(0.0, 0.0, 1.0), -HALF_PI);
+  rotX.setFromAxisAndAngle(Vec3(1.0, 0.0, 0.0), -HALF_PI);
+  arcXfo.ori = rotX * arcXfo.ori;
+  this.addArc(xfo * tipXfo * arcXfo, radius, Vec2(-HALF_PI, HALF_PI), detail);
+
+  this.addLine(xfo.transformVector(Vec3(radius, height*-0.5, 0.0)), xfo.transformVector(Vec3(radius, height*0.5, 0.0)));
+  this.addLine(xfo.transformVector(Vec3(-radius, height*-0.5, 0.0)), xfo.transformVector(Vec3(-radius, height*0.5, 0.0)));
+  this.addLine(xfo.transformVector(Vec3(0.0, height*-0.5, radius)), xfo.transformVector(Vec3(0.0, height*0.5, radius)));
+  this.addLine(xfo.transformVector(Vec3(0.0, height*-0.5, -radius)), xfo.transformVector(Vec3(0.0, height*0.5, -radius)));
+}
+

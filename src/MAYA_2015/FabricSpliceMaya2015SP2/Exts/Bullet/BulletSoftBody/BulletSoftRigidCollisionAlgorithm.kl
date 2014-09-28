@@ -1,0 +1,69 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+/// BulletSoftRigidCollisionAlgorithm  provides collision detection between BulletSoftBody and BulletRigidBody
+object BulletSoftRigidCollisionAlgorithm : BulletCollisionAlgorithm
+{
+	Data pointer;
+};
+
+function Data BulletSoftRigidCollisionAlgorithm.getPointer(){
+	return this.pointer;
+}
+
+function BulletSoftRigidCollisionAlgorithm(BulletPersistentManifold mf, BulletCollisionAlgorithmConstructionInfo ci, BulletICollisionObject body0, BulletICollisionObject body1, Boolean isSwapped){
+	this.__construct(mf, ci, body0, body1, isSwapped);
+}
+
+function BulletSoftRigidCollisionAlgorithm.__construct!(BulletPersistentManifold mf, BulletCollisionAlgorithmConstructionInfo ci, BulletICollisionObject body0, BulletICollisionObject body1, Boolean isSwapped) = "BulletSoftRigidCollisionAlgorithm_construct2";
+
+function ~BulletSoftRigidCollisionAlgorithm(){
+	this.__destroy();
+}
+function BulletSoftRigidCollisionAlgorithm.__destroy!() = "etSoftRigidCollisionAlgorithm_destroy";
+
+	//	Boolean	m_ownManifold;
+	//	BulletPersistentManifold*	m_manifoldPtr;
+
+	// BulletSoftBody*				m_softBody;
+	// BulletICollisionObject*		m_rigidCollisionObject;
+
+	// ///for rigid versus soft (instead of soft versus rigid), we use this swapped boolean
+	// Boolean	m_isSwapped;
+
+
+	// BulletSoftRigidCollisionAlgorithm(BulletPersistentManifold* mf,const BulletCollisionAlgorithmConstructionInfo& ci,BulletICollisionObject* col0,BulletICollisionObject* col1, Boolean isSwapped);
+
+	// virtual ~BulletSoftRigidCollisionAlgorithm();
+
+	// virtual void processCollision (BulletICollisionObject* body0,BulletICollisionObject* body1,const BulletDispatcherInfo& dispatchInfo,BulletManifoldResult* resultOut);
+
+	// virtual Scalar calculateTimeOfImpact(BulletICollisionObject* body0,BulletICollisionObject* body1,const BulletDispatcherInfo& dispatchInfo,BulletManifoldResult* resultOut);
+
+	// virtual	void	getAllContactManifolds(BulletManifoldArray&	manifoldArray)
+	// {
+	// 	//we don't add any manifolds
+	// }
+
+
+	// struct CreateFunc :public 	BulletCollisionAlgorithmCreateFunc
+	// {
+	// 	virtual	BulletCollisionAlgorithm* CreateCollisionAlgorithm(BulletCollisionAlgorithmConstructionInfo& ci, BulletICollisionObject* body0,BulletICollisionObject* body1)
+	// 	{
+	// 		void* mem = ci.m_dispatcher1->allocateCollisionAlgorithm(sizeof(BulletSoftRigidCollisionAlgorithm));
+	// 		if (!m_swapped)
+	// 		{
+	// 			return new(mem) BulletSoftRigidCollisionAlgorithm(0,ci,body0,body1,false);
+	// 		} else
+	// 		{
+	// 			return new(mem) BulletSoftRigidCollisionAlgorithm(0,ci,body0,body1,true);
+	// 		}
+	// 	}
+	// };
+
+
+
+

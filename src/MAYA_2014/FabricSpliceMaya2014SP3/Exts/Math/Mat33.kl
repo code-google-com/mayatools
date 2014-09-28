@@ -1,0 +1,415 @@
+
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+/*SPHINX-description
+The :ref:`mat33` represents a 3 by 3 matrix. It uses :ref:`vec3` types for each of the 3 rows.
+
+Example
+---------
+
+.. code-block:: js
+
+    // create a matrix 3x3
+    Vec3 v0(1.0, 0.0, 0.0);
+    Vec3 v1(0.0, 1.0, 0.0);
+    Vec3 v2(0.0, 0.0, 1.0);
+    Mat33 mat(v0, v1, v2);
+
+
+
+Note: Fabric Engine Matrices are column-major rather than row-major.
+---------
+Most DCCs follow a row-major convention for expressing their matrices which implies that
+multiplication of matrices occurs in the opposite order to those in Fabric Engine.
+
+In Maya and Softimage, to transform a point (P) by a matrix (WM), you would post-multiply the vector by the matrix 
+by placing it on the left side of the matrix. 
+
+ (P' = P x WM)
+
+In Fabric Engine, to transform a point (P) by a matrix (WM), you would post-multiply it by placing it on the right hand side of the matrix.
+
+ (P' = WM x P)
+
+When multiplying matrices together, the order of the matrices is also swapped when compared to Maya/Softimage.
+
+To Transform a Matrix (M) into the space of a another matrix (WM), you would place the L on the right hand side of WM
+
+(M' = WM x M)
+
+In Maya, Softimage and 3dsmax, the order of the matrices in the multiplication would be swapped. 
+
+(M' = M x WM)
+
+Although there is no 'correct' way of structuring matrices, our matrix convention does not follow the conventions set by the majiority of popular DCCs, and has therefore caused confusion among our users. Modifying our math library to be row major instead of column major is scheduled for an upcoming release.
+
+
+
+*/
+
+struct Mat33
+{
+  Vec3 row0;
+  Vec3 row1;
+  Vec3 row2;
+};
+
+inline Mat33(){
+  this.setIdentity();
+}
+
+// constructor from scalars
+inline Mat33(
+  Scalar _00, Scalar _01, Scalar _02,
+  Scalar _10, Scalar _11, Scalar _12,
+  Scalar _20, Scalar _21, Scalar _22
+) {
+  this.set(_00, _01, _02, _10, _11, _12, _20, _21, _22);
+}
+
+// constructor from vectors
+inline Mat33(
+  Vec3 row0, Vec3 row1, Vec3 row2
+) {
+  this.row0 = row0;
+  this.row1 = row1;
+  this.row2 = row2;
+}
+
+// setter from scalars
+inline Mat33.set!(
+  Scalar _00, Scalar _01, Scalar _02,
+  Scalar _10, Scalar _11, Scalar _12,
+  Scalar _20, Scalar _21, Scalar _22
+) {
+  this.row0 = Vec3(_00, _01, _02);
+  this.row1 = Vec3(_10, _11, _12);
+  this.row2 = Vec3(_20, _21, _22);
+}
+
+// setter from (standard/external) float32 array and an offset
+inline Mat33.set!(Float32 v<>, UInt32 o) {
+  if(v.size() >= 9 + o) {
+    this.row0.set(v, o + 0);
+    this.row1.set(v, o + 3);
+    this.row2.set(v, o + 6);
+  }
+}
+
+// getter as external float32 array and an offset
+inline Mat33.get(io Float32 v<>, UInt32 o) {
+  if(v.size() >= 9 + o) {
+    this.row0.get(v, o + 0);
+    this.row1.get(v, o + 3);
+    this.row2.get(v, o + 6);
+  }
+}
+
+// getter as float32 array and an offset
+inline Mat33.get(io Float32 v[], UInt32 o) {
+  if(v.size() < 9 + o)
+    v.resize(9 + o);
+  this.row0.get(v, o + 0);
+  this.row1.get(v, o + 3);
+  this.row2.get(v, o + 6);
+}
+
+// setter from (standard/external) float64 array and an offset
+inline Mat33.set!(Float64 v<>, UInt32 o) {
+  if(v.size() >= 9 + o) {
+    this.row0.set(v, o + 0);
+    this.row1.set(v, o + 3);
+    this.row2.set(v, o + 6);
+  }
+}
+
+// getter as external float64 array and an offset
+inline Mat33.get(io Float64 v<>, UInt32 o) {
+  if(v.size() >= 9 + o) {
+    this.row0.get(v, o + 0);
+    this.row1.get(v, o + 3);
+    this.row2.get(v, o + 6);
+  }
+}
+
+// getter as float64 array and an offset
+inline Mat33.get(io Float64 v[], UInt32 o) {
+  if(v.size() < 9 + o)
+    v.resize(9 + o);
+  this.row0.get(v, o + 0);
+  this.row1.get(v, o + 3);
+  this.row2.get(v, o + 6);
+}
+
+// setter from (standard/external) float32 array
+inline Mat33.set!(Float32 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float32 array
+inline Mat33.get(io Float32 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float32 array
+inline Mat33.get(io Float32 v[]) {
+  this.get(v, 0);
+}
+
+// setter from (standard/external) float64 array
+inline Mat33.set!(Float64 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float64 array
+inline Mat33.get(io Float64 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float64 array
+inline Mat33.get(io Float64 v[]) {
+  this.get(v, 0);
+}
+
+// setter from vectors
+inline Mat33.set!(in Vec3 row0, in Vec3 row1, in Vec3 row2) {
+  this.setRows(row0,row1,row2);
+}
+
+// setter from vectors, row-wise
+inline Mat33.setRows!(in Vec3 row0, in Vec3 row1, in Vec3 row2) {
+  this.row0 = row0;
+  this.row1 = row1;
+  this.row2 = row2;
+}
+
+// setter from vectors, column-wise
+inline Mat33.setColumns!(in Vec3 col0, in Vec3 col1, in Vec3 col2) {
+  this.row0.x = col0.x; this.row0.y = col1.x; this.row0.z = col2.x;
+  this.row1.x = col0.y; this.row1.y = col1.y; this.row1.z = col2.y;
+  this.row2.x = col0.z; this.row2.y = col1.z; this.row2.z = col2.z;
+}
+
+// setting all components of the matrix to 0.0
+inline Mat33.setNull!() {
+  Vec3 nullVec3(0.0, 0.0, 0.0);
+  this.row0 = this.row1 = this.row2 = nullVec3;
+}
+
+// setting this matrix to the identity matrix
+inline Mat33.setIdentity!() {
+  this.setNull();
+  this.setDiagonal(1.0);
+}
+
+// setting the diagonal components of 
+// this matrix to a scalar
+inline Mat33.setDiagonal!(in Scalar v) {
+  this.row0.x = this.row1.y = this.row2.z = v;
+}
+
+// setting the diagonal components of this
+// matrix to the components of a vector
+inline Mat33.setDiagonal!(in Vec3 v) {
+  this.row0.x = v.x;
+  this.row1.y = v.y;
+  this.row2.z = v.z;
+}
+
+// returns true if this matrix is the same as another one
+inline Boolean Mat33.equal(in Mat33 other) {
+  return this.row0.equal( other.row0 ) && this.row1.equal( other.row1 ) && this.row2.equal( other.row2 );
+}
+
+// returns true if this matrix is almost the same as another one
+// (given a precision)
+inline Boolean Mat33.almostEqual(in Mat33 other, in Scalar precision) {
+  return this.row0.almostEqual( other.row0, precision ) && this.row1.almostEqual( other.row1, precision ) && this.row2.almostEqual( other.row2, precision );
+}
+
+// returns true if this matrix is almost the same as another one
+// (using a default precision)
+inline Boolean Mat33.almostEqual(in Mat33 other) {
+  return this.almostEqual(other, PRECISION);
+}
+
+// equals operator
+inline Boolean == (Mat33 a, Mat33 b) {
+  return a.equal(b);
+}
+
+// not equals operator
+inline Boolean != (Mat33 a, Mat33 b) {
+  return !a.equal(b);
+}
+
+// returns the addition of two matrices
+inline Mat33 + (Mat33 a, Mat33 b) {
+  return Mat33( a.row0 + b.row0, a.row1 + b.row1, a.row2 + b.row2 );
+}
+
+// adds another matrix to this one
+inline Mat33. += (Mat33 other) {
+  this = this + other;
+}
+
+// returns the subtraction of two matrices
+inline Mat33 - (Mat33 a, Mat33 b) {
+  return Mat33( a.row0 - b.row0, a.row1 - b.row1, a.row2 - b.row2 );
+}
+
+// subtracts another matrix from this one
+inline Mat33. -= (Mat33 other) {
+  this = this - other;
+}
+
+// returns the product of two matrices
+function Mat33 * (Mat33 left, Mat33 right) {
+  Mat33 result;
+
+  result.row0.x = left.row0.x * right.row0.x + left.row0.y * right.row1.x + left.row0.z * right.row2.x;
+  result.row0.y = left.row0.x * right.row0.y + left.row0.y * right.row1.y + left.row0.z * right.row2.y;
+  result.row0.z = left.row0.x * right.row0.z + left.row0.y * right.row1.z + left.row0.z * right.row2.z;
+
+  result.row1.x = left.row1.x * right.row0.x + left.row1.y * right.row1.x + left.row1.z * right.row2.x;
+  result.row1.y = left.row1.x * right.row0.y + left.row1.y * right.row1.y + left.row1.z * right.row2.y;
+  result.row1.z = left.row1.x * right.row0.z + left.row1.y * right.row1.z + left.row1.z * right.row2.z;
+
+  result.row2.x = left.row2.x * right.row0.x + left.row2.y * right.row1.x + left.row2.z * right.row2.x;
+  result.row2.y = left.row2.x * right.row0.y + left.row2.y * right.row1.y + left.row2.z * right.row2.y;
+  result.row2.z = left.row2.x * right.row0.z + left.row2.y * right.row1.z + left.row2.z * right.row2.z;
+
+  return result;
+}
+
+// returns the product of a matrix and a Vec3
+inline Vec3 * (Mat33 mat33, Vec3 vec3) {
+  return Vec3(
+    mat33.row0.x * vec3.x + mat33.row0.y * vec3.y + mat33.row0.z * vec3.z,
+    mat33.row1.x * vec3.x + mat33.row1.y * vec3.y + mat33.row1.z * vec3.z,
+    mat33.row2.x * vec3.x + mat33.row2.y * vec3.y + mat33.row2.z * vec3.z
+  );
+}
+
+// returns the product of a matrix and a scalar
+inline Mat33 * (Mat33 mat33, Scalar s) {
+  return Mat33( mat33.row0 * s, mat33.row1 * s, mat33.row2 * s );
+}
+
+// returns the product of a scalar and a matrix
+inline Mat33 * (Scalar s, Mat33 mat33) {
+  return Mat33( mat33.row0 * s, mat33.row1 * s, mat33.row2 * s );
+}
+
+// multiplies this matrix with another one
+inline Mat33. *= (Mat33 other) {
+  this = this * other;
+}
+
+// multiplies this matrix with a scalar
+inline Mat33. *= (Scalar other) {
+  this = this * other;
+}
+
+// returns the division of a matrix and a scalar
+inline Mat33 / (Mat33 mat33, Scalar s) {
+  if( Math_badDivisor( s ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( s, "Mat33.divide" );
+  return mat33 * (1.0 / s);
+}
+
+// devides this matrix by a scalar
+inline Mat33. /= (Scalar other) {
+  this = this / other;
+}
+
+// overload method for the add operator
+inline Mat33 Mat33.add(Mat33 other) {
+  return this + other;
+}
+
+// overload method for the subtract operator
+inline Mat33 Mat33.subtract(Mat33 other) {
+  return this - other;
+}
+
+// overload method for the multiply operator
+inline Mat33 Mat33.multiply(Mat33 other) {
+  return this * other;
+}
+
+// // overload method for the divide operator
+// inline Mat33 Mat33.divide(Mat33 other) {
+//   return this / other;
+// }
+
+// returns the product of this matrix and a scalar
+inline Mat33 Mat33.multiplyScalar(Scalar other) {
+  return this * other;
+}
+
+// returns the product of this matrix and a vector
+inline Vec3 Mat33.multiplyVector(Vec3 other) {
+  return this * other;
+}
+
+// returns the division of this matrix and a scalar
+inline Mat33 Mat33.divideScalar(Scalar other) {
+  return this / other;
+}
+
+// returns the determinant of this matrix
+inline Scalar Mat33.determinant() {
+  return this.row0.x * this.row1.y * this.row2.z
+  + this.row0.y * this.row1.z * this.row2.x
+  + this.row0.z * this.row1.x * this.row2.y
+  - this.row0.x * this.row1.z * this.row2.y
+  - this.row0.y * this.row1.x * this.row2.z
+  - this.row0.z * this.row1.y * this.row2.x;
+}
+
+// returns the adjoint matrix of this matrix
+inline Mat33 Mat33.adjoint() {
+  Mat33 result;
+
+  result.row0.x = this.row1.y * this.row2.z - this.row1.z * this.row2.y;
+  result.row0.y = this.row0.z * this.row2.y - this.row0.y * this.row2.z;
+  result.row0.z = this.row0.y * this.row1.z - this.row0.z * this.row1.y;
+
+  result.row1.x = this.row1.z * this.row2.x - this.row1.x * this.row2.z;
+  result.row1.y = this.row0.x * this.row2.z - this.row0.z * this.row2.x;
+  result.row1.z = this.row0.z * this.row1.x - this.row0.x * this.row1.z;
+
+  result.row2.x = this.row1.x * this.row2.y - this.row1.y * this.row2.x;
+  result.row2.y = this.row0.y * this.row2.x - this.row0.x * this.row2.y;
+  result.row2.z = this.row0.x * this.row1.y - this.row0.y * this.row1.x;
+
+  return result;
+}
+
+// returns the inverse matrix of this matrix
+inline Mat33 Mat33.inverse() {
+  Scalar det = this.determinant();
+  if( Math_badDivisor( det ) )//Perf: check first to avoid building the report string
+    Math_reportBadDivisor( det, "Mat33.inverse" );
+  return this.adjoint() / det;
+}
+inline Mat33 Mat33.inverse_safe() {
+  Scalar det = this.determinant();
+  if( Math_badDivisor( det ) )
+    return this.adjoint();
+  return this.adjoint() / det;
+}
+
+// returns the transposed matrix of this matrix
+inline Mat33 Mat33.transpose() {
+  Mat33 result(
+    this.row0.x, this.row1.x, this.row2.x,
+    this.row0.y, this.row1.y, this.row2.y,
+    this.row0.z, this.row1.z, this.row2.z);
+  return result;
+}
+
+
+

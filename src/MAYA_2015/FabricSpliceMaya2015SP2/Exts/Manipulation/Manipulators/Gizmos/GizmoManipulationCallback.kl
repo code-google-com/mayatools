@@ -1,0 +1,25 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+Object supporting the :ref:`GizmoManipulationCallback` interface is used by the GizmoHandlers to apply the manipulation data to the scene. 
+
+*/
+
+
+interface GizmoManipulationCallback {
+
+    // Invoked by the GizmoHandler when the mouse drag is starting
+    // The event passed in is the mouse down event.  
+    onDragBegin!(io MouseEvent event);
+    
+    // Invoked by the SurfacePaintManipulator when the mouse drag is ending
+    // The event passed in is the mouse up event.  
+    onDragEnd!(io MouseEvent event);
+
+    onDrag!(io MouseEvent event, Xfo space, Xfo delta, UInt32 flags);
+};
+

@@ -1,0 +1,338 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+The :ref:`geometryattributes` type represents an attribute container, grouping attributes that can have different types. The size of all contained attribute vectors is equal,
+enforced by the :ref:`geometryattributes`.
+
+.. note:: because KL currently lacks the notion of Object inheritance and virtual functions, all supported attribute types must be defined or required by this file. Moreover, multiple functions currently contain a big 'switch' statement based on attribute types, but this will be removed once KL adds support for virtual functions.
+
+Example
+---------
+
+.. code-block:: js
+
+    // create an attribute container
+    GeometryAttributes attributes = GeometryAttributes();
+    attributes.resize(3);
+
+    // Add different attributes to the container.
+    // These will be pre-resized to the attributes container size (3 in this case).
+    Ref<Vec3Attribute> positions = attributes.getOrCreatePositions();
+    Ref<Vec3Attribute> normals = attributes.getOrCreateVec3Attribute( 'normals' );
+    Ref<Vec2Attribute> uvs = attributes.getOrCreateVec2Attribute( 'uvs' );
+
+    normals.values[2] = Vec3(0, 1, 0);
+    attributes.setPosition( 2, Vec3(0, 10, 5);
+
+    // Resize the attribute container: will resize all contained attributes.
+    attributes.resize(10);
+
+    normals.values[9] = Vec3(0,-1,0);
+    attributes.setPosition( 9, Vec3(-10, 2, -4);
+*/
+
+require Math, FabricStatistics;
+
+/////////////////////////////////////////////////////////////////////////////////
+// SPECIFIC ATTRIBUTE DEFINITIONS
+
+interface GeometryAttribute {
+  Size size();
+  resize!( Size count );
+  Data data();
+
+  Boolean equalValues( Size index1, Size index2 );
+
+  copyValue!( Size sourceIndex, Size targetIndex );
+  copyValue!( Ref<Object> source, Size sourceIndex, Size targetIndex );
+  copyFrom!( Ref<Object> other );
+
+  linearCombine!( Ref<Object> source, LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights, Size targetIndex );
+
+  Size getScalarValueSize();
+  setFromScalar!( Size index, LocalL16ScalarArray value );
+
+  String getName();
+  String valueDesc( Size index );
+  String unitTestPrint( Size index );
+
+  UInt32 getVersion();
+
+  //Make sure to call this method after value changes are finished, so caches (such as drawing data) know that they need to be regenerated.
+  incrementVersion!();
+
+  Size getContainerIndex();
+  setContainerIndex!( Size index );
+  Ref<StatisticSource> getStatisticsSource();
+
+  String getDesc?(Boolean useUnitTestPrint);
+  String getDesc?();
+};
+
+struct _AttributeRef {
+  Ref<GeometryAttribute> attr;
+  Size index;
+};
+
+object GeometryAttributes : StatisticSourceWithAutoRegisterMember {
+
+  Size elementCount;
+
+  GeometryAttribute attributes[];
+  IndexPool attributesIndexPool;
+
+  _AttributeRef nameToAttr[String];
+  //Todo: add type-sorted attribute array (to minimize the 'switch type' cost)
+  UInt32 keysVersion;
+
+  Ref<GeometryAttribute> positionsAttribute;//Fast access to positions attributes
+  Type positionsAttributeType;//Caching, hoping it helps performance..
+
+  Ref<GeometryAttribute> normalsAttribute;//Fast access to normals attributes
+
+  //Statistics
+  StatisticsAutoRegisterMember autoStats;
+  String debugName;
+};
+
+function GeometryAttributes() {
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+  this.debugName = "GeometryAttributes";
+}
+
+//removes all attributes, and reset size to 0.
+function GeometryAttributes.clear!() {
+  ++this.keysVersion;
+  this.elementCount = 0;
+  this.attributes.resize(0);
+  this.attributesIndexPool.reset();
+  _AttributeRef emptyDict[String];
+  this.nameToAttr = emptyDict;
+  GeometryAttribute nullAttribute = null;
+  this.positionsAttribute = nullAttribute;
+  this.positionsAttributeType = nullAttribute.type();
+  this.normalsAttribute = nullAttribute;
+}
+
+function GeometryAttributes.copy!( Ref<GeometryAttributes> other ) {
+  if( other ) {
+    //Do an 'incremental' clone: keep the same memory buffers if possible.
+    String toRemove[];
+    for(name in this.nameToAttr) {
+      if( !other.has(name) )
+        toRemove.push(name);
+    }
+    for( Size i = 0; i < toRemove.size(); ++i )
+      this.removeAttribute(toRemove[i]);
+
+    this.resize( other.size() );
+    for (name, attrRef in other.nameToAttr) {
+      Ref<GeometryAttribute> myAttr = this.getAttribute( name );
+      if( Boolean(myAttr) && attrRef.attr.type() == myAttr.type() ) {
+        myAttr.copyFrom( attrRef.attr );
+      } else {
+        if( myAttr ) // Different type: first remove it
+          this.removeAttribute( myAttr );
+        GeometryAttribute sourceAttr = attrRef.attr;//IMPORTANT: a Ref<>.clone() is a noop; we need to clone from a non-Ref
+        GeometryAttribute sourceAttrClone = sourceAttr.clone();
+        this.attachNewAttribute( sourceAttrClone );
+      }
+    }
+  } else
+    this.clear();
+}
+
+function GeometryAttributes GeometryAttributes.clone() {
+  //The difference with default clone() is that new.base.autoStat will point to 'new' (from constructor)
+  GeometryAttributes new = GeometryAttributes();
+  new.copy(this);
+  return new;
+}
+
+//Returns the size of attribute vectors (NOT the number of attribute vectors: see numAttributes() ). All contained attribute vectors have the same size.
+inline Size GeometryAttributes.size(){
+  return this.elementCount;
+}
+
+//Returns the number of contained attributes (NOT the size of attribute vectors: see .size() )
+inline Size GeometryAttributes.numAttributes(){
+  return this.nameToAttr.size();
+}
+
+//Copies an attribute value from a source index to a target index, for all contained attribute vectors.
+inline GeometryAttributes.copyValue( Size sourceIndex, Size targetIndex ) {
+  for( Size i = 0; i < this.attributes.size(); ++i ) {
+    Ref<GeometryAttribute> attr = this.attributes[i];
+    if( attr )
+      attr.copyValue( sourceIndex, targetIndex );
+  }
+}
+
+inline GeometryAttributes.linearCombine( LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights, Size targetIndex ) {
+  for( Size i = 0; i < this.attributes.size(); ++i ) {
+    Ref<GeometryAttribute> attr = this.attributes[i];
+    if( attr ) {
+      Ref<Object> attrObj = null;//TODO: remove when KL bug is fixed
+      attrObj = attr;
+      attr.linearCombine( attrObj, sourceIndices, sourceWeights, targetIndex );
+    }
+  }
+}
+
+//Returns a contained attribute from its name, or 'null' if not found.
+inline Ref<GeometryAttribute> GeometryAttributes.getAttribute(String name) {
+  if( this.nameToAttr.has(name) ) //TODO: use the new 'get' dict method
+    return this.nameToAttr[name].attr;
+  else {
+    Ref<GeometryAttribute> nullAttr = null;
+    return nullAttr;
+  }
+}
+
+//Checks if the attribute is owned by this container
+inline Boolean GeometryAttributes.hasAttribute( Ref<GeometryAttribute> attribute ) {
+  if( !attribute )
+    return false;
+  Size index = attribute.getContainerIndex();
+  if( index >= this.attributes.size() )
+    return false;
+  return this.attributes[index] === attribute;
+}
+
+//Returns a contained attribute of a specific type from its name, or 'null' if not found or another type.
+inline Ref<GeometryAttribute> GeometryAttributes.getAttribute(String name, Type expectedAttributeType) {
+  Ref<GeometryAttribute> attr = this.getAttribute(name);
+  if( attr.type != expectedAttributeType ) {
+    Ref<GeometryAttribute> nullAttr = null;
+    return nullAttr;
+  }
+
+  return attr;
+}
+
+//Returns true if it contains an attribute of a given name.
+inline Boolean GeometryAttributes.has?(String name) {
+  return this.nameToAttr.has(name);
+}
+
+//Returns true if it contains an attribute of a given name and type.
+inline Boolean GeometryAttributes.has?(String name, Type attributeType) {
+  if( !this.nameToAttr.has(name) )
+    return false;
+  return this.nameToAttr[name].attr.type == attributeType;
+}
+
+//Returns an attribute of a given name and type if it exists, else it creates and returns it.
+function GeometryAttributes.attachNewAttribute!(Ref<GeometryAttribute> attribute) {
+  Ref<GeometryAttribute> inputAttribute = attribute;//Resolve KL 'const' ambiguity
+  String name = inputAttribute.getName();
+  if( this.nameToAttr.has(name) )
+    throw("GeometryAttributes.attachNewAttribute: attribute "+name+" already exists");
+
+  UInt32 index;
+  if( this.attributesIndexPool.getFreeIndex( index ) )
+    this.attributes.resize( this.attributesIndexPool.getIndexEnd() );
+
+  ++this.keysVersion;
+  this.attributes[index] = inputAttribute;
+  _AttributeRef attributeRef;
+  attributeRef.attr = inputAttribute;
+  attributeRef.index = index;
+  this.nameToAttr[name] = attributeRef;
+
+  //Make sure it's incremented when we clear attributes and add them back
+  //Stupid and inefficient loop, but I prefer not to add yet another method (setVersion)
+  while( inputAttribute.getVersion() < this.keysVersion )
+    inputAttribute.incrementVersion();
+
+  inputAttribute.resize(this.elementCount);
+  inputAttribute.setContainerIndex( index );
+
+  if(FabricStatisticsEnabled()) {
+    Ref<StatisticSource> attrSource = inputAttribute.getStatisticsSource();
+    AddStatisticsChild(this.autoStats, attrSource);
+  }
+
+  if(name == "positions") {
+    this.positionsAttribute = inputAttribute;
+    this.positionsAttributeType = inputAttribute.type();
+  }
+  else if(name == "normals")
+    this.normalsAttribute = inputAttribute;
+}
+
+//Removes an attribute of a given name.
+function GeometryAttributes.removeAttribute!(String name) {
+  if( this.nameToAttr.has(name) ) {//TODO: use the new 'get' dict method
+    Size index = this.nameToAttr[name].index;
+    this.attributesIndexPool.unusedIndex( index );
+
+    Ref<GeometryAttribute> nullGeomAttr = null;
+    if( this.attributes[index] == this.positionsAttribute ) {
+      this.positionsAttribute = nullGeomAttr;
+      this.positionsAttributeType = nullGeomAttr.type();
+    } if( this.attributes[index] == this.normalsAttribute )
+      this.normalsAttribute = nullGeomAttr;
+
+    this.attributes[index] = nullGeomAttr;//Release the memory
+    this.nameToAttr.delete(name);
+    ++this.keysVersion;
+  }
+}
+
+//Resizes all contained attribute vectors.
+function GeometryAttributes.resize!( Size newCount ) {
+  if( this.elementCount != newCount ) {
+    this.elementCount = newCount;
+    for( Size i = 0; i < this.attributes.size(); ++i ) {
+      Ref<GeometryAttribute> attr = this.attributes[i];
+      if( attr )
+        attr.resize(newCount);
+    }
+  }
+}
+
+//Returns a string description of all contained attribute values.
+function String GeometryAttributes.getDesc?( Boolean useUnitTestPrint) {
+  String desc;
+  desc += "Attributes: nb elements = "+ this.size()+'\n';
+  for( UInt32 i = 0; i < this.size(); ++i ) {
+    String str = "  " + i + ": ";
+    for( UInt32 j = 0; j < this.attributes.size(); ++j ) {
+      if( this.attributes[j] ){
+        if(useUnitTestPrint)
+          str += this.attributes[j].getName() + "=" + this.attributes[j].unitTestPrint(i) + " ";
+        else
+          str += this.attributes[j].getName() + "=" + this.attributes[j].valueDesc(i) + " ";
+      }
+    }
+    desc += str +'\n';
+  }
+  return desc;
+}
+function String GeometryAttributes.getDesc?() {
+  return this.getDesc(false);
+}
+
+function String GeometryAttributes.getAttributeListDesc?() {
+  String desc;
+  desc += "Attributes: nb elements = "+ this.size()+'\n';
+  for (name, attrRef in this.nameToAttr)
+    desc += "  "+attrRef.attr.type+" "+name+'\n';
+  return desc;
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] GeometryAttributes.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, this.debugName ) );
+  stats.push( StatisticRecord( Statistic_Category, "Geometry" ) );
+  stats.push( StatisticRecord( "Size", this.size() ) );
+
+  //Memory usage: approximative, until KL can do it for us
+  Size memoryUsage = this.attributes.size()*16 + this.attributesIndexPool.getMemUsage() + this.nameToAttr.size() * 40;
+  stats.push( StatisticRecord( Statistic_MemoryUsage, memoryUsage ) );
+  return stats;
+}

@@ -1,0 +1,88 @@
+{
+ "libs": [
+  "Bullet"
+ ], 
+ "code": [
+  "LinearMath/BulletAabbUtil2.kl",
+  "LinearMath/BulletTypedObject.kl",
+  "LinearMath/BulletMotionState.kl",
+  "LinearMath/BulletDefaultMotionState.kl",
+
+  "BulletCollision/CollisionShapes/BulletCollisionShape.kl",
+  "BulletCollision/CollisionShapes/BulletConvexShape.kl",
+  "BulletCollision/CollisionShapes/BulletConvexInternalShape.kl",
+  "BulletCollision/CollisionShapes/BulletPolyhedralConvexShape.kl",
+  "BulletCollision/CollisionShapes/BulletConcaveShape.kl",
+  "BulletCollision/CollisionShapes/BulletConvex2dShape.kl",
+  "BulletCollision/CollisionShapes/BulletConvexHullShape.kl",
+  "BulletCollision/CollisionShapes/BulletCompoundShape.kl",
+
+  "BulletCollision/CollisionShapes/BulletBoxShape.kl",
+  "BulletCollision/CollisionShapes/BulletCapsuleShape.kl",
+  "BulletCollision/CollisionShapes/BulletCylinderShape.kl",
+  "BulletCollision/CollisionShapes/BulletSphereShape.kl",
+  "BulletCollision/CollisionShapes/BulletStaticPlaneShape.kl",
+
+  "BulletCollision/CollisionShapes/BulletStridingMeshInterface.kl",
+  "BulletCollision/CollisionShapes/BulletTriangleIndexVertexArray.kl",
+  "BulletCollision/CollisionShapes/BulletTriangleMeshShape.kl",
+  "BulletCollision/CollisionShapes/BulletBvhTriangleMeshShape.kl",
+  
+  "BulletCollision/NarrowPhaseCollision/BulletManifoldPoint.kl",
+  "BulletCollision/NarrowPhaseCollision/BulletPersistentManifold.kl",
+  "BulletCollision/NarrowPhaseCollision/BulletSimplexSolverInterface.kl",
+  "BulletCollision/NarrowPhaseCollision/BulletVoronoiSimplexSolver.kl",
+  "BulletCollision/NarrowPhaseCollision/BulletConvexPenetrationDepthSolver.kl",
+  "BulletCollision/NarrowPhaseCollision/BulletMinkowskiPenetrationDepthSolver.kl",
+
+  "BulletCollision/BroadphaseCollision/BulletDispatcher.kl",
+  "BulletCollision/BroadphaseCollision/BulletCollisionAlgorithm.kl",
+  "BulletCollision/BroadphaseCollision/BulletBroadphaseProxy.kl",
+  "BulletCollision/BroadphaseCollision/BulletOverlappingPairCache.kl",
+  "BulletCollision/BroadphaseCollision/BulletBroadphaseInterface.kl",
+  "BulletCollision/BroadphaseCollision/BulletDbvtBroadphase.kl",
+  "BulletCollision/BroadphaseCollision/BulletAxisSweep3.kl",
+
+  "BulletCollision/CollisionDispatch/BulletCollisionCreateFunc.kl",
+  "BulletCollision/CollisionDispatch/BulletBox2dBox2dCollisionAlgorithm.kl",
+  "BulletCollision/CollisionDispatch/BulletConvex2dConvex2dAlgorithm.kl",
+
+  "BulletCollision/CollisionDispatch/BulletCollisionObject.kl",
+  "BulletCollision/CollisionDispatch/BulletCollisionConfiguration.kl",
+  "BulletCollision/CollisionDispatch/BulletDefaultCollisionConfiguration.kl",
+  "BulletCollision/CollisionDispatch/BulletCollisionDispatcher.kl",
+  "BulletCollision/CollisionDispatch/BulletCollisionWorld.kl",
+
+  "BulletDynamics/Dynamics/BulletRigidBody.kl",
+
+  "BulletSoftBody/BulletSparseSDF.kl",
+  "BulletSoftBody/BulletSoftBodySolvers.kl",
+  "BulletSoftBody/BulletSoftBodyInternals.kl",
+  "BulletSoftBody/BulletSoftBody.kl",
+  "BulletSoftBody/BulletSoftRigidCollisionAlgorithm.kl",
+  "BulletSoftBody/BulletSoftBodyRigidBodyCollisionConfiguration.kl",
+  "BulletSoftBody/BulletSoftSoftCollisionAlgorithm.kl",
+  "BulletSoftBody/BulletSoftBodyHelpers.kl",
+
+  "BulletDynamics/ConstraintSolver/BulletConstraintSolver.kl",
+  "BulletDynamics/ConstraintSolver/BulletTypedConstraint.kl",
+  "BulletDynamics/ConstraintSolver/BulletHingeConstraint.kl",
+  "BulletDynamics/ConstraintSolver/BulletSliderConstraint.kl",
+  "BulletDynamics/ConstraintSolver/BulletSequentialImpulseConstraintSolver.kl",
+  "BulletDynamics/ConstraintSolver/BulletConeTwistConstraint.kl",
+  "BulletDynamics/ConstraintSolver/BulletPoint2PointConstraint.kl",
+  "BulletDynamics/ConstraintSolver/BulletContactConstraint.kl",
+  "BulletDynamics/ConstraintSolver/BulletGeneric6DofConstraint.kl",
+  "BulletDynamics/ConstraintSolver/BulletUniversalConstraint.kl",
+  
+  "BulletDynamics/Dynamics/BulletRigidBody_Constraints.kl",
+
+  "BulletDynamics/Dynamics/BulletActionInterface.kl",
+  "BulletDynamics/Dynamics/BulletDynamicsWorld.kl",
+  "BulletDynamics/Dynamics/BulletSimpleDynamicsWorld.kl",
+  "BulletDynamics/Dynamics/BulletDiscreteDynamicsWorld.kl",
+  "BulletDynamics/Dynamics/BulletContinuousDynamicsWorld.kl",
+
+  "BulletSoftBody/BulletSoftRigidDynamicsWorld.kl"
+ ]
+}

@@ -1,0 +1,23 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+struct VideoHandle {
+  Data pointer;
+  Size width;
+  Size height;
+  Scalar duration;
+  Scalar fps;
+  Scalar time;
+};
+
+function ~VideoHandle() = "FabricVIDEOFreeHandle";
+function VideoHandle.clear!() = "FabricVIDEOFreeHandle";
+function VideoHandle.openFileHandle!(String fileHandle) = "FabricVIDEOOpenFileHandle";
+function VideoHandle.createFromFileHandle!(String file, Size width, Size height) = "FabricVIDEOCreateFromFileHandle";
+function VideoHandle.seekTime!(io Scalar time) = "FabricVIDEOSeekTime";
+function VideoHandle.getAllPixels!(io RGB pixels[]) = "FabricVIDEOGetAllPixels";
+function VideoHandle.writeAllPixels!(io RGB pixels[]) = "FabricVIDEOWriteAllPixels";
+

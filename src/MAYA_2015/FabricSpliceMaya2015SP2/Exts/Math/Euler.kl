@@ -1,0 +1,162 @@
+
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+/*SPHINX-description
+The :ref:`euler` type represents a 3D rotation as Euler XYZ angles and a :ref:`rotationorder`. The XYZ angles are expressed as a :ref:`vec3` in radians. The Euler type also provides conversion methods to :ref:`mat33`.
+
+Example
+---------
+
+.. code-block:: js
+
+    RotationOrder ro('xyz');
+    Euler euler(0.0, PI, 0.0, ro);
+    Mat33 matrix = euler.toMat33();
+*/
+
+struct Euler
+{
+  Scalar x;
+  Scalar y;
+  Scalar z;
+  RotationOrder ro;
+};
+
+// default constructor
+inline Euler() {
+  this.x = 0.0;
+  this.y = 0.0;
+  this.z = 0.0;
+  this.ro.setXYZ();
+}
+
+// constructor using a Vec3 as angles in radians, RotationOrder = XYZ
+inline Euler(in Vec3 angles) {
+  this.x = angles.x;
+  this.y = angles.y;
+  this.z = angles.z;
+  this.ro.setXYZ();
+}
+
+// constructor using a Vec3 as radians and a RotationOrder
+inline Euler(in Vec3 angles, in RotationOrder order) {
+  this.set(angles, order);
+}
+
+// constructor using three Scalars as angles in radians, RotationOrder = XYZ
+inline Euler(in Scalar x, in Scalar y, in Scalar z) {
+  this.set(x, y, z);
+}
+
+// constructor using three Scalars as angles in radians and a RotationOrder
+inline Euler(in Scalar x, in Scalar y, in Scalar z, in RotationOrder order) {
+  this.set(x, y, z, order);
+}
+
+// setter using a Vec3 as angles in radians, RotationOrder = XYZ
+inline Euler.set!(in Vec3 angles) {
+  this.x = angles.x;
+  this.y = angles.y;
+  this.z = angles.z;
+  this.ro.setXYZ();
+}
+
+// setter using a Vec3 as radians and a RotationOrder
+inline Euler.set!(in Vec3 angles, in RotationOrder order) {
+  this.x = angles.x;
+  this.y = angles.y;
+  this.z = angles.z;
+  this.ro = order;
+}
+
+// setter using three Scalars as angles in radians, RotationOrder = XYZ
+inline Euler.set!(in Scalar x, in Scalar y, in Scalar z) {
+  this.x = x;
+  this.y = y;
+  this.z = z;
+  this.ro.setXYZ();
+}
+
+// setter using three Scalars as angles in radians and a RotationOrder
+inline Euler.set!(in Scalar x, in Scalar y, in Scalar z, in RotationOrder order) {
+  this.x = x;
+  this.y = y;
+  this.z = z;
+  this.ro = order;
+}
+
+// setter using a Vec3 as angles in radians, RotationOrder = XYZ
+inline Euler.setAngles!(in Vec3 angles) {
+  this.set(angles);
+}
+
+// returns the angles as a Vec3 in radians
+inline Vec3 Euler.getAngles() {
+  return Vec3(this.x, this.y, this.z);
+}
+
+// returns true if this Euler is the same as another one (precisely)
+inline Boolean Euler.equal(in Euler other) {
+  return this.x == other.x && this.y == other.y && this.z == other.z && this.ro.order == other.ro.order;
+}
+
+// returns true if this Euler is almost the same as another one (based on a prevision)
+inline Boolean Euler.almostEqual(in Euler other, in Scalar precision) {
+  return
+      (abs(this.x - other.x) < precision) &&
+      (abs(this.y - other.y) < precision) &&
+      (abs(this.z - other.z) < precision) &&
+      (this.ro.order == other.ro.order);
+}
+
+// equals operator
+inline Boolean == (Euler a, Euler b) {
+  return a.x == b.x && a.y == b.y && a.z == b.z && a.ro.order == b.ro.order;
+}
+
+// not equals operator
+inline Boolean != (Euler a, Euler b) {
+  return a.x != b.x || a.y != b.y || a.z != b.z || a.ro.order != b.ro.order;
+}
+
+// returns a rotation matrix representing
+// the same 3D rotation as this Euler.
+function Mat33 Euler.toMat33() {
+  Scalar Cx = cos(this.x), Sx = sin(this.x);
+  Scalar Cy = cos(this.y), Sy = sin(this.y);
+  Scalar Cz = cos(this.z), Sz = sin(this.z);
+
+  Mat33 Rx( 1.0, 0.0, 0.0,
+            0.0,  Cx, -Sx,
+            0.0,  Sx,  Cx);
+
+  Mat33 Ry(  Cy,  0.0,  Sy,
+            0.0,  1.0, 0.0,
+            -Sy,  0.0,  Cy);
+
+  Mat33 Rz(  Cz,  -Sz,  0.0,
+             Sz,   Cz,  0.0,
+            0.0,  0.0,  1.0);
+
+  Mat33 result;
+
+  if (this.ro.isXYZ())
+    result = Rx * Ry * Rz;
+  else if (this.ro.isYZX())
+    result = Ry * Rz * Rx;
+  else if (this.ro.isZXY())
+    result = Rz * Rx * Ry;
+  else if (this.ro.isXZY())
+    result = Rx * Rz * Ry;
+  else if (this.ro.isZYX())
+    result = Rz * Ry * Rx;
+  else if (this.ro.isYXZ())
+    result = Ry * Rx * Rz;
+
+  return result;
+}
+
+
+

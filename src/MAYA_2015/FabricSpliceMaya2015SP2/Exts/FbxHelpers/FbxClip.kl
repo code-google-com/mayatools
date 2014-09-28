@@ -1,0 +1,278 @@
+//
+// Copyright 2010-2011 Fabric Technologies Inc. All rights reserved.
+//
+require Math;
+require Util;
+require Animation;
+require Fbx;
+
+
+object FbxClip : IClip {
+
+    /////
+    String filePath;
+    Scalar scaleFactor;
+    FbxHandle handle;
+    ImporterIdentifier identifiers[];
+    String animationLayerName;
+
+    Clip clip;
+};
+
+
+function FbxClip(String filePath, Scalar scaleFactor){
+  this.scaleFactor = scaleFactor;
+  if(this.openFile(filePath))
+    this._parseFCurves();
+}
+
+function FbxClip(String filePath){
+  this.scaleFactor = 1.0;
+  if(this.openFile(filePath))
+    this._parseFCurves();
+}
+
+function FbxClip(FbxHandle handle){
+  this.scaleFactor = 1.0;
+  this.handle = handle;
+  this._parseFCurves();
+}
+
+function String FbxClip.getFilePath(){
+  return this.filePath;
+}
+
+
+inline String FbxClip.getName(){
+  return this.clip.getName();
+}
+
+inline UInt32 FbxClip.getNumTrackSets() {
+  return this.clip.getNumTrackSets();
+}
+
+inline String[] FbxClip.getTrackSetNames(){
+  return this.clip.getTrackSetNames();
+}
+
+// returns True if the Clip contains the given trackSet
+function Boolean FbxClip.hasTrackSet(String name) {
+  return this.clip.hasTrackSet(name);
+}
+
+// returns a trackSet by name
+function ITrackSet FbxClip.getTrackSet(String name) {
+  return this.clip.getTrackSet(name);
+}
+
+
+// adds an existing trackSets to the clip.
+function FbxClip.setTrackSet!(String name, ITrackSet trackSet) {
+  this.clip.setTrackSet(name, trackSet);
+}
+
+// sets a trackSet by name
+function  FbxClip.addTrackSet!(String name, ITrackSet trackSet) {
+  this.clip.addTrackSet(name, trackSet);
+}
+
+inline Vec2 FbxClip.getTimeRange(){
+  return this.clip.getTimeRange();
+}
+
+inline IClipValues FbxClip.evaluate(Scalar time, io Integer keyIndices[][]){
+  return this.clip.evaluate(time, keyIndices);
+}
+
+inline IClipValues FbxClip.evaluate!(Scalar time){
+  return this.clip.evaluate(time);
+}
+
+
+function String FbxClip.getDesc(String indent) {
+  String desc;
+  desc += indent + "FbxClip { \n";
+  desc += indent + "  filePath: " + this.filePath + "\n";
+  desc += indent + "  animationLayerName: " + this.animationLayerName + "\n";
+  desc += this.clip.getDesc(indent+'  ') + "\n";
+  desc += indent + "}\n";
+  return desc;
+}
+
+function String FbxClip.getDesc() {
+  return this.getDesc("");
+}
+
+
+
+function ImporterIdentifier[String][] findFCurveIdentifiers(ImporterIdentifier identifiers[], String animationLayerName){
+  ImporterIdentifier curveIdentifiers[String][];
+  for(Integer i=0; i<identifiers.size; i++){
+    if(identifiers[i].type == "FCURVE"){
+      if(animationLayerName != "" && identifiers[i].getStringData('layer') != animationLayerName)
+        continue;
+      String ownerName =  identifiers[i].name.split('/')[0];
+      if(!curveIdentifiers.has(ownerName)){
+        ImporterIdentifier empty[];
+        curveIdentifiers[ownerName] = empty;
+      }
+      curveIdentifiers[ownerName].push(identifiers[i]);
+    }
+  }
+  return curveIdentifiers;
+}
+
+function parseTrack(String name, Scalar values[], io KeyframeTrack track, Scalar scaleFactor){
+  track.keys.resize(values.size()/6);
+  for(Size k=0; k<track.keys.size(); k++) {
+    track.keys[k].time = values[k*6+0];
+    track.keys[k].value = values[k*6+1] * scaleFactor;
+    // TODO: re-enable the tanget values here. 
+    // track.keys[k].intangent.x = values[k*6+2];
+    // track.keys[k].intangent.y = values[k*6+3];
+    // track.keys[k].outtangent.x = values[k*6+4];
+    // track.keys[k].outtangent.y = values[k*6+5];
+    // track.keys[k].flags = (track.keys[k].intangent.x != 0.0 || track.keys[k].outtangent.x != 0.0) ? 1 : 0;
+  }
+}
+
+
+function Boolean FbxClip.openFile!(String filePath) {
+
+  if(filePath == 0){
+    if(this.handle)
+      this.handle.close();
+    this.clip = Clip("Clip");
+    this.handle = null;
+    return false;
+  }
+  
+  if(this.handle){
+    if(this.handle.getOpenedFilePath() != filePath){
+      this.handle.close();
+      this.handle = null;
+    }
+  }
+
+  // TODO openFileHandle should return a Boolean stating whether the file was opened successfully
+  // Also, we should have a method. 'isOpened' where we can tell if the handle was opened successfully. 
+  this.handle = FbxHandle();
+  this.handle.openFileHandle(filePath, '');
+  this.filePath = filePath;
+
+
+  return true;
+}
+
+function FbxClip._parseFCurves!() {
+
+  if(this.handle == null){
+    setError("Error parsing curves. fbxhandle not open.");
+  }
+
+  // Construct a new Clip, using the name of the file.
+  this.clip = Clip(pathSplitExt(pathSplit(this.handle.getOpenedFilePath())[1])[0]);
+
+  String animationLayerNames[];
+  this.handle.getAnimationLayerNames(animationLayerNames);
+  if(animationLayerNames.size == 0){
+    setError("No Animation Layers in File:" + this.filePath);
+    return;
+  }
+
+  ImporterOptions options;
+  this.handle.getIdentifiers(this.identifiers, options);
+
+  ImporterIdentifier curveIdentifiers[String][] = findFCurveIdentifiers(this.identifiers, this.animationLayerName);
+
+
+  String trackSetTypes[String][];
+  for(ownerName, trackSetIdentifiers in curveIdentifiers){
+    for(Integer i=0; i<trackSetIdentifiers.size; i++){
+      String compound = trackSetIdentifiers[i].getStringData('compound');
+
+      // Supporting scale tracks means that we might have rotation and scale at the same time
+      // The clip-values system doesn't support propagating clip values.
+      // Note: the better solution is to store decomposed values (tr, ori, sc) values inthe track sets
+      // and then combine them in ClipPose._updateXfo(Index index) into a single Xfo. 
+      // The value names might be suffixed with the compound. 
+      if(compound == 'sc')
+        continue;
+
+      if(!trackSetTypes.has(ownerName)){
+        String compounds[];
+        compounds.push(compound);
+        trackSetTypes[ownerName] = compounds;
+      }
+      else{
+        Boolean found = false;
+        for(Integer j=0; j<trackSetTypes[ownerName].size(); j++)
+          if(trackSetTypes[ownerName][j] == compound)
+            found = true;
+        if(!found)
+          trackSetTypes[ownerName].push(compound);
+      }
+    }
+  }
+  for(ownerName, compounds in trackSetTypes){
+    Boolean xfoTracks = false;
+    UInt32 flags = 0;
+    KeyframeTrackSet trackSet = null;
+    if(compounds.size > 1){
+      for(Integer i=0; i<compounds.size(); i++){
+        if(compounds[i] == 'tr')
+          flags |= TRACKSETFLAG_TR_TRACKS;
+        else if(compounds[i] == 'ori')
+          flags |= TRACKSETFLAG_ORI_TRACKS;
+        else if(compounds[i] == 'euler')
+          flags |= TRACKSETFLAG_ORI_TRACKS|TRACKSETFLAG_EULERANGLES_TRACKS;
+        else if(compounds[i] == 'sc')
+          flags |= TRACKSETFLAG_SC_TRACKS;
+        trackSet = KeyframeTrackSet(ownerName, Xfo(), flags);
+      }
+    }
+    else{
+      if(compounds[0] == 'tr')
+        trackSet = KeyframeTrackSet(ownerName, Vec3(), flags);
+      else if(compounds[0] == 'ori')
+        trackSet = KeyframeTrackSet(ownerName, Quat(), flags);
+      else if(compounds[0] == 'euler')
+        trackSet = KeyframeTrackSet(ownerName, Euler(), flags);
+      else{
+        Color yellow = Color(1.0, 1.0, 0.0, 1.0);
+        trackSet = KeyframeTrackSet(ownerName, yellow, 0.0, flags);
+      }
+    }
+    this.clip.addTrackSet(ownerName, trackSet);
+  }
+
+
+  for(ownerName, trackSetIdentifiers in curveIdentifiers){
+    for(Integer i=0; i<trackSetIdentifiers.size; i++){
+      // String ownerName = trackSetIdentifiers[i].getStringData('owner');
+      String compound = trackSetIdentifiers[i].getStringData('compound');
+
+      if(compound == 'sc')
+        continue;
+
+      String channel = trackSetIdentifiers[i].getStringData('channel');
+      Scalar values[];
+      this.handle.parseFCurve(trackSetIdentifiers[i], values);
+
+      ITrackSet trackSet = this.clip.getTrackSet(ownerName);
+      KeyframeTrack track = trackSet.getTrack(compound + "." + channel);
+      String name = ownerName + "." + compound + "." + channel;
+      // report("parseTrack:" + name);
+
+      if(compound == 'tr')
+        parseTrack(name, values, track, this.scaleFactor);
+      else
+        parseTrack(name, values, track, 1.0);
+    }
+  }
+
+
+  // this.clip.incrementVersion();
+}
+
+

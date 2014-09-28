@@ -1,0 +1,300 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+struct IdxOff {
+  UInt32 index;
+  UInt32 offset;
+};
+
+alias IdxOff IterOff;//DataIter=index + offset
+
+inline IdxOff( UInt32 index ) {
+  this.index = index;
+  this.offset = 0;
+}
+
+inline IdxOff( UInt32 index, UInt32 offset ) {
+  this.index = index;
+  this.offset = offset;
+}
+
+alias UInt32 DataIter;
+
+struct CompactDataSets {
+  UInt32 data[];
+  DataIter startIters[];
+};
+
+function CompactDataSets.=( CompactDataSets other )
+{
+  this.data = other.data.clone();
+  this.startIters = other.startIters.clone();
+}
+
+//WasConstructed: sub-structs are not constructed by default (bug??)
+function Boolean CompactDataSets.WasConstructed() {
+  return this.data.size() != 0;
+}
+
+inline CompactDataSets() {
+  this.data.push(0);//0 is reserved (NULL key)
+}
+
+inline UInt32 CompactDataSets.nbItems() {
+  return this.startIters.size();
+}
+
+inline CompactDataSets.setNbItems!( UInt32 nbItems ) {
+  //Todo: recompact if needed
+  this.startIters.resize( nbItems );
+}
+
+function CompactDataSets.clear!() {
+  this.data.resize(1);
+  this.startIters.resize(0);
+}
+
+function Size CompactDataSets.memUsage() {
+  return this.data.size() * 4 + this.startIters.size() * 4;
+}
+
+inline DataIter CompactDataSets.getDataIter( UInt32 itemIndex ) {
+  return this.startIters[ itemIndex ];
+}
+
+//IdxOff encoding:
+//  - If lower 3 bits are not all set, then these 3 bits contain the Offset, and 29 higher bits contain the index
+//  - If lower 3 bits are set, then 29 higher bits is an iter to an extended entry, which contains
+//    a UInt32 index followed by a UInt32 offset
+
+inline UInt32 IdxOff_ExtractOffset( UInt32 entry ) {
+  return entry & 7;
+}
+
+inline UInt32 IdxOff_ExtractIndex( UInt32 entry ) {
+  return entry >> 3;
+}
+
+inline UInt32 CompactDataSets.extractOffset?( DataIter idxOffIter ) {
+  UInt32 entry = this.data[ idxOffIter ];
+  UInt32 offset = IdxOff_ExtractOffset( entry );
+  if( offset != 7 )
+    return offset;
+  UInt32 extendedDataIter = IdxOff_ExtractIndex( entry );
+  return this.data[ extendedDataIter + 1 ];
+}
+
+inline UInt32 CompactDataSets.extractIndex?( DataIter idxOffIter ) {
+  UInt32 entry = this.data[ idxOffIter ];
+  UInt32 offset = IdxOff_ExtractOffset( entry );
+  if( offset != 7 )
+    return IdxOff_ExtractIndex( entry );
+  UInt32 extendedDataIter = IdxOff_ExtractIndex( entry );
+  return IdxOff_ExtractIndex( this.data[ extendedDataIter ] );
+}
+
+inline IdxOff CompactDataSets.extractIdxOff?( DataIter idxOffIter ) {
+  UInt32 entry = this.data[ idxOffIter ];
+  IdxOff result;
+  result.offset = IdxOff_ExtractOffset( entry );
+  result.index = IdxOff_ExtractIndex( entry );
+  if( result.offset == 7 ) {
+    result.offset = this.data[ result.index + 1 ];
+    result.index = IdxOff_ExtractIndex( this.data[ result.index ] );
+  }
+  return result;
+}
+
+inline CompactDataSets.setAsIdxOff!( DataIter iter, UInt32 index, UInt32 offset ) {
+  //Note: when we keep track of dealloc space, space should be first free by caller
+  if( offset < 7 )
+    this.data[ iter ] = (index << 3) | offset;
+  else {
+    UInt32 prevSize = this.data.size();
+    this.data[ iter ] = (prevSize << 3) | 7;
+    this.data.push( index << 3 );
+    this.data.push( offset );
+  }
+}
+
+inline DataIter CompactDataSets.expandIdxOffData!( DataIter idxOffIter, UInt32 nbUInt32ToAllocate ) {
+  //Note: this won't recopy existing extended data (if any).
+  //Note: when we keep track of dealloc space, space should be first free by caller
+  IdxOff idxOff = this.extractIdxOff( idxOffIter );
+  UInt32 prevSize = this.data.size();
+  this.data[ idxOffIter ] = (prevSize << 3) | 7;
+  this.data.resize( prevSize + nbUInt32ToAllocate + 2 );
+  this.data[prevSize] = (idxOff.index << 3) | 1;//Set expanded bit
+  this.data[prevSize+1] = idxOff.offset;
+  return prevSize + 2;
+}
+
+//getExpandedIdxOffData: returns 0 if not expanded
+inline DataIter CompactDataSets.getExpandedIdxOffDataIter?( DataIter idxOffIter ) {
+  UInt32 idxOffData = this.data[ idxOffIter ];
+  if( IdxOff_ExtractOffset( idxOffData ) != 7 )
+    return 0;
+  UInt32 expIter = IdxOff_ExtractIndex( idxOffData );
+  if( ( this.data[ expIter ] & 1) == 0 )
+    return 0;
+  return expIter + 2;
+}
+
+inline DataIter CompactDataSets.getExpandedIdxOffDataIter_nocheck?( DataIter idxOffIter ) {
+  UInt32 idxOffData = this.data[ idxOffIter ];
+  return IdxOff_ExtractIndex( idxOffData ) + 2;
+}
+
+inline DataIter CompactDataSets.getExpandedIdxOffDataIndex_nocheck?( DataIter expandedDataIter ) {
+  return IdxOff_ExtractIndex( this.data[ expandedDataIter-2 ] );
+}
+
+inline DataIter CompactDataSets.getExpandedIdxOffDataOffset_nocheck?( DataIter expandedDataIter ) {
+  return this.data[ expandedDataIter-1 ];
+}
+
+inline Boolean CompactDataSets.getExpandedIdxOffDataUserBit1_nocheck?( DataIter expandedDataIter ) {
+  return (this.data[ expandedDataIter-2 ] & 2) != 0;
+}
+
+inline CompactDataSets.setExpandedIdxOffDataUserBit1_nocheck!( DataIter expandedDataIter ) {
+  this.data[ expandedDataIter-2 ] = this.data[ expandedDataIter-2 ] | 2;
+}
+
+inline Boolean CompactDataSets.getExpandedIdxOffDataUserBit2_nocheck?( DataIter expandedDataIter ) {
+  return (this.data[ expandedDataIter-2 ] & 4) != 0;
+}
+
+inline CompactDataSets.setExpandedIdxOffDataUserBit2_nocheck!( DataIter expandedDataIter ) {
+  this.data[ expandedDataIter-2 ] = this.data[ expandedDataIter-2 ] | 4;
+}
+
+inline DataIter CompactDataSets.setAsArray!( UInt32 itemIndex, UInt32 size, UInt32 nbUInt32ToAllocate ) {
+  //Todo: if reallocating: deallocate space first
+  //TODO: if 0 polys, create no entries?
+
+  DataIter iter = this.data.size();
+  this.startIters[ itemIndex ] = iter;
+  this.data.resize( iter + 1 + nbUInt32ToAllocate );
+
+  //Set array header
+  this.setAsIdxOff( iter, itemIndex, size );
+  return iter;
+}
+
+inline DataIter CompactDataSets.setAsArray!( UInt32 itemIndex, UInt32 size ) {
+  return this.setAsArray( itemIndex, size, size );
+}
+
+inline DataIter CompactDataSets.pushArray!( UInt32 size, UInt32 nbUInt32ToAllocate ) {
+  UInt32 prevNbItems = this.startIters.size();
+  this.startIters.push(0);
+  return this.setAsArray( prevNbItems, size, nbUInt32ToAllocate );
+}
+
+inline DataIter CompactDataSets.pushArray!( UInt32 size ) {
+  return this.pushArray( size, size );
+}
+
+inline DataIter CompactDataSets.getArrayItemIter?( DataIter arrayIter, UInt32 itemIndex, UInt32 dataSizePerArrayItem ) {
+  return arrayIter + 1 + dataSizePerArrayItem * itemIndex;
+}
+
+inline DataIter CompactDataSets.getArrayItemIter?( DataIter arrayIter, UInt32 itemIndex ) {
+  return arrayIter + 1 + itemIndex;
+}
+
+inline IdxOff CompactDataSets.getIdxOffArrayItem?( DataIter arrayIter, UInt32 itemIndex ) {
+  return this.extractIdxOff( arrayIter + 1 + itemIndex );
+}
+
+inline UInt32 CompactDataSets.getIdxOffArrayItemIndex?( DataIter arrayIter, UInt32 itemIndex ) {
+  return this.extractIndex( arrayIter + 1 + itemIndex );
+}
+
+inline IdxOff CompactDataSets.getIdxOffArrayItemOffset?( DataIter arrayIter, UInt32 itemIndex ) {
+  return this.extractOffset( arrayIter + 1 + itemIndex );
+}
+
+function String CompactDataSets.getIdxOffArrayString?( UInt32 item ) {
+  UInt32 iter = this.getDataIter( item );
+  UInt32 size = this.extractOffset( iter );
+  String str = "[";
+  for( UInt32 i = 0; i != size; ++i ) {
+    if( i != 0 )
+      str += ", ";
+    IdxOff idxOff = this.getIdxOffArrayItem( iter, i );
+    str += idxOff.index + ":" + SInt32( idxOff.offset );
+  }
+  str += "]";
+  return str;
+}
+
+function String CompactDataSets.getIterArrayIndexString?( LocalL16UInt32Array iterArray ) {
+  String str = "[";
+  for( UInt32 i = 0; i != iterArray.size(); ++i ) {
+    if( i != 0 )
+      str += ", ";
+    str += this.extractIndex( iterArray.get(i) );
+  }
+  str += "]";
+  return str;
+}
+
+
+////////////////////////////////////////////////////////////////////
+
+inline UInt32 NextOff( UInt32 offset, UInt32 count ) {
+  UInt32 nextOff = offset+1;
+  if( nextOff == count )
+    nextOff = 0;
+  return nextOff;
+}
+
+inline UInt32 NextOff( UInt32 offset, UInt32 start, UInt32 end ) {
+  UInt32 nextOff = offset+1;
+  if( nextOff == end )
+    nextOff = start;
+  return nextOff;
+}
+
+inline IncOff( io UInt32 offset, UInt32 count ) {
+  ++offset;
+  if( offset == count )
+    offset = 0;
+}
+
+inline IncOff( io UInt32 offset, UInt32 start, UInt32 end ) {
+  ++offset;
+  if( offset == end )
+    offset = start;
+}
+
+inline UInt32 PrevOff( UInt32 offset, UInt32 count ) {
+  UInt32 prevOff = offset;
+  if( prevOff == 0 )
+    return count - 1;
+  return prevOff - 1;
+}
+
+inline UInt32 PrevOff( UInt32 offset, UInt32 start, UInt32 end ) {
+  UInt32 prevOff = offset;
+  if( prevOff == start )
+    return end - 1;
+  return prevOff - 1;
+}
+
+inline DecOff( io UInt32 offset, UInt32 count ) {
+  if( offset == 0 )
+    offset = count - 1;
+  else
+    --offset;
+}
+
+inline DecOff( io UInt32 offset, UInt32 start, UInt32 end ) {
+  if( offset == start )
+    offset = end - 1;
+  else
+    --offset;
+}

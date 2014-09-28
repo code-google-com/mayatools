@@ -1,0 +1,175 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+object QuatAttribute : GeometryAttribute, StatisticSourceWithAutoRegisterMember {
+  UInt32 version;
+  String name;
+  UInt32 containerIndex;
+
+  Quat values[];
+  Boolean normalize;//SetUnit after linearCombine
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function QuatAttribute() {
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] QuatAttribute.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, this.name ) );
+  stats.push( StatisticRecord( Statistic_Category, "Attribute" ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, this.values.size()*4*4 ) );
+  return stats;
+}
+
+inline String QuatAttribute.getName() {
+  return this.name;
+}
+
+inline UInt32 QuatAttribute.getVersion() {
+  return this.version;
+}
+
+inline Size QuatAttribute.getContainerIndex() {
+  return this.containerIndex;
+}
+
+inline QuatAttribute.setContainerIndex!( Size index ) {
+  this.containerIndex = index;
+}
+
+function QuatAttribute QuatAttribute.clone() {
+  //The difference with default clone() is that new.base.autoStat will point to 'new' (from constructor)
+  QuatAttribute new = QuatAttribute();
+  new.version = this.version;
+  new.name = this.name.clone();
+  new.containerIndex = this.containerIndex;
+  new.values = this.values.clone();
+  new.normalize = this.normalize;
+  return new;
+}
+
+function Ref<StatisticSource> QuatAttribute.getStatisticsSource() {
+  return this.autoStats;
+}
+
+inline QuatAttribute() {
+  this.normalize = true;
+}
+
+inline QuatAttribute.resize!(Size count) {
+  this.values.resize(count);
+  ++this.version;
+}
+
+inline Size QuatAttribute.size() {
+  return this.values.size();
+}
+
+inline Data QuatAttribute.data() {
+  Ref<QuatAttribute> thisRef = this;
+  return thisRef.values.data();
+}
+
+//Make sure to call this method after position changes are finished, so caches (such as drawing data) know that they need to be regenerated.
+inline QuatAttribute.incrementVersion!() {
+  ++this.version;
+}
+
+inline QuatAttribute.copyValue!( Size sourceIndex, Size targetIndex ) {
+  this.values[targetIndex] = this.values[sourceIndex];
+}
+
+inline QuatAttribute.copyValue!( Ref<Object> sourceAttr, Size sourceIndex, Size targetIndex ) {
+  Ref<QuatAttribute> source = sourceAttr;
+  this.values[targetIndex] = source.values[sourceIndex];
+}
+
+inline Quat QuatAttribute.getLinearCombination( LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights ) {
+  Quat result;
+  for( Size i = 0; i < sourceIndices.size(); ++i )
+    result += this.values[sourceIndices.get(i)]*sourceWeights.get(i);
+  if(this.normalize)
+    result = result.unit_safe();
+  return result;
+}
+
+inline QuatAttribute.linearCombine!( Ref<Object> sourceAttr, LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights, Size targetIndex ) {
+  Ref<QuatAttribute> source = sourceAttr;
+  this.values[targetIndex] = source.getLinearCombination( sourceIndices, sourceWeights );
+}
+
+inline QuatAttribute.copyFrom!( Ref<Object> otherAttr ) {
+  Ref<QuatAttribute> other = otherAttr;
+  this.incrementVersion();
+
+  // Copy in place to avoid mallocs
+  Size size = other.values.size();
+  this.values.resize( size );
+  for( Size i = 0; i < size; ++i )
+    this.values[i] = other.values[i];
+}
+
+inline QuatAttribute.setFromScalar!( Size index, LocalL16ScalarArray value ) {
+  this.values[index].v.x = value.get(0);
+  this.values[index].v.y = value.get(1);
+  this.values[index].v.z = value.get(2);
+  this.values[index].w = value.get(3);
+}
+
+inline Size QuatAttribute.getScalarValueSize() {
+  return 4;
+}
+
+inline Boolean QuatAttribute.equalValues( Size index1, Size index2 ) {
+  return this.values[index1].equal( this.values[index2] );
+}
+
+function String QuatAttribute.valueDesc( Size index ) {
+  return String(this.values[index]);
+}
+
+require Util;
+function String QuatAttribute.unitTestPrint( Size index ) {
+  return unitTestPrint(this.values[index]);
+}
+
+//Returns a string description of the attribute.
+function String QuatAttribute.getDesc?( Boolean includeValues) {
+  String desc;
+  desc += "Attribute: " + this.getName() + " nb elements = "+ this.values.size()+'\n';
+  if(includeValues){
+    if(this.values.size > 0){
+      desc += "  values:[ \n";
+      for(Integer i=0; i<this.values.size; i++){
+        desc += '    ' + unitTestPrint(this.values[i]) + " \n";
+      }
+      desc += "  ]\n";
+    }
+    else{
+      desc += "  values:[]\n";
+    }
+  }
+  return desc;
+}
+function String QuatAttribute.getDesc?() {
+  return this.getDesc(false);
+}
+
+function Ref<QuatAttribute> GeometryAttributes.getOrCreateQuatAttribute!( String name ) {
+  Ref<GeometryAttribute> attr = this.getAttribute( name, QuatAttribute );
+  if( attr )
+    return attr;
+
+  QuatAttribute newAttr = QuatAttribute();
+  newAttr.resize(this.elementCount);
+  newAttr.name = name;
+  newAttr.version = this.keysVersion;
+  this.attachNewAttribute(newAttr);
+
+  return newAttr;
+}

@@ -1,0 +1,74 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+///The BulletConvex2dShape allows to use arbitrary convex shapes as 2d convex shapes, with the Z component assumed to be 0.
+///For 2d boxes, the BulletBox2dShape is recommended.
+object BulletConvex2dShape : BulletConvexShape, BulletCollisionShape
+{
+	Data pointer;
+	BulletConvexShape childConvexShape;
+};
+
+function Data BulletConvex2dShape.getPointer(){
+	return this.pointer;
+}
+
+function BulletConvex2dShape(BulletConvexShape convexChildShape){
+	this.childConvexShape = convexChildShape;
+	this.__construct(convexChildShape);
+}
+function BulletConvex2dShape.__construct!(BulletConvexShape convexChildShape) = "BulletConvex2dShape_construct";
+
+function ~BulletConvex2dShape() = "BulletConvex2dShape_destroy";
+	
+function Vec3 BulletConvex2dShape.localGetSupportingVertexWithoutMargin(Vec3 vec) = 'BulletConvex2dShape_localGetSupportingVertexWithoutMargin';
+
+function Vec3 BulletConvex2dShape.localGetSupportingVertex(Vec3 vec) = 'BulletConvex2dShape_localGetSupportingVertex';
+
+function BulletConvex2dShape.batchedUnitVectorGetSupportingVertexWithoutMargin?( Vec3 vectors[], io Vec3 supportVerticesOut[]) = 'BulletConvex2dShape_batchedUnitVectorGetSupportingVertexWithoutMargin';
+
+function BulletConvex2dShape.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = "BulletConvex2dShape_calculateLocalInertia";
+
+function BulletConvexShape BulletConvex2dShape.getChildShape() 
+{
+	return this.childConvexShape;
+}
+
+// 	virtual const char*	getName()const 
+// 	{
+// 		return "Convex2dShape";
+// 	}
+	
+
+
+// 	///////////////////////////
+
+
+// 	///getAabb's default implementation is brute force, expected derived classes to implement a fast dedicated version
+function BulletConvex2dShape.getAabb(Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletConvex2dShape_getAabb';
+
+function BulletConvex2dShape.getAabbSlow(Xfo t, io Vec3 aabbMin, io Vec3 aabbMax) = 'BulletConvex2dShape_getAabbSlow';
+
+function BulletConvex2dShape.setLocalScaling!(Vec3 scaling)  = 'BulletConvex2dShape_setLocalScaling';
+function Vec3 BulletConvex2dShape.getLocalScaling()  = 'BulletConvex2dShape_getLocalScaling';
+
+function BulletConvex2dShape.setMargin!(Scalar margin) = 'BulletConvex2dShape_setMargin';
+function Scalar	BulletConvex2dShape.getMargin() = 'BulletConvex2dShape_getMargin';
+
+function Integer BulletConvex2dShape.getNumPreferredPenetrationDirections() = 'BulletConvex2dShape_getNumPreferredPenetrationDirections';
+	
+function BulletConvex2dShape.getPreferredPenetrationDirection(Integer index, io Vec3 penetrationVector) = 'BulletConvex2dShape_getPreferredPenetrationDirection';
+
+
+////////////////////////////////////////////////
+// From BulletCollisionShape
+
+
+function BulletConvex2dShape.calculateLocalInertia?(Scalar mass, io Vec3 inertia) = "BulletConvex2dShape_calculateLocalInertia";
+
+function BulletConvex2dShape.setMargin!(Scalar margin) = 'BulletConvex2dShape_setMargin';
+function Scalar	BulletConvex2dShape.getMargin() = 'BulletConvex2dShape_getMargin';
+
+

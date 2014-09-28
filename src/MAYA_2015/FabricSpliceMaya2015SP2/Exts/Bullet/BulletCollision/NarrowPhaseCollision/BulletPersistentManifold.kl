@@ -1,0 +1,121 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+//the enum starts at 1024 to avoid type conflicts with BulletTypedConstraint
+// enum BulletContactManifoldTypes
+// {
+// 	MIN_CONTACT_MANIFOLD_TYPE = 1024,
+// 	BT_PERSISTENT_MANIFOLD_TYPE
+// };
+
+// #define MANIFOLD_CACHE_SIZE 4
+
+///BulletPersistentManifold is a contact point cache, it stays persistent as long as objects are overlapping in the broadphase.
+///Those contact points are created by the collision narrow phase.
+///The cache can be empty, or hold 1,2,3 or 4 points. Some collision algorithms (GJK) might only add one point at a time.
+///updates/refreshes old contact points, and throw them away if necessary (distance becomes too large)
+///reduces the cache to 4 points, when more then 4 points are added, using following rules:
+///the contact point with deepest penetration is always kept, and it tries to maximuze the area covered by the points
+///note that some pairs of objects might have more then one contact manifold.
+
+
+object BulletPersistentManifold : BulletTypedObject
+{
+	Data pointer;
+	Vec3 v;
+};
+
+function Data BulletPersistentManifold.getPointer(){
+	return this.pointer;
+}
+
+
+
+// 	BulletManifoldPoint m_pointCache[MANIFOLD_CACHE_SIZE];
+
+// 	/// this two body pointers can point to the physics rigidbody class.
+// 	/// void* will allow any rigidbody class
+// 	void* m_body0;
+// 	void* m_body1;
+
+// 	Integer	m_cachedPoints;
+
+// 	Scalar	m_contactBreakingThreshold;
+// 	Scalar	m_contactProcessingThreshold;
+
+	
+// 	/// sort cached points so most isolated points come first
+// 	Integer	sortCachedPoints( in BulletManifoldPoint pt);
+
+// 	Integer		findContactPoint(const BulletManifoldPoint* unUsed, Integer numUnused, in BulletManifoldPoint pt);
+
+// public:
+
+
+// 	Integer	m_companionIdA;
+// 	Integer	m_companionIdB;
+
+// 	Integer m_index1a;
+
+// 	BulletPersistentManifold();
+
+// 	BulletPersistentManifold(void* body0,void* body1,Integer , Scalar contactBreakingThreshold,Scalar contactProcessingThreshold)
+// 		: BulletTypedObject(BT_PERSISTENT_MANIFOLD_TYPE),
+// 	m_body0(body0),m_body1(body1),m_cachedPoints(0),
+// 		m_contactBreakingThreshold(contactBreakingThreshold),
+// 		m_contactProcessingThreshold(contactProcessingThreshold)
+// 	{
+// 	}
+
+// 	SIMD_FORCE_INLINE void* getBody0() { return m_body0;}
+// 	SIMD_FORCE_INLINE void* getBody1() { return m_body1;}
+
+// 	SIMD_FORCE_INLINE const void* getBody0() const { return m_body0;}
+// 	SIMD_FORCE_INLINE const void* getBody1() const { return m_body1;}
+
+// 	void	setBodies(void* body0,void* body1)
+// 	{
+// 		m_body0 = body0;
+// 		m_body1 = body1;
+// 	}
+
+// 	void clearUserCache(BulletManifoldPoint& pt);
+
+// #ifdef DEBUG_PERSISTENCY
+// 	void	DebugPersistency();
+// #endif //
+	
+function Integer BulletPersistentManifold.getNumContacts() = 'BulletPersistentManifold_getNumContacts';
+
+function BulletManifoldPoint BulletPersistentManifold.getContactPoint?(Integer index) = 'BulletPersistentManifold_getContactPoint';
+
+///@todo: get this margin from the current physics / collision environment
+function Scalar	BulletPersistentManifold.getContactBreakingThreshold() = 'BulletPersistentManifold_getContactBreakingThreshold';
+
+function Scalar	BulletPersistentManifold.getContactProcessingThreshold() = 'BulletPersistentManifold_getContactProcessingThreshold';
+	
+function Integer BulletPersistentManifold.getCacheEntry( in BulletManifoldPoint newPoint) = 'BulletPersistentManifold_getCacheEntry';
+
+function Integer BulletPersistentManifold.addManifoldPoint(  in BulletManifoldPoint newPoint) = 'BulletPersistentManifold_addManifoldPoint';
+
+function BulletPersistentManifold.removeContactPoint!(Integer index) = 'BulletPersistentManifold_removeContactPoint';
+function BulletPersistentManifold.replaceContactPoint!( in BulletManifoldPoint newPoint,Integer insertIndex) = 'BulletPersistentManifold_replaceContactPoint';
+
+function Boolean BulletPersistentManifold.validContactDistance?( in BulletManifoldPoint pt) = 'BulletPersistentManifold_validContactDistance';
+
+/// calculated new worldspace coordinates and depth, and reject points that exceed the collision margin
+function BulletPersistentManifold.refreshContactPoints!(  in Xfo trA,in Xfo trB) = 'BulletPersistentManifold_refreshContactPoints';
+
+	
+function BulletPersistentManifold.clearManifold!() = 'BulletPersistentManifold_clearManifold';
+
+
+
+// }
+// ;
+
+
+
+

@@ -1,0 +1,26 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+require Util;
+
+
+object FbxHandle {
+  Data pointer;
+};
+
+function FbxHandle.openFileHandle!(String filePath, String textureFolder) = "FabricFBXOpenFileHandle";
+function String FbxHandle.getOpenedFilePath() = "FabricFBXGetOpenedFilePath";
+function FbxHandle.close!() = "FabricFBXFreeFbxHandle";
+function FbxHandle.clear!() = "FabricFBXFreeFbxHandle";
+function FbxHandle.getIdentifiers?(io ImporterIdentifier identifiers[], ImporterOptions options) = "FabricFBXGetIdentifiers";
+function FbxHandle.getAnimationLayerNames?(io String layerNames[]) = "FabricFBXGetAnimationLayerNames";
+function FbxHandle.parsePolygonMeshBbox!(ImporterIdentifier identifier, io Vec3 bboxMin, io Vec3 bboxMax) = "FabricFBXParsePolygonMeshBbox";
+function FbxHandle.parsePolygonMeshAndAttributes!(ImporterIdentifier identifier, io UInt32 polygonSizes[], io UInt32 packedPolyPointIndices[], io Vec3 positions[], io Vec3 polyPointNormals[], io Vec2 polyPointUVs[][]) = "FabricFBXParsePolygonMeshAndAttributes";
+function FbxHandle.parseFCurve!(ImporterIdentifier identifier, io Scalar values[]) = "FabricFBXParseFCurve";
+function FbxHandle.collectParentHierarchyChain!(ImporterIdentifier identifier, io ImporterIdentifier chain[]) = "FabricCollectParentHierarchyChain";
+function FbxHandle.parseSkeleton!(ImporterIdentifier identifier, io ImporterIdentifier bones[]) = "FabricFBXParseSkeleton";
+function FbxHandle.parseSkinWeights!(ImporterIdentifier identifier, io UInt32 nb[], io UInt32 packedOrderedIds[], io Scalar packedOrderedWeights[]) = "FabricFBXParseSkinWeights";
+function ~FbxHandle() = "FabricFBXFreeFbxHandle";
+

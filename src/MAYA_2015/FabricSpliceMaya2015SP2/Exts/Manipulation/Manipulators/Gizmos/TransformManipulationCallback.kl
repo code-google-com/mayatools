@@ -1,0 +1,63 @@
+
+
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+The TransformManipulationCallback supporting the :ref:`GizmoManipulationCallback` interface is used to apply gizmo manipulation directly to InlineInstances from InlineDrawing.
+
+*/
+
+
+object TransformManipulationCallback : GizmoManipulationCallback {
+	InlineTransform targets[];
+	TransformManipulationCommand command;
+};
+
+function TransformManipulationCallback.setTargets!(InlineTransform targets[]){
+  this.targets = targets;
+}
+
+function TransformManipulationCallback.addTarget!(io InlineTransform target){
+  this.targets.push(target);
+}
+
+function TransformManipulationCallback.onDragBegin!(io MouseEvent event){
+	this.command = TransformManipulationCommand(this.targets);
+}
+
+function TransformManipulationCallback.onDragEnd!(io MouseEvent event){
+  event.getHost().addUndoRedoCommand(this.command);
+  event.accept();
+}
+
+function TransformManipulationCallback.onDrag!(io MouseEvent event, Xfo space, Xfo delta, UInt32 flags){
+  // Now set the value back to the targets. 
+  // Note: this should in turn update the gizmo Xfo, if it is computed based on the targets.
+  Xfo invSpace = space.inverse();
+  for(Integer i=0; i<this.targets.size; i++){
+    for(Integer j=0; j<this.targets[i].getGlobalCount(); j++){
+      // Retreive the cached xfo so that the values are not accumulated
+      // between sequential manipulations.
+      Xfo xfo = invSpace * this.command.oldValues[i][j];
+      if(flags&ManipulationMode_Position){
+        xfo.tr += delta.tr;
+      }
+      if(flags&ManipulationMode_Orientation){
+        xfo.ori = delta.ori * xfo.ori;
+      }
+      if(flags&ManipulationMode_Scale){
+        xfo.sc *= delta.sc; // TODO: handle rotated scale values. 
+      }
+      xfo = space * xfo;
+      this.targets[i].setGlobalXfo(j, xfo);
+      this.command.newValues[i][j] = xfo;
+    }
+  }
+
+  // Notify the system that data has changed, and that we should redraw…
+  event.getHost().requestRedraw();
+  event.accept();
+}
+   

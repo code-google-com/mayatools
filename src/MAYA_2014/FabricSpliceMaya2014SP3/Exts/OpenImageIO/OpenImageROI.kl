@@ -1,0 +1,44 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+
+struct OpenImageROI {
+  SInt32 xbegin;
+  SInt32 xend;
+  SInt32 ybegin;
+  SInt32 yend;
+  SInt32 zbegin;
+  SInt32 zend;
+  SInt32 chbegin;
+  SInt32 chend;
+};
+
+function OpenImageROI() = "OpenImageROI_construct_variant1";
+function OpenImageROI(SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend) = "OpenImageROI_construct_variant2";
+function OpenImageROI(SInt32 xbegin, SInt32 xend, SInt32 ybegin, SInt32 yend, SInt32 zbegin, SInt32 zend, SInt32 chbegin, SInt32 chend) = "OpenImageROI_construct_variant3";
+
+function Boolean OpenImageROI.defined() = "OpenImageROI_defined";
+
+function SInt32 OpenImageROI.width() { return this.xend - this.xbegin; }
+function SInt32 OpenImageROI.height() { return this.yend - this.ybegin; }
+function SInt32 OpenImageROI.depth() { return this.zend - this.zbegin; }
+
+function SInt32 OpenImageROI.nchannels() { return this.chend - this.chbegin; }
+
+function UInt64 OpenImageROI.npixels() = "OpenImageROI_npixels";
+inline OpenImageROI OpenImageROI.All () { return OpenImageROI(); }
+
+inline Boolean == (OpenImageROI a, OpenImageROI b) {
+  return (a.xbegin == b.xbegin && a.xend == b.xend &&
+          a.ybegin == b.ybegin && a.yend == b.yend &&
+          a.zbegin == b.zbegin && a.zend == b.zend &&
+          a.chbegin == b.chbegin && a.chend == b.chend);
+}
+
+inline Boolean != (OpenImageROI a, OpenImageROI b) {
+  return (a.xbegin != b.xbegin || a.xend != b.xend ||
+          a.ybegin != b.ybegin || a.yend != b.yend ||
+          a.zbegin != b.zbegin || a.zend != b.zend ||
+          a.chbegin != b.chbegin || a.chend != b.chend);
+}

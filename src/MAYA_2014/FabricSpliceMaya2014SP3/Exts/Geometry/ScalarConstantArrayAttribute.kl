@@ -1,0 +1,218 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+//Scalar constant array attribute: scalar vectors of uniform size
+object ScalarConstantArrayAttribute : GeometryAttribute, StatisticSourceWithAutoRegisterMember {
+  UInt32 version;
+  String name;
+  UInt32 containerIndex;
+
+  Scalar values[];
+  Size arraySize;
+  Size count;
+  StatisticsAutoRegisterMember autoStats;
+};
+
+function ScalarConstantArrayAttribute() {
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] ScalarConstantArrayAttribute.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, this.name ) );
+  stats.push( StatisticRecord( Statistic_Category, "Attribute" ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, this.values.size()*4 ) );
+  return stats;
+}
+
+inline String ScalarConstantArrayAttribute.getName() {
+  return this.name;
+}
+
+inline UInt32 ScalarConstantArrayAttribute.getVersion() {
+  return this.version;
+}
+
+inline Size ScalarConstantArrayAttribute.getContainerIndex() {
+  return this.containerIndex;
+}
+
+inline ScalarConstantArrayAttribute.setContainerIndex!( Size index ) {
+  this.containerIndex = index;
+}
+
+function ScalarConstantArrayAttribute ScalarConstantArrayAttribute.clone() {
+  //The difference with default clone() is that new.base.autoStat will point to 'new' (from constructor)
+  ScalarConstantArrayAttribute new = ScalarConstantArrayAttribute();
+  new.version = this.version;
+  new.name = this.name.clone();
+  new.containerIndex = this.containerIndex;
+  new.values = this.values.clone();
+  new.arraySize = this.arraySize;
+  new.count = this.count;
+  return new;
+}
+
+function Ref<StatisticSource> ScalarConstantArrayAttribute.getStatisticsSource() {
+  return this.autoStats;
+}
+
+inline ScalarConstantArrayAttribute.setArraySize!(Size arraySize) {
+  if( this.arraySize != arraySize ) {
+    this.arraySize = arraySize;
+    this.resize(this.count);
+  }
+}
+
+inline ScalarConstantArrayAttribute.resize!(Size count) {
+  this.count = count;
+  this.values.resize(count * this.arraySize);
+  ++this.version;
+}
+
+inline Size ScalarConstantArrayAttribute.size() {
+  return this.count;
+}
+
+inline Data ScalarConstantArrayAttribute.data() {
+  Ref<ScalarConstantArrayAttribute> thisRef = this;
+  return thisRef.values.data();
+}
+
+//Make sure to call this method after position changes are finished, so caches (such as drawing data) know that they need to be regenerated.
+inline ScalarConstantArrayAttribute.incrementVersion!() {
+  ++this.version;
+}
+
+inline Scalar ScalarConstantArrayAttribute.get(Size index, Size offset) {
+  return this.values[index * this.arraySize + offset];
+}
+
+inline ScalarConstantArrayAttribute.copyValue!( Size sourceIndex, Size targetIndex ) {
+  for(Size i = 0; i < this.arraySize; ++i)
+    this.values[targetIndex*this.arraySize+i] = this.values[sourceIndex*this.arraySize+i];
+}
+
+inline ScalarConstantArrayAttribute.copyValue!( Ref<Object> sourceAttr, Size sourceIndex, Size targetIndex ) {
+  Ref<ScalarConstantArrayAttribute> source = sourceAttr;
+  for(Size i = 0; i < this.arraySize; ++i)
+    this.values[targetIndex*this.arraySize+i] = source.values[sourceIndex*this.arraySize+i];
+}
+
+inline LocalL16ScalarArray ScalarConstantArrayAttribute.getLinearCombination( LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights ) {
+  LocalL16ScalarArray resultVector;
+  resultVector.resize(this.arraySize);
+  for(Size i = 0; i < this.arraySize; ++i) {
+    //Could be optimized for SIMD..
+    Scalar result;
+    for( Size j = 0; j < sourceIndices.size(); ++j )
+      result += this.values[sourceIndices.get(j)*this.arraySize+i]*sourceWeights.get(j);
+    resultVector.set(i, result);
+  }
+  return resultVector;
+}
+
+inline ScalarConstantArrayAttribute.linearCombine!( Ref<Object> sourceAttr, LocalL16UInt32Array sourceIndices, LocalL16ScalarArray sourceWeights, Size targetIndex ) {
+  Ref<ScalarConstantArrayAttribute> source = sourceAttr;
+  for(Size i = 0; i < this.arraySize; ++i) {
+    //Could be optimized for SIMD..
+    Scalar result;
+    for( Size j = 0; j < sourceIndices.size(); ++j )
+      result += source.values[sourceIndices.get(j)*this.arraySize+i]*sourceWeights.get(j);
+    this.values[targetIndex*this.arraySize+i] = result;
+  }
+}
+
+inline ScalarConstantArrayAttribute.setValue!( Size index, LocalL16ScalarArray value ) {
+  for(Size i = 0; i < this.arraySize; ++i)
+    this.values[index*this.arraySize+i] = value.get(i);
+}
+
+inline ScalarConstantArrayAttribute.copyFrom!( Ref<Object> otherAttr ) {
+  Ref<ScalarConstantArrayAttribute> other = otherAttr;
+  this.incrementVersion();
+  this.count = other.count;
+  this.arraySize = other.arraySize;
+
+  // Copy in place to avoid mallocs
+  Size size = other.values.size();
+  this.values.resize( size );
+  for( Size i = 0; i < size; ++i )
+    this.values[i] = other.values[i];
+}
+
+inline ScalarConstantArrayAttribute.setFromScalar!( Size index, LocalL16ScalarArray value ) {
+  this.setValue(index, value);
+}
+
+inline Size ScalarConstantArrayAttribute.getScalarValueSize() {
+  return this.arraySize;
+}
+
+inline Boolean ScalarConstantArrayAttribute.equalValues( Size index1, Size index2 ) {
+  for(Size i = 0; i < this.arraySize; ++i) {
+    if( this.values[index1*this.arraySize+i] != this.values[index2*this.arraySize+i])
+      return false;
+  }
+  return true;
+}
+
+function String ScalarConstantArrayAttribute.valueDesc( Size index ) {
+  String desc = "[";
+  for(Size i = 0; i < this.arraySize; ++i) {
+    if(i)
+      desc += ', ';
+    desc += this.values[index*this.arraySize+i];
+  }
+  desc += "]";
+  return desc;
+}
+
+require Util;
+function String ScalarConstantArrayAttribute.unitTestPrint( Size index ) {
+  String desc = "[";
+  for(Size i = 0; i < this.arraySize; ++i) {
+    if(i)
+      desc += ', ';
+    desc += unitTestPrint(this.values[index*this.arraySize+i]);
+  }
+  desc += "]";
+  return desc;
+}
+//Returns a string description of the attribute.
+function String ScalarConstantArrayAttribute.getDesc?( Boolean includeValues) {
+  String desc;
+  desc += "Attribute: " + this.getName() + " nb elements = "+ this.values.size()+'\n';
+  if(includeValues){
+    if(this.values.size > 0){
+      desc += "  values:[ \n";
+      for(Integer i=0; i<this.values.size; i++){
+        desc += '    ' + unitTestPrint(this.values[i]) + " \n";
+      }
+      desc += "  ]\n";
+    }
+    else{
+      desc += "  values:[]\n";
+    }
+  }
+  return desc;
+}
+function String ScalarConstantArrayAttribute.getDesc?() {
+  return this.getDesc(false);
+}
+
+function Ref<ScalarConstantArrayAttribute> GeometryAttributes.getOrCreateScalarConstantArrayAttribute!( String name ) {
+  Ref<GeometryAttribute> attr = this.getAttribute( name, ScalarConstantArrayAttribute );
+  if( attr )
+    return attr;
+
+  ScalarConstantArrayAttribute newAttr = ScalarConstantArrayAttribute();
+  newAttr.resize(this.elementCount);
+  newAttr.name = name;
+  newAttr.version = this.keysVersion;
+  this.attachNewAttribute(newAttr);
+  return newAttr;
+}

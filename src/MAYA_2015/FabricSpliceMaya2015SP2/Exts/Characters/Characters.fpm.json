@@ -1,0 +1,10 @@
+{
+  "code": [
+    "Bone.kl",
+    "CharacterInterfaces.kl",
+    "Skeleton.kl",
+    "Pose.kl",
+    "ClipPose.kl",
+    "Character.kl"
+  ]
+}

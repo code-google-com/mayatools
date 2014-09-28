@@ -1,0 +1,437 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Alembic;
+require Geometry;
+
+object AlembicGeometryParamReader {
+  String _name;
+  String _paramType;
+  AlembicGeometryScope _scope;
+  AlembicTimeSampling _timeSampling;
+  AlembicSampleInfo _info;
+  SInt32 _numSamples;
+  AlembicIFloat32GeomParam _Float32Param;
+  AlembicIUInt32GeomParam _UInt32Param;
+  AlembicIVec2VfGeomParam _Vec2VfParam;
+  AlembicIVec3VfGeomParam _Vec3VfParam;
+  AlembicIVec3NfGeomParam _Vec3NfParam;
+  AlembicIQuatfGeomParam _QuatfParam;
+  AlembicIColorfGeomParam _ColorfParam;
+};
+
+function AlembicGeometryParamReader(AlembicIFloat32GeomParam param) {
+  this._name = param.getName();
+  if(this._name.startsWith('.'))
+    this._name = this._name.leftStrip(1);
+  this._paramType = "Float32";
+  this._Float32Param = param;
+  this._timeSampling = this._Float32Param.getTimeSampling();
+  this._numSamples = this._Float32Param.getNumSamples();
+  this._scope = this._Float32Param.getScope();
+}
+
+function AlembicGeometryParamReader(AlembicIUInt32GeomParam param) {
+  this._name = param.getName();
+  if(this._name.startsWith('.'))
+    this._name = this._name.leftStrip(1);
+  this._paramType = "UInt32";
+  this._UInt32Param = param;
+  this._timeSampling = this._UInt32Param.getTimeSampling();
+  this._numSamples = this._UInt32Param.getNumSamples();
+  this._scope = this._UInt32Param.getScope();
+}
+
+function AlembicGeometryParamReader(AlembicIVec2VfGeomParam param) {
+  this._name = param.getName();
+  if(this._name.startsWith('.'))
+    this._name = this._name.leftStrip(1);
+  this._paramType = "Vec2Vf";
+  this._Vec2VfParam = param;
+  this._timeSampling = this._Vec2VfParam.getTimeSampling();
+  this._numSamples = this._Vec2VfParam.getNumSamples();
+  this._scope = this._Vec2VfParam.getScope();
+}
+
+function AlembicGeometryParamReader(AlembicIVec3VfGeomParam param) {
+  this._name = param.getName();
+  if(this._name.startsWith('.'))
+    this._name = this._name.leftStrip(1);
+  this._paramType = "Vec3Vf";
+  this._Vec3VfParam = param;
+  this._timeSampling = this._Vec3VfParam.getTimeSampling();
+  this._numSamples = this._Vec3VfParam.getNumSamples();
+  this._scope = this._Vec3VfParam.getScope();
+}
+
+function AlembicGeometryParamReader(AlembicIVec3NfGeomParam param) {
+  this._name = param.getName();
+  if(this._name.startsWith('.'))
+    this._name = this._name.leftStrip(1);
+  this._paramType = "Vec3Nf";
+  this._Vec3NfParam = param;
+  this._timeSampling = this._Vec3NfParam.getTimeSampling();
+  this._numSamples = this._Vec3NfParam.getNumSamples();
+  this._scope = this._Vec3NfParam.getScope();
+}
+
+function AlembicGeometryParamReader(AlembicIQuatfGeomParam param) {
+  this._name = param.getName();
+  if(this._name.startsWith('.'))
+    this._name = this._name.leftStrip(1);
+  this._paramType = "Quatf";
+  this._QuatfParam = param;
+  this._timeSampling = this._QuatfParam.getTimeSampling();
+  this._numSamples = this._QuatfParam.getNumSamples();
+  this._scope = this._QuatfParam.getScope();
+}
+
+function AlembicGeometryParamReader(AlembicIColorfGeomParam param) {
+  this._name = param.getName();
+  if(this._name.startsWith('.'))
+    this._name = this._name.leftStrip(1);
+  this._paramType = "Colorf";
+  this._ColorfParam = param;
+  this._timeSampling = this._ColorfParam.getTimeSampling();
+  this._numSamples = this._ColorfParam.getNumSamples();
+  this._scope = this._ColorfParam.getScope();
+}
+
+function String AlembicGeometryParamReader.getName() {
+  return this._name;
+}
+
+function String AlembicGeometryParamReader.getParamType() {
+  return this._paramType;
+}
+
+function AlembicGeometryScope AlembicGeometryParamReader.getScope() {
+  return this._scope;
+}
+
+function Boolean AlembicGeometryParamReader.readSample!(Float64 time, io GeometryAttributes attributes) {
+
+  if(this._info.time == time || this._numSamples == 0)
+    return false;
+
+  AlembicSampleInfo info(time, this._timeSampling, this._numSamples);
+  if(info == this._info)
+    return false;
+  this._info = info;
+
+  switch(this._paramType)
+  {
+    case 'Float32':
+    {
+      ScalarAttribute attr = attributes.getOrCreateScalarAttribute(this._name);
+      Float32 valuesA<>;
+      if(this._Float32Param.isIndexed()) {
+        report('AlembicGeometryParamReader: Indexed param '+this._name+' not supported.');
+        return true;
+      }
+      AlembicIFloat32GeomParamSample sample = this._Float32Param.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._Float32Param.getExpanded(AlembicISampleSelector(this._info.indexB));
+        Float32 valuesB<> = sample.getVals();
+        Size count = Math_min(valuesA.size(), valuesB.size());
+        for(Size i=0;i<count;i++)
+          attr.values[i] = valuesA[i] * Float32(this._info.ifraction) + valuesB[i] * Float32(this._info.fraction);
+      } else {
+        for(Size i=0;i<attr.values.size();i++)
+          attr.values[i] = valuesA[i];
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    case 'UInt32':
+    {
+      UInt32Attribute attr = attributes.getOrCreateUInt32Attribute(this._name);
+      UInt32 valuesA<>;
+      if(this._UInt32Param.isIndexed()) {
+        report('AlembicGeometryParamReader: Indexed param '+this._name+' not supported.');
+        return true;
+      }
+      AlembicIUInt32GeomParamSample sample = this._UInt32Param.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._UInt32Param.getExpanded(AlembicISampleSelector(this._info.indexB));
+        UInt32 valuesB<> = sample.getVals();
+        Size count = Math_min(valuesA.size(), valuesB.size());
+        for(Size i=0;i<count;i++)
+          attr.values[i] = valuesA[i] * this._info.ifraction + valuesB[i] * Float32(this._info.fraction);
+      } else {
+        for(Size i=0;i<attr.values.size();i++)
+          attr.values[i] = valuesA[i];
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    case 'Vec2Vf':
+    {
+      Vec2Attribute attr = attributes.getOrCreateVec2Attribute(this._name);
+      Vec2 valuesA[];
+      if(this._Vec2VfParam.isIndexed()) {
+        report('AlembicGeometryParamReader: Indexed param '+this._name+' not supported.');
+        return true;
+      }
+      AlembicIVec2VfGeomParamSample sample = this._Vec2VfParam.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._Vec2VfParam.getExpanded(AlembicISampleSelector(this._info.indexB));
+        Vec2 valuesB[] = sample.getVals();
+        Size count = Math_min(valuesA.size(), valuesB.size());
+        for(Size i=0;i<count;i++)
+          attr.values[i] = valuesA[i].linearInterpolate(valuesB[i], Float32(this._info.fraction));
+      } else {
+        attr.values = valuesA;
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    case 'Vec3Vf':
+    {
+      Vec3Attribute attr = attributes.getOrCreateVec3Attribute(this._name);
+      Vec3 valuesA[];
+      if(this._Vec3VfParam.isIndexed()) {
+        report('AlembicGeometryParamReader: Indexed param '+this._name+' not supported.');
+        return true;
+      }
+      AlembicIVec3VfGeomParamSample sample = this._Vec3VfParam.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._Vec3VfParam.getExpanded(AlembicISampleSelector(this._info.indexB));
+        Vec3 valuesB[] = sample.getVals();
+        Size count = Math_min(valuesA.size(), valuesB.size());
+        for(Size i=0;i<count;i++)
+          attr.values[i] = valuesA[i].linearInterpolate(valuesB[i], Float32(this._info.fraction));
+      } else {
+        attr.values = valuesA;
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    case 'Vec3Nf':
+    {
+      Vec3Attribute attr = attributes.getOrCreateVec3Attribute(this._name);
+      Vec3 valuesA[];
+      if(this._Vec3NfParam.isIndexed()) {
+        report('AlembicGeometryParamReader: Indexed param '+this._name+' not supported.');
+        return true;
+      }
+      AlembicIVec3NfGeomParamSample sample = this._Vec3NfParam.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._Vec3NfParam.getExpanded(AlembicISampleSelector(this._info.indexB));
+        Vec3 valuesB[] = sample.getVals();
+        Size count = Math_min(valuesA.size(), valuesB.size());
+        for(Size i=0;i<count;i++)
+          attr.values[i] = valuesA[i].linearInterpolate(valuesB[i], Float32(this._info.fraction));
+      } else {
+        attr.values = valuesA;
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    case 'Quatf':
+    {
+      QuatAttribute attr = attributes.getOrCreateQuatAttribute(this._name);
+      Quat valuesA[];
+      if(this._QuatfParam.isIndexed()) {
+        report('AlembicGeometryParamReader: Indexed param '+this._name+' not supported.');
+        return true;
+      }
+      AlembicIQuatfGeomParamSample sample = this._QuatfParam.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._QuatfParam.getExpanded(AlembicISampleSelector(this._info.indexB));
+        Quat valuesB[] = sample.getVals();
+        Size count = Math_min(valuesA.size(), valuesB.size());
+        for(Size i=0;i<count;i++)
+          attr.values[i] = valuesA[i].sphericalLinearInterpolate(valuesB[i], Float32(this._info.fraction));
+      } else {
+        attr.values = valuesA;
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    case 'Colorf':
+    {
+      ColorAttribute attr = attributes.getOrCreateColorAttribute(this._name);
+      Color valuesA[];
+      if(this._ColorfParam.isIndexed()) {
+        report('AlembicGeometryParamReader: Indexed param '+this._name+' not supported.');
+        return true;
+      }
+      AlembicIColorfGeomParamSample sample = this._ColorfParam.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._ColorfParam.getExpanded(AlembicISampleSelector(this._info.indexB));
+        Color valuesB[] = sample.getVals();
+        Size count = Math_min(valuesA.size(), valuesB.size());
+        for(Size i=0;i<count;i++)
+          attr.values[i] = valuesA[i].linearInterpolate(valuesB[i], Float32(this._info.fraction));
+      } else {
+        attr.values = valuesA;
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    default:
+    {
+      setError('AlembicGeometryParamReader: Unsupported paramType "'+this._paramType+'".');
+      break;
+    }
+  }
+
+  return false;
+}
+
+function Boolean AlembicGeometryParamReader.readSample!(Float64 time, io PolygonMesh mesh) {
+  if(this._info.time == time || this._numSamples == 0)
+    return false;
+
+  AlembicSampleInfo info(time, this._timeSampling, this._numSamples);
+  if(info == this._info)
+    return false;
+  this._info = info;
+
+  switch(this._paramType)
+  {
+    case 'Float32':
+    {
+      Ref<ScalarAttribute> attr = mesh.getOrCreateScalarAttribute(this._name);
+      Float32 valuesA<>;
+      AlembicIFloat32GeomParamSample sample = this._Float32Param.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._Float32Param.getExpanded(AlembicISampleSelector(this._info.indexB));
+        Float32 valuesB<> = sample.getVals();
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, Scalar(valuesA[i] * this._info.ifraction + valuesB[i] * this._info.fraction));
+      } else {
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, Scalar(valuesA[i]));
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    case 'UInt32':
+    {
+      Ref<UInt32Attribute> attr = mesh.getOrCreateUInt32Attribute(this._name);
+      UInt32 valuesA<>;
+      AlembicIUInt32GeomParamSample sample = this._UInt32Param.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._UInt32Param.getExpanded(AlembicISampleSelector(this._info.indexB));
+        UInt32 valuesB<> = sample.getVals();
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, UInt32(valuesA[i] * this._info.ifraction + valuesB[i] * this._info.fraction));
+      } else {
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, UInt32(valuesA[i]));
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    case 'Vec2Vf':
+    {
+      Ref<Vec2Attribute> attr = mesh.getOrCreateVec2Attribute(this._name);
+      Vec2 valuesA[];
+      AlembicIVec2VfGeomParamSample sample = this._Vec2VfParam.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._Vec2VfParam.getExpanded(AlembicISampleSelector(this._info.indexB));
+        Vec2 valuesB[] = sample.getVals();
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, valuesA[i].linearInterpolate(valuesB[i], Float32(this._info.fraction)));
+      } else {
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, valuesA[i]);
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    case 'Vec3Vf':
+    {
+      Ref<Vec3Attribute> attr = mesh.getOrCreateVec3Attribute(this._name);
+      Vec3 valuesA[];
+      AlembicIVec3VfGeomParamSample sample = this._Vec3VfParam.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._Vec3VfParam.getExpanded(AlembicISampleSelector(this._info.indexB));
+        Vec3 valuesB[] = sample.getVals();
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, valuesA[i].linearInterpolate(valuesB[i], Float32(this._info.fraction)));
+      } else {
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, valuesA[i]);
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    case 'Vec3Nf':
+    {
+      Ref<Vec3Attribute> attr = mesh.getOrCreateVec3Attribute(this._name);
+      Vec3 valuesA[];
+      AlembicIVec3NfGeomParamSample sample = this._Vec3NfParam.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._Vec3NfParam.getExpanded(AlembicISampleSelector(this._info.indexB));
+        Vec3 valuesB[] = sample.getVals();
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, valuesA[i].linearInterpolate(valuesB[i], Float32(this._info.fraction)));
+      } else {
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, valuesA[i]);
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    case 'Quatf':
+    {
+      Ref<QuatAttribute> attr = mesh.getOrCreateQuatAttribute(this._name);
+      Quat valuesA[];
+      AlembicIQuatfGeomParamSample sample = this._QuatfParam.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._QuatfParam.getExpanded(AlembicISampleSelector(this._info.indexB));
+        Quat valuesB[] = sample.getVals();
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, valuesA[i].sphericalLinearInterpolate(valuesB[i], Float32(this._info.fraction)));
+      } else {
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, valuesA[i]);
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    case 'Colorf':
+    {
+      Ref<ColorAttribute> attr = mesh.getOrCreateColorAttribute(this._name);
+      Color valuesA[];
+
+      AlembicIColorfGeomParamSample sample = this._ColorfParam.getExpanded(AlembicISampleSelector(this._info.indexA));
+      valuesA = sample.getVals();
+      if(this._info.requiresInterpolation()) {
+        sample = this._ColorfParam.getExpanded(AlembicISampleSelector(this._info.indexB));
+        Color valuesB[] = sample.getVals();
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, valuesA[i].linearInterpolate(valuesB[i], Float32(this._info.fraction)));
+      } else {
+        for(Size i=0;i<mesh.pointCount();i++)
+          mesh.setPointAttribute(i, attr, valuesA[i]);
+      }
+      attr.incrementVersion();
+      return true;
+    }
+    default:
+    {
+      setError('AlembicGeometryParamReader: Unsupported paramType "'+this._paramType+'".');
+      break;
+    }
+  }
+
+  return false;
+}

@@ -1,0 +1,188 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+//Returns an attribute of a given name and type if it exists, else it creates and returns it.
+//NOTE: this function is mostly for backward compatibility, since it is not extensible to custom types. Use GeometryAttributes.getOrCreateXXXXAttribute(name) instead.
+function Ref<GeometryAttribute> GeometryAttributes.getOrCreateAttribute!(String name, Type attributeType) {
+  if( this.nameToAttr.has(name) ) {//TODO: use the new 'get' dict method
+    Ref<GeometryAttribute> existingAttr = this.nameToAttr[name].attr;
+    if( attributeType != existingAttr.type )
+      setError("GeometryAttributes.getOrCreateAttribute: attribute '"+name+"' already exists with a different type: "+existingAttr.type);
+    return existingAttr;
+  }
+
+  if( attributeType == Vec3Attribute ) {
+    return this.getOrCreateVec3Attribute(name);
+  } else if( attributeType == Vec3_dAttribute ) {
+    return this.getOrCreateVec3_dAttribute(name);
+  } else if( attributeType == ScalarAttribute ) {
+    return this.getOrCreateScalarAttribute(name);
+  } else if( attributeType == Vec2Attribute ) {
+    return this.getOrCreateVec2Attribute(name);
+  } else if( attributeType == Vec4Attribute ) {
+    return this.getOrCreateVec4Attribute(name);
+  } else if( attributeType == QuatAttribute ) {
+    return this.getOrCreateQuatAttribute(name);
+  } else if( attributeType == ColorAttribute ) {
+    return this.getOrCreateColorAttribute(name);
+  } else if( attributeType == RGBAttribute ) {
+    return this.getOrCreateRGBAttribute(name);
+  } else if( attributeType == RGBAAttribute ) {
+    return this.getOrCreateRGBAAttribute(name);
+  } else if( attributeType == UInt32Attribute ) {
+    return this.getOrCreateUInt32Attribute(name);
+  } else if( attributeType == ScalarConstantArrayAttribute ) {
+    return this.getOrCreateScalarConstantArrayAttribute(name);
+  } else if( attributeType == UInt16ConstantArrayAttribute ) {
+    return this.getOrCreateUInt16ConstantArrayAttribute(name);
+  } else if( attributeType == Mat33Attribute ) {
+    return this.getOrCreateMat33Attribute(name);
+  } else if( attributeType == Mat44Attribute ) {
+    return this.getOrCreateMat44Attribute(name);
+  } else
+    throw("GeometryAttributes.getOrCreateAttribute: unsupported attribute type: "+attributeType);
+}
+
+//Returns true if positions are stored as Float64 (double precision), else they are stored as Float32.
+inline Boolean GeometryAttributes.hasFloat64Positions() {
+  return this.positionsAttributeType == Vec3_dAttribute;
+}
+
+//Returns the positions attribute (Float32) if it exists, else it creates it. If positions already exist as Float64, an exception is raised.
+inline Ref<Vec3Attribute> GeometryAttributes.getOrCreatePositions!() {
+  if( this.positionsAttributeType == Vec3Attribute )
+    return this.positionsAttribute;
+
+  if( this.positionsAttribute ) {
+    if( this.size() )
+      throw("GeometryAttributes.getOrCreatePositions: positions already exist as Float64");
+    this.removeAttribute( "positions" );
+  }
+  return this.getOrCreateVec3Attribute( "positions" );
+}
+
+//Returns the positions attribute (Float64) if it exists, else it creates it. If positions already exist as Float32, an exception is raised.
+inline Ref<Vec3_dAttribute> GeometryAttributes.getOrCreatePositions_d!() {
+  if( this.positionsAttributeType == Vec3_dAttribute )
+    return this.positionsAttribute;
+
+  if( this.positionsAttribute ) {
+    if( this.size() )
+      throw("GeometryAttributes.getOrCreatePositions: positions already exist as Float32");
+    this.removeAttribute( "positions" );
+  }
+  return this.getOrCreateVec3_dAttribute( "positions" );
+}
+
+//Returns the positions attribute (Float32) if exists, else 'null'
+inline Ref<Vec3Attribute> GeometryAttributes.getPositions() {
+  if( this.positionsAttributeType == Vec3Attribute )
+    return this.positionsAttribute;
+  return null;
+}
+
+//Returns the positions attribute (Float64) if exists, else 'null'
+inline Ref<Vec3_dAttribute> GeometryAttributes.getPositions_d() {
+  if( this.positionsAttributeType == Vec3_dAttribute )
+    return this.positionsAttribute;
+  return null;
+}
+
+//Returns the position at the given index. A conversion is made if stored as Float64.
+//NOTE: this function is less efficient than calling getPositions() and then working directly with it
+inline Vec3 GeometryAttributes.getPosition( Size index ) {
+  if( this.positionsAttributeType == Vec3Attribute ) {
+    Ref<Vec3Attribute> attr = this.positionsAttribute;
+    return attr.values[index];
+  } else {
+    Ref<Vec3_dAttribute> attr = this.positionsAttribute;
+    return attr.values[index].toVec3();
+  }
+}
+
+//Returns the position at the given index. A conversion is made if stored as Float32.
+//NOTE: this function is less efficient than calling getPositions() and then working directly with it
+inline Vec3_d GeometryAttributes.getPosition_d( Size index ) {
+  if( this.positionsAttributeType == Vec3Attribute ) {
+    Vec3_d vec;
+    Ref<Vec3Attribute> attr = this.positionsAttribute;
+    vec.set(attr.values[index]);
+    return vec;
+  } else {
+    Ref<Vec3_dAttribute> attr = this.positionsAttribute;
+    return attr.values[index];
+  }
+}
+
+//Sets the position for the given index. A conversion is made if stored as Float64.
+//NOTE: this function is less efficient than calling getPositions() and then working directly with it
+inline GeometryAttributes.setPosition( Size index, Vec3 pos ) {
+  if( this.positionsAttributeType == Vec3Attribute ) {
+    Ref<Vec3Attribute> attr = this.positionsAttribute;
+    attr.values[index] = pos;
+  } else {
+    Ref<Vec3_dAttribute> attr = this.positionsAttribute;
+    attr.values[index].set(pos);
+  }
+}
+
+//Sets the position for the given index. A conversion is made if stored as Float32.
+//NOTE: this function is less efficient than calling getPositions() and then working directly with it
+inline GeometryAttributes.setPosition( Size index, Vec3_d pos ) {
+  if( this.positionsAttributeType == Vec3Attribute ) {
+    Ref<Vec3Attribute> attr = this.positionsAttribute;
+    attr.values[index] = pos.toVec3();
+  } else {
+    Ref<Vec3_dAttribute> attr = this.positionsAttribute;
+    attr.values[index] = pos;
+  }
+}
+
+//Returns the normals attribute, and creates it if it doesn't exist.
+inline Ref<Vec3Attribute> GeometryAttributes.getOrCreateNormals!() {
+  if( this.normalsAttribute )
+    return this.normalsAttribute;
+  return this.getOrCreateVec3Attribute( "normals" );
+}
+
+//Returns the normals attribute, or 'null' if it doesn't exist.
+inline Ref<Vec3Attribute> GeometryAttributes.getNormals() {
+  Ref<Vec3Attribute> normalsAttr = null;
+  normalsAttr = this.normalsAttribute;
+  return normalsAttr;
+}
+
+function Type _StringToAttributeType( String attrTypeString ) {
+  if( attrTypeString == "Vec3Attribute" ) {
+    return Vec3Attribute;
+  } else if( attrTypeString == "Vec3_dAttribute" ) {
+    return Vec3_dAttribute;
+  } else if( attrTypeString == "ScalarAttribute" ) {
+    return ScalarAttribute;
+  } else if( attrTypeString == "Vec2Attribute" ) {
+    return Vec2Attribute;
+  } else if( attrTypeString == "Vec4Attribute" ) {
+    return Vec4Attribute;
+  } else if( attrTypeString == "QuatAttribute" ) {
+    return QuatAttribute;
+  } else if( attrTypeString == "ColorAttribute" ) {
+    return ColorAttribute;
+  } else if( attrTypeString == "RGBAttribute" ) {
+    return RGBAttribute;
+  } else if( attrTypeString == "RGBAAttribute" ) {
+    return RGBAAttribute;
+  } else if( attrTypeString == "UInt32Attribute" ) {
+    return UInt32Attribute;
+  } else if( attrTypeString == "ScalarConstantArrayAttribute" ) {
+    return ScalarConstantArrayAttribute;
+  } else if( attrTypeString == "UInt16ConstantArrayAttribute" ) {
+    return UInt16ConstantArrayAttribute;
+  } else if( attrTypeString == "Mat33Attribute" ) {
+    return Mat33Attribute;
+  } else if( attrTypeString == "Mat44Attribute" ) {
+    return Mat44Attribute;
+  }
+  setError("AttributeValueEquals: unsupported attribute type: "+attrTypeString);
+  return ScalarAttribute;
+}

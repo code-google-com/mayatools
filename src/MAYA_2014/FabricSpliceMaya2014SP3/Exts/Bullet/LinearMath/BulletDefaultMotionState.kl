@@ -1,0 +1,65 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+///The BulletDefaultMotionState provides a common implementation to synchronize world transforms with offsets.
+object	BulletDefaultMotionState : BulletMotionState
+{
+	Data pointer;
+	Object userPointer;
+};
+
+function Data BulletDefaultMotionState.getPointer(){ 
+  return this.pointer; 
+}
+
+// Note: we can't directly override the constructor, so we instead call __construct on construction.
+///this BulletDefaultMotionState constructor gets created objects from the user, and will not delete those
+function BulletDefaultMotionState(){
+  this.__construct();
+}
+function BulletDefaultMotionState.__construct!() = 'BulletDefaultMotionState_construct';
+
+function BulletDefaultMotionState(Xfo startTrans){
+  this.__constructStartTrans(startTrans);
+}
+function BulletDefaultMotionState.__constructStartTrans!(Xfo startTrans) = 'BulletDefaultMotionState_constructStartTrans';
+
+function BulletDefaultMotionState(Xfo startTrans, Xfo centerOfMassOffset){
+  this.__constructStartTransCenterOfMassOffset(startTrans, centerOfMassOffset);
+}
+function BulletDefaultMotionState.__constructStartTransCenterOfMassOffset!(Xfo startTrans, Xfo centerOfMassOffset) = 'BulletDefaultMotionState_constructStartTransCenterOfMassOffset';
+
+function ~BulletDefaultMotionState(){
+	// report("~BulletDefaultMotionState");
+	this.__destroy();
+}
+function BulletDefaultMotionState.__destroy!() = 'BulletDefaultMotionState_destroy';
+
+
+///synchronizes world transform from user to physics
+function BulletDefaultMotionState.getWorldTransform?(io Xfo centerOfMassWorldTrans) = 'BulletDefaultMotionState_getWorldTransform';
+
+///synchronizes world transform from physics to user
+///Bullet only calls the update of worldtransform for active objects
+function BulletDefaultMotionState.setWorldTransform!(Xfo centerOfMassWorldTrans) = 'BulletDefaultMotionState_setWorldTransform';
+
+
+
+function Xfo BulletDefaultMotionState.getGraphicsWorldTrans() = 'BulletDefaultMotionState_getGraphicsWorldTrans';
+function BulletDefaultMotionState.setGraphicsWorldTrans!(Xfo value) = 'BulletDefaultMotionState_setGraphicsWorldTrans';
+function Xfo BulletDefaultMotionState.getCenterOfMassOffset() = 'BulletDefaultMotionState_getCenterOfMassOffset';
+function BulletDefaultMotionState.setCenterOfMassOffset!(Xfo value) = 'BulletDefaultMotionState_setCenterOfMassOffset';
+function Xfo BulletDefaultMotionState.getStartWorldTrans() = 'BulletDefaultMotionState_getStartWorldTrans';
+function BulletDefaultMotionState.setStartWorldTrans!(Xfo value) = 'BulletDefaultMotionState_setStartWorldTrans';
+
+function Object	BulletDefaultMotionState.getUserPointer(){
+	return this.userPointer;
+}
+function BulletDefaultMotionState.setUserPointer!(Object value){
+	this.userPointer = value;
+}
+

@@ -1,0 +1,211 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+The :ref:`keyframe` represents a single control key on an :ref:`keyframetrack`, which is essentially an animation curve. A :ref:`keyframe` provide various interpolation methodes from :ref:`keyframe` to the next.
+
+When interpoolating Bezier keyframes, the tangent values are relative to the 
+
+The tangent x value is the fraction between this key and the next. A value of 0.333 generates a handle that streches one third the distance from this key to the next. 
+The tangent y value is the gradient of the handle. A value of 0.0 creates a flat handle, and a value of 1.0 generates a handle whose slops is 45 degrees. 
+
+Storing keyframe handles as fractions and gradients is consistent with all majior DCCs, and ensures that the curve shape is maintained as the keys are moded in the curve editor.
+
+Example
+---------
+
+.. code-block:: js
+
+    // create two keys
+    Keyframe keyA(0.0, 0.0, Vec2(-0.333, 0.0), Vec2(-0.333, 0.0));
+    Keyframe keyB(100.0, 4.0);
+
+    // interpolate the keys for a given time
+    Scalar value = keyA.interpolate(keyB, 2.0);
+*/
+
+require Math;
+
+const Integer Keyframe_Interpolation_Constant = 0;
+const Integer Keyframe_Interpolation_Linear = 1;
+const Integer Keyframe_Interpolation_Bezier = 2;
+
+struct Keyframe {
+  Scalar time;
+  Scalar value;
+  Integer interpolation;
+  Vec2 inTangent;
+  Vec2 outTangent;
+};
+
+// constructor providing time, value, both tangent and the interpolation type
+inline Keyframe(Scalar time, Scalar value, Vec2 inTangent, Vec2 outTangent, Integer interpolation) {
+  this.time = time;
+  this.value = value;
+  this.inTangent = inTangent;
+  this.outTangent = outTangent;
+  this.interpolation = interpolation;
+}
+
+// constructor providing time, value and both tangents. interpolation is set to bezier.
+inline Keyframe(Scalar time, Scalar value, Vec2 inTangent, Vec2 outTangent) {
+  this.time = time;
+  this.value = value;
+  this.inTangent = inTangent;
+  this.outTangent = outTangent;
+  this.interpolation = Keyframe_Interpolation_Bezier;
+}
+
+// constructor providing time and value. tangents are zero length, interpolation is set to linear.
+inline Keyframe(Scalar time, Scalar value) {
+  this.time = time;
+  this.value = value;
+  this.inTangent.set(-0.333, 0.0);
+  this.outTangent.set( 0.333, 0.0);
+  this.interpolation = Keyframe_Interpolation_Linear;
+}
+
+// default constructor, time, value, tangents are zeroed. interpolation is linear.
+inline Keyframe() {
+  this.time = 0.0;
+  this.value = 0.0;
+  this.inTangent.set(-0.333, 0.0);
+  this.outTangent.set( 0.333, 0.0);
+  this.interpolation = Keyframe_Interpolation_Linear;
+}
+
+// returns true if the provided Scalar is zero
+inline Boolean isZero(Float64 x) {
+  Float64 EQN_EPS = 1e-4;
+  return (x > - EQN_EPS && x < EQN_EPS);
+}
+
+// helper inline
+inline Float64 cbrt(Float64 v) {
+  return pow(v, 1.0 / 3.0);
+}
+
+// interpolates this key with another one provided a (absolute) time value
+inline Scalar Keyframe.interpolate(Keyframe key2, Scalar t) {
+  if(t <= (this.time + PRECISION))
+    return this.value;
+  if(t >= (key2.time - PRECISION))
+    return key2.value;
+
+  if(this.interpolation == Keyframe_Interpolation_Constant)
+    return this.value;
+
+  Float64 u = (t - this.time) / (key2.time - this.time);
+  Float64 s = 1.0 - u;
+  Float64 u2 = u * u;
+
+  if(this.interpolation == Keyframe_Interpolation_Linear)
+    return Scalar(s * this.value + u * key2.value);
+
+  // bezier interpolation below
+  Vec2 p0, p1, p2, p3;
+  p0.x =  this.time;
+  p0.y =  this.value;
+  p3.x =  key2.time;
+  p3.y =  key2.value;
+
+  p1.x = this.time + (key2.time - this.time) * this.outTangent.x;
+  p1.y = this.value + ((key2.time - this.time) * this.outTangent.x) * this.outTangent.y;
+  p2.x = key2.time + ((key2.time - this.time) * key2.inTangent.x);
+  p2.y = key2.value + ((key2.time - this.time) * key2.inTangent.x) * key2.inTangent.y;
+
+  p1.x = Math_clamp(p1.x, p0.x, p3.x);
+  p2.x = Math_clamp(p2.x, p0.x, p3.x);
+
+  //report(" p0=" +p0 + " p1=" +p1 + " p2=" +p2 + " p3=" +p3);
+
+  // ax3+bx2+cx+d=0
+  Float64 Ax, Bx, Cx, Dx;
+  Ax = p3.x - p0.x - 3.0 * p2.x + 3.0 * p1.x;
+  Bx = p0.x - 2.0 * p1.x + p2.x;
+  Cx = - p0.x + p1.x;
+  Dx = p0.x - t;
+  
+  Float64 Ay, By, Cy, Dy;
+  Ay = p3.y - p0.y - 3.0 * p2.y + 3.0 * p1.y;
+  By = p0.y - 2.0 * p1.y + p2.y;
+  Cy = - p0.y + p1.y;
+  Dy = p0.y;
+
+  Float64 c[4];
+  Float64 roots[3];
+  c[0] = Dx;
+  c[1] = 3.0 * Cx;
+  c[2] = 3.0 * Bx;
+  c[3] = Ax;
+
+  Float64 v;
+  if (isZero(Ax) && isZero(Bx)) {
+    v = u;
+  } else {
+    // Count is the number of solutions to the cubic equation
+    Integer numroots = findCubicRoots(c, roots);
+
+    if (numroots == 0) {
+      // No roots: [phtaylor 22/03/2013] this issue was highlighted by the Alembic exporter. 
+      // This fix needs to be validated by Peter. 
+      u = (t - p0.x) / (p3.x - p0.x);
+      return Scalar(p0.y + ((p3.y - p0.y) * u));
+    }
+    else if (numroots == 1) {
+      v = roots[0]; // One solution, just return it
+    }
+    else {
+      v = - 1.0;
+      for (Integer i = 0; i < numroots; i++) {
+        // make sure the solution is within 0..1
+        if ((roots[i] >= 0.0) && (roots[i] <= 1.0)) {
+          // Get the largest solution
+          if (v < 0.0) v = roots[i];
+            else if (roots[i] > v) v = roots[i];
+          }
+      }
+    }
+  }
+
+  Float64 v2 = v * v;
+  Float64 v3 = v2 * v;
+  return Scalar(Ay * v3 + 3.0 * By * v2 + 3.0 * Cy * v + Dy);
+}
+
+// interpolates this key with another one provided linear blend value (0.0 to 1.0)
+inline Scalar Keyframe.linearInterpolate(Keyframe key2, Scalar b) {
+  Scalar t = this.time * (1.0 - b) + key2.time * b;
+  return this.interpolate(key2, t);
+}
+
+
+
+function String Keyframe.getDesc(String indent) {
+  String desc;
+  desc += indent + "Keyframe { \n";
+  desc += indent + "  time: " + this.time + "\n";
+  desc += indent + "  value: " + this.value + "\n";
+  switch(this.interpolation){
+    case Keyframe_Interpolation_Constant:
+      desc += indent + "  interpolation: Constant\n";
+    break;
+    case Keyframe_Interpolation_Linear:
+      desc += indent + "  interpolation: Linear\n";
+    break;
+    case Keyframe_Interpolation_Bezier:
+      desc += indent + "  interpolation: Bezier\n";
+    break;
+  }
+  if(this.interpolation == Keyframe_Interpolation_Bezier){
+    desc += indent + "  inTangent: " + this.inTangent + "\n";
+    desc += indent + "  outTangent: " + this.outTangent + "\n";
+  }
+  desc += indent + "}";
+  return desc;
+}
+
+
+function String Keyframe.getDesc() {
+  return this.getDesc("");
+}

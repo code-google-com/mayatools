@@ -1,0 +1,24 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`inlineshapeadaptor` interface is used to represent an adaptor capable of drawing an :ref:`inlineshape` within an :ref:`inlinedrawing`.
+*/
+
+interface InlineTransformAdaptor {
+
+  // returns the types this adaptor is capable of drawing
+  String[] getTransformTypes();
+
+  // draws the shape on screen. this is used from
+  // within the InlineInstance and should not be called manually.
+  // the index and count arguments provide information about
+  // how many times the shape will be drawn, and of the current
+  // draw index. this allows the shape's draw to perform uploading
+  // and enabling / disabling of VBOs etc...
+  Boolean _draw!(io DrawContext context, io Ref<InlineTransform> transform, Index index, Size count);
+};
+

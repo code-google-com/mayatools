@@ -1,0 +1,58 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+/*SPHINX-description
+.. versionadded:: 1.12.0
+The :ref:`quatparam` implements the :ref:`param` interface for Quat values.
+*/
+
+require Math;
+
+object QuatParam : Param {
+  String name;
+  Quat value;
+  Param options[String];
+};
+
+// default constructor
+function QuatParam(String name) {
+  this.name = name;
+}
+
+// constructor taking input value
+function QuatParam(String name, Quat value) {
+  this.name = name;
+  this.value = value;
+}
+
+// returns the name of this parameter
+function String QuatParam.getName() {
+  return this.name;
+}
+
+// returns the value type of this parameter
+function String QuatParam.getValueType() {
+  return "Quat";
+}
+
+// getting an option on this param
+function Param QuatParam.getOption(String name)
+{
+  return this.options.get(name, null);
+}
+
+// setting an option on the parameter
+function QuatParam.setOption!(Param option)
+{
+  this.options[option.getName()] = option;
+}
+
+// returns the param's value
+function Quat QuatParam.getValue() {
+  return this.value;
+}
+
+// sets the param's value
+function QuatParam.setValue!(Quat value) {
+  this.value = value;
+}

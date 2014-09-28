@@ -1,0 +1,122 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+require FabricOGL, FabricStatistics;
+
+object OGLBuffer : StatisticSourceWithAutoRegisterMember {
+  UInt32 bufferID;
+  UInt32 additionalBufferIDs[];
+  UInt32 elementCount;
+  UInt32 numBufferElementComponents;
+  Boolean normalize;
+  Boolean perInstance;
+  UInt32 bufferType;
+  UInt32 bufferUsage;
+  UInt32 bufferElementComponentType;
+
+  //Statistics
+  StatisticsAutoRegisterMember autoStats;
+};
+  
+inline OGLBuffer(){
+  //report("OGLBuffer:" + getContextID());
+  if(FabricStatisticsEnabled())
+    this.autoStats = StatisticsAutoRegisterMember(this);
+}
+
+
+inline ~OGLBuffer(){
+  this.deleteBuffer();
+}
+
+function OGLBuffer.deleteBuffer!() {
+  if(this.bufferID != 0 && cpglHaveContext()){
+    UInt32 bufferIDs[];
+    bufferIDs.push(this.bufferID);
+    glDeleteBuffers(1, bufferIDs);
+    this.bufferID = 0;
+
+    for( Size i = 0; i < this.additionalBufferIDs.size(); ++i ) {
+      bufferIDs[0] = this.additionalBufferIDs[i];
+      glDeleteBuffers(1, bufferIDs);
+    }
+    this.additionalBufferIDs.resize(0);
+  }
+}
+
+function OGLBuffer.genBuffer!(
+  Data bufferData,
+  UInt64 bufferSize,
+  UInt64 bufferDataElementCount,
+  UInt32 bufferIndex
+) {
+  if(!cpglHaveContext()){
+    setError("ERROR: OGLBuffer.genBuffer. OpenGL context not bound");
+    return;
+  }
+  // [phtaylor 16/11/2012] TODO: Remove the bufferDataElementCount parameter, and instead just use bufferSize
+  if (/*this.bufferID != 0 &&*/ bufferDataElementCount != this.elementCount) {
+    this.deleteBuffer();
+  }
+  if (bufferSize > 0) {
+    if( bufferIndex > this.additionalBufferIDs.size() )
+      this.additionalBufferIDs.resize(bufferIndex);
+
+    UInt32 bufferID = bufferIndex == 0 ? this.bufferID : this.additionalBufferIDs[bufferIndex-1];
+
+    if (bufferID == 0) {
+      UInt32 bufferIDs[];
+      bufferIDs.push(0);
+      glGenBuffers(1, bufferIDs);
+      bufferID = UInt32(bufferIDs[0]);
+      if(bufferIndex == 0)
+        this.bufferID = bufferID;
+      else
+        this.additionalBufferIDs[bufferIndex-1] = bufferID;
+    }
+    // Now fill the buffer with the data
+    glBindBuffer(this.bufferType, bufferID);
+    glBufferData(this.bufferType, UInt32(bufferSize), bufferData, this.bufferUsage);
+    glBindBuffer(this.bufferType, 0);
+  }
+  this.elementCount = UInt32(bufferDataElementCount);
+}
+
+function OGLBuffer.genBuffer!(
+  Data bufferData,
+  UInt64 bufferSize,
+  UInt64 bufferDataElementCount
+) {
+  this.genBuffer(bufferData, bufferSize, bufferDataElementCount, 0);
+}
+
+function UInt64 OGLBuffer.getApproximateGPUMemoryUsage() {
+  if( !this.bufferID )
+    return 0;
+
+  switch(this.bufferElementComponentType) {
+    case GL_BYTE: case GL_UNSIGNED_BYTE:
+      return this.elementCount*this.numBufferElementComponents;
+    case GL_SHORT: case GL_UNSIGNED_SHORT: case GL_HALF_FLOAT:
+      return this.elementCount*this.numBufferElementComponents*2;
+    case GL_INT: case GL_UNSIGNED_INT: case GL_FLOAT: case GL_INT_2_10_10_10_REV: case GL_UNSIGNED_INT_2_10_10_10_REV:
+      return this.elementCount*this.numBufferElementComponents*4;
+    case GL_DOUBLE:
+      return this.elementCount*this.numBufferElementComponents*8;
+    case GL_INT_2_10_10_10_REV: case GL_UNSIGNED_INT_2_10_10_10_REV:
+      return this.elementCount*4;
+  }
+  return 0;
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] OGLBuffer.getStatistics() {
+  StatisticRecord stats[];
+  stats.push( StatisticRecord( Statistic_Name, "OGLBuffer_"+this.bufferID ) );
+  stats.push( StatisticRecord( Statistic_Category, "OGL" ) );
+  stats.push( StatisticRecord( "Size", this.elementCount ) );
+  stats.push( StatisticRecord( Statistic_MemoryUsage, 14*4 ) );
+  stats.push( StatisticRecord( Statistic_GPUMemoryUsage, this.getApproximateGPUMemoryUsage() ) );
+  return stats;
+}

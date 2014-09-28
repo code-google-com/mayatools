@@ -1,0 +1,1990 @@
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+require Math;
+
+const Boolean _octDebugStructure = false;
+
+//Octree internal data allocator for providing more efficient memory usage
+//Lower level structure
+struct _OctreeArrays {
+  ContiguousUInt32Allocator data;
+};
+
+inline _OctreeArrays.clear!() {
+  this.data.clear();
+}
+
+const UInt32 _OctreeAccessorExpandedBit = 0x80000000;
+const UInt32 _OctreeAccessorExpandedMask = 0x7FFFFFFF;
+
+inline Boolean _OctreeArrays_CanCompress( UInt32 index, UInt32 offset ) {
+  return index < 0x01000000 && offset < 0x100;
+}
+
+inline UInt32 _OctreeArrays_Compress( UInt32 index, UInt32 offset ) {
+  return (index << 8) | offset;
+}
+
+inline _OctreeArrays_Uncompress( UInt32 value, io UInt32 index, io UInt32 offset ) {
+  index = value >> 8;
+  offset = value & 0xFF;
+}
+
+inline _OctreeArrays_GetAccessorData( UInt32 accessor, io UInt32 baseIndex, io Boolean compressed ) {
+  baseIndex = accessor & _OctreeAccessorExpandedMask;
+  compressed = !Boolean(accessor & 0x80000000);
+}
+
+inline UInt32 _OctreeArrays_Accessor( UInt32 baseIndex, Boolean compressed ) {
+  return compressed ? baseIndex : (_OctreeAccessorExpandedBit | baseIndex);
+}
+
+struct _OctreeArrayIterator {
+  Boolean compressed;
+  UInt32 count;
+  UInt32 endData;
+  UInt32 currentData;
+};
+
+inline _OctreeArrayIterator _OctreeArrays.getIterator( UInt32 accessor ) {
+  _OctreeArrayIterator it;
+  if( accessor ) {
+    UInt32 baseIndex;
+    _OctreeArrays_GetAccessorData( accessor, baseIndex, it.compressed );
+    it.count = this.data.data[baseIndex];
+    it.currentData = baseIndex+1;
+    it.endData = it.currentData + ( it.compressed ? it.count : it.count*2 );
+  }
+  return it;
+}
+
+inline Size _OctreeArrayIterator.getSize() {
+  return this.count;
+}
+
+inline _OctreeArrayIterator _OctreeArrays.getIterator( UInt32 accessor, Size initialIndex ) {
+  _OctreeArrayIterator it = this.getIterator(accessor);
+  it.currentData += it.compressed ? initialIndex : initialIndex*2;
+  return it;
+}
+
+inline Boolean _OctreeArrays.getNext( io _OctreeArrayIterator it, io UInt32 index, io UInt32 offset ) {
+  if( it.currentData == it.endData )
+    return false;
+
+  if( it.compressed )
+    _OctreeArrays_Uncompress( this.data.data[it.currentData++], index, offset );
+  else {
+    index = this.data.data[it.currentData++];
+    offset = this.data.data[it.currentData++];
+  }
+  return true;
+}
+
+inline Boolean _OctreeArrays.getNext( io _OctreeArrayIterator it, io UInt32 index ) {
+  if( it.currentData == it.endData )
+    return false;
+
+  if( it.compressed )
+    index = this.data.data[it.currentData++] >> 8;
+  else {
+    index = this.data.data[it.currentData];
+    it.currentData += 2;
+  }
+  return true;
+}
+
+inline _OctreeArrayIterator.removedItem!() {
+  //Goto previous item so we get the next one again (last was shuffled)
+  --this.count;
+  if( this.compressed ) {
+    this.currentData -= 1;
+    this.endData -= 1;
+  } else {
+    this.currentData -= 2;
+    this.endData -= 2;
+  }
+}
+
+inline UInt32 _OctreeCellsArray_encodeCellAndMembership( UInt32 cellIndex, UInt32 membershipType ) {
+  return (cellIndex << 2) | membershipType;
+}
+
+inline _OctreeCellsArray_decodeCellAndMembership( UInt32 value, io UInt32 cellIndex, io UInt32 membershipType ) {
+  cellIndex = value >> 2;
+  membershipType = value & 3;
+}
+
+struct _OctreeCellsIterator {
+  _OctreeArrayIterator it;
+};
+
+inline _OctreeCellsIterator _OctreeArrays.getCellsIterator( UInt32 accessor ) {
+  _OctreeCellsIterator it;
+  it.it = this.getIterator(accessor);
+  return it;
+}
+
+inline Size _OctreeCellsIterator.getSize() {
+  return this.it.count;
+}
+
+inline _OctreeCellsIterator.removedItem!() {
+  this.it.removedItem();
+}
+
+inline _OctreeCellsIterator _OctreeArrays.getCellsIterator( UInt32 accessor, Size initialIndex ) {
+  _OctreeCellsIterator it;
+  it.it = this.getIterator(accessor, initialIndex);
+  return it;
+}
+
+inline Boolean _OctreeArrays.getNext( io _OctreeCellsIterator it, io UInt32 index, io UInt32 offset, io UInt32 membershipType ) {
+  UInt32 value;
+  if( !this.getNext(it.it, value, offset) )
+    return false;
+
+  _OctreeCellsArray_decodeCellAndMembership(value, index, membershipType);
+  return true;
+}
+
+inline Boolean _OctreeArrays.getNext( io _OctreeCellsIterator it, io UInt32 index, io UInt32 membershipType ) {
+  UInt32 value;
+  if( !this.getNext(it.it, value) )
+    return false;
+
+  _OctreeCellsArray_decodeCellAndMembership(value, index, membershipType);
+  return true;
+}
+
+//Note: _OctreeArrays.get: use "getIterator" when accessing all elements for better performance
+inline _OctreeArrays.get!( UInt32 accessor, UInt32 element, io UInt32 index, io UInt32 offset ) {
+  UInt32 baseIndex;
+  Boolean compressed;
+  _OctreeArrays_GetAccessorData( accessor, baseIndex, compressed );
+
+  if( _octDebugStructure ) {
+    UInt32 size = this.data.data[baseIndex];
+    if( element >= size )
+      report("_OctreeArrays.get: out of bound: element="+element+", size="+size);
+  }
+
+  if( compressed )
+    _OctreeArrays_Uncompress( this.data.data[baseIndex+1+element], index, offset );
+  else {
+    index = this.data.data[baseIndex + 1 + element*2];
+    offset = this.data.data[baseIndex + 2 + element*2];
+  }
+}
+
+inline _OctreeArrays.getCellData!( UInt32 accessor, UInt32 element, io UInt32 index, io UInt32 offset, io UInt32 membershipType ) {
+  UInt32 value;
+  this.get(accessor, element, value, offset);
+  _OctreeCellsArray_decodeCellAndMembership(value, index, membershipType);
+}
+
+inline UInt32 _OctreeArrays.getSize( UInt32 accessor ) {
+  return this.data.data[ accessor & _OctreeAccessorExpandedMask ];
+}
+
+//Note: _OctreeArrays.get: use "getIterator" when accessing all elements for better performance
+inline _OctreeArrays.set_noExpand!( UInt32 accessor, UInt32 element, UInt32 index, UInt32 offset ) {
+  UInt32 baseIndex;
+  Boolean compressed;
+  _OctreeArrays_GetAccessorData( accessor, baseIndex, compressed );
+
+  if( _octDebugStructure ) {
+    UInt32 size = this.data.data[baseIndex];
+    if( element >= size )
+      report("_OctreeArrays.set_noExpand: out of bound: element="+element+", size="+size);
+    if( compressed && !_OctreeArrays_CanCompress(index, offset) )
+      report("_OctreeArrays.set_noExpand: would need to expand!!");
+  }
+
+  if( compressed )
+    this.data.data[baseIndex+1+element] = _OctreeArrays_Compress( index, offset );
+  else {
+    this.data.data[baseIndex + 1 + element*2] = index;
+    this.data.data[baseIndex + 2 + element*2] = offset;
+  }
+}
+
+inline _OctreeArrays.inPlaceUncompress!( UInt32 baseIndex, UInt32 count ) {
+  UInt32 arrayData = baseIndex+1;
+  for( Size i = count; i--; ) {
+    Size iIndex, iOffset;
+    _OctreeArrays_Uncompress( this.data.data[arrayData + i], iIndex, iOffset );
+    this.data.data[arrayData + i*2] = iIndex;
+    this.data.data[arrayData + i*2 + 1] = iOffset;
+  }
+}
+
+//Returns 'true' if expanded
+inline Boolean _OctreeArrays.set!( io UInt32 accessor, UInt32 element, UInt32 index, UInt32 offset ) {
+  UInt32 baseIndex;
+  Boolean compressed;
+  _OctreeArrays_GetAccessorData( accessor, baseIndex, compressed );
+
+  if( _octDebugStructure ) {
+    UInt32 size = this.data.data[baseIndex];
+    if( element >= size )
+      report("_OctreeArrays.set: out of bound: element="+element+", size="+size);
+  }
+
+  Boolean expanded;
+  if( compressed && !_OctreeArrays_CanCompress(index, offset) ) {
+    expanded = true;
+    UInt32 size = this.data.data[baseIndex];
+    Size toAllocate = size*2+1;
+    baseIndex = this.data.reallocate( baseIndex, size+1, toAllocate, toAllocate>>3 );
+    accessor = baseIndex | _OctreeAccessorExpandedBit;
+    this.inPlaceUncompress( baseIndex, size );
+    compressed = false;
+  }
+
+  if( compressed )
+    this.data.data[baseIndex+1+element] = _OctreeArrays_Compress( index, offset );
+  else {
+    this.data.data[baseIndex + 1 + element*2] = index;
+    this.data.data[baseIndex + 2 + element*2] = offset;
+  }
+  return expanded;
+}
+
+function Size _OctreeArrays.addElement!( io UInt32 accessor, Size prevSize, UInt32 index, UInt32 offset ) {
+  Boolean canCompress = _OctreeArrays_CanCompress(index, offset);
+  if( !accessor ) {
+    //Allocate new
+    if( canCompress ) {
+      accessor = this.data.allocate(2, 0);
+      this.data.data[accessor] = 1;
+      this.data.data[accessor+1] = _OctreeArrays_Compress(index, offset);
+    } else {
+      accessor = this.data.allocate(3, 0);
+      this.data.data[accessor] = 1;
+      this.data.data[accessor+1] = index;
+      this.data.data[accessor+2] = offset;
+      accessor |= _OctreeAccessorExpandedBit;
+    }
+    return 0;
+  }
+
+  Boolean prevCompressed;
+  UInt32 baseIndex;
+  _OctreeArrays_GetAccessorData( accessor, baseIndex, prevCompressed );
+  Boolean compressed = prevCompressed && canCompress;
+  Size prevAllocated = prevCompressed ? prevSize + 1 : prevSize*2 + 1;
+  Size toAllocate = compressed ? (prevSize + 1) + 1 : (prevSize + 1)*2 + 1;
+  baseIndex = this.data.reallocate( baseIndex, prevAllocated, toAllocate, toAllocate>>2 );
+  this.data.data[baseIndex] = prevSize+1;
+
+  Size arrayData = baseIndex+1;
+
+  if( compressed ) {
+    this.data.data[arrayData + prevSize] = _OctreeArrays_Compress( index, offset );
+    accessor = baseIndex;
+  } else {
+    if( prevCompressed )
+      this.inPlaceUncompress( baseIndex, prevSize );
+
+    this.data.data[arrayData + prevSize*2] = index;
+    this.data.data[arrayData + prevSize*2 + 1] = offset;
+    accessor = baseIndex | _OctreeAccessorExpandedBit;
+  }
+  return prevSize;
+}
+
+inline Size _OctreeArrays.addElement!( io UInt32 accessor, UInt32 index, UInt32 offset ) {
+  Size prevSize = this.data.data[accessor & _OctreeAccessorExpandedMask];
+  return this.addElement( accessor, prevSize, index, offset );
+}
+
+inline Boolean _OctreeArrays.reserveElements!( io UInt32 accessor, UInt32 additionalElementCount ) {
+  if(!additionalElementCount)
+    return false;
+
+  if(!accessor) {
+    accessor = this.data.allocate(1, additionalElementCount-1);
+    this.data.data[accessor] = 0;//Size = 0; set it since we assume we can always check Size on accessors
+    return true;
+  }
+  UInt32 baseIndex;
+  Boolean compressed;
+  _OctreeArrays_GetAccessorData( accessor, baseIndex, compressed );
+  UInt32 size = this.data.data[baseIndex];
+
+  Size prevAlloc = compressed ? size+1 : size*2+1;
+  Size newAlloc = prevAlloc + (compressed ? additionalElementCount : additionalElementCount*2);
+  newAlloc += newAlloc>>4;//Just a small padding..
+
+  //Note: we need to first 'fake' that the count has changed, else it won't actually reserve
+  accessor = this.data.reallocate(baseIndex, prevAlloc, newAlloc, 0);
+  accessor = this.data.reallocate(accessor, newAlloc, prevAlloc, newAlloc-prevAlloc);
+  Boolean moved = accessor != baseIndex;
+
+  if(!compressed)
+    accessor |= _OctreeAccessorExpandedBit;
+  return moved;
+}
+
+function Size _OctreeArrays.removeElement!( io UInt32 accessor, UInt32 element, io UInt32 replacingIndex, io UInt32 replacingOffset, Boolean keepAsReserved, Boolean recompactIfPossible ) {
+  UInt32 baseIndex;
+  Boolean prevCompressed;
+  _OctreeArrays_GetAccessorData( accessor, baseIndex, prevCompressed );
+  UInt32 prevSize = this.data.data[baseIndex];
+
+  if( _octDebugStructure ) {
+    if( element >= prevSize )
+      report("_OctreeArrays.removeElement: out of bound: element="+element+", size="+prevSize);
+  }
+
+  if( element+1 != prevSize ) {
+    //Shuffle to replace
+    Size arrayData = baseIndex+1;
+    Size replaceSource = prevSize-1;
+    if( prevCompressed ) {
+      UInt32 replaceSourceValue = this.data.data[arrayData+replaceSource];
+      _OctreeArrays_Uncompress( replaceSourceValue, replacingIndex, replacingOffset );
+      this.data.data[arrayData + element] = replaceSourceValue;
+    } else {
+      replacingIndex = this.data.data[arrayData + replaceSource*2];
+      replacingOffset = this.data.data[arrayData + replaceSource*2 + 1];
+      this.data.data[arrayData + element*2] = replacingIndex;
+      this.data.data[arrayData + element*2+1] = replacingOffset;
+    }
+  } else
+    replacingIndex = InvalidIndex;
+
+  if( prevSize == 1 ) {
+    this.data.free( baseIndex, prevCompressed ? 2 : 3 );
+    accessor = 0;
+    return 0;
+  }
+  this.data.data[baseIndex] = prevSize-1;
+
+  if( prevCompressed ) {
+    accessor = this.data.reallocate( baseIndex, prevSize+1, prevSize, keepAsReserved ? 1 : 0 );
+  } else {
+    Size prevAllocated = prevSize*2+1;
+    Boolean recompacted;
+    if( recompactIfPossible ) {
+      UInt32 index = baseIndex+1;
+      recompacted = true;
+      for( Size i = 0; i < prevSize-1; ++i ) {
+        if( !_OctreeArrays_CanCompress(this.data.data[index], this.data.data[index+1]) ) {
+          recompacted = false;
+          break;
+        }
+        index += 2;
+      }
+      if( recompacted ) {
+        index = baseIndex+1;
+        for( Size i = 1; i < prevSize; ++i ) {
+          this.data.data[baseIndex+i] = _OctreeArrays_Compress( this.data.data[index], this.data.data[index+1] );
+          index += 2;
+        }
+        accessor = this.data.reallocate( baseIndex, prevAllocated, prevSize, keepAsReserved ? prevAllocated-prevSize : 0 );
+      }
+    }
+    if( !recompacted )
+      accessor = this.data.reallocate( baseIndex, prevAllocated, prevAllocated-2, keepAsReserved ? 2 : 0 ) | _OctreeAccessorExpandedBit;
+  }
+  return prevSize-1;
+}
+
+inline _OctreeArrays.free!( io UInt32 accessor, UInt32 size ) {
+  UInt32 baseIndex;
+  Boolean compressed;
+  _OctreeArrays_GetAccessorData( accessor, baseIndex, compressed );
+
+  if( baseIndex )
+    this.data.free( baseIndex, compressed ? size+1 : size*2+1 );
+
+  accessor = 0;
+}
+
+inline _OctreeArrays.free!( io UInt32 accessor ) {
+  this.free( accessor, this.getSize(accessor) );
+}
+
+inline _OctreeArrays.remapAccessorAfterRecompact!( io UInt32 accessor, UInt32 oldIndexToNewIndex[] ) {
+  UInt32 baseIndex;
+  Boolean compressed;
+  _OctreeArrays_GetAccessorData( accessor, baseIndex, compressed );
+  accessor = _OctreeArrays_Accessor( oldIndexToNewIndex[baseIndex], compressed );
+}
+
+function Size _OctreeArrays.memUsage() {
+  return this.data.memUsage();
+}
+
+function String _OctreeArrays.getArrayString( UInt32 accessor ) {
+  String s = "["+this.getSize(accessor)+"]: ";
+  _OctreeArrayIterator it = this.getIterator( accessor );
+  UInt32 idx, off;
+  while( this.getNext( it, idx, off ) )
+    s += "{"+idx+","+off+"}, ";
+  return s;
+}
+
+function String _OctreeArrays.getCellArrayString( UInt32 accessor ) {
+  String s = "["+this.getSize(accessor)+"]: ";
+  _OctreeCellsIterator it = this.getCellsIterator( accessor );
+  UInt32 idx, off, mbs;
+  while( this.getNext( it, idx, off, mbs ) )
+    s += "{"+idx+","+off+","+mbs+"}, ";
+  return s;
+}
+
+/////////// Octree
+
+const Boolean _octDebugTrace = false;
+
+//The octree defined here is in 'world' space. Unlike a KD-Tree or BBox tree, this has the benefit of 
+//making the structure independent of objects' position, which simplifies parallelism and updates upon object positions' changes.
+//The first usage of this structure is for view culling, and given that drawing an object is very fast with modern GPUs,
+//we don't want to add more CPU overhead than GPU time gains. So a 'fast but unprecise' structure is the best; we want to lower 
+//update / query cost at the price of having more 'false positives' (less precision), and to have faster results, even if more approximate.
+
+//Note: in some case KL doesn't allow to use a constant, eg: Type data[constant]; In such case I put //_Oct_CELL_SUBDIV
+//so it is clear that it should have been Type data[_Oct_CELL_SUBDIV];
+
+const Integer _Oct_CELL_SUBDIV = 2;
+
+const Integer _Oct_CELL_DEPTH0_MASK = 131071;//17 bits (17th = root)
+
+const UInt8 _Oct_MAX_DEPTH = 13;
+
+const UInt8 _OctreeCellArray_toClassifyObjects = 0;
+const UInt8 _OctreeCellArray_cellObjects = 1;
+const UInt8 _OctreeCellArray_subCellObjects = 2;//Note: this has to be the last one (used by raycast traverser)
+
+//Constants to balance subdivide/update overhead VS spatial partition gains
+const Integer _Oct_MIN_NUMOBJECTS_TO_SPLIT = 4;
+const Integer _Oct_MAX_OBJECT_MEMBER_CUMUL_COUNT = 16;
+
+struct _OctCellPath {
+  UInt16 xyz[3];
+};
+
+function String _OctCellPath.getDesc?( UInt8 maxDepth ) {
+  UInt16 xyz[3];
+  xyz = this.xyz;
+  String s = "xyz=<" + this.xyz[0] + "," + this.xyz[1] + "," + this.xyz[2] + ">={";
+  Size depth = 0;
+  while( ( xyz[0] | xyz[1] | xyz[2] ) != 0 && depth <= maxDepth ) {
+    s += String((( xyz[0] & 32768 ) == 0) ? 0 : 1) + String((( xyz[1] & 32768 ) == 0) ? 0 : 1) + String((( xyz[2] & 32768 ) == 0) ? 0 : 1) + ",";
+    xyz[0] = xyz[0] << 1;
+    xyz[1] = xyz[1] << 1;
+    xyz[2] = xyz[2] << 1;
+    ++depth;
+  }
+  return s + "}";
+}
+
+inline Boolean _OctCellPath.equals?( _OctCellPath other ) {
+  return this.xyz[0] == other.xyz[0] && this.xyz[1] == other.xyz[1] && this.xyz[2] == other.xyz[2];
+}
+
+struct _OctCellBBox {
+  _OctCellPath min;
+  _OctCellPath max;
+};
+
+function String _OctCellBBox.getDesc?( UInt8 maxDepth ) {
+  return "{min=" + this.min.getDesc( maxDepth ) + " max=" + this.max.getDesc( maxDepth ) + "}";
+}
+
+inline Boolean _OctCellBBox.intersects?( _OctCellBBox other ) {
+  return  this.min.xyz[0] < other.max.xyz[0] && this.max.xyz[0] > other.min.xyz[0]
+      &&  this.min.xyz[1] < other.max.xyz[1] && this.max.xyz[1] > other.min.xyz[1]
+      &&  this.min.xyz[2] < other.max.xyz[2] && this.max.xyz[2] > other.min.xyz[2];
+}
+
+inline Boolean _OctCellBBox.contains?( _OctCellPath point ) {
+  return  this.min.xyz[0] <= point.xyz[0] && this.max.xyz[0] >= point.xyz[0]
+      &&  this.min.xyz[1] <= point.xyz[1] && this.max.xyz[1] >= point.xyz[1]
+      &&  this.min.xyz[2] <= point.xyz[2] && this.max.xyz[2] >= point.xyz[2];
+}
+
+inline Boolean _OctCellBBox.contains?( _OctCellBBox other ) {
+  return  this.min.xyz[0] <= other.min.xyz[0] && this.max.xyz[0] >= other.max.xyz[0]
+      &&  this.min.xyz[1] <= other.min.xyz[1] && this.max.xyz[1] >= other.max.xyz[1]
+      &&  this.min.xyz[2] <= other.min.xyz[2] && this.max.xyz[2] >= other.max.xyz[2];
+}
+
+inline UInt8 _OctCellBBox.getIntersectionType?( _OctCellBBox other ) {
+  if( !this.intersects( other ) )
+    return IntersectionNone;
+
+  if( this.contains( other) )
+    return IntersectionIncludesOther;
+
+  return IntersectionOverlap;
+}
+
+inline _OctCellBBox getBBoxIntersection( _OctCellBBox first, _OctCellBBox second ) {
+  _OctCellBBox inters;
+  for( Size dim = 0; dim < 3; ++dim ) {
+    if( first.min.xyz[dim] > second.min.xyz[dim] )
+      inters.min.xyz[dim] = first.min.xyz[dim];
+    else
+      inters.min.xyz[dim] = second.min.xyz[dim];
+    if( first.max.xyz[dim] < second.max.xyz[dim] )
+      inters.max.xyz[dim] = first.max.xyz[dim];
+    else
+      inters.max.xyz[dim] = second.max.xyz[dim];
+  }
+  return inters;
+}
+
+inline UInt64 _OctCellBBox.getVolume?() {
+  return  UInt64(this.max.xyz[0] - this.min.xyz[0])
+        * UInt64(this.max.xyz[1] - this.min.xyz[1])
+        * UInt64(this.max.xyz[2] - this.min.xyz[2]);
+}
+
+inline _OctCellPath _OctCellBBox.getCenter?() {
+  _OctCellPath centerPath;
+  centerPath.xyz[0] = UInt16((UInt32(this.min.xyz[0]) + UInt32(this.max.xyz[0]) + 1)/2);
+  centerPath.xyz[1] = UInt16((UInt32(this.min.xyz[1]) + UInt32(this.max.xyz[1]) + 1)/2);
+  centerPath.xyz[2] = UInt16((UInt32(this.min.xyz[2]) + UInt32(this.max.xyz[2]) + 1)/2);
+  return centerPath;
+}
+
+const UInt8 _Octree_dirtyFlag = 1;
+const UInt8 _Octree_usedFlag = 2;
+const UInt8 _Octree_initializedFlag = 4;
+const UInt8 _Octree_subdividedFlag = 8;
+const UInt8 _Octree_infiniteFlag = 16;
+const UInt8 _Octree_sphereFlag = 32;
+
+inline Boolean getFlag( UInt8 val, UInt8 flag ) {
+  return Boolean(val & flag);
+}
+
+inline setFlag( io UInt8 val, UInt8 flag ) {
+  val = val | flag;
+}
+
+inline clearFlag( io UInt8 val, UInt8 flag ) {
+  val = val & ~flag;
+}
+
+struct _OctObjectData {
+
+  UInt32 cells;//14 == _Oct_MAX_DEPTH+1; 0 = no list
+  UInt8 ownerCellCumulativeCountAtDepth[14];//14 == _Oct_MAX_DEPTH+1. We can use UInt8 since the data will be limited by _Oct_MAX_OBJECT_MEMBER_CUMUL_COUNT (* small factor)
+
+  //Keep original, world coord data, so we can rehash if needed.
+  //Note: woud be more precise as a 4X4 matrix bbox (tr + scale + rot), with more math overhead...
+  Vec3 min;
+  Vec3 max;
+  Scalar radius;//-1 == infinite
+
+  UInt8 maxDepth;//last cells index used
+  UInt8 depthSize;
+  UInt8 stateBits;
+
+  _OctCellBBox octBBox;
+};
+
+inline Boolean _OctObjectData.isUsed() {
+  return getFlag( this.stateBits, _Octree_usedFlag );
+}
+
+inline Boolean _OctObjectData.isDirty() {
+  return getFlag( this.stateBits, _Octree_dirtyFlag );
+}
+
+inline Boolean _OctObjectData.isInfinite() {
+  return getFlag( this.stateBits, _Octree_infiniteFlag );
+}
+
+inline Boolean _OctObjectData.isSphere() {
+  return getFlag( this.stateBits, _Octree_sphereFlag );
+}
+
+inline Boolean _OctObjectData.isInitialized() {
+  return getFlag( this.stateBits, _Octree_initializedFlag );
+}
+
+inline Vec3 _OctObjectData.getCenter() {
+  return (this.min + this.max)*0.5;
+}
+
+inline UInt8 _OctObjectData.getNumOwnerCellsAtDepth?( UInt8 depth ) {
+  if( depth > this.maxDepth )
+    return 0;
+  if( depth == 0 )
+    return this.ownerCellCumulativeCountAtDepth[0];
+  else
+    return this.ownerCellCumulativeCountAtDepth[depth] - this.ownerCellCumulativeCountAtDepth[depth-1];
+}
+
+//returns 'true' if the object is now dirty (has changed)
+inline Boolean _OctObjectData.set!( Vec3 min, Vec3 max ) {
+  if( this.min != min || this.max != max || this.isSphere() ) {
+    this.min = min;
+    this.max = max;
+    this.radius = ((max-min)*0.5).length();
+    clearFlag( this.stateBits, _Octree_sphereFlag );
+    if( !this.isDirty() ) {
+      setFlag( this.stateBits, _Octree_dirtyFlag );
+      return true;
+    }
+  }
+  return false;
+}
+
+//returns 'true' if the object is now dirty (has changed)
+inline Boolean _OctObjectData.set!( Vec3 center, Scalar radius ) {
+  Vec3 min = center - Vec3(radius, radius, radius);
+  Vec3 max = center + Vec3(radius, radius, radius);
+  if( this.min != min || this.max != max || !this.isSphere() ) {
+    this.min = min;
+    this.max = max;
+    this.radius = radius;
+    setFlag( this.stateBits, _Octree_sphereFlag );
+
+    if( !this.isDirty() ) {
+      setFlag( this.stateBits, _Octree_dirtyFlag );
+      return true;
+    }
+  }
+  return false;
+}
+
+inline Boolean _OctObjectData.intersectsBBox?( Vec3 min, Vec3 max ) {
+  if( this.isInfinite() )
+    return true;
+  else if( this.isSphere() ) {
+    Vec3 center = (this.min + this.max) * 0.5;
+    return bBoxIntersectsBSphere( min, max, center, this.radius*this.radius );
+  } else
+    return bBoxIntersectsBBox( this.min, this.max, min, max );
+}
+
+inline Boolean _OctObjectData.intersectsBSphere?( LocalBoundingVolume bSphere ) {
+  if( this.isInfinite() )
+    return true;
+  else if( this.isSphere() ) {
+    Vec3 center = (this.min + this.max) * 0.5;
+    return bSphere.bSphereIntersectsBSphere( center, this.radius );
+  } else
+    return bBoxIntersectsBSphere( this.min, this.max, bSphere.bSphereGetCenter(), bSphere.bSphereGetSquaredRadius() );
+}
+
+inline _OctObjectData.expandWorldBBox?( io Vec3 min, io Vec3 max ) {
+  if( this.radius >= 0.0 ) {//Infinite bvol objects have radius == -1.0
+    if( this.min.x < min.x )
+      min.x = this.min.x;
+    if( this.max.x > max.x )
+      max.x = this.max.x;
+
+    if( this.min.y < min.y )
+      min.y = this.min.y;
+    if( this.max.y > max.y )
+      max.y = this.max.y;
+
+    if( this.min.z < min.z )
+      min.z = this.min.z;
+    if( this.max.z > max.z )
+      max.z = this.max.z;
+  }
+}
+
+struct _OctCellData{
+  _OctCellBBox octBBox;
+
+  UInt32 parentCell;
+
+  //SubCells: bit pattern: [0: Z0Y0X0, 1: Z0Y0X1, 2: Z0Y1X0, 3: Z0Y1X1,  4: Z1Y0X0 5: Z1Y0X1 6: Z1Y1X0 7: Z1Y1X1]
+  UInt32 subCellIndices[8];//8: _Oct_CELL_SUBDIV^3
+
+  UInt32 arrays[3];
+
+  UInt8 stateBits;
+  UInt8 depth;
+  UInt8 parentSubCellIndex;
+};
+
+inline Boolean _OctCellData.isUsed() {
+  return getFlag( this.stateBits, _Octree_usedFlag );
+}
+
+inline Boolean _OctCellData.isDirty() {
+  return getFlag( this.stateBits, _Octree_dirtyFlag );
+}
+
+inline Boolean _OctCellData.isSubdivided() {
+  return getFlag( this.stateBits, _Octree_subdividedFlag );
+}
+
+struct _OctreeStruct {
+  Boolean initialized;
+  Boolean keepSubCellObjectList;// Accelerates volume queries, but 3X memory cost.
+
+  UInt8 maxDepth;
+  Scalar smallestWorldCellSize;
+  UInt8 actualMaxDepth;//Derived from maxDepth + smallestWorldCellSize
+  Size objectCount;
+
+  Vec3 min;
+  Vec3 max;
+  Vec3 gridMin;
+  Vec3 gridMax;
+  Vec3 worldToGridScale;
+  Vec3 gridToWorldScale;
+
+  Size rootCellIndex;
+  Size infiniteBVolObjectsCellIndex;
+
+  _OctreeArrays packedMemberLists;
+
+  _OctCellData packedCellData[];
+  IndexPool packedCellDataIndexPool;
+
+  _OctObjectData objectData[];
+
+  Size dirtyObjects[];
+  UInt32ArrayNoFree dirtyCellsPerDepth[14];
+  Size deletedDirtyCellsCount;
+
+  Size debugValidateCount;
+
+  IndexSet tempIndexSet;
+  Byte tempByteData[];
+};
+
+function _OctreeStruct() {
+  this.init(_Oct_MAX_DEPTH, false, 1.0e-5);
+}
+
+function _OctreeStruct( UInt8 maxDepth, Boolean keepSubCellObjectList, Scalar smallestWorldCellSize ) {
+  this.init(maxDepth, keepSubCellObjectList, smallestWorldCellSize);
+}
+
+function _OctreeStruct.init!(UInt8 maxDepth, Boolean keepSubCellObjectList, Scalar smallestWorldCellSize) {
+  this.keepSubCellObjectList = keepSubCellObjectList;
+  this.smallestWorldCellSize = smallestWorldCellSize;
+  if( maxDepth > _Oct_MAX_DEPTH ) {
+    this.maxDepth = _Oct_MAX_DEPTH;
+    report("WARNING: _OctreeStruct max supported depth is " + _Oct_MAX_DEPTH);
+  }
+  else
+    this.maxDepth = maxDepth;
+  this.actualMaxDepth = maxDepth;
+
+  if( this.packedCellData.size() )
+    return;//Already initialized
+
+  //Reserve entry 0 as NULL
+  UInt32 dummy;
+  this.packedCellData.resize(1);
+  this.packedCellDataIndexPool.getFreeIndex(dummy);
+
+  //Start with inverted min/max (avoids ifs later on)
+  this.min.x = 1.0e+20;
+  this.min.y = 1.0e+20;
+  this.min.z = 1.0e+20;
+
+  this.max.x = -1.0e+20;
+  this.max.y = -1.0e+20;
+  this.max.z = -1.0e+20;
+
+  this.gridMin = this.min;
+  this.gridMax = this.max;
+}
+
+function UInt32 _OctreeStruct.getInfiniteBVolList() {
+  return this.packedCellData[this.infiniteBVolObjectsCellIndex].arrays[_OctreeCellArray_toClassifyObjects];
+}
+
+function _OctreeStruct._validateInternalStructureConsistency!( String label ) {
+  for( Size i = 0; i < this.packedCellData.size(); ++i ) {
+    if(!this.packedCellData[i].isUsed())
+      continue;
+    for( Size j = 0; j < 3; ++j ) {
+      Size currOffset;
+      _OctreeArrayIterator it = this.packedMemberLists.getIterator( this.packedCellData[i].arrays[j] );
+
+      UInt32 idx, off;
+      while( this.packedMemberLists.getNext( it, idx, off ) ) {
+        if( !this.objectData[idx].isUsed() || !this.objectData[idx].isInitialized() )
+          throw(label+" Octree inconsistency for cell "+i+": refers to unused object "+idx);
+        UInt32 cellIndex, cellOffset, cellMembershipType;
+        this.packedMemberLists.getCellData( this.objectData[idx].cells, off, cellIndex, cellOffset, cellMembershipType );
+        if( cellIndex != i || cellOffset != currOffset || cellMembershipType != j )
+          throw(label+" Octree inconsistency for cell "+i+" and object "+idx);
+        ++currOffset;
+      }
+    }
+  }
+  for( Size i = 0; i < this.objectData.size(); ++i ) {
+    if(!this.objectData[i].isUsed() || !this.objectData[i].isInitialized())
+      continue;
+    Size currOffset;
+    _OctreeCellsIterator it = this.packedMemberLists.getCellsIterator( this.objectData[i].cells );
+
+    UInt32 idx, off, mbs;
+    while( this.packedMemberLists.getNext( it, idx, off, mbs ) ) {
+      UInt32 objIndex, objOffset;
+      this.packedMemberLists.get( this.packedCellData[idx].arrays[mbs], off, objIndex, objOffset );
+      if( !this.packedCellData[idx].isUsed() )
+        throw(label+" Octree inconsistency for object "+i+": refers to unused cell "+idx);
+      if( objIndex != i || objOffset != currOffset )
+        throw(label+" Octree inconsistency for object "+i+" and cell "+idx);
+      ++currOffset;
+    }
+  }
+}
+
+inline _OctreeStruct.validateInternalStructureConsistency!( String label ) {
+  ++this.debugValidateCount;
+  if(_octDebugStructure && (this.debugValidateCount%1000==0) )
+    this._validateInternalStructureConsistency( label+" "+this.debugValidateCount );
+}
+
+inline _OctreeStruct.removeObjectCellMembership!( Size objectIndex, io _OctObjectData objectData, UInt32 cellIndex, io _OctCellData cellData, UInt32 cellOffset, UInt32 membershipType, Boolean addCellToDirtyList ) {
+  if(_octDebugTrace)report("removeObjectCellMembership");
+  this.removeCellObjectInternal( cellIndex, cellData, cellOffset, membershipType );
+
+  if(   !cellData.isSubdivided()
+      && this.packedMemberLists.getSize( cellData.arrays[_OctreeCellArray_cellObjects] ) == 0
+      && this.packedMemberLists.getSize( cellData.arrays[_OctreeCellArray_subCellObjects] ) == 0
+      && this.packedMemberLists.getSize( cellData.arrays[_OctreeCellArray_toClassifyObjects] ) == 0 ) {
+    //Cleanup
+    Size parentCell = cellData.parentCell;
+    this._freeCell( cellData, cellIndex );
+    this.packedCellData[ parentCell ].subCellIndices[ cellData.parentSubCellIndex ] = 0;
+    Size i;
+    for( i = 0; i < 8; ++i ) {
+      if( i != cellData.parentSubCellIndex && this.packedCellData[ parentCell ].subCellIndices[ i ] != 0 )
+        break;
+    }
+    if( i == 8 )
+      clearFlag( this.packedCellData[ parentCell ].stateBits, _Octree_subdividedFlag );
+  } else if(addCellToDirtyList)
+    this.setCellDirty( cellIndex, true );
+}
+
+inline _OctreeStruct.releaseObjectCellMembersUpToDepth!( Size objectIndex, io _OctObjectData objectData, Size lastDirtyDepth, Boolean unsplitting ) {
+  if(_octDebugTrace)report("releaseObjectCellMembersUpToDepth");
+  _OctreeCellsIterator it = this.packedMemberLists.getCellsIterator( objectData.cells );
+  UInt32 cellIndex, cellOffset, membershipType;
+  UInt32 objectOffset;
+  while( this.packedMemberLists.getNext( it, cellIndex, cellOffset, membershipType ) ) {
+    UInt8 cellDepth = this.packedCellData[cellIndex].depth;
+    if( cellDepth >= lastDirtyDepth ) {
+      this.removeObjectCellMembership( objectIndex, objectData, cellIndex, this.packedCellData[cellIndex], cellOffset, membershipType, false );
+
+      UInt32 parent = this.packedCellData[cellIndex].parentCell;
+      if( !this.keepSubCellObjectList && lastDirtyDepth != 0 ) {
+        this.tempIndexSet.add(parent);
+      }
+      this.removeObjectCellInternal( objectIndex, objectData, objectOffset, false );
+      if(_octDebugStructure)this.validateInternalStructureConsistency("1a");
+      it.removedItem();
+    } else {
+      if(  this.keepSubCellObjectList 
+        && unsplitting
+        && cellDepth+1 == lastDirtyDepth 
+        && membershipType != _OctreeCellArray_toClassifyObjects
+        && this.tempIndexSet.add(cellIndex) ) {
+          
+        // Set 'to classify'
+        this.removeCellObjectInternal( cellIndex, this.packedCellData[cellIndex], cellOffset, membershipType );
+        this.setCellDirty( cellIndex, true );
+        Size toClassCellObjectsOffset = this.packedMemberLists.addElement( this.packedCellData[cellIndex].arrays[_OctreeCellArray_toClassifyObjects], objectIndex, objectOffset );
+        if( this.packedMemberLists.set( objectData.cells, objectOffset, _OctreeCellsArray_encodeCellAndMembership( cellIndex, _OctreeCellArray_toClassifyObjects ), toClassCellObjectsOffset ) )
+          it = this.packedMemberLists.getCellsIterator( objectData.cells, objectOffset+1 );
+          if(_octDebugStructure)this.validateInternalStructureConsistency("1b");
+      }
+      ++objectOffset;
+    }
+  }
+  if(_octDebugStructure)this.validateInternalStructureConsistency("1");
+
+  if( !this.keepSubCellObjectList && unsplitting ) {
+    for( Size i = lastDirtyDepth; i <= objectData.maxDepth; ++i )
+      objectData.ownerCellCumulativeCountAtDepth[i] = 0;
+
+    Size index;
+    while( index != this.tempIndexSet.size() ) {
+      cellIndex = this.tempIndexSet.indices[index];
+      UInt8 depth = this.packedCellData[cellIndex].depth;
+      if( depth+1 == lastDirtyDepth )
+        this.addObjectToCell( objectIndex, objectData, cellIndex, this.packedCellData[cellIndex], true, true );
+      else {
+        UInt32 parent = this.packedCellData[cellIndex].parentCell;
+        if( Boolean(parent) )
+          this.tempIndexSet.add(parent);
+      }
+      ++index;
+    }
+  }
+  if(_octDebugStructure)this.validateInternalStructureConsistency("1b");
+
+  objectData.maxDepth = UInt8(lastDirtyDepth == 0 ? 0 : lastDirtyDepth - 1);
+  this.tempIndexSet.clear();
+}
+
+inline _OctreeStruct._initCell!( Size depth, io _OctCellData cell ) {
+  cell = _OctCellData();
+  cell.depth = UInt8(depth);
+  setFlag( cell.stateBits, _Octree_usedFlag );
+}
+
+inline Size _OctreeStruct._createCell!( Size depth ) {
+  Size index;
+  if( this.packedCellDataIndexPool.getFreeIndex( index ) )
+    this.packedCellData.resize( index + 1 );
+  this._initCell( depth, this.packedCellData[index] );
+
+  return index;
+}
+
+inline _OctreeStruct._freeCell!( io _OctCellData cell, Size index ) {
+  this.packedMemberLists.free(cell.arrays[_OctreeCellArray_cellObjects]);
+  this.packedMemberLists.free(cell.arrays[_OctreeCellArray_subCellObjects]);
+  this.packedMemberLists.free(cell.arrays[_OctreeCellArray_toClassifyObjects]);
+
+  clearFlag( cell.stateBits, _Octree_usedFlag );
+  if( cell.isDirty() )
+    ++this.deletedDirtyCellsCount;
+  this.packedCellDataIndexPool.unusedIndex( index );
+}
+
+inline _OctreeStruct.addObjectToCellInternal!( UInt32 objectIndex, io _OctObjectData objectData, Size objectCellsCount, UInt32 cellIndex, io _OctCellData cell, UInt32 membershipType ) {
+  if(_octDebugTrace)report("addObjectToCellInternal");
+  if(_octDebugStructure)this.validateInternalStructureConsistency("3a");
+  Size cellObjectsOffset = this.packedMemberLists.addElement( cell.arrays[membershipType], objectIndex, objectCellsCount );
+  this.packedMemberLists.addElement( objectData.cells, objectCellsCount, _OctreeCellsArray_encodeCellAndMembership( cellIndex, membershipType ), cellObjectsOffset );
+  if(_octDebugStructure)this.validateInternalStructureConsistency("3b");
+}
+
+function _OctreeStruct.addObjectToCell!( Size objectIndex, io _OctObjectData objectData, Size objectCellCount, Size cellIndex, io _OctCellData cell, Boolean addCellToDirtyList, Boolean unSplitting ) {
+
+  UInt8 depth = cell.depth;
+
+  UInt32 arrayType;
+  if( !unSplitting ) {
+    if( objectData.maxDepth < depth )
+      objectData.maxDepth = depth;
+    if( depth != 0 && objectData.ownerCellCumulativeCountAtDepth[depth] == 0 )
+      objectData.ownerCellCumulativeCountAtDepth[depth] = objectData.ownerCellCumulativeCountAtDepth[depth-1];
+    if( objectData.ownerCellCumulativeCountAtDepth[depth] < 255)
+      ++objectData.ownerCellCumulativeCountAtDepth[depth];
+    for( Size higherDepth = depth+1; higherDepth <= objectData.maxDepth; ++higherDepth ) {
+      UInt8 count = objectData.ownerCellCumulativeCountAtDepth[higherDepth];
+      if( count != 0 && count < 255)
+        ++objectData.ownerCellCumulativeCountAtDepth[higherDepth];
+    }
+  }
+  this.addObjectToCellInternal( objectIndex, objectData, objectCellCount, cellIndex, cell, _OctreeCellArray_toClassifyObjects );
+  this.setCellDirty( cellIndex, addCellToDirtyList );
+}
+
+inline _OctreeStruct.addObjectToCell!( Size objectIndex, io _OctObjectData objectData, Size cellIndex, io _OctCellData cell, Boolean addCellToDirtyList, Boolean unSplitting ) {
+  this.addObjectToCell( objectIndex, objectData, this.packedMemberLists.getSize( objectData.cells ), cellIndex, cell, addCellToDirtyList, unSplitting );
+}
+
+inline _OctreeStruct.setCellDirty!( Size cellIndex, Boolean addToDirtyList ) {
+  if( !this.packedCellData[cellIndex].isDirty() ) {
+    setFlag( this.packedCellData[cellIndex].stateBits, _Octree_dirtyFlag );
+    if( addToDirtyList )
+      this.dirtyCellsPerDepth[this.packedCellData[cellIndex].depth].push( cellIndex );
+  }
+}
+
+inline _OctreeStruct.getOctCoord?( Vec3 pos, io _OctCellPath coord ) {
+  Vec3 transormedPos = ( pos - this.gridMin ) * this.worldToGridScale;
+
+  if(transormedPos.x < 0.0)
+    transormedPos.x = 0.0;
+  else if(transormedPos.x > 65535.0)
+    transormedPos.x = 65535.0;
+  if(transormedPos.y < 0.0)
+    transormedPos.y = 0.0;
+  else if(transormedPos.y > 65535.0)
+    transormedPos.y = 65535.0;
+  if(transormedPos.z < 0.0)
+    transormedPos.z = 0.0;
+  else if(transormedPos.z > 65535.0)
+    transormedPos.z = 65535.0;
+
+  coord.xyz[0] = UInt16(transormedPos.x);
+  coord.xyz[1] = UInt16(transormedPos.y);
+  coord.xyz[2] = UInt16(transormedPos.z);
+}
+
+inline _OctreeStruct.getOctBBox?( Vec3 min, Vec3 max, Boolean clamp, io _OctCellBBox octBBox ) {
+
+  Vec3 transormedMin = ( min - this.gridMin ) * this.worldToGridScale;
+  Vec3 transormedMax = ( max - this.gridMin ) * this.worldToGridScale;
+
+  if( clamp ) {
+    if(transormedMin.x < 1.0)
+      transormedMin.x = 1.0;
+    else if(transormedMin.x > 65534.0)
+      transormedMin.x = 65534.0;
+    if(transormedMin.y < 1.0)
+      transormedMin.y = 1.0;
+    else if(transormedMin.y > 65534.0)
+      transormedMin.y = 65534.0;
+    if(transormedMin.z < 1.0)
+      transormedMin.z = 1.0;
+    else if(transormedMin.z > 65534.0)
+      transormedMin.z = 65534.0;
+
+    if(transormedMax.x < 1.0)
+      transormedMax.x = 1.0;
+    else if(transormedMax.x > 65534.0)
+      transormedMax.x = 65534.0;
+    if(transormedMax.y < 1.0)
+      transormedMax.y = 1.0;
+    else if(transormedMax.y > 65534.0)
+      transormedMax.y = 65534.0;
+    if(transormedMax.z < 1.0)
+      transormedMax.z = 1.0;
+    else if(transormedMax.z > 65534.0)
+      transormedMax.z = 65534.0;
+  }
+
+  octBBox.min.xyz[0] = UInt16(transormedMin.x) - 1;
+  octBBox.min.xyz[1] = UInt16(transormedMin.y) - 1;
+  octBBox.min.xyz[2] = UInt16(transormedMin.z) - 1;
+
+  octBBox.max.xyz[0] = UInt16(transormedMax.x) + 1;
+  octBBox.max.xyz[1] = UInt16(transormedMax.y) + 1;
+  octBBox.max.xyz[2] = UInt16(transormedMax.z) + 1;
+}
+
+inline _OctreeStruct.getBBox?( _OctCellBBox octBBox, io Vec3 min, io Vec3 max ) {
+  min = Vec3(octBBox.min.xyz[0], octBBox.min.xyz[1], octBBox.min.xyz[2])*this.gridToWorldScale + this.gridMin;
+  max = Vec3(octBBox.max.xyz[0], octBBox.max.xyz[1], octBBox.max.xyz[2])*this.gridToWorldScale + this.gridMin;
+}
+
+inline UInt8 getDepthSize( UInt16 octWidth ) {
+  UInt8 depthSize = 13;
+  if( octWidth ) {
+    for( UInt16 i = 0; i < 14; ++i ) {
+      if( ( octWidth & (32768 >> i) ) != 0 ) {
+        depthSize = UInt8(i);
+        break;
+      }
+    }
+  }
+  return depthSize;
+}
+
+inline _OctreeStruct.removeCellObjectInternal!( UInt32 cellIndex, io _OctCellData cellData, UInt32 cellOffset, UInt32 membershipType ) {
+  UInt32 replacingIndex, replacingOffset;
+  this.packedMemberLists.removeElement( cellData.arrays[membershipType], cellOffset, replacingIndex, replacingOffset, true, false );
+
+  if( replacingIndex != InvalidIndex )
+    this.packedMemberLists.set_noExpand( this.objectData[replacingIndex].cells, replacingOffset, _OctreeCellsArray_encodeCellAndMembership( cellIndex, membershipType ), cellOffset );
+}
+
+function _OctreeStruct.updateObjectPath!( Size objectIndex, io _OctObjectData objectData ) {
+  if( !objectData.isUsed() )
+    return;
+
+  Boolean initialize;
+  if( !objectData.isInitialized() ) {
+    setFlag( objectData.stateBits, _Octree_initializedFlag );
+    objectData.cells = 0;
+    for( Size i = 0; i < 14; ++i )
+      objectData.ownerCellCumulativeCountAtDepth[i] = 0;
+
+    objectData.maxDepth = 0;
+    initialize = true;
+  }
+
+  if( objectData.radius == -1.0 ) {//infinite
+    if( !objectData.isInfinite() ) {
+    if(_octDebugStructure)this.validateInternalStructureConsistency("3a2_");
+      this.releaseObjectCellMembersUpToDepth( objectIndex, objectData, 0, false );
+      setFlag( objectData.stateBits, _Octree_infiniteFlag );
+      if(_octDebugStructure)this.validateInternalStructureConsistency("3a2");
+      this.addObjectToCell( objectIndex, objectData, this.infiniteBVolObjectsCellIndex, this.packedCellData[this.infiniteBVolObjectsCellIndex], false, false );
+    }
+    return;
+  } else if( objectData.isInfinite() ) {
+    clearFlag( objectData.stateBits, _Octree_infiniteFlag );
+    this.releaseObjectCellMembersUpToDepth( objectIndex, objectData, 0, false );
+  }
+
+  _OctCellBBox prevBBox = objectData.octBBox;
+  clearFlag( objectData.stateBits, _Octree_dirtyFlag );
+
+  //Compute new path. Should be within world bbox since world bbox should have been updated first
+  this.getOctBBox( objectData.min, objectData.max, false, objectData.octBBox );
+
+  UInt16 depthBits =   (objectData.octBBox.max.xyz[0] - objectData.octBBox.min.xyz[0])
+                     | (objectData.octBBox.max.xyz[1] - objectData.octBBox.min.xyz[1])
+                     | (objectData.octBBox.max.xyz[2] - objectData.octBBox.min.xyz[2]);
+
+  objectData.depthSize = getDepthSize( depthBits );
+
+  if( initialize ) {
+    //Just add to root cell
+    if(_octDebugStructure)this.validateInternalStructureConsistency("3a1");
+    this.addObjectToCell( objectIndex, this.objectData[objectIndex], this.rootCellIndex, this.packedCellData[this.rootCellIndex], false, false );
+  } else {
+    //Check if we changed our path, in a significative manner relatively to objectData.maxDepth
+    UInt16 upperBitsMask = UInt16( ~( _Oct_CELL_DEPTH0_MASK >> (objectData.maxDepth + 1 ) ) );
+    UInt16 diffBits = (objectData.octBBox.min.xyz[0] ^ prevBBox.min.xyz[0])
+                    | (objectData.octBBox.min.xyz[1] ^ prevBBox.min.xyz[1])
+                    | (objectData.octBBox.min.xyz[2] ^ prevBBox.min.xyz[2])
+                    | (objectData.octBBox.max.xyz[0] ^ prevBBox.max.xyz[0])
+                    | (objectData.octBBox.max.xyz[1] ^ prevBBox.max.xyz[1])
+                    | (objectData.octBBox.max.xyz[2] ^ prevBBox.max.xyz[2]);
+    if( diffBits & upperBitsMask != 0 ) {
+      //For now keep it simple: just remove the object membership up to the last dirty level.
+      //Eventually we could try to keep cells which are still intersecting us, but that would 
+      //make incremental update & states more complex...
+      UInt16 lastDirtyDepth;
+      UInt16 mask = upperBitsMask;
+      for( lastDirtyDepth = objectData.maxDepth + 2; lastDirtyDepth--; ) {
+        if( (diffBits & mask) == 0 )
+          break;
+        mask = mask << 1;
+      }
+      //lastDirtyDepth should be > 1
+      this.releaseObjectCellMembersUpToDepth( objectIndex, objectData, lastDirtyDepth, true );
+    }
+  }
+}
+
+inline _OctCellBBox ComputeSubCellBBox( _OctCellBBox parentCellBbox, _OctCellPath parentCellBboxCenter, UInt8 subCellIndex ) {
+  _OctCellBBox octBBox;
+  for( Size dim = 0; dim < 3; ++dim ) {
+    Boolean left = (subCellIndex & (1<<dim)) == 0;
+    if( left ) {
+      octBBox.min.xyz[dim] = parentCellBbox.min.xyz[dim];
+      octBBox.max.xyz[dim] = parentCellBboxCenter.xyz[dim];
+    } else {
+      octBBox.min.xyz[dim] = parentCellBboxCenter.xyz[dim];
+      octBBox.max.xyz[dim] = parentCellBbox.max.xyz[dim];
+    }
+  }
+  return octBBox;
+}
+
+inline ComputeSubCellBBox( Vec3 parentMin, Vec3 parentMax, Vec3 parentCenter, UInt8 subCellIndex, io Vec3 min, io Vec3 max ) {
+  Boolean left;
+  left = (subCellIndex & 1) == 0;
+  if( left ) {
+    min.x = parentMin.x;
+    max.x = parentCenter.x;
+  } else {
+    min.x = parentCenter.x;
+    max.x = parentMax.x;
+  }
+  left = (subCellIndex & 2) == 0;
+  if( left ) {
+    min.y = parentMin.y;
+    max.y = parentCenter.y;
+  } else {
+    min.y = parentCenter.y;
+    max.y = parentMax.y;
+  }
+  left = (subCellIndex & 4) == 0;
+  if( left ) {
+    min.z = parentMin.z;
+    max.z = parentCenter.z;
+  } else {
+    min.z = parentCenter.z;
+    max.z = parentMax.z;
+  }
+}
+
+inline _OctreeStruct.addMemberToSubCells!( Size parentCellIndex, _OctCellPath parentCenterPath, Size objectIndex, io _OctObjectData objectData, Byte cellBits, Size numSubMembersToReserve[8] ) {
+  if(_octDebugTrace)report("addMemberToSubCells");
+  //NOTE: can't use parentCell struct directly since allocating subcells might invalidate it
+  Size subCellCount;
+  for( UInt8 bit = 0; bit < 8; ++bit ) {
+    if( (UInt16(1<<bit) & cellBits) != 0 )
+      ++subCellCount;
+  }
+  Size objectCellsCount = this.packedMemberLists.getSize( objectData.cells );
+  this.packedMemberLists.reserveElements( objectData.cells, subCellCount );
+  if(_octDebugStructure)this.validateInternalStructureConsistency("3a_3b2");
+
+  for( UInt8 bit = 0; bit < 8; ++bit ) {
+    if( (UInt16(1<<bit) & cellBits) != 0 ) {
+      Size subCell = this.packedCellData[parentCellIndex].subCellIndices[bit];
+      if( subCell == 0 ) {
+        subCell = this._createCell( this.packedCellData[parentCellIndex].depth + 1 );
+        this.packedCellData[parentCellIndex].subCellIndices[bit] = subCell;
+        this.packedCellData[subCell].parentCell = UInt32(parentCellIndex);
+        this.packedCellData[subCell].parentSubCellIndex = bit;
+
+        //Set cell bbox bits
+        this.packedCellData[subCell].octBBox = ComputeSubCellBBox( this.packedCellData[parentCellIndex].octBBox, parentCenterPath, UInt8(bit) );
+        this.packedMemberLists.reserveElements( this.packedCellData[subCell].arrays[_OctreeCellArray_toClassifyObjects], numSubMembersToReserve[bit] );
+        if(_octDebugStructure)this.validateInternalStructureConsistency("3a_3b");
+      }
+      this.addObjectToCell( objectIndex, objectData, objectCellsCount++, subCell, this.packedCellData[subCell], true, false );
+      if(_octDebugStructure)this.validateInternalStructureConsistency("3a_3");
+    }
+  }
+  if(_octDebugStructure)this.validateInternalStructureConsistency("3a_3b3");
+}
+
+//NOTE: we assume that the object is intersecting the cell
+inline UInt8 cellBBoxGetIntersectingObjectSubcellBits( _OctCellPath cellCenterPath, _OctCellBBox objBBox, io Size numDims ) {
+  numDims = 3;
+  UInt8 cellBits = 255;
+
+  //SubCells: bit pattern: [0: Z0Y0X0, 1: Z0Y0X1, 2: Z0Y1X0, 3: Z0Y1X1,  4: Z1Y0X0 5: Z1Y0X1 6: Z1Y1X0 7: Z1Y1X1]
+  UInt8 leftMask[3];
+  leftMask[0] = 170;//10101010
+  leftMask[1] = 204;//11001100
+  leftMask[2] = 240;//11110000
+
+  for( Size dim = 0; dim < 3; ++dim ) {
+    Boolean left = true, right = true;
+    if( objBBox.min.xyz[dim] >= cellCenterPath.xyz[dim] )
+      left = false;
+    else if( objBBox.max.xyz[dim] <= cellCenterPath.xyz[dim] )
+      right = false;
+    if( !left ) {
+      cellBits = cellBits & leftMask[dim];
+      if( numDims )
+        --numDims;
+    }
+    if( !right ) {
+      cellBits = cellBits & ~(leftMask[dim]);
+      if( numDims )
+        --numDims;
+    }
+  }
+  return cellBits;
+}
+
+inline _OctreeStruct.removeObjectCellInternal!( UInt32 objectIndex, io _OctObjectData objectData, UInt32 objectOffset, Boolean recompactIfPossible ) {
+  if(_octDebugTrace)report("removeObjectCellInternal");
+  UInt32 replacingValue, replacingOffset;
+  this.packedMemberLists.removeElement( this.objectData[objectIndex].cells, objectOffset, replacingValue, replacingOffset, true, recompactIfPossible );
+
+  if( replacingValue != InvalidIndex ) {
+    UInt32 replacingIndex, replacingMembershipType;
+    _OctreeCellsArray_decodeCellAndMembership( replacingValue, replacingIndex, replacingMembershipType );
+    this.packedMemberLists.set_noExpand( this.packedCellData[replacingIndex].arrays[replacingMembershipType], replacingOffset, objectIndex, objectOffset );
+  }
+}
+
+function _OctreeStruct.removeCellFromObjects!( UInt32 cellIndex, io _OctCellData cell, UInt32 membershipType ) {
+  _OctreeArrayIterator it = this.packedMemberLists.getIterator( cell.arrays[membershipType] );
+  if(_octDebugTrace)report("removeCellFromObjects");
+
+  UInt32 objectIndex, objectOffset;
+  while( this.packedMemberLists.getNext( it, objectIndex, objectOffset ) ) {
+    this.removeObjectCellInternal( objectIndex, this.objectData[objectIndex], objectOffset, true );
+  }
+
+  this.packedMemberLists.free( cell.arrays[membershipType], it.getSize() );
+  if(_octDebugStructure)this.validateInternalStructureConsistency("6");
+}
+
+function _OctreeStruct.changeMembershipType!( UInt32 cellIndex, io _OctCellData cell, UInt32 prevMembershipType, UInt32 membershipType ) {
+  if(_octDebugTrace)report("changeMembershipType");
+  _OctreeArrayIterator it = this.packedMemberLists.getIterator( cell.arrays[prevMembershipType] );
+
+  //Reserve on target list
+  this.packedMemberLists.reserveElements( cell.arrays[membershipType], it.getSize() );
+
+  UInt32 objectIndex, objectOffset;
+  while( this.packedMemberLists.getNext( it, objectIndex, objectOffset ) ) {
+    Size cellObjectsOffset = this.packedMemberLists.addElement( cell.arrays[membershipType], objectIndex, objectOffset );
+    this.packedMemberLists.set( this.objectData[objectIndex].cells, objectOffset, _OctreeCellsArray_encodeCellAndMembership( cellIndex, membershipType ), cellObjectsOffset );
+  }
+  this.packedMemberLists.free( cell.arrays[prevMembershipType], it.getSize() );
+  this.setCellDirty( cellIndex, true );
+  if(_octDebugStructure)this.validateInternalStructureConsistency("7");
+}
+
+//updateCell: returns the number of 'update' operations (object membership changed)
+function Size _OctreeStruct.updateCell!( io _OctCellData cell, Size cellIndex ) {
+  if( !cell.isDirty() || cellIndex == this.infiniteBVolObjectsCellIndex )
+    return 0;
+  if(_octDebugTrace)report("updateCell");
+
+  _OctCellPath centerPath = cell.octBBox.getCenter();
+  _OctreeArrayIterator subCellObjectsIt = this.packedMemberLists.getIterator( cell.arrays[_OctreeCellArray_subCellObjects] );
+  Size numSubCellObjects = subCellObjectsIt.getSize();
+
+  _OctreeArrayIterator it = this.packedMemberLists.getIterator( cell.arrays[_OctreeCellArray_toClassifyObjects] );
+
+  //Compute potential subcell for each cell to classify
+  Size numToClassifyObjects = it.getSize();
+  Size numUpdates = numToClassifyObjects;
+
+  if( this.tempByteData.size() < numToClassifyObjects )
+    this.tempByteData.resize(numToClassifyObjects);
+
+  Size numSubMembersToReserve[8];
+  Size currIndex;
+  UInt32 objectIndex, objectOffset;
+  while( this.packedMemberLists.getNext( it, objectIndex, objectOffset ) ) {
+    Size numDims;
+    UInt8 cellBits = cellBBoxGetIntersectingObjectSubcellBits( centerPath, this.objectData[objectIndex].octBBox, numDims );
+
+    //Determining if an object should remain at this cell level of be split among subcells
+    //is not just a matter of checking if it is not in all subcells. For example, a very small object
+    //at the center of the cell would touch to all 8 cells, but it might be good to split it since for
+    //each cell it only uses a small space. However, if the object is big, and covers the 8 cells,
+    //it is clear that it should not be split among subcells, as it would only cause more memory and
+    //subdivide/update overhead. In order to cover for 'ill' cases of objects that would
+    //fall exactly on cell boundaries and cause a lot of overhead by being member of many many cells,
+    //we use the _Oct_MAX_OBJECT_MEMBER_CUMUL_COUNT to limit the damages on overhead.
+
+    //Cumul count: approximate from prev level count, since for this level it depends on the order of subdivided cells
+    UInt16 cumulObjCellCount = 2 * UInt16(this.objectData[objectIndex].ownerCellCumulativeCountAtDepth[cell.depth ? cell.depth-1 : cell.depth]);
+    if( cumulObjCellCount > _Oct_MAX_OBJECT_MEMBER_CUMUL_COUNT || this.objectData[objectIndex].depthSize < cell.depth + numDims ) {
+      if(_octDebugStructure)this.validateInternalStructureConsistency("pre8");
+      Size cellObjectsOffset = this.packedMemberLists.addElement( cell.arrays[_OctreeCellArray_cellObjects], objectIndex, objectOffset );
+      this.packedMemberLists.set( this.objectData[objectIndex].cells, objectOffset, _OctreeCellsArray_encodeCellAndMembership( cellIndex, _OctreeCellArray_cellObjects ), cellObjectsOffset );
+      this.removeCellObjectInternal( cellIndex, cell, currIndex, _OctreeCellArray_toClassifyObjects );
+      it.removedItem();
+      if(_octDebugStructure)this.validateInternalStructureConsistency("8");
+    } else {
+      this.tempByteData[currIndex++] = cellBits;
+      for( Size i = 0; i < 8; ++i ) {
+        if( cellBits & (1<<i) )
+          ++numSubMembersToReserve[i];
+      }
+    }
+  }
+
+  Boolean wasSubdivided = cell.isSubdivided();
+  Boolean subdivided = wasSubdivided;
+
+  if( !wasSubdivided ) {
+    //Decide if we should do further splits
+    //Modulate _Oct_MIN_NUMOBJECTS_TO_SPLIT based on depth (maybe should be depth^2?),
+    //else tree traversal / update overhead will grow faster than spatial partition gains
+    //NOTE: not obvious which approach we should take here; depends on the overall required 'precision'
+    //      (eg: typical object size, typical query size: light/camera volume size)
+    //Note: instead of >= _Oct_MIN_NUMOBJECTS_TO_SPLIT, we might want >= _Oct_MIN_NUMOBJECTS_TO_SPLIT + f(cell.depth)...
+    subdivided = (numSubCellObjects + numToClassifyObjects) >= _Oct_MIN_NUMOBJECTS_TO_SPLIT && cell.depth < this.actualMaxDepth;
+    if( subdivided ) {
+      setFlag( cell.stateBits, _Octree_subdividedFlag );
+
+      //WARNING: from here don't use 'cell' as its container (packedCellData) might reallocate and invalidate the 'cell' pointer
+      it = subCellObjectsIt;
+      while( this.packedMemberLists.getNext( it, objectIndex ) ) {
+        Size numDims;
+        UInt8 cellBits = cellBBoxGetIntersectingObjectSubcellBits( centerPath, this.objectData[objectIndex].octBBox, numDims );
+        this.addMemberToSubCells( cellIndex, centerPath, objectIndex, this.objectData[objectIndex], cellBits, numSubMembersToReserve );
+      }
+    }
+  }
+  //NOTE: FROM HERE ON, 'CELL' MIGHT NO LONGER BE VALID: REALLOCATED!!!
+  if( subdivided ) {
+    currIndex = 0;
+    it = this.packedMemberLists.getIterator( cell.arrays[_OctreeCellArray_toClassifyObjects] );
+    while( this.packedMemberLists.getNext( it, objectIndex ) )
+      this.addMemberToSubCells( cellIndex, centerPath, objectIndex, this.objectData[objectIndex], this.tempByteData[currIndex++], numSubMembersToReserve );
+  }
+
+  if( subdivided && !this.keepSubCellObjectList )
+    this.removeCellFromObjects( cellIndex, this.packedCellData[cellIndex], _OctreeCellArray_toClassifyObjects );
+  else
+    this.changeMembershipType( cellIndex, this.packedCellData[cellIndex], _OctreeCellArray_toClassifyObjects, _OctreeCellArray_subCellObjects );
+
+  //Push all dirty subcells
+  clearFlag( this.packedCellData[cellIndex].stateBits, _Octree_dirtyFlag );
+  return numUpdates;
+}
+
+function _OctreeStruct.recompactData!() {
+  UInt32 oldIndexToNewIndex[];
+  this.packedMemberLists.data.recompact( oldIndexToNewIndex );
+  for( Size i = 0; i < this.packedCellData.size(); ++i ) {
+    if( this.packedCellData[i].isUsed() ) {
+      for( Size j = 0; j < 3; ++j )
+        this.packedMemberLists.remapAccessorAfterRecompact(this.packedCellData[i].arrays[j], oldIndexToNewIndex);
+    }
+  }
+  for( Size i = 0; i < this.objectData.size(); ++i ) {
+    if( this.objectData[i].isUsed() )
+      this.packedMemberLists.remapAccessorAfterRecompact(this.objectData[i].cells, oldIndexToNewIndex);
+  }
+}
+
+//_OctreeStruct: 
+function Size _OctreeStruct.update!( Integer numAllowedCellUpdates ) {
+  if( this.dirtyObjects.size() == 0 ) {
+    Boolean dirtyCell;
+    for( Size i = 0; i < 14; ++i ) {
+      if( this.dirtyCellsPerDepth[i].size() ) {
+        dirtyCell = true;
+        break;
+      }
+    }
+    if( !dirtyCell )
+      return 0;
+  }
+  //First, compute an ajusted world bbox (+ padding to avoid reajusting too often)
+  Size objectCount = this.objectData.size();
+  for( Size i = 0; i < this.dirtyObjects.size(); ++i ) {
+    Size objectIndex = this.dirtyObjects[i];
+    if( objectIndex < objectCount )
+      this.objectData[ this.dirtyObjects[i] ].expandWorldBBox( this.min, this.max );
+  }
+
+  if( this.min.x < this.gridMin.x || this.min.y < this.gridMin.y || this.min.z < this.gridMin.z ||
+      this.max.x > this.gridMax.x || this.max.y > this.gridMax.y || this.max.z > this.gridMax.z ||
+     !this.initialized
+    ) {
+    if( this.gridMin.x != 1.0e+20 ) {
+      //Not initializing: things have changed a lot: fully recompute the BBox (the whole scene might have been translated)
+      this.min.x = 1.0e+20;
+      this.min.y = 1.0e+20;
+      this.min.z = 1.0e+20;
+      this.max.x = -1.0e+20;
+      this.max.y = -1.0e+20;
+      this.max.z = -1.0e+20;
+      this.gridMin = this.min;
+      this.gridMax = this.max;
+      for( Size i = 0; i < this.objectData.size(); ++i ) {
+        if( this.objectData[ i ].isUsed() )
+          this.objectData[ i ].expandWorldBBox( this.min, this.max );
+      }
+    }
+
+    //Keep aspect ratio: make the BBox square.
+    //Sounds like big overhead, but will simplify volume queries and avoid malformed/flat cells.
+    Vec3 bboxSize = (this.max - this.min) + Vec3(10e-10, 10e-10, 10e-10);//avoid divide by zero
+    Vec3 bboxRadius = bboxSize*0.5;
+    Vec3 bboxCenter = this.min + bboxRadius;
+    Scalar radius = bboxRadius.x;
+    if( radius < bboxRadius.y )
+      radius = bboxRadius.y;
+    if( radius < bboxRadius.z )
+      radius = bboxRadius.z;
+    bboxRadius = Vec3( radius, radius, radius ) * 1.5; //1.5: avoid too frequent bbox expansions
+    this.gridMin = bboxCenter - bboxRadius;
+    this.gridMax = bboxCenter + bboxRadius;
+
+    if( this.smallestWorldCellSize > 0 ) {
+      Scalar cellSize = radius;
+      for( UInt8 i = 0; i <= this.maxDepth; ++i ) {
+        if( cellSize < this.smallestWorldCellSize ) {
+          if( i < this.actualMaxDepth )
+            this.actualMaxDepth = i;
+          break;
+        }
+        cellSize = cellSize * 0.5;
+      }
+    }
+
+    //Re-hash all!
+
+    //1) clear all data, but don't deallocate
+    this.initialized = true;
+    this.packedMemberLists.clear();
+    this.packedCellDataIndexPool.setAllAsUnused(true);//keep element 0 (NULL)
+    for( Size i = 0; i < this.packedCellData.size(); ++i )
+      clearFlag( this.packedCellData[i].stateBits, _Octree_usedFlag );
+
+    this.rootCellIndex = this._createCell(0);
+    this.packedCellData[this.rootCellIndex].octBBox.min.xyz[0] = 0;
+    this.packedCellData[this.rootCellIndex].octBBox.min.xyz[1] = 0;
+    this.packedCellData[this.rootCellIndex].octBBox.min.xyz[2] = 0;
+    this.packedCellData[this.rootCellIndex].octBBox.max.xyz[0] = 65535;
+    this.packedCellData[this.rootCellIndex].octBBox.max.xyz[1] = 65535;
+    this.packedCellData[this.rootCellIndex].octBBox.max.xyz[2] = 65535;
+
+    this.infiniteBVolObjectsCellIndex = this._createCell(0);
+    this.packedCellData[this.infiniteBVolObjectsCellIndex].octBBox = this.packedCellData[this.rootCellIndex].octBBox;
+
+    for( Size i = 0; i < 14; ++i )
+      this.dirtyCellsPerDepth[i].reset();
+    this.deletedDirtyCellsCount = 0;
+    this.setCellDirty( this.rootCellIndex, true );
+
+    //2) set the scaling factors
+    this.worldToGridScale = this.gridMax - this.gridMin;
+    this.worldToGridScale = this.worldToGridScale.safeInverse();
+    this.worldToGridScale *= 65536.0;//UInt16 precision
+
+    this.gridToWorldScale.x = 1.0/this.worldToGridScale.x;
+    this.gridToWorldScale.y = 1.0/this.worldToGridScale.y;
+    this.gridToWorldScale.z = 1.0/this.worldToGridScale.z;
+
+    //3) set objects' cell paths
+    Size numObjects = this.objectData.size();
+
+    //Reset all flags first, else validation code will report false errors.
+    for( Size i = 0; i < numObjects; ++i )
+      clearFlag( this.objectData[i].stateBits, _Octree_initializedFlag );
+
+    for( Size i = 0; i < numObjects; ++i )
+      this.updateObjectPath( i, this.objectData[i] );
+
+  } else {
+    for( Size i = 0; i < this.dirtyObjects.size(); ++i )
+      this.updateObjectPath( this.dirtyObjects[i], this.objectData[ this.dirtyObjects[i] ] );
+  }
+  this.dirtyObjects.resize(0);
+
+  //Subdivide
+  //Ideally, this would be done by in parallel with drawing, while we draw previous frame...
+
+  Size numActualUpdates = 0;
+  Boolean firstCell = true;//Update at least one if some allowed updates
+  Size currDepth = 0;
+  Size dirtyCellIndex = 0;
+  while( (numAllowedCellUpdates < 0 || numActualUpdates < numAllowedCellUpdates || (firstCell && numAllowedCellUpdates > 0)) ) {
+
+    while( currDepth != 14 && dirtyCellIndex == this.dirtyCellsPerDepth[currDepth].size() ) {
+      this.dirtyCellsPerDepth[currDepth].resize(0);
+      dirtyCellIndex = 0;
+      ++currDepth;
+    }
+    if( currDepth == 14 )
+      break;
+
+    Size cellIndex = this.dirtyCellsPerDepth[currDepth].data[dirtyCellIndex];
+    if( this.packedCellData[cellIndex].isUsed() && this.packedCellData[cellIndex].isDirty() && this.packedCellData[cellIndex].depth == currDepth ) {// Might have been recycled
+      numActualUpdates += this.updateCell( this.packedCellData[cellIndex], cellIndex );
+      firstCell = false;
+
+      //While updating, recompact only if 50% is free; at the end we will recompact more.
+      //TODO: re-compress obj->cells list before recompating all!!
+      if( this.packedMemberLists.data.data.size() > 1000 
+       && this.packedMemberLists.data.freeDataCount > this.packedMemberLists.data.data.size() ) {
+        if(_octDebugTrace)report("While updating: RECOMPACT: free="+this.packedMemberLists.data.freeDataCount+" total="+this.packedMemberLists.data.data.size());
+        this.recompactData();
+      }
+
+    }
+    ++dirtyCellIndex;
+  }
+  Boolean updatedAll = currDepth == 14;
+  if( updatedAll ) {
+    for( Size i = 0; i < 14; ++i )
+      this.dirtyCellsPerDepth[i].reset();
+    this.deletedDirtyCellsCount = 0;
+
+    this.tempIndexSet.free();
+    this.tempByteData.resize(0);
+  } else {
+    //Cleanup dirty cell list.
+    Boolean cleanAll;
+    if( this.deletedDirtyCellsCount > this.getCellCount() ) {
+      //Recycled cells remain in the 'dirty' list until we clean it all.
+      //However, we don't want to filter the list at each 'update', since
+      //the dirty cells might all still be actually dirty.
+      cleanAll = true;
+      this.deletedDirtyCellsCount = 0;
+    }
+    for( ; currDepth < 14; ++currDepth ) {
+      Size targetIndex = 0;
+      for( ; dirtyCellIndex < this.dirtyCellsPerDepth[currDepth].size(); ++dirtyCellIndex ) {
+        Size cellIndex = this.dirtyCellsPerDepth[currDepth].data[dirtyCellIndex];
+        if( this.packedCellData[cellIndex].isUsed() && this.packedCellData[cellIndex].isDirty() && this.packedCellData[cellIndex].depth == currDepth )
+          this.dirtyCellsPerDepth[currDepth].data[targetIndex++] = cellIndex;
+      }
+      this.dirtyCellsPerDepth[currDepth].resize( targetIndex );
+      dirtyCellIndex = 0;
+      if( !cleanAll ) //Just clean last level
+        break;
+    }
+  }
+  // Recompact data if worth it. Current heuristic: if finished updating, tolerate only 10%, else 25%.
+  if(  numActualUpdates > 0 
+    && this.packedMemberLists.data.data.size() > 1000 
+    && this.packedMemberLists.data.freeDataCount*(updatedAll ? 10 : 2) > this.packedMemberLists.data.data.size() ) {
+    if(_octDebugTrace)report("RECOMPACT: free="+this.packedMemberLists.data.freeDataCount+" total="+this.packedMemberLists.data.data.size());
+    this.recompactData();
+    if(_octDebugStructure)this.validateInternalStructureConsistency("R");
+  }
+  if(_octDebugStructure)this.validateInternalStructureConsistency("CHECKALL");
+
+  return numActualUpdates;
+}
+
+inline Size _OctreeStruct.getObjectCount() {
+  return this.objectCount;
+}
+
+inline Size _OctreeStruct.getCellCount() {
+  return this.packedCellDataIndexPool.getNumUsed();
+}
+
+inline Scalar _OctreeStruct.getAverageObjectsPerCell() {
+  return Scalar(this.getObjectCount()) / Scalar(this.getCellCount());
+}
+
+inline Boolean _OctreeStruct.updateObjectVolume!( UInt32 index, Vec3 min, Vec3 max ) {
+  if( index >= this.objectData.size() )
+    this.objectData.resize( index + 1 );
+
+  if( this.objectData[index].set( min, max ) || !this.objectData[index].isUsed() ) {
+    if( !this.objectData[index].isUsed() )
+      ++this.objectCount;
+    setFlag( this.objectData[index].stateBits, _Octree_usedFlag );
+    this.dirtyObjects.push( index );
+    return true;
+  }
+  return false;
+}
+
+inline Boolean _OctreeStruct.updateObjectVolume!( UInt32 index, Vec3 center, Scalar radius ) {
+  if( index >= this.objectData.size() ) {
+    this.objectData.resize( index + 1 );
+  }
+  if( this.objectData[index].set( center, radius ) || !this.objectData[index].isUsed() ) {
+    if( !this.objectData[index].isUsed() )
+      ++this.objectCount;
+    setFlag( this.objectData[index].stateBits, _Octree_usedFlag );
+    this.dirtyObjects.push( index );
+    return true;
+  }
+  return false;
+}
+
+inline Boolean _OctreeStruct.updateObjectAsInfiniteVolume!( UInt32 index ) {
+  return this.updateObjectVolume( index, Vec3(), -1.0 );
+}
+
+inline _OctreeStruct.updateObjectVolume!( UInt32 index, Mat44 transform, LocalBoundingVolume localBVol ) {
+  if(localBVol.type == LocalBoundingVolume_infinite || (localBVol.type == LocalBoundingVolume_bCone && localBVol.bConeGetCutoff() < 0.0) || (localBVol.type == LocalBoundingVolume_bSphere && localBVol.bSphereGetRadius() < 0.0) ) {
+      this.updateObjectAsInfiniteVolume( index );
+  } else {
+    if( localBVol.type == LocalBoundingVolume_bSphere ) {
+      Vec3 bSphereCenter;
+      Scalar squaredRadius;
+      transformedBSphereGetBSphere( transform, localBVol.pt1, localBVol.sc1, bSphereCenter, squaredRadius );
+      Scalar precisionSum = abs(bSphereCenter.x) + abs(bSphereCenter.y) + abs(bSphereCenter.z);
+      if( precisionSum*precisionSum + squaredRadius > 1.0e38 )
+        this.updateObjectAsInfiniteVolume( index );
+      else
+        this.updateObjectVolume( index, bSphereCenter, sqrt(squaredRadius) );
+    } else {
+      Vec3 min, max;
+      localBVolGetBBox( transform, localBVol, min, max );
+      Scalar precisionSum = abs(min.x) + abs(min.y) + abs(min.z) + abs( max.x ) + abs( max.y ) + abs( max.z );
+      if( precisionSum > 1.0e19 )
+        this.updateObjectAsInfiniteVolume( index );// Degrade to 'infinite' bbox else we will get precision problem
+      else
+        this.updateObjectVolume( index, min, max );
+    }
+  }
+}
+
+inline _OctreeStruct.getObjectBBox!( Size index, io Vec3 min, io Vec3 max) {
+  min = this.objectData[index].min;
+  max = this.objectData[index].max;
+}
+
+inline _OctreeStruct.removeObject!( UInt32 index ) {
+  if( index < this.objectData.size() && this.objectData[index].isUsed() ) {
+    this.releaseObjectCellMembersUpToDepth( index, this.objectData[index], 0, false );
+    if( this.objectData[index].isUsed() )
+      --this.objectCount;
+    clearFlag( this.objectData[index].stateBits, _Octree_usedFlag );
+    clearFlag( this.objectData[index].stateBits, _Octree_infiniteFlag );
+  }
+}
+
+// Debugging methods
+
+function UInt8 _OctreeStruct.getActualDepth_slow() {
+  UInt8 max = 0;
+  for( Size i = 0; i < this.packedCellData.size(); ++i ) {
+    if( this.packedCellData[i].isUsed() && max < this.packedCellData[i].depth )
+      max = this.packedCellData[i].depth;
+  }
+  return max;
+}
+
+function String _OctreeStruct.getObjectDesc?( Size index, UInt8 bboxPrintDepth, Boolean printDetails ) {
+  String desc = "  " + index;
+  if( !this.objectData[index].isUsed() )
+    desc += " (UNUSED)";
+  if( this.objectData[index].isInfinite() )
+    desc += ": infinite bounding volume";
+  else {
+    desc += ": min=" + this.objectData[index].min + " max=" + this.objectData[index].max + " radius=" + this.objectData[index].radius + " dirty=" + this.objectData[index].isDirty() + " depthSize=" + this.objectData[index].depthSize + " maxCellDepth=" + this.objectData[index].maxDepth;
+    if( printDetails )
+      desc += " octBBox=" + this.objectData[index].octBBox.getDesc(bboxPrintDepth);
+    desc += "\n";
+    if( printDetails ) {
+/*      for( Size depth = 0; depth <= this.objectData[index].maxDepth; ++depth ) {
+        Size count = this.packedMemberLists.getSize( this.objectData[index].cellsPerDepth[depth] );
+        if( count ) {
+          desc += "    Depth=" + depth + " nbCells=" + count + " (cumul=" + this.objectData[index].ownerCellCumulativeCountAtDepth[depth] + ") [";
+          //memberIndexListKey = this.objectData[index].cellsPerDepth[depth];
+          //Size membershipIndex;
+          _OctreeCellsIterator it = this.packedMemberLists.getCellsIterator( this.objectData[index].cellsPerDepth[depth] );
+          UInt32 cellIndex, membershipType;
+          while( this.packedMemberLists.getNext( it, cellIndex, membershipType ) )
+            //desc += this.packedObjectCellMembership[ membershipIndex ].cellIndex + ",";
+            desc += cellIndex + ",";
+          desc += "]\n";
+        }
+      }*/
+    }
+  }
+  return desc;
+}
+
+function _OctreeStruct.reportObjects?( Boolean printDetails ) {
+  UInt8 gridDepth = this.getActualDepth_slow();
+  String desc = "_OctreeStruct.reportObjects: nbObjects (used or not)=" + this.objectData.size() + ":\n";
+  for( Size i = 0; i < this.objectData.size(); ++i ) {
+    if( this.objectData[i].isUsed() )
+      desc += this.getObjectDesc( i, gridDepth, printDetails );
+  }
+  report( desc );
+}
+
+function String _OctreeStruct.getCellDesc?( UInt8 gridDepth, Size c, String indent, Boolean printObjectMembers, Boolean recursive ) {
+  String s = indent + "Cell " + c + ": depth=" + this.packedCellData[c].depth + " bbox=" + this.packedCellData[c].octBBox.getDesc(gridDepth) + " parent=" + this.packedCellData[c].parentCell + "," + this.packedCellData[c].parentSubCellIndex + " dirty=" + this.packedCellData[c].isDirty() + "\n";
+  String subIndent = indent + "  ";
+  if( this.packedCellData[c].isSubdivided() )
+    s += subIndent + "subCells: " + this.packedCellData[c].subCellIndices + "\n";
+
+  Size objectIndex;
+  Size numCellObjects = this.packedMemberLists.getSize( this.packedCellData[c].arrays[_OctreeCellArray_cellObjects] );
+  if( numCellObjects ) {
+    s += subIndent + "numCellObj=" + numCellObjects;
+    if( printObjectMembers ) {
+      s += " [";
+      _OctreeArrayIterator it = this.packedMemberLists.getIterator( this.packedCellData[c].arrays[_OctreeCellArray_cellObjects] );
+      while( this.packedMemberLists.getNext( it, objectIndex ) )
+        s += objectIndex + ",";
+      s += "]";
+    }
+    s += "\n";
+  }
+  Size numSubCellObjects = this.packedMemberLists.getSize( this.packedCellData[c].arrays[_OctreeCellArray_subCellObjects] );
+  if( numSubCellObjects ) {
+    s += subIndent + "numSubCellObj=" + numSubCellObjects;
+    if( printObjectMembers ) {
+      s += " [";
+      _OctreeArrayIterator it = this.packedMemberLists.getIterator( this.packedCellData[c].arrays[_OctreeCellArray_subCellObjects] );
+      while( this.packedMemberLists.getNext( it, objectIndex ) )
+        s += objectIndex + ",";
+      s += "]";
+    }
+    s += "\n";
+  }
+  Size numToClassifyObjects = this.packedMemberLists.getSize( this.packedCellData[c].arrays[_OctreeCellArray_toClassifyObjects] );
+  if( numToClassifyObjects ) {
+    s += subIndent + "numToClassifyObj=" + numToClassifyObjects;
+    if( printObjectMembers ) {
+      s += " [";
+      _OctreeArrayIterator it = this.packedMemberLists.getIterator( this.packedCellData[c].arrays[_OctreeCellArray_toClassifyObjects] );
+      while( this.packedMemberLists.getNext( it, objectIndex ) )
+        s += objectIndex + ",";
+      s += "]";
+    }
+    s += "\n";
+  }
+  if( recursive ) {
+    for( Size i = 0; i < 8; ++i ) {
+      Size subCell = this.packedCellData[c].subCellIndices[i];
+      if( subCell )
+        s += this.getCellDesc( gridDepth, subCell, subIndent, printObjectMembers, recursive );
+    }
+  }
+  return s;
+}
+
+function Size _OctreeStruct.getMemUsage() {
+  Size OctObjectDataSize = 14 + 8*4 + 4 + 8;
+  Size OctCellDataSize = 8+4+8*4+3*4+4;
+  Size mem = 8*3 + 4*5 + 6*12 
+      + this.packedMemberLists.memUsage() 
+      + this.packedCellData.size()*OctCellDataSize
+      + this.packedCellDataIndexPool.getMemUsage()
+      + this.objectData.size()*OctObjectDataSize
+      + this.dirtyObjects.size()*4;
+  for( Size i = 0; i < 14; ++i )
+    mem += this.dirtyCellsPerDepth[i].size()*4;
+  return mem;
+}
+
+function _OctreeStruct.report?( Boolean printDetails ) {
+
+  UInt8 gridDepth = this.getActualDepth_slow();
+
+  //Count actual num members per objects & cell (excluding redundant info)
+  Size numLeafMembers = 0;
+  Size numMemberToClassify = 0;
+  Size numCellMembers = 0;
+  for( Size i = 1; i < this.packedCellData.size(); ++i ) {
+    if( this.packedCellData[i].isUsed() ) {//used
+      Size numToClassifyObjects = this.packedMemberLists.getSize( this.packedCellData[i].arrays[_OctreeCellArray_toClassifyObjects] );
+      Size numCellObjects = this.packedMemberLists.getSize( this.packedCellData[i].arrays[_OctreeCellArray_cellObjects] );
+      Size numSubCellObjects = this.packedMemberLists.getSize( this.packedCellData[i].arrays[_OctreeCellArray_subCellObjects] );
+
+      numMemberToClassify += numToClassifyObjects;
+      numLeafMembers += numCellObjects + numToClassifyObjects;
+      if( !this.packedCellData[i].isSubdivided() )
+        numLeafMembers += numSubCellObjects;
+
+      numCellMembers += numToClassifyObjects + numCellObjects + numSubCellObjects;
+    }
+  }
+
+  Size numLeafCellForAllObjects = 0;
+  Size numObjects;
+  for( Size i = 0; i < this.objectData.size(); ++i ) {
+    if( this.objectData[i].isUsed() ) {
+      ++numObjects;
+      _OctreeCellsIterator it = this.packedMemberLists.getCellsIterator( this.objectData[i].cells );
+      UInt32 cellIndex, membershipType;
+      while( this.packedMemberLists.getNext( it, cellIndex, membershipType ) ) {
+        if(  membershipType != _OctreeCellArray_subCellObjects
+          || !this.packedCellData[cellIndex].isSubdivided() )
+          ++numLeafCellForAllObjects;
+      }
+    }
+  }
+  //In fact: numLeafCellForAllObjects should be == numLeafMembers
+
+  String s = "\nOctrid: mem=" + this.getMemUsage() + " depth= " + gridDepth + " min="+ this.gridMin + " max=" + this.gridMax 
+          + "\n  nbObj=" + numObjects + " nbCells=" + (this.packedCellDataIndexPool.getNumUsed()-1)
+          + " nbCellMembers= " + numCellMembers 
+          + " nbInfiniteObjects= " + this.packedMemberLists.getSize(this.getInfiniteBVolList()) 
+          + " nbLeafCellMembers =" + numLeafMembers + " nbCellMembers to Classify=" + numMemberToClassify
+          + "\n  nbLeafObjMemberPerCell=" + ( Scalar( numLeafMembers ) / Scalar( this.packedCellDataIndexPool.getNumUsed()-1 ) )
+          + "\n  nbLeafCellMemberPerObject=" + ( Scalar( numLeafMembers ) / Scalar( numObjects ) )
+          + "\n  nbCellPerObject=" + ( Scalar( this.packedCellDataIndexPool.getNumUsed()-1 ) / Scalar( numObjects ) );
+
+  if( printDetails ) {
+    Size numDirtyCells = 0;
+    for( Size i = 0; i < 14; ++i )
+      numDirtyCells += this.dirtyCellsPerDepth[i].size();
+    s += "\n  nbDirtyObj=" + this.dirtyObjects.size() + " nbDirtyCells=" + numDirtyCells + " rootIdx=" + this.rootCellIndex;
+  }
+  s += "\n";
+
+  if( printDetails ) {
+    if( this.packedMemberLists.getSize(this.getInfiniteBVolList()) ) {
+      s += "InfiniteObjects: [";
+      UInt32 objectIndex;
+      _OctreeArrayIterator it = this.packedMemberLists.getIterator( this.getInfiniteBVolList() );
+      while( this.packedMemberLists.getNext( it, objectIndex ) )
+        s += objectIndex + ",";
+      s += "]\n";
+    }
+    s += this.getCellDesc( gridDepth, this.rootCellIndex, "", true, true );
+  }
+  report( s );
+}
+
+function _OctreeStruct.validate_slow?() {
+  report("Validating Octree - begin");
+  //Checks the consistency of the tree
+  //Note: more could be checked here; to improve...
+  Size numObjectsPerCell[];
+  Size expectedNumObjectsPerCell[];
+  numObjectsPerCell.resize( this.packedCellData.size() );
+  expectedNumObjectsPerCell.resize( this.packedCellData.size() );
+
+  Size numCellsPerObject[];
+  Size expectedNumCellsPerObject[];
+  numCellsPerObject.resize( this.objectData.size() );
+  expectedNumCellsPerObject.resize( this.objectData.size() );
+
+  Size objTotalMembers = 0;
+
+  for( Size i = 0; i < this.objectData.size(); ++i ) {
+    if( this.objectData[i].isUsed() ) {
+      UInt8 lastDepth = 0;
+      Size cumulCount = 0;
+
+/*      for( Size j = 0; j < 14; ++j ) {
+        if( j != 0 && j <= this.objectData[i].maxDepth && cumulCount != this.objectData[i].ownerCellCumulativeCountAtDepth[j-1] )
+          report("Error: cumul count doesn't match for object " + i + " and depth " + (j-1) + " actual=" + cumulCount + " expected=" + this.objectData[i].ownerCellCumulativeCountAtDepth[j-1] + " all=" + this.objectData[i].ownerCellCumulativeCountAtDepth );
+
+        _OctreeCellsIterator it = this.packedMemberLists.getCellsIterator( this.objectData[i].cellsPerDepth[j] );
+        UInt32 cellIndex, membershipType;
+        while( this.packedMemberLists.getNext( it, cellIndex, membershipType ) ) {
+          ++objTotalMembers;
+          ++expectedNumCellsPerObject[i];
+          if( j > lastDepth )
+            lastDepth = j;
+          ++numObjectsPerCell[cellIndex];
+          if( !this.packedCellData[cellIndex].octBBox.intersects(this.objectData[i].octBBox) )
+            report("Error: cell "+cellIndex+" doesn't intersect object "+i);
+          ++cumulCount;
+
+          if( j != 0 ) {
+            Size parentCellIndex = this.packedCellData[cellIndex].parentCell;
+            Boolean found = false;
+            _OctreeCellsIterator parentIt = this.packedMemberLists.getCellsIterator( this.objectData[i].cellsPerDepth[j-1] );
+            UInt32 parentCellIndex2, parentMembershipType;
+            while( this.packedMemberLists.getNext( it, parentCellIndex2, parentMembershipType ) ) {
+              if( parentCellIndex2 == parentCellIndex ) {
+                found = true;
+                break;
+              }
+            }
+            if( !found )
+              report("Error: object " + i + " part of cell " + cellIndex + " but not its parent " + parentCellIndex );
+          }
+        }
+      }*/
+      if( lastDepth != this.objectData[i].maxDepth )
+        report("Object " + i + " maxDepth mismatch: should be " + lastDepth );
+    }
+  }
+
+  Size cellTotalMembers = 0;
+  for( Size i = 0; i < this.packedCellData.size(); ++i ) {
+    if( this.packedCellData[i].isUsed() ) {
+      Boolean hasSubCell = false;
+      for( Size j = 0; j < 8; ++j ) {
+        Size subCell = this.packedCellData[i].subCellIndices[j];
+        if( subCell ) {
+          hasSubCell = true;
+          if( this.packedCellData[subCell].parentCell != i )
+            report("Error: subcell " + subCell + " has wrong parent");
+          if( !this.packedCellData[subCell].octBBox.intersects(this.packedCellData[i].octBBox) )
+            report("Error: subcell not intersecting parent cell");
+        }
+      }
+      if( hasSubCell != this.packedCellData[i].isSubdivided() )
+        report("Error: cell " + i + " has inconsistent subdivided state: actual="+hasSubCell+" expected="+this.packedCellData[i].isSubdivided());
+
+      for( Size listType = 0; listType < 3; ++listType ) {
+        Size memberCount = 0;
+        Size key;
+
+        UInt32 objectIndex;
+
+        _OctreeArrayIterator it = this.packedMemberLists.getIterator( this.packedCellData[i].arrays[listType] );
+        while( this.packedMemberLists.getNext( it, objectIndex ) ) {
+          ++cellTotalMembers;
+          ++memberCount;
+          ++expectedNumObjectsPerCell[i];
+          ++numCellsPerObject[objectIndex];
+        }
+      }
+    }
+  }
+
+  for( Size i = 0; i < numObjectsPerCell.size(); ++i ) {
+    if( numObjectsPerCell[i] != expectedNumObjectsPerCell[i] )
+      report("Error: numObjectsPerCell mismatch for object "+i+" : "+numObjectsPerCell[i]+ " VS "+expectedNumObjectsPerCell[i]);
+  }
+
+  for( Size i = 0; i < numCellsPerObject.size(); ++i ) {
+    if( numCellsPerObject[i] != expectedNumCellsPerObject[i] )
+      report("Error: numObjectsPerCell mismatch for object "+i+" : "+numCellsPerObject[i]+ " VS "+expectedNumCellsPerObject[i]);
+  }
+  report("Validating Octree - end");
+}

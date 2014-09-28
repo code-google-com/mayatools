@@ -1,0 +1,261 @@
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+/*SPHINX-description
+
+The ``Points`` object implements a point cloud geometry. All its data is contained in its ``GeometryAttributes`` container that can be retrieved by calling ``getAttributes()``.
+
+A ``size`` attribute can be defined by ``getOrCreateSizesAttribute()`` or ``setSizesAttribute()``. This attribute will then be used by helpers such as ``getSize()``, but more importantly, the point bounding spheres defined by the ``size`` will be used to compute the bounding box or for ``raycast()`` queries. If not size attribute is defined, the ``Points.defaultPointSize`` constant will be used as size for all points.
+
+Example
+---------
+
+.. code-block:: js
+
+    Points points = Points();
+    points.getOrCreateSizesAttribute();
+
+    points.resize( 10 );
+    for( Size i = 0; i < 10; ++i ) {
+      points.setPosition( i, Vec3( 0, i, 0 ) );
+      points.setSize( (i+1) * 0.1 );
+    }
+
+*/
+
+require Math, FabricStatistics;
+
+//Points defines a point cloud geometry. It mostly wraps a 'GeometryAttributes' container.
+//A specific 'sizeAttribute' can be defined to be used for the bounding box, 'raycast()', 'getSize()'.
+object Points : Geometry, SpatialQueryable, StatisticSourceWithAutoRegisterMember {
+  BaseGeometry base;
+
+  //Size data (defaultPointSize or sizesAttribute) is used for get/setSize,
+  //for computing bounding volume, and for raycast queries.
+  Scalar defaultPointSize;
+  Ref<ScalarAttribute> sizesAttribute;
+
+  Object spatialAccelerationCache;//Created on demand. Cache from the meta-data dictionary to avoid locks.
+};
+
+function Points() {
+  this.base.init("Points", this);
+
+  this.defaultPointSize = 1e-4;
+}
+
+//Copies the content from the source Points.
+function Points.copy!( Points src ) {
+  this.base.attributes.copy(src.base.attributes);
+  if( src.sizesAttribute )
+    this.sizesAttribute = this.base.attributes.getAttribute( src.sizesAttribute.getName(), ScalarAttribute );
+}
+
+function Points Points.clone() {
+  //The difference with default clone() is that new.base.autoStat will point to 'new' (from constructor)
+  Points new = Points();
+  new.copy( this );
+  return new;
+}
+
+//clears all data, including points and attributes.
+function Points.clear!() {
+  this.base.attributes.clear();
+  this.base.attributes.getOrCreatePositions();
+  Ref<ScalarAttribute> nullSizeAttr = null;
+  this.sizesAttribute = nullSizeAttr;
+}
+
+//Returns the associated attributes container. Attributes and points have a 1 to 1 mapping.
+inline Ref<GeometryAttributes> Points.getAttributes() { return this.base.attributes; }
+
+function Points._attachAttributes!( io GeometryAttributes attributes ) {
+  this.base.attachAttributes( attributes );
+}
+
+//Adds N points and returns the index of the first of the consecutive indices.
+inline Size Points.addPoints!( Size count ) {
+  Size prevSize = this.base.attributes.size();
+  this.base.attributes.resize( prevSize + count );
+  return prevSize;
+}
+
+//Changes the number of points, adding or truncating the last ones.
+inline Points.resize!( Size newSize ) {
+  this.base.attributes.resize( newSize );
+}
+
+//Returns the number of points.
+inline Size Points.size() {
+  return this.base.attributes.size();
+}
+
+//Returns the number of points.
+inline Size Points.pointCount() {
+  return this.base.attributes.size();
+}
+
+//Default attribute name to be used for points' size (to be created when calling 'getOrCreateSizesAttribute').
+const String PointsDefaultSizesAttributeName = "pointSizes";
+
+//Returns the point size attribute, creates it if not there.
+function Ref<ScalarAttribute> Points.getOrCreateSizesAttribute!() {
+  if( !this.sizesAttribute )
+    this.setSizesAttribute( this.base.attributes.getOrCreateScalarAttribute( PointsDefaultSizesAttributeName ) );
+  return this.sizesAttribute;
+}
+
+//Defines the attribute that will be used for 'setSize' and 'getSize'.
+//The attribute will be used, too, to extend the bounding volume and
+//for raycast queries.
+function Points.setSizesAttribute!( Ref<ScalarAttribute> sizesAttribute ) {
+  if( Boolean(sizesAttribute) && !this.base.attributes.hasAttribute( sizesAttribute ) )
+    throw("Points.setSizesAttribute: size attribute not part of Points' attributes");
+  this.sizesAttribute = sizesAttribute;
+}
+
+//Returns the position of a point.
+inline Vec3 Points.getPosition( Size point ) {
+  return this.base.attributes.getPosition( point );
+}
+
+//Sets the positions of a point. Important: once all positions have been changed, call 'incrementPositionsVersion()'.
+inline Points.setPosition!( Size point, Vec3 position ) {
+  this.base.attributes.setPosition( point, position );
+}
+
+//This should be called once position changes (setPosition) are finished, so caches (such as drawing data) know that they need to be regenerated.
+inline Points.incrementPositionsVersion!() {
+  this.base.attributes.positionsAttribute.incrementVersion();
+}
+
+//Returns the size of a point.
+inline Scalar Points.getSize( Size point ) {
+  if( this.sizesAttribute )
+    return this.sizesAttribute.values[ point ];
+  else
+    return this.defaultPointSize;
+}
+
+//Sets the size of a point, if a size attribute has been set with 'setSizesAttribute'. Important: once all positions have been changed, call 'incrementSizesVersion()'.
+inline Points.setSize!( Size point, Scalar size ) {
+  if( !this.sizesAttribute )
+    throw( "Points.setSize: size attribute was not setup by calling setSizesAttribute" );
+
+  this.sizesAttribute.values[ point ] = size;
+}
+
+//Make sure to call this method after size changes (setSize) are finished, so caches (such as drawing data) know that they need to be regenerated.
+inline Points.incrementSizesVersion!() {
+  this.sizesAttribute.incrementVersion();
+}
+
+//Implementation of StatisticSource interface's 'getStatistics()'.
+function StatisticRecord[] Points.getStatistics() {
+  StatisticRecord stats[];
+  this.base.addStatistics(stats);
+  stats.push( StatisticRecord( "Points", this.base.attributes.size() ) );
+  return stats;
+}
+
+//Returns the bounding box of the points (Geometry interface).
+//Takes point sizes into account ('Points.defaultPointSize' and 'Points.sizesAttribute' members).
+function LocalBoundingVolume Points.getBoundingVolume() {
+  if( this.sizesAttribute )
+    return this._getBoundingVolume( this.sizesAttribute );
+
+  LocalBoundingVolume bBox = this.base.getBoundingVolume();
+  Vec3 sizeVec = Vec3( this.defaultPointSize, this.defaultPointSize, this.defaultPointSize );
+  bBox.bBoxSetMin( bBox.bBoxGetMin() - sizeVec );
+  bBox.bBoxSetMax( bBox.bBoxGetMax() + sizeVec );
+  return bBox;
+}
+
+//Geometry interface implementation: redirects to pointCount
+function Size Points.elementCount() {
+  return this.pointCount();
+}
+
+//Geometry interface implementation
+function LocalBoundingVolume Points.getElementBoundingVolume(Size index) {
+  Vec3 center = this.getPosition(index);
+  Scalar radius;
+  if( this.sizesAttribute )
+    radius = this.sizesAttribute.values[index]*0.5; //Assuming "size" is the diameter..??
+  else
+    radius = this.defaultPointSize*0.5;
+  LocalBoundingVolume bVol;
+  bVol.bSphereInit(center, radius);
+  return bVol;
+}
+
+//Bounding volume taking into account the 'sizes' attribute
+object _PointsWithSizesBoundingVolumeCache {
+  LocalBoundingVolume bbox;
+
+  UInt32 prevPosAttrVersion;
+  Ref<GeometryAttribute> prevPosAttr;
+
+  UInt32 prevSizeAttrVersion;
+  Ref<GeometryAttribute> prevSizeAttr;
+
+  SimpleLock lock;
+};
+
+//Returns the bounding volume of the points, from the positions attribute and sizes attribute.
+//This function is complex since we want the bounding box to be computed lazily, in a thread-safe fashion.
+function LocalBoundingVolume Points._getBoundingVolume( Ref<ScalarAttribute> sizes ) {
+  Ref<_PointsWithSizesBoundingVolumeCache> boundingVolumeCache = null;
+  {
+    //Get from meta-data; add if not present
+    Ref<ThreadsafeMetaDataContainer> mutableMetaData = this.base.metaData;//Make non-const
+    AutoLock AL(mutableMetaData.lock);
+    boundingVolumeCache = mutableMetaData.lockedGet("sizedPointsBBox");
+    if( !boundingVolumeCache ) {
+      _PointsWithSizesBoundingVolumeCache newBoundingVolumeCache = _PointsWithSizesBoundingVolumeCache();
+      newBoundingVolumeCache.lock = SimpleLock("_PointsWithSizesBoundingVolumeCache");
+      mutableMetaData.lockedSet("sizedPointsBBox", newBoundingVolumeCache);
+      boundingVolumeCache = newBoundingVolumeCache;
+    }
+  }
+  AutoLock AL(boundingVolumeCache.lock);
+
+  //Update if required
+  Boolean dirty;
+  if( synchronizeVersion( this.base.attributes.positionsAttribute.getVersion(), boundingVolumeCache.prevPosAttrVersion ) || this.base.attributes.positionsAttribute != boundingVolumeCache.prevPosAttr )
+    dirty = true;
+
+  if( synchronizeVersion( sizes.getVersion(), boundingVolumeCache.prevSizeAttrVersion ) || sizes != boundingVolumeCache.prevSizeAttr )
+    dirty = true;
+
+  if( dirty ) {
+    boundingVolumeCache.prevPosAttr = this.base.attributes.positionsAttribute;
+    boundingVolumeCache.prevSizeAttr = sizes;
+
+    boundingVolumeCache.bbox.bBoxInit();
+    for( UInt32 i = 0; i < this.base.attributes.size(); ++i ) {
+      Vec3 position = this.base.attributes.getPosition(i);
+      Scalar size = sizes.values[i];
+      Vec3 sizeVec(size, size, size);
+      boundingVolumeCache.bbox.bBoxAdd( position - sizeVec );
+      boundingVolumeCache.bbox.bBoxAdd( position + sizeVec );
+    }
+  }
+  return boundingVolumeCache.bbox;
+}
+
+
+//////////// Debugging
+
+//Returns a String description of the geometry structure. 
+// withAttributes: include the attribute values in the desc.
+// useUnitTestPrint: use the unitTestPrint method to ensure that the values are consistent accross platforms(used in unit testing).
+function String Points.getDesc?( Boolean withAttributes, Boolean useUnitTestPrint ) {
+  String desc;
+  desc += "Points: "+ this.base.debugName + " pointCount: " + this.pointCount() + " nbAttributeVectors: " + this.base.attributes.numAttributes() + '\n';
+  if( withAttributes ) {
+    desc += "  Attributes:\n";
+    desc += this.base.attributes.getDesc(useUnitTestPrint) + '\n';
+  }
+  return desc;
+}

@@ -1,0 +1,48 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+require Geometry;
+require RTR;
+
+function _OGLShape_updateGeometryAttributeBuffers(io DrawContext context, io OGLBufferDictionary buffers, GeometryAttributes attributes) {
+
+  Data NULL;
+  InlineShader shader = context.getObject('currentShader');
+
+  for(Size i=0; i<shader.getAttributeCount(); i++) {
+    String name = shader.getAttributeName(i);
+    if(!attributes.has(name))
+      continue;
+
+    OGLBuffer buffer = buffers.get(name);
+    if(buffer == null) {
+      buffer = OGLBuffer();
+      buffer.bufferType = GL_ARRAY_BUFFER;
+      buffer.bufferUsage = GL_DYNAMIC_DRAW;
+      buffers.set(name, buffer);
+    }
+
+    Integer locationInt = shader.getAttributeID(name);
+    if(locationInt == -1)
+      continue;
+
+    GeometryAttribute attr = attributes.getAttribute(name);
+    if(buffers.getVersion(name) != attr.getVersion()) {
+      RTRAttributeWrapper wrapper = CreateGeneratorAttributeWrapper(attr);
+      buffer.elementCount = attr.size();
+      wrapper.loadToOGLBuffer(buffer);
+      buffers.setVersion(name, attr.getVersion());
+    }
+
+    Size location = locationInt;
+
+    glBindBuffer(buffer.bufferType, buffer.bufferID);
+    glEnableVertexAttribArray(location);
+    glVertexAttribPointer(location, buffer.numBufferElementComponents, buffer.bufferElementComponentType, GL_FALSE, 0, NULL);
+
+    glBindBuffer(buffer.bufferType, 0);
+  }
+
+  return;
+}

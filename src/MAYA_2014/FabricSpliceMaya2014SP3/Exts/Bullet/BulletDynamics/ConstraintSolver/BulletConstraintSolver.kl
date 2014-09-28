@@ -1,0 +1,24 @@
+
+/*
+ *  Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+ */
+
+require Math;
+
+/// BulletConstraintSolver provides solver Interface
+interface BulletConstraintSolver
+{
+  Data getPointer();
+
+  // void prepareSolve (Integer /* numBodies */, Integer /* numManifolds */);
+
+  // ///solve a group of constraIntegers
+  // Scalar solveGroup(BulletICollisionObject** bodies,Integer numBodies,BulletPersistentManifold** manifold,Integer numManifolds,BulletTypedConstraint** constraIntegers,Integer numConstraints, const BulletContactSolverInfo& info,class BulletIDebugDraw* debugDrawer, BulletStackAlloc* stackAlloc,BulletDispatcher* dispatcher);
+
+  // void allSolved (const BulletContactSolverInfo& /* info */,class BulletIDebugDraw* /* debugDrawer */, BulletStackAlloc* /* stackAlloc */);
+
+  ///clear Integerernal cached data and reset random seed
+  reset!();
+};
+
+

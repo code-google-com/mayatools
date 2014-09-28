@@ -1,0 +1,75 @@
+/*
+ *  Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+ */
+
+/*SPHINX-description
+.. versionadded:: 1.12.0
+
+The :ref:`ManipulationHandle` is used to provide access to the EventDispatcher from C++. This uses the :ref:`singletons` extension to query the 'EventDispatcher'.
+    
+*/
+
+require Singletons;
+
+object ManipulationHandle {};
+
+
+// Reactivate the manipulation, but do not modify the stack. 
+// This method should be called by the DCC when the custom manipulator is disabled. 
+function ManipulationHandle.activateManipulation!(){
+  Ref<EventDispatcher> eventDispatcher = EventDispatcher_GetInstance();
+  if(eventDispatcher != null) 
+    eventDispatcher.activateManipulation();
+}
+
+
+// Temporarily deactivate the manipulation, but do not modify the stack. 
+// This method should be called by the DCC when the custom manipulator is disabled to
+// suspend manipulation, but not alter the stack. 
+// e.g. If a paint manipulator is active, but the user activates a different tool in Maya, 
+// then we simply deactivate the manipulation system, but leave the paint manipulator
+// at the top of the stack.
+function ManipulationHandle.deactivateManipulation!(){
+  Ref<EventDispatcher> eventDispatcher = EventDispatcher_GetInstance();
+  if(eventDispatcher != null) 
+    eventDispatcher.deactivateManipulation();
+}
+
+
+function Boolean ManipulationHandle.onEvent(io Event event) {
+  Ref<EventDispatcher> eventDispatcher = EventDispatcher_GetInstance();
+  if(eventDispatcher != null) 
+    return eventDispatcher.onEvent(event);
+  return false;
+}
+
+
+// Calling methods on RTVals while passing Objects to eb cast to interfaces isn't working yet. 
+// Here I define 3 explcit mthods to work around this. 
+
+function Boolean ManipulationHandle.onEvent(io KeyEvent keyEvent) {
+	Event event = keyEvent;
+  Ref<EventDispatcher> eventDispatcher = EventDispatcher_GetInstance();
+  if(eventDispatcher != null) 
+    return eventDispatcher.onEvent(event);
+  return false;
+}
+
+
+function Boolean ManipulationHandle.onEvent(io MouseEvent mouseEvent) {
+	Event event = mouseEvent;
+  Ref<EventDispatcher> eventDispatcher = EventDispatcher_GetInstance();
+  if(eventDispatcher != null) 
+    return eventDispatcher.onEvent(event);
+  return false;
+}
+
+
+function Boolean ManipulationHandle.onEvent(io MouseWheelEvent weelEvent) {
+	Event event = weelEvent;
+  Ref<EventDispatcher> eventDispatcher = EventDispatcher_GetInstance();
+  if(eventDispatcher != null) 
+    return eventDispatcher.onEvent(event);
+  return false;
+}
+

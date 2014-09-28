@@ -1,0 +1,314 @@
+
+//
+// Copyright 2010-2014 Fabric Software Inc. All rights reserved.
+//
+
+/*SPHINX-description
+The :ref:`color` type represents a full float pixel color, storing the components ordered as red, green, blue and alpha.
+
+Example
+---------
+
+.. code-block:: js
+
+    Color colorFromByte(255, 0, 0);
+    Color colorFromScalar(1.0, 0.0, 0.0);
+*/
+
+struct Color
+{
+  Scalar r;
+  Scalar g;
+  Scalar b;
+  Scalar a;
+};
+
+// constructor from rgba Scalar components
+inline Color(Scalar r, Scalar g, Scalar b, Scalar a) {
+  this.set(r, g, b, a);
+}
+
+// constructor from rgb Scalar components, alpha = 1.0
+inline Color(Scalar r, Scalar g, Scalar b) {
+  this.set(r, g, b, 1.0);
+}
+
+// constructor from rgba Integer components
+inline Color(Integer r, Integer g, Integer b, Integer a) {
+  this.set(Scalar(r) / 255.0,
+           Scalar(g) / 255.0,
+           Scalar(b) / 255.0,
+           Scalar(a) / 255.0);
+}
+
+// constructor from rgb Integer components, alpha = 255
+inline Color(Integer r, Integer g, Integer b) {
+  this.set(Scalar(r) / 255.0,
+           Scalar(g) / 255.0,
+           Scalar(b) / 255.0,
+           1.0);
+}
+
+// setter using rgba Scalar components
+inline Color.set!(Scalar r, Scalar g, Scalar b, Scalar a) {
+  this.r = r;
+  this.g = g;
+  this.b = b;
+  this.a = a;
+}
+
+// setter from (standard/external) float32 array and an offset
+inline Color.set!(Float32 v<>, UInt32 o) {
+  if(v.size() >= 4 + o) {
+    this.r = v[o + 0];
+    this.g = v[o + 1];
+    this.b = v[o + 2];
+    this.a = v[o + 3];
+  }
+}
+
+// getter as external float32 array and an offset
+inline Color.get(io Float32 v<>, UInt32 o) {
+  if(v.size() >= 4 + o) {
+    v[o + 0] = this.r;
+    v[o + 1] = this.g;
+    v[o + 2] = this.b;
+    v[o + 3] = this.a;
+  }
+}
+
+// getter as float32 array and an offset
+inline Color.get(io Float32 v[], UInt32 o) {
+  if(v.size() < 4 + o)
+    v.resize(4 + o);
+  v[o + 0] = this.r;
+  v[o + 1] = this.g;
+  v[o + 2] = this.b;
+  v[o + 3] = this.a;
+}
+
+// setter from (standard/external) float64 array and an offset
+inline Color.set!(Float64 v<>, UInt32 o) {
+  if(v.size() >= 4 + o) {
+    this.r = Float32(v[o + 0]);
+    this.g = Float32(v[o + 1]);
+    this.b = Float32(v[o + 2]);
+    this.a = Float32(v[o + 3]);
+  }
+}
+
+// getter as external float64 array and an offset
+inline Color.get(io Float64 v<>, UInt32 o) {
+  if(v.size() >= 4 + o) {
+    v[o + 0] = this.r;
+    v[o + 1] = this.g;
+    v[o + 2] = this.b;
+    v[o + 3] = this.a;
+  }
+}
+
+// getter as external float64 array and an offset
+inline Color.get(io Float64 v[], UInt32 o) {
+  if(v.size() < 4 + o)
+    v.resize(4 + o);
+  v[o + 0] = this.r;
+  v[o + 1] = this.g;
+  v[o + 2] = this.b;
+  v[o + 3] = this.a;
+}
+
+// setter from (standard/external) float32 array
+inline Color.set!(Float32 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float32 array
+inline Color.get(io Float32 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float32 array
+inline Color.get(io Float32 v[]) {
+  this.get(v, 0);
+}
+
+// setter from (standard/external) float64 array
+inline Color.set!(Float64 v<>) {
+  this.set(v, 0);
+}
+
+// getter as external float64 array
+inline Color.get(io Float64 v<>) {
+  this.get(v, 0);
+}
+
+// getter as float64 array
+inline Color.get(io Float64 v[]) {
+  this.get(v, 0);
+}
+
+// returns true if both Colors match exactly
+inline Boolean Color.equal(in Color other) {
+  return this.r == other.r && this.g == other.g && this.b == other.b && this.a == other.a;
+}
+
+// returns true if both colors match to a given precision
+inline Boolean Color.almostEqual(in Color other, in Scalar precision) {
+  return
+      (abs(this.r - other.r) < precision) &&
+      (abs(this.g - other.g) < precision) &&
+      (abs(this.b - other.b) < precision) &&
+      (abs(this.a - other.a) < precision);
+}
+
+// returns true if both colors match almost (using the PRECISION constant)
+inline Boolean Color.almostEqual(in Color other) {
+  return this.almostEqual(other, PRECISION);
+}
+
+// returns the Color's component given an index (0 to 3)
+inline Scalar Color.component( Size i ) {
+  if(i == 0)
+    return this.r;
+  else if(i == 1)
+    return this.g;
+  else if(i == 2)
+    return this.b;
+  else
+    return this.a;
+}
+
+// sets the Color's component given an index (0 to 3)
+inline Color.setComponent!( Size i, Scalar v ) {
+  if(i == 0)
+    this.r = v;
+  else if(i == 1)
+    this.g = v;
+  else if(i == 2)
+    this.b = v;
+  else
+    this.a = v;
+}
+
+// equal operator
+inline Boolean == (Color a, Color b) {
+  return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+}
+
+// not equal operator
+inline Boolean != (Color a, Color b) {
+  return a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a;
+}
+
+// add operator, adds two Colors component wise
+inline Color + (Color a, Color b) {
+  return vecAdd(a, b);
+}
+
+// add-assign operator, adds another Color to this one
+inline Color. += (Color other) {
+  this = this + other;
+}
+
+// subtract operator, subtracts two Colors component wise
+inline Color - (Color a, Color b) {
+  return vecSub(a, b);
+}
+
+// subtract-assign operator, subtracts another Color from this one
+inline Color. -= (Color other) {
+  this = this - other;
+}
+
+// multiply operator, multiplies a Scalar and a Color
+inline Color * (Scalar a, Color b) {
+  return vecMul(a, b);
+}
+
+// multiply operator, multiplies a Color and a Scalar
+inline Color * (Color a, Scalar b) {
+  return vecMul(a, b);
+}
+
+// multiply operator, multiplies two Colors component wise
+inline Color * (Color a, Color b) {
+  return vecMul(a, b);
+}
+
+// multiply-assign operator, multiplies a Scalar with this Color
+inline Color. *= (Scalar other) {
+  this = this * other;
+}
+
+// multiply-assign operator, multiplies another Color to this one
+inline Color. *= (Color other) {
+  this = this * other;
+}
+
+// division operator, divides a Color by another one
+inline Color / (Color a, Color b) {
+  return vecDiv(a, b);
+}
+
+// division operator, divides a Color by a Scalar
+inline Color / (Scalar a, Color b) {
+  return vecDiv(a, b);
+}
+
+// division operator, divides a Color by a Scalar
+inline Color / (Color a, Scalar b) {
+  return vecDiv(a, b);
+}
+
+// division-assign operator, divides this Color by a Scalar
+inline Color. /= (Scalar other) {
+  this = this / other;
+}
+
+// division-assign operator, divides this Color by another one
+inline Color. /= (Color other) {
+  this = this / other;
+}
+
+
+// overload method for the add operator.
+inline Color Color.add(Color other) {
+  return this + other;
+}
+
+// overload method for the subtract operator.
+inline Color Color.subtract(Color other) {
+  return this - other;
+}
+
+// overload method for the multiply operator.
+inline Color Color.multiply(Color other) {
+  return this * other;
+}
+
+// overload method for the divide operator.
+inline Color Color.divide(Color other) {
+  return this / other;
+}
+
+// overload method for the multiply Scalar operator
+inline Color Color.multiplyScalar(Scalar other) {
+  return this * other;
+}
+
+// linearly interpolates this Color with another one based on 
+// the blend value t (0.0 to 1.0)
+inline Color Color.linearInterpolate(in Color other, in Scalar t) {
+  return this + ((other - this) * t);
+}
+
+// returns this Color as a RGBA byte color.
+inline RGBA Color.toRGBA() {
+  return RGBA(Integer(this.r * 255), Integer(this.g * 255), Integer(this.b * 255), Integer(this.a * 255) );
+}
+
+// returns this Color as a RGB byte color.
+inline RGB Color.toRGB() {
+  return RGB(Integer(this.r * 255), Integer(this.g * 255), Integer(this.b * 255) );
+}
+

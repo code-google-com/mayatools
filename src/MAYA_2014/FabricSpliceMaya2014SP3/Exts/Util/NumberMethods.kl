@@ -1,0 +1,121 @@
+//
+// Copyright 2010-2013 Fabric Engine Inc. All rights reserved.
+//
+require Math;
+
+// Get significand and exponent
+// Breaks the floating point number x into its binary significand 
+//(a floating point value between 0.5(included) and 1.0(excluded)) 
+// and an integral exponent for 2, such that:
+function Float32 frexp(in Float32 value, io Integer e) = "Float32_frexp";
+function Float64 frexp(in Float64 value, io Integer e) = "Float64_frexp";
+
+// Generate value from significand and exponent
+// Returns the result of multiplying x (the significand) by 2 raised
+// to the power of exp (the exponent).
+function Float32 ldexp(in Float32 value, in Integer e) = "Float32_ldexp";
+function Float64 ldexp(in Float64 value, in Integer e) = "Float64_ldexp";
+
+// Removes accuracy to the Float32 value 
+// to ensure the same result across all platforms. 
+function Float32 unitTestTruncate(Float32 value){
+  // Remove precision from the value without losing range. 
+  // Extract the significand and exponent.
+  // round the significand to use 5 orders of magnitude. 
+  // regenerate the number. 
+  Integer n;
+  Float32 result = frexp(value, n);
+  result = floor((result * 8192)+0.5) / 8192;//Use a power of 2 to avoid having lower precision bits
+  return Float32(ldexp(result, n));
+}
+
+// Converts the Scalar value to a string, removing accuracy
+// to ensure the same result across all platforms. 
+function String unitTestPrint(Float32 value){
+  return(String(unitTestTruncate(value)));
+}
+
+// Removes accuracy to the Float64 value 
+// to ensure the same result across all platforms. 
+function Float64 unitTestTruncate(Float64 value){
+  // Remove precision from the value without losing range. 
+  // Extract the significand and exponent.
+  // round the significand to use 10 orders of magnitude. 
+  // regenerate the number. 
+  Integer n;
+  Float64 result = frexp(value, n);
+  result = floor((result * 1048576)+0.5) / 1048576;//Use a power of 2 to avoid having lower precision bits
+  return Float64(ldexp(result, n));
+}
+
+// Converts the Scalar value to a string, removing accuracy
+// to ensure the same result across all platforms. 
+function String unitTestPrint(Float64 value){
+  return String(unitTestTruncate(value));
+}
+
+// Converts the value to a string
+// ensuring the same result across all platforms. 
+function String unitTestPrint(ARGB value){
+  return String(value);
+}
+
+function String unitTestPrint(Color value){
+  return "{r:"+unitTestPrint(value.r)+",g:"+unitTestPrint(value.g)+",b:"+unitTestPrint(value.b)+",a:"+unitTestPrint(value.a)+"}";
+}
+
+function String unitTestPrint(Euler value){
+  return "{x:"+unitTestPrint(value.x)+",y:"+unitTestPrint(value.y)+",z:"+unitTestPrint(value.z)+",ro:"+unitTestPrint(value.ro)+"}";
+}
+
+function String unitTestPrint(Mat22 value){
+  return "{row0:"+unitTestPrint(value.row0)+",row1:"+unitTestPrint(value.row1)+"}";
+}
+
+function String unitTestPrint(Mat33 value){
+  return "{row0:"+unitTestPrint(value.row0)+",row1:"+unitTestPrint(value.row1)+",row2:"+unitTestPrint(value.row2)+"}";
+}
+
+function String unitTestPrint(Mat44 value){
+  return "{row0:"+unitTestPrint(value.row0)+",row1:"+unitTestPrint(value.row1)+",row2:"+unitTestPrint(value.row2)+",row3:"+unitTestPrint(value.row3)+"}";
+}
+
+function String unitTestPrint(Quat value){
+  return "{v:"+unitTestPrint(value.v)+",w:"+unitTestPrint(value.w)+"}";
+}
+ 
+function String unitTestPrint(Ray value){
+  return "{start:"+unitTestPrint(value.start)+",direction:"+unitTestPrint(value.direction)+"}";
+}
+
+function String unitTestPrint(RGB value){
+  return String(value);
+}
+
+function String unitTestPrint(RGBA value){
+  return String(value);
+}
+
+function String unitTestPrint(RotationOrder value){
+  return String(value);
+}
+
+function String unitTestPrint(Vec2 value){
+  return "{x:"+unitTestPrint(value.x)+",y:"+unitTestPrint(value.y)+"}";
+}
+
+function String unitTestPrint(Vec3 value){
+  return "{x:"+unitTestPrint(value.x)+",y:"+unitTestPrint(value.y)+",z:"+unitTestPrint(value.z)+"}";
+}
+
+function String unitTestPrint(Vec3_d value){
+  return "{x:"+unitTestPrint(value.x)+",y:"+unitTestPrint(value.y)+",z:"+unitTestPrint(value.z)+"}";
+}
+
+function String unitTestPrint(Vec4 value){
+  return "{x:"+unitTestPrint(value.x)+",y:"+unitTestPrint(value.y)+",z:"+unitTestPrint(value.z)+",t:"+unitTestPrint(value.t)+"}";
+}
+
+function String unitTestPrint(Xfo value){
+  return "{tr:"+unitTestPrint(value.tr)+",ori:"+unitTestPrint(value.ori)+",sc:"+unitTestPrint(value.sc)+"}";
+}
