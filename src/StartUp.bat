@@ -23,9 +23,12 @@ SET PROJECT_DIR=%COMMONPATH%developer\
 REM ### Set Python path
 SET PYTHONPATH=%COMMONPATH%MAYA_%MAYAVERSION%\;%COMMONPATH%;%PYTHONPATH%
 SET MAYA_SCRIPT_PATH=%COMMONPATH%;%MAYA_SCRIPT_PATH%
-SET MAYA_MODULE_PATH="Z:\Software\Peregrine Labs Yeti 1.3.10 Maya 2014-2015 WinX64\Yeti-v1.3.10_Maya2014-windows64";%MAYA_MODULE_PATH%
 
-REM use call to enter debug mode and see errors output from cmd
+IF %MAYAVERSION% == 2015 SET MAYA_MODULE_PATH=%COMMONPATH%MAYA_%MAYAVERSION%\FabricSpliceMaya2015SP2;%MAYA_MODULE_PATH%
+
+IF %MAYAVERSION% == 2014 SET MAYA_MODULE_PATH=%COMMONPATH%MAYA_%MAYAVERSION%\FabricSpliceMaya2014SP3;%MAYA_MODULE_PATH%
+
+REM use call to enter debug mode and see errors output from 5cmd
 REM call %COMMONPATH%"Maya "%MAYAVERSION%"-internalTools.lnk"
 
 CALL "E:\Program Files\Golaem\GolaemCrowd-3.1.0.1-Maya2014\bin\glmCrowdForMaya.bat"
