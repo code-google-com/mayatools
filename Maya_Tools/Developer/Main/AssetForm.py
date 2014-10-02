@@ -66,6 +66,10 @@ class AssetForm(form_class,base_class):
                 
             self.xmlNameTypeList = xml.dom.minidom.parse(self.Proj.NameTypeList)
             print('self.xmlAssetList',self.xmlAssetList)
+        elif str(self.Proj.ProjectName)=='Sony_J_Env':
+            self.xmlNameTypeList = xml.dom.minidom.parse(self.Proj.NameTypeList)
+            print('self.xmlNameTypeList',self.xmlNameTypeList)
+            
         self.loadProjectData()
         self.resetToFileOpened()
         #except:
@@ -91,7 +95,7 @@ class AssetForm(form_class,base_class):
         
         userID = getpass.getuser()
         if userID not in self.Proj.Technical() + self.Proj.Producer() + self.Proj.Art():
-            #self.btnCreateServerFolders.setEnabled(False)
+            self.btnCreateServerFolders.setEnabled(False)
             #self.server.setEnabled(False)
             self.btnToClient.setEnabled(False)
         
@@ -221,6 +225,9 @@ class AssetForm(form_class,base_class):
         elif str(self.Proj.ProjectName) == "Saber_Halo2":
             serverPath = self.Proj.ServerPath + group +'/'+ item
         
+        elif str(self.Proj.ProjectName) == "Sony_J_Env":
+            serverPath = self.Proj.ServerPath + group +'/'+ item
+        
         else: #str(self.Proj.ProjectName) != "Sony_LP1":
             if lod == 'Not Available':
                 if type == '':
@@ -240,9 +247,11 @@ class AssetForm(form_class,base_class):
         lod = self.cbbWorkingStage.currentText()
         if str(self.Proj.ProjectName) == "Sony_LP1":
             localPath = self.Proj.LocalPath + type +'/'+ lod +'/'+'Model'
-        
+        elif str(self.Proj.ProjectName) == "Sony_J_Env":
+            localPath = self.Proj.LocalPath + type +'/'+ lod +'/'+ item
         elif str(self.Proj.ProjectName) == "Saber_Halo2":
             localPath = self.Proj.LocalPath + group +'/' + item
+        
         
         else: #str(self.Proj.ProjectName) != "Sony_LP1" and str(self.Proj.ProjectName) != "Saber_Halo2":
             if self.Proj.group == False:
@@ -285,7 +294,7 @@ class AssetForm(form_class,base_class):
         print('Project Name:',str(self.Proj.ProjectName))
         
         if str(self.Proj.ProjectName) == "Sony_LP1":
-                localFolder = self.Proj.LocalPath +  '/' + type +'/'+ working +'/'+ 'Model'
+                localFolder = self.Proj.LocalPath  + type +'/'+ working +'/'+ 'Model'
                 textureFolder = localFolder + '/'+'Textures'
                 workFolder = localFolder +'/'+'Workfiles'
                 print('Thu muc:',str(localFolder))
@@ -295,6 +304,61 @@ class AssetForm(form_class,base_class):
                     os.makedirs(str(textureFolder))  
                 if not os.path.exists(workFolder):
                     os.makedirs(str(workFolder))  
+        if str(self.Proj.ProjectName) == "Capcom2014":
+                if group =="Vehicles":
+                    localFolder = self.Proj.LocalPath  + group +'/'+ item +'/'
+                    psd = localFolder + "psd"
+                    ref = localFolder + "ref"
+                    tex = localFolder + "tex"
+                    hires = localFolder + "hires"
+                    img = localFolder + "img"
+                    if not os.path.exists(psd):
+                        os.makedirs(str(psd))
+                    if not os.path.exists(ref):
+                        os.makedirs(str(ref))
+                    if not os.path.exists(tex):
+                        os.makedirs(str(tex))
+                    if not os.path.exists(hires):
+                        os.makedirs(str(hires))
+                    if not os.path.exists(img):
+                        os.makedirs(str(img))
+                if group =="Weapon":
+                    localFolder = self.Proj.LocalPath  + group +'/'+ item +'/'
+                    psd = localFolder + "psd"
+                    ref = localFolder + "ref"
+                    tex = localFolder + "textures"
+                    hires = localFolder + "hi_res"
+                    if not os.path.exists(psd):
+                        os.makedirs(str(psd))
+                    if not os.path.exists(ref):
+                        os.makedirs(str(ref))
+                    if not os.path.exists(tex):
+                        os.makedirs(str(tex))
+                    if not os.path.exists(hires):
+                        os.makedirs(str(hires))
+                if group =="Environment":
+                    localFolder = self.Proj.LocalPath  + group +'/'+ item +'/'
+                    psd = localFolder + "psd"
+                    ref = localFolder + "ref"
+                    tex = localFolder + "textures"
+                    hires = localFolder + "high res"
+                    if not os.path.exists(psd):
+                        os.makedirs(str(psd))
+                    if not os.path.exists(ref):
+                        os.makedirs(str(ref))
+                    if not os.path.exists(tex):
+                        os.makedirs(str(tex))
+                    if not os.path.exists(hires):
+                        os.makedirs(str(hires))
+                        
+        if str(self.Proj.ProjectName) == "Sony_J_Env":
+                localFolder = self.Proj.LocalPath + type +'/'+ working +'/'+ item
+                #textureFolder = self.Proj.LocalPath +'texture' +'/'+
+                #workFolder = localFolder +'/'+'Workfiles'
+                print('Thu muc:',str(localFolder))
+                if not os.path.exists(localFolder):
+                    os.makedirs(str(localFolder))
+                  
         
         if str(self.Proj.ProjectName) == "Saber_Halo2":
             localitem = self.Proj.LocalPath + group + '/'+ item
@@ -304,7 +368,8 @@ class AssetForm(form_class,base_class):
             if not os.path.exists(sourceimages):
                 os.makedirs(str(sourceimages))
               
-        if str(self.Proj.ProjectName) != "Sony_LP1":
+        
+        else : #str(self.Proj.ProjectName) != "Sony_LP1"
             for i in range(len(self.Proj.structureFolders)):
                 
                 if self.Proj.group == False:
@@ -362,7 +427,58 @@ class AssetForm(form_class,base_class):
                     os.makedirs(str(feedbackFolder_Ge))
                 if not os.path.exists(feedbackFolder_Client):
                     os.makedirs(str(feedbackFolder_Client))
-        if str(self.Proj.ProjectName) == "Saber_Halo2":
+         
+        elif str(self.Proj.ProjectName) == "Capcom2014":
+            print"Tao Project tren server ne"
+            if group =="Vehicles":
+                for asset in assets:
+                    serverFolder = self.Proj.ServerPath  + group +'/'+ asset +'/'
+                    psd = serverFolder + "psd"
+                    ref = serverFolder + "ref"
+                    tex = serverFolder + "tex"
+                    hires = serverFolder + "hires"
+                    img = serverFolder + "img"
+                    if not os.path.exists(psd):
+                        os.makedirs(str(psd))
+                    if not os.path.exists(ref):
+                        os.makedirs(str(ref))
+                    if not os.path.exists(tex):
+                        os.makedirs(str(tex))
+                    if not os.path.exists(hires):
+                        os.makedirs(str(hires))
+                    if not os.path.exists(img):
+                            os.makedirs(str(img))
+            elif group =="Weapon":
+                for asset in assets:
+                    serverFolder = self.Proj.ServerPath  + group +'/'+ asset +'/'
+                    psd = serverFolder + "psd"
+                    ref = serverFolder + "ref"
+                    tex = serverFolder + "textures"
+                    hires = serverFolder + "hi_res"
+                    if not os.path.exists(psd):
+                        os.makedirs(str(psd))
+                    if not os.path.exists(ref):
+                        os.makedirs(str(ref))
+                    if not os.path.exists(tex):
+                        os.makedirs(str(tex))
+                    if not os.path.exists(hires):
+                        os.makedirs(str(hires))
+            elif group =="Environment":
+                for asset in assets:
+                    serverFolder = self.Proj.ServerPath  + group +'/'+ asset +'/'
+                    psd = serverFolder + "psd"
+                    ref = serverFolder + "ref"
+                    tex = serverFolder + "textures"
+                    hires = serverFolder + "high res"
+                    if not os.path.exists(psd):
+                        os.makedirs(str(psd))
+                    if not os.path.exists(ref):
+                        os.makedirs(str(ref))
+                    if not os.path.exists(tex):
+                        os.makedirs(str(tex))
+                    if not os.path.exists(hires):
+                        os.makedirs(str(hires))
+        elif str(self.Proj.ProjectName) == "Saber_Halo2":
             # Tao folder tren scenes:
             for asset in assets:
                 serverFolder = self.Proj.ServerPath + str(group) + '/' + str(asset)             
@@ -379,8 +495,25 @@ class AssetForm(form_class,base_class):
                     os.makedirs(str(feedbackFolder_Ge))
                 if not os.path.exists(feedbackFolder_Client):
                     os.makedirs(str(feedbackFolder_Client))
+        elif str(self.Proj.ProjectName) == "Sony_J_Env":
+            # Tao folder tren scenes:
+            for asset in assets:
+                serverFolder = self.Proj.ServerPath + str(group) + '/' + str(asset)             
+                if not os.path.exists(serverFolder):
+                    os.makedirs(str(serverFolder))                
+            # TAO FOLDER TREN FEEDBACK:
+            for asset in assets:
+                feedbackFolder_Ge = self.Proj.FeedbacksPath +'From_GE'+ '/'+str(group) + '/' + str(asset)
+                feedbackFolder_Client = self.Proj.FeedbacksPath +'From_Client'+'/'+ str(group) + '/' + str(asset) 
+                print('feedbackFolder',feedbackFolder_Ge)
+                print('feedbackFolder_Client',feedbackFolder_Client)
+                if not os.path.exists(feedbackFolder_Ge):
+                    os.makedirs(str(feedbackFolder_Ge))
+                if not os.path.exists(feedbackFolder_Client):
+                    os.makedirs(str(feedbackFolder_Client))
+             
                     
-        if str(self.Proj.ProjectName) != "Sony_LP1":
+        else : # str(self.Proj.ProjectName) != "Sony_LP1"
             for asset in assets:
                 feedbackFolder = self.Proj.FeedbacksPath + str(group) + '\\' + str(asset) + '\\'
                 
@@ -448,15 +581,19 @@ class AssetForm(form_class,base_class):
             if str(self.Proj.ProjectName) == "Sony_LP1":
                 dirFile = (self.Proj.ServerPath + str(group) + '\\' + item + '\\'+'Model'+'\\').replace('\\','/')
                 print('Duong dan server:',dirFile)
-            if str(self.Proj.ProjectName) != "Sony_LP1":     
+            elif str(self.Proj.ProjectName) == "Sony_J_Env":
+                dirFile = (self.Proj.ServerPath + str(group) + '\\' + item + '\\').replace('\\','/')
+                print('Duong dan server:',dirFile)
+            else:# str(self.Proj.ProjectName) != "Sony_LP1":     
                 dirFile = (self.Proj.ServerPath + str(group) + '\\' + dirFile + '\\').replace('\\','/')
                 print('duong dan: server',dirFile)
         if self.local.isChecked():
             # Du an SONY_PL1:
             if str(self.Proj.ProjectName) == "Sony_LP1":
-                dirFile = self.Proj.LocalPath +  '/' + type +'/'+ lod +'/'+ 'Model'
-                
-            if str(self.Proj.ProjectName) != "Sony_LP1":
+                dirFile = self.Proj.LocalPath  + type +'/'+ lod +'/'+ 'Model'
+            elif str(self.Proj.ProjectName) == "Sony_J_Env":
+                dirFile = self.Proj.LocalPath  + type +'/'+ lod +'/'+ item
+            else: #str(self.Proj.ProjectName) != "Sony_LP1":
                 if self.Proj.group:
                     dirFile = (self.Proj.LocalPath + str(group) + '\\' + dirFile + '\\').replace('\\','/')
                     print('duong dan: local1',dirFile)
@@ -503,18 +640,22 @@ class AssetForm(form_class,base_class):
         print('stages: ',self.Proj.stages)
         print('L1:',self.Proj.L1)
         print('LOD: ',self.Proj.LOD)
-        if str(self.Proj.ProjectName) == 'Sony_LP1':
+        if str(self.Proj.ProjectName) == 'Sony_J_Env':
+            self.cbbWorkingStage.addItems(self.Proj.L2)
+        elif str(self.Proj.ProjectName) == 'Sony_LP1':
             self.cbbWorkingStage.addItems(self.Proj.L2)
         
-        if str(self.Proj.ProjectName) != 'Sony_LP1':
+        else:# str(self.Proj.ProjectName) != 'Sony_J_Env':
             if len(self.Proj.stages) == 0:
                 self.cbbWorkingStage.addItems(['Not Available'])
             else:
                 self.cbbWorkingStage.addItems(self.Proj.stages)
         
-        if str(self.Proj.ProjectName) == 'Sony_LP1':
-            self.cbbType.addItems(self.Proj.L1) 
-        if str(self.Proj.ProjectName) != 'Sony_LP1':
+        if str(self.Proj.ProjectName) == 'Sony_J_Env':
+            self.cbbType.addItems(self.Proj.L1)
+        elif str(self.Proj.ProjectName) == 'Sony_LP1':
+            self.cbbType.addItems(self.Proj.L1)  
+        else:# str(self.Proj.ProjectName) != 'Sony_J_Env':
             self.cbbType.addItems(self.Proj.LOD)                  
   
     def on_cbbType_currentIndexChanged (self, groupName):
@@ -558,7 +699,14 @@ class AssetForm(form_class,base_class):
         work = self.cbbWorkingStage.currentText()
         if str(self.Proj.ProjectName) == "Sony_LP1":
             localPath = self.Proj.LocalPath + str(type) + '/' + str(work)
-        if str(self.Proj.ProjectName) != "Sony_LP1":
+        elif str(self.Proj.ProjectName) == "Sony_J_Env":
+            if type == 'texture':
+                localPath = self.Proj.LocalPath + str(type) + '/' + str(work) #+'/'+ item
+            else:
+                localPath = self.Proj.LocalPath + str(type) + '/' + str(work) #+'/'+ item
+        elif str(self.Proj.ProjectName) == "Capcom2014":
+            localPath = self.Proj.LocalPath + str(group) + '/' + str(item)
+        else:# str(self.Proj.ProjectName) != "Sony_LP1":
             if self.Proj.group:
                 #print 'Group is True'
                 localPath = self.Proj.LocalPath + str(group) + '/' + str(item)
