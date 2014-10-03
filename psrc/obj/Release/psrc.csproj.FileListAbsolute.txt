@@ -1,0 +1,14 @@
+Z:\ge_Tools\psrc\psrc\bin\Release\psrc.dll
+Z:\ge_Tools\psrc\psrc\bin\Release\psrc.pdb
+Z:\ge_Tools\psrc\psrc\bin\Release\Interop.Photoshop.dll
+Z:\ge_Tools\psrc\psrc\obj\Release\Interop.Photoshop.dll
+Z:\ge_Tools\psrc\psrc\obj\Release\psrc.csproj.ResolveComReference.cache
+Z:\ge_Tools\psrc\psrc\obj\Release\psrc.dll
+Z:\ge_Tools\psrc\psrc\obj\Release\psrc.pdb
+Z:\ge_Tools\psrc\bin\Release\psrc.dll
+Z:\ge_Tools\psrc\bin\Release\psrc.pdb
+Z:\ge_Tools\psrc\obj\Release\psrc.csprojResolveAssemblyReference.cache
+Z:\ge_Tools\psrc\obj\Release\Interop.Photoshop.dll
+Z:\ge_Tools\psrc\obj\Release\psrc.csproj.ResolveComReference.cache
+Z:\ge_Tools\psrc\obj\Release\psrc.dll
+Z:\ge_Tools\psrc\obj\Release\psrc.pdb

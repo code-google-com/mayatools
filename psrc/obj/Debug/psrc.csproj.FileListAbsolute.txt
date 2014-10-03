@@ -1,0 +1,15 @@
+Z:\ge_Tools\psrc\psrc\bin\Debug\psrc.dll
+Z:\ge_Tools\psrc\psrc\bin\Debug\psrc.pdb
+Z:\ge_Tools\psrc\psrc\bin\Debug\Interop.Photoshop.dll
+Z:\ge_Tools\psrc\psrc\obj\Debug\psrc.csprojResolveAssemblyReference.cache
+Z:\ge_Tools\psrc\psrc\obj\Debug\Interop.Photoshop.dll
+Z:\ge_Tools\psrc\psrc\obj\Debug\psrc.csproj.ResolveComReference.cache
+Z:\ge_Tools\psrc\psrc\obj\Debug\psrc.dll
+Z:\ge_Tools\psrc\psrc\obj\Debug\psrc.pdb
+Z:\ge_Tools\psrc\obj\Debug\psrc.csprojResolveAssemblyReference.cache
+Z:\ge_Tools\psrc\obj\Debug\Interop.Photoshop.dll
+Z:\ge_Tools\psrc\obj\Debug\psrc.csproj.ResolveComReference.cache
+Z:\ge_Tools\psrc\obj\Debug\psrc.dll
+Z:\ge_Tools\psrc\bin\Debug\psrc.dll
+Z:\ge_Tools\psrc\bin\Debug\psrc.pdb
+Z:\ge_Tools\psrc\obj\Debug\psrc.pdb
