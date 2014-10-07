@@ -1,0 +1,29 @@
+global proc checkMaxSkinInfluences(string $mesh, int $maxInfluences)
+{
+    select -cl;
+    string $skinCluster = `findRelatedSkinCluster $mesh`;
+    if($skinCluster == "") error ("checkSkinInfluences: can't find skinCluster connected to '" + $mesh + "'.\n");
+    
+    int $verts[] = `polyEvaluate -v $mesh`;
+    int $count;
+    int $i;
+    for($i=0;$i<($verts[0]+1);$i++)
+    {
+        float $inf[] = `skinPercent -query -value $skinCluster ($mesh + ".vtx[" + $i + "]")`;
+        float $activeInf[] = {};
+        int $j;
+        for($j=0;$j<size($inf);$j++)
+        {
+            if($inf[$j]>0) $activeInf[size($activeInf)] = $inf[$j];
+        }
+        
+        if(size($activeInf) > $maxInfluences) 
+        {
+            select -add ($mesh + ".vtx["+$i+"]");
+            $count++;
+        }
+    }
+    
+    if($count > 0) warning ("More than " + $maxInfluences + " influences for " + $count + " verts on " + $mesh + "\n");
+    else print ("Found no verts with more than " + $maxInfluences + " on " + $mesh + "\n");
+}

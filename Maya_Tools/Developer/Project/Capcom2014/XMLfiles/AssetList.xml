@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<AssetList>
+
+	<group name = "Vehicles">
+		<asset name = "atv" start_date = "" due_date = "" stage = ""  image = ""/>
+		
+	</group>
+	<group name = "Weapon">
+		<asset name = "assaultrifle" start_date = "" due_date = "" stage = "" image = ""/>
+	</group>
+
+	<group name = "Environment">
+		<asset name = "wes_corner_building_01" start_date = "" due_date = "" stage = "" image = ""/>
+	</group>
+	
+	
+
+</AssetList>

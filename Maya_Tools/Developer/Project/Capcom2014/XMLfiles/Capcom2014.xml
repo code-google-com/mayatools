@@ -1,0 +1,75 @@
+<?xml version="1.0" ?>
+<Project name="Capcom2014">
+	<Managers>
+		<Tech>
+			<user>trungtran</user>
+			<user>thohoang</user>
+						
+		</Tech>
+		<ArtDirector>
+			<user>huongnguyen</user>
+			<user>hangdo</user>
+			<user>tungvo</user>
+			<user>thinhnguyen</user>
+		</ArtDirector>
+		<Producer>
+			<user>nghiatrinh</user>
+			<user>thinhnguyen</user>
+		</Producer>
+	</Managers>
+	<Directories>
+		<ServerPath>//glassegg.com/projects/Scenes/Capcom2014/</ServerPath>
+		<LocalPath>Z:/Project/Capcom2014/</LocalPath>
+		<ProjectLocalPath> </ProjectLocalPath>
+		<AlternativePath> </AlternativePath>
+		<DocumentsPath>//glassegg.com/projects/Documents_Feedbacks/Capcom2014/</DocumentsPath>
+		<FeedbacksPath>//glassegg.com/projects/Documents_Feedbacks/Capcom2014/Feedbacks/</FeedbacksPath>
+		<ReferencesImagePath>//glassegg.com/projects/Documents_Feedbacks/Capcom2014/</ReferencesImagePath>
+	</Directories>
+	<Structures_Asset group = "False" feedback = "False">
+	  <folder name = "bg" >
+			<folder name = "object" type = "L1" >
+				<folder name = "building" type = "L2">
+					<folder name = "models" type = "" filename = "_Exterior_LOD0_model_v00" filetype = "mb"/>
+					<folder name = "textures" type = "" filename = "_Exterior_LOD0_textures_v00" filetype = "mb"/>
+				</folder>
+				<folder name = "building_parts" type = "L2">
+					<folder name = "models" type = "" filename = "_Interior_LOD0_model_v00" filetype = "mb"/>
+					<folder name = "textures" type = "" filename = "_Interior_LOD0_textures_v00" filetype = "mb"/>
+				</folder>
+				<folder name = "rock" type = "L2" filename = "_Wheel_LODs_v00" filetype = "mb">
+					<folder name = "models" type = "" filename = "_Interior_LOD0_model_v00" filetype = "mb"/>
+					<folder name = "textures" type = "" filename = "_Interior_LOD0_textures_v00" filetype = "mb"/>
+				</folder>				
+			</folder>
+			<folder name = "gimmick" type = "L1" >
+				<folder name = "9700" type = "L2">
+					<folder name = "models" type = "" filename = "_Exterior_LOD0_model_v00" filetype = "mb"/>
+					<folder name = "textures" type = "" filename = "_Exterior_LOD0_textures_v00" filetype = "mb"/>
+				</folder>
+				
+							
+			</folder>
+			
+		</folder>
+	</Structures_Asset>
+	<ProjectData>
+		<Template file = "BanDaiNamCo.mb"/>
+		<AssetList file = "AssetList.xml"/>
+		<Module>
+			<module name = "NamingConvention" params = ''/>
+			<module name = "CleanerTools" params = "yes"/>
+			<module name = "Pivots" />
+			<umodule name = "PartLods" params = "yes"/>
+			<module name = "LODTools" params = "" />	
+			<module name = "UVTools" />
+			<module name = "PolyTools" />
+			<nmodule name = "CrydevTools" />
+			<module name = "ShaderTools" params = ""/>
+			<nmodule name = "ThirdpartyTools" params = ""/>
+			<module name = "ArtistWork" params = ""/>
+			<module name = "CommonTab" params = ""/>
+		</Module>
+
+	</ProjectData>
+</Project>
