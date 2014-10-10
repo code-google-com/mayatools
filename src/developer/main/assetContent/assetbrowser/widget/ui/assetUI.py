@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\assetUI.ui'
+# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\assetUI.ui'
 #
-# Created: Tue Sep 23 16:12:59 2014
+# Created: Sat Oct 04 10:17:18 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!

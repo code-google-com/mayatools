@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\editvertexcolors\widget\ui\editVertexColorsUI.ui'
+# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\editvertexcolors\widget\ui\editVertexColorsUI.ui'
 #
-# Created: Tue Sep 23 16:13:02 2014
+# Created: Sat Oct 04 10:17:19 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(587, 183)
+        MainWindow.resize(587, 269)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout_10 = QtGui.QVBoxLayout(self.centralwidget)
@@ -161,9 +161,6 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.btnAddRed.sizePolicy().hasHeightForWidth())
         self.btnAddRed.setSizePolicy(sizePolicy)
         self.btnAddRed.setStyleSheet(_fromUtf8(""))
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/Project/white, without circle/add.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.btnAddRed.setIcon(icon)
         self.btnAddRed.setIconSize(QtCore.QSize(20, 20))
         self.btnAddRed.setObjectName(_fromUtf8("btnAddRed"))
         self.verticalLayout_6.addWidget(self.btnAddRed)
@@ -201,9 +198,6 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.btnReplaceRed.sizePolicy().hasHeightForWidth())
         self.btnReplaceRed.setSizePolicy(sizePolicy)
         self.btnReplaceRed.setStyleSheet(_fromUtf8(""))
-        icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(_fromUtf8(":/Project/white, without circle/minus.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.btnReplaceRed.setIcon(icon1)
         self.btnReplaceRed.setIconSize(QtCore.QSize(20, 20))
         self.btnReplaceRed.setObjectName(_fromUtf8("btnReplaceRed"))
         self.verticalLayout_7.addWidget(self.btnReplaceRed)

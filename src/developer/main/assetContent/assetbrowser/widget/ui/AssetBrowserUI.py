@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\AssetBrowserUI.ui'
+# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\AssetBrowserUI.ui'
 #
-# Created: Tue Sep 23 16:12:58 2014
+# Created: Sat Oct 04 10:17:17 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -125,9 +125,21 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.tab_3, _fromUtf8(""))
         self.tab_4 = QtGui.QWidget()
         self.tab_4.setObjectName(_fromUtf8("tab_4"))
+        self.verticalLayout_7 = QtGui.QVBoxLayout(self.tab_4)
+        self.verticalLayout_7.setMargin(3)
+        self.verticalLayout_7.setObjectName(_fromUtf8("verticalLayout_7"))
+        self.verticalLayout_6 = QtGui.QVBoxLayout()
+        self.verticalLayout_6.setObjectName(_fromUtf8("verticalLayout_6"))
+        self.verticalLayout_7.addLayout(self.verticalLayout_6)
         self.tabWidget.addTab(self.tab_4, _fromUtf8(""))
         self.tab = QtGui.QWidget()
         self.tab.setObjectName(_fromUtf8("tab"))
+        self.verticalLayout_5 = QtGui.QVBoxLayout(self.tab)
+        self.verticalLayout_5.setMargin(3)
+        self.verticalLayout_5.setObjectName(_fromUtf8("verticalLayout_5"))
+        self.verticalLayout_2 = QtGui.QVBoxLayout()
+        self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
+        self.verticalLayout_5.addLayout(self.verticalLayout_2)
         self.tabWidget.addTab(self.tab, _fromUtf8(""))
         self.verticalLayout_3.addWidget(self.tabWidget)
         self.verticalLayout.addWidget(self.splitter)
@@ -215,7 +227,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelps.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QObject.connect(self.treeViewPath, QtCore.SIGNAL(_fromUtf8("clicked(QModelIndex)")), self.edtRootLocation.show)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
