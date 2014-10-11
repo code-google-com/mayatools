@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\loginUI.ui'
 #
-# Created: Sat Oct 04 10:17:18 2014
-#      by: PyQt4 UI code generator 4.11
+# Created: Sat Oct 11 09:23:36 2014
+#      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
 

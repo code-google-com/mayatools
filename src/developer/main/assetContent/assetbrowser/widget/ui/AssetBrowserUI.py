@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\AssetBrowserUI.ui'
 #
-# Created: Sat Oct 04 10:17:17 2014
-#      by: PyQt4 UI code generator 4.11
+# Created: Sat Oct 11 09:23:35 2014
+#      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -228,7 +228,6 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
-        QtCore.QObject.connect(self.treeViewPath, QtCore.SIGNAL(_fromUtf8("clicked(QModelIndex)")), self.edtRootLocation.show)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
