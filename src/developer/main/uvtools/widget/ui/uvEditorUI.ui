@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>529</width>
-    <height>65</height>
+    <width>452</width>
+    <height>72</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+    <horstretch>0</horstretch>
+    <verstretch>50</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
@@ -19,34 +25,39 @@
      <number>3</number>
     </property>
     <item>
-     <widget class="QGroupBox" name="groupBox">
+     <widget class="QPushButton" name="btnOpenUVEditor">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
         <horstretch>0</horstretch>
-        <verstretch>20</verstretch>
+        <verstretch>0</verstretch>
        </sizepolicy>
       </property>
-      <property name="title">
-       <string/>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>50</height>
+       </size>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <property name="margin">
-        <number>3</number>
-       </property>
-       <item>
-        <widget class="QPushButton" name="btnOpenUVEditor">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
-           <horstretch>0</horstretch>
-           <verstretch>20</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Open UV Editor</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
+      <property name="sizeIncrement">
+       <size>
+        <width>0</width>
+        <height>30</height>
+       </size>
+      </property>
+      <property name="baseSize">
+       <size>
+        <width>0</width>
+        <height>30</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>Open UV Editor</string>
+      </property>
      </widget>
     </item>
    </layout>

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\AssetBrowserUI.ui'
 #
-# Created: Sun Oct 12 05:13:07 2014
+# Created: Sun Oct 12 09:14:53 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -28,7 +28,7 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.setWindowModality(QtCore.Qt.NonModal)
         MainWindow.setEnabled(True)
-        MainWindow.resize(1366, 863)
+        MainWindow.resize(1366, 733)
         MainWindow.setAcceptDrops(True)
         MainWindow.setWindowOpacity(1.0)
         MainWindow.setDocumentMode(True)
@@ -41,11 +41,12 @@ class Ui_MainWindow(object):
         self.splitter.setObjectName(_fromUtf8("splitter"))
         self.treeViewPath = QtGui.QTreeView(self.splitter)
         self.treeViewPath.setEnabled(True)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.treeViewPath.sizePolicy().hasHeightForWidth())
         self.treeViewPath.setSizePolicy(sizePolicy)
+        self.treeViewPath.setMinimumSize(QtCore.QSize(100, 0))
         font = QtGui.QFont()
         font.setUnderline(False)
         font.setStrikeOut(False)

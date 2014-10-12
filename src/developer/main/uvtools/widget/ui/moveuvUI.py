@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\uvtools\widget\ui\moveuvUI.ui'
 #
-# Created: Sun Oct 12 05:13:10 2014
+# Created: Sun Oct 12 09:14:56 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -110,7 +110,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.lineEdit.sizePolicy().hasHeightForWidth())
         self.lineEdit.setSizePolicy(sizePolicy)
-        self.lineEdit.setMinimumSize(QtCore.QSize(0, 0))
+        self.lineEdit.setMinimumSize(QtCore.QSize(0, 20))
         self.lineEdit.setSizeIncrement(QtCore.QSize(0, 0))
         self.lineEdit.setBaseSize(QtCore.QSize(0, 0))
         self.lineEdit.setStyleSheet(_fromUtf8("QLineEdit {\n"

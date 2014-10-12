@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\uvtools\widget\ui\setuvratioUI.ui'
 #
-# Created: Sun Oct 12 05:13:11 2014
+# Created: Sun Oct 12 09:14:56 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -42,7 +42,6 @@ class Ui_MainWindow(object):
         font.setBold(True)
         font.setWeight(75)
         self.groupBox.setFont(font)
-        self.groupBox.setTitle(_fromUtf8(""))
         self.groupBox.setObjectName(_fromUtf8("groupBox"))
         self.verticalLayout = QtGui.QVBoxLayout(self.groupBox)
         self.verticalLayout.setMargin(3)
@@ -167,6 +166,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
+        self.groupBox.setTitle(_translate("MainWindow", "Scale UV", None))
         self.btnSetUVScale.setText(_translate("MainWindow", "Set UV Scale", None))
         self.btnGetUVScale.setText(_translate("MainWindow", "Get UV Scale", None))
         self.ldtRatio.setText(_translate("MainWindow", "25", None))

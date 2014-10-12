@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\pivottools\widget\ui\pivotUI.ui'
 #
-# Created: Sun Oct 12 05:13:10 2014
+# Created: Sun Oct 12 09:14:55 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!

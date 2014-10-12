@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\uvtools\widget\ui\uvEditorUI.ui'
 #
-# Created: Sun Oct 12 05:13:11 2014
+# Created: Sun Oct 12 09:14:56 2014
 #      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,12 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(529, 65)
+        MainWindow.resize(466, 104)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(50)
+        sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
+        MainWindow.setSizePolicy(sizePolicy)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout = QtGui.QVBoxLayout(self.centralwidget)
@@ -44,11 +49,17 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setMargin(3)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.btnOpenUVEditor = QtGui.QPushButton(self.groupBox)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.MinimumExpanding)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(20)
+        sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.btnOpenUVEditor.sizePolicy().hasHeightForWidth())
         self.btnOpenUVEditor.setSizePolicy(sizePolicy)
+        self.btnOpenUVEditor.setMinimumSize(QtCore.QSize(0, 50))
+        self.btnOpenUVEditor.setSizeIncrement(QtCore.QSize(0, 30))
+        self.btnOpenUVEditor.setBaseSize(QtCore.QSize(0, 30))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.btnOpenUVEditor.setFont(font)
         self.btnOpenUVEditor.setObjectName(_fromUtf8("btnOpenUVEditor"))
         self.verticalLayout_2.addWidget(self.btnOpenUVEditor)
         self.verticalLayout.addWidget(self.groupBox)

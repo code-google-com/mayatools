@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>1366</width>
-    <height>863</height>
+    <height>733</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -40,10 +40,16 @@
         <bool>true</bool>
        </property>
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
        </property>
        <property name="font">
         <font>

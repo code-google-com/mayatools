@@ -33,7 +33,7 @@
        </font>
       </property>
       <property name="title">
-       <string/>
+       <string>Scale UV</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <property name="margin">
