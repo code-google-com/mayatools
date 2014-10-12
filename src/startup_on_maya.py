@@ -1,4 +1,3 @@
-from PyQt4 import QtCore
 import os, sys, imp
 import maya.cmds as cmds
 import maya.mel as mel

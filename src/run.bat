@@ -1,0 +1,1 @@
+powershell.exe -File startup.ps1

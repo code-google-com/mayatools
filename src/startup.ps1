@@ -28,7 +28,6 @@ Function getNumberMax()
             $ErrorMessage = $_.Exception.Message
             $ErrorMessage
        }
-
     }
     return $out 
 }
@@ -48,16 +47,16 @@ function setEnvPathMaya($version)
     }
 }
 
-function execMaya($item)
+Function execMaya($item)
 {
         setEnvPathMaya($item.Name)
         & ($item.Value + 'bin\maya.exe') -c 'python(\"import startup_on_maya\")'
 }
 
-function execMax($item)
+Function execMax($item)
 {
         #setEnvPathMaya($item.Name)
-        & ($item.Value + '\3dsmax.exe') #-c 'python(\"import startup_on_maya\")'
+        & ($item.Value + '3dsmax.exe') #-c 'python(\"import startup_on_maya\")'
 }
 
 function showWindow()
@@ -65,39 +64,43 @@ function showWindow()
     Add-Type -AssemblyName System.Windows.Forms
     $Form = New-Object System.Windows.Forms.Form
     $numMaya = getNumberMaya
+    $numMaya.GetType()
     $numMax = getNumberMax
+    $numMax.GetType()
     $xpos = 0; $ypos = 0
     foreach($item in $numMaya.GetEnumerator())
     {
-
+        #$item.GetType()
         $button = New-Object System.Windows.Forms.Button
         $button.Location = New-Object System.Drawing.Point($xpos, $ypos)
         $button.Size = New-Object System.Drawing.Size(100, 100)
         $button.add_Click({execMaya($item)}.GetNewClosure())
         $button.Text = $item.Name
         $Form.Controls.Add($button)
-        $ypos += 120
+        $ypos += 110
     }
 
-    $xpos = 120; $ypos = 0
+    $xpos = 110; $ypos = 0
 
     foreach($item in $numMax.GetEnumerator())
     {
-
+        #$item.GetType()
         $button = New-Object System.Windows.Forms.Button
         $button.Location = New-Object System.Drawing.Point($xpos, $ypos)
         $button.Size = New-Object System.Drawing.Size(100, 100)
         $button.add_Click({execMax($item)}.GetNewClosure())
         $button.Text = $item.Name
         $Form.Controls.Add($button)
-        $ypos += 120
+        $ypos += 110
     }
+
+
     $Form.StartPosition = "CenterScreen"
+
     # add button base on info get from registry
     $Form.ShowDialog()
 }
 
 
 #createShortCutApplication -app "maya" -version 2014
-#getNumberMax
 showWindow
