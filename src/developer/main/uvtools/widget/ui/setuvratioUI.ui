@@ -7,14 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>399</width>
-    <height>81</height>
+    <height>150</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
+   <layout class="QVBoxLayout" name="verticalLayout_2">
     <property name="margin">
      <number>3</number>
     </property>
@@ -35,10 +35,7 @@
       <property name="title">
        <string/>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_3">
-       <property name="spacing">
-        <number>7</number>
-       </property>
+      <layout class="QVBoxLayout" name="verticalLayout">
        <property name="margin">
         <number>3</number>
        </property>
@@ -118,10 +115,90 @@ font:  bold 11px
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <property name="spacing">
-          <number>1</number>
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QPushButton" name="btn64">
+           <property name="styleSheet">
+            <string notr="true">color: rgb(0, 0, 0);
+background-color: rgb(195, 195, 195);</string>
+           </property>
+           <property name="text">
+            <string>64</string>
+           </property>
+           <property name="texel" stdset="0">
+            <number>64</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn96">
+           <property name="text">
+            <string>96</string>
+           </property>
+           <property name="texel" stdset="0">
+            <number>96</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn128">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(195, 195, 195);
+color: rgb(0, 0, 0);</string>
+           </property>
+           <property name="text">
+            <string>128</string>
+           </property>
+           <property name="texel" stdset="0">
+            <number>128</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn256">
+           <property name="text">
+            <string>256</string>
+           </property>
+           <property name="texel" stdset="0">
+            <number>256</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn512">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(195, 195, 195);
+color: rgb(0, 0, 0);</string>
+           </property>
+           <property name="text">
+            <string>512</string>
+           </property>
+           <property name="texel" stdset="0">
+            <number>512</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn1024">
+           <property name="text">
+            <string>1024</string>
+           </property>
+           <property name="texel" stdset="0">
+            <number>1024</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <widget class="QPushButton" name="btnSetTexel">
            <property name="font">
@@ -131,37 +208,7 @@ font:  bold 11px
             </font>
            </property>
            <property name="text">
-            <string>Set texel</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="ldtRes">
-           <property name="font">
-            <font>
-             <pointsize>-1</pointsize>
-             <weight>75</weight>
-             <italic>false</italic>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QLineEdit {
-padding: 4px;
-border-style: solid;
-border: 1px solid gray;
-border-radius: 10px;
-font:  bold 11px
-}</string>
-           </property>
-           <property name="text">
-            <string>1024</string>
-           </property>
-           <property name="echoMode">
-            <enum>QLineEdit::Normal</enum>
-           </property>
-           <property name="placeholderText">
-            <string>--resolution--</string>
+            <string>Set texel (pixel/meter)</string>
            </property>
           </widget>
          </item>
@@ -184,8 +231,11 @@ border-radius: 10px;
 font:  bold 11px
 }</string>
            </property>
+           <property name="inputMask">
+            <string/>
+           </property>
            <property name="text">
-            <string>204.8</string>
+            <string/>
            </property>
            <property name="placeholderText">
             <string>-- texel--</string>

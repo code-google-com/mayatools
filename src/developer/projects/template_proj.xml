@@ -40,7 +40,10 @@
 				<module name = "normaltools"/> 
 			</tab>
 			<tab name="UV">
-				<module name = "uvtools"/>
+				<module name = "uvtools">
+					<submodule name = "moveuvWidget"/>
+					<submodule name = "setuvratioWidget"/>
+				</module>
 			</tab>			
 			<tab name="SHADER">
 				<module name = "debugshaders"/>

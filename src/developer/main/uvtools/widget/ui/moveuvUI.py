@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\uvtools\widget\ui\moveuvUI.ui'
 #
-# Created: Sat Oct 11 09:23:40 2014
+# Created: Sat Oct 11 19:19:31 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!

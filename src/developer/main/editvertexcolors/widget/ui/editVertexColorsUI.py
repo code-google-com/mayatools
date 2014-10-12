@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\editvertexcolors\widget\ui\editVertexColorsUI.ui'
 #
-# Created: Sat Oct 11 09:23:38 2014
+# Created: Sat Oct 11 19:19:30 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!

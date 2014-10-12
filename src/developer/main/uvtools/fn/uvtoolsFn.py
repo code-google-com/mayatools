@@ -16,7 +16,7 @@ import functools
 import boltUvRatio
 import math
 
-def mirrorUV(self,direction):#, pivotPoint = setPivotMirror()):
+def mirrorUV(direction):#, pivotPoint = setPivotMirror()):
     meshes = cmds.ls(hl = True)
     UVs = cmds.ls(sl = True)
     filterMesh = []
@@ -35,4 +35,29 @@ def mirrorUV(self,direction):#, pivotPoint = setPivotMirror()):
             if direction == 'H':
                 cmds.polyMoveUV(pivot = [0,0], scaleU = -1)
         except:
+            pass
+        
+def setUVScale(ratio):
+        boltUvRatio.collect_shells_and_set_shells_UV_ratio(ratio)
+
+def getUVScale():
+        ratio = boltUvRatio.get_sel_faces_UV_ratio(1)
+        return 1/ratio
+    
+def moveUVShell(dist, direction):
+        if direction == 'down':
+            cmds.polyEditUVShell( u = 0, v = -dist)
+        if direction == 'up':
+            cmds.polyEditUVShell( u = 0, v = dist)
+        if direction == 'left':
+            cmds.polyEditUVShell( u = -dist, v = 0)
+        if direction == 'right':
+            cmds.polyEditUVShell( u = dist, v = 0)
+        if direction == 'upleft':
+            pass
+        if direction == 'upright':
+            pass
+        if direction == 'downleft':
+            pass
+        if direction == 'downright':
             pass
