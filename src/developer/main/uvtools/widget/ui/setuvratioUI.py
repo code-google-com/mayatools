@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\uvtools\widget\ui\setuvratioUI.ui'
 #
-# Created: Sat Oct 11 19:19:32 2014
-#      by: PyQt4 UI code generator 4.10.4
+# Created: Sun Oct 12 05:13:11 2014
+#      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(399, 150)
+        MainWindow.resize(609, 150)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.centralwidget)
@@ -98,6 +98,7 @@ class Ui_MainWindow(object):
         self.line.setObjectName(_fromUtf8("line"))
         self.verticalLayout.addWidget(self.line)
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
+        self.horizontalLayout_2.setSpacing(1)
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
         self.btn64 = QtGui.QPushButton(self.groupBox)
         self.btn64.setStyleSheet(_fromUtf8("color: rgb(0, 0, 0);\n"

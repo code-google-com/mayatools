@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>461</width>
-    <height>178</height>
+    <height>188</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,7 +36,7 @@
           <number>1</number>
          </property>
          <item row="0" column="0">
-          <widget class="QPushButton" name="pushButton">
+          <widget class="QPushButton" name="btnUpLeft">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
              <horstretch>0</horstretch>
@@ -73,7 +73,7 @@
          <item row="0" column="1">
           <widget class="QPushButton" name="btnUp">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -100,7 +100,7 @@
           </widget>
          </item>
          <item row="0" column="2">
-          <widget class="QPushButton" name="pushButton_3">
+          <widget class="QPushButton" name="btnUpRight">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
              <horstretch>0</horstretch>
@@ -163,7 +163,7 @@
             <bool>true</bool>
            </property>
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Ignored" vsizetype="Maximum">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -204,7 +204,7 @@ font:  bold 11px
            <property name="dragEnabled">
             <bool>true</bool>
            </property>
-           <property name="placeholderText" stdset="0">
+           <property name="placeholderText">
             <string>type number</string>
            </property>
           </widget>
@@ -239,7 +239,7 @@ font:  bold 11px
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QPushButton" name="pushButton_5">
+          <widget class="QPushButton" name="btnDownLeft">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
              <horstretch>0</horstretch>
@@ -282,7 +282,7 @@ font:  bold 11px
          <item row="2" column="1">
           <widget class="QPushButton" name="btnDown">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
+            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -309,7 +309,7 @@ font:  bold 11px
           </widget>
          </item>
          <item row="2" column="2">
-          <widget class="QPushButton" name="pushButton_7">
+          <widget class="QPushButton" name="btnDownRight">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
              <horstretch>0</horstretch>
@@ -358,7 +358,7 @@ font:  bold 11px
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <property name="spacing">
-          <number>0</number>
+          <number>3</number>
          </property>
          <item>
           <widget class="QPushButton" name="btnMirrorU">

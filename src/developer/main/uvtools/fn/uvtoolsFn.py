@@ -61,3 +61,13 @@ def moveUVShell(dist, direction):
             pass
         if direction == 'downright':
             pass
+
+def openUVEditor():
+    try:
+        uvPanel = cmds.paneLayout('textureEditorPanel', panelSize=[1, 220, 1], cn = 'vertical2', swp = 1)
+    except:
+        uvPanel = cmds.paneLayout('textureEditorPanel', panelSize=[1, 220, 1], cn = 'vertical2')
+    
+    uvTextureViews = cmds.getPanel(scriptType='polyTexturePlacementPanel')
+    
+    

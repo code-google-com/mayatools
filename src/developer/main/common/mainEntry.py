@@ -119,7 +119,7 @@ class projectUI(QtGui.QMainWindow, ProjectForm.Ui_ProjectMainForm):
         
     def loadUI(self):
         packages = self.proj.moduleLoader.getElementsByTagName('tab') # create tab in mainform base on name
-        for index in range(len(packages)):
+        for index in range(len(packages)):# interate through tabs
             scrollWidget = QtMainWidget()
             pkgName = packages[index].getAttribute('name')   
             modules = packages[index].getElementsByTagName('module') # get package name --> assign this to a QtMainWidget inherited from DockWidget 
