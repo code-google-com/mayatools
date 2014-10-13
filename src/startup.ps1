@@ -37,12 +37,12 @@ function setEnvPathMaya($version)
     $env:PROJECT_DIR = $Root + "\developer\"
     $env:PYTHONPATH += ";" + $Root + "\" + $version + ";" + $Root
     $env:MAYA_SCRIPT_PATH += ";" + $Root
-    if ($version -eq "Maya2015")
-    {
+    if ($version -match "Maya2015"){
+        print "Maya 2015"
         $env:MAYA_MODULE_PATH += ";" + $Root + "\" + $version + "\FabricSpliceMaya2015SP2"
     }
-    if ($version -eq "Maya2014")
-    {
+    if ($version -match "Maya2014"){
+        print "Maya 2014"
         $env:MAYA_MODULE_PATH +=  ";" + $Root + "\" + $version + "\FabricSpliceMaya2014SP3"
     }
 }
@@ -64,9 +64,7 @@ function showWindow()
     Add-Type -AssemblyName System.Windows.Forms
     $Form = New-Object System.Windows.Forms.Form
     $numMaya = getNumberMaya
-    $numMaya.GetType()
     $numMax = getNumberMax
-    $numMax.GetType()
     $xpos = 0; $ypos = 0
     foreach($item in $numMaya.GetEnumerator())
     {
@@ -74,7 +72,7 @@ function showWindow()
         $button = New-Object System.Windows.Forms.Button
         $button.Location = New-Object System.Drawing.Point($xpos, $ypos)
         $button.Size = New-Object System.Drawing.Size(100, 100)
-        $button.add_Click({execMaya($item)}.GetNewClosure())
+        $button.add_Click({execMaya($item); $Form.Close()}.GetNewClosure())
         $button.Text = $item.Name
         $Form.Controls.Add($button)
         $ypos += 110
@@ -88,7 +86,7 @@ function showWindow()
         $button = New-Object System.Windows.Forms.Button
         $button.Location = New-Object System.Drawing.Point($xpos, $ypos)
         $button.Size = New-Object System.Drawing.Size(100, 100)
-        $button.add_Click({execMax($item)}.GetNewClosure())
+        $button.add_Click({execMax($item); $Form.Close()}.GetNewClosure())
         $button.Text = $item.Name
         $Form.Controls.Add($button)
         $ypos += 110

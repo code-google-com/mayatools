@@ -12,8 +12,13 @@ import pkgutil, os
 class QtMainWidget(QtGui.QScrollArea):
     def __init__(self):
         QtGui.QScrollArea.__init__(self)
+        
         self.vsubLayout = QtGui.QVBoxLayout()
+        self.vsubLayout.setContentsMargins(0,0,0,0)
+        self.vsubLayout.setSpacing(0)
         self.vmainLayout = QtGui.QVBoxLayout()
+        self.vmainLayout.setContentsMargins(0,0,0,0)
+        self.vmainLayout.setSpacing(0)
         self.setLayout(self.vmainLayout)
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -24,6 +29,8 @@ class QtMainWidget(QtGui.QScrollArea):
         
     def loadWidgetCustomize(self, pkgDockWidget):
         widgetLayout = QtGui.QVBoxLayout()
+        widgetLayout.setContentsMargins(0,0,0,0)
+        widgetLayout.setSpacing(0)
         self.vsubLayout.addLayout(widgetLayout)
         widgetLayout.addWidget(pkgDockWidget)
         
