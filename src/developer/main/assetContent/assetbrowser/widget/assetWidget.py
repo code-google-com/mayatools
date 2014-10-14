@@ -6,7 +6,7 @@ except:
 try: 
 	reload(fO)
 except:
-from developer.main.assetContent.assetbrowser.fn import fileObject as fO
+	from developer.main.assetContent.assetbrowser.fn import fileObject as fO
 
 from PyQt4 import QtGui, QtCore
 import os, sys

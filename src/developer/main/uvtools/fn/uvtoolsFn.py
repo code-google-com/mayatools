@@ -61,6 +61,13 @@ def moveUVShell(dist, direction):
             pass
         if direction == 'downright':
             pass
+        
+def unwrapPipe(listSeam, faceSet):
+    cmds.polyForceUV(faceSet, utilize = True)
+    listEdges = cmds.polyListComponentConversion(te = True) - listSeam
+    cmds.select(listEdges)
+    cmds.polyMapSewMove()
+    
 
 def openUVEditor():
     try:

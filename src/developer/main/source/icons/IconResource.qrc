@@ -1,6 +1,11 @@
 <RCC>
   <qresource prefix="Project">
+    <file>rotate_03.png</file>
+    <file>rotate_04.png</file>
+    <file>rotate_04.png</file>
+    <file>rotate_01.png</file>
     <file>mask_02.png</file>
+    <file>rotate_02.png</file>
     <file>checkout.png</file>
     <file>other.png</file>
     <file>out.png</file>

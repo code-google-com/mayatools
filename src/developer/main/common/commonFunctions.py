@@ -8,18 +8,19 @@ import maya.cmds as cmds
 from pymel import versions
 import pymel.core as py
 import xml.etree.ElementTree as xml
-
 from PyQt4 import QtCore, QtGui, uic
 import sip
 
+def getMayaVersion():
+    return versions.current()
 
 def loadNestedModule(name):
     if name in sys.modules.keys():
         sys.modules.pop(name)
-    return importlib.import_module(name)
-
-def getMayaVersion():
-    return versions.current()
+    if getMayaVersion() >= 201400:
+        return importlib.import_module(name)
+    else:
+        return __import__(name, globals(), locals(), [name.split('.')[-1]], 0)
 
 def getPath(path, remIdx):
     out = path

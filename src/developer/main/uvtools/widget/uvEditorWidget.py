@@ -5,6 +5,11 @@ except:
 
 from PyQt4 import QtGui
 
+try:
+	reload(uFn)
+except:
+	from developer.main.uvtools.fn import uvtoolsFn as uFn
+
 class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
                 
 	def __init__(self):
