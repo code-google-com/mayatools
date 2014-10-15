@@ -103,7 +103,6 @@ class assetWidget(QtGui.QGraphicsWidget):
 	# create property for widget
 	pos = QtCore.pyqtProperty(QtCore.QPointF, fset = _set_pos)
 	
-		
 class AssetWidgetScene(QtGui.QGraphicsScene):
 	
 	def __init__(self, parent = None):
