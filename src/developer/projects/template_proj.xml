@@ -44,6 +44,7 @@
 					<submodule name = "moveuvWidget"/>
 					<submodule name = "setuvratioWidget"/>
 					<submodule name = "uvEditorWidget"/>
+					<submodule name = "uvutilitiesWidget"/>
 				</module>
 			</tab>			
 			<tab name="SHADER">

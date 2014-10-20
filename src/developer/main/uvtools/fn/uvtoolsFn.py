@@ -64,7 +64,7 @@ def moveUVShell(dist, direction):
         
 def unwrapPipe(listSeam, faceSet):
     cmds.polyForceUV(faceSet, utilize = True)
-    listEdges = cmds.polyListComponentConversion(te = True) - listSeam
+    listEdges = cmds.polyListComponentConversion(faceSet, te = True) - listSeam
     cmds.select(listEdges)
     cmds.polyMapSewMove()
     
