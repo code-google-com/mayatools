@@ -8,6 +8,11 @@ try:
 except:
 	from developer.main.common import commonFunctions as cf
 
+try:
+	reload(geXML)
+except:
+	from developer.main.common import geXML
+
 from PyQt4 import QtGui, QtCore
 from P4 import P4, P4Exception
 from functools import partial
@@ -38,6 +43,9 @@ class QtWidget(QtGui.QMainWindow, ui.Ui_MainWindow):
 	# -- loading workspaces base on 
     def loadWorkSpaces(self):
 		self.cbbWorkSpaces.clear()
+		#geXML.initXmlPath("")
+		testXML = geXML.cGeXML()
+		testXML.writeHistoryFile('', 'host', '12.34')
 		p4 = P4()
 		p4.port = str(self.edtPort.text())
 		p4.user = str(self.edtUserName.text())
