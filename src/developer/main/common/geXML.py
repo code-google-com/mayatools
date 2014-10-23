@@ -60,7 +60,7 @@ class cGeXML:
         
         if not elemmentsNode:
             elemmentsNode = self._doc.createElement(element + 's')
-            self._doc.appendChild(elemmentsNode)
+            self._doc.firstChild.appendChild(elemmentsNode)
         
         elemmentNode = self._doc.createElement(element)
         elemmentNode.setAttribute('value', value)
@@ -82,6 +82,7 @@ class cGeXML:
     # Get info from history.
     def readHistory(self, element):
         elemmentsNodes = self._doc.getElementsByTagName(element + 's')
+        
         if elemmentsNodes == None:
             return Node
         else:
