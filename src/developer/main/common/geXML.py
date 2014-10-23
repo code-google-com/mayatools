@@ -7,7 +7,10 @@ from multiprocessing.connection import _xml_dumps
 # Public Constants
 XML_PATH_DEFAULT = os.path.dirname(os.path.abspath(__file__)) + '\\testHung3.xml';
 
-def get_first(iterable, default=None):
+# Public Function
+# Get first element of array.
+# Reference: http://stackoverflow.com/questions/363944/python-idiom-to-return-first-item-or-none
+def getFirst(iterable, default=None):
     if iterable:
         for item in iterable:
             return item
@@ -31,101 +34,112 @@ class cGeXML:
         self._doc = None
     
     # Initialization XML path.
+    # Check xmlPath is true, if not, use default.
     def initXmlPath(self, xmlPath):
         global XML_PATH_DEFAULT
         
+        if xmlPath == None:
+            self._xmlPath = XML_PATH_DEFAULT
+            return
+        
+        if xmlPath == '':
+            self._xmlPath = XML_PATH_DEFAULT
+            return
+            
         if os.path.isfile(xmlPath):
             self._xmlPath = xmlPath
-        else:
-            self._xmlPath = XML_PATH_DEFAULT
+            return
+        
+        self._xmlPath = XML_PATH_DEFAULT
     
     # Save XML file.
+    # Save current _doc content to XML file.
     def save(self):
         xmlFile = open(self._xmlPath, 'w')
         xmlFile.write(self._doc.toprettyxml())
         xmlFile.close()
     
-    # Create history XML file.
-    def createHistory(self, xmlPath):
+    # Create XML file.
+    # Create XML, create type-tag nodeRoot.
+    def create(self, xmlPath):
         self._doc = Document()
-        nodeHistory = self._doc.createElement('history')
-        self._doc.appendChild(nodeHistory)
+        nodeRoot = self._doc.createElement('root')
+        self._doc.appendChild(nodeRoot)
         
         self.save()
     
-    # Write info to history.
-    def writeHistory(self, element, value):
-        elemmentsNodes = self._doc.getElementsByTagName(element + 's')
-        elemmentsNode = get_first(elemmentsNodes)
+    # Write info.
+    # Write element & value to type-tag.
+    def write(self, type, element, value):
+        nodeSType = self._doc.getElementsByTagName(type)
+        nodeType = getFirst(nodeSType)
         
-        if not elemmentsNode:
-            elemmentsNode = self._doc.createElement(element + 's')
-            self._doc.firstChild.appendChild(elemmentsNode)
+        if not nodeType:
+            nodeType = self._doc.createElement(type)
+            self._doc.firstChild.appendChild(nodeType)
         
-        elemmentNode = self._doc.createElement(element)
-        elemmentNode.setAttribute('value', value)
-        elemmentsNode.appendChild(elemmentNode)
+        nodeSElementS = nodeType.getElementsByTagName(element + 's')
+        nodeElementS = getFirst(nodeSElementS)
+        
+        if not nodeElementS:
+            nodeElementS = self._doc.createElement(element + 's')
+            nodeType.appendChild(nodeElementS)
+        
+        nodeElement = self._doc.createElement(element)
+        nodeElement.setAttribute('value', value)
+        nodeElementS.appendChild(nodeElement)
         
         self.save()
     
-    # Write info to history XML file.
-    def writeHistoryFile(self, xmlPath, element, value):
+    # Write info to XML file.
+    def writeFile(self, xmlPath, type, element, value):
+        if value == None:
+            return
+        
+        if value == '':
+            return
+        
+        self.initXmlPath(xmlPath)
+        
+        if os.path.exists(self._xmlPath):
+            try:
+                self._doc = parse(self._xmlPath)
+            except:
+                self.create(self._xmlPath)
+        else:
+            self.create(self._xmlPath)
+        
+        self.write(type, element, value)
+    
+    # Get info.
+    # Get info from type-tag
+    def read(self, type, element):
+        nodeSType = self._doc.getElementsByTagName(type)
+        nodeType = getFirst(nodeSType)
+        if not nodeType:
+            return None
+        
+        nodeSElementS = nodeType.getElementsByTagName(element + 's')
+        nodeElementS = getFirst(nodeSElementS)
+        if nodeElementS == None:
+            return None
+        
+        nodeSResult = nodeElementS.getElementsByTagName(element)
+        nodeResult = getFirst(nodeSResult)
+        if nodeResult == None:
+            return None
+        
+        resultS = []
+        for nodeResult in nodeSResult:
+            resultS.append(nodeResult.getAttribute('value'))
+        return resultS
+    
+    # Get info from XML file.
+    def readFile(self, xmlPath, type, element):
         self.initXmlPath(xmlPath)
         
         if os.path.exists(self._xmlPath):
             self._doc = parse(self._xmlPath)
-        else:
-            self.createHistory(self._xmlPath)
-        
-        self.writeHistory(element, value)
-    
-    # Get info from history.
-    def readHistory(self, element):
-        elemmentsNodes = self._doc.getElementsByTagName(element + 's')
-        
-        if elemmentsNodes == None:
-            return Node
-        else:
-            elementResults
-            for elementNode in elemmentsNodes:
-                elementResults.append(elementNode.getValue())
-            return elementResults
-    
-    # Get info from history XML file.
-    def readHistoryFile(self, xmlPath, element):
-        self.initXmlPath(xmlPath)
-        
-        if os.path.exists(self._xmlPath):
-            self._doc = parse(self._xmlPath)
-            return self.readHistory(element)
+            return self.read(type, element)
         else:
             return None
-    
-    # Test: write IP server info to XML file.
-    def writeIpServer(self, xmlPath, ipServer):
-        if not xmlPath:
-            xmlPath = _xmlPathDefault
-        
-        doc = Document()
-        nodeRoot = doc.createElement('history')
-        nodeHost = doc.createElement('host')
-        
-        nodeIpServer = doc.createElement('ipServer')
-        nodeIpServer.setAttribute('value', ipServer)
-        nodeHost.appendChild(nodeIpServer)
-        nodeRoot.appendChild(nodeHost)
-        doc.appendChild(nodeRoot)
-        
-        xmlFile = open(xmlPath, 'w')
-        xmlFile.write(doc.toprettyxml())
-        xmlFile.close()
-        
-        return
-       
-    # Test: read IP server info from XML file.
-    def readIpServer(self, xmlPath):
-        if (not xmlPath) or (os.path.isfile(xmlPath)) :
-            dom = parse('test.xml')
-        else:
-            dom = parse(xmlPath)
-        return
