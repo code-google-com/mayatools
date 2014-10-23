@@ -15,7 +15,10 @@ import pymel.core as pm
 import pymel.core.datatypes as dt
 from math import *
 
-from developer.main.common import commonFunctions as cf
+try:
+    reload(cf)
+except:
+    from developer.main.common import commonFunctions as cf
 
 def attachMesh():
     # check shader assigned to faces before attaching

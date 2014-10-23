@@ -38,11 +38,9 @@ function setEnvPathMaya($version)
     $env:PYTHONPATH += ";" + $Root + "\" + $version + ";" + $Root
     $env:MAYA_SCRIPT_PATH += ";" + $Root
     if ($version -match "Maya2015"){
-        print "Maya 2015"
         $env:MAYA_MODULE_PATH += ";" + $Root + "\" + $version + "\FabricSpliceMaya2015SP2"
     }
     if ($version -match "Maya2014"){
-        print "Maya 2014"
         $env:MAYA_MODULE_PATH +=  ";" + $Root + "\" + $version + "\FabricSpliceMaya2014SP3"
     }
 }

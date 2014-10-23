@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\bakingao\widget\ui\bakingaoUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\bakingao\widget\ui\bakingaoUI.ui'
 #
-# Created: Mon Oct 20 11:20:52 2014
-#      by: PyQt4 UI code generator 4.11
+# Created: Thu Oct 23 12:26:12 2014
+#      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!
 

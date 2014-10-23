@@ -8,21 +8,19 @@ import maya.cmds as cmds
 from pymel import versions
 import pymel.core as py
 import xml.etree.ElementTree as xml
+
 from PyQt4 import QtCore, QtGui, uic
 import sip
+
+def loadNestedModule(name): # load module in package
+    if name in sys.modules.keys():
+        sys.modules.pop(name)
+    return importlib.import_module(name)
 
 def getMayaVersion():
     return versions.current()
 
-def loadNestedModule(name):
-    if name in sys.modules.keys():
-        sys.modules.pop(name)
-    if getMayaVersion() >= 201400:
-        return importlib.import_module(name)
-    else:
-        return __import__(name, globals(), locals(), [name.split('.')[-1]], 0)
-
-def getPath(path, remIdx):
+def getPath(path, remIdx): # get the path after removing remIdx item.
     out = path
     for i in range(remIdx):
         out = os.path.split(out)[0]
@@ -81,11 +79,17 @@ def loadUI(uiFile):
         return loadUIPySide(uiFile)
 
 def gcd(a, b):
+    '''
+        get the greatest common divider
+    '''
     while b:
         a,b = b, a % b
     return a
 
 def lcm(a, b):
+    '''
+        get the lowest common multipler
+    '''
     return a * b/gcd(a,b)
 
 def convertArrayListToList(ArrayList):
@@ -126,6 +130,9 @@ def writeXML_v2(xmlDoc, location, fileName):
     openStream.close()
 
 def getDataFromClipboard():
+    '''
+        get string from buffer
+    '''
     clipboard = QtGui.QApplication.clipboard()
     out = str(clipboard.text())
     return out
@@ -222,15 +229,15 @@ def copytree(src, dst, backup = True):
                     #raise Error(errors)
                     
 def saveFileIncrement():
-        #print 'OK'
+        '''
+            save increment file to current file
+        '''
         currentFileName = os.path.split(cmds.file(q = True, sn = True))[1]
         if re.search('.*_v[0-9]*\.*', currentFileName):
             index = os.path.splitext(os.path.split(currentFileName)[1])[0].split('_v')[-1]
             nameFile = currentFileName.replace(index, '0' + str(int(index)+1))
-            print nameFile 
         else:
             nameFile = os.path.splitext(currentFileName)[0] + '_v00' + os.path.splitext(currentFileName)[1] 
-            print nameFile
         cmds.file(rn = nameFile)
         cmds.file(s = True, type = 'mayaBinary')
         

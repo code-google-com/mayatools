@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Z:\ge_Tools\src\developer\main\modeltools\widget\ui\selecttoolsUI.ui'
+# Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\modeltools\widget\ui\selecttoolsUI.ui'
 #
-# Created: Mon Oct 20 11:20:53 2014
-#      by: PyQt4 UI code generator 4.11
+# Created: Thu Oct 23 12:26:13 2014
+#      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
