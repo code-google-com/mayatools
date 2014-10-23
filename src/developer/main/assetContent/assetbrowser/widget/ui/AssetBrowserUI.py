@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\AssetBrowserUI.ui'
 #
-# Created: Thu Oct 23 12:26:11 2014
+# Created: Thu Oct 23 16:43:09 2014
 #      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!

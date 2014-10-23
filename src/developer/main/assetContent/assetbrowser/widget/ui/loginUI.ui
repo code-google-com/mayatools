@@ -9,13 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-<<<<<<< .mine
-    <width>536</width>
+    <width>471</width>
     <height>334</height>
-=======
-    <width>470</width>
-    <height>303</height>
->>>>>>> .r596
    </rect>
   </property>
   <property name="windowTitle">
@@ -231,13 +226,6 @@
      </layout>
     </item>
    </layout>
-   <zorder>textEdit</zorder>
-   <zorder>layoutWidget</zorder>
-   <zorder>layoutWidget</zorder>
-   <zorder>layoutWidget</zorder>
-   <zorder>horizontalSpacer_3</zorder>
-   <zorder>cbbHost</zorder>
-   <zorder>layoutWidget</zorder>
   </widget>
  </widget>
  <resources>

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\assetContent\assetbrowser\widget\ui\loginUI.ui'
 #
-# Created: Thu Oct 23 12:26:11 2014
+# Created: Thu Oct 23 16:43:10 2014
 #      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -27,11 +27,21 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.setWindowModality(QtCore.Qt.ApplicationModal)
-        MainWindow.resize(470, 303)
+        MainWindow.resize(471, 334)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.centralwidget)
         self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
+        self.horizontalLayout_4 = QtGui.QHBoxLayout()
+        self.horizontalLayout_4.setObjectName(_fromUtf8("horizontalLayout_4"))
+        spacerItem = QtGui.QSpacerItem(268, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_4.addItem(spacerItem)
+        self.cbbHost = QtGui.QComboBox(self.centralwidget)
+        self.cbbHost.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
+        self.cbbHost.setObjectName(_fromUtf8("cbbHost"))
+        self.cbbHost.addItem(_fromUtf8(""))
+        self.horizontalLayout_4.addWidget(self.cbbHost)
+        self.verticalLayout_3.addLayout(self.horizontalLayout_4)
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
         self.verticalLayout = QtGui.QVBoxLayout()
@@ -96,8 +106,8 @@ class Ui_MainWindow(object):
         self.pushButton.setFlat(True)
         self.pushButton.setObjectName(_fromUtf8("pushButton"))
         self.horizontalLayout_3.addWidget(self.pushButton)
-        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayout_3.addItem(spacerItem)
+        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_3.addItem(spacerItem1)
         self.verticalLayout_3.addLayout(self.horizontalLayout_3)
         self.textEdit = QtGui.QTextEdit(self.centralwidget)
         self.textEdit.setTextInteractionFlags(QtCore.Qt.TextSelectableByKeyboard|QtCore.Qt.TextSelectableByMouse)
@@ -111,8 +121,8 @@ class Ui_MainWindow(object):
         self.btnLoginNoSC = QtGui.QPushButton(self.centralwidget)
         self.btnLoginNoSC.setObjectName(_fromUtf8("btnLoginNoSC"))
         self.horizontalLayout_2.addWidget(self.btnLoginNoSC)
-        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayout_2.addItem(spacerItem1)
+        spacerItem2 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_2.addItem(spacerItem2)
         self.checkBox = QtGui.QCheckBox(self.centralwidget)
         self.checkBox.setObjectName(_fromUtf8("checkBox"))
         self.horizontalLayout_2.addWidget(self.checkBox)
@@ -124,6 +134,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "Asset Login", None))
+        self.cbbHost.setItemText(0, _translate("MainWindow", "Connect to", None))
         self.label_4.setText(_translate("MainWindow", "Host", None))
         self.label.setText(_translate("MainWindow", "UserName", None))
         self.label_2.setText(_translate("MainWindow", "Password", None))

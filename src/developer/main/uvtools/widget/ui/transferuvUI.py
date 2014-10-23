@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'D:\maya_Tools\src\developer\main\uvtools\widget\ui\transferuvUI.ui'
 #
-# Created: Thu Oct 23 12:26:15 2014
+# Created: Thu Oct 23 16:43:13 2014
 #      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!
