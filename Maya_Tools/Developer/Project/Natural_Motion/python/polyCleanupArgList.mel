@@ -1,0 +1,988 @@
+// Copyright (C) 1997-2013 Autodesk, Inc., and/or its licensors.
+// All rights reserved.
+//
+// The coded instructions, statements, computer programs, and/or related
+// material (collectively the "Data") in these files contain unpublished
+// information proprietary to Autodesk, Inc. ("Autodesk") and/or its licensors,
+// which is protected by U.S. and Canadian federal copyright law and by
+// international treaties.
+//
+// The Data is provided for use exclusively by You. You have the right to use,
+// modify, and incorporate this Data into other products for purposes authorized 
+// by the Autodesk software license agreement, without fee.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. AUTODESK
+// DOES NOT MAKE AND HEREBY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES
+// INCLUDING, BUT NOT LIMITED TO, THE WARRANTIES OF NON-INFRINGEMENT,
+// MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR ARISING FROM A COURSE 
+// OF DEALING, USAGE, OR TRADE PRACTICE. IN NO EVENT WILL AUTODESK AND/OR ITS
+// LICENSORS BE LIABLE FOR ANY LOST REVENUES, DATA, OR PROFITS, OR SPECIAL,
+// DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES, EVEN IF AUTODESK AND/OR ITS
+// LICENSORS HAS BEEN ADVISED OF THE POSSIBILITY OR PROBABILITY OF SUCH DAMAGES.
+
+//
+//  Creation Date: May 11, 1999
+//
+//  Procedure Name:
+//
+//		polyCleanup (command). 
+//
+//		Input Arguments:
+//			0 / 1		: Do the cleanup on all selectable meshes
+//			0 / 1		: Only select things that need to be cleaned up
+//			0 / 1		: With or without construction history
+//
+//			0 / 1 		: Triangulate 4-sided faces
+//			0 / 1		: Triangulate > 4-sided faces	
+//			0 / 1		: Triangulate concave faces
+//			0 / 1		: Triangulate holed faces	
+//			0 / 1		: Triangulate non-planar faces
+//
+//			0 / 1		: Delete zero area faces
+//			<float>		: Face tolerance
+//			0 / 1		: Delete zero area edges
+//			<float>		: Edge tolerance
+//			0 / 1		: Delete faces with zero area map (uv area)
+//			<float>	: Map tolerance
+//			0 / 1		: Delete lamina (duplicate) faces
+//		Returns:
+//			string, of items affected. Empty if no items affected.
+//
+// Example:
+//		// Select from all meshes, all of the criteria
+//		//
+//		polyCleanup 1 1 1  1 1 1 1 1  1 0.1 1 0.1 1 0.1 1;
+//
+//  Description:
+//
+//      Perform a 'cleanup' of various 'bad' polygon geometry
+//		attributes. This includes:
+//
+//		Deletion of:
+//		- zero area face 
+//		- zero area edges 
+//		- zero area mapped faces 
+//
+//		Triangulization of :
+//		  - non-planar polygons
+//		  - 4 to N sided polygons
+//		  - concave polygons
+//		  - polygons with holes.
+//
+//      Triangulization will occur first, before deletion.
+// 
+// 
+//////////////////////////////////////////////////////////////////////
+
+// Utility procedures. Requires an existing selection list
+// item to be useful.
+//
+
+proc concat( string $a[], string $b[] )
+//
+// Description:
+//		Utility to concatentate 2 string arrays
+//
+{
+	for ($i in $b)
+		$a[size($a)] = $i;
+}
+
+proc int
+arraysMatch (string $a[], string $b[])
+//
+// Description:
+//		Utility to compare two string arrays
+//
+{
+	int $length = size ($a);
+	if ($length != size ($b)) {
+		return (false);
+	}
+
+	for ($i = 0; $i < $length; $i++) {
+		if ($a[$i] != $b[$i]) {
+			return (false);
+		}
+	}
+	return (true);
+}
+
+proc string[]
+polyCleanupSelectForTesselate(string $selectedItems[],
+							  int $quads, int $nsided,
+							  int $nonplanar, int $holed,
+							  int $concave)
+//
+// Description:
+//		Select quads, N-sided, nonplanar, holed, and / or concave
+//		polygons.
+// Arguments:
+//		selectedItems : items to test
+//		quads : check for quads polys
+//		nsided : check for n-sided polys
+//		nonplanar : check fo non-planar polys
+//		holed : check for holed polys
+//		concave : check for concave polys
+// Returns:
+//		List of things to tesselate. Empty if none found
+//
+{
+	string $selected[];
+	string $returnSelected[];
+
+	if (size($selectedItems) == 0)
+		return $returnSelected;
+	if (($quads +$nsided + $nonplanar + $holed + $concave) == 0)
+		return $returnSelected;
+
+	// Go to face mode select. Not needed !
+	//selectType -pf true;
+
+	// 4-sided polygons
+	if ($quads)
+	{
+		select -r $selectedItems;
+		polySelectConstraint -m 3 -t 8 -sz 2;
+		$selected = `ls -sl`;
+		//print ("Select quads: ");
+		//print $selected ;
+		//print ("\n");
+		concat( $returnSelected, $selected );
+		polySelectConstraint -m 0 -t 8 -sz 0;
+	}
+
+	// N-sided polygons
+	if ($nsided)
+	{
+		select -r $selectedItems;
+		polySelectConstraint -m 3 -t 8 -sz 3;
+		$selected = `ls -sl`;
+		//print ("Select N-sided: ");
+		//print $selected ;
+		//print ("\n");
+		concat( $returnSelected, $selected );
+		polySelectConstraint -m 0 -t 8 -sz 0;
+	}
+
+	// Non-planar polygons
+	if ($nonplanar)
+	{
+		select -r $selectedItems;
+		polySelectConstraint -m 3 -t 8 -p 1;
+		$selected = `ls -sl`;
+		//print ("Select Non-planar: ");
+		//print $selected ;
+		//print ("\n");
+		concat( $returnSelected, $selected );
+		polySelectConstraint -m 0 -t 8 -p 0;
+	}
+
+	// Holed polygons
+	if ($holed)
+	{
+		select -r $selectedItems;
+		polySelectConstraint -m 3 -t 8 -h 1;
+		$selected = `ls -sl`;
+		//print ("Select holed: ");
+		//print $selected ;
+		//print ("\n");
+		concat( $returnSelected, $selected );
+		polySelectConstraint -m 0 -t 8 -h 0;
+	}
+	
+	// Concave polygons
+	if ($concave)
+	{
+		select -r $selectedItems;
+		polySelectConstraint -m 3 -t 8 -c 1;
+		$selected = `ls -sl`;
+		//print ("Select concave: ");
+		//print $selected;
+		//print ("\n");
+		concat( $returnSelected, $selected );
+		polySelectConstraint -m 0 -t 8 -c 0;
+	}
+
+	// Return the selected items
+	return $returnSelected;
+}
+
+proc string[]
+polyCleanupSelectForSplit(string $selectedItems[], int $nonmanifold, int $vertices)
+//
+// Description:
+//		Select nonmanifold vertices.
+// Arguments:
+//		selectedItems : items to test
+//		nonmanifold : check fo nonmanifold polys
+//		vertices:		check for vertices otherwise check for edges
+// Returns:
+//		List of things to split. Empty if none found
+//
+{
+	string $selected[];
+	string $returnSelected[];
+
+	if (size($selectedItems) == 0)
+		return $returnSelected;
+	if ($nonmanifold <= 0)
+		return $returnSelected;
+
+	// Go to face mode select. Not needed !
+	//selectType -pf true;
+
+	// Non-manifold vertices
+	if ($nonmanifold > 0)
+	{
+		if ($vertices) {
+			$selected = `polyInfo -nmv $selectedItems`;
+			concat( $returnSelected, $selected );
+		}
+		else {
+			$selected = `polyInfo -nme $selectedItems`;
+			concat( $returnSelected, $selected );
+		}
+	}
+
+	// Return the selected items
+	return $returnSelected;
+}
+
+proc string[]
+polyCleanupSelectForUnshare(string $selectedItems[],
+							  int $sharedUVs)
+//
+// Description:
+//		Select uvs which are shared by more than 1 vertex.
+// Arguments:
+//		selectedItems : items to test
+//		sharedUVs : check for uvs shared by more than 1 vertex
+// Returns:
+//		List of things to unshare. Empty if none found
+//
+{
+	string $selected[];
+	string $returnSelected[];
+
+	if (size($selectedItems) == 0)
+		return $returnSelected;
+	if ($sharedUVs == 0)
+		return $returnSelected;
+
+	// shared uvs
+	if ($sharedUVs)
+	{
+		select -r `polyListComponentConversion -toUV $selectedItems`;
+		polySelectConstraint -mode 3 -type 16 -textureshared 1;
+		$selected = `ls -sl`;
+		concat( $returnSelected, $selected );
+		polySelectConstraint -mode 0 -type 16 -textureshared 0;
+	}
+
+	// Return the selected items
+	return $returnSelected;
+}
+
+proc int
+polyCleanupSelectForRemove(string $selectedItems[],
+						   int $fgeom, int $egeom, int $uv, int $lamina,
+						   float $minface, float $maxface,
+						   float $minedge, float $maxedge,
+						   float $minuv, float $maxuv,
+						   string $faces[], string $zeroFaces[], string $edges[], string $laminaFaces[])
+//
+// Description:
+//		Look for polygons within a given area, withing a given map
+//		area, or edges within a given length, or lamina faces
+//		and return a selection list	with any items found.
+// Arguments:
+//		selectedItems : items to check
+//		fgeom : face check
+//		egeon : edge check
+//		uv : uv check
+//		lamina : lamina face check
+//		minface, maxface : min/max face area to check
+//		minedge, maxedge : min/max edge length to check
+//		minuv, maxuv : min/max face uv area to check
+//		faces : list of faces found
+//		zerofaces : list of zeroArea faces found
+//		edges : list of edges found
+//		laminaFaces : list of lamina faces found
+// Returns:
+//		If any items selected.
+//
+{
+	//string $returnSelected[];
+	string $selected[];
+
+	// We are looking for faces.
+	//selectType -pf true;
+
+	// Get zero area geometry faces
+	if ($fgeom)
+	{
+		select -r $selectedItems;
+		//print ("Select geom faces between " + $minface + " " + $maxface + "\n");
+	    polySelectConstraint -m 3 -t 8 -ga on -gab $minface $maxface;
+		$selected = `ls -sl`;
+		concat( $zeroFaces, $selected );
+		polySelectConstraint -m 0 -t 8 -ga off;
+	}
+
+	// Get zero area uv faces - need to set geometry area that
+	// will pass the geometry test.
+	//
+	//
+	if ($uv)
+	{
+		select -r $selectedItems;
+		//print ("Select uv faces between " + $minuv + " " + $maxuv + "\n");
+		polySelectConstraint -m 3 -t 8 -ga on -gab 0.0 1000000.0;
+		polySelectConstraint -m 3 -t 8 -ta on -tab $minuv $maxuv;
+		$selected = `ls -sl`;
+		concat( $faces, $selected );
+		polySelectConstraint -m 0 -t 8 -ta off -ga off;
+	}
+
+	// We are looking for edge.
+	//selectType -pe true;
+
+	// Get zero area geometry edges
+	if ($egeom)
+	{
+		select -r $selectedItems;
+		//print ("Select edges between " + $minedge + " " + $maxedge + "\n");
+	    polySelectConstraint -m 3 -t 0x8000 -l on -lb $minedge $maxedge;
+		$selected = `ls -sl`;
+		concat( $edges, $selected );
+		polySelectConstraint -m 0 -t 0x8000 -l off;
+	}
+
+	// Get lamina faces
+	//
+	if ($lamina) {
+		select -r $selectedItems;
+		string $laminaList[] = `polyInfo -laminaFaces`;
+		concat( $laminaFaces, $laminaList );
+	}
+
+	return ( size($faces) + size($edges) + size($zeroFaces) + size($laminaFaces) );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Main routines
+
+proc polyCleanupSelectSelection( string $selection[] )
+//
+// Description:
+//		Just select a selection (replace, the current one)
+// Arguments:
+//		selection : selection to select
+// Returns:
+//		none
+//
+{
+	//print ("Selected ");
+	//print $selection;
+	select -r $selection;
+}
+
+proc int polyCleanupSelectionBatch(string $in[], string $out[], int $start)
+{
+	if ($start >= size($in)) {
+		clear $in;
+		return 1;
+	}
+	int $end=$start;
+	int $cur=0;
+	clear $out;
+	string $curobj=$in[$end];
+	string $buf[2];
+	tokenize $curobj "." $buf;
+	string $lastobj=$buf[0];
+	$out[$cur++]=$curobj;
+	$end++;
+	
+	while ($end < size($in)) 
+	{
+		$curobj = $in[$end];
+		tokenize $curobj "." $buf;
+
+		if ($buf[0] == $lastobj) 
+		{
+			$out[$cur++]=$curobj;
+			$end++;
+		} 
+		else 
+			break;
+	}
+	return $end;
+}
+
+proc polyCleanupBatchAction( string $action, string $selection[], int $history)
+//
+// Description:
+//		Sort the set of things to do an action on by object, and
+//		do the action
+// Arguments:
+//		action : name of action to do
+//		selection : selection to work on
+//		history : do action with / without history
+// Returns:
+//		none
+//
+{
+	int $index=0;
+	string $cmd;
+	while (size($selection) > $index) 
+	{
+		string $cursel[];
+		$index=`polyCleanupSelectionBatch $selection $cursel $index`;
+		if ($history == -1) {
+			$cmd = $action;
+		}
+		else {
+			$cmd =($action + " -ch " + $history);
+		}
+		for ($i in $cursel)
+			$cmd=($cmd + " " + $i);
+		eval $cmd;
+	}
+}
+
+proc polyCleanupTesselateSelection( string $selection[], int $history)
+//
+// Description:
+//		Tesselate a selection
+// Arguments:
+//		selection : selection to tesselate
+//		history : do action with / without history
+// Returns:
+//		none
+//
+{
+	//print ("Tesselate selected items");
+	//print $selection;
+	polyCleanupBatchAction polyTriangulate $selection $history;
+}
+
+proc polyCleanupSplitSelection( string $selection[], int $history, int $vertices)
+//
+// Description:
+//		Tesselate a selection
+// Arguments:
+//		selection : selection to tesselate
+//		history : do action with / without history
+// Returns:
+//		none
+//
+{
+	//print ("Tesselate selected items");
+	//print $selection;
+	if ($vertices) {
+		polyCleanupBatchAction polySplitVertex $selection $history;
+	}
+	else {
+		polyCleanupBatchAction polySplitEdge $selection $history;
+	}
+}
+
+proc polyCleanupUnshareSelection( string $selection[], int $history)
+//
+// Description:
+//		Tesselate a selection
+// Arguments:
+//		selection : selection to tesselate
+//		history : do action with / without history
+// Returns:
+//		none
+//
+{
+	//print ("Tesselate selected items");
+	//print $selection;
+	polyCleanupBatchAction "polyForceUV -unshare " $selection -1;
+}
+
+proc polyCleanupRemoveSelection( string $selection[], int $history, 
+								 int $faces, int $collapse, int $merge,
+								 float $mergeTol )
+//
+// Description:
+//		Remove a selection
+// Arguments:
+//		selection : selection to remove
+//		history : do action with / without history
+//		faces : action is on faces flag
+//		collapse : if true, collapse, else delete and possibly merge
+//		merge : whether to do merge on faces
+//		mergeTol : merge tolerance, if not collapsing
+// Returns:
+//		none
+//
+{
+	if ($faces)
+	{
+		if($collapse)
+		{
+			//print ("Collapse selected faces: ");
+			//print $selection;
+			//print ("\n");
+			polyCleanupBatchAction polyCollapseFacet $selection $history;
+		}
+		else
+		{
+			//print ("Delete selected faces: ");
+			//print $selection;
+			//print ("\n");
+			string $objSelection[] = `polyListComponentConversion $selection`;
+			polyCleanupBatchAction delete $selection -1;
+			if ( $merge ) {
+				for ($i in $objSelection ) {
+					string $vertSelection[] = `polyListComponentConversion -tv $i`;
+					polyMergeVertex -d $mergeTol -ch $history $vertSelection;
+				}
+			}
+			select -cl;
+		}
+	}
+	else
+	{
+		//print ("Delete selected edges: ");
+		//print $selection;
+		//print ("\n");
+		polyCleanupBatchAction polyCollapseEdge $selection $history;
+	}
+}
+
+proc
+cleanupNonManifoldGeometry (string $selectedMeshes[], int $history, int $technique)
+{
+	if ($technique <= 0) return;
+	string $failed[];
+
+	for ($mesh in $selectedMeshes) {
+		// Make sure we do indeed have nonmanifold geometry
+		//
+		string $nonManifold[] = `polyInfo -nmv -nme $mesh`;
+		if (size ($nonManifold) == 0) {
+			continue;
+		}
+		// Conform the geometry and see if that gets rid of all the
+		// nonmanifold bits
+		//
+		if ($technique == 1) {
+			polyNormal -normalMode 2 -ch $history ($mesh + ".f[*]");
+		}
+		string $edges[] = `polyInfo -nme $mesh`;
+		string $vertices[];
+		if (size ($edges) == 0) {
+			$vertices = `polyInfo -nmv $mesh`;
+		}
+		string $lastEdges[];
+		string $lastVertices[];
+		while ((!arraysMatch($lastEdges, $edges) || !arraysMatch($lastVertices, $vertices)) && ((size($edges) + size($vertices)) != 0)) {
+			// Remember what was nonmanifold last time
+			//
+			$lastEdges = $edges;
+			$lastVertices = $vertices;
+			// Split any nonmanifold edges
+			//
+			if (size ($edges) != 0) {
+				polySplitEdge -ch $history $edges;
+				clear $edges;
+				$vertices = `polyInfo -nmv $mesh`;
+			}
+			// Split any remaining nonmanifold vertices
+			//
+			if (size ($vertices) != 0) {
+				polySplitVertex -ch $history $vertices;
+				clear $vertices;
+			}
+			// Now check to see if the object is still nonmanifold
+			//
+			$nonManifold = `polyInfo -nmv -nme $mesh`;
+			if (size ($nonManifold) != 0) {
+				// Chip off the faces
+				//
+				string $nonManifoldFaces[] = `polyListComponentConversion -toFace $nonManifold`;
+				polyChipOff -kft 0 -dup 0 -ch $history $nonManifoldFaces;
+				// And then check for nonmanifold bits again
+				//
+				$edges = `polyInfo -nme $mesh`;
+				if (size ($edges) == 0) {
+					$vertices = `polyInfo -nmv $mesh`;
+				}
+			}
+		}
+		// Check to see if we failed to cleanup
+		//
+		if ((size($edges) + size($vertices)) != 0) {
+			$failed[size($failed)] = $mesh;
+		}
+	}
+	if (size($failed) != 0) {
+		string $message = (uiRes("m_polyCleanupArgList.kNonmanifold"));
+		for ($mesh in $failed) {
+			$message += $mesh;
+			$message += " ";
+		}
+		warning $message;
+	}
+}
+
+global proc string[]
+polyCleanupArgList (string $version, string $args[])
+//
+// Description:
+//		Perform a cleanup on polygonal meshes (command)
+//
+//  Input Arguments:
+//	$version: The version of arguments being passed.  Used to know how to 
+//	interpret the $args array.
+//		"1" : $allMeshes, $selectOnly, $historyOn,
+//			  $quads, $nsided, $concave, $holed,
+//			  $nonplanar, $zeroGeom, $zeroGeomTol,
+//			  $zeroEdge, $zeroEdgeTol, $zeroMap,
+//			  $zeroMapTol
+//		"2" : $sharedUVs
+//		"3" : $lamina
+//
+//	$args
+//	Version 1
+//	[0]		$allMeshes				All selectable meshes
+//	[1]		$selectOnly				Only perform a selection
+//	[2]		$historyOn				keep construction history
+//	[3]		$quads					check for quads polys
+//	[4]		$nsided					check for n-sided polys
+//	[5]		$concave				check for concave polys
+//	[6]		$holed					check for holed polys
+//	[7]		$nonplanar				check fo non-planar polys
+//	[8]		$zeroGeom				check for 0 area faces
+//	[9]		$zeroGeomTol			tolerance for face areas
+//	[10]	$zeroEdge				check for 0 length edges
+//	[11]	$zeroEdgeTol			tolerance for edge length
+//	[12]	$zeroMap				check for 0 uv face area 
+//	[13]	$zeroMapTol				tolerance for uv face areas
+//
+//	Version 2
+//	[14]	$sharedUVs				Unshare uvs that are shared across vertices
+//	[15]	$nonmanifold			check for nonmanifold polys
+//										<= 0 means do not check
+//										1 means cleanup with conform
+//										2 means do not use conform
+//
+//	Version 3
+//	[16]	$lamina					check for lamina polys
+//
+// Returns:
+//		list of items cleaned up. Empty if none
+//
+{
+	waitCursor -state on;
+
+	int		$versionNum				= $version;
+
+	int		$allMeshes				= $args[0];
+	int		$selectOnly				= $args[1];
+	int		$historyOn				= $args[2];
+	int		$quads					= $args[3];
+	int		$nsided					= $args[4];
+	int		$concave				= $args[5];
+	int		$holed					= $args[6];
+	int		$nonplanar				= $args[7];
+	int		$zeroGeom				= $args[8];
+	float	$zeroGeomTol			= $args[9];
+	int		$zeroEdge				= $args[10];
+	float	$zeroEdgeTol			= $args[11];
+	int		$zeroMap				= $args[12];
+	float	$zeroMapTol				= $args[13];
+	int		$sharedUVs				= ($versionNum >= 2 ? $args[14] : "0");
+	int		$nonmanifold			= ($versionNum >= 2 ? $args[15] : "0");
+	int		$lamina					= ($versionNum >= 3 ? $args[16] : "0");
+
+	// Need this otherwise call to changeSelectMode fails below (eg in batch mode)
+	// 
+	if( !`exists changeSelectMode` ) {
+		source "statusLine.mel";
+		source "selectionMaskStackInit.mel";
+	}
+
+	// Cache the current selection list
+	//
+	string $currentSelection[] = `ls -sl`;
+
+	string $selectedMeshes[];
+	string $anyMeshes[];
+	string $cleanedUp[];
+
+	// Select everything
+	//
+	if ($allMeshes == 1)
+	{
+		//print ("Select all meshes. If any...\n");
+		$anyMeshes = `ls -type mesh`;
+		select -r -all;
+	}
+
+	// Filter out the poly meshes only from the current 
+	// selection. Ignore any intermediate objects, cause cleaning
+	// them up would probably break something
+
+	string $anyMeshes[] = `ls -sl -dag -type mesh`;
+	int $index = 0;
+	int $cur = 0;
+	int $iobj;
+	while (size($anyMeshes) > $index)
+	{
+
+		$iobj = `getAttr ($anyMeshes[$index]+".intermediateObject")`;
+		if($iobj == 0) {
+			$selectedMeshes[$cur++] = $anyMeshes[$index];
+		}
+		$index++;
+	}
+
+	//print ("Currently selected poly mesh: ");
+	//print $selectedMeshes;
+	//print "\n";
+
+	// If not meshes found, abort and restore the
+	// selection list
+	if (size($selectedMeshes) == 0)
+    {
+		// If no mesh objects, check for either faces
+		// or edges selected
+		//
+		string $selectedEdges[] = `filterExpand -ex false -sm 32`; // Edges;
+		string $selectedFaces[] = `filterExpand -ex false -sm 34`; // Faces;
+		string $selectedUVs[];
+		if ($sharedUVs == 1) {
+			$selectedUVs = `filterExpand -ex false -sm 35`; // UVs;
+		}
+
+		if (size($selectedEdges) + size($selectedFaces) + size ($selectedUVs) == 0)
+		{
+			//confirmDialog -title "Polygon Cleanup" -message
+			//	"No polygonal objects found. No cleanup will be performed."
+			//	-button "OK";
+			warning (uiRes("m_polyCleanupArgList.kNoObjectsFound"));
+			select -r $currentSelection;
+			waitCursor -state off;
+			return $cleanedUp;
+		}
+		concat $selectedMeshes $selectedEdges;
+		concat $selectedMeshes $selectedFaces;
+		concat $selectedMeshes $selectedUVs;
+	}
+
+	//int $index = 0;
+	//while (size($selectedMeshes) > $index)
+	//{
+	//	doMenuComponentSelection($selectedMeshes[$index], "facet");
+	//	$index++;
+	//}
+	//updateComponentSelectionMasks;
+	//updateObjectSelectionMasks;
+
+	// Turn off all of the previous selection constraints
+	polyInstallAction;
+	//polyInstallAction -uc;
+
+	// Scan through each mesh found, and
+	// perform the cleanup
+	//
+	string $listToTesselate[];
+	string $listToRemove[];
+
+	$listToTesselate = `polyCleanupSelectForTesselate $selectedMeshes $quads $nsided $nonplanar $holed $concave`;
+
+	// Do the tesselation first.
+	int $numToTesselate = size($listToTesselate);
+	if ($selectOnly==1 && $numToTesselate > 0)
+    {
+		polyCleanupTesselateSelection $listToTesselate $historyOn;
+	}
+
+	string $listToSplit[] = `polyCleanupSelectForSplit $selectedMeshes $nonmanifold true`;
+	int $numToSplit = size ($listToSplit);
+	if (($nonmanifold > 0) && ($selectOnly == 1) && ($numToSplit > 0)) {
+		cleanupNonManifoldGeometry ($selectedMeshes, $historyOn, $nonmanifold);
+	}
+
+	string $uvsToUnshare[] = `polyCleanupSelectForUnshare $selectedMeshes $sharedUVs`;
+	int $numToUnshare = size($uvsToUnshare);
+	if ($selectOnly==1 && $numToUnshare > 0)
+    {
+		polyCleanupUnshareSelection $uvsToUnshare $historyOn;
+	}
+
+	// Must handle faces differently from edges,
+	// so keep track of 2 lists.
+	//
+	string $facesToRemove[];
+	string $edgesToRemove[];
+	string $zeroAreaFacesToRemove[];
+	string $laminaFacesToRemove[];
+	int $numToRemove = 0;
+	int $geometryRemoved = false;
+
+	if ($selectOnly==1)
+	{
+		// remove zero area faces by delete and merge verts
+		// this will also cover zero area faces with zero map area
+		polyCleanupSelectForRemove $selectedMeshes $zeroGeom 0 0 0 0.0 $zeroGeomTol 0.0 $zeroEdgeTol 0.0 $zeroMapTol $facesToRemove $zeroAreaFacesToRemove $edgesToRemove $laminaFacesToRemove;
+		if (size($zeroAreaFacesToRemove)) {
+			polyCleanupRemoveSelection $zeroAreaFacesToRemove $historyOn true false true $zeroEdgeTol;
+			$geometryRemoved = true;
+		}
+		clear $zeroAreaFacesToRemove;
+
+		// Collapse the zero length edges, shouldn't change the look
+		// of the geometry, but may affect the UVs.
+		polyCleanupSelectForRemove $selectedMeshes 0 $zeroEdge 0 0 0.0 $zeroGeomTol 0.0 $zeroEdgeTol 0.0 $zeroMapTol $facesToRemove $zeroAreaFacesToRemove $edgesToRemove $laminaFacesToRemove;
+		if (size($edgesToRemove)) {
+			polyCleanupRemoveSelection $edgesToRemove $historyOn false true false 0.0;
+			$geometryRemoved = true;
+		}
+		clear $edgesToRemove;
+		
+		// then reselect zero map area faces (the ones that are left
+		// have non-zero area, so delete & merge won't work, so collapse them.
+		polyCleanupSelectForRemove $selectedMeshes 0 0 $zeroMap 0 0.0 $zeroGeomTol 0.0 $zeroEdgeTol 0.0 $zeroMapTol $facesToRemove $zeroAreaFacesToRemove $edgesToRemove $laminaFacesToRemove;
+		if (size($facesToRemove)) {
+			polyCleanupRemoveSelection $facesToRemove $historyOn true true false 0.0;
+			$geometryRemoved = true;
+		}
+		clear $facesToRemove;
+
+		// remove lamina faces by delete and merge verts
+		// this will also cover zero area faces with zero map area
+		polyCleanupSelectForRemove $selectedMeshes $zeroGeom 0 0 $lamina 0.0 $zeroGeomTol 0.0 $zeroEdgeTol 0.0 $zeroMapTol $facesToRemove $zeroAreaFacesToRemove $edgesToRemove $laminaFacesToRemove;
+		if (size($laminaFacesToRemove)) {
+			polyCleanupRemoveSelection $laminaFacesToRemove $historyOn true false false 0.0;
+			$geometryRemoved = true;
+		}
+		clear $laminaFacesToRemove;
+	} else {
+		$numToRemove = `polyCleanupSelectForRemove $selectedMeshes $zeroGeom $zeroEdge $zeroMap $lamina 0.0 $zeroGeomTol 0.0 $zeroEdgeTol 0.0 $zeroMapTol $facesToRemove $zeroAreaFacesToRemove $edgesToRemove $laminaFacesToRemove`;
+	}
+
+	// Finally we can handle selection in 1 shot.
+	if (($numToRemove + $numToTesselate + $numToUnshare + $numToSplit) > 0)
+	{
+		if ($selectOnly == 2)
+		{
+			//print ("Selected ");
+			//print $listToTesselate;
+			//print $facesToRemove;
+			//print $edgesToRemove;
+			select -r $listToTesselate $listToSplit $facesToRemove 
+				$laminaFacesToRemove $edgesToRemove $uvsToUnshare 
+				$zeroAreaFacesToRemove;
+		}
+
+		// Auto-magically go into face component selection
+		// at end of successful cleanup.
+		//
+		// Fix for bug 115780.
+		//
+		int $index = 0;
+		string $objectPart[2];
+		int $osize;
+		while (size($listToTesselate) > $index)
+		{
+			tokenize $listToTesselate[$index] "." $objectPart;
+			$osize = size($objectPart[0]);
+			if ($osize != 0)
+			{
+				hilite $objectPart[0];
+			}
+			$index++;
+		}
+		$index = 0;
+		while (size($listToSplit) > $index)
+		{
+			tokenize $listToSplit[$index] "." $objectPart;
+			$osize = size($objectPart[0]);
+			if ($osize != 0)
+			{
+				hilite $objectPart[0];
+			}
+			$index++;
+		}
+		$index = 0;
+		while (size($facesToRemove) > $index)
+		{
+			tokenize $facesToRemove[$index] "." $objectPart;
+			$osize = size($objectPart[0]);
+			if ($osize != 0)
+			{
+				hilite $objectPart[0];
+			}
+			$index++;
+		}
+		$index = 0;
+		while (size($laminaFacesToRemove) > $index)
+		{
+			tokenize $laminaFacesToRemove[$index] "." $objectPart;
+			$osize = size($objectPart[0]);
+			if ($osize != 0)
+			{
+				hilite $objectPart[0];
+			}
+			$index++;
+		}
+		$index = 0;
+		while (size($edgesToRemove) > $index)
+		{
+			tokenize $edgesToRemove[$index] "." $objectPart;
+			$osize = size($objectPart[0]);
+			if ($osize != 0)
+			{
+				hilite $objectPart[0];
+			}
+			$index++;
+		}
+		$index = 0;
+		while (size($uvsToUnshare) > $index)
+		{
+			tokenize $uvsToUnshare[$index] "." $objectPart;
+			$osize = size($objectPart[0]);
+			if ($osize != 0)
+			{
+				hilite $objectPart[0];
+			}
+			$index++;
+		}
+
+		// Go into face selection mode. Update the icons.
+		selectType -pf true;
+		changeSelectMode -component;
+		updateSelectionModeIcons;
+	}
+
+	// Nothing found. Restore the previous selection list
+	else if ( !$geometryRemoved )
+    {
+		//confirmDialog -title "Polygon Cleanup" -message
+		//	"No items found to cleanup."
+		//	-button "OK";
+		warning (uiRes("m_polyCleanupArgList.kNoItemsFound"));
+		if ($selectOnly == 2)
+			select -clear;
+		else
+			select -r $currentSelection;
+		waitCursor -state off;
+		return $cleanedUp;
+	}
+
+	concat( $cleanedUp, $listToTesselate );
+	concat( $cleanedUp, $listToSplit );
+	concat( $cleanedUp, $facesToRemove );
+	concat( $cleanedUp, $laminaFacesToRemove );
+	concat( $cleanedUp, $edgesToRemove );
+	concat( $cleanedUp, $uvsToUnshare );
+
+	waitCursor -state off;
+	return $cleanedUp;
+}

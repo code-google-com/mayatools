@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<AssetList>
+	<group name="Cars">
+		<asset name="Abarth_500_2012" start_date="" due_date="" stage="" image="" />
+		<asset name="Audi_RS5Coupe_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="Audi_TTRSPlusCoupe_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="BMW_M235iCoupe_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="Chevrolet_CamaroSS_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="Dodge_DartGT_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="Ferrari_458Italia_2013" start_date="" due_date="" stage="" image="" />
+		<asset name="Ford_FocusST_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="Hyundai_GenesisCoupe38Ultimate_2013" start_date="" due_date="" stage="" image="" />
+		<asset name="Hyundai_VelosterTurboRSpec_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="Jaguar_FTypeRCoupe_2015" start_date="" due_date="" stage="" image="" />
+		<asset name="Lotus_ExigeS_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="MercedesBenz_A250AMGSport_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="MercedesBenz_C63AMGEdition507_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="MercedesBenz_CLA45AMGCoupe_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="Mini_CooperS_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="Nissan_GTRPremium_2015" start_date="" due_date="" stage="" image="" />
+		<asset name="Pagani_ZondaRevolucion_2013" start_date="" due_date="" stage="" image="" />
+		<asset name="Scion_FRS_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="Subaru_ImprezaWRXSTI_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="Toyota_GT86_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="Volkswagen_GolfGTI_2014" start_date="" due_date="" stage="" image="" />
+		<asset name="Volkswagen_GolfGTI_2014" start_date="" due_date="" stage="" image="" />
+	</group>
+</AssetList>

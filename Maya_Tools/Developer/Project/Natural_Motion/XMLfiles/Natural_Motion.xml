@@ -14,14 +14,27 @@
 		</Producer>
 	</Managers>
 	<Directories>
-		<ServerPath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/3DScene/</ServerPath>
-		<LocalPath>D:/2013_GlassEgg_Vehicles2014/3DScene/</LocalPath>
-		<ProjectLocalPath>maya</ProjectLocalPath>
-		<DocumentsPath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/Documents/</DocumentsPath>
-		<FeedbacksPath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/Feedbacks/</FeedbacksPath>
+		<ServerPath>//glassegg.com/projects/Scenes/NaturalMotion/</ServerPath>
+		<LocalPath>Z:/Project/NM/Hemlock/</LocalPath>
+		<ProjectLocalPath>Assets/Body/Model/WIP/</ProjectLocalPath>
+		<DocumentsPath>//glassegg.com/projects/Documents_Feedbacks/NaturalMotion/Documents/</DocumentsPath>
+		<FeedbacksPath>//glassegg.com/projects/Documents_Feedbacks/NaturalMotion/Feedbacks/</FeedbacksPath>
 		<ReferencesImagePath>//proj-server/Project_RT/2013_GlassEgg_Vehicles2014/Documents/</ReferencesImagePath>
 	</Directories>
 	<Structures_Asset group="True">
+		<folder name = "Assets">
+			<folder name = "Body">
+				<folder name = "Model">
+					<folder name = "WIP">
+						<folder name="Engine" type = "LOD"/>
+						<folder name="Exterior" type = "LOD"/>
+						<folder name="HyperDetails" type = "LOD"/>
+						<folder name="Interior" type = "LOD"/>
+						<folder name="LODB" type = "LOD"/>
+					</folder>
+				</folder>
+			</folder>
+		</folder>
 	</Structures_Asset>
 	<ProjectData>
 		<Template file="Sony_template_file.mb" />
