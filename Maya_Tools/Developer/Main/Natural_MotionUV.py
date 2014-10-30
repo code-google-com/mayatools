@@ -3,8 +3,8 @@ import maya.cmds as cmds
 import os
 
 
-mat_def_Ext = {'Aluminium Rough': 1, 'Aluminium Shiny': 2, 'Badge Glossy': 3, 'Badge Shadow': 4, 'Carbon': 5, 'Chrome': 6, 'Light': 7, 'Paint Glossy': 8, 'Paint Mettalic': 9, 'Pitch Black': 10, 'Plastic Rough': 11, 'Plastic Shiny': 12, 'Rubber Rough': 13, 'Rubber Semi Shiny': 14, 'Exhaust Inside Rough': 15, 'Exhaust Inside Shiny': 16}
-mat_def_Int = {'Aluminium Rough': 1, 'Aluminium Shiny': 2, 'Badge Glossy': 3, 'Badge Shadow': 4, 'Carbon': 5, 'Chrome': 6, 'Leather':7, 'Light': 8, 'Mirror':9, 'Paint Glossy': 10, 'Paint Mettalic': 11, 'Pitch Black': 12, 'Plastic Rough': 13, 'Plastic Shiny': 14, 'Rubber Rough': 15, 'Rubber Semi Shiny': 16, 'Exhaust Inside Rough': 17, 'Exhaust Inside Shiny': 18}
+mat_def = {'Aluminium Rough': 1, 'Aluminium Shiny': 2, 'Badge Glossy': 3, 'Badge Shadow': 4, 'Carbon': 5, 'Chrome': 6, 'Light': 7, 'Paint Glossy': 8, 'Paint Mettalic': 9, 'Pitch Black': 10, 'Plastic Rough': 11, 'Plastic Shiny': 12, 'Rubber Rough': 13, 'Rubber Semi Shiny': 14, 'Exhaust Inside Rough': 15, 'Exhaust Inside Shiny': 16}
+mat_def_Int = {'Aluminium Rough': 1, 'Aluminium Shiny': 2, 'Badge Glossy': 3, 'Badge Shadow': 4, 'Carbon': 5, 'Chrome': 6, 'Leather':7, 'Light': 8, 'Mirror':9, 'Paint Glossy': 10, 'Paint Mettalic': 11, 'Pitch Black': 12, 'Plastic Rough': 13, 'Plastic Shiny': 14, 'Rubber Rough': 15, 'Rubber Semi Shiny': 16, 'Exhaust Inside Rough': 17, 'Exhaust Inside Shiny': 18, 'Custom 1':19, 'Custom 2':20, 'Custom 3':21, 'Custom 4':22, 'Custom 5':23}
 mat = ['Badge_Material', 'Base_Material', 'Coloured_Material', 'Carbon_Material', 'Glass_Material', 'Grill_Material', 'GroundShadow_Material', 'Light_Material', 'Override_Material', 'Paint_Material', 'Unused_Material', 'Window_Material']
 
 sub_lodAs =['Body','ANIMATED_EngineBlock','ANIMATED_HoodHinge1','ANIMATED_HoodStrutRodLeft','ANIMATED_HoodStrutRodRight','ANIMATED_HoodHinge2','TARGET_HoodStrutLeft','TARGET_HoodStrutRight','ANIMATED_Bootlid','ANIMATED_BootLidStrutRod_Right','ANIMATED_BootLidStrutRod_Left','TARGET_BootLidStrut_Left','TARGET_BootLidStrut_Right','ANIMATED_Door_Left','ANIMATED_Door_Right','ANIMATED_SteeringWheel'] 
@@ -25,7 +25,7 @@ def unwrapToSlot_Int(material):
     transformNode = py.ls(hl = True)[0]
     shapeNode = transformNode.listRelatives(c = True)[0]
     print shapeNode
-    py.polyProjection(t = 'spherical', ch = True, isu = 1/80.0, isv =1/80.0 )
+    py.polyProjection(t = 'spherical', ch = True, isu = 1/120.0, isv =1/120.0 )
     uvs = py.polyListComponentConversion(facesSel, tuv = True)
     py.select(uvs)
     # --------------------
@@ -259,49 +259,54 @@ def createHierachy(*arg):
                 
                 elif sub_lodA=='ANIMATED_Bootlid':
                     ANIMATED_Bootlid = cmds.spaceLocator(n='ANIMATED_Bootlid')
+                    
                     g_BootLid = cmds.group(n = 'BootLid', em =True)
                     cmds.parent(g_BootLid,ANIMATED_Bootlid)
                     
                     ANIMATED_BootLidStrut_Left = cmds.spaceLocator(n='ANIMATED_BootLidStrut_Left')
-                    #g_BootLidStrut_Left = cmds.group(n = 'BootLidStrut_Left', em =True)
-                    #g_BootLidStrut_Left_Coloured_Geo = cmds.group(n = 'Coloured_Geo', em =True)
-                    #g_BootLidStrut_Left_Coloured_Geo_Inner = cmds.group(n = 'Inner', em =True)
+                    g_BootLidStrut_Left = cmds.group(n = 'BootLidStrut_Left', em =True)
+                    g_BootLidStrut_Left_Coloured_Geo = cmds.group(n = 'Coloured_Geo', em =True)
+                    g_BootLidStrut_Left_Coloured_Geo_Inner = cmds.group(n = 'Inner', em =True)
                     
-                    #cmds.parent(g_BootLidStrut_Left_Coloured_Geo_Inner,g_BootLidStrut_Left_Coloured_Geo)
-                    #cmds.parent(g_BootLidStrut_Left_Coloured_Geo,g_BootLidStrut_Left)
-                    #cmds.parent(g_BootLidStrut_Left,ANIMATED_BootLidStrut_Left)    
+                    cmds.parent(g_BootLidStrut_Left_Coloured_Geo_Inner,g_BootLidStrut_Left_Coloured_Geo)
+                    cmds.parent(g_BootLidStrut_Left_Coloured_Geo,g_BootLidStrut_Left)
+                    cmds.parent(g_BootLidStrut_Left,ANIMATED_BootLidStrut_Left)    
                     cmds.parent(ANIMATED_BootLidStrut_Left,ANIMATED_Bootlid)    
                     
                     ANIMATED_BootLidStrut_Right = cmds.spaceLocator(n='ANIMATED_BootLidStrut_Right')
-                    #g_BootLidStrut_Right = cmds.group(n = 'BootLidStrut_Right', em =True)
-                    #g_BootLidStrut_Right_Coloured_Geo = cmds.group(n = 'Coloured_Geo', em =True)
-                    #g_BootLidStrut_Right_Coloured_Geo_Inner = cmds.group(n = 'Inner', em =True)
+                    g_BootLidStrut_Right = cmds.group(n = 'BootLidStrut_Right', em =True)
+                    g_BootLidStrut_Right_Coloured_Geo = cmds.group(n = 'Coloured_Geo', em =True)
+                    g_BootLidStrut_Right_Coloured_Geo_Inner = cmds.group(n = 'Inner', em =True)
                     
-                    #cmds.parent(g_BootLidStrut_Left_Coloured_Geo_Inner,g_BootLidStrut_Left_Coloured_Geo)
-                    #cmds.parent(g_BootLidStrut_Left_Coloured_Geo,g_BootLidStrut_Left)
-                    #cmds.parent(g_BootLidStrut_Left,ANIMATED_BootLidStrut_Left)    
-                    cmds.parent(ANIMATED_BootLidStrut_Right,ANIMATED_Bootlid)              
+                    cmds.parent(g_BootLidStrut_Right_Coloured_Geo_Inner,g_BootLidStrut_Right_Coloured_Geo)
+                    cmds.parent(g_BootLidStrut_Right_Coloured_Geo,g_BootLidStrut_Right)
+                    cmds.parent(g_BootLidStrut_Right,ANIMATED_BootLidStrut_Right)    
+                    cmds.parent(ANIMATED_BootLidStrut_Right,ANIMATED_Bootlid)    
+                              
                 
                 elif sub_lodA=='ANIMATED_BootLidStrutRod_Right':
                     ANIMATED_BootLidStrutRod_Right = cmds.spaceLocator(n='ANIMATED_BootLidStrutRod_Right')
-                    #g_BootLidStrutRob_Right = cmds.group(n = 'BootLidStrutRob_Right', em =True)
-                    #g_BootLidStrut_Right_Coloured_Geo = cmds.group(n = 'Coloured_Geo', em =True)
-                    #g_BootLidStrut_Right_Coloured_Geo_Inner = cmds.group(n = 'Inner', em =True)
                     
-                    #cmds.parent(g_BootLidStrut_Right_Coloured_Geo_Inner,g_BootLidStrut_Right_Coloured_Geo)
-                    #cmds.parent(g_BootLidStrut_Right_Coloured_Geo,g_BootLidStrutRob_Right)
-                    #cmds.parent(g_BootLidStrutRob_Right,ANIMATED_BootLidStrutRod_Right)    
+                    g_BootLidStrutRob_Right = cmds.group(n = 'BootLidStrutRob_Right', em =True)
+                    g_BootLidStrut_Right_Coloured_Geo = cmds.group(n = 'Coloured_Geo', em =True)
+                    g_BootLidStrut_Right_Coloured_Geo_Inner = cmds.group(n = 'Inner', em =True)
+                    
+                    cmds.parent(g_BootLidStrut_Right_Coloured_Geo_Inner,g_BootLidStrut_Right_Coloured_Geo)
+                    cmds.parent(g_BootLidStrut_Right_Coloured_Geo,g_BootLidStrutRob_Right)
+                    cmds.parent(g_BootLidStrutRob_Right,ANIMATED_BootLidStrutRod_Right)    
                       
                     
                 elif sub_lodA=='ANIMATED_BootLidStrutRod_Left':
                     ANIMATED_BootLidStrutRod_Left = cmds.spaceLocator(n='ANIMATED_BootLidStrutRod_Left')
-                    #g_BootLidStrutRob_Left = cmds.group(n = 'BootLidStrutRob_Right', em =True)
-                    #g_BootLidStrutRob_Left_Coloured_Geo = cmds.group(n = 'Coloured_Geo', em =True)
-                    #g_BootLidStrutRob_Left_Coloured_Geo_Inner = cmds.group(n = 'Inner', em =True)
                     
-                    #cmds.parent(g_BootLidStrutRob_Left_Coloured_Geo_Inner,g_BootLidStrutRob_Left_Coloured_Geo)
-                    #cmds.parent(g_BootLidStrutRob_Left_Coloured_Geo,g_BootLidStrutRob_Left)
-                    #cmds.parent(g_BootLidStrutRob_Left,ANIMATED_BootLidStrutRod_Left)    
+                    g_BootLidStrutRob_Left = cmds.group(n = 'BootLidStrutRob_Right', em =True)
+                    g_BootLidStrutRob_Left_Coloured_Geo = cmds.group(n = 'Coloured_Geo', em =True)
+                    g_BootLidStrutRob_Left_Coloured_Geo_Inner = cmds.group(n = 'Inner', em =True)
+                    
+                    cmds.parent(g_BootLidStrutRob_Left_Coloured_Geo_Inner,g_BootLidStrutRob_Left_Coloured_Geo)
+                    cmds.parent(g_BootLidStrutRob_Left_Coloured_Geo,g_BootLidStrutRob_Left)
+                    cmds.parent(g_BootLidStrutRob_Left,ANIMATED_BootLidStrutRod_Left)
+                        
                 
                 elif sub_lodA=='TARGET_BootLidStrut_Left':
                     TARGET_BootLidStrut_Left = cmds.spaceLocator(n='TARGET_BootLidStrut_Left')
@@ -311,27 +316,31 @@ def createHierachy(*arg):
                 
                 elif sub_lodA=='ANIMATED_Door_Left':
                     ANIMATED_Door_Left = cmds.spaceLocator(n='ANIMATED_Door_Left')
-                    #g_Mirror_Left = cmds.group(n = 'Mirror_Left', em =True)
-                    #cmds.parent(g_Mirror_Left,ANIMATED_Door_Left)
-                    #g_Door_Left = cmds.group(n = 'Mirror_Left', em =True)
-                    #cmds.parent(g_Door_Left,ANIMATED_Door_Left)
                     
-                    #ANIMATED_DoorWindow_Left = cmds.spaceLocator(n='ANIMATED_DoorWindow_Left')
-                    #g_DoorWindow_Left = cmds.group(n = 'DoorWindow_Left', em =True)
-                    #cmds.parent(g_DoorWindow_Left,ANIMATED_DoorWindow_Left)
-                    #cmds.parent(ANIMATED_DoorWindow_Left,ANIMATED_Door_Left)                    
+                    g_Mirror_Left = cmds.group(n = 'Mirror_Left', em =True)
+                    cmds.parent(g_Mirror_Left,ANIMATED_Door_Left)
+                    g_Door_Left = cmds.group(n = 'Mirror_Left', em =True)
+                    cmds.parent(g_Door_Left,ANIMATED_Door_Left)
+                    
+                    ANIMATED_DoorWindow_Left = cmds.spaceLocator(n='ANIMATED_DoorWindow_Left')
+                    g_DoorWindow_Left = cmds.group(n = 'DoorWindow_Left', em =True)
+                    cmds.parent(g_DoorWindow_Left,ANIMATED_DoorWindow_Left)
+                    cmds.parent(ANIMATED_DoorWindow_Left,ANIMATED_Door_Left)   
+                                     
                 
                 elif sub_lodA=='ANIMATED_Door_Right':
                     ANIMATED_Door_Right = cmds.spaceLocator(n='ANIMATED_Door_Right')
-                    #g_Mirror_Right = cmds.group(n = 'Mirror_Left', em =True)
-                    #cmds.parent(g_Mirror_Right,ANIMATED_Door_Right)
-                    #g_Door_Right = cmds.group(n = 'Door_Right', em =True)
-                    #cmds.parent(g_Door_Right,ANIMATED_Door_Right)
                     
-                    #ANIMATED_DoorWindow_Right = cmds.spaceLocator(n='ANIMATED_DoorWindow_Right')
-                    #g_DoorWindow_Right = cmds.group(n = 'DoorWindow_Right', em =True)
-                    #cmds.parent(g_DoorWindow_Right,ANIMATED_DoorWindow_Right)
-                    #cmds.parent(ANIMATED_DoorWindow_Right,ANIMATED_Door_Right)
+                    g_Mirror_Right = cmds.group(n = 'Mirror_Left', em =True)
+                    cmds.parent(g_Mirror_Right,ANIMATED_Door_Right)
+                    g_Door_Right = cmds.group(n = 'Door_Right', em =True)
+                    cmds.parent(g_Door_Right,ANIMATED_Door_Right)
+                    
+                    ANIMATED_DoorWindow_Right = cmds.spaceLocator(n='ANIMATED_DoorWindow_Right')
+                    g_DoorWindow_Right = cmds.group(n = 'DoorWindow_Right', em =True)
+                    cmds.parent(g_DoorWindow_Right,ANIMATED_DoorWindow_Right)
+                    cmds.parent(ANIMATED_DoorWindow_Right,ANIMATED_Door_Right)
+                    
                 
                 elif sub_lodA=='ANIMATED_SteeringWheel':      
                      ANIMATED_SteeringWheel = cmds.spaceLocator(n='ANIMATED_SteeringWheel')
@@ -339,7 +348,29 @@ def createHierachy(*arg):
                      cmds.parent(g_SteeringWheel,ANIMATED_SteeringWheel)
                 cmds.parent(sub_lodA,anim_Body)
                      
-    cmds.parent(anim_Body,loda)                           
+    cmds.parent(anim_Body,loda)
+    cmds.parent(loda,model)
+    
+    #sub_Bodys = ['Fender_Rear','Bumper_Rear','Skirt','Bumper_Front','Fender_Front','Roof','Exhaust','Wiper_Left','Wiper_Right','Engine','Chassis','Taillight','Headlight','Windows','Interior','Seat_Right','Seat_Left','Boot']
+    #sub_materials = ['Paint_Geo','Carbon_Geo','Grille1_Geo','Coloured_Geo','Badge_Geo','Light_Geo','Glass_Geo']
+    
+    g_lodb = cmds.group(n = 'lodB', em = True)
+    g_bodyb = cmds.group(n = 'bodyb', em = True)
+    for sub_Bodyb in sub_Bodys:
+        g_subBodyb = cmds.group(n = sub_Bodyb, em =True)
+        for sub_materialb in sub_materials:
+            g_subMaterialb = cmds.group(n = sub_materialb, em =True)
+            g_Outer = cmds.group(n = 'Outer', em =True)
+            g_Floating = cmds.group(n = 'Floating', em =True)
+            cmds.parent(g_Floating, g_Outer)
+            cmds.parent(g_Outer,g_subMaterialb)
+            cmds.parent(g_subMaterialb,g_subBodyb)
+            
+        cmds.parent(g_subBodyb,g_bodyb)
+    cmds.parent(g_bodyb,g_lodb)
+    cmds.parent(g_lodb,model)
+                        
+      
     '''
     for g in geo:
         if not cmds.objExists(g):
@@ -354,6 +385,7 @@ def createHierachy(*arg):
     
 def assignTextures(*arg):
     texDir = os.path.split(os.path.split(cmds.file(q= True, sn = True))[0])[0]
+    print('texDir',texDir)
     lightTex = texDir + '/Textures/' + cmds.file(q= True, sn = True).split('/')[2] + '_Light_Material.tga'
     bagdeTex = texDir + '/Textures/' + cmds.file(q= True, sn = True).split('/')[2] + '_Badge_Diffuse.tga'
     geoTex = 'T:/Scenes/NaturalMotion/Tech/texture.tga'
@@ -421,6 +453,11 @@ def createGUI():
     cmds.menuItem( label='Rubber Semi Shiny') 
     cmds.menuItem( label='Exhaust Inside Rough')
     cmds.menuItem( label='Exhaust Inside Shiny')
+    cmds.menuItem( label='Custom 1')
+    cmds.menuItem( label='Custom 2')
+    cmds.menuItem( label='Custom 3')
+    cmds.menuItem( label='Custom 4')
+    cmds.menuItem( label='Custom 5')
     cmds.separator()
     cmds.button(label = 'Create Material', h = 25, c = createMat)
     cmds.button(label = 'Create Hierarchy', h = 25, c = createHierachy)
