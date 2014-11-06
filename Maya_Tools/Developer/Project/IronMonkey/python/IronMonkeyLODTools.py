@@ -13,7 +13,7 @@ Sony_mapping_LODs = ['_LOD0_','_LOD1_','_LOD2_','_LOD3_','_LOD4_','_LOD5_','_LOD
 Sony_nohide = []
 # IronMonkey Lods:
 IronMonkey_mapping_LODs = ['lod_00_layer', 'lod_01_layer', 'lod_02_layer', 'lod_03_layer', 'lod_04_layer', 'lod_05_layer', 'lod_06_layer']
-IronMonkey_nohide = ['base_car_layer','spoilers','exhausts']
+IronMonkey_nohide = ['base_car_layer','spoilers','exhausts', 'hoods']
 
 lods = ['lod_00','lod_01','lod_02','lod_03','lod_04','lod_05','lod_06']
 parts = ['type_a','type_b','type_c','type_d','kit_y','kit_z', 'kit_x', 'pulled_type_a','pulled_type_b', 'pulled_type_c', 'pulled_type_d',
@@ -48,6 +48,7 @@ def setupLOD():
         cmds.createDisplayLayer(n = 'base_unwrap_layer')
         cmds.createDisplayLayer(n = 'spoilers')
         cmds.createDisplayLayer(n = 'exhausts')
+        cmds.createDisplayLayer(n = 'hoods')
         for part in parts:
             try:
                 py.select('*' + part + '*')
@@ -160,6 +161,12 @@ def setupLOD():
             cmds.editDisplayLayerMembers('exhausts', cmds.ls('exhaust|*'), noRecurse = True)
         except:
             pass
+        
+        try:
+            cmds.editDisplayLayerMembers('hoods', cmds.ls('hood|*'), noRecurse = True)
+        except:
+            pass
+
 
 class CustomLODTools(form_class,base_class):
     def __init__(self):
@@ -195,6 +202,7 @@ class CustomLODTools(form_class,base_class):
   
         self.cbbSpoilers.currentIndexChanged.connect(self.showSpoilers)
         self.cbbExhausted.currentIndexChanged.connect(self.showExhausted)
+        self.cbbHood.currentIndexChanged.connect(self.showHood)
         
         self.btnLOD0.setChecked(True)
         self.btnStandard.setChecked(True)
@@ -238,14 +246,19 @@ class CustomLODTools(form_class,base_class):
     def check(self):
         self.cbbSpoilers.clear()
         self.cbbExhausted.clear()
+        self.cbbHood.clear()
         if self._projectName == 'IronMonkey':
             setupLOD()
             childrenOfSpoilers = cmds.listRelatives('spoiler', c = True)
             childrenOfSpoilers.append('---Nothing---')
             childrenOfExhaust = cmds.listRelatives('exhaust', c = True)
             childrenOfExhaust.append('---Nothing---')
+            childrenOfHood = cmds.listRelatives('hood', c = True)
+            childrenOfHood.append('---Nothing---')
+            
             self.cbbSpoilers.addItems(childrenOfSpoilers)
             self.cbbExhausted.addItems(childrenOfExhaust)
+            self.cbbHood.addItems(childrenOfHood)
         else:
             if not cmds.objExists('LayerSetup'):
                 self.createLOD()
@@ -271,6 +284,17 @@ class CustomLODTools(form_class,base_class):
                 cmds.setAttr(s + '.visibility', 0)
             else:
                 if str(exhaust) in s:
+                    cmds.setAttr(s + '.visibility', 1)
+                else:
+                    cmds.setAttr(s + '.visibility', 0)
+                    
+    def showHood(self):
+        hood = self.cbbHood.currentText()
+        for s in cmds.listRelatives('hood', c = True, f= True):
+            if hood == '---Nothing---':
+                cmds.setAttr(s + '.visibility', 0)
+            else:
+                if str(hood) in s:
                     cmds.setAttr(s + '.visibility', 1)
                 else:
                     cmds.setAttr(s + '.visibility', 0)
@@ -356,17 +380,19 @@ class CustomLODTools(form_class,base_class):
         cmds.showHidden(all = True)
         
     def SwapLOD(self):
+        cmds.undoInfo(openChunk = True)
         if self._projectName == 'IronMonkey':
             self.SwapLODIronMonkey()
         if self._projectName == 'Sony':
             self.SwapLODSony()
+        cmds.undoInfo(closeChunk = True)
         
     def SwapLODIronMonkey(self):
  
             #if layer not in self._nohide]
         if self._projectName == 'IronMonkey':
             mel.eval('showHidden -all;')        
-        self._nohide = ['base_car_layer', 'spoilers','exhausts']
+        self._nohide = ['base_car_layer', 'spoilers','exhausts', 'hoods']
         
         if self.rdbSourceLOD0.isChecked():
             LODa = mappingLODs(self._projectName,'_LOD0_')
@@ -413,9 +439,15 @@ class CustomLODTools(form_class,base_class):
                 if self.btnPulled.isChecked():
                     if cmds.objExists('bumper_front|pulled_type_a'):
                         type_a.append('bumper_front|pulled_type_a')
+                    else:
+                        type_a.append('bumper_front|standard_type_a')
                 if self.btnLarge.isChecked():
                     if cmds.objExists('bumper_front|large_type_a'):
                         type_a.append('bumper_front|large_type_a')
+                    else:
+                        type_a.append('bumper_front|large_type_a')
+                        
+                if self.btnSmall.isChecked():
 
             if self.chkBumper_rear.isChecked():
                 if 'type_a_layer' not in self._nohide:
@@ -425,8 +457,12 @@ class CustomLODTools(form_class,base_class):
                 if self.btnPulled.isChecked():
                     if cmds.objExists('bumper_rear|pulled_type_a'):
                         type_a.append('bumper_rear|pulled_type_a')
+                    else:
+                        type_a.append('bumper_rear|standard_type_a')
                 if self.btnLarge.isChecked():
                     if cmds.objExists('bumper_rear|large_type_a'):
+                        type_a.append('bumper_rear|large_type_a')
+                    else:
                         type_a.append('bumper_rear|large_type_a')
 
             if self.chkSide_skirt.isChecked():
@@ -437,15 +473,14 @@ class CustomLODTools(form_class,base_class):
                 if self.btnPulled.isChecked():
                     if cmds.objExists('side_skirts|pulled_type_a'):
                         type_a.append('side_skirts|pulled_type_a')
+                    else:
+                        type_a.append('side_skirts|standard_type_a')
                 if self.btnLarge.isChecked():
                     if cmds.objExists('side_skirts|large_type_a'):
                         type_a.append('side_skirts|large_type_a')
+                    else:
+                        type_a.append('side_skirts|large_type_a')
 
-            if self.chkHood.isChecked():
-                if 'type_a_layer' not in self._nohide:
-                    self._nohide.append('type_a_layer')
-                type_a.append('hood|type_a')
-                
             groups = [group.split('.')[0] for group in cmds.connectionInfo('type_a_layer.drawInfo', dfs = True)]
             for g in groups:
                 if g not in type_a:
@@ -486,7 +521,7 @@ class CustomLODTools(form_class,base_class):
             print 'pulled'
             cmds.setAttr('wheel_arch|standard.visibility', 0)
             self._nohide.append('pulled_wheel_arch_layer') 
-            if self.btnLOD0.isChecked():
+            if self.btnLOD0.isChecked(): # if type A is selected
                 if cmds.objExists('pulled_type_a_layer'):
                     self._nohide.append('pulled_type_a_layer')
                     try:
@@ -495,7 +530,7 @@ class CustomLODTools(form_class,base_class):
                         cmds.setAttr('side_skirts|standard_type_a.visibility', 0)
                     except:
                         pass
-            if self.btnLOD1.isChecked():
+            if self.btnLOD1.isChecked(): # if type B is selected
                 if cmds.objExists('pulled_type_b_layer'):
                     self._nohide.append('pulled_type_b_layer')
                     try:
@@ -504,7 +539,7 @@ class CustomLODTools(form_class,base_class):
                         cmds.setAttr('side_skirts|standard_type_b.visibility', 0)
                     except:
                         pass
-            if self.btnLOD2.isChecked():
+            if self.btnLOD2.isChecked(): # if type C is selected
                 if cmds.objExists('pulled_type_c_layer'):
                     self._nohide.append('pulled_type_c_layer')
                     try:
@@ -513,7 +548,7 @@ class CustomLODTools(form_class,base_class):
                         cmds.setAttr('side_skirts|standard_type_c.visibility', 0)
                     except:
                         pass
-            if self.btnLOD3.isChecked():
+            if self.btnLOD3.isChecked(): # if type D is selected
                 self._nohide.append('pulled_type_d_layer')
                 try:
                     cmds.setAttr('bumper_front|standard_type_d.visibility', 0)
@@ -550,12 +585,12 @@ class CustomLODTools(form_class,base_class):
         flag = cmds.getAttr(LODa + '.visibility')
         cmds.setAttr(LODa + '.visibility', not flag)
         cmds.setAttr(LODb + '.visibility', flag)
+        
         self.showSpoilers()
         self.showExhausted()
+        self.showHood()
         
-   
-
-    
+       
     def setPosition(self):
         if not self.btnSpreadHonrizonal.isChecked():
             for index in range(len(LODsChain)):
